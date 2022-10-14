@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>Microsoft.PowerFx.Dataverse</RootNamespace>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>C:\Data\power-fx-dataverse\src\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>1701;1702;1998</NoWarn>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <!-- Nuget Properties -->
+  <PropertyGroup>
+    <PackageId>Microsoft.PowerFx.Dataverse</PackageId>
+    <Title>Microsoft Power Fx Compiler - Dataverse Target</Title>
+    <Description>The Dataverse backend for the Power Fx compiler</Description>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Company>Microsoft</Company>
+    <Authors>Microsoft</Authors>
+    <RepositoryUrl>https://github.com/microsoft/Power-Fx-Dataverse</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="6.0.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221013-325232" />
+    <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.PowerFx.Dataverse.Parser">
+      <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <!--
+  <Import Project="$(SourcePath)\Language\PowerFx.NugetGeneration.props" />
+
+  <Import Project="$(SourcePath)\Build.targets" />
+  -->
+</Project>

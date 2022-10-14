@@ -1,0 +1,338 @@
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//------------------------------------------------------------------------------
+
+using Microsoft.AppMagic.Common;
+using Microsoft.PowerFx.Core.IR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Types;
+using System.Text.RegularExpressions;
+using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+
+namespace Microsoft.PowerFx.Dataverse.Functions
+{
+    internal static partial class Library
+    {
+        public static RetVal Value(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var arg0 = node.Args[0];
+            var arg = arg0.Accept(visitor, context);
+            if (arg.type is StringType)
+            {
+                if (arg0 is TextLiteralNode literal)
+                {
+                    if (!int.TryParse(literal.LiteralValue, out var ignore))
+                    {
+                        context._unsupportedWarnings.Add("Value() only works on ints");
+                    }
+                }
+
+                // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
+                var result = context.GetTempVar(context.GetReturnType(node));
+                var numberType = ToSqlType(result.type);
+
+                // only allow whole numbers to be parsed
+                context.SetIntermediateVariable(result, $"TRY_PARSE({arg} AS int)");
+                context.ErrorCheck($"LEN({arg}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                return result;
+            }
+            else if (arg.type is NumberType)
+            {
+                // calling Value on a number is a pass-thru
+                return context.SetIntermediateVariable(node, arg.ToString());
+            }
+            else if (arg.type is BlankType)
+            {
+                return context.SetIntermediateVariable(node, "NULL");
+            }
+            else
+            {
+                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), arg0.IRContext.SourceContext);
+            }
+        }
+
+        public static RetVal Text(SqlVisitor visitor, CallNode node, Context context)
+        {
+            if (node.Args.Count > 2)
+            {
+                throw BuildUnsupportedArgumentException(node.Function, 2, node.Args[2].IRContext.SourceContext);
+            }
+
+            var val = node.Args[0].Accept(visitor, context);
+            if (val.type is NumberType)
+            {
+                string format = null;
+                if (node.Args.Count > 1)
+                {
+                    if (node.Args[1] is TextLiteralNode)
+                    {
+                        using (context.NewInlineLiteralContext())
+                        {
+                            var formatArg = node.Args[1].Accept(visitor, context);
+                            format = formatArg.ToString();
+                        }
+                    }
+                    else if (node.Args[1].IRContext.ResultType is BlankType)
+                    {
+                        // if the format is blank, emit an empty string
+                        return context.SetIntermediateVariable(node, $"N''");
+                    }
+                    else
+                    {
+                        throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
+                    }
+                }
+
+                var result = context.GetTempVar(context.GetReturnType(node));
+                if (format == null)
+                {
+                    var defaultFormatted = visitor.CoerceNumberToString(val, context);
+                    context.SetIntermediateVariable(result, fromRetVal: defaultFormatted);
+                }
+                else
+                {
+                    // The numeric formating placeholders for Text: https://docs.microsoft.com/en-us/powerapps/maker/canvas-apps/functions/function-text#number-placeholders
+                    // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
+
+                    // Do not allow , . or locale tag
+                    if (Regex.IsMatch(format, @"(,|\.|\[\$-[\w-]+\])"))
+                    {
+                        context._unsupportedWarnings.Add("Unsupported numeric format");
+                        throw new SqlCompileException(SqlCompileException.NumericFormatNotSupported, node.Args[1].IRContext.SourceContext);
+                    }
+
+                    // except that % ‰ e : ' need to be escaped
+                    format = format.Replace("%", "\\%");
+                    format = format.Replace("‰", "\\‰");
+                    format = format.Replace("e", "\\e");
+                    format = format.Replace("E", "\\E");
+                    format = format.Replace(":", "\\:");
+                    format = format.Replace("'", "\\''");
+
+                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                }
+                return result;
+            }
+            else if (val.type is StringType)
+            {
+                // formatting a string is a pass-thru
+                return context.SetIntermediateVariable(node, $"{val}");
+            }
+            else if (val.type is BlankType)
+            {
+                // null should be coerced to empty string
+                return context.SetIntermediateVariable(node, $"N''");
+            }
+            else
+            {
+                throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
+            }
+        }
+
+        public static RetVal UpperLower(SqlVisitor visitor, CallNode node, Context context, string function)
+        {
+            var val = node.Args[0].Accept(visitor, context);
+            // Null values are coerced to empty string
+            return context.SetIntermediateVariable(node, $"{function}({CoerceNullToString(val)})");
+        }
+
+        public static RetVal StringUnaryFunction(SqlVisitor visitor, CallNode node, Context context, string function)
+        {
+            var val = node.Args[0].Accept(visitor, context);
+            return context.SetIntermediateVariable(node, $"{function}({val})");
+        }
+
+        public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var val = node.Args[0].Accept(visitor, context);
+            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
+            context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
+            return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
+        }
+
+        public static RetVal Concatenate(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var args = new List<string>(node.Args.Count);
+            for (int i = 0; i < node.Args.Count; i++)
+            {
+                var arg = node.Args[i].Accept(visitor, context);
+
+                var coercedArg = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(arg));
+                // if there is a single parameter, this is a pass thru
+                if (i == 0 && node.Args.Count == 1)
+                {
+                    return context.SetIntermediateVariable(node, $"{coercedArg}");
+                }
+                else
+                {
+                    args.Add(coercedArg.ToString());
+                }
+            }
+
+            return context.SetIntermediateVariable(node, $"CONCAT({String.Join(",", args)})");
+        }
+
+        public static RetVal Blank(SqlVisitor visitor, CallNode node, Context context)
+        {
+            return RetVal.FromSQL("NULL", context.GetReturnType(node));
+        }
+
+        public static RetVal IsBlank(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var arg = node.Args[0].Accept(visitor, context);
+            if (arg.type is StringType)
+            {
+                return context.SetIntermediateVariable(node, $"({arg} IS NULL OR LEN({arg}+N'x') = 1)");
+            }
+            else
+            {
+                return context.SetIntermediateVariable(node, $"({arg} IS NULL)");
+            }
+        }
+
+        public static RetVal LeftRight(SqlVisitor visitor, CallNode node, Context context, string function)
+        {
+            var strArg = node.Args[0].Accept(visitor, context);
+            var rawOffset = node.Args[1].Accept(visitor, context);
+            var offset = context.SetIntermediateVariable(new SqlBigType(), function == "LEFT" ? RoundDownNullToInt(rawOffset) : RoundUpNullToInt(rawOffset));
+            context.NegativeNumberCheck(offset);
+            // zero offsets are not considered errors, and return empty string
+            return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
+        }
+
+        public static RetVal Mid(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var strArg = node.Args[0].Accept(visitor, context);
+
+            ValidateNumericArgument(node.Args[1]);
+            RetVal start = node.Args[1].Accept(visitor, context);
+            context.NonPositiveNumberCheck(start);
+
+            RetVal length;
+            if (node.Args.Count > 2)
+            {
+                ValidateNumericArgument(node.Args[2]);
+                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", new SqlIntType());
+                context.NegativeNumberCheck(length);
+            }
+            else
+            {
+                // SQL ignores trailing spaces when counting the length
+                length = RetVal.FromSQL($"LEN({strArg}+N'x')-1", FormulaType.Number);
+            }
+
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
+        }
+
+        public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var arg = node.Args[0].Accept(visitor, context);
+            if (arg.type is StringType)
+            {
+                // SQL ignores trailing spaces when counting the length
+                return context.SetIntermediateVariable(node, $"LEN({arg} + N'x')-1");
+            }
+            else if (arg.type is BlankType)
+            {
+                // the length of blank is 0
+                return context.SetIntermediateVariable(node, "0");
+            }
+            else
+            {
+                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
+            }
+        }
+
+        public static RetVal StartsEndsWith(SqlVisitor visitor, CallNode node, Context context, MatchType matchType)
+        {
+            var str = node.Args[0].Accept(visitor, context);
+            var match = visitor.EncodeLikeArgument(node.Args[1], matchType, context);
+            return context.SetIntermediateVariable(node, $"{str} LIKE {match}");
+        }
+
+        public static RetVal TrimEnds(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var result = context.GetTempVar(context.GetReturnType(node));
+            var str = node.Args[0].Accept(visitor, context);
+            context.SetIntermediateVariable(result, $"ISNULL(RTRIM(LTRIM({str})), N'')");
+            return result;
+        }
+
+        public static RetVal Trim(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var result = context.GetTempVar(context.GetReturnType(node));
+            var str = node.Args[0].Accept(visitor, context);
+            context.SetIntermediateVariable(result, $"ISNULL(RTRIM(LTRIM({str})), N'')");
+            context.AppendContentLine($"WHILE (CHARINDEX(N'  ',{result}) <> 0) BEGIN set {result}=REPLACE({result}, N'  ', N' ') END");
+            return result;
+        }
+
+        public static RetVal Substitute(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var result = context.GetTempVar(context.GetReturnType(node));
+            var str = node.Args[0].Accept(visitor, context);
+            var oldStr = node.Args[1].Accept(visitor, context);
+            var newStr = node.Args[2].Accept(visitor, context);
+            var replaceAll = $"REPLACE({str}, {CoerceNullToString(oldStr)}, {CoerceNullToString(newStr)})";
+            if (node.Args.Count == 4)
+            {
+                // TODO: this should converted to a UDF
+                ValidateNumericArgument(node.Args[3]);
+                var instance = node.Args[3].Accept(visitor, context);
+                context.NonPositiveNumberCheck(instance);
+
+                using (var indenter = context.NewIfIndenter())
+                {
+                    // if the instance is null, replace all
+                    using (indenter.EmitIfCondition($"{instance} IS NULL"))
+                    {
+                        context.SetIntermediateVariable(result, replaceAll);
+                    }
+                    using (indenter.EmitElse())
+                    {
+                        var idx = context.GetTempVar(new SqlIntType());
+                        var matchCount = context.GetTempVar(new SqlIntType());
+                        context.SetIntermediateVariable(idx, $"1");
+                        context.SetIntermediateVariable(matchCount, $"1");
+                        // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
+                        var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
+                        context.AppendContentLine($"WHILE({matchCount} <= {instance}) BEGIN set {idx}=CHARINDEX({oldStr}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={instance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+
+                        context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({str}, {idx}, {oldLen}, {newStr}), {str})");
+                    }
+                }
+            }
+            else
+            {
+                // if no instance is indicated, replace all
+                context.SetIntermediateVariable(result, replaceAll);
+            }
+            return result;
+        }
+
+        public static RetVal Replace(SqlVisitor visitor, CallNode node, Context context)
+        {
+            var result = context.GetTempVar(context.GetReturnType(node));
+            var str = node.Args[0].Accept(visitor, context);
+            ValidateNumericArgument(node.Args[1]);
+            var start = node.Args[1].Accept(visitor, context);
+            ValidateNumericArgument(node.Args[2]);
+            var count = node.Args[2].Accept(visitor, context);
+            context.NonPositiveNumberCheck(count);
+            var newStr = node.Args[3].Accept(visitor, context);
+            // STUFF will return null if the start index or count are larger than the string, so concatenate the strings in that case
+            context.SetIntermediateVariable(result, $"ISNULL(STUFF({str}, {start}, {count}, {newStr}), {str} + {newStr})");
+            return result;
+        }
+
+        public static string CoerceNullToString(RetVal retVal)
+        {
+            return $"ISNULL({retVal},N'')";
+        }
+    }
+}

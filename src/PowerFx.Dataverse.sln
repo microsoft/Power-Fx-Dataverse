@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerFx.Dataverse\PowerFx.Dataverse.csproj", "{40DCE36D-63E1-42F7-827B-C53538B90FE5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Eval", "PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj", "{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B02685E4-3E83-4B15-8255-5EA8FBBB19CC}
+	EndGlobalSection
+EndGlobal
