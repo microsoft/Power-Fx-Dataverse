@@ -10,7 +10,7 @@
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
-    <AssemblyOriginatorKeyFile>..\..\src\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1998</NoWarn>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
