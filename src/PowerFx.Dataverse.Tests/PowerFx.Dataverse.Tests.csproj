@@ -26,6 +26,7 @@
     <PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="0.6.6" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221018-325751" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221018-325751" />
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221018-325751" />
