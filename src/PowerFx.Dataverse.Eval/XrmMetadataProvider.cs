@@ -36,10 +36,12 @@ namespace Microsoft.PowerFx.Dataverse
             qe.ColumnSet.AddColumn("logicalname");
             qe.Criteria.AddFilter(fe);
 
-            try
-            {
-                var result = _serviceClient.RetrieveMultiple(qe).Entities.FirstOrDefault();
+            var resp = DataverseExtensions.DataverseCall<EntityCollection>(
+                () => _serviceClient.RetrieveMultiple(qe), $"Get logical name for '{displayName}'");
 
+            if (!resp.HasError)
+            {
+                var result = resp.Response.Entities.FirstOrDefault();
                 if (result == null)
                 {
                     logicalName = null;
@@ -49,11 +51,9 @@ namespace Microsoft.PowerFx.Dataverse
                 logicalName = result.Attributes["logicalname"].ToString();
                 return true;
             }
-            catch (Exception ex) when (!ex.IsFatal())
-            {
-                logicalName = null;
-                return false;
-            }
+
+            logicalName = null;
+            return false;
         }
 
         public bool TryGetEntityMetadataFromDisplayName(string displayName, out EntityMetadata entityMetadata)
@@ -74,7 +74,6 @@ namespace Microsoft.PowerFx.Dataverse
                     LogicalName = logicalName
                 },
                 rer => rer.EntityMetadata,
-                null,
                 out entityMetadata);
         }
 
@@ -83,7 +82,6 @@ namespace Microsoft.PowerFx.Dataverse
             return _serviceClient.Execute<RetrieveAllEntitiesRequest, RetrieveAllEntitiesResponse, EntityMetadata[]>(
                 new RetrieveAllEntitiesRequest() { EntityFilters = EntityFilters.All },
                 raer => raer.EntityMetadata,
-                null, // no logging
                 out entities);
         }
     }

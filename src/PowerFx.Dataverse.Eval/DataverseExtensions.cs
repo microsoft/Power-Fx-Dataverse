@@ -5,43 +5,30 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Connectors;
-using Microsoft.PowerFx.Preview;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.ServiceModel;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseExtensions
     {
-        public static bool Execute<Req, Res, Out>(this IOrganizationService svcClient, Req request, Func<Res, Out> transform, Action<ExecutionResult, string> logMessage, out Out result)
+        public static bool Execute<Req, Res, Out>(this IOrganizationService svcClient, Req request, Func<Res, Out> transform, out Out result)
             where Req : OrganizationRequest
             where Res : OrganizationResponse
         {
-            try
+            var resp = DataverseCall<Res>(() => (Res)svcClient.Execute(request), request.RequestName);
+            if (resp.HasError)
             {
-                var response = (Res)svcClient.Execute(request);
-                if (logMessage != null) logMessage(ExecutionResult.Success, null);
-                result = transform(response);
-                return true;
-            }
-            catch (Exception ex) when (!ex.IsFatal())
-            {
-                if (logMessage != null) logMessage(ExecutionResult.Error, ex.Message);
                 result = default;
                 return false;
             }
-        }
 
-        public enum ExecutionResult
-        {
-            Success = 0,
-            Error = 1
+            result = transform(resp.Response);
+            return true;
         }
 
         public static Entity ToEntity(this RecordValue record, EntityMetadata entityMetadata)
@@ -56,23 +43,6 @@ namespace Microsoft.PowerFx.Dataverse
             return entity;
         }
 
-        public static string GetExceptionMessage(this Exception ex)
-        {
-            StringBuilder sb = new(1024);
-            GetExceptionMessageInternal(ex, 0, sb);
-
-            return sb.ToString().Trim();
-        }
-
-        private static void GetExceptionMessageInternal(Exception ex, int level, StringBuilder stringBuilder)
-        {
-            if (level > 10 || ex == null || string.IsNullOrEmpty(ex.Message))
-                return;
-
-            stringBuilder.AppendLine($"[{ex.GetType().DisplayName()}] {ex.Message}");
-            GetExceptionMessageInternal(ex.InnerException, level + 1, stringBuilder);
-        }
-
         private static string DisplayName(this Type t)
         {
             if (!t.IsGenericType)
@@ -84,14 +54,6 @@ namespace Microsoft.PowerFx.Dataverse
             string genericArgs = string.Join(",", t.GetGenericArguments().Select(ta => DisplayName(ta)).ToArray());
 
             return genericTypeName + "<" + genericArgs + ">";
-        }
-
-        public static bool IsFatal(this Exception ex)
-        {
-            return ex is StackOverflowException ||
-                   ex is AccessViolationException ||
-                   ex is OutOfMemoryException ||
-                   ex is TaskCanceledException;
         }
 
         public static bool IsSupported(this ODataParameters odataParameters)
@@ -117,38 +79,77 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<T>.Of(ErrorValue.NewError(new ExpressionError() { Kind = ErrorKind.Unknown, Message = message, Severity = ErrorSeverity.Critical, MessageKey = method }));
         }
 
-        public static DataverseResponse<T> DataverseCall<T>(Func<T> call, string noResultMessage = null, [CallerMemberName] string memberName = null)
+        // Return 0 if not found. 
+        private static int GetHttpStatusCode(FaultException<OrganizationServiceFault> e)
         {
-            string GetMessage(string message) => $"Error in {memberName}: {message ?? "<null>"}";
-
-            try
-            {
-                T result = call();
-
-                return result.Equals(default(T))
-                    ? new DataverseResponse<T>(GetMessage(noResultMessage))
-                    : new DataverseResponse<T>(result);
-            }
-            catch (Exception ex) when (!ex.IsFatal())
-            {
-                return new DataverseResponse<T>(GetMessage(ex.GetExceptionMessage()));
-            }
+            return GetHttpStatusCode(e.Detail);
         }
 
-        public static DataverseResponse DataverseCall(Action call, [CallerMemberName] string memberName = null)
+        private static int GetHttpStatusCode(OrganizationServiceFault e)
         {
-            string GetMessage(string message) => $"Error in {memberName}: {message ?? "<null>"}";
+            var props = e?.ErrorDetails;
+            if (props != null)
+            {
+                if (props.TryGetValue("ApiExceptionHttpStatusCode", out var data))
+                { 
+                    if (data is int code)
+                    {
+                        return code;
+                    }                    
+                }
+            }
+            return 0;
+        }
 
+        // Call IOrganizationService and translate responses. 
+        // This should be the one place we translate from IOrganizationClient failures.
+        public static DataverseResponse<T> DataverseCall<T>(Func<T> call, string operationDescription)
+        {
+            string message;
             try
             {
-                call();
+                // Will throw on error 
+                try
+                {
+                    T result = call();
 
-                return new DataverseResponse();
+                    // Success. 
+                    return new DataverseResponse<T>(result);
+                }
+                catch (AggregateException ae)
+                {
+                    // Unwrap aggregates
+                    throw ae.InnerException;
+                }
             }
-            catch (Exception ex) when (!ex.IsFatal())
+            catch (FaultException<OrganizationServiceFault> e)
             {
-                return new DataverseResponse(GetMessage(ex.GetExceptionMessage()));
+                // thrown by server- server received command and it failed. Like missing record, etc.
+                // Details contain things like:
+                // - http status code 
+
+                message = e.Message;                
             }
+            catch (System.ServiceModel.Security.MessageSecurityException e)
+            {
+                // thrown if we can't auth to server.                 
+                message = e.Message;
+            }
+            catch (System.IO.IOException e)
+            {
+                // Network is bad - such as network is offline. 
+                message = e.Message;
+            }
+            catch
+            {
+                // Any other exception is a "hard failure" that should propagate up. 
+                // this will terminate the eval. 
+                throw;
+            }
+
+            var fullMessage = $"Error attempting {operationDescription}. {message}";
+            return DataverseResponse<T>.NewError(fullMessage);
+
         }
     }
 }

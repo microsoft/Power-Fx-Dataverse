@@ -1,0 +1,42 @@
+﻿#override: Value.txt
+
+// Value() doesn't accept Date objects
+>> Value(Date(1900, 1, 1))
+Errors: Error 6-22: This argument can not be passed as this type in formula columns.
+
+
+>> Value(Date(1900, 2, 28))
+Errors: Error 6-23: This argument can not be passed as this type in formula columns.
+
+>> Value(Date(1900, 3, 1))
+Errors: Error 6-22: This argument can not be passed as this type in formula columns.
+
+
+>> Value(Date(1900, 3, 1)) - Value(Date(1900, 2, 28))
+Errors: Error 6-22: This argument can not be passed as this type in formula columns.
+
+// SQL Value() only supports whole numbers 
+>> Value("0.0")
+#error
+
+>> Value("123,456.78")
+#error
+
+>> Value( "$ 12.34" )
+#error
+
+>> Value( "24e3" )
+#error
+
+>> Value( "12.34%" )
+#error
+
+>> Value(" %10")
+#error
+
+>> Value("10% ")
+#error
+
+>> Value("%10")
+#error
+

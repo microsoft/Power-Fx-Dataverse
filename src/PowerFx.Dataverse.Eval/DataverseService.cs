@@ -25,17 +25,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, new ColumnSet(true)), $"Entity {logicalName}:{id} not found");            
+            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, new ColumnSet(true)), $"Retrieve '{logicalName}':{id}");            
         }       
 
         public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _organizationService.Create(entity), $"Entity creation failed");            
+            return DataverseExtensions.DataverseCall(() => _organizationService.Create(entity), $"Create '{entity.LogicalName}'");
         }
 
         public async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => { _organizationService.Update(entity); return entity; });           
+            return DataverseExtensions.DataverseCall(() => { _organizationService.Update(entity); return entity; }, $"Update '{entity.LogicalName}':{entity.Id}");
         }
 
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
@@ -50,7 +50,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _organizationService.Delete(entityName, id));            
+            // Delete returns <void>, need to provide a return value.  
+            return DataverseExtensions.DataverseCall(() => { _organizationService.Delete(entityName, id); return true; }, $"Delete '{entityName}':{id}");
         }      
     }
 }

@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Microsoft.PowerFx.Dataverse.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>..\..\src\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>1701;1702;1998</NoWarn>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.1.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.1.0" />
+    <!-- 
+			CVE-2022-34716 Component Governance Security Advisory for System.Security.Cryptography.Xml 
+			https://nvd.nist.gov/vuln/detail/CVE-2022-34716
+    -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="0.6.6" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221018-325751" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221018-325751" />
+    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221018-325751" />
+    <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221018-325751" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(PackagesPath)Microsoft.PowerFx.Core.Tests\0.2.3-preview.20221013-325232\content\ExpressionTestCases\*.txt">
+      <Link>ExpressionTestCases\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj" />
+    <ProjectReference Include="..\..\src\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="SqlExpressionTestCases\*.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.PowerFx.Dataverse.Parser">
+      <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+</Project>

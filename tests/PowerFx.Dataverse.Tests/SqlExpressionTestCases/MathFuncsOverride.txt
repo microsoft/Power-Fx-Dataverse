@@ -1,0 +1,25 @@
+﻿#override: mathfuncs.txt
+
+// resolve Blank vs 0 behavior - mathfuncs.txt has 0, new Abs.txt has Blank
+>> Abs(Blank())
+Blank()
+
+// new Sqrt.txt has Blank
+>> Sqrt(Blank())
+Blank()
+
+// new Power.txt has 0
+>> Power(Blank(), -2)
+0
+
+// new Exp.txt has Blank
+>> Exp(Blank())
+Blank()
+
+// new Int.txt has Blank
+>> Int(Blank())
+Blank()
+
+// new Ln.txt has Blank
+>> Ln(Blank())
+Blank()

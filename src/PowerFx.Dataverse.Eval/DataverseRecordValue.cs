@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -12,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
@@ -29,14 +31,20 @@ namespace Microsoft.PowerFx.Dataverse
         private EntityMetadata _metadata;
 
         // Used to resolve entity relationships (dot operators). 
-        private readonly IDataverseServices _dataverseServices;
+        private readonly IConnectionValueContext _connection;
 
-        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IDataverseServices services)
+        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection)
             : base(recordType)
         {
             _entity = entity ?? throw new ArgumentNullException(nameof(entity));
             _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-            _dataverseServices = services;
+            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+
+            if (_entity.LogicalName != _metadata.LogicalName)
+            {
+                // Need to be for the same entity. 
+                throw new ArgumentException($"Entity {_entity.LogicalName} doesn't match Metadata {_metadata.LogicalName}.");
+            }
         }
 
         internal Entity Entity => _entity;
@@ -44,6 +52,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
+            // If primary key is missing from Attributes, still get it from the entity. 
+            if (fieldName == _metadata.PrimaryIdAttribute)
+            {
+                result = FormulaValue.New(_entity.Id);
+                return true;
+            }
+
             // IR should convert the fieldName from display to Logical Name. 
             if (!_entity.Attributes.TryGetValue(fieldName, out var value))
             {
@@ -53,15 +68,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (value is EntityReference reference)
             {
-                DataverseResponse<Entity> newEntity = _dataverseServices.RetrieveAsync(reference.LogicalName, reference.Id).ConfigureAwait(false).GetAwaiter().GetResult();
+                // Blank was already handled, vlaue would have been null. 
+                DataverseResponse<Entity> newEntity = _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id).ConfigureAwait(false).GetAwaiter().GetResult();
 
                 if (newEntity.HasError)
                 {
-                    result = null;
-                    return false;
+                    result = newEntity.DValueError(nameof(IDataverseUpdater.UpdateAsync)).ToFormulaValue();
+                    return true;
                 }
 
-                result = new DataverseRecordValue(newEntity.Response, _metadata, (RecordType)fieldType, _dataverseServices);
+                var newMetadata = _connection.GetMetadataOrThrow(newEntity.Response.LogicalName);
+
+                result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
                 return true;
             }
 
@@ -101,7 +119,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return error;
             }
 
-            DataverseResponse<Entity> result = await _dataverseServices.UpdateAsync(_entity, cancellationToken);
+            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(_entity, cancellationToken);
 
             if (result.HasError)
             {
@@ -157,6 +175,17 @@ namespace Microsoft.PowerFx.Dataverse
         public override object ToObject()
         {
             return _entity;
+        }
+
+        public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
+        {
+            var tableName = _connection.GetSerializationName(_entity.LogicalName);
+            var id = _entity.Id.ToString("D");
+            var keyName = _metadata.PrimaryIdAttribute;
+
+            // Note that function names are case sensitive. 
+            var expr = $"LookUp({IdentToken.MakeValidIdentifier(tableName)}, {keyName}=GUID(\"{id}\"))";
+            sb.Append(expr);
         }
     }
 }

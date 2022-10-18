@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Eval", "PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj", "{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse.Tests", "..\tests\PowerFx.Dataverse.Tests\PowerFx.Dataverse.Tests.csproj", "{C575C47B-E49C-4CDD-9983-9DCDA13B9AB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C575C47B-E49C-4CDD-9983-9DCDA13B9AB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C575C47B-E49C-4CDD-9983-9DCDA13B9AB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C575C47B-E49C-4CDD-9983-9DCDA13B9AB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C575C47B-E49C-4CDD-9983-9DCDA13B9AB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

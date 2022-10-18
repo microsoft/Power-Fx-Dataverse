@@ -52,13 +52,24 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal IExternalDocument Document => _document;
 
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider)
+        // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
+        // Map logical name to display name
+        private readonly IReadOnlyDictionary<string,string> _displayNameLookup;
+
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null)
         {
             _innerProvider = provider;
+            _displayNameLookup = displayNameLookup;
             _document = new DataverseDocument(this);
         }
 
+        // Called by operations that just want to get the metadata. 
         internal bool TryGetDataSource(string logicalName, out DataverseDataSourceInfo dataSource)
+        {
+            return TryGetDataSource(logicalName, null, out dataSource);
+        }
+
+        internal bool TryGetDataSource(string logicalName, string variableName, out DataverseDataSourceInfo dataSource)
         {
             if (_cdsCache.TryGetValue(logicalName, out dataSource))
             {
@@ -66,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             if (TryGetXrmEntityMetadata(logicalName, out var xrmEntity))
             {
-                dataSource = FromXrm(xrmEntity);
+                dataSource = FromXrm(xrmEntity, variableName);
                 return true;
             }
             else
@@ -154,13 +165,13 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="logicalName">Logical name of the entity. 
         /// Metadata will be resolved via the <see cref="IXrmMetadataProvider"/> provided to ctor. </param>
         /// <returns></returns>
-        public RecordType GetRecordType(string logicalName)
+        public RecordType GetRecordType(string logicalName, string variableName = null)
         {
             if (logicalName == null)
             {
                 throw new ArgumentNullException(nameof(logicalName));
             }
-            if (TryGetDataSource(logicalName, out DataverseDataSourceInfo dataSource))
+            if (TryGetDataSource(logicalName, variableName, out DataverseDataSourceInfo dataSource))
             {
                 var dtype = dataSource.Schema.ToRecord();
 
@@ -172,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // This constructs a DataverseDataSourceInfo around the entity. 
         // If the entity has option sets or relationships, this may need to call back on the _document object to resolve types. 
-        internal DataverseDataSourceInfo FromXrm(EntityMetadata entity)
+        internal DataverseDataSourceInfo FromXrm(EntityMetadata entity, string variableName = null)
         {
             if (_xrmCache.ContainsKey(entity.LogicalName) && _cdsCache.TryGetValue(entity.LogicalName, out var cachedDs))
             {
@@ -260,7 +271,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 #endif
 
-            var dataSource = new DataverseDataSourceInfo(externalEntity, this);
+            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName);
 
             // add the external entity to the cache
             _cdsCache[dataSource.Name] = dataSource;
@@ -325,6 +336,13 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
+                    // Try to check against lookup map. This is fast. 
+                    if (_displayNameLookup != null)
+                    {
+                        _displayNameLookup.TryGetValue(key, out var displayName);
+                        return displayName;
+                    }
+
                     // if not found in either cache, get the raw entity from CDS
                     if (TryGetXrmEntityMetadata(key, out xrmEntity))
                     {
@@ -344,6 +362,12 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if not found in either cache, get the raw entity from CDS
+            if (_displayNameLookup != null)
+            {
+                return _displayNameLookup.ContainsKey(key);
+            }
+
+            // Fallback to metadata lookup - this can be slow. 
             if (TryGetXrmEntityMetadata(key, out _))
             {
                 return true;

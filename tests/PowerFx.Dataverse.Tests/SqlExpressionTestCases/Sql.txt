@@ -1,0 +1,85 @@
+﻿// SQL-specific tests
+
+// IsError inside If
+>> If(true, IsError(1/0 + 1))
+true
+
+>> If(IsError(1/0), 1, 2)
+1
+
+>> Switch(IsError(1/0), true, 1, 2)
+1
+
+// If inside IsError
+>> IsError(If(false, 1/0, 1/0))
+true
+
+>> IsError(If(true, 1/0, 1/0))
+true
+
+>> IsError(Switch(1, 1, 1/0, 1/0))
+true
+
+// IsError inside If inside IsError
+>> IsError(If(false, IsError(1/0), IsError(1/0)))
+false
+
+>> IsError(1/2 + 1) && IsError(1/0)
+false
+
+>> IsError(1/2 + 2)
+false
+
+>> IsError(1/0 + 1)
+true
+
+>> IfError(If(true, 1/0, 1/0), 2)
+2
+
+>> IsError(If(IfError(1/0 = 1, true), 1/0, 1/0))
+true
+
+// math operation overflow
+// 1000000000000
+>> Power(10,12)
+#Error
+
+// 1000000000000
+>> Power(100,6)
+#Error
+
+// 1E+200
+>> Power(10,200)
+#Error
+
+>> IsError(Power(10,200))
+true
+
+
+>> RoundUp(1, -200)
+#Error
+
+>> RoundUp(1, -10)
+#Error
+
+>> Text(Ln(Exp(200)))
+#Error
+
+>> IsError(Text(Ln(Exp(200))))
+true
+
+// literal overflow
+>> 1E37
+#Error
+
+>> IsError(1E37)
+true
+
+
+// check string literals are sanitized
+>> "Robert '; DROP TABLE Students; --"
+"Robert '; DROP TABLE Students; --"
+
+// check SQL wildcards are handled
+>> "%_" in "SQL wildcards"
+false

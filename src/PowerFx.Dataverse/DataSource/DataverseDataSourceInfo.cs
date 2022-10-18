@@ -37,7 +37,10 @@ namespace Microsoft.PowerFx.Dataverse
         private CdsEntityMetadataProvider _provider;
         private DelegationMetadata _delegationMetadata;
 
-        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider)
+        public DataverseDataSourceInfo(
+            CdsTableDefinition tableDefinition, 
+            CdsEntityMetadataProvider provider, 
+            string variableName = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
@@ -72,6 +75,9 @@ namespace Microsoft.PowerFx.Dataverse
                 // Ensure that primary keys are included in datasource selects.
                 QueryOptions.AddSelectMultiple(GetKeyColumns());
             }
+
+            // Default values
+            this.EntityName = new DName(variableName ?? CdsTableDefinition.Name);
         }
 
         public string PrimaryNameField => CdsTableDefinition.PrimaryNameColumn;
@@ -110,7 +116,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool IsComponentScoped => throw new NotImplementedException();
 
-        public DName EntityName => new DName(CdsTableDefinition.Name);
+        public DName EntityName { get; private set; }
 
         public string InvariantName => CdsTableDefinition.Name;
 

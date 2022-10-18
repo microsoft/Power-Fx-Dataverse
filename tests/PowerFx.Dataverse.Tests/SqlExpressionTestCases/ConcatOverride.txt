@@ -1,0 +1,6 @@
+﻿// Not implemented 
+>> Concatenate("777", ["abc"], ["1", "2"])
+#skip 
+
+>> Concatenate("777", Filter(["empty table"], Value <> Value), ["1", "2"])
+#skip

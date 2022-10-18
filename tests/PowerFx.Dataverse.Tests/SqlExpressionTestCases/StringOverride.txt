@@ -1,0 +1,14 @@
+﻿#override: string.txt
+
+// These are limits in Text() function, showing up in String test cases. 
+>> Len(Text(1/0, "#.000"))
+Errors: Error 14-21: Locale-specific formatting tokens such as "." and "," are not supported in formula columns.
+
+>> StartsWith("foobar", Text(1/0))
+Errors: Error 21-30: Only a literal value is supported for this argument.
+
+>> EndsWith("foobar", Text(1/0))
+Errors: Error 19-28: Only a literal value is supported for this argument.
+
+>> Mid(Text(1/0, "#.000"), 1)
+Errors: Error 14-21: Locale-specific formatting tokens such as "." and "," are not supported in formula columns.

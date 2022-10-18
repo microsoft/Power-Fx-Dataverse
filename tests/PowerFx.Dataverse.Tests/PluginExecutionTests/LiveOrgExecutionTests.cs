@@ -1,0 +1,682 @@
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//------------------------------------------------------------------------------
+
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
+using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
+
+namespace Microsoft.PowerFx.Dataverse.Tests
+{
+    // Run Dataverse execution against a live org. 
+    [TestClass]
+    public class LiveOrgExecutionTests
+    {
+        // Env var we look for to get a dataverse connection string. 
+        const string ConnectionStringVariable = "FxTestDataverseCx";
+
+        private ServiceClient GetClient()
+        {
+            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+
+            // short-circuit if connection string is not set
+            if (cx == null)
+            {
+                Assert.Inconclusive($"Skipping Live Dataverse tests. Set {cx} env var.");
+                throw new NotImplementedException();
+            }
+
+            // https://docs.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
+            // For example:
+            // $"Url=https://aurorabapenv67c10.crm10.dynamics.com/; Username={username}; Password={password}; authtype=OAuth";
+
+            var svcClient = new ServiceClient(cx);
+            svcClient.EnableAffinityCookie = true;
+
+            return svcClient;
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterFirst()
+        {
+            string tableName = "TableTest1S";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, "First(TableTest1S)", out disposableObjects);
+                var obj = result.ToObject() as Entity;
+
+                Assert.AreEqual("Name1", obj.Attributes["crcef_name"].ToString());
+                Assert.AreEqual(1, (obj.Attributes["crcef_properties"] as XrmOptionSetValue).Value); // Choice1
+                Assert.AreEqual(17, obj.Attributes["crcef_score"]);
+
+                DateTime dt = (DateTime)obj.Attributes["crcef_creationdate"];
+                Assert.AreEqual(new DateTime(2022, 12, 27, 23, 0, 0), dt); // UTC time
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterFirstWithDisplayName()
+        {
+            string tableName = "TableTest1S";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result1 = RunDataverseTest(tableName, "First(TableTest1S).Name", out disposableObjects, out var engine, out var symbols, out var runtimeConfig);
+
+                var check2 = engine.Check("First(TableTest1S).Name", symbolTable: symbols);
+                Assert.IsTrue(check2.IsSuccess);
+
+                var run2 = check2.GetEvaluator();
+                var result2 = run2.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+                Assert.AreEqual(result1.ToObject(), result2.ToObject());
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterFirstN()
+        {
+            string tableName = "TableTest1S";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result1 = RunDataverseTest(tableName, "FirstN(TableTest1S, 5)", out disposableObjects, out var engine, out var symbols, out var runtimeConfig);
+
+                var dv1 = result1 as DataverseTableValue;
+                var r1 = dv1.Rows.ToList();
+
+                var check2 = engine.Check("FirstN(TableTest1S, 1)", symbolTable: symbols);
+                Assert.IsTrue(check2.IsSuccess);
+
+                var run2 = check2.GetEvaluator();
+                var result2 = run2.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+                var dv2 = result2 as DataverseTableValue;
+                var r2 = dv2.Rows.ToList();
+
+                Assert.AreEqual(5, r1.Count);
+                Assert.AreEqual(1, r2.Count);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterCollectNoKey()
+        {
+            string tableName = "TableTest1S";
+            string expr = "Collect(TableTest1S, { Name: \"N2\" })";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterInsertRowsAsyncWithConflict()
+        {
+            string tableName = "Table2";
+            var prefix = Guid.NewGuid().ToString().Replace("-", string.Empty).ToUpperInvariant();
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                RunDataverseTest(tableName, out disposableObjects, out var engine, out var symbols, out var runtimeConfig, async: true);
+
+                Parallel.For(1, 5, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, (i) =>
+                {
+                    object obj = InsertRow(symbols, runtimeConfig, prefix, engine, i);
+
+                    Assert.IsNotNull(obj);
+                    Assert.IsInstanceOfType(obj, typeof(Entity));
+                });
+
+                // Insert last row a second time, in a DV table that has a Key constraint
+                var obj5 = InsertRow(symbols, runtimeConfig, prefix, engine, 4);
+
+                Assert.IsNotNull(obj5);
+                Assert.IsInstanceOfType(obj5, typeof(ErrorValue));
+
+                var ev5 = obj5 as ErrorValue;
+
+                Assert.AreEqual(1, ev5.Errors.Count);
+                Assert.AreEqual("Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
+                                "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
+                                "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'", ev5.Errors.First().Message);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        private static object InsertRow(SymbolTable symbols, ReadOnlySymbolValues runtimeConfig, string prefix, RecalcEngine engine, int i)
+        {
+            string expr = $"Collect(Table2, {{ Name: \"{prefix}-{i}\" }})";
+            Console.WriteLine("Running: {0}", expr);
+
+            var check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+            var obj = result.ToObject();
+            return obj;
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterFilter()
+        {
+            string tableName = "TableTest1S";
+            string expr = "First(Filter(TableTest1S, Name = \"N2\"))";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatch()
+        {
+            string tableName = "TableTest1S";
+            double newValue = new Random().Next() / 1000.0;
+            Console.WriteLine($"Setting new value to {newValue}");
+            var expr = $"Patch(TableTest1S, First(Filter(TableTest1S, Name = \"N1a\")), {{ YYY: {newValue} }})";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithConflict()
+        {
+            string tableName = "Table2";
+            var expr = @"Patch(Table2, { Table2 : GUID(""c9ebbaac-5728-ed11-9db2-0022482aea8f"") }, { Name : ""N1"" })";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+
+                var err = result as ErrorValue;
+                Assert.AreEqual(1, err.Errors.Count);
+
+                string errMsg = "Error in UpdateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
+                                "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
+                                "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'";
+
+                Assert.AreEqual(errMsg, err.Errors.First().Message);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithId()
+        {
+            string tableName = "Table2";
+            var expr = $"Patch(Table2, {{ Table2 : GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")}}, {{ Name : \"XYZ\" }})";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithIdBlank()
+        {
+            string tableName = "Table2";
+            var expr = $"Patch(Table2, {{ Table2 : GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")}}, {{ Name : Blank() }})";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithDateTime()
+        {
+            string tableName = "Table2";
+
+            var dt = DateTime.Now;
+            long tk = dt.Ticks % 10000000;
+            dt = dt.Add(new TimeSpan(-tk)); // Make sure we have no milli/micro-second
+
+            var expr = $"Patch(Table2, {{ Table2 : GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")}}, {{ MyDate : DateTimeValue(\"{dt.ToString(new CultureInfo("en-US"))}\") }})"; // "9/7/2022 5:30:44 PM" (local time, not UTC)
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+
+                var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\"))).MyDate";
+                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).Result;
+                Assert.IsNotNull(result2);
+
+                DateTime dt2 = (result2 as DateTimeValue).Value;
+                Assert.AreEqual(dt, dt2);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterRead()
+        {
+            string tableName = "Table2";
+            int wn = new Random().Next(1000000);
+            decimal dc = wn / 100m;
+            float ft = wn / 117f;
+            double cy = ft;
+
+            var expr = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithNumbers()
+        {
+            string tableName = "Table2";
+            int wn = new Random().Next(1000000);
+            decimal dc = wn / 100m;
+            float ft = ((int)((wn / 117) * 100d)) / 100;
+            double cy = ft;
+
+            var expr = $"Patch(Table2, {{ Table2: GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")}}, {{ WholeNumber: {wn}, Decimal: {dc}, Float: {ft}, 'Currency (crcef2_currency)': {cy} }})";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+
+                var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
+                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).Result;
+                Assert.IsNotNull(result2);
+
+                Entity e = (Entity)result2.ToObject();
+                int wn2 = e.GetAttributeValue<int>("crcef2_wholenumber");
+                decimal dc2 = e.GetAttributeValue<decimal>("crcef2_decimal");
+                float ft2 = (float)e.GetAttributeValue<double>("crcef2_float");
+                double cy2 = (double)e.GetAttributeValue<Money>("crcef2_currency").Value;
+
+                Assert.AreEqual(wn, wn2);
+                Assert.AreEqual(dc, dc2);
+                Assert.AreEqual(ft, ft2);
+                Assert.AreEqual(cy, cy2);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithOptionSet()
+        {
+            string tableName = "TableTest1S";
+            string expr = $"First(Filter(TableTest1S, TableTest1 = GUID(\"4ed3cf85-651d-ed11-9db1-0022482aea8f\"))).Properties2";
+            FxOptionSetValue os = null;
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var symbols, out var runtimeConfig);
+                Assert.IsNotNull(result);
+
+                os = result as FxOptionSetValue;
+
+                string currentValue = os?.DisplayName;
+                string newValue = currentValue == "Value1" ? "'Properties2 (TableTest1S)'.Value2" : "'Properties2 (TableTest1S)'.Value1";
+                string expr2 = $"Patch(TableTest1S, {{ TableTest1 : GUID(\"4ed3cf85-651d-ed11-9db1-0022482aea8f\")}}, {{ Properties2: {newValue} }})";
+
+                FormulaValue result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbols, runtimeConfig: runtimeConfig).Result;
+                Assert.IsNotNull(result2);
+                Assert.IsInstanceOfType(result2.ToObject(), typeof(Entity));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+
+            try
+            {
+                FormulaValue result3 = RunDataverseTest(tableName, expr, out disposableObjects);
+                Assert.IsNotNull(result3);
+
+                FxOptionSetValue os3 = result3 as FxOptionSetValue;
+                Assert.AreNotEqual(os.Option, os3.Option);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithInvalidId()
+        {
+            string tableName = "Table2";
+            var expr = $"Patch(Table2, {{ Table2 : GUID(\"b8e7086e-ffff-ffff-ffff-0022482aea8f\")}}, {{ Name : \"XYZ\" }})";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+
+                var err = result as ErrorValue;
+                Assert.AreEqual(1, err.Errors.Count);
+
+                string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
+                Assert.AreEqual(errMsg, err.Errors.First().Message);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterPatchWithInvalidIdAsync()
+        {
+            string tableName = "Table2";
+            string expr = $"Patch(Table2, {{ Table2 : GUID(\"b8e7086e-ffff-ffff-ffff-0022482aea8f\")}}, {{ Name : \"XYZ\" }})";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+
+                var err = result as ErrorValue;
+                Assert.AreEqual(1, err.Errors.Count);
+
+                string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
+                Assert.AreEqual(errMsg, err.Errors.First().Message);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterRemoveWithId()
+        {
+            string tableName = "Table2";
+            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", "")}";
+            string expr = $"Collect(Table2, {{ Name: \"{newName}\" }} ); Remove(Table2, First(Filter(Table2, crcef2_name = \"{newName}\")))";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+                bool bv = (bool)result.ToObject();
+
+                Assert.IsTrue(bv);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterRemoveByName()
+        {
+            string tableName = "Table2";
+            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", "")}";
+            string expr = $"Collect(Table2, {{ Name: \"{newName}A\", Name2: \"{newName}\" }}); Collect(Table2, {{ Name: \"{newName}B\", Name2: \"{newName}\" }}); Remove(Table2, {{ crcef2_name2: \"{newName}\" }})";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+                ErrorValue ev = (ErrorValue)result.ToObject();
+
+                Assert.AreEqual("Dataverse record doesn't contain primary Id, of Guid type", string.Join("|", ev.Errors.Select(ee => ee.Message)));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
+        }
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
+        }
+
+        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out SymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
+        }
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out SymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            ServiceClient svcClient = GetClient();
+            XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
+            disposableObjects = new List<IDisposable>() { svcClient };
+
+            bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
+            Assert.IsTrue(b1);
+
+            DataverseConnection dv = null;
+
+            if (async)
+            {
+                var asyncClient = new DataverseAsyncClient(svcClient);
+                disposableObjects.Add(asyncClient);
+                dv = new DataverseConnection(asyncClient, new XrmMetadataProvider(svcClient));
+            }
+            else
+            {
+                dv = new DataverseConnection(svcClient);
+            }
+            TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
+            symbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            symbols.EnableMutationFunctions();
+
+            Assert.IsNotNull(tableValue);
+            Assert.IsNotNull(symbols);
+
+            engine = new RecalcEngine();
+            runtimeConfig = dv.GetSymbolValues();
+
+            if (string.IsNullOrEmpty(expr))
+            {
+                return null;
+            }
+
+            CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            IExpressionEvaluator run = check.GetEvaluator();
+            FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+            return result;
+        }
+
+        private void DisposeObjects(List<IDisposable> objects)
+        {
+            if (objects != null)
+            {
+                foreach (IDisposable obj in objects)
+                {
+                    obj.Dispose();
+                }
+            }
+        }
+    }
+
+    internal class DataverseAsyncClient : IDataverseServices, IDisposable
+    {
+        private readonly ServiceClient _svcClient;
+        private bool disposedValue;
+
+        public DataverseAsyncClient(ServiceClient client)
+        {
+            _svcClient = client ?? throw new ArgumentNullException(nameof(client));
+        }
+
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        {
+            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Create" );
+        }
+
+        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        {
+            return DataverseExtensions.DataverseCall(() => _svcClient.DeleteAsync(entityName, id, ct).ConfigureAwait(false), "Delete");
+        }
+
+        public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return _svcClient.ExecuteWebRequest(method, queryString, body, customHeaders, contentType, cancellationToken);
+        }
+
+        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        {
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, new ColumnSet(true), ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
+        }
+
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
+        {
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
+        }
+
+        public virtual async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        {
+            return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _svcClient?.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
+}

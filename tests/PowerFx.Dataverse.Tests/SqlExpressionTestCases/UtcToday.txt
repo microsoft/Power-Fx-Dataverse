@@ -1,0 +1,3 @@
+﻿
+>> IsUTCToday(UTCToday())
+true

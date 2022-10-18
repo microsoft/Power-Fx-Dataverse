@@ -1,0 +1,6 @@
+﻿#override: Blank.txt
+
+// Blank() by itself is not valid for SQL, since there must a valid SQL type
+>> Blank()
+#Skip
+

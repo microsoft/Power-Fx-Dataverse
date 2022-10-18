@@ -1,0 +1,123 @@
+﻿#override: Date.txt
+
+// -------------------------------
+// Verify Success case to sanity check
+>> Date(2011,5,13)
+Date(2011,5,13)
+
+// This is an upcoming breaking change - stop special casing 1900
+>> Date(80, 1, 2)
+Date(1980,1,2)
+
+// -------------------------------
+// Sql doesn't allow Blank() to mean the default units. 
+>> Day(DateAdd(Date(2001,1,1), 3, Blank()))
+Errors: Error 31-38: Only a literal value is supported for this argument.
+
+
+>> DateDiff(Date(2011,1,15) , Date(2011,1,30), Blank())
+Errors: Error 44-51: Only a literal value is supported for this argument.
+
+
+// -------------------------------
+// Sql doesn't support milliseconds
+>> DateDiff(Date(2011,1,15) , Date(2011,1,30), "milliseconds")
+Errors: Error 44-58: Not supported in formula columns.
+
+>> DateDiff(Date(2011,1,15) , Date(2011,1,30), TimeUnit.Milliseconds)
+Errors: Error 52-65: Not supported in formula columns.
+
+// Don't support "milliseconds"
+>> DateAdd(Date(2011,1,15), 100000000, "milliseconds")
+Errors: Error 36-50: Not supported in formula columns.
+
+
+>> DateAdd(Date(2011,1,15), 100000000, TimeUnit.Milliseconds)
+Errors: Error 44-57: Not supported in formula columns.
+
+// -------------------------------
+// SQL doesn't support overflowing/underflowing days and months like JS does. 
+// So making this work in SQL will be expensive. 
+// Should these return #Error instead of blank?
+>> Date(2000, 25, 69)
+Blank()
+
+>> Date(2000, 2, -1)
+Blank()
+
+>> Date(2000, -2, 1)
+Blank()
+
+>> Date(2000, -2, -1)
+Blank()
+
+// -------------------------------
+// Date Overflow issues
+// date overflow
+>>Year(Date(9999, 12, 31))
+9999
+
+>> Year(Date(10000, 1, 1))
+#Error
+
+// Date doesn't support inputting years earlier than 1900, so use subtraction to create min supported value
+>> Year(DateAdd(Date(1953, 1, 1), -200, TimeUnit.Years))
+1753
+
+// Date Add overflow
+>> Year(DateAdd(Date(9999, 12, 31), 1))
+#Error
+
+>> IsError(DateAdd(Date(9999, 12, 31), 1))
+true
+
+>> Year(DateAdd(Date(1952, 12, 31), -200, TimeUnit.Years))
+#Error
+
+>> IsError(DateAdd(Date(1952, 12, 31), -200, TimeUnit.Years))
+true
+
+>> IsError(Date(2001, 2, 14) + 99999999999.9)
+true
+
+// date diff overflow
+>> IsError(DateDiff(Date(1900, 1, 1), Date(9999, 12, 31), TimeUnit.Months))
+false
+
+>> IsError(DateDiff(Date(1900,1,1), Date(5982,12,31), TimeUnit.Minutes))
+false
+
+>> IsError(DateDiff(Date(1900, 1, 1), Date(9999, 12, 31), TimeUnit.Minutes))
+true
+
+>> IsError(DateDiff(Date(1900, 1, 1), Date(9999, 12, 31), TimeUnit.Seconds))
+true
+
+// -------------------------------
+// Real bugs - investigate
+// should return true
+>> Date(Blank(), 2, 3) < Date(2011,1,30)
+false
+
+// should return true
+>> Date(Blank(), 2, 3) <= Date(2011,1,30)
+false
+
+// should return true
+>> DateAdd(Date(Blank(), 2, 3), 3) < DateAdd(Date(2011,1,30), 3)
+false
+
+// should return true
+>> DateAdd(Date(Blank(), 2, 3), 3) <= DateAdd(Date(2011,1,30), 3)
+false
+
+// Fx normally returns numbers. 
+>> Day(Blank())
+Blank()
+
+>> Month(Blank())
+Blank()
+
+>> Year(Blank())
+Blank()
+
