@@ -27,14 +27,14 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="0.6.6" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221018-325751" />
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221018-325751" />
-    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221018-325751" />
-    <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221018-325751" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221019-325900" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="$(PackagesPath)Microsoft.PowerFx.Core.Tests\0.2.3-preview.20221013-325232\content\ExpressionTestCases\*.txt">
+    <Content Include="$(PackagesPath)Microsoft.PowerFx.Core.Tests\0.2.3-preview.20221019-325900\content\ExpressionTestCases\*.txt">
       <Link>ExpressionTestCases\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
