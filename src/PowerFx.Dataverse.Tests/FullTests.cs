@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             if (string.IsNullOrEmpty(ConnectionString) && context.Properties.Contains("SqlConnectionString"))
                 ConnectionString = context.Properties["SqlConnectionString"].ToString();
 
-            if (string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
+            if (!string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
                 Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
         }
 
