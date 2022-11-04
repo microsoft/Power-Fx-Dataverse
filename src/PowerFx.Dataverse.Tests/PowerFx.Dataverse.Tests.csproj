@@ -30,15 +30,15 @@
     <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221019-325900" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221019-325900" />
-    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221019-325900" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221019-325900" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="$(PackagesPath)Microsoft.PowerFx.Core.Tests\0.2.3-preview.20221019-325900\content\ExpressionTestCases\*.txt">
+  <ItemGroup>    
+    <None Include="$(PkgMicrosoft_PowerFx_Core_Tests)\content\ExpressionTestCases\*.txt" >
       <Link>ExpressionTestCases\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <None Update="SqlExpressionTestCases\*.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
@@ -57,5 +57,5 @@
       <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
+
 </Project>

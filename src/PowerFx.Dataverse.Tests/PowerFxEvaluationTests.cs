@@ -24,6 +24,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// The connection string for the database to execute generated SQL
         /// </summary>
         static string ConnectionString = null;
+        static string SrcRoot = null;
+        static string DeploymentDir = null;
 
         [ClassInitialize()]
         public static void ClassInit(TestContext context)
@@ -35,6 +37,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             if (!string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
                 Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
+
+            SrcRoot = Directory.GetParent(Directory.GetParent(context.Properties["TestDir"].ToString()).FullName).FullName;
+            DeploymentDir = context.DeploymentDirectory;
+
         }
 
         [TestMethod]
@@ -51,7 +57,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                runner.AddDir();
+                
+                foreach (var path in Directory.EnumerateFiles(GetExpressionTestDir(), "*.txt"))
+                {
+                    runner.AddFile(path);
+                }
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
@@ -82,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var runner = new TestRunner(sql);
                                 
                 // Run only those test files fully supported by SQL
-                runner.AddFile(
+                foreach (string file in new[] {
                     "AndOrCases.txt",
                     "arithmetic.txt",
                     "Blank.txt",
@@ -92,8 +102,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     "mathfuncs.txt",
                     "string.txt",
                     "Text.txt",
-                    "Value.txt"
-                    );
+                    "Value.txt" })
+                {
+                    runner.AddFile(Path.Combine(GetExpressionTestDir(), file));
+                }
+                    
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
@@ -130,9 +143,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public static string GetSqlDefaultTestDir()
         {
-            var curDir = Path.GetDirectoryName(typeof(ExpressionEvaluationTests).Assembly.Location);
-            var testDir = Path.Combine(curDir, "SqlExpressionTestCases");
-            return testDir;
+            return Path.Combine(SrcRoot, @"PowerFx.Dataverse.Tests\SqlExpressionTestCases");
+        }
+
+        public static string GetExpressionTestDir()
+        {            
+            return Path.Combine(DeploymentDir, "ExpressionTestCases");
         }
 
         private class SqlRunner : BaseRunner, IDisposable
