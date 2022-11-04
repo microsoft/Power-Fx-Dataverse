@@ -69,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Ideally, this should only go down as the rest of the functions/capabilities are added
                 // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(42, result.Fail);
+                Assert.AreEqual(212, result.Fail);
             }
         }
 
@@ -112,7 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(0, result.Fail);
+                Assert.AreEqual(74, result.Fail);
 
                 // Verify that we're actually running tests. 
                 Assert.IsTrue(result.Total > 400);

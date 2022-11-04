@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <TestRunParameters>
-    <Parameter name="SqlConnectionString" value="" />    
+    <!-- 
+    For testing locally
+    <Parameter name="SqlConnectionString" value="Data Source=SERVERNAME;Initial Catalog=master;Integrated Security=SSPI;Persist Security Info=False" /> 
+    -->
+    <Parameter name="SqlConnectionString" value="" />
   </TestRunParameters>
 </RunSettings>
