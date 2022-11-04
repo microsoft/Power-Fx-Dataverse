@@ -23,8 +23,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <summary>
         /// The connection string for the database to execute generated SQL
         /// </summary>
-        static string ConnectionString = null;
-        static string SrcRoot = null;
+        static string ConnectionString = null;        
         static string DeploymentDir = null;
 
         [ClassInitialize()]
@@ -38,9 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             if (!string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
                 Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
 
-            SrcRoot = Directory.GetParent(Directory.GetParent(context.Properties["TestDir"].ToString()).FullName).FullName;
             DeploymentDir = context.DeploymentDirectory;
-
         }
 
         [TestMethod]
@@ -143,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public static string GetSqlDefaultTestDir()
         {
-            return Path.Combine(SrcRoot, @"PowerFx.Dataverse.Tests\SqlExpressionTestCases");
+            return Path.Combine(DeploymentDir, "SqlExpressionTestCases");
         }
 
         public static string GetExpressionTestDir()

@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <None Update="SqlExpressionTestCases\*.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
