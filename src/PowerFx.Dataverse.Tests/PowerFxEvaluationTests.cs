@@ -23,15 +23,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <summary>
         /// The connection string for the database to execute generated SQL
         /// </summary>
-        static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        static string ConnectionString = null;
 
+        [ClassInitialize()]
+        public static void ClassInit(TestContext context)
+        {
+            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+            
+            if (string.IsNullOrEmpty(ConnectionString) && context.Properties.Contains("SqlConnectionString"))
+                ConnectionString = context.Properties["SqlConnectionString"].ToString();
+
+            if (string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
+                Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
+        }
 
         [TestMethod]
         public void RunSqlTestCases()
-        { 
-            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        {             
             // short-circuit if connection string is not set
-            if (ConnectionString == null)
+            if (string.IsNullOrEmpty(ConnectionString))
             {
                 Assert.Inconclusive("Skipping SQL tests - no connection string set");
                 return;
@@ -58,10 +68,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [TestMethod]
         public void RunCleanSqlTestCases()
-        {
-            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        {            
             // short-circuit if connection string is not set
-            if (ConnectionString == null)
+            if (string.IsNullOrEmpty(ConnectionString))
             {
                 Assert.Inconclusive("Skipping SQL tests - no connection string set");
                 return;

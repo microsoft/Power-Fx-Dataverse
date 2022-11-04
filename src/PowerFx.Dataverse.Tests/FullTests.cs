@@ -4,22 +4,35 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.PowerFx.Dataverse;
+using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     [TestClass]
     public class FullTests
     {
+        static string ConnectionString = null;
+
+        [ClassInitialize()]
+        public static void ClassInit(TestContext context)
+        {
+            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+
+            if (string.IsNullOrEmpty(ConnectionString) && context.Properties.Contains("SqlConnectionString"))
+                ConnectionString = context.Properties["SqlConnectionString"].ToString();
+
+            if (string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
+                Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
+        }
+
         [TestMethod]
         public void SqlCompileBaselineTest()
         {
@@ -473,7 +486,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlConnection GetSql()
         {
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+            var cx = ConnectionString;
 
             if (string.IsNullOrEmpty(cx))
             {

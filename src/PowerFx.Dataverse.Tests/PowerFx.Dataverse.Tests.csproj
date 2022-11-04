@@ -13,6 +13,7 @@
     <AssemblyOriginatorKeyFile>..\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1998</NoWarn>
     <LangVersion>9.0</LangVersion>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>
