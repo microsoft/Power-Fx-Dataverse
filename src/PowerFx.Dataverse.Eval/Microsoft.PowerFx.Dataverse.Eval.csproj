@@ -30,8 +30,8 @@
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221107-6" />
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="0.2.3-preview.20221107-6" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221107-7" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="0.2.3-preview.20221107-7" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">      
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
