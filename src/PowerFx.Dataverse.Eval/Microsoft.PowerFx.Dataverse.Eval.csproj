@@ -19,8 +19,7 @@
     <PackageId>Microsoft.PowerFx.Dataverse.Eval</PackageId>
     <Title>Microsoft Power Fx Dataverse Integration</Title>
     <Description>Dataverse support for the Power Fx interpreter</Description>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>0.1.0</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>    
     <Company>Microsoft</Company>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Authors>Microsoft</Authors>
