@@ -30,7 +30,7 @@
     <PackageReference Include="System.Text.Json" Version="6.0.2" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221107-7" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

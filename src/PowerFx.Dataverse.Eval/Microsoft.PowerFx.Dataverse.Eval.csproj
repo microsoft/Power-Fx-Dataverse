@@ -19,17 +19,10 @@
     <PackageId>Microsoft.PowerFx.Dataverse.Eval</PackageId>
     <Title>Microsoft Power Fx Dataverse Integration</Title>
     <Description>Dataverse support for the Power Fx interpreter</Description>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>0.1.0</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>    
     <Company>Microsoft</Company>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Authors>Microsoft</Authors>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netstandard2.0'">
-    <WarningsAsErrors>NU1605</WarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|netstandard2.0'">
-    <WarningsAsErrors>NU1605</WarningsAsErrors>
   </PropertyGroup>
   
   <ItemGroup>
@@ -37,8 +30,8 @@
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221019-325900" />
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221107-7" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="0.2.3-preview.20221107-7" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">      
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

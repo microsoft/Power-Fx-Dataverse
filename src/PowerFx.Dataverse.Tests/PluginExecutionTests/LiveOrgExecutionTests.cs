@@ -50,6 +50,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterFirst()
         {
             string tableName = "TableTest1S";
@@ -74,6 +76,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterFirstWithDisplayName()
         {
             string tableName = "TableTest1S";
@@ -98,6 +102,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterFirstN()
         {
             string tableName = "TableTest1S";
@@ -129,6 +135,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterCollectNoKey()
         {
             string tableName = "TableTest1S";
@@ -148,6 +156,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterInsertRowsAsyncWithConflict()
         {
             string tableName = "Table2";
@@ -200,6 +210,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterFilter()
         {
             string tableName = "TableTest1S";
@@ -219,6 +231,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatch()
         {
             string tableName = "TableTest1S";
@@ -241,6 +255,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithConflict()
         {
             string tableName = "Table2";
@@ -271,6 +287,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithId()
         {
             string tableName = "Table2";
@@ -291,6 +309,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithIdBlank()
         {
             string tableName = "Table2";
@@ -311,6 +331,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
         public void ExecuteViaInterpreterPatchWithDateTime()
         {
             string tableName = "Table2";
@@ -344,6 +365,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterRead()
         {
             string tableName = "Table2";
@@ -370,6 +393,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithNumbers()
         {
             string tableName = "Table2";
@@ -411,6 +436,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithOptionSet()
         {
             string tableName = "TableTest1S";
@@ -453,6 +480,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithInvalidId()
         {
             string tableName = "Table2";
@@ -479,6 +508,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterPatchWithInvalidIdAsync()
         {
             string tableName = "Table2";
@@ -506,6 +537,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterRemoveWithId()
         {
             string tableName = "Table2";
@@ -527,6 +560,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [Ignore]
+
         public void ExecuteViaInterpreterRemoveByName()
         {
             string tableName = "Table2";

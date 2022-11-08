@@ -13,6 +13,7 @@
     <AssemblyOriginatorKeyFile>..\267DevDivSNKey2048.snk</AssemblyOriginatorKeyFile>
     <NoWarn>1701;1702;1998</NoWarn>
     <LangVersion>9.0</LangVersion>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,17 +28,17 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="0.6.6" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221019-325900" />
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221019-325900" />
-    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221019-325900" />
-    <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221019-325900" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.3-preview.20221107-7" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.3-preview.20221107-7" />
+    <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="0.2.3-preview.20221107-7" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="0.2.3-preview.20221107-7" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="$(PackagesPath)Microsoft.PowerFx.Core.Tests\0.2.3-preview.20221019-325900\content\ExpressionTestCases\*.txt">
+  <ItemGroup>    
+    <None Include="$(PkgMicrosoft_PowerFx_Core_Tests)\content\ExpressionTestCases\*.txt" >
       <Link>ExpressionTestCases\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -47,7 +48,7 @@
 
   <ItemGroup>
     <None Update="SqlExpressionTestCases\*.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
@@ -56,5 +57,5 @@
       <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
+
 </Project>
