@@ -14,9 +14,13 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using Span = Microsoft.PowerFx.Syntax.Span;
+
+
+!! This cannot build properly! 
 
 namespace Microsoft.PowerFx.Dataverse
 {
