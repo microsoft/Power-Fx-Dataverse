@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -43,6 +42,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // get a RecordValue for the first entity in the table.
+        public Entity GetFirstEntity(string logicalName, DataverseConnection dataverseConnection)
+        {
+            if (dataverseConnection == null)
+            {
+                dataverseConnection = new DataverseConnection(this, _provider);
+                dataverseConnection.AddTable(logicalName, logicalName);
+            }
+
+            foreach (var entity in _list)
+            {
+                if (entity.LogicalName == logicalName)
+                {
+                    return Clone(entity);
+                }
+            }
+            throw new InvalidOperationException($"No entity of type {logicalName}.");
+        }
+
         public RecordValue ConvertEntityToRecordValue(string logicalName, DataverseConnection dataverseConnection)
         {
             if (dataverseConnection == null)
@@ -50,15 +67,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 dataverseConnection = new DataverseConnection(this, _provider);
                 dataverseConnection.AddTable(logicalName, logicalName);
             }
-            
-            foreach (var entity in _list)
-            {
-                if (entity.LogicalName == logicalName)
-                {
-                    return dataverseConnection.Marshal(entity);                  
-                }
-            }
-            throw new InvalidOperationException($"No entity of type {logicalName}.");
+
+            var entity = GetFirstEntity(logicalName, dataverseConnection);
+            return dataverseConnection.Marshal(entity);            
         }
 
         // Entities should conform to the metadata passed to the ctor. 
@@ -80,14 +91,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
 
 
-                _list.Add(entity);
+                _list.Add(Clone(entity));
             }
         }
 
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
 
+        // Gets a copy of the entity. 
+        // modifying the storage still requires a call to Update. 
         public Entity LookupRef(EntityReference entityRef)
+        {
+            return Clone(LookupRefCore(entityRef));
+        }
+
+        // Gets direct access to the entire storage.
+        // Modifying this entity will modify the storage.
+        internal Entity LookupRefCore(EntityReference entityRef)
         {
             if (_onLookupRef != null)
             {
@@ -113,13 +133,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken ct = default(CancellationToken))
         {
-            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference)), "Entity lookup");            
+            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference)), "Entity lookup");
         }
 
         public virtual Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
         {
-            throw new NotImplementedException();
-        }       
+            // gets the raw storage and mutate it. 
+            var existing = LookupRefCore(entity.ToEntityReference()); 
+            
+            foreach (var attr in entity.Attributes)
+            {
+                existing.Attributes[attr.Key] = attr.Value;
+            }
+            
+            return Task.FromResult(new DataverseResponse<Entity>(entity));
+        }
 
         public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
         {
@@ -138,12 +166,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 take = int.MaxValue;
             }
-            
+
             foreach (var entity in data)
             {
                 if (entity.LogicalName == qe.EntityName)
                 {
-                    entityList.Add(entity);
+                    entityList.Add(Clone(entity));
                     take--;
                     if (take == 0)
                     {
@@ -163,6 +191,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
         {
             throw new NotImplementedException();
+        }
+
+        // Create clones to simulate that local copies of an Entity are separate than what's in the database.
+        private Entity Clone(Entity entity)
+        {
+            var newEntity = new Entity(entity.LogicalName, entity.Id);
+            foreach (var attr in entity.Attributes)
+            {
+                newEntity.Attributes[attr.Key] = attr.Value;
+            }
+            return newEntity;
         }
     }
 }

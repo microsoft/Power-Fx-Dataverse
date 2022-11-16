@@ -7,11 +7,13 @@
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
+using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -52,9 +54,9 @@ namespace Microsoft.PowerFx.Dataverse
         public SymbolTable Symbols { get; private set; }
 
         /// <summary>
-        /// Runtime values for Globals from calling <see cref="AddTable(string, string)"/>.
+        /// Values of global tables that we've added.
         /// </summary>
-        internal IReadOnlyDictionary<string, DataverseTableValue> KnownTables => _tables;
+        public ReadOnlySymbolValues SymbolValues { get; private set; }
 
         IDataverseServices IConnectionValueContext.Services => _dvServices;
 
@@ -89,17 +91,28 @@ namespace Microsoft.PowerFx.Dataverse
             _dvServices = dvServices;
             _metadataCache = cdsEntityMetadataProvider;
             Symbols = new DVSymbolTable(_metadataCache);
+            this.SymbolValues = this.Symbols.CreateValues();
         }
 
-        public SymbolTable GetRowScopeSymbols(string tableLogicalName)
+        // Identity is important so that we can correlate bindings from Check and result. 
+        // Logical Name --> Row Scope symbols for that table 
+        Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbols = new Dictionary<string, ReadOnlySymbolTable>();
+
+        public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName)
         {
-            var recordType = this.GetRecordType(tableLogicalName);
+            lock (_rowScopeSymbols)
+            {
+                if (!_rowScopeSymbols.TryGetValue(tableLogicalName, out var symTable))
+                {
+                    var recordType = this.GetRecordType(tableLogicalName);
 
-            var s = ReadOnlySymbolTable.NewFromRecord(recordType, this.Symbols);
-            var s2 = new SymbolTable() { Parent = s };
+                    symTable = ReadOnlySymbolTable.NewFromRecord(recordType, allowThisRecord: true, allowMutable: true, debugName: $"RowScope:{tableLogicalName}");
+                                        
+                    _rowScopeSymbols[tableLogicalName] = symTable;
+                }
 
-            s2.AddVariable("ThisRecord", recordType);
-            return s2;
+                return symTable;
+            }
         }
 
         /// <summary>
@@ -117,8 +130,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             if (_tables.TryGetValue(variableName, out var existingTable))
             {
-                throw new InvalidOperationException(
-                    $"Table with variable name '{variableName}' was already added as {existingTable._entityMetadata.LogicalName}.");
+                throw new InvalidOperationException($"Table with variable name '{variableName}' was already added as {existingTable._entityMetadata.LogicalName}.");
             }
 
             EntityMetadata entityMetadata = GetMetadataOrThrow(tableLogicalName);
@@ -128,9 +140,10 @@ namespace Microsoft.PowerFx.Dataverse
             RecordType recordType = GetRecordType(entityMetadata);
             DataverseTableValue tableValue = new DataverseTableValue(recordType, this, entityMetadata);
 
-            Symbols.AddVariable(variableName, tableValue.Type);
+            var slot = Symbols.AddVariable(variableName, tableValue.Type);
 
             _tables[variableName] = tableValue;
+            this.SymbolValues.Set(slot, tableValue);
             return tableValue;
         }
 
@@ -189,18 +202,15 @@ namespace Microsoft.PowerFx.Dataverse
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
         public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default)
         {
-            if (!_metadataCache.TryGetXrmEntityMetadata(logicalName, out EntityMetadata metadata))
-                throw new InvalidOperationException($"No metadata for {logicalName}");
-
-            if (cancellationToken.IsCancellationRequested)
-                throw new TaskCanceledException();
+            EntityMetadata metadata = GetMetadataOrThrow(logicalName);
+            cancellationToken.ThrowIfCancellationRequested();
 
             DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken);
+            RecordType type = GetRecordType(metadata.LogicalName);
 
-            if (response.HasError)
-                return RecordValue.NewError(new ExpressionError() { Kind = ErrorKind.Unknown, Severity = ErrorSeverity.Critical, Message = response.Error });
-
-            return new DataverseRecordValue(response.Response, metadata, GetRecordType(metadata.LogicalName), this);
+            return response.HasError
+                ? response.GetErrorValue(type)
+                : new DataverseRecordValue(response.Response, metadata, type, this);
         }
 
         /// <summary>
@@ -217,30 +227,19 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (ids.Length == 0)
                 throw new ArgumentException("No Id provided", nameof(ids));
-            if (!_metadataCache.TryGetXrmEntityMetadata(logicalName, out EntityMetadata metadata))
-                throw new InvalidOperationException($"No metadata for {logicalName}");
 
-            Task<DataverseResponse<Entity>>[] tasks = new Task<DataverseResponse<Entity>>[ids.Length];
+            EntityMetadata metadata = GetMetadataOrThrow(logicalName);
 
-            for (int i = 0; i < ids.Length; i++)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    throw new TaskCanceledException();
+            QueryExpression query = new(logicalName);
+            query.ColumnSet.AllColumns = true;
+            query.Criteria.AddCondition(new ConditionExpression(metadata.PrimaryIdAttribute, ConditionOperator.In, ids));
 
-                tasks[i] = _dvServices.RetrieveAsync(metadata.LogicalName, ids[i], cancellationToken);
-            }
+            DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken);
+            RecordType type = GetRecordType(metadata.LogicalName);
 
-            Task.WaitAll(tasks, cancellationToken);
-
-            return tasks.Select<Task<DataverseResponse<Entity>>, FormulaValue>(t =>
-            {
-                if (t.IsFaulted)
-                    return RecordValue.NewError(new ExpressionError() { Kind = ErrorKind.Unknown, Severity = ErrorSeverity.Severe, Message = t.Exception.Message });
-                else if (t.Result.HasError)
-                    return RecordValue.NewError(new ExpressionError() { Kind = ErrorKind.Unknown, Severity = ErrorSeverity.Critical, Message = t.Result.Error });
-                else
-                    return new DataverseRecordValue(t.Result.Response, metadata, GetRecordType(metadata.LogicalName), this);
-            }).ToArray();
+            return response.HasError
+                ? new FormulaValue[] { response.GetErrorValue(type) }
+                : response.Response.Entities.Select(e => new DataverseRecordValue(e, metadata, type, this)).ToArray();
         }
 
         /// <summary>
@@ -288,37 +287,6 @@ namespace Microsoft.PowerFx.Dataverse
         EntityMetadata IConnectionValueContext.GetMetadataOrThrow(string tableLogicalName)
         {
             return this.GetMetadataOrThrow(tableLogicalName);
-        }
-
-        public ReadOnlySymbolValues GetSymbolValues()
-        {
-            return ReadOnlySymbolValues.New(KnownTables).SetDebugName("KnownTables");
-        }
-
-        /// <summary>
-        /// Get symbols for executing within a row scope. 
-        /// </summary>
-        /// <param name="dv"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public ReadOnlySymbolValues GetRowScopeSymbolValues(RecordValue parameters)
-        {
-            var s1 = GetSymbolValues();
-            var s2 = ReadOnlySymbolValues.NewRowScope(parameters, s1, debugName: "RowScope");
-
-            return s2;
-        }
-    }
-
-    // $$$ Temporary hack since DebugName can't be set. Move into Fx core and then remove this. 
-    internal static class ReadOnlySymbolValuesExtensions
-    {
-        public static ReadOnlySymbolValues SetDebugName(this ReadOnlySymbolValues table, string name)
-        {
-            var prop = table.GetType().GetProperty("DebugName", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-            prop.SetValue(table, name);
-
-            return table;
         }
     }
 }

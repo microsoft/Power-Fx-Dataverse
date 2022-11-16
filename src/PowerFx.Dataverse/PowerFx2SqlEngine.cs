@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.Errors;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Localization;
@@ -28,6 +27,10 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public sealed class PowerFx2SqlEngine : DataverseEngine
     {
+
+        // default decimal precision
+        internal const int DefaultPrecision = 10;
+
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
@@ -35,7 +38,6 @@ namespace Microsoft.PowerFx.Dataverse
             : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(culture), culture)
         {
         }
-
 
         public override CheckResult Check(string expression)
         {
@@ -294,7 +296,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? 2 : 4);
+                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? 2 : DefaultPrecision);
                 }
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }

@@ -91,7 +91,7 @@ AS BEGIN
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v5, 4)
+    RETURN ROUND(@v5, 10)
 END
 ";
         public const string BaselineCreateRow = @"fn_testUdf1([new_CurrencyPrice_Schema],[AccountId])
@@ -238,6 +238,21 @@ END
             var errors = result.Errors.ToArray();
             Assert.AreEqual(1, errors.Length);
             Assert.AreEqual(message, errors[0].ToString());
+            Assert.AreEqual(key, errors[0].MessageKey);
+        }
+
+        // Verify error messages in other locales
+        [DataTestMethod]
+        [DataRow("3+", "Opérande attendu. La formule ou l’expression attend un opérande valide", "ErrOperandExpected", DisplayName = "Parse error")]
+        public void CheckLocaleErrorMssage(string expr, string message, string key)
+        {
+            var culture = new CultureInfo("fr-FR");
+            var engine = new PowerFx2SqlEngine(culture: culture);
+            var result = engine.Check(expr); // foo is undefined 
+
+            Assert.IsFalse(result.IsSuccess);
+            var errors = result.Errors.ToArray();            
+            Assert.IsTrue(errors[0].ToString().Contains(message));
             Assert.AreEqual(key, errors[0].MessageKey);
         }
 

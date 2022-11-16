@@ -9,8 +9,11 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
+using System.IO;
 using System.Linq;
 using System.ServiceModel;
+using System.ServiceModel.Security;
+using static Microsoft.PowerFx.Dataverse.DataverseHelpers;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -76,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
         public static DValue<T> DataverseError<T>(string message, string method)
             where T : ValidFormulaValue
         {
-            return DValue<T>.Of(ErrorValue.NewError(new ExpressionError() { Kind = ErrorKind.Unknown, Message = message, Severity = ErrorSeverity.Critical, MessageKey = method }));
+            return DValue<T>.Of(FormulaValue.NewError(GetExpressionError(message, messageKey: method)));
         }
 
         // Return 0 if not found. 
@@ -130,12 +133,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 message = e.Message;                
             }
-            catch (System.ServiceModel.Security.MessageSecurityException e)
+            catch (MessageSecurityException e)
             {
                 // thrown if we can't auth to server.                 
                 message = e.Message;
             }
-            catch (System.IO.IOException e)
+            catch (IOException e)
             {
                 // Network is bad - such as network is offline. 
                 message = e.Message;

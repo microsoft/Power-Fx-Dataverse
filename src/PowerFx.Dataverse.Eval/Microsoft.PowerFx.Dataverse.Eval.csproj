@@ -28,6 +28,7 @@
   <Import Project="..\Build.props" />
   
   <ItemGroup>
+    <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" />
     <PackageReference Include="System.Text.Json" Version="6.0.2" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
@@ -39,17 +40,8 @@
     </PackageReference>
   </ItemGroup>
 
-  <!--<Import Project="$(SourcePath)\Language\PowerFx.NugetGeneration.props" />-->
-
   <ItemGroup>
     <ProjectReference Include="..\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Microsoft.PowerFx.Dataverse.Parser">
-      <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-    
-  <!--<Import Project="$(SourcePath)\Build.targets" />-->
 </Project>

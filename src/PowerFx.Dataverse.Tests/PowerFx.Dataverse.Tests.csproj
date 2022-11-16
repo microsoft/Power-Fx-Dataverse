@@ -22,13 +22,10 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.1.0" />
     <PackageReference Include="MSTest.TestFramework" Version="2.1.0" />
-    <!-- 
-			CVE-2022-34716 Component Governance Security Advisory for System.Security.Cryptography.Xml 
-			https://nvd.nist.gov/vuln/detail/CVE-2022-34716
-    -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
-    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="0.6.6" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.3" /> <!-- CVE-2021-24112 -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.1" /> <!-- CVE-2022-34716 -->
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" /> <!-- CVE-2022-41064 -->
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.0.9" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
@@ -37,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>    
-    <None Include="$(PkgMicrosoft_PowerFx_Core_Tests)\content\ExpressionTestCases\*.txt" >
+    <None Include="$(PkgMicrosoft_PowerFx_Core_Tests)\content\ExpressionTestCases\*.txt">
       <Link>ExpressionTestCases\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -52,12 +49,6 @@
     <None Update="SqlExpressionTestCases\*.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.PowerFx.Dataverse.Parser">
-      <HintPath>..\..\ref\Microsoft.PowerFx.Dataverse.Parser\lib\netstandard2.0\Microsoft.PowerFx.Dataverse.Parser.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

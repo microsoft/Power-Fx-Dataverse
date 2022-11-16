@@ -24,6 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         public DVSymbolTable(CdsEntityMetadataProvider metadataProvider)
         {
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null);
+            DebugName = "DataverseGlobals";
         }
 
         // This requires internal types in PowerFx, so it needs to be in PowerFx.Dataverse

@@ -23,28 +23,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <summary>
         /// The connection string for the database to execute generated SQL
         /// </summary>
-        static string ConnectionString = null;        
-        static string DeploymentDir = null;
+        static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
-        [ClassInitialize()]
-        public static void ClassInit(TestContext context)
-        {
-            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
-            
-            if (string.IsNullOrEmpty(ConnectionString) && context.Properties.Contains("SqlConnectionString"))
-                ConnectionString = context.Properties["SqlConnectionString"].ToString();
-
-            if (!string.IsNullOrEmpty(ConnectionString) && ConnectionString.Length > 75)
-                Console.WriteLine($"Using connection string: {ConnectionString.Substring(0, 75)}...");
-
-            DeploymentDir = context.DeploymentDirectory;
-        }
 
         [TestMethod]
         public void RunSqlTestCases()
-        {             
+        {
+            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
             // short-circuit if connection string is not set
-            if (string.IsNullOrEmpty(ConnectionString))
+            if (ConnectionString == null)
             {
                 Assert.Inconclusive("Skipping SQL tests - no connection string set");
                 return;
@@ -54,11 +41,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                
-                foreach (var path in Directory.EnumerateFiles(GetExpressionTestDir(), "*.txt"))
-                {
-                    runner.AddFile(path);
-                }
+                runner.AddDir();
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
@@ -69,15 +52,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Ideally, this should only go down as the rest of the functions/capabilities are added
                 // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(212, result.Fail);
+                Assert.AreEqual(42, result.Fail);
             }
         }
 
         [TestMethod]
         public void RunCleanSqlTestCases()
-        {            
+        {
+            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
             // short-circuit if connection string is not set
-            if (string.IsNullOrEmpty(ConnectionString))
+            if (ConnectionString == null)
             {
                 Assert.Inconclusive("Skipping SQL tests - no connection string set");
                 return;
@@ -89,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var runner = new TestRunner(sql);
                                 
                 // Run only those test files fully supported by SQL
-                foreach (string file in new[] {
+                runner.AddFile(
                     "AndOrCases.txt",
                     "arithmetic.txt",
                     "Blank.txt",
@@ -99,11 +83,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     "mathfuncs.txt",
                     "string.txt",
                     "Text.txt",
-                    "Value.txt" })
-                {
-                    runner.AddFile(Path.Combine(GetExpressionTestDir(), file));
-                }
-                    
+                    "Value.txt"
+                    );
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
@@ -112,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(74, result.Fail);
+                Assert.AreEqual(0, result.Fail);
 
                 // Verify that we're actually running tests. 
                 Assert.IsTrue(result.Total > 400);
@@ -140,12 +121,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public static string GetSqlDefaultTestDir()
         {
-            return Path.Combine(DeploymentDir, "SqlExpressionTestCases");
-        }
-
-        public static string GetExpressionTestDir()
-        {            
-            return Path.Combine(DeploymentDir, "ExpressionTestCases");
+            var curDir = Path.GetDirectoryName(typeof(ExpressionEvaluationTests).Assembly.Location);
+            var testDir = Path.Combine(curDir, "SqlExpressionTestCases");
+            return testDir;
         }
 
         private class SqlRunner : BaseRunner, IDisposable
@@ -171,15 +149,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
 
-            // Round to 4 decimal places
+            // Round to default precision number of decimal places
             private double Round(double value)
             {
-                return Math.Round(10000 * value, MidpointRounding.AwayFromZero) / 10000;
+                return Math.Round(Math.Pow(10, PowerFx2SqlEngine.DefaultPrecision) * value, MidpointRounding.AwayFromZero) / Math.Pow(10, PowerFx2SqlEngine.DefaultPrecision);
             }
 
             public override bool NumberCompare(double a, double b)
             {
-                // SQL only has 4 digits of precision after the decimal. 
                 if (base.NumberCompare(a, b))
                 {
                     return true;

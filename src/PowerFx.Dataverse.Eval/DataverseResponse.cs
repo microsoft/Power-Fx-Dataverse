@@ -7,6 +7,7 @@
 using Microsoft.PowerFx.Types;
 using System;
 using System.Threading.Tasks;
+using static Microsoft.PowerFx.Dataverse.DataverseHelpers;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -52,5 +53,10 @@ namespace Microsoft.PowerFx.Dataverse
         public bool HasError => Error != null;
 
         internal DValue<RecordValue> DValueError(string method) => DataverseExtensions.DataverseError<RecordValue>(Error, method);
+
+        public ErrorValue GetErrorValue(FormulaType type)
+        {
+            return FormulaValue.NewError(GetExpressionError(Error), type);
+        }
     }
 }

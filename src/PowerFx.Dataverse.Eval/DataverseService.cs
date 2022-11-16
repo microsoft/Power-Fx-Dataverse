@@ -19,14 +19,14 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly IOrganizationService _organizationService;
 
         internal DataverseService(IOrganizationService service)
-        {            
+        {
             _organizationService = service;
         }
 
         public async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, new ColumnSet(true)), $"Retrieve '{logicalName}':{id}");            
-        }       
+            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, new ColumnSet(true)), $"Retrieve '{logicalName}':{id}");
+        }
 
         public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
         {
@@ -40,11 +40,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query.ToString()} returned nothing");            
+            return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query.ToString()} returned nothing");
         }
 
         public HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
-        {            
+        {
             throw new NotImplementedException();
         }
 
@@ -52,6 +52,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // Delete returns <void>, need to provide a return value.  
             return DataverseExtensions.DataverseCall(() => { _organizationService.Delete(entityName, id); return true; }, $"Delete '{entityName}':{id}");
-        }      
+        }
     }
 }

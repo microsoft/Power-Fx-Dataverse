@@ -6,19 +6,15 @@
 
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
-using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -208,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable(displayName, logicalName);
 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             // Test the serializer! 
             var serialized = result.ToExpression();
@@ -216,7 +212,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());            
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);            
         }
 
         [TestMethod]
@@ -242,7 +238,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             
             var entity = (Entity) result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -274,7 +270,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -306,7 +302,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -336,7 +332,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNull(entity); // 
@@ -361,7 +357,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues());
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             Assert.IsInstanceOfType(result, typeof(DataverseTableValue));
         }
@@ -382,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             Func<string, DataverseConnection, FormulaValue> eval = 
-                (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues()).Result;
+                (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
 
             // Relationship refers to a type that we didn't AddTable for. 
             var result = eval("First(t1).Other", dv); // reference to Remote (t2)            
@@ -423,7 +419,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             Func<string, DataverseConnection, FormulaValue> eval =
-                (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.GetSymbolValues()).Result;
+                (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv2, EntityLookup el2) = CreateMemoryForRelationshipModels();
@@ -461,7 +457,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            var symbols = rowScope ? dv.GetRowScopeSymbols(tableLogicalName: logicalName) : dv.Symbols;
+            var rowScopeSymbols = rowScope ? dv.GetRowScopeSymbols(tableLogicalName: logicalName) : null;
+            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
 
             var engine1 = new RecalcEngine();
             var check = engine1.Check(expr, symbolTable: symbols);
@@ -469,20 +466,106 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Eval it 
             ReadOnlySymbolValues runtimeConfig;
-            if (rowScope)
+            if (rowScopeSymbols != null)
             {
                 var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
-                runtimeConfig = dv.GetRowScopeSymbolValues(record);
+                var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+                runtimeConfig = ReadOnlySymbolValues.Compose(rowScopeValues, dv.SymbolValues);
             }
             else
             {
-                runtimeConfig = dv.GetSymbolValues();
+                runtimeConfig = dv.SymbolValues;
             }
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
 
             Assert.AreEqual(expected, result.ToObject());
+        }
+
+        // Set() function against entity fields in RowScope
+        [DataTestMethod]
+        [DataRow("Set(Price, 200); Price")]
+        public void LocalSet(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.EnableSetFunction();
+            var engine1 = new RecalcEngine(config);
+            
+            var check = engine1.Check(expr, options: opts, symbolTable: rowScopeSymbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var entity = el.GetFirstEntity(logicalName, dv); // any record
+            var record = dv.Marshal(entity);
+            var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+
+            var result = run.EvalAsync(CancellationToken.None, rowScopeValues).Result;
+
+            Assert.AreEqual(200.0, result.ToObject());
+
+            // verify on entity 
+            var e2 = el.LookupRef(entity.ToEntityReference());
+            Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+        }
+
+        // Patch() function against entity fields in RowScope
+        [DataTestMethod]
+        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price")]
+        public void PatchFunction(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(200.0, result.ToObject());
+
+            // verify on entity 
+            //var e2 = el.LookupRef(entity.ToEntityReference());
+            //Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+        }
+
+        [TestMethod]
+        public void BasicSymbols()
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            // We get same symbols back - this is important since Check / Eval need to match. 
+            var sym1 = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            var sym2 = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+
+            Assert.AreSame(sym1, sym2);
         }
 
         // Test blank references.
@@ -498,7 +581,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable(displayName, logicalName);
 
             // Set to blank. 
-            var entity1 = el.LookupRef(_eRef1);
+            var entity1 = el.LookupRefCore(_eRef1);
             entity1.Attributes["refg"] = null;
             entity1.Attributes["otherid"] = null;
 
@@ -508,7 +591,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Eval it                        
             var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
-            var runtimeConfig = dv.GetRowScopeSymbolValues(record);
+            var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
             
             var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig ).Result;
             Assert.IsTrue(result is BlankValue);
@@ -535,7 +618,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Eval it                        
             var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
-            var runtimeConfig = dv.GetRowScopeSymbolValues(record);
+            var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
 
             // Case 1: Succeed 
             el._onLookupRef = null;
@@ -620,11 +703,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv1.AddTable("T1", "local");
             dv2.AddTable("T2", "local");
 
-            el2.LookupRef(_eRef1).Attributes["new_price"] = 200;
+            el2.LookupRefCore(_eRef1).Attributes["new_price"] = 200;
 
             var engine1 = new RecalcEngine();
-            var s1 = dv1.GetSymbolValues();
-            var s2 = dv2.GetSymbolValues();
+            var s1 = dv1.SymbolValues;
+            var s2 = dv2.SymbolValues;
 
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 

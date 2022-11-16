@@ -50,8 +50,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterFirst()
         {
             string tableName = "TableTest1S";
@@ -76,8 +74,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterFirstWithDisplayName()
         {
             string tableName = "TableTest1S";
@@ -102,8 +98,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterFirstN()
         {
             string tableName = "TableTest1S";
@@ -135,8 +129,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterCollectNoKey()
         {
             string tableName = "TableTest1S";
@@ -156,8 +148,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterInsertRowsAsyncWithConflict()
         {
             string tableName = "Table2";
@@ -195,7 +185,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private static object InsertRow(SymbolTable symbols, ReadOnlySymbolValues runtimeConfig, string prefix, RecalcEngine engine, int i)
+        private static object InsertRow(ReadOnlySymbolTable symbols, ReadOnlySymbolValues runtimeConfig, string prefix, RecalcEngine engine, int i)
         {
             string expr = $"Collect(Table2, {{ Name: \"{prefix}-{i}\" }})";
             Console.WriteLine("Running: {0}", expr);
@@ -210,8 +200,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterFilter()
         {
             string tableName = "TableTest1S";
@@ -231,8 +219,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatch()
         {
             string tableName = "TableTest1S";
@@ -255,8 +241,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithConflict()
         {
             string tableName = "Table2";
@@ -287,8 +271,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithId()
         {
             string tableName = "Table2";
@@ -309,8 +291,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithIdBlank()
         {
             string tableName = "Table2";
@@ -331,7 +311,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
         public void ExecuteViaInterpreterPatchWithDateTime()
         {
             string tableName = "Table2";
@@ -365,8 +344,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterRead()
         {
             string tableName = "Table2";
@@ -393,8 +370,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithNumbers()
         {
             string tableName = "Table2";
@@ -436,8 +411,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithOptionSet()
         {
             string tableName = "TableTest1S";
@@ -480,8 +453,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithInvalidId()
         {
             string tableName = "Table2";
@@ -508,8 +479,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterPatchWithInvalidIdAsync()
         {
             string tableName = "Table2";
@@ -537,8 +506,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterRemoveWithId()
         {
             string tableName = "Table2";
@@ -560,8 +527,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        [Ignore]
-
         public void ExecuteViaInterpreterRemoveByName()
         {
             string tableName = "Table2";
@@ -592,12 +557,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
         }
 
-        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out SymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
         }
 
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out SymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
@@ -620,13 +585,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
             symbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
-            symbols.EnableMutationFunctions();
 
             Assert.IsNotNull(tableValue);
             Assert.IsNotNull(symbols);
 
-            engine = new RecalcEngine();
-            runtimeConfig = dv.GetSymbolValues();
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+            engine = new RecalcEngine(config);
+            runtimeConfig = dv.SymbolValues;
 
             if (string.IsNullOrEmpty(expr))
             {
@@ -666,7 +632,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Create" );
+            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Create");
         }
 
         public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
