@@ -515,6 +515,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.AreEqual(200.0, result.ToObject());
 
+            // RecordValue is updated .
+            Assert.AreEqual(200.0, record.GetField("new_price").ToObject());
+
+            Assert.AreEqual(new Decimal(200.0), entity.Attributes["new_price"]);
+
             // verify on entity 
             var e2 = el.LookupRef(entity.ToEntityReference());
             Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
@@ -522,8 +527,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
-        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price")]
-        public void PatchFunction(string expr)
+        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
+        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
+        // [DataRow("Patch(t1, First(t1), { Price : 200}).Price")] // https://github.com/microsoft/Power-Fx/issues/852
+        public void PatchFunction(string expr, double expected)
         {
             // create table "local"
             var logicalName = "local";
@@ -544,11 +551,43 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            Assert.AreEqual(200.0, result.ToObject());
+            // Verify on expression - this may be old or no
+            Assert.AreEqual(expected, result.ToObject());
 
-            // verify on entity 
-            //var e2 = el.LookupRef(entity.ToEntityReference());
-            //Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+            // verify on entity - this should always be updated 
+            var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+            var entity = (Entity) r2.ToObject();
+            var e2 = el.LookupRef(entity.ToEntityReference());
+            Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+        }
+
+        [DataTestMethod]
+        [DataRow("Remove(t1, LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")) )")]
+        public void RemoveFunction(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            // Verify on expression - this may be old or no
+
+            // verify on entity - this should always be updated 
+            Assert.IsFalse(el.Exists(new EntityReference(logicalName, _g1)));            
         }
 
         [TestMethod]
