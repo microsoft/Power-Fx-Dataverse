@@ -104,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return Clone(LookupRefCore(entityRef));
         }
-
+                
         // Gets direct access to the entire storage.
         // Modifying this entity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
@@ -122,6 +122,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
             throw new InvalidOperationException($"Entity {entityRef.LogicalName}:{entityRef.Id} not found");
+        }
+
+        public bool Exists(EntityReference entityRef)
+        {
+            foreach (var entity in _list)
+            {
+                if (entity.LogicalName == entityRef.LogicalName && entity.Id == entityRef.Id)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
@@ -190,7 +202,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            foreach (var entity in _list)
+            {
+                if (entity.LogicalName == entityName&& entity.Id == id)
+                {
+                    _list.Remove(entity);
+                    break;
+                }
+            }
+            return Task.FromResult(new DataverseResponse());
         }
 
         // Create clones to simulate that local copies of an Entity are separate than what's in the database.
