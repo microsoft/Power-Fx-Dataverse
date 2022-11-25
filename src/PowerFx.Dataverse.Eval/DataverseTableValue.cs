@@ -137,7 +137,8 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentException($"All elements to be deleted must be of type RecordValue");            
 
             foreach (var record in recordsToRemove.OfType<RecordValue>())
-            {                
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
                 if (fv.Type == FormulaType.Blank || fv is not GuidValue id)
@@ -145,8 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
                 }
                 else
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
+                {                    
                     DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
                     if (response.HasError)
