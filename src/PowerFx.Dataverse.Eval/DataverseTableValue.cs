@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : ODataQueryableTableValue
     {
-        private readonly IConnectionValueContext _connection;        
+        private readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
 
@@ -65,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters);
 
             if (entities.HasError)
-                return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync))};
+                return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
 
             foreach (Entity entity in entities.Response.Entities)
             {
@@ -118,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             if (fv is not GuidValue id)
-                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));            
+                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
 
             DataverseResponse<Entity> entityResponse = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
@@ -134,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (recordsToRemove == null)
                 throw new ArgumentNullException(nameof(recordsToRemove));
             if (!recordsToRemove.All(rtr => rtr is RecordValue))
-                throw new ArgumentException($"All elements to be deleted must be of type RecordValue");            
+                throw new ArgumentException($"All elements to be deleted must be of type RecordValue");
 
             foreach (var record in recordsToRemove.OfType<RecordValue>())
             {
@@ -146,7 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
                 }
                 else
-                {                    
+                {
                     DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
                     if (response.HasError)
