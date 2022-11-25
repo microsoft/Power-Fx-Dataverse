@@ -76,16 +76,20 @@ namespace Microsoft.PowerFx.Dataverse
             return list;
         }
 
-        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken)
+        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (record == null)
                 throw new ArgumentNullException(nameof(record));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             Entity entity = record.ToEntity(_entityMetadata);
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
 
             if (response.HasError)
                 return response.DValueError(nameof(IDataverseCreator.CreateAsync));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken);
@@ -96,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
         }
 
-        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken)
+        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (baseRecord == null)
                 throw new ArgumentNullException(nameof(baseRecord));
@@ -106,13 +110,15 @@ namespace Microsoft.PowerFx.Dataverse
             // Retrieve the primary key of the entity (should alwyas be present and a Guid)
             FormulaValue fv = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (fv.Type == FormulaType.Blank)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
 
             if (fv is not GuidValue id)
-                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));            
 
             DataverseResponse<Entity> entityResponse = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
@@ -123,15 +129,15 @@ namespace Microsoft.PowerFx.Dataverse
             return await item.UpdateFieldsAsync(record, cancellationToken);
         }
 
-        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken)
+        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (recordsToRemove == null)
                 throw new ArgumentNullException(nameof(recordsToRemove));
             if (!recordsToRemove.All(rtr => rtr is RecordValue))
-                throw new ArgumentException($"All elements to be deleted must be of type RecordValue");
+                throw new ArgumentException($"All elements to be deleted must be of type RecordValue");            
 
             foreach (var record in recordsToRemove.OfType<RecordValue>())
-            {
+            {                
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
                 if (fv.Type == FormulaType.Blank || fv is not GuidValue id)
@@ -140,6 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
                     if (response.HasError)

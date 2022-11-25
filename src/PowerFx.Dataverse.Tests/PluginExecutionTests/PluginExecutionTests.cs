@@ -224,10 +224,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName); 
-
             
             var id = "00000000-0000-0000-0000-000000000001";
-            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)));
+            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
             RecordValue record = dv.Marshal(entityOriginal);
 
             // Test the serializer! 
@@ -259,7 +258,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
 
             var id = "00000000-0000-0000-0000-000000000001";
-            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)));
+            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
             RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id)) as RecordValue;
 
             // Test the serializer! 
@@ -291,7 +290,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
 
             var id = "00000000-0000-0000-0000-000000000001";
-            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)));
+            var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
             RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }))[0] as RecordValue;
 
             // Test the serializer! 
@@ -468,7 +467,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             ReadOnlySymbolValues runtimeConfig;
             if (rowScopeSymbols != null)
             {
-                var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
+                var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
                 var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
                 runtimeConfig = ReadOnlySymbolValues.Compose(rowScopeValues, dv.SymbolValues);
             }
@@ -507,7 +506,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var entity = el.GetFirstEntity(logicalName, dv); // any record
+            var entity = el.GetFirstEntity(logicalName, dv, CancellationToken.None); // any record
             var record = dv.Marshal(entity);
             var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
 
@@ -521,7 +520,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(new Decimal(200.0), entity.Attributes["new_price"]);
 
             // verify on entity 
-            var e2 = el.LookupRef(entity.ToEntityReference());
+            var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
             Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
         }
 
@@ -557,7 +556,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // verify on entity - this should always be updated 
             var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
             var entity = (Entity) r2.ToObject();
-            var e2 = el.LookupRef(entity.ToEntityReference());
+            var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
             Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
         }
 
@@ -629,7 +628,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine1 = new RecalcEngine();
 
             // Eval it                        
-            var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
+            var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
             var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
             
             var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig ).Result;
@@ -656,7 +655,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine1 = new RecalcEngine();
 
             // Eval it                        
-            var record = el.ConvertEntityToRecordValue(logicalName, dv); // any record
+            var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
             var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
 
             // Case 1: Succeed 
@@ -802,8 +801,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var thisRecordName = "local"; // table only has 1 entity.
 
             // Create context to simulate evaluating on entity in thisRecordName table.
-            var record = entityLookup.ConvertEntityToRecordValue(thisRecordName, null);
-            var metadata = entityLookup.LookupMetadata(thisRecordName);
+            var record = entityLookup.ConvertEntityToRecordValue(thisRecordName, null, CancellationToken.None);
+            var metadata = entityLookup.LookupMetadata(thisRecordName, CancellationToken.None);
             var engine = new DataverseEngine(metadata, new CdsEntityMetadataProvider(entityLookup._rawProvider), new PowerFxConfig());
 
             var check = engine.Check(expr);
@@ -829,8 +828,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var thisRecordName = "account"; // table only has 1 entity.
 
             // Create context to simulate evaluating on entity in thisRecordName table.
-            var record = lookup.ConvertEntityToRecordValue(thisRecordName, null);
-            var metadata = lookup.LookupMetadata(thisRecordName);
+            var record = lookup.ConvertEntityToRecordValue(thisRecordName, null, CancellationToken.None);
+            var metadata = lookup.LookupMetadata(thisRecordName, CancellationToken.None);
             var engine = new DataverseEngine(metadata, lookup._provider, new PowerFxConfig());
 
             var expr = "ThisRecord.CurrencyPrice + Calc";
@@ -872,7 +871,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             DataverseConnection dvConnection = new DataverseConnection(entityLookup, xrmMetadataProvider);
-            entityLookup.Add(entity1, entity2);
+            entityLookup.Add(CancellationToken.None, entity1, entity2);
 
             return (dvConnection, entityLookup);
         }
@@ -900,7 +899,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(3, attr2.SourceType); // this is a calc filed. 
 
             EntityLookup lookup = new EntityLookup(new MockXrmMetadataProvider(metadata));
-            lookup.Add(entity1, entity1);
+            lookup.Add(CancellationToken.None, entity1, entity1);
             return lookup;
         }
     }

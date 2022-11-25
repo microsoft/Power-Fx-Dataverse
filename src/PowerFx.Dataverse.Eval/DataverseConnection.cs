@@ -202,6 +202,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
         public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -228,6 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (ids.Length == 0)
                 throw new ArgumentException("No Id provided", nameof(ids));
 
+            cancellationToken.ThrowIfCancellationRequested();
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
 
             QueryExpression query = new(logicalName);

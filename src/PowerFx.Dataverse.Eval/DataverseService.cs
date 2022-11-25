@@ -23,23 +23,27 @@ namespace Microsoft.PowerFx.Dataverse
             _organizationService = service;
         }
 
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, new ColumnSet(true)), $"Retrieve '{logicalName}':{id}");
         }
 
-        public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _organizationService.Create(entity), $"Create '{entity.LogicalName}'");
         }
 
-        public async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => { _organizationService.Update(entity); return entity; }, $"Update '{entity.LogicalName}':{entity.Id}");
         }
 
-        public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query.ToString()} returned nothing");
         }
 
@@ -48,9 +52,9 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException();
         }
 
-        public async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Delete returns <void>, need to provide a return value.  
+            cancellationToken.ThrowIfCancellationRequested();            
             return DataverseExtensions.DataverseCall(() => { _organizationService.Delete(entityName, id); return true; }, $"Delete '{entityName}':{id}");
         }
     }
