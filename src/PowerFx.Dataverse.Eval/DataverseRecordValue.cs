@@ -108,8 +108,10 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken)
+        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Update local copy of entity 
             UpdateEntityWithRecord(record, out var error);
 
@@ -118,6 +120,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return error;
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(_entity, cancellationToken);
 
             if (result.HasError)

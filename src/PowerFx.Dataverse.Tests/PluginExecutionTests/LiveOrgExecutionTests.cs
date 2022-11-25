@@ -630,34 +630,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _svcClient = client ?? throw new ArgumentNullException(nameof(client));
         }
 
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Create");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Create");
         }
 
-        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _svcClient.DeleteAsync(entityName, id, ct).ConfigureAwait(false), "Delete");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => _svcClient.DeleteAsync(entityName, id, cancellationToken).ConfigureAwait(false), "Delete");
         }
 
         public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _svcClient.ExecuteWebRequest(method, queryString, body, customHeaders, contentType, cancellationToken);
         }
 
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, new ColumnSet(true), ct).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, new ColumnSet(true), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
         }
 
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, ct).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
         }
 
-        public virtual async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, ct).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
         }
 
         protected virtual void Dispose(bool disposing)

@@ -152,7 +152,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             var fullMessage = $"Error attempting {operationDescription}. {message}";
             return DataverseResponse<T>.NewError(fullMessage);
-
         }
     }
 }

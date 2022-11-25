@@ -18,23 +18,23 @@ namespace Microsoft.PowerFx.Dataverse
 
     public interface IDataverseCreator
     {
-        Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken));
+        Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IDataverseReader
     {
-        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken));
-        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken));
+        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public interface IDataverseUpdater
     {
         // Entity can contain just the fields to update.
         // Return fully updated entity 
-        Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken));
+        Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
     }
     public interface IDataverseDeleter
     {
-        Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken));
+        Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

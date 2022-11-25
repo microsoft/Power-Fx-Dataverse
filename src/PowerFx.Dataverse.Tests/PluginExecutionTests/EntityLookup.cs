@@ -32,8 +32,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _provider = new CdsEntityMetadataProvider(_rawProvider);
         }
 
-        public EntityMetadata LookupMetadata(string logicalName)
+        public EntityMetadata LookupMetadata(string logicalName, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!_rawProvider.TryGetEntityMetadata(logicalName, out var metadata))
             {
                 throw new InvalidOperationException($"Metadata {logicalName} not found.");
@@ -42,10 +43,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // get a RecordValue for the first entity in the table.
-        public Entity GetFirstEntity(string logicalName, DataverseConnection dataverseConnection)
+        public Entity GetFirstEntity(string logicalName, DataverseConnection dataverseConnection, CancellationToken cancellationToken)
         {
             if (dataverseConnection == null)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 dataverseConnection = new DataverseConnection(this, _provider);
                 dataverseConnection.AddTable(logicalName, logicalName);
             }
@@ -54,32 +56,37 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 if (entity.LogicalName == logicalName)
                 {
-                    return Clone(entity);
+                    return Clone(entity, cancellationToken);
                 }
             }
+
             throw new InvalidOperationException($"No entity of type {logicalName}.");
         }
 
-        public RecordValue ConvertEntityToRecordValue(string logicalName, DataverseConnection dataverseConnection)
+        public RecordValue ConvertEntityToRecordValue(string logicalName, DataverseConnection dataverseConnection, CancellationToken cancellationToken)
         {
             if (dataverseConnection == null)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 dataverseConnection = new DataverseConnection(this, _provider);
                 dataverseConnection.AddTable(logicalName, logicalName);
             }
 
-            var entity = GetFirstEntity(logicalName, dataverseConnection);
+            var entity = GetFirstEntity(logicalName, dataverseConnection, cancellationToken);
             return dataverseConnection.Marshal(entity);            
         }
 
         // Entities should conform to the metadata passed to the ctor. 
-        public void Add(params Entity[] entities)
+        public void Add(CancellationToken cancellationToken, params Entity[] entities)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             foreach (var entity in entities)
             {
-                // Assert the entities we provide match the metadata we have. 
-                var metadata = LookupMetadata(entity.LogicalName); // will throw if missing. 
+                cancellationToken.ThrowIfCancellationRequested();
 
+                // Assert the entities we provide match the metadata we have. 
+                var metadata = LookupMetadata(entity.LogicalName, cancellationToken); // will throw if missing. 
 
                 foreach (var attr in entity.Attributes)
                 {
@@ -90,8 +97,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     }
                 }
 
-
-                _list.Add(Clone(entity));
+                _list.Add(Clone(entity, cancellationToken));
             }
         }
 
@@ -100,9 +106,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Gets a copy of the entity. 
         // modifying the storage still requires a call to Update. 
-        public Entity LookupRef(EntityReference entityRef)
+        public Entity LookupRef(EntityReference entityRef, CancellationToken cancellationToken)
         {
-            return Clone(LookupRefCore(entityRef));
+            return Clone(LookupRefCore(entityRef), cancellationToken);
         }
                 
         // Gets direct access to the entire storage.
@@ -136,20 +142,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return false;
         }
 
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Add(entity);
+            cancellationToken.ThrowIfCancellationRequested();
+            Add(cancellationToken, entity);
 
             return new DataverseResponse<Guid>(entity.Id);
         }
 
-        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken ct = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference)), "Entity lookup");
+            cancellationToken.ThrowIfCancellationRequested();
+            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup");
         }
 
-        public virtual Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken ct = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // gets the raw storage and mutate it. 
             var existing = LookupRefCore(entity.ToEntityReference()); 
             
@@ -161,16 +171,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse<Entity>(entity));
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return LookupReferenceAsync(new EntityReference(entityName, id));
         }
 
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken ct = default(CancellationToken))
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<Entity> entityList = new List<Entity>();
             IEnumerable<Entity> data = _list;
 
+            cancellationToken.ThrowIfCancellationRequested();
             var qe = query as QueryExpression;
 
             int take = qe.TopCount.GetValueOrDefault();
@@ -181,9 +193,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             foreach (var entity in data)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (entity.LogicalName == qe.EntityName)
                 {
-                    entityList.Add(Clone(entity));
+                    entityList.Add(Clone(entity, cancellationToken));
                     take--;
                     if (take == 0)
                     {
@@ -200,10 +213,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             throw new NotImplementedException();
         }
 
-        public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken ct = default(CancellationToken))
+        public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             foreach (var entity in _list)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (entity.LogicalName == entityName&& entity.Id == id)
                 {
                     _list.Remove(entity);
@@ -214,8 +230,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create clones to simulate that local copies of an Entity are separate than what's in the database.
-        private Entity Clone(Entity entity)
+        private Entity Clone(Entity entity, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {

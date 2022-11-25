@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : ODataQueryableTableValue
     {
-        private readonly IConnectionValueContext _connection;        
+        private readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
 
@@ -65,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters);
 
             if (entities.HasError)
-                return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync))};
+                return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
 
             foreach (Entity entity in entities.Response.Entities)
             {
@@ -76,16 +76,20 @@ namespace Microsoft.PowerFx.Dataverse
             return list;
         }
 
-        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken)
+        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (record == null)
                 throw new ArgumentNullException(nameof(record));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             Entity entity = record.ToEntity(_entityMetadata);
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
 
             if (response.HasError)
                 return response.DValueError(nameof(IDataverseCreator.CreateAsync));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken);
@@ -96,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
         }
 
-        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken)
+        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (baseRecord == null)
                 throw new ArgumentNullException(nameof(baseRecord));
@@ -105,6 +109,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Retrieve the primary key of the entity (should alwyas be present and a Guid)
             FormulaValue fv = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (fv.Type == FormulaType.Blank)
             {
@@ -123,7 +129,7 @@ namespace Microsoft.PowerFx.Dataverse
             return await item.UpdateFieldsAsync(record, cancellationToken);
         }
 
-        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken)
+        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (recordsToRemove == null)
                 throw new ArgumentNullException(nameof(recordsToRemove));
@@ -132,6 +138,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var record in recordsToRemove.OfType<RecordValue>())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
                 if (fv.Type == FormulaType.Blank || fv is not GuidValue id)
