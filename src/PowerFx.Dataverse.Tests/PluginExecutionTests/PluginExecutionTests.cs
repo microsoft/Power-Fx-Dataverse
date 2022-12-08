@@ -193,7 +193,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("t1", "t1")] // table
         [DataRow("First(t1)", "LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\"))")] // record
         [DataRow("LookUp(t1, false)", "If(false,First(FirstN(t1,0)))")] // blank
-        [DataRow("First(t1).LocalId", "GUID(\"00000000000000000000000000000001\")")] // Guid
+        [DataRow("First(t1).LocalId", "GUID(\"00000000-0000-0000-0000-000000000001\")")] // Guid
         public async Task TestSerialize(string expr, string expectedSerialized)
         {
             // create table "local"
