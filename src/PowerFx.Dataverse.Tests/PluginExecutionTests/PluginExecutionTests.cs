@@ -58,6 +58,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Assert.AreEqual("field", field.DisplayName);
         }
 
+        [TestMethod]
+        public void TestFailure()
+        {
+            Assert.Fail("This test should fail");
+        }
+
         // Wrapper to track calls to TryGetEntityMetadata.
         // In pracitce, these are expensive and we need to limit them. 
         public class TrackingXrmMetadataProvider : IXrmMetadataProvider
