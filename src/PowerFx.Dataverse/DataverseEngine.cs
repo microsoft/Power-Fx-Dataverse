@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
-          CultureInfo culture = null)
+          CultureInfo culture = null, string foo = "ll")
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
 
