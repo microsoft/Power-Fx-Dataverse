@@ -866,7 +866,6 @@ END
         [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
         [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Text(Date(2011, 3, 15))", false, "Error 5-22: This argument cannot be passed as type Date in formula columns.", DisplayName = "Date")]
         [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]
         public void CheckTextFailures(string expr, bool success, string message = null)
         {
@@ -881,24 +880,6 @@ END
                 Assert.AreEqual(1, result.Errors.Count());
                 Assert.AreEqual(message, result.Errors.First().ToString());
             }
-        }
-
-        [DataTestMethod]
-        // TODO: the span for enum literals is incorrect in the IR: it is only the dot and the name for namespaced enum literals, instead of the entire thing
-        [DataRow("WeekNum(Date(2019,1,6), StartOfWeek.Friday)", "Error 35-42: The start_of_week argument is not supported for the WeekNum function in formula columns.", DisplayName = "WeekNum Enum")]
-        [DataRow("WeekNum(Date(2019,1,6), 2)", "Error 24-25: The start_of_week argument is not supported for the WeekNum function in formula columns.", DisplayName = "WeekNum Integer")]
-        [DataRow("Weekday(Date(2019,1,6), StartOfWeek.Thursday)", "Error 35-44: The start_of_week argument is not supported for the Weekday function in formula columns.", DisplayName = "Weekday Enum")]
-        [DataRow("Weekday(Date(2019,1,6), 16)", "Error 24-26: The start_of_week argument is not supported for the Weekday function in formula columns.", DisplayName = "Weekday Integer")]
-        public void CheckWeekNumFailures(string expr, string message)
-        {
-            var engine = new PowerFx2SqlEngine();
-            var result = engine.Check(expr);
-
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.Errors);
-            Assert.AreEqual(1, result.Errors.Count());
-
-            Assert.AreEqual(message, result.Errors.First().ToString());
         }
 
         [DataTestMethod]

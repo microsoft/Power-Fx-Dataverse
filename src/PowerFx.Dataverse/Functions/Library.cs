@@ -37,7 +37,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Char, Char },
             //{ BuiltinFunctionsCore.CountIf, CountIf },
             //{ BuiltinFunctionsCore.CountRows, CountRows },
-            { BuiltinFunctionsCore.Date, Date },
+            
+            // Date is not supported since date-only returning userlocale is non-sensical. 
+            // Instead, we should have Date for tzi. 
+            // { BuiltinFunctionsCore.Date, Date },
+
             { BuiltinFunctionsCore.DateAdd, DateAdd },
             { BuiltinFunctionsCore.DateDiff, DateDiff },
             //{ BuiltinFunctionsCore.DateTimeValue, DateTimeValue },

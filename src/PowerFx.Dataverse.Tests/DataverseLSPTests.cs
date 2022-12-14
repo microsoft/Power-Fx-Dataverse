@@ -102,7 +102,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 		[DataRow("DateOnly", "Date", DisplayName = "Date")]
 		[DataRow("UTCToday()", "DateTimeNoTimeZone", DisplayName = "UTCToday function")]
 		[DataRow("UTCNow()", "DateTimeNoTimeZone", DisplayName = "UTCNow function")]
-		[DataRow("Date(1992,2,15)", "Date", DisplayName = "Date function")]
 		[DataRow("Boolean", "Boolean")]
 		[DataRow("field", "Number", DisplayName = "Decimal")]
 		[DataRow("Money", "Number", DisplayName = "Money")]
