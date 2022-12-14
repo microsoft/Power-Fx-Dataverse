@@ -36,17 +36,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             return context.SetIntermediateVariable(node, $"CONVERT(date, {date}) = CONVERT(date, GETUTCDATE())");
         }
 
-        public static RetVal Date(SqlVisitor visitor, CallNode node, Context context)
-        {
-            var year = node.Args[0].Accept(visitor, context);
-            // Handle "two-digit" year scenario to match Canvas, where 1-1899 get converted to 1901-3799
-            var adjustedYear = context.SetIntermediateVariable(year.type, $"IIF({year} < 1900 AND {year} >= 0, 1900 + {year}, {year})");
-            var month = node.Args[1].Accept(visitor, context);
-            var day = node.Args[2].Accept(visitor, context);
-            context.DateOverflowCheck(adjustedYear, month, day);
-            return context.SetIntermediateVariable(node, $"IIF({adjustedYear} IS NOT NULL AND {month} IS NOT NULL AND {day} IS NOT NULL, DATEFROMPARTS({adjustedYear}, {month}, {day}), NULL)");
-        }
-
         public static RetVal DateAdd(SqlVisitor visitor, CallNode node, Context context)
         {
             // first visit the units node
