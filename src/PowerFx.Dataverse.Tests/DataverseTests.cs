@@ -931,6 +931,7 @@ END
         [DataRow("WeekNum(tziDateOnly)", true, typeof(SqlDecimalType))]
         [DataRow("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("WeekNum(dateOnly, 2)", false, typeof(SqlDecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
