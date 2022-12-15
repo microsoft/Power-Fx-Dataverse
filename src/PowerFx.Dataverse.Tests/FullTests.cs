@@ -300,6 +300,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Month(If(true,tziDateOnly,tziDateTime))", 8M, cx, metadata);
                 ExecuteSqlTest("Day(IfError(tziDateOnly,tziDateTime))", 26M, cx, metadata);
                 ExecuteSqlTest("tziDateTime < tziDateOnly", true, cx, metadata);
+
+                ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
+                ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
+
             }
         }
 

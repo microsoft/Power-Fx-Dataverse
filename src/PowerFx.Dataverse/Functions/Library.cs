@@ -38,8 +38,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.CountIf, CountIf },
             //{ BuiltinFunctionsCore.CountRows, CountRows },
             
-            // Date is not supported since date-only returning userlocale is non-sensical. 
-            // Instead, we should have Date for tzi. 
+            // Date is not supported since it returns user-local time, which isn't accurate due to time zone/ DST issues.
+            // Instead, we should have a new Date function that returns TimeZoneIndependent. 
             // { BuiltinFunctionsCore.Date, Date },
 
             { BuiltinFunctionsCore.DateAdd, DateAdd },
