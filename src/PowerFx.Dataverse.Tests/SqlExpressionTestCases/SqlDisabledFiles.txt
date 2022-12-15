@@ -16,6 +16,9 @@
 #DISABLE: Coalesce.txt
 #DISABLE: Concat.txt
 #DISABLE: CountFunctions.txt
+
+#DISABLE: Date.txt
+
 #DISABLE: FilterFunctions.txt
 
 

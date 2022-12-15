@@ -37,7 +37,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Char, Char },
             //{ BuiltinFunctionsCore.CountIf, CountIf },
             //{ BuiltinFunctionsCore.CountRows, CountRows },
-            { BuiltinFunctionsCore.Date, Date },
+            
+            // Date is not supported since it returns user-local time, which isn't accurate due to time zone/ DST issues.
+            // Instead, we should have a new Date function that returns TimeZoneIndependent. 
+            // { BuiltinFunctionsCore.Date, Date },
+
             { BuiltinFunctionsCore.DateAdd, DateAdd },
             { BuiltinFunctionsCore.DateDiff, DateDiff },
             //{ BuiltinFunctionsCore.DateTimeValue, DateTimeValue },

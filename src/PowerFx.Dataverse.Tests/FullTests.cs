@@ -299,8 +299,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Year(UTCToday())", (decimal)DateTime.UtcNow.Year, cx, metadata);
                 ExecuteSqlTest("Month(If(true,tziDateOnly,tziDateTime))", 8M, cx, metadata);
                 ExecuteSqlTest("Day(IfError(tziDateOnly,tziDateTime))", 26M, cx, metadata);
-                ExecuteSqlTest("Year(Date(2021,8,16))", 2021M, cx, metadata);
                 ExecuteSqlTest("tziDateTime < tziDateOnly", true, cx, metadata);
+
+                ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
+                ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
             }
         }
 
