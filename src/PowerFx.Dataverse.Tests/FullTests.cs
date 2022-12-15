@@ -303,7 +303,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
                 ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
-
             }
         }
 

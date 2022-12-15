@@ -926,6 +926,11 @@ END
         [DataRow("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "<= Date Only vs. User Local Date Only")]
         [DataRow("Day(dateOnly)", true, typeof(SqlDecimalType), DisplayName = "Day of Date Only")]
         [DataRow("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", DisplayName = "Day of User Local Date Only")]
+        [DataRow("WeekNum(dateOnly)", true, typeof(SqlDecimalType))]
+        [DataRow("WeekNum(tziDateTime)", true, typeof(SqlDecimalType))]
+        [DataRow("WeekNum(tziDateOnly)", true, typeof(SqlDecimalType))]
+        [DataRow("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
