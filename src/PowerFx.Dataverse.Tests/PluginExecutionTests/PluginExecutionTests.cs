@@ -528,7 +528,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
-        // [DataRow("Patch(t1, First(t1), { Price : 200}).Price")] // https://github.com/microsoft/Power-Fx/issues/852
+        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200)]
         public void PatchFunction(string expr, double expected)
         {
             // create table "local"
