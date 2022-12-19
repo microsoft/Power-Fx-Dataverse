@@ -29,10 +29,10 @@ Errors: Error 16-20: Locale-specific formatting tokens such as "." and "," are n
 
 // can't pass Date() to text
 >> Text(Date(2018, 3, 15), "yyyy-MM-dd")
-Errors: Error 5-22: This argument can not be passed as this type in formula columns.
+Errors: Error 5-22: 'Date' is an unknown or unsupported function.
 
 >> Text(Date(2018, 3, 15), "MM-dd-yyyy")
-Errors: Error 5-22: This argument can not be passed as this type in formula columns.
+Errors: Error 5-22: 'Date' is an unknown or unsupported function.
 
 // Sql Text only supports whole numbers. 
 >> Text(123.4)
