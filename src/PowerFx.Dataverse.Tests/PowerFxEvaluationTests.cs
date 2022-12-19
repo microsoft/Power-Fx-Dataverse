@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(64, result.Fail);
+                Assert.AreEqual(62, result.Fail);
 
                 // Verify that we're actually running tests. 
                 Assert.IsTrue(result.Total > 400);
