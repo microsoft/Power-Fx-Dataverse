@@ -65,6 +65,8 @@
 #DISABLE: TableMathFuncs.txt
 #DISABLE: TableStringFuncs.txt
 
+#DISABLE: Text_Format.txt
+
 #DISABLE: Time.txt
 
 #DISABLE: Weekday.txt
