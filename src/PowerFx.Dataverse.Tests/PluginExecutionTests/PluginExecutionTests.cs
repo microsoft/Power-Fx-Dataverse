@@ -529,6 +529,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200)]
+        // [DataRow("Collect(t1, { Price : 200}).Price", 200)] // https://github.com/microsoft/Power-Fx/issues/915
+        // [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
+        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
         public void PatchFunction(string expr, double expected)
         {
             // create table "local"
@@ -554,10 +557,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());
 
             // verify on entity - this should always be updated 
-            var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
-            var entity = (Entity) r2.ToObject();
-            var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-            Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+            if (expr.Contains("Patch("))
+            {
+                var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+                var entity = (Entity)r2.ToObject();
+                var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
+                Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+            }
         }
 
         [DataTestMethod]
