@@ -122,6 +122,60 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        public void MetadataChecks()
+        {
+            var localName = DataverseTests.LocalModel.LogicalName;
+
+            var rawProvider = new TrackingXrmMetadataProvider(
+                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+            );
+
+            // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
+            var disp = new Dictionary<string, string>
+            {
+                { "local", "Locals" },
+                { "remote", "Remotes"  }
+            };
+
+            var provider = new CdsEntityMetadataProvider(rawProvider, disp);
+            var ok = provider.TryGetXrmEntityMetadata(localName, out var entityMetadata);
+            Assert.IsTrue(ok);
+            Assert.IsNotNull(entityMetadata);
+
+            // Lookup non-relationship field
+            var logicalName = "new_price";
+            var displayName = "Price";
+            ok = entityMetadata.TryGetAttribute(logicalName, out var amd);
+            Assert.IsTrue(ok);
+            Assert.AreEqual(amd.LogicalName, logicalName);
+
+            ok = entityMetadata.TryGetAttribute(logicalName.ToUpper(), out amd);
+            Assert.IsFalse(ok, "case sensitive lookup");
+            Assert.IsNull(amd);
+            
+            ok = entityMetadata.TryGetAttribute(displayName, out amd);
+            Assert.IsNull(amd);
+            Assert.IsFalse(ok, "only logical names, Not display names");
+                        
+            // Relationships.
+            // "refg" is the relationship for "otherid" attribute.
+            ok = entityMetadata.TryGetAttribute("otherid", out amd);
+            Assert.IsTrue(ok);
+
+            ok = entityMetadata.TryGetRelationship("otherid", out var relationshipName);
+            Assert.IsFalse(ok, "Attribute is not a relationship");
+            Assert.IsNull(relationshipName);
+
+            ok = entityMetadata.TryGetRelationship("refg", out relationshipName);
+            Assert.IsTrue(ok);
+            Assert.AreEqual("otherid", relationshipName);
+
+            ok = entityMetadata.TryGetRelationship("Refg", out relationshipName);
+            Assert.IsFalse(ok, "not case sensitive");
+            Assert.IsNull(relationshipName);
+        }
+
+        [TestMethod]
         public void Check()
         {
             var rawProvider = new MockXrmMetadataProvider(_trivialModel);
