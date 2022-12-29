@@ -9,6 +9,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -20,6 +21,27 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public static class AttributeUtility
     {
+        // Lookup by attribute logical name or by relationship name. 
+        public static bool TryGetAttribute(this EntityMetadata entityMetadata, string fieldName, out AttributeMetadata amd)
+        {
+            amd = entityMetadata.Attributes.FirstOrDefault(amd => amd.LogicalName == fieldName);
+            return amd != null;
+        }
+
+        public static bool TryGetRelationship(this EntityMetadata entityMetadata, string fieldName, out string realAttributeName)
+        {
+            foreach (var relationships in entityMetadata.ManyToOneRelationships)
+            {
+                if (relationships.ReferencingEntityNavigationPropertyName == fieldName)
+                {
+                    realAttributeName = relationships.ReferencingAttribute;                    
+                    return realAttributeName  != null;
+                }
+            }
+            realAttributeName = null;
+            return false;
+        }
+
         /// <summary>
         /// Convert an Power Fx FormulaValue to an entity Object value. 
         /// </summary>
@@ -62,12 +84,12 @@ namespace Microsoft.PowerFx.Dataverse
                     
                 case AttributeTypeCode.Money:
                     return new Money((decimal)((NumberValue)fxValue).Value);
-
+                                    
                 case AttributeTypeCode.CalendarRules:
                 case AttributeTypeCode.Customer:
                 case AttributeTypeCode.EntityName:
                 case AttributeTypeCode.Virtual:
-                case AttributeTypeCode.Lookup:
+                case AttributeTypeCode.Lookup: // EntityReference
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.Memo:
                 case AttributeTypeCode.PartyList:

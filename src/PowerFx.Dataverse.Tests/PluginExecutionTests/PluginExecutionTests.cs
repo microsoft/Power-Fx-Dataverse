@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -484,8 +485,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Set() function against entity fields in RowScope
         [DataTestMethod]
-        [DataRow("Set(Price, 200); Price")]
-        public void LocalSet(string expr)
+        [DataRow("Set(Price, 200); Price", 200.0)]
+        [DataRow("Set(Other, First(Remote));Other.data", 200.0)] 
+        [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)] // $$$
+        public void LocalSet(string expr, object expected)
         {
             // create table "local"
             var logicalName = "local";
@@ -493,15 +496,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
+            dv.AddTable("Remote", "remote");
 
+            
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
 
             var opts = new ParserOptions { AllowsSideEffects = true };
             var config = new PowerFxConfig(); // Pass in per engine
-            config.EnableSetFunction();
+            config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
-            
-            var check = engine1.Check(expr, options: opts, symbolTable: rowScopeSymbols);
+
+            var allSymbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
             Assert.IsTrue(check.IsSuccess);
 
             var run = check.GetEvaluator();
@@ -509,19 +515,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity = el.GetFirstEntity(logicalName, dv, CancellationToken.None); // any record
             var record = dv.Marshal(entity);
             var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+            var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
 
-            var result = run.EvalAsync(CancellationToken.None, rowScopeValues).Result;
+            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
 
-            Assert.AreEqual(200.0, result.ToObject());
+            Assert.AreEqual(expected, result.ToObject());
 
-            // RecordValue is updated .
-            Assert.AreEqual(200.0, record.GetField("new_price").ToObject());
+            // Extra validation that recordValue is updated .
+            if (expr.StartsWith("Set(Price, 200)"))
+            {
+                Assert.AreEqual(200.0, record.GetField("new_price").ToObject());
 
-            Assert.AreEqual(new Decimal(200.0), entity.Attributes["new_price"]);
+                Assert.AreEqual(new Decimal(200.0), entity.Attributes["new_price"]);
 
-            // verify on entity 
-            var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-            Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+                // verify on entity 
+                var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
+                Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+            }
         }
 
         // Patch() function against entity fields in RowScope
@@ -529,9 +539,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200)]
-        // [DataRow("Collect(t1, { Price : 200}).Price", 200)] // https://github.com/microsoft/Power-Fx/issues/915
+        [DataRow("Collect(t1, { Price : 200}).Price", 200)] 
         // [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
-        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
+        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255)]        
         public void PatchFunction(string expr, double expected)
         {
             // create table "local"
@@ -626,7 +636,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Set to blank. 
             var entity1 = el.LookupRefCore(_eRef1);
-            entity1.Attributes["refg"] = null;
             entity1.Attributes["otherid"] = null;
 
             var symbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
@@ -866,12 +875,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity2 = new Entity("remote", _g2);
 
             entity1.Attributes["new_price"] = 100;
+
+            // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
+            // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
             entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
 
-            // $$$ This is from ReferencingEntityNavigationPropertyName
-            // This is the field we end up looking up when we try to access 'otherid'.
-            entity1.Attributes["refg"] = entity1.Attributes["otherid"];
             entity2.Attributes["data"] = 200;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
