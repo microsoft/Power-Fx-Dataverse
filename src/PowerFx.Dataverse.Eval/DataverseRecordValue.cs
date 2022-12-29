@@ -48,6 +48,26 @@ namespace Microsoft.PowerFx.Dataverse
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
+        private bool TryGetAttributeOrRelationship(string fieldName, out object value)
+        {
+            // IR should convert the fieldName from display to Logical Name. 
+            if (_entity.Attributes.TryGetValue(fieldName, out value))
+            {
+                return true;
+            }
+
+            if (_metadata.TryGetRelationship(fieldName, out var realAttributeName))
+            {
+                if (_entity.Attributes.TryGetValue(realAttributeName, out value))
+                {
+                    return true;
+                }
+            }
+
+            value = null;
+            return false;
+        }
+
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
             // If primary key is missing from Attributes, still get it from the entity. 
@@ -58,10 +78,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // IR should convert the fieldName from display to Logical Name. 
-            if (!_entity.Attributes.TryGetValue(fieldName, out var value))
+            if (!TryGetAttributeOrRelationship(fieldName, out var value))
             {
                 result = null;
                 return false;
+            }
+
+            if (value == null)
+            {
+                // Caller will convert to Blank. 
+                result = null;
+                return false; 
             }
 
             if (value is EntityReference reference)
@@ -139,7 +166,25 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var field in record.Fields)
             {
-                AttributeMetadata amd = _metadata.Attributes.FirstOrDefault(amd => amd.LogicalName == field.Name);
+                if (!_metadata.TryGetAttribute(field.Name, out var amd))
+                {
+                    if (_metadata.TryGetRelationship(field.Name, out var realAttributeName))
+                    {
+                        // Get primary key, set as guid. 
+                        var dvr = field.Value as DataverseRecordValue;
+                        if (dvr == null)
+                        {
+                            // Binder should have stopped this. 
+                            error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
+                            return;
+                        }
+                        var entityRef = dvr.Entity.ToEntityReference();
+
+                        _entity.Attributes[realAttributeName] = entityRef;
+                        return;
+                    }
+                }
+
                 try
                 {
                     object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
