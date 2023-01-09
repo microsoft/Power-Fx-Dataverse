@@ -971,6 +971,50 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             lookup.Add(CancellationToken.None, entity1, entity1);
             return lookup;
         }
+
+        // Patch() function against entity fields in RowScope
+        [DataTestMethod]
+        //[DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price")]
+        [DataRow("Remove(t1, First(t1))")]
+        public void MutationFunctionErrors(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            el._onDeleteRef = (response) => new DataverseResponse();
+
+            //el._onLookupRef = (er) =>
+            //    throw new FaultException<OrganizationServiceFault>(
+            //        new OrganizationServiceFault(),
+            //        new FaultReason("Andersonf testing"));
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsTrue(false);
+
+            // verify on entity - this should always be updated 
+            //if (expr.Contains("Patch("))
+            //{
+            //    var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+            //    var entity = (Entity)r2.ToObject();
+            //    var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
+            //    Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+            //}
+        }
     }
 
     // Example of a custom function
@@ -980,5 +1024,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return FormulaValue.New(value.Value * 2);
         }
+    }
+
+    class FakeMessage
+    {
+        public string Value;
     }
 }
