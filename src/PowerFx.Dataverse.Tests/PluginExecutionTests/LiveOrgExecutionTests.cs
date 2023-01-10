@@ -331,7 +331,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
 
                 var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\"))).MyDate";
-                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).Result;
+                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
 
                 DateTime dt2 = (result2 as DateTimeValue).Value;
@@ -390,7 +390,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
 
                 var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
-                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).Result;
+                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
 
                 Entity e = (Entity)result2.ToObject();
@@ -429,7 +429,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 string newValue = currentValue == "Value1" ? "'Properties2 (TableTest1S)'.Value2" : "'Properties2 (TableTest1S)'.Value1";
                 string expr2 = $"Patch(TableTest1S, {{ TableTest1 : GUID(\"4ed3cf85-651d-ed11-9db1-0022482aea8f\")}}, {{ Properties2: {newValue} }})";
 
-                FormulaValue result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbols, runtimeConfig: runtimeConfig).Result;
+                FormulaValue result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbols, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
                 Assert.IsInstanceOfType(result2.ToObject(), typeof(Entity));
             }
