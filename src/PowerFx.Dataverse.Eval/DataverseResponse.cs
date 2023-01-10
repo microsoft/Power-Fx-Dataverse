@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Simple way to create a DataverseResponse error instance.
     /// </summary>
-    public class DataverseResponseHasError: DataverseResponse
+    internal class DataverseResponseHasError: DataverseResponse
     {
         public DataverseResponseHasError(string error)
         {
