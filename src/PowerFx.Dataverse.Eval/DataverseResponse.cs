@@ -59,4 +59,15 @@ namespace Microsoft.PowerFx.Dataverse
             return FormulaValue.NewError(GetExpressionError(Error), type);
         }
     }
+
+    /// <summary>
+    /// Simple way to create a DataverseResponse error instance.
+    /// </summary>
+    public class DataverseResponseHasError: DataverseResponse
+    {
+        public DataverseResponseHasError(string error)
+        {
+            Error = error;
+        }
+    }
 }

@@ -974,7 +974,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
-        //[DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price")]
         [DataRow("Remove(t1, First(t1))")]
         public void MutationFunctionErrors(string expr)
         {
@@ -983,6 +982,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            el._getCustomErrorMessage = delegate () { return "My custom error message!"; };
+
             dv.AddTable(displayName, logicalName);
 
             var opts = new ParserOptions { AllowsSideEffects = true };
@@ -995,25 +997,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            el._onDeleteRef = (response) => new DataverseResponse();
-
-            //el._onLookupRef = (er) =>
-            //    throw new FaultException<OrganizationServiceFault>(
-            //        new OrganizationServiceFault(),
-            //        new FaultReason("Andersonf testing"));
-
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var errors = ((ErrorValue)result).Errors;
 
-            Assert.IsTrue(false);
-
-            // verify on entity - this should always be updated 
-            //if (expr.Contains("Patch("))
-            //{
-            //    var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
-            //    var entity = (Entity)r2.ToObject();
-            //    var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-            //    Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
-            //}
+            Assert.AreEqual("My custom error message!", errors.First().Message);
         }
     }
 
