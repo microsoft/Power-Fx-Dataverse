@@ -58,5 +58,13 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return FormulaValue.NewError(GetExpressionError(Error), type);
         }
+
+        static public DataverseResponse NewError(string error)
+        {
+            return new DataverseResponse()
+            {
+                Error = error
+            };
+        }
     }
 }

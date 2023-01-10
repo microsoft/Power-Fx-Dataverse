@@ -103,6 +103,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
+        public Func<string> _getCustomErrorMessage;
 
         // Gets a copy of the entity. 
         // modifying the storage still requires a call to Update. 
@@ -217,6 +218,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (_getCustomErrorMessage != null)
+            {
+                return Task.FromResult(DataverseResponse.NewError(_getCustomErrorMessage()));
+            }
+
             foreach (var entity in _list)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -226,6 +232,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     break;
                 }
             }
+
             return Task.FromResult(new DataverseResponse());
         }
 

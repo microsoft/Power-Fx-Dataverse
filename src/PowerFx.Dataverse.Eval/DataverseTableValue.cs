@@ -150,7 +150,7 @@ namespace Microsoft.PowerFx.Dataverse
                     DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
 
                     if (response.HasError)
-                        return DValue<BooleanValue>.Of(BooleanValue.New(false));
+                        return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
                 }
             }
 
