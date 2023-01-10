@@ -220,8 +220,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             if (_getCustomErrorMessage != null)
             {
-                DataverseResponse response = new DataverseResponseHasError(_getCustomErrorMessage());
-                return Task.FromResult(response);
+                return Task.FromResult(DataverseResponse.NewError(_getCustomErrorMessage()));
             }
 
             foreach (var entity in _list)

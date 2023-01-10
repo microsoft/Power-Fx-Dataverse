@@ -631,15 +631,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        [DataRow("Remove(t1, LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")) )")]
-        public void RemoveFunction(string expr)
+        [DataRow("Remove(t1, LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")) )", false)]
+        [DataRow("Remove(t1, First(t1))", true)]
+        public void RemoveFunction(string expr, bool injectError)
         {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
+            var errorMessage = "My custom error message!";
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
+
+            if (injectError)
+            {
+                el._getCustomErrorMessage = () => errorMessage;
+            }
 
             var opts = new ParserOptions { AllowsSideEffects = true };
             var config = new PowerFxConfig(); // Pass in per engine
@@ -653,10 +660,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            // Verify on expression - this may be old or no
+            if (injectError)
+            {
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.AreEqual(errorMessage, ((ErrorValue)result).Errors.First().Message);
+            }
+            else
+            {
+                Assert.IsNotInstanceOfType(result, typeof(ErrorValue));
 
-            // verify on entity - this should always be updated 
-            Assert.IsFalse(el.Exists(new EntityReference(logicalName, _g1)));            
+                // Verify on expression - this may be old or no
+
+                // verify on entity - this should always be updated 
+                Assert.IsFalse(el.Exists(new EntityReference(logicalName, _g1)));
+            }           
         }
 
         [TestMethod]
@@ -971,37 +988,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             lookup.Add(CancellationToken.None, entity1, entity1);
             return lookup;
         }
-
-        // Patch() function against entity fields in RowScope
-        [DataTestMethod]
-        [DataRow("Remove(t1, First(t1))")]
-        public void MutationFunctionErrors(string expr)
-        {
-            // create table "local"
-            var logicalName = "local";
-            var displayName = "t1";
-
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-
-            el._getCustomErrorMessage = delegate () { return "My custom error message!"; };
-
-            dv.AddTable(displayName, logicalName);
-
-            var opts = new ParserOptions { AllowsSideEffects = true };
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check.IsSuccess);
-
-            var run = check.GetEvaluator();
-
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-            var errors = ((ErrorValue)result).Errors;
-
-            Assert.AreEqual("My custom error message!", errors.First().Message);
-        }
     }
 
     // Example of a custom function
@@ -1011,10 +997,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return FormulaValue.New(value.Value * 2);
         }
-    }
-
-    class FakeMessage
-    {
-        public string Value;
     }
 }
