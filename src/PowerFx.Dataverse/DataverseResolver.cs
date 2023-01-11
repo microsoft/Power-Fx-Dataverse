@@ -22,21 +22,12 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Resolver for Dataverse bindings. 
     /// </summary>
-    class DataverseResolver : SimpleResolver
+    class DataverseResolver : ComposedReadOnlySymbolTable
     {
         private CdsEntityMetadataProvider _provider;
 
-        public static PowerFxConfig CreateConfig(TexlFunction[] functions)
-        {
-            CultureInfo culture = null;
-            var config = new PowerFxConfig(culture);
-            config.SetCoreFunctions(functions);
-
-            return config;
-        }
-
-        public DataverseResolver(CdsEntityMetadataProvider provider, TexlFunction[] functions)
-            : base(CreateConfig(functions))
+        public DataverseResolver(CdsEntityMetadataProvider provider, ReadOnlySymbolTable functions)
+            : base(functions)
         {            
             _provider = provider;
         }

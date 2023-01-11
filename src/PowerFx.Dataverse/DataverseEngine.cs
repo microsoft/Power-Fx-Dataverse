@@ -92,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
             var parseResult = parseOptions.Parse(expression);
 
-            var functionList = Config.SymbolTable.Functions.ToArray();
+            var functionList = Config.SymbolTable;
             var resolver = new DataverseResolver(_metadataCache, functionList);
 
             var binding = TexlBinding.Run(
@@ -196,7 +196,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns>Expression in expected display or logical format.</returns>
         internal string ConvertExpression(string expression, bool toDisplay)
         {
-            var resolver = new DataverseResolver(_metadataCache, Config.SymbolTable.Functions.ToArray());
+            var resolver = new DataverseResolver(_metadataCache, Config.SymbolTable);
             
             // We need to build the context type (used for ThisRecord scope) to pass to the expression formula helper 
             var currentDsType = FormulaType.Build(_currentDataSource.Schema.ToRecord());
