@@ -140,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity 
-            UpdateEntityWithRecord(record, out var error);
+            UpdateEntityWithRecord(record, out var lean, out var error);
 
             if (error != null)
             {
@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(_entity, cancellationToken);
+            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(lean, cancellationToken);
 
             if (result.HasError)
             {
@@ -160,9 +160,10 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Record should already be logical names. 
-        private void UpdateEntityWithRecord(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        private void UpdateEntityWithRecord(RecordValue record, out Entity leanEntity, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             error = null;
+            leanEntity = new Entity(_entity.LogicalName, _entity.Id);
 
             foreach (var field in record.Fields)
             {
@@ -191,6 +192,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                     string fieldName = field.Name;
                     _entity.Attributes[fieldName] = fieldValue;
+
+                    leanEntity.Attributes.Add(fieldName, fieldValue);
                 }
                 catch (NotImplementedException)
                 {
