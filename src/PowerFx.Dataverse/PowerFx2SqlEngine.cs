@@ -27,7 +27,6 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public sealed class PowerFx2SqlEngine : DataverseEngine
     {
-
         // default decimal precision
         internal const int DefaultPrecision = 10;
 
@@ -39,10 +38,64 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        public override CheckResult Check(string expression)
+        // Called by Engine after Bind to collect additional errors. 
+        // this can walk the tree and apply SQL-engine specific restrictions. 
+        protected override IEnumerable<ExpressionError> PostCheck(CheckResult result)
         {
-            // For sql codegen, enable sql restrictions. 
-            return CheckInternal(expression, performSqlValidations : true);
+            var errors = PostCheck2(result);
+            return ExpressionError.New(errors, result.CultureInfo);
+        }
+
+        private IEnumerable<IDocumentError> PostCheck2(CheckResult result)
+        { 
+            var expression = result.Parse.Text;
+            var binding = result.ApplyBindingInternal();
+
+            if (result.IsSuccess)
+            {
+                try
+                {
+                    var returnType = BuildReturnType(binding.ResultType);
+
+                    // SQL visitor will throw errors for SQL-specific constraints.
+                    var sqlInfo = result.ApplySqlCompiler();
+                    var res = sqlInfo._retVal;
+
+                    var errors = new List<IDocumentError>();
+                    if (!ValidateReturnType(new SqlCompileOptions(), res.type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
+                    {
+                        errors.AddRange(typeErrors);
+                    }
+
+                    if (errors.Count > 0)
+                    {
+                        return errors;
+                    }
+
+
+                    if (result.IsSuccess)
+                    {
+                        result.ReturnType = returnType;
+                    }
+                }
+                catch (SqlCompileException ex)
+                {
+                    // append the entire span for any errors with an unknown span
+                    return ex.GetErrors(binding.Top.GetTextSpan());
+                }
+                catch (NotImplementedException)
+                {
+                    return new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan());
+                }
+                catch (Exception ex)
+                {
+                    return new[] {
+                        new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
+                        };
+                }
+            }
+
+            return new IDocumentError[0];
         }
 
         // Compile the formula to SQL that can be called from CDS. 
@@ -50,20 +103,23 @@ namespace Microsoft.PowerFx.Dataverse
         public SqlCompileResult Compile(string expression, SqlCompileOptions options)
         {
             // don't perform SQL validations during the initial check, as they will be done as part of the compilation
-            var result1 = this.CheckInternal(expression, performSqlValidations: false);
+            SqlCompileResult sqlResult = new SqlCompileResult(this);
+            sqlResult.SetText(expression);
+            sqlResult.SetBindingInfo();
+            var binding = sqlResult.ApplyBindingInternal();
 
             // attempt to produce a sanitized formula, success or failure, for reporting
-            var binding = result1._binding;
             var sanitizedFormula = StructuralPrint.Print(binding.Top, binding, new NameSanitizer(binding));
 
-            if (!result1.IsSuccess)
+            sqlResult.ApplyErrors(); // will invoke post-check hook
+
+            if (!sqlResult.IsSuccess)
             {
-                SqlCompileResult sqlResult = new SqlCompileResult(result1);
                 sqlResult.SanitizedFormula = sanitizedFormula;
 
                 // Note if we fail due to unsupported functions. 
                 sqlResult._unsupportedWarnings = new List<string>();
-                foreach (var error in result1.Errors)
+                foreach (var error in sqlResult.Errors)
                 {
                     if (error.MessageKey == "ErrUnknownFunction")
                     {
@@ -75,11 +131,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             try
             {
-                var (irNode, scopeSymbol) = IRTranslator.Translate(binding);
-
-                var v = new SqlVisitor();
-                var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
-                var result = irNode.Accept(v, ctx);
+                var sqlInfo = sqlResult.ApplySqlCompiler();
+                var ctx = sqlInfo._ctx;
+                var result = sqlInfo._retVal;
+                var irNode = sqlResult.ApplyIR().TopNode;
 
                 // if no function content generated (for scenarios which perform no logic), set the return
                 if (ctx._sbContent.Length == 0)
@@ -89,8 +144,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
                 {
-                    var errorResult = new SqlCompileResult();
-                    errorResult.SetErrors(errors);
+                    var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
                     return errorResult;
                 }
@@ -206,8 +260,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 EmitReturn(tw, indent, ctx, result, retType, options);
                 tw.WriteLine($"END");
-
-                var sqlResult = new SqlCompileResult(result1);
+                                
                 sqlResult.SqlFunction = tw.ToString();
 
                 // Write actual function definition 
@@ -231,7 +284,10 @@ namespace Microsoft.PowerFx.Dataverse
                 var dependentFields = ctx.GetDependentFields();
 
                 // The top-level identifiers are the logical names of fields on the main entity
-                sqlResult.TopLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();
+                sqlResult.ApplyDependencyAnalysis();
+                var topLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();
+                sqlResult.TopLevelIdentifiers.Clear();
+                sqlResult.TopLevelIdentifiers.UnionWith(topLevelIdentifiers);
 
                 // related identifiers are the the logical names of fields on other entities
                 sqlResult.RelatedIdentifiers = dependentFields.Where(pair => pair.Key != _currentEntityName).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -239,27 +295,15 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
 
                 sqlResult.ReturnType = retType;
-                sqlResult.LogicalFormula = ConvertExpression(expression, toDisplay: false);
+                sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null);
                 sqlResult.SanitizedFormula = sanitizedFormula;
 
                 sqlResult._unsupportedWarnings = ctx._unsupportedWarnings;
                 return sqlResult;
             }
-            catch (SqlCompileException sqlEx)
-            {
-                var errorResult = new SqlCompileResult();
-                errorResult.SetErrors(sqlEx.GetErrors(binding.Top.GetTextSpan()));
-                errorResult.SanitizedFormula = sanitizedFormula;
-                errorResult._unsupportedWarnings = new List<string>
-                {
-                    sqlEx.Message
-                };
-                return errorResult;
-            }
             catch (NotImplementedException)
             {
-                var errorResult = new SqlCompileResult();
-                errorResult.SetErrors(
+                var errorResult = new SqlCompileResult(
                     new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan())
                 );
                 errorResult.SanitizedFormula = sanitizedFormula;
@@ -267,8 +311,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (Exception ex)
             {
-                var errorResult = new SqlCompileResult();
-                errorResult.SetErrors(
+                var errorResult = new SqlCompileResult(
                     new[] {
                         new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
                     }
@@ -304,6 +347,60 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 tw.WriteLine($"{indent}RETURN {result}");
             }
+        }
+    }
+
+    internal static class CheckResultExtensions
+    {
+        private static SqlCompileInfo SqlCompilerWorker(this CheckResult check)
+        {
+            var binding = check.ApplyBindingInternal();
+
+            var irResult = check.ApplyIR();
+            var irNode = irResult.TopNode;
+            var scopeSymbol = irResult.RuleScopeSymbol;
+
+            var v = new SqlVisitor();
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
+            
+            // This visitor will throw exceptions on SQL errors. 
+            var result = irNode.Accept(v, ctx);
+
+            var info = new SqlCompileInfo
+            {
+                _retVal = result,
+                _ctx = ctx
+            };
+            return info;
+        }
+
+        /// <summary>
+        /// Run SQL compiler phase or throw on errors. 
+        /// If the check result is a <see cref="SqlCompileResult"/>, then this is cached.
+        /// </summary>
+        /// <param name="check"></param>
+        /// <returns></returns>
+        /// <exception cref="SqlCompileException">Throw if we hit Power Fx restrictions that 
+        /// aren't supported by the SQL backend.</exception>
+        internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check)
+        {
+            // If this is a SqlCompileResult, then we can cache it. 
+            // Else, just recompute. 
+            SqlCompileResult sqlCheck = check as SqlCompileResult;
+            var info = sqlCheck?._sqlInfo;
+            if (info != null)
+            {
+                // Get from cache
+                return info;
+            }
+
+            info = check.SqlCompilerWorker();
+
+            if (sqlCheck != null)
+            {
+                sqlCheck._sqlInfo = info;
+            }
+            return info;
         }
     }
 }

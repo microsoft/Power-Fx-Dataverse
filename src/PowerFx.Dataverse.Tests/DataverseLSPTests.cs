@@ -43,9 +43,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 				// Dataverse would use the entity name to look up proper metadata. 
 				Assert.AreEqual(_entityLogicalName, entityLogicalName);
 
-				var powerFx2SqlEngine = DataverseIntellisenseTests.GetAllAttributesEngine(culture);
-
-				return powerFx2SqlEngine;
+				Engine powerFx2SqlEngine = DataverseIntellisenseTests.GetAllAttributesEngine(culture);
+				EditorContextScope scope = powerFx2SqlEngine.CreateEditorScope();
+				return scope;
 			}
 		}
 

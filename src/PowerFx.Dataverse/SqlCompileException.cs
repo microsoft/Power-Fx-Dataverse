@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Errors;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Syntax;
+using System.Reflection;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -123,11 +124,6 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey AggregateCoercionNotSupported = new ErrorResourceKey("FormulaColumns_AggregateCoercionNotSupported");
 
-        /// <summary>
-        /// The error resource key for a formula that is too long
-        /// </summary>
-        internal readonly static ErrorResourceKey FormulaTooLong = new ErrorResourceKey("FormulaColumns_FormulaTooLong");
-
         // <summary>
         /// The error resource key for a formula that references a virtual table
         /// </summary>
@@ -153,6 +149,25 @@ namespace Microsoft.PowerFx.Dataverse
             _error.EnsureErrorContext(defaultSpan);
 
             yield return _error;
+        }
+
+        // Return true if this error key is a SQL Not Supported case. 
+        internal static bool IsError(string errorKey)
+        {
+            var fields = typeof(SqlCompileException).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            foreach (var field in fields)
+            {
+                if (field.FieldType == typeof(ErrorResourceKey))
+                {
+                    var key2 = (ErrorResourceKey)field.GetValue(null);
+                    if (key2.Key == errorKey)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

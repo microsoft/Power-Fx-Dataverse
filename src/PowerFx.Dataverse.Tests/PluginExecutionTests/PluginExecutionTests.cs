@@ -189,7 +189,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(check.IsSuccess);
             Assert.AreEqual(FormulaType.Number, check.ReturnType);
 
-            Assert.IsNotNull(check._binding);
+            Assert.IsNotNull(check.Binding);
         }
 
         // Ensure a custom function shows up in intellisense. 
