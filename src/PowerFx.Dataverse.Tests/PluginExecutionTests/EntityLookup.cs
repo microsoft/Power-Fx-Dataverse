@@ -103,7 +103,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
+
+        // When used, it forces a mutation function to return a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
+
+        // When passed, simulates an invalid field getting updated.
         public Func<string> _getTargetedColumnName;
 
         // Gets a copy of the entity. 

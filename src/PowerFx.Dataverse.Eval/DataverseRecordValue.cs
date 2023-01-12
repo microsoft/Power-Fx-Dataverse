@@ -139,8 +139,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Update local copy of entity 
-            UpdateEntityWithRecord(record, out var leanEntity, out var error);
+            // Update local copy of entity.
+            var leanEntity = ConvertRecordToEntity(record, out var error);
 
             if (error != null)
             {
@@ -164,12 +164,12 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Record should already be logical names. 
-        private void UpdateEntityWithRecord(RecordValue record, out Entity leanEntity, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
-            error = null;
+            // Contains only the modified fields.
+            var leanEntity = new Entity(_entity.LogicalName, _entity.Id);
 
-            // Contains only the modified columns.
-            leanEntity = new Entity(_entity.LogicalName, _entity.Id);
+            error = null;
 
             foreach (var field in record.Fields)
             {
@@ -183,12 +183,12 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             // Binder should have stopped this. 
                             error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
-                            return;
+                            return null;
                         }
                         var entityRef = dvr.Entity.ToEntityReference();
 
                         leanEntity.Attributes.Add(realAttributeName, entityRef);
-                        return;
+                        return leanEntity;
                     }
                 }
 
@@ -203,8 +203,11 @@ namespace Microsoft.PowerFx.Dataverse
                 catch (NotImplementedException)
                 {
                     error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} with type {_entity.Attributes[field.Name].GetType().Name}/{field.Value.Type} is not supported yet.", methodName);
+                    return null;
                 }
             }
+
+            return leanEntity;
         }
 
         public static bool TryGetValue(OptionSetValueType type, object value, out Types.OptionSetValue osValue)
