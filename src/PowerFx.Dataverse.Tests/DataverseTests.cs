@@ -1486,6 +1486,28 @@ END
             Assert.AreEqual(expr, result.LogicalFormula);
         }
 
+        // Translate an expr with both display and logical names
+        [DataTestMethod]
+        [DataRow("new_price * Quantity", "Price * Quantity", "new_price * new_quantity")]
+        public void MixedTranslate(string mixedExpr, string expectedDisplay, string expectedLogical)
+        {
+            var provider = new MockXrmMetadataProvider(RelationshipModels);
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            
+            var actualTranslation = engine.ConvertToDisplay(mixedExpr);
+            Assert.AreEqual(expectedDisplay, actualTranslation);
+
+            actualTranslation = engine.ConvertToDisplay(expectedLogical);
+            Assert.AreEqual(expectedDisplay, actualTranslation);
+
+            // compile the translated expression and ensure it matches the original logical expression
+            foreach (var expr in new string[] { mixedExpr, expectedDisplay, expectedLogical })
+            {
+                var result = engine.Compile(expr, new SqlCompileOptions());
+                Assert.AreEqual(expectedLogical, result.LogicalFormula);
+            }
+        }
+
         [DataTestMethod]
         [DataRow("Price * Quantity", "#$FieldDecimal$# * #$FieldDecimal$#", DisplayName = "Display Names")]
         [DataRow("new_price * new_quantity", "#$FieldDecimal$# * #$FieldDecimal$#", DisplayName = "Logical Names")]
