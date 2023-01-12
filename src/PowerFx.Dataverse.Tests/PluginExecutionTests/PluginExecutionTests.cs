@@ -631,6 +631,75 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow("Patch(t1, First(t1), {Price:200})")]
+        public void PatchFunctionLean(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            el._getTargetedColumnName = () => "new_price";
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result; ;
+
+            Assert.IsNotInstanceOfType(result, typeof(ErrorValue));
+        }
+
+        [DataTestMethod]
+        [DataRow("Set(Price, 200); Price", 100.0)]
+        public void PatchFunctionLeanWithError(string expr, object expected)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("Remote", "remote");
+
+            // This will force an error.
+            el._getTargetedColumnName = () => "Foo";
+
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var allSymbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var entity = el.GetFirstEntity(logicalName, dv, CancellationToken.None); // any record
+            var record = dv.Marshal(entity);
+            var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+            var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
+
+            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+
+            // Check if entity has not been updated.
+            Assert.AreEqual(expected, result.ToObject());
+            Assert.AreEqual(100.0, record.GetField("new_price").ToObject());
+            Assert.AreEqual(100, entity.Attributes["new_price"]);
+        }
+
+        [DataTestMethod]
         [DataRow("Remove(t1, LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")) )", false)]
         [DataRow("Remove(t1, First(t1))", true)]
         public void RemoveFunction(string expr, bool injectError)

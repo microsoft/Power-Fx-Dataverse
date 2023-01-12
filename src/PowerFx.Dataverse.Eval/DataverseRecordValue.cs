@@ -139,8 +139,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Update local copy of entity 
-            UpdateEntityWithRecord(record, out var error);
+            // Update local copy of entity.
+            var leanEntity = ConvertRecordToEntity(record, out var error);
 
             if (error != null)
             {
@@ -148,20 +148,27 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(_entity, cancellationToken);
+            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
 
             if (result.HasError)
             {
                 return result.DValueError(nameof(IDataverseUpdater.UpdateAsync));
             }
 
-            _entity = result.Response;
+            foreach (var attr in result.Response.Attributes)
+            {
+                _entity.Attributes[attr.Key] = attr.Value;
+            }
+            
             return DValue<RecordValue>.Of(this);
         }
 
         // Record should already be logical names. 
-        private void UpdateEntityWithRecord(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
+            // Contains only the modified fields.
+            var leanEntity = new Entity(_entity.LogicalName, _entity.Id);
+
             error = null;
 
             foreach (var field in record.Fields)
@@ -176,12 +183,12 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             // Binder should have stopped this. 
                             error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
-                            return;
+                            return null;
                         }
                         var entityRef = dvr.Entity.ToEntityReference();
 
-                        _entity.Attributes[realAttributeName] = entityRef;
-                        return;
+                        leanEntity.Attributes.Add(realAttributeName, entityRef);
+                        return leanEntity;
                     }
                 }
 
@@ -190,13 +197,17 @@ namespace Microsoft.PowerFx.Dataverse
                     object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
 
                     string fieldName = field.Name;
-                    _entity.Attributes[fieldName] = fieldValue;
+                    
+                    leanEntity.Attributes.Add(fieldName, fieldValue);
                 }
                 catch (NotImplementedException)
                 {
                     error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} with type {_entity.Attributes[field.Name].GetType().Name}/{field.Value.Type} is not supported yet.", methodName);
+                    return null;
                 }
             }
+
+            return leanEntity;
         }
 
         public static bool TryGetValue(OptionSetValueType type, object value, out Types.OptionSetValue osValue)
