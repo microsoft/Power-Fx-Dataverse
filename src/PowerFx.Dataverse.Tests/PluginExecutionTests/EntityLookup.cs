@@ -104,6 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
         public Func<string> _getCustomErrorMessage;
+        public Func<string> _getTargetedColumnName;
 
         // Gets a copy of the entity. 
         // modifying the storage still requires a call to Update. 
@@ -166,10 +167,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             
             foreach (var attr in entity.Attributes)
             {
+                if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
+                {
+                    return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                }
+
                 existing.Attributes[attr.Key] = attr.Value;
             }
             
-            return Task.FromResult(new DataverseResponse<Entity>(entity));
+            return Task.FromResult(new DataverseResponse<Entity>(existing));
         }
 
         public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))

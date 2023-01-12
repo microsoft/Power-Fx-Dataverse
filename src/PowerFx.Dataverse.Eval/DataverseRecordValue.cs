@@ -140,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity 
-            UpdateEntityWithRecord(record, out var lean, out var error);
+            UpdateEntityWithRecord(record, out var leanEntity, out var error);
 
             if (error != null)
             {
@@ -148,14 +148,18 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(lean, cancellationToken);
+            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
 
             if (result.HasError)
             {
                 return result.DValueError(nameof(IDataverseUpdater.UpdateAsync));
             }
 
-            _entity = result.Response;
+            foreach (var attr in result.Response.Attributes)
+            {
+                _entity.Attributes[attr.Key] = attr.Value;
+            }
+            
             return DValue<RecordValue>.Of(this);
         }
 
@@ -163,6 +167,8 @@ namespace Microsoft.PowerFx.Dataverse
         private void UpdateEntityWithRecord(RecordValue record, out Entity leanEntity, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             error = null;
+
+            // Contains only the modified columns.
             leanEntity = new Entity(_entity.LogicalName, _entity.Id);
 
             foreach (var field in record.Fields)
@@ -181,7 +187,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         var entityRef = dvr.Entity.ToEntityReference();
 
-                        _entity.Attributes[realAttributeName] = entityRef;
+                        leanEntity.Attributes.Add(realAttributeName, entityRef);
                         return;
                     }
                 }
@@ -191,8 +197,7 @@ namespace Microsoft.PowerFx.Dataverse
                     object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
 
                     string fieldName = field.Name;
-                    _entity.Attributes[fieldName] = fieldValue;
-
+                    
                     leanEntity.Attributes.Add(fieldName, fieldValue);
                 }
                 catch (NotImplementedException)
