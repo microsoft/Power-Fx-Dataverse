@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // When used, it forces a mutation function to return a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
 
-        // When passed, simulates an invalid field getting updated.
+        // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
         public Func<string> _getTargetedColumnName;
 
         // Gets a copy of the entity. 
