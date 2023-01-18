@@ -1,9 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-
   <PropertyGroup>
     <PowerFxVersion>0.2.3-preview.20230117-1003</PowerFxVersion>
     <DataverseParserVersion>0.1.0-ci-20230118-67296243</DataverseParserVersion>
   </PropertyGroup>
-
 </Project>
