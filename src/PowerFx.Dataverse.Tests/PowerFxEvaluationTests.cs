@@ -57,32 +57,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        public void RunCleanSql2()
-        {
-            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
-            // short-circuit if connection string is not set
-            if (ConnectionString == null)
-            {
-                Assert.Inconclusive("Skipping SQL tests - no connection string set");
-                return;
-            }
-
-            // Build step copied all tests to output dir.
-            using (var sql = new SqlRunner(ConnectionString))
-            {
-                var runner = new TestRunner(sql);
-
-                // Run only those test files fully supported by SQL
-                runner.AddFile(
-                    @"c:\temp\test.txt"
-                    );
-
-                var result = runner.RunTests();
-            }
-        }
-
-
-        [TestMethod]
         public void RunCleanSqlTestCases()
         {
             ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
