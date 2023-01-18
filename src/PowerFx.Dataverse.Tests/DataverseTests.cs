@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -46,7 +47,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsNotNull(result.SqlCreateRow);
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual(0, result.Errors.Count());
-            Assert.IsNull(result.Expression);
 
             Assert.IsTrue(result.ReturnType is NumberType);
             Assert.AreEqual(1, result.TopLevelIdentifiers.Count);
@@ -188,7 +188,7 @@ END
         public void CheckNullRef()
         {
             var engine = new PowerFx2SqlEngine();
-            Assert.ThrowsException<ArgumentNullException>(() => engine.Check(null));
+            Assert.ThrowsException<ArgumentNullException>(() => engine.Check((string) null));
         }
 
         [TestMethod]
@@ -736,8 +736,12 @@ END
         [TestMethod]
         public void CompileInvalidFormula()
         {
+            // Max length is determined by engine. 
+            var opts = new PowerFx2SqlEngine().GetDefaultParserOptionsCopy();
+            Assert.AreEqual(1000, opts.MaxExpressionLength);
+
             var expr = new string('a', 1001);
-            var error = "Error 0-1001: Formulas can't be longer than 1000 characters.";
+            var error = "Error 0-1001: Expression can't be more than 1000 characters. The expression is 1001 characters.";
 
             var engine = new PowerFx2SqlEngine();
             var options = new SqlCompileOptions();
@@ -753,7 +757,7 @@ END
             Assert.IsNotNull(compileResult.Errors);
             Assert.AreEqual(1, compileResult.Errors.Count(), 1);
             Assert.AreEqual(error, compileResult.Errors.First().ToString());
-            Assert.AreEqual(SqlCompileException.FormulaTooLong.Key, compileResult.Errors.First().MessageKey);
+            Assert.AreEqual("ErrTextTooLarge", compileResult.Errors.First().MessageKey);
             Assert.IsNotNull(compileResult.SanitizedFormula);
         }
 
@@ -1565,6 +1569,24 @@ END
             var array = items.ToArray();
             Array.Sort(array);
             return string.Join(',', array);
+        }
+    }
+
+    // Helpers to leverage the EditorContextScope
+    public static class DataverseEngineExtensions
+    {
+        public static string ConvertToDisplay(this DataverseEngine engine, string expression)
+        {
+            IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
+            var displayExpr = scope.ConvertToDisplay(expression);
+            return displayExpr;
+        }
+
+        public static IIntellisenseResult Suggest(this DataverseEngine engine, string expression, int cursorPosition)
+        {
+            IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
+            var results = scope.Suggest(expression, cursorPosition);
+            return results;
         }
     }
 }

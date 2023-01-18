@@ -16,13 +16,14 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public class SqlCompileResult : CheckResult
     {
-        public SqlCompileResult() {  }
+        public SqlCompileResult(PowerFx2SqlEngine engine)
+        : base(engine)
+        {  
+        }
 
-        public SqlCompileResult(CheckResult inner)
+        internal SqlCompileResult(IEnumerable<IDocumentError> errors)
+            : base(ExpressionError.New(errors))
         {
-            this.ReturnType = inner.ReturnType;
-            this.TopLevelIdentifiers = inner.TopLevelIdentifiers;
-            this.Errors = inner.Errors;
         }
         
         /// <summary>
@@ -48,6 +49,9 @@ namespace Microsoft.PowerFx.Dataverse
         // Test harness can use to inspect exceptions.
         internal List<string> _unsupportedWarnings;
 
+        // Results of SQL visitor. 
+        internal SqlCompileInfo _sqlInfo;
+
         /// <summary>
         /// A dictionary of field logical names on related records, indexed by the related entity logical name
         /// </summary>
@@ -67,5 +71,13 @@ namespace Microsoft.PowerFx.Dataverse
         ///    "account" => { "account_primary_contact" }
         /// </example>
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
+    }
+
+    // Additional info computed by the SQL comilation work
+    internal class SqlCompileInfo
+    {
+        internal SqlVisitor.RetVal _retVal;
+
+        internal SqlVisitor.Context _ctx;
     }
 }

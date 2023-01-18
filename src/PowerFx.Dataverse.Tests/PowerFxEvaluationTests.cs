@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Ideally, this should only go down as the rest of the functions/capabilities are added
                 // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(193, result.Fail);
+                Assert.AreEqual(191, result.Fail);
             }
         }
 
@@ -117,6 +117,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 Assert.AreEqual(0, result.Fail);
             }
+        }
+
+        [TestMethod]
+        public void SqlCompileExceptionIsError()
+        {
+            Assert.IsTrue(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
+            Assert.IsFalse(SqlCompileException.IsError("OtherError"));
         }
 
         public static string GetSqlDefaultTestDir()
@@ -191,13 +198,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     // Evaluation ran, but failed due to unsupported features.
                     var result = new RunResult(compileResult);
-                    
+
+                    // If error is a known SQL restriction, than flag as unsupported. 
+                    foreach (var error in compileResult.Errors)
+                    {
+                        if (SqlCompileException.IsError(error.MessageKey))
+                        {
+                            result.UnsupportedReason = error.Message;
+                            return result;
+                        }
+                    }
+
+                    // If error is an exisitng error type (such as unsupported function), but flagged for SQL.
                     if (compileResult._unsupportedWarnings != null)
                     {
                         if (compileResult._unsupportedWarnings.Count > 0)
                         {
                             result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                        }
+                        } 
                     }
                     return result;
                 }
