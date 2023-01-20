@@ -179,11 +179,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return Task.FromResult(DataverseResponse.NewError($"Invalid attempt to update {attr.Key} column."));
                 }
 
-                if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
-                {
-                    return Task.FromResult(DataverseResponse.NewError($"Invalid attempt to update {attr.Key} column."));
-                }
-
                 if (_checkColumnRange != null)
                 {
                     var errorMessage = _checkColumnRange(attr.Key, attr.Value);
