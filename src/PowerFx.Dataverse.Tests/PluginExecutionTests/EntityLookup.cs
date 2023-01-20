@@ -104,6 +104,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
 
+        // Throws if column value is out of range
+        public Action<KeyValuePair<string, object>> _checkColumnRange;
+
         // When used, it forces a mutation function to return a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
 
@@ -174,6 +177,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
                 {
                     return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                }
+
+                if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
+                {
+                    return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                }
+
+                if (_checkColumnRange != null)
+                {
+                    try
+                    {
+                        _checkColumnRange(attr);
+                    }
+                    catch (Exception e)
+                    {
+                        if (e.GetType().FullName == "Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseOperationException")
+                        {
+                            return Task.FromResult(DataverseResponse<Entity>.NewError(e.Message));
+                        }
+                    }
+                    
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;
