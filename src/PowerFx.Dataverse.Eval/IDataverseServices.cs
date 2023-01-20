@@ -31,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         // Entity can contain just the fields to update.
         // Return fully updated entity 
-        Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
     }
     public interface IDataverseDeleter
     {

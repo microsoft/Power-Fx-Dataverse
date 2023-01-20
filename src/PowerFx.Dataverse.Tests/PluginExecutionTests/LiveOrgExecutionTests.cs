@@ -241,6 +241,83 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        public void FormulaColumnTest()
+        {
+            string tableName = "PFxTestTables";
+            var newName = "ABC";
+
+            // Formula: Concatenate(Name, " SULFIX")
+            var formulaColumnValue = newName + " SULFIX";
+
+            var expr = $"Patch(PFxTestTables, {{ PFxTestTable : GUID(\"0090411a-4397-ed11-aad1-000d3a58b59f\")}}, {{ Name : \"{newName}\" }})";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+
+                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"] );
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void PatchingFormulaColumnTest()
+        {
+            string tableName = "PFxTestTables";
+
+            // Formula: Concatenate(Name, " SULFIX")
+            var formulaColumnValue = "Bar" + " SULFIX";
+
+            var expr = "Patch(PFxTestTables, { PFxTestTable : GUID(\"61574f20-4397-ed11-aad1-000d3a58b59f\")}, { 'Formula column' : \"New value\" })";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+
+                // Formula column has not changed.
+                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void PatchingWithInvalidValueTest()
+        {
+            string tableName = "PFxTestTables";
+
+            // Column 'Limited number' has a range limit of 0 - 100.
+            var expr = "Patch(PFxTestTables, { PFxTestTable : GUID(\"61574f20-4397-ed11-aad1-000d3a58b59f\")}, { 'Limited number' : 200 })";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains("A validation error occurred"));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public void ExecuteViaInterpreterPatchWithConflict()
         {
             string tableName = "Table2";
@@ -584,7 +661,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 dv = new DataverseConnection(svcClient);
             }
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
-            symbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
             Assert.IsNotNull(tableValue);
             Assert.IsNotNull(symbols);
@@ -660,7 +737,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
         }
 
-        public virtual async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
