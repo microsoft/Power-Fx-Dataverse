@@ -32,6 +32,11 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.AttributeUtility",
 
+                // Policies 
+                "Microsoft.PowerFx.Dataverse.Policy",
+                "Microsoft.PowerFx.Dataverse.SingleOrgPolicy",
+                "Microsoft.PowerFx.Dataverse.MultiOrgPolicy",
+
                 // Optional services / Mocks.
                 "Microsoft.PowerFx.Dataverse.DataverseResponse`1",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse",
@@ -57,8 +62,9 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider",
 
                 // used for Eval, but here because they need Fx Core Internals. 
-                "Microsoft.PowerFx.Dataverse.DVSymbolTable", 
-
+                "Microsoft.PowerFx.Dataverse.DVSymbolTable",
+                "Microsoft.PowerFx.Dataverse.DVLazySymbolTable",
+                
                 // SQL compilation 
                 "Microsoft.PowerFx.Dataverse.DataverseEngine",
                 "Microsoft.PowerFx.Dataverse.PowerFx2SqlEngine",

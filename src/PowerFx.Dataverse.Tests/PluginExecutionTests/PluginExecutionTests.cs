@@ -484,6 +484,67 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());         
         }
 
+        // Ensure a custom function shows up in intellisense. 
+        [TestMethod]
+        public void IntellisenseWithWholeOrgPolicy()
+        {
+            // Everything policy 
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "xxxt1"); // unique display name
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv2, EntityLookup el2) = CreateMemoryForRelationshipModels(policy);
+
+            var engine = new RecalcEngine();
+
+            // Intellisense doesn't return anything on pure empty, 
+            // needs at least first char of identifier. 
+
+            var check = engine.Check("xx",symbolTable: dv2.Symbols);
+            
+            var results = engine.Suggest(check, 2);
+            var list = results.Suggestions.ToArray();
+
+            // BUG - we should see the symbol names show up here,
+            // need https://github.com/microsoft/Power-Fx/issues/1017
+            // we don't see symbols until they've been lazily loaded. 
+            Assert.AreEqual(0, list.Length);
+
+            // Triggers a lazy load
+            var check2 = engine.Check("First(xxxt1)", symbolTable: dv2.Symbols); 
+            Assert.IsTrue(check2.IsSuccess);
+
+            // After lazily load, now the symbol table is populated and we see the symbols. 
+            var results2 = engine.Suggest(check, 2);
+            var list2 = results2.Suggestions.ToArray();
+
+            Assert.AreEqual(1, list2.Length);
+            Assert.AreEqual("xxxt1", list2[0].DisplayText.Text);
+        }
+
+        // Enumerate various setups to run tests in. 
+        private IEnumerable<(DataverseConnection dv, EntityLookup el)> Setups()
+        {
+            // Explicit policy 
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            yield return (dv, el);
+
+            // Everything policy 
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "t2");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv2, EntityLookup el2) = CreateMemoryForRelationshipModels(policy);
+
+            yield return (dv2, el2);
+        }
+
         [DataTestMethod]
 
         // Row Scope
@@ -508,33 +569,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logicalName = "local";
             var displayName = "t1";
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName);
-
-            var rowScopeSymbols = rowScope ? dv.GetRowScopeSymbols(tableLogicalName: logicalName) : null;
-            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
-
-            var engine1 = new RecalcEngine();
-            var check = engine1.Check(expr, symbolTable: symbols);
-            Assert.IsTrue(check.IsSuccess);
-
-            // Eval it 
-            ReadOnlySymbolValues runtimeConfig;
-            if (rowScopeSymbols != null)
+            foreach ((DataverseConnection dv, EntityLookup el) in Setups())
             {
-                var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
-                var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
-                runtimeConfig = ReadOnlySymbolValues.Compose(rowScopeValues, dv.SymbolValues);
-            }
-            else
-            {
-                runtimeConfig = dv.SymbolValues;
-            }
+                var rowScopeSymbols = rowScope ? dv.GetRowScopeSymbols(tableLogicalName: logicalName) : null;
+                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
 
-            var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+                var engine1 = new RecalcEngine();
+                var check = engine1.Check(expr, symbolTable: symbols);
+                Assert.IsTrue(check.IsSuccess);
 
-            Assert.AreEqual(expected, result.ToObject());
+                // Eval it 
+                ReadOnlySymbolValues runtimeConfig;
+                if (rowScopeSymbols != null)
+                {
+                    var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
+                    var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+                    runtimeConfig = ReadOnlySymbolValues.Compose(rowScopeValues, dv.SymbolValues);
+                }
+                else
+                {
+                    runtimeConfig = dv.SymbolValues;
+                }
+
+                var run = check.GetEvaluator();
+                var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+                Assert.AreEqual(expected, result.ToObject());
+            }
         }
 
         // Set() function against entity fields in RowScope
@@ -1009,7 +1070,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
-        private (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels()
+        private (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels(Policy policy = null)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -1025,8 +1086,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
-            DataverseConnection dvConnection = new DataverseConnection(entityLookup, xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2);
+
+            CdsEntityMetadataProvider metadataCache;
+            if (policy is SingleOrgPolicy policy2)
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
+            }
+            else
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+            }
+
+            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
 
             return (dvConnection, entityLookup);
         }
