@@ -105,7 +105,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public Action<EntityReference> _onLookupRef;
 
         // Throws if column value is out of range
-        public Action<KeyValuePair<string, object>> _checkColumnRange;
+        public Func<string, object, string> _checkColumnRange;
 
         // When used, it forces a mutation function to return a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
@@ -186,18 +186,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 if (_checkColumnRange != null)
                 {
-                    try
+                    var errorMessage = _checkColumnRange(attr.Key, attr.Value);
+
+                    if (errorMessage != null)
                     {
-                        _checkColumnRange(attr);
-                    }
-                    catch (Exception e)
-                    {
-                        if (e.GetType().FullName == "Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseOperationException")
-                        {
-                            return Task.FromResult(DataverseResponse<Entity>.NewError(e.Message));
-                        }
-                    }
-                    
+                        return Task.FromResult(DataverseResponse<Entity>.NewError(errorMessage));
+                    }                    
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;

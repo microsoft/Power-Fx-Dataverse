@@ -552,7 +552,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable(displayName, logicalName);
             dv.AddTable("Remote", "remote");
 
-            
+
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
 
             var opts = new ParserOptions { AllowsSideEffects = true };
@@ -660,6 +660,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataTestMethod]
         [DataRow("Patch(t1, First(t1), {Price:1000})")]
+
+        // Test case left as reference to future change. It should also fail.
+        //[DataRow("Set(Price, 200); Price")]
         public void PatchWithUpdateInvalidFieldError(string expr)
         {
             // create table "local"
@@ -668,28 +671,38 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
-            dv.AddTable("Remote", "remote");
 
             // Inject update invalid fields error
             el._getTargetedColumnName = () => "Foo";
+
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
 
             var opts = new ParserOptions { AllowsSideEffects = true };
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            var allSymbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
             Assert.IsTrue(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            var entity = el.GetFirstEntity(logicalName, dv, CancellationToken.None); // any record
+            var record = dv.Marshal(entity);
+            var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+            var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
+
+
+            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
 
             Assert.IsInstanceOfType(result, typeof(ErrorValue));
         }
 
         [DataTestMethod]
-        [DataRow("Patch(t1, First(t1), {Price:1000})")]
-        public void PatchWithNumberOutOfRangeError(string expr)
+        [DataRow("Patch(t1, First(t1), {Price:1000})", false)]
+        [DataRow("Patch(t1, First(t1), {Price:50})", true)]
+        public void PatchWithNumberOutOfRangeError(string expr, bool succeeds)
         {
             // create table "local"
             var logicalName = "local";
@@ -699,20 +712,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
 
             dv.AddTable(displayName, logicalName);
-            dv.AddTable("Remote", "remote");
 
             // Inject number out of range error
-            el._checkColumnRange = (attr) =>
+            el._checkColumnRange = (key, value) =>
             {
-                if (attr.Key == "new_price")
+                if (key == "new_price")
                 {
-                    var number = (decimal) attr.Value;
+                    var number = (decimal) value;
 
                     if (number > 100)
                     {
-                        throw new PowerPlatform.Dataverse.Client.Utils.DataverseOperationException(errorMessage);
+                        return errorMessage;
                     }
                 }
+
+                return null;
             };
 
             var opts = new ParserOptions { AllowsSideEffects = true };
@@ -726,8 +740,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            Assert.IsInstanceOfType(result, typeof(ErrorValue));
-            Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
+            if (succeeds)
+            {
+                Assert.IsNotInstanceOfType(result, typeof(ErrorValue));
+            }
+            else
+            {
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
+            }
         }
 
         [DataTestMethod]
