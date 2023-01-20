@@ -104,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
 
-        // Throws if column value is out of range
+        // Return error message if numeric column is our of range (string: field name, object: number value).
         public Func<string, object, string> _checkColumnRange;
 
         // When used, it forces a mutation function to return a DataverseResponse error.

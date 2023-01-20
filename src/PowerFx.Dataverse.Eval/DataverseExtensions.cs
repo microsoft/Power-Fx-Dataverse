@@ -145,6 +145,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (Exception e)
             {
+                // Need to handle other Dataverse exceptions
+                // https://github.com/microsoft/Power-Fx-Dataverse/issues/51
                 if (e.GetType().FullName == "Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseOperationException")
                 {
                     message = e.Message;
