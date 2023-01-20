@@ -737,7 +737,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
         }
 
-        public virtual async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");

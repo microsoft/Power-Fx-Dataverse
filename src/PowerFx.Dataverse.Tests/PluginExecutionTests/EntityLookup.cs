@@ -165,7 +165,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup");
         }
 
-        public virtual Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -176,12 +176,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
                 {
-                    return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                    return Task.FromResult(DataverseResponse.NewError($"Invalid attempt to update {attr.Key} column."));
                 }
 
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
                 {
-                    return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                    return Task.FromResult(DataverseResponse.NewError($"Invalid attempt to update {attr.Key} column."));
                 }
 
                 if (_checkColumnRange != null)
@@ -190,14 +190,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     if (errorMessage != null)
                     {
-                        return Task.FromResult(DataverseResponse<Entity>.NewError(errorMessage));
+                        return Task.FromResult(DataverseResponse.NewError(errorMessage));
                     }                    
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;
             }
             
-            return Task.FromResult(new DataverseResponse<Entity>(existing));
+            return Task.FromResult(new DataverseResponse());
         }
 
         public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))

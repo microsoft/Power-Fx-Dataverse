@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
+            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
 
             if (result.HasError)
             {
