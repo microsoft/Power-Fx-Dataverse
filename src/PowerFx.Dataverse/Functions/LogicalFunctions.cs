@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     var condition = shortCircuitTest ? coercedArg.ToString() : $"(NOT {coercedArg})";
                     using (indenter.EmitIfCondition(condition))
                     {
-                        result = context.SetIntermediateVariable(result, fromRetVal:arg);
+                        result = context.SetIntermediateVariable(result, fromRetVal:coercedArg);
                     }
                 }
                 return result;

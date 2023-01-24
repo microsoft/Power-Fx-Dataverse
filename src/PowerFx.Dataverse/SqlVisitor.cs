@@ -357,7 +357,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(node, $"ISNULL({arg},N'') <> N'true'");
+                    return context.SetIntermediateVariable(node, $"ISNULL({arg},N'') = N'true'");
 
                 case UnaryOpKind.BooleanOptionSetToBoolean:
                     // converting a boolean option set to a boolean is a noop
