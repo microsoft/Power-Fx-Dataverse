@@ -55,7 +55,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (_displayNameLookup.TryGetDisplayName(new DName(logicalName), out var variable))
             {
-                variableName = variable.Value;
+                // For whole-org, we don't have fixed-name variables. (aren't converted to invariant)
+                // We use display namaes, which are converted to their logical name.  
+                variableName = logicalName;
                 return true;
             }
 
@@ -101,51 +103,55 @@ namespace Microsoft.PowerFx.Dataverse
         // This will be a subset of all known tables. 
         public HashSet<string> GetDependencies(CheckResult check)
         {
+            check.ApplyBinding();
+            check.ThrowOnErrors();
+
             var tf = new TableFinder(check);
             check.Parse.Root.Accept(tf);
 
             return tf._tableNames;
         }
-    }
 
-    // Given an expression with Table References, get a list of all the tables that are actually used. 
-    internal class TableFinder : IdentityTexlVisitor
-    {
-        private readonly CheckResult _check;
-        public readonly HashSet<string> _tableNames = new HashSet<string>();
 
-        public TableFinder(CheckResult check)
+        // Given an expression with Table References, get a list of all the tables that are actually used. 
+        internal class TableFinder : IdentityTexlVisitor
         {
-            _check = check;
-        }
+            private readonly CheckResult _check;
+            public readonly HashSet<string> _tableNames = new HashSet<string>();
 
-        public override void PostVisit(DottedNameNode node)
-        {
-            var type = _check.GetNodeType(node);
-            if (type is RecordType t)
+            public TableFinder(CheckResult check)
             {
-                var name = t.TableSymbolName;
-                if (name != null)
-                {
-                    _tableNames.Add(name);
-                }
+                _check = check;
             }
 
-            base.PostVisit(node);
-        }
-
-        public override void Visit(FirstNameNode node)
-        {
-            var type = _check.GetNodeType(node);
-            if (type is TableType t)
+            public override void PostVisit(DottedNameNode node)
             {
-                var name = t.TableSymbolName;
-                if (name != null)
+                var type = _check.GetNodeType(node);
+                if (type is RecordType t)
                 {
-                    _tableNames.Add(name);
+                    var name = t.TableSymbolName;
+                    if (name != null)
+                    {
+                        _tableNames.Add(name);
+                    }
                 }
+
+                base.PostVisit(node);
             }
-            base.Visit(node);
+
+            public override void Visit(FirstNameNode node)
+            {
+                var type = _check.GetNodeType(node);
+                if (type is TableType t)
+                {
+                    var name = t.TableSymbolName;
+                    if (name != null)
+                    {
+                        _tableNames.Add(name);
+                    }
+                }
+                base.Visit(node);
+            }
         }
     }
 }

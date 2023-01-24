@@ -522,6 +522,92 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("xxxt1", list2[0].DisplayText.Text);
         }
 
+        // When using WholeOrg policy, we're using display names,
+        // which are converted to invariant.
+        [DataTestMethod]
+        [DataRow("new_price + 10", "Price + 10")]
+        [DataRow("ThisRecord.new_price + 10", "ThisRecord.Price + 10")]
+        [DataRow("First(local).new_price", "First(t1).Price")]
+        [DataRow("ThisRecord.refg.data", "ThisRecord.Other.Data")]
+        [DataRow("First(remote).data", "First(Remote).Data")]
+        [DataRow("Set(refg, First(remote));refg.data", "Set(Other, First(Remote));Other.Data")]
+        public void WholeOrgConversions(string logical, string display)
+        {
+            var logicalName = "local";
+
+            // Everything policy 
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            {
+                var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+
+                var config = new PowerFxConfig();
+                config.EnableSetFunction();
+                var engine = new RecalcEngine(config);
+                
+
+                var check = new CheckResult(engine)
+                    .SetText(display, new ParserOptions { AllowsSideEffects = true })
+                    .SetBindingInfo(symbols);
+
+                check.ApplyBinding();
+                Assert.IsTrue(check.IsSuccess);
+
+                var invariant = check.ApplyGetInvariant();
+
+                Assert.AreEqual(invariant, logical);
+
+
+                var display2 = engine.GetDisplayExpression(invariant, symbols);
+                Assert.AreEqual(display, display2);
+            }
+        }
+
+        // Dependency finder. 
+        [DataTestMethod]
+        [DataRow("1+2", "")] // none
+        [DataRow("First(t1).Price", "local")]
+        [DataRow("First(Remote)", "remote")]
+        [DataRow("First(t1).Price & IsBlank(First(Remote))", "local,remote")]
+        public void TableDependencyFinder(string expression, string listTables)
+        {
+            var logicalName = "local";
+
+            // Everything policy 
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            {
+                var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+
+                var config = new PowerFxConfig();
+                config.EnableSetFunction();
+                var engine = new RecalcEngine(config);
+
+                var check = new CheckResult(engine)
+                    .SetText(expression)
+                    .SetBindingInfo(symbols);
+
+                var list = policy.GetDependencies(check).ToArray();
+                Array.Sort(list);
+                var x = string.Join(",", list);
+
+                Assert.AreEqual(listTables, x);
+            }
+        }
+
+
         // Enumerate various setups to run tests in. 
         private IEnumerable<(DataverseConnection dv, EntityLookup el)> Setups()
         {
