@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
                 out entityMetadata);
         }
 
-        // $$$ We should *never* call this API. Too expensive. 
+        // We should *never* call this API. Too expensive. 
         // 236 mb working set , 196.28412 mb allocations ,  9104ms , 517 entities
         [Obsolete("Bad perf API - avoid this. Use SingleOrgPolicy instead for lazy loading.")]
         public bool GetEntitiesMetadata(out EntityMetadata[] entities)
