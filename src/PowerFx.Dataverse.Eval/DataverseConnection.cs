@@ -4,12 +4,14 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,22 +38,20 @@ namespace Microsoft.PowerFx.Dataverse
     /// Create around connection to Dataverse. 
     /// Provides both symbols for compilation and runtime values via <see cref="DataverseTableValue"/>.
     /// </summary>
-    public sealed class DataverseConnection : IConnectionValueContext
+    public class DataverseConnection : IConnectionValueContext
     {
-        private readonly CdsEntityMetadataProvider _metadataCache;
-
-        // Mapping of Table variable names (what's used in expression) to values. 
-        private readonly Dictionary<string, DataverseTableValue> _tables = new Dictionary<string, DataverseTableValue>();
-
-        // Mapping of logical name back to variable name.
-        private readonly Dictionary<string, string> _logical2Variable = new Dictionary<string, string>();
+        internal readonly CdsEntityMetadataProvider _metadataCache;
 
         private readonly IDataverseServices _dvServices;
 
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.
         /// </summary>
-        public SymbolTable Symbols { get; private set; }
+        protected readonly SymbolTable _symbols;
+
+        public ReadOnlySymbolTable Symbols => _symbols;
+
+        private readonly Policy _policy;
 
         /// <summary>
         /// Values of global tables that we've added.
@@ -59,6 +59,8 @@ namespace Microsoft.PowerFx.Dataverse
         public ReadOnlySymbolValues SymbolValues { get; private set; }
 
         IDataverseServices IConnectionValueContext.Services => _dvServices;
+
+        public Policy Policy => _policy;
 
         /// <summary>
         /// DataverseConnection constructor.
@@ -87,11 +89,19 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public DataverseConnection(IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider)
+            : this(null, dvServices, cdsEntityMetadataProvider)
+        {            
+        }
+
+        public DataverseConnection(Policy policy, IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider)
         {
             _dvServices = dvServices;
             _metadataCache = cdsEntityMetadataProvider;
-            Symbols = new DVSymbolTable(_metadataCache);
-            this.SymbolValues = this.Symbols.CreateValues();
+
+            this._policy = policy ?? new MultiOrgPolicy(); 
+
+            this._symbols = _policy.CreateSymbols(this, _metadataCache);            
+            this.SymbolValues = this._symbols.CreateValues();
         }
 
         // Identity is important so that we can correlate bindings from Check and result. 
@@ -124,27 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public TableValue AddTable(string variableName, string tableLogicalName)
         {
-            if (_logical2Variable.TryGetValue(tableLogicalName, out var existingVariableName))
-            {
-                throw new InvalidOperationException($"Table with logical name '{tableLogicalName}' was already added as {existingVariableName}.");
-            }
-            if (_tables.TryGetValue(variableName, out var existingTable))
-            {
-                throw new InvalidOperationException($"Table with variable name '{variableName}' was already added as {existingTable._entityMetadata.LogicalName}.");
-            }
-
-            EntityMetadata entityMetadata = GetMetadataOrThrow(tableLogicalName);
-
-            _logical2Variable.Add(tableLogicalName, variableName);
-
-            RecordType recordType = GetRecordType(entityMetadata);
-            DataverseTableValue tableValue = new DataverseTableValue(recordType, this, entityMetadata);
-
-            var slot = Symbols.AddVariable(variableName, tableValue.Type);
-
-            _tables[variableName] = tableValue;
-            this.SymbolValues.Set(slot, tableValue);
-            return tableValue;
+            return this._policy.AddTable(variableName, tableLogicalName);
         }
 
         /// <summary>
@@ -157,7 +147,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public bool TryGetVariableName(string logicalName, out string variableName)
         {
-            return _logical2Variable.TryGetValue(logicalName, out variableName);
+            return _policy.TryGetVariableName(logicalName, out variableName);
         }
 
         string IConnectionValueContext.GetSerializationName(string tableLogicalName)
@@ -254,7 +244,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public RecordType GetRecordType(string tableLogicalName)
         {
-            if (!_logical2Variable.TryGetValue(tableLogicalName, out string variableName))
+            if (!_policy.TryGetVariableName(tableLogicalName, out string variableName))
             {
                 // Calling AddTable is important so that we have the variableName,
                 // which is needed for the DataSourceInfo,
@@ -277,7 +267,7 @@ namespace Microsoft.PowerFx.Dataverse
             return GetRecordType(entityMetadata.LogicalName);
         }
 
-        private EntityMetadata GetMetadataOrThrow(string tableLogicalName)
+        internal EntityMetadata GetMetadataOrThrow(string tableLogicalName)
         {
             if (!_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata))
             {

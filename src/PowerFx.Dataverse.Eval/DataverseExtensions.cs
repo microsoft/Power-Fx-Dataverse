@@ -7,6 +7,7 @@
 using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.IO;
@@ -19,6 +20,35 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseExtensions
     {
+        /// <summary>
+        /// Helper to get all Logical 2 Display name map for the entire org. 
+        /// This efficiently fetches the table names, but not the metadata. 
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
+        public static AllTablesDisplayNameProvider GetDisplayNames(this IOrganizationService client)
+        {
+            RetrieveAllEntitiesRequest req = new RetrieveAllEntitiesRequest
+            {
+                EntityFilters = Microsoft.Xrm.Sdk.Metadata.EntityFilters.Entity
+            };
+            var resp = (RetrieveAllEntitiesResponse)client.Execute(req);
+
+            var map = new AllTablesDisplayNameProvider();
+            foreach (var entity in resp.EntityMetadata)
+            {
+                var displayName = GetDisplayName(entity);
+                map.Add(entity.LogicalName, displayName);
+            }
+
+            return map;
+        }
+
+        private static string GetDisplayName(EntityMetadata entity)
+        {
+            return entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
+        }
+
         public static bool Execute<Req, Res, Out>(this IOrganizationService svcClient, Req request, Func<Res, Out> transform, out Out result)
             where Req : OrganizationRequest
             where Res : OrganizationResponse
