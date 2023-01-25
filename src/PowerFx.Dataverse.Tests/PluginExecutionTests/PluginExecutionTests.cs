@@ -557,10 +557,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("new_price + 10", "Price + 10")]
         [DataRow("ThisRecord.new_price + 10", "ThisRecord.Price + 10")]
         [DataRow("First(local).new_price", "First(t1).Price")]
-        [DataRow("ThisRecord.refg.data", "ThisRecord.Other.Data")]
+        [DataRow("ThisRecord.refg.data", "ThisRecord.Other.Data")] // relationships
         [DataRow("First(remote).data", "First(Remote).Data")]
-        [DataRow("Set(refg, First(remote));refg.data", "Set(Other, First(Remote));Other.Data")]
-        public void WholeOrgConversions(string logical, string display)
+        [DataRow("Set(refg, First(remote));refg.data", "Set(Other, First(Remote));Other.Data")] // relationships
+        [DataRow("new_price * new_quantity", "Price * Quantity", "new_price * Quantity")]
+        public void WholeOrgConversions(string logical, string display, string mixed = null)
         {
             var logicalName = "local";
 
@@ -579,22 +580,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();
                 var engine = new RecalcEngine(config);
-                
 
-                var check = new CheckResult(engine)
-                    .SetText(display, new ParserOptions { AllowsSideEffects = true })
-                    .SetBindingInfo(symbols);
+                // Check conversion against all forms. 
+                foreach (var expr in new string[] { logical, display, mixed })
+                {
+                    if (expr == null)
+                    {
+                        continue;
+                    }
 
-                check.ApplyBinding();
-                Assert.IsTrue(check.IsSuccess);
+                    // Get invariant
+                    var check = new CheckResult(engine)
+                        .SetText(expr, new ParserOptions { AllowsSideEffects = true })
+                        .SetBindingInfo(symbols);
 
-                var invariant = check.ApplyGetInvariant();
+                    check.ApplyBinding();
+                    Assert.IsTrue(check.IsSuccess);
 
-                Assert.AreEqual(invariant, logical);
+                    var invariant = check.ApplyGetInvariant();
+                    Assert.AreEqual(invariant, logical);
 
-
-                var display2 = engine.GetDisplayExpression(invariant, symbols);
-                Assert.AreEqual(display, display2);
+                    // Get display 
+                    var display2 = engine.GetDisplayExpression(expr, symbols);
+                    Assert.AreEqual(display, display2);
+                }
             }
         }
 
