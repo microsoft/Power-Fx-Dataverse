@@ -148,18 +148,21 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse<Entity> result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
+            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
 
             if (result.HasError)
             {
                 return result.DValueError(nameof(IDataverseUpdater.UpdateAsync));
             }
 
-            foreach (var attr in result.Response.Attributes)
+            // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
+
+            foreach (var attr in newEntity.Response.Attributes)
             {
                 _entity.Attributes[attr.Key] = attr.Value;
             }
-            
+
             return DValue<RecordValue>.Of(this);
         }
 

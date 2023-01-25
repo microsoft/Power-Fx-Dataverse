@@ -35,10 +35,10 @@ namespace Microsoft.PowerFx.Dataverse
             return DataverseExtensions.DataverseCall(() => _organizationService.Create(entity), $"Create '{entity.LogicalName}'");
         }
 
-        public async Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => { _organizationService.Update(entity); return entity; }, $"Update '{entity.LogicalName}':{entity.Id}");
+            return DataverseExtensions.DataverseCall(() => { _organizationService.Update(entity); return true; }, $"Update '{entity.LogicalName}':{entity.Id}");
         }
 
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))

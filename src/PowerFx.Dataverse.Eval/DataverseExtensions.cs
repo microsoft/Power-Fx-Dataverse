@@ -173,11 +173,20 @@ namespace Microsoft.PowerFx.Dataverse
                 // Network is bad - such as network is offline. 
                 message = e.Message;
             }
-            catch
+            catch (Exception e)
             {
-                // Any other exception is a "hard failure" that should propagate up. 
-                // this will terminate the eval. 
-                throw;
+                // Need to handle other Dataverse exceptions
+                // https://github.com/microsoft/Power-Fx-Dataverse/issues/51
+                if (e.GetType().FullName == "Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseOperationException")
+                {
+                    message = e.Message;
+                }
+                else
+                {
+                    // Any other exception is a "hard failure" that should propagate up. 
+                    // this will terminate the eval. 
+                    throw;
+                }
             }
 
             var fullMessage = $"Error attempting {operationDescription}. {message}";

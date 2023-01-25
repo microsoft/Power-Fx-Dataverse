@@ -104,10 +104,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Chance to hook for error injection. Can throw. 
         public Action<EntityReference> _onLookupRef;
 
+        // Return error message if numeric column is our of range (string: field name, object: number value).
+        public Func<string, object, string> _checkColumnRange;
+
         // When used, it forces a mutation function to return a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
 
-        // When passed, simulates an invalid field getting updated.
+        // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
         public Func<string> _getTargetedColumnName;
 
         // Gets a copy of the entity. 
@@ -162,7 +165,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup");
         }
 
-        public virtual Task<DataverseResponse<Entity>> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -173,13 +176,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
                 {
-                    return Task.FromResult(DataverseResponse<Entity>.NewError($"Invalid attempt to update {attr.Key} column."));
+                    return Task.FromResult(DataverseResponse.NewError($"Invalid attempt to update {attr.Key} column."));
+                }
+
+                if (_checkColumnRange != null)
+                {
+                    var errorMessage = _checkColumnRange(attr.Key, attr.Value);
+
+                    if (errorMessage != null)
+                    {
+                        return Task.FromResult(DataverseResponse.NewError(errorMessage));
+                    }                    
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;
             }
             
-            return Task.FromResult(new DataverseResponse<Entity>(existing));
+            return Task.FromResult(new DataverseResponse());
         }
 
         public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
