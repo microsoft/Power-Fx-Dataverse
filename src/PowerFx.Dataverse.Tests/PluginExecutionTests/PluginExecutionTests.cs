@@ -778,6 +778,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        // DV works by making a copy of the entity when retrieving it. In-memory works by reference.
+        [DataRow("With({oldCount:CountRows(t1)},Collect(t1,{Price:200});CountRows(t1)-oldCount)", 1.0)]
+        [DataRow("Collect(t1,{Price:110});CountRows(t1)", 2.0)]
+        [DataRow("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 2.0)]
+        [DataRow("With({x:Collect(t1,{Price:77}), y:Collect(t1,{Price:88})}, Remove(t1,x);Remove(t1,y);CountRows(t1))", 1.0)]
+        public void CacheBug(string expr, double expected)
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;            
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
+        [DataTestMethod]
         [DataRow("Patch(t1, First(t1), {Price:200})")]
         public void PatchFunctionLean(string expr)
         {
