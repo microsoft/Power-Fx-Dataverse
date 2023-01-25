@@ -778,6 +778,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        // DV works by making a copy of the entity when retrieving it. In-memory works by reference.
         [DataRow("With({oldCount:CountRows(t1)},Collect(t1,{Price:200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1,{Price:110});CountRows(t1)", 2.0)]
         [DataRow("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 2.0)]
