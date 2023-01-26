@@ -1,0 +1,12 @@
+#override: Date.txt
+
+// SQL doesn't coerce blanks to dates
+
+>> Day(Blank())
+Blank()
+    
+>> Month(Blank())
+Blank()
+
+>> Year(Blank())
+Blank()
