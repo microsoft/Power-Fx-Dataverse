@@ -117,11 +117,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 sqlResult.SanitizedFormula = sanitizedFormula;
 
-                // Note if we fail due to unsupported functions. 
+                // Note if we fail due to unsupported functions or unsupported function overloads.
                 sqlResult._unsupportedWarnings = new List<string>();
                 foreach (var error in sqlResult.Errors)
                 {
-                    if (error.MessageKey == "ErrUnknownFunction")
+                    if (error.MessageKey == "ErrUnknownFunction" || error.MessageKey == "ErrBadType_ExpectedType_ProvidedType")
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);
                     }

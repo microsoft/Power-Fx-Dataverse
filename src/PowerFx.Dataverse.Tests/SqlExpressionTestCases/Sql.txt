@@ -42,35 +42,35 @@ true
 // math operation overflow
 // 1000000000000
 >> Power(10,12)
-#Error
+Error
 
 // 1000000000000
 >> Power(100,6)
-#Error
+Error
 
 // 1E+200
 >> Power(10,200)
-#Error
+Error
 
 >> IsError(Power(10,200))
 true
 
 
 >> RoundUp(1, -200)
-#Error
+Error
 
 >> RoundUp(1, -10)
-#Error
+Error
 
 >> Text(Ln(Exp(200)))
-#Error
+Error
 
 >> IsError(Text(Ln(Exp(200))))
 true
 
 // literal overflow
 >> 1E37
-#Error
+Error
 
 >> IsError(1E37)
 true

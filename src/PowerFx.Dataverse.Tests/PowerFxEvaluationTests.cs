@@ -50,53 +50,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var result = runner.RunTests();
 
-                // Ideally, this should only go down as the rest of the functions/capabilities are added
-                // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(191, result.Fail, result.Output);
-            }
-        }
-
-        [TestMethod]
-        public void RunCleanSqlTestCases()
-        {
-            ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
-            // short-circuit if connection string is not set
-            if (ConnectionString == null)
-            {
-                Assert.Inconclusive("Skipping SQL tests - no connection string set");
-                return;
-            }
-
-            // Build step copied all tests to output dir.
-            using (var sql = new SqlRunner(ConnectionString))
-            {
-                var runner = new TestRunner(sql);
-                                
-                // Run only those test files fully supported by SQL
-                runner.AddFile(
-                    "AndOrCases.txt",
-                    "arithmetic.txt",
-                    "Blank.txt",
-                    "Date.txt",
-                    "If.txt",
-                    "inScalar.txt",
-                    "mathfuncs.txt",
-                    "string.txt",
-                    "Text.txt",
-                    "Value.txt"
-                    );
-
-                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
-                {
-                    runner.AddFile(path);
-                }
-                
-                var result = runner.RunTests();
-
-                Assert.AreEqual(23, result.Fail, result.Output);
-
-                // Verify that we're actually running tests. 
-                Assert.IsTrue(result.Total > 400);
+                // Any failures introduced by new tests or unsupported features should be overridden
+                Assert.AreEqual(0, result.Fail, result.Output);
             }
         }
 

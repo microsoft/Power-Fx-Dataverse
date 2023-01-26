@@ -156,7 +156,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var arg2 = RetVal.FromSQL(match, FormulaType.String);
-                        return context.SetIntermediateVariable(node, $"({arg1} LIKE {arg2})");
+                        return context.SetIntermediateVariable(node, $"({Library.CoerceNullToString(arg1)} LIKE {arg2})");
                     }
 
                 //case BinaryOpKind.EqBlob:

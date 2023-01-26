@@ -20,6 +20,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Value(SqlVisitor visitor, CallNode node, Context context)
         {
+            if (node.Args.Count > 1)
+            {
+                throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
+            }
+
             var arg0 = node.Args[0];
             var arg = arg0.Accept(visitor, context);
             if (arg.type is StringType)
@@ -150,7 +155,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
+            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(val));
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -199,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var rawOffset = node.Args[1].Accept(visitor, context);
-            var offset = context.SetIntermediateVariable(new SqlBigType(), function == "LEFT" ? RoundDownNullToInt(rawOffset) : RoundUpNullToInt(rawOffset));
+            var offset = context.SetIntermediateVariable(new SqlBigType(), function == "LEFT" ? RoundDownNullToInt(rawOffset) : RoundDownNullToInt(rawOffset));
             context.NegativeNumberCheck(offset);
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
@@ -252,7 +257,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var str = node.Args[0].Accept(visitor, context);
             var match = visitor.EncodeLikeArgument(node.Args[1], matchType, context);
-            return context.SetIntermediateVariable(node, $"{str} LIKE {match}");
+            return context.SetIntermediateVariable(node, $"{CoerceNullToString(str)} LIKE {match}");
         }
 
         public static RetVal TrimEnds(SqlVisitor visitor, CallNode node, Context context)

@@ -1,5 +1,5 @@
 ﻿#override: Exp.txt
 
-// Excel returns 5.5799E+186 - overrides SQL Decimal
+// Excel returns 5.5799E+186 - overflows SQL Decimal
 >> Exp(430)
-#Error
+Error

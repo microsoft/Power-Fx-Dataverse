@@ -9,12 +9,15 @@ Errors: Error 5-6: Only a literal value is supported for this argument.
 // If Blank is on either side, operator is false. 
 // Use If() to coerce Blank to string. 
 >> Blank() in Blank()
-Errors: Error 8-10: Not supported in formula columns.
+Errors: Error 8-10: This operation cannot be performed on type ObjNull in formula columns.
 
 // Case where Blank() doesn't act like ""
 >> If(false, "", Blank()) in "abc"
 Errors: Error 0-22: Only a literal value is supported for this argument.
 
+// Not sure why blank should NOT be coerced
+>> "" in If(true, Blank(), "")
+true
 
 >> 5 in "5"
 Errors: Error 2-4: Only a literal value is supported for this argument.

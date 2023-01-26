@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         // Some TexlFunctions are overloaded
         private static Dictionary<TexlFunction, FunctionPtr> _funcsByName = new Dictionary<TexlFunction, FunctionPtr>
         {
-            { BuiltinFunctionsCore.Abs, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ABS", 1, coerceNulls: false) },
+            { BuiltinFunctionsCore.Abs, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ABS", 1, coerceNulls: true) },
             //{ BuiltinFunctionsCore.AddColumns, AddColumns },
             { BuiltinFunctionsCore.And, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "AND", false) },
             { BuiltinFunctionsCore.Average, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "AVG", errorOnNulls:true) },
@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Hour, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Hour) },
             { BuiltinFunctionsCore.If, If },
             { BuiltinFunctionsCore.IfError, IfError },
-            { BuiltinFunctionsCore.Int, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "FLOOR", 1, coerceNulls: false) },
+            { BuiltinFunctionsCore.Int, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "FLOOR", 1, coerceNulls: true) },
             { BuiltinFunctionsCore.IsBlank, IsBlank },
             { BuiltinFunctionsCore.IsBlankOptionSetValue, IsBlank },
             { BuiltinFunctionsCore.IsError, IsError },
