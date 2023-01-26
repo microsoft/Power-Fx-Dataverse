@@ -97,6 +97,9 @@ namespace Microsoft.PowerFx.Dataverse
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
 
+            // After mutation, lazely refresh Rows from server.
+            Refresh();
+
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
         }
 
@@ -126,7 +129,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return entityResponse.DValueError(nameof(IDataverseReader.RetrieveAsync));
 
             var item = new DataverseRecordValue(entityResponse.Response, _entityMetadata, Type.ToRecord(), _connection);
-            return await item.UpdateFieldsAsync(record, cancellationToken);
+            var ret = await item.UpdateFieldsAsync(record, cancellationToken);
+
+            // After mutation, lazely refresh Rows from server.
+            Refresh();
+
+            return ret;
         }
 
         public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
@@ -153,6 +161,9 @@ namespace Microsoft.PowerFx.Dataverse
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
                 }
             }
+
+            // After mutation, lazely refresh Rows from server.
+            Refresh();
 
             return DValue<BooleanValue>.Of(BooleanValue.New(true));
         }

@@ -7,6 +7,7 @@
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.CdsService;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Entities.Delegation;
@@ -54,12 +55,22 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
         // Map logical name to display name
-        private readonly IReadOnlyDictionary<string,string> _displayNameLookup;
+        private readonly Func<string,string> _displayNameLookup;
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null)
         {
             _innerProvider = provider;
-            _displayNameLookup = displayNameLookup;
+            if (displayNameLookup != null)
+            {
+                _displayNameLookup = (logicalName) => displayNameLookup.TryGetValue(logicalName, out var displayName) ? displayName : null;
+            }
+            _document = new DataverseDocument(this);
+        }
+
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, DisplayNameProvider displayNameLookup)
+        {
+            _innerProvider = provider;
+            _displayNameLookup = (logicalName) => displayNameLookup.TryGetDisplayName(new DName(logicalName), out var displayName) ? displayName.Value : null;
             _document = new DataverseDocument(this);
         }
 
@@ -339,7 +350,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Try to check against lookup map. This is fast. 
                     if (_displayNameLookup != null)
                     {
-                        _displayNameLookup.TryGetValue(key, out var displayName);
+                        var displayName = _displayNameLookup(key);
                         return displayName;
                     }
 
@@ -364,7 +375,8 @@ namespace Microsoft.PowerFx.Dataverse
             // if not found in either cache, get the raw entity from CDS
             if (_displayNameLookup != null)
             {
-                return _displayNameLookup.ContainsKey(key);
+                var displayName = _displayNameLookup(key);
+                return displayName != null;
             }
 
             // Fallback to metadata lookup - this can be slow. 
