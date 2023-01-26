@@ -128,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
                         var returnType = new SqlBigType();
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, returnType)} {op} {Library.CoerceNullToNumberType (right, returnType)})");
+                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, returnType)} {op} {Library.CoerceNullToNumberType(right, returnType)})");
                         context.PerformRangeChecks(result, node);
                         return result;
                     }
@@ -357,7 +357,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(node, $"ISNULL({arg},N'') = N'true'");
+                    var coercedArg = RetVal.FromSQL($"IIF({arg} IS NULL OR {arg} = N'', N'false', {arg})", FormulaType.String);
+                    context.ErrorCheck($"{coercedArg} <> N'true' AND {coercedArg} <> N'false'", Context.ValidationErrorCode);
+                    return context.SetIntermediateVariable(node, $"{coercedArg} = N'true'");
 
                 case UnaryOpKind.BooleanOptionSetToBoolean:
                     // converting a boolean option set to a boolean is a noop
@@ -491,30 +493,36 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal string EncodeLikeArgument(IntermediateNode node, MatchType matchType, Context context)
         {
-            // encode string literal for SQL wildcards
-            if (!(node is TextLiteralNode || (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)))
+            if (node is TextLiteralNode)
+            {
+                // use an inline literal context to get the like argument as a raw string to properly format the SQL parameter
+                using (context.NewInlineLiteralContext())
+                {
+                    var arg = node.Accept(this, context);
+                    var match = arg.ToString();
+
+                    // encode SQL placeholders and quotes
+                    match = match.Replace("_", "[_]");
+                    match = match.Replace("[", "[[]");
+                    match = match.Replace("%", "[%]");
+                    match = match.Replace("'", "''");
+
+                    // append start and end wildcards, as needed
+                    var startWildcard = matchType != MatchType.Prefix ? "%" : "";
+                    var endWildcard = matchType != MatchType.Suffix ? "%" : "";
+                    return $"N'{startWildcard}{match}{endWildcard}'";
+                }
+            }
+            else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)
+            {
+                // blank coerces to empty string, which matches everything, so emit a wildcard
+                return "N'%'";
+            }
+            else
             {
                 // TODO: allow runtime encoding of string inputs
                 context._unsupportedWarnings.Add("Only string literals allowed");
                 throw Library.BuildLiteralArgumentException(node.IRContext.SourceContext);
-            }
-
-            // use an inline literal context to get the like argument as a raw string to properly format the SQL parameter
-            using (context.NewInlineLiteralContext())
-            {
-                var arg = node.Accept(this, context);
-                var match = arg.ToString();
-
-                // encode SQL placeholders and quotes
-                match = match.Replace("_", "[_]");
-                match = match.Replace("[", "[[]");
-                match = match.Replace("%", "[%]");
-                match = match.Replace("'", "''");
-
-                // append start and end wildcards, as needed
-                var startWildcard = matchType != MatchType.Prefix ? "%" : "";
-                var endWildcard = matchType != MatchType.Suffix ? "%" : "";
-                return $"N'{startWildcard}{match}{endWildcard}'";
             }
         }
 
@@ -1072,6 +1080,14 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_checkOnly) return;
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NonPositiveNumberCondition, retVal);
+                ErrorCheck(condition, ValidationErrorCode);
+            }
+
+            internal void LessThanOneNumberCheck(RetVal retVal)
+            {
+                if (_checkOnly) return;
+
+                var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.LessThanOneNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
             }
 

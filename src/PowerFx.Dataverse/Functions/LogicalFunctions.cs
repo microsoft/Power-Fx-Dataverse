@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     // if there is a single parameter, this is a pass thru
                     if (i == 0 && node.Args.Count == 1)
                     {
-                        return context.SetIntermediateVariable(node, fromRetVal: arg);
+                        return context.SetIntermediateVariable(node, fromRetVal: coercedArg);
                     }
                     else if (result == null)
                     {

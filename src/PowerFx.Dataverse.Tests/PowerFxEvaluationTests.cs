@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Ideally, this should only go down as the rest of the functions/capabilities are added
                 // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(191, result.Fail);
+                Assert.AreEqual(191, result.Fail, result.Output);
             }
         }
 
@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(62, result.Fail);
+                Assert.AreEqual(23, result.Fail, result.Output);
 
                 // Verify that we're actually running tests. 
                 Assert.IsTrue(result.Total > 400);
@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                //runner.AddFile("Testingtxt");
+                //runner.AddFile("Testing.txt");
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
                 {
                     runner.AddFile(path);
@@ -115,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(0, result.Fail);
+                Assert.AreEqual(0, result.Fail, result.Output);
             }
         }
 
