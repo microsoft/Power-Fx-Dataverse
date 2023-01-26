@@ -31,6 +31,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.AttributeUtility",
+                "Microsoft.PowerFx.Dataverse.MetadataExtensions",
 
                 // Policies 
                 "Microsoft.PowerFx.Dataverse.Policy",

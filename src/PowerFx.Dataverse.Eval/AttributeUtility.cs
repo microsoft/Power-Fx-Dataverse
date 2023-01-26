@@ -24,12 +24,22 @@ namespace Microsoft.PowerFx.Dataverse
         // Lookup by attribute logical name or by relationship name. 
         public static bool TryGetAttribute(this EntityMetadata entityMetadata, string fieldName, out AttributeMetadata amd)
         {
+            if (entityMetadata == null)
+            {
+                throw new ArgumentNullException(nameof(entityMetadata));
+            }
+
             amd = entityMetadata.Attributes.FirstOrDefault(amd => amd.LogicalName == fieldName);
             return amd != null;
         }
 
         public static bool TryGetRelationship(this EntityMetadata entityMetadata, string fieldName, out string realAttributeName)
         {
+            if (entityMetadata == null)
+            {
+                throw new ArgumentNullException(nameof(entityMetadata));
+            }
+
             if (entityMetadata.ManyToOneRelationships != null)
             {
                 foreach (var relationships in entityMetadata.ManyToOneRelationships)
