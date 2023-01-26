@@ -121,6 +121,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsInstanceOfType(field2, typeof(NumberType));
         }
 
+        // Lookup missing field 
+        [TestMethod]
+        public void MetadataChecksMissingField()
+        {
+            var metadata = _trivialModel.ToXrm();
+            var ok = metadata.TryGetRelationship("missing", out var attr);
+            Assert.IsFalse(ok);
+            Assert.IsNull(attr);
+
+            ok = metadata.TryGetAttribute("missing", out var amd);
+            Assert.IsFalse(ok);
+            Assert.IsNull(amd);
+        }
+
         [TestMethod]
         public void MetadataChecks()
         {
@@ -522,16 +536,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("xxxt1", list2[0].DisplayText.Text);
         }
 
+        [TestMethod]
+        public void SingleOrgPolicyTest()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            foreach (var name in new string[] { "local", "t1", "remote", "Remote" })
+            {
+                var ok = dv.Symbols.TryLookupSlot(name, out var s1);
+                Assert.IsTrue(ok);
+                Assert.IsNotNull(s1);
+                Assert.AreSame(dv.Symbols, s1.Owner);
+            }
+        }
+
         // When using WholeOrg policy, we're using display names,
         // which are converted to invariant.
         [DataTestMethod]
         [DataRow("new_price + 10", "Price + 10")]
         [DataRow("ThisRecord.new_price + 10", "ThisRecord.Price + 10")]
         [DataRow("First(local).new_price", "First(t1).Price")]
-        [DataRow("ThisRecord.refg.data", "ThisRecord.Other.Data")]
+        [DataRow("ThisRecord.refg.data", "ThisRecord.Other.Data")] // relationships
         [DataRow("First(remote).data", "First(Remote).Data")]
-        [DataRow("Set(refg, First(remote));refg.data", "Set(Other, First(Remote));Other.Data")]
-        public void WholeOrgConversions(string logical, string display)
+        [DataRow("Set(refg, First(remote));refg.data", "Set(Other, First(Remote));Other.Data")] // relationships
+        [DataRow("new_price * new_quantity", "Price * Quantity", "new_price * Quantity")]
+        public void WholeOrgConversions(string logical, string display, string mixed = null)
         {
             var logicalName = "local";
 
@@ -550,22 +584,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();
                 var engine = new RecalcEngine(config);
-                
 
-                var check = new CheckResult(engine)
-                    .SetText(display, new ParserOptions { AllowsSideEffects = true })
-                    .SetBindingInfo(symbols);
+                // Check conversion against all forms. 
+                foreach (var expr in new string[] { logical, display, mixed })
+                {
+                    if (expr == null)
+                    {
+                        continue;
+                    }
 
-                check.ApplyBinding();
-                Assert.IsTrue(check.IsSuccess);
+                    // Get invariant
+                    var check = new CheckResult(engine)
+                        .SetText(expr, new ParserOptions { AllowsSideEffects = true })
+                        .SetBindingInfo(symbols);
 
-                var invariant = check.ApplyGetInvariant();
+                    check.ApplyBinding();
+                    Assert.IsTrue(check.IsSuccess);
 
-                Assert.AreEqual(invariant, logical);
+                    var invariant = check.ApplyGetInvariant();
+                    Assert.AreEqual(invariant, logical);
 
-
-                var display2 = engine.GetDisplayExpression(invariant, symbols);
-                Assert.AreEqual(display, display2);
+                    // Get display 
+                    var display2 = engine.GetDisplayExpression(expr, symbols);
+                    Assert.AreEqual(display, display2);
+                }
             }
         }
 
@@ -634,7 +676,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
 
         // Row Scope
-        [DataRow("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names        
+        [DataRow("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names
+        [DataRow("new_price + new_quantity", 100.0)] // new_quantity is blank. 
+
         [DataRow("Price + 10", 110.0, true)] //using Display name for Price
         [DataRow("ThisRecord.Other.Data", 200.0)] // Relationship 
         [DataRow("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
@@ -649,6 +693,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
         [DataRow("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
         [DataRow("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias        
+        
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
@@ -1248,6 +1293,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
             entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
+
+            // entity1.new_quantity is intentionally blank. 
 
             entity2.Attributes["data"] = 200;
 

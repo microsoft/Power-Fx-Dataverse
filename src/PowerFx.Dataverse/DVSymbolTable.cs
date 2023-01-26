@@ -81,6 +81,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // This callback will add the symbol, so that when we return, our caller will naturally find it. 
                 // But that add will inc the VersionHash, so we override to disable it. 
                 _funcAdd(logicalName.Value, name.Value);
+            } 
+            else if (_displayNameLookup.TryGetDisplayName(name, out var displayName))
+            {
+                _funcAdd(name.Value, displayName.Value);
             }
 
             return base.TryLookup(name, out nameInfo);
