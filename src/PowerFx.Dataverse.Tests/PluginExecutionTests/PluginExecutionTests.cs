@@ -546,9 +546,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
 
-            var ok = dv.Symbols.TryLookupSlot("remote", out var s1);
-            Assert.IsTrue(ok);
-            Assert.IsNotNull(s1);
+            foreach (var name in new string[] { "local", "t1", "remote", "Remote" })
+            {
+                var ok = dv.Symbols.TryLookupSlot(name, out var s1);
+                Assert.IsTrue(ok);
+                Assert.IsNotNull(s1);
+                Assert.AreSame(dv.Symbols, s1.Owner);
+            }
         }
 
         // When using WholeOrg policy, we're using display names,
