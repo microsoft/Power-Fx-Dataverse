@@ -30,12 +30,15 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static bool TryGetRelationship(this EntityMetadata entityMetadata, string fieldName, out string realAttributeName)
         {
-            foreach (var relationships in entityMetadata.ManyToOneRelationships)
+            if (entityMetadata.ManyToOneRelationships != null)
             {
-                if (relationships.ReferencingEntityNavigationPropertyName == fieldName)
+                foreach (var relationships in entityMetadata.ManyToOneRelationships)
                 {
-                    realAttributeName = relationships.ReferencingAttribute;                    
-                    return realAttributeName  != null;
+                    if (relationships.ReferencingEntityNavigationPropertyName == fieldName)
+                    {
+                        realAttributeName = relationships.ReferencingAttribute;
+                        return realAttributeName != null;
+                    }
                 }
             }
             realAttributeName = null;

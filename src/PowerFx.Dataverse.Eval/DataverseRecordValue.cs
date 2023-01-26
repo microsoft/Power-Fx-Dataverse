@@ -25,8 +25,8 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseRecordValue : RecordValue
     {
         // The underlying entity (= table row)
-        private Entity _entity;
-        private EntityMetadata _metadata;
+        private readonly Entity _entity;
+        private readonly EntityMetadata _metadata;
 
         // Used to resolve entity relationships (dot operators). 
         private readonly IConnectionValueContext _connection;

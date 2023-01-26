@@ -20,6 +20,8 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseExtensions
     {
+        // $$$ Make this public 
+
         /// <summary>
         /// Helper to get all Logical 2 Display name map for the entire org. 
         /// This efficiently fetches the table names, but not the metadata. 

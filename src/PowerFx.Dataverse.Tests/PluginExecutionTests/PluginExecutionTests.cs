@@ -121,6 +121,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsInstanceOfType(field2, typeof(NumberType));
         }
 
+        // Lookup missing field 
+        [TestMethod]
+        public void MetadataChecksMissingField()
+        {
+            var metadata = _trivialModel.ToXrm();
+            var ok = metadata.TryGetRelationship("missing", out var attr);
+            Assert.IsFalse(ok);
+            Assert.IsNull(attr);
+
+            ok = metadata.TryGetAttribute("missing", out var amd);
+            Assert.IsFalse(ok);
+            Assert.IsNull(amd);
+        }
+
         [TestMethod]
         public void MetadataChecks()
         {
@@ -522,6 +536,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("xxxt1", list2[0].DisplayText.Text);
         }
 
+        [TestMethod]
+        public void SingleOrgPolicyTest()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var ok = dv.Symbols.TryLookupSlot("remote", out var s1);
+            Assert.IsTrue(ok);
+            Assert.IsNotNull(s1);
+        }
+
         // When using WholeOrg policy, we're using display names,
         // which are converted to invariant.
         [DataTestMethod]
@@ -634,7 +663,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
 
         // Row Scope
-        [DataRow("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names        
+        [DataRow("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names
+        [DataRow("new_price + new_quantity", 100.0)] // new_quantity is blank. 
+
         [DataRow("Price + 10", 110.0, true)] //using Display name for Price
         [DataRow("ThisRecord.Other.Data", 200.0)] // Relationship 
         [DataRow("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
@@ -649,6 +680,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
         [DataRow("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
         [DataRow("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias        
+        
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
@@ -1248,6 +1280,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
             entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
+
+            // entity1.new_quantity is intentionally blank. 
 
             entity2.Attributes["data"] = 200;
 
