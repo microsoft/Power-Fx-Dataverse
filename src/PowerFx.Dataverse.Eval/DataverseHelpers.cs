@@ -14,16 +14,5 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return new ExpressionError() { Kind = ErrorKind.Unknown, Severity = severity, Message = message, MessageKey = messageKey };
         }
-
-        // For some specific column types we need to extract the primitive value.
-        internal static object ExtractPrimitiveValue(object value)
-        {
-            if (value is Money money) 
-            {
-                return money.Value;
-            }
-
-            return value;
-        }
     }
 }

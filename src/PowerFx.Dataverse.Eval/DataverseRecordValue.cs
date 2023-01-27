@@ -114,8 +114,15 @@ namespace Microsoft.PowerFx.Dataverse
                 value = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.Local);
             }
 
+            // For some specific column types we need to extract the primitive value.
+            if (value is Money money)
+            {
+                result = FormulaValue.New(money.Value);
+                return true;
+            }
+
             // Handle primitives
-            if (PrimitiveValueConversions.TryMarshal(DataverseHelpers.ExtractPrimitiveValue(value), fieldType, out result))
+            if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
             {
                 return true;
             }
