@@ -1317,7 +1317,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity2 = new Entity("remote", _g2);
 
             entity1.Attributes["new_price"] = 100;
-            entity1.Attributes["currency"] = new Money(123);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

@@ -4,8 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-
 namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseHelpers
