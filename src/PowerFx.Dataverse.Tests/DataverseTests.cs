@@ -1126,6 +1126,7 @@ END
                 AttributeMetadataModel.NewDecimal("conflict1", "Conflict"),
                 AttributeMetadataModel.NewDecimal("conflict2", "Conflict"),
                 AttributeMetadataModel.NewDecimal("new_price", "Price"),
+                AttributeMetadataModel.NewMoney("currency", "Currency"),
                 AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
                 AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),

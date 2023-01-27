@@ -115,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Handle primitives
-            if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
+            if (PrimitiveValueConversions.TryMarshal(DataverseHelpers.ExtractPrimitiveValue(value), fieldType, out result))
             {
                 return true;
             }

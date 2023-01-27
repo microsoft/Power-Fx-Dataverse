@@ -498,6 +498,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());         
         }
 
+        // Run with 2 tables registered. 
+        [DataTestMethod]
+        [DataRow("First(t1).currency", 123.0)]
+        public void ExtractPrimitiveValueTest(string expr, object expected)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var check = engine.Check(expr, symbolTable: dv.Symbols);;
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
         // Ensure a custom function shows up in intellisense. 
         [TestMethod]
         public void IntellisenseWithWholeOrgPolicy()
@@ -1193,6 +1216,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity1 = new Entity("local", _g1);
             entity1.Attributes["new_price"] = 100;
             entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
+            entity1.Attributes["currency"] = new Xrm.Sdk.Money(123);
 
             var val1 = dv.Marshal(entity1);
 
@@ -1288,6 +1312,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity2 = new Entity("remote", _g2);
 
             entity1.Attributes["new_price"] = 100;
+            entity1.Attributes["currency"] = new Money(123);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
