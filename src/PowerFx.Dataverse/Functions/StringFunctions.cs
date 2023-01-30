@@ -13,6 +13,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Types;
 using System.Text.RegularExpressions;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -298,14 +299,15 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.SetIntermediateVariable(matchCount, $"1");
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
                 var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
-                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({oldStr}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+                // find the appropriate instance (case sensitive) in the original string
+                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({oldStr} {SqlStatementFormat.CollateString}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 
                 context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({CoerceNullToString(str)}, {idx}, {oldLen}, {CoerceNullToString(newStr)}), {CoerceNullToString(str)})");
             }
             else
             {
                 // if no instance is indicated, replace all
-                context.SetIntermediateVariable(result, $"REPLACE({CoerceNullToString(str)}, {CoerceNullToString(oldStr)}, {CoerceNullToString(newStr)})");
+                context.SetIntermediateVariable(result, $"REPLACE({CoerceNullToString(str)}, {CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(newStr)})");
             }
             return result;
         }

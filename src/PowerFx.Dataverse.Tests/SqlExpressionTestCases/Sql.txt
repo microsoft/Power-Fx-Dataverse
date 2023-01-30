@@ -83,3 +83,13 @@ true
 // check SQL wildcards are handled
 >> "%_" in "SQL wildcards"
 false
+
+// ensure Substitute is case sensitive
+>> Substitute("HelloHELLOhello", "he", "je")
+"HelloHELLOjello"
+
+>> Substitute("HelloHelloHello", "he", "je", 2)
+"HelloHelloHello"
+
+>> Substitute("HelloHELLOhelloHelloHELLOhello", "he", "je", 2)
+"HelloHELLOhelloHelloHELLOjello"
