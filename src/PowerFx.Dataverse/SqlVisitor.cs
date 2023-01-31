@@ -977,10 +977,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             #region SQL Building
 
-            // TODO: these error codes are not defined in the language anywhere, only hardcoded in the EnumStore definition
-            // Should they be added to an enum
-            internal const string ValidationErrorCode = "11";
-            internal const string Div0ErrorCode = "13";
+            internal static string GetErrorCode(ErrorKind kind)
+            {
+                return ((int)kind).ToString();
+            }
+            internal static string ValidationErrorCode => GetErrorCode(ErrorKind.Validation);
+            internal static string Div0ErrorCode => GetErrorCode(ErrorKind.Div0);
+            internal static string InvalidArgumentErrorCode => GetErrorCode(ErrorKind.InvalidArgument);
 
             internal StringBuilder _sbContent = new StringBuilder();
             int _indentLevel = 1;
