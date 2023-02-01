@@ -472,7 +472,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         const string ConnectionStringVariable = "FxTestSQLDatabase";
 
-
         private static SqlConnection GetSql()
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
