@@ -498,6 +498,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());         
         }
 
+        // Run with 2 tables registered. 
+        [DataTestMethod]
+        [DataRow("First(t1).money", 123.0)]
+        [DataRow("With({x:First(t1).money, y:First(t1)}, x + y.money)", 246.0)]
+        [DataRow("With({x:Collect(t1,{money:40})}, x.money + First(t1).money)", 163.0)]
+        [DataRow("Patch(t1, First(t1), {money:321});First(t1).money", 321.0)]
+        public void ExtractPrimitiveValueTest(string expr, object expected)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);;
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
         // Ensure a custom function shows up in intellisense. 
         [TestMethod]
         public void IntellisenseWithWholeOrgPolicy()
@@ -1301,6 +1330,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2);
+
+            CdsEntityMetadataProvider metadataCache;
+            if (policy is SingleOrgPolicy policy2)
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
+            }
+            else
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+            }
+
+            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
+
+            return (dvConnection, entityLookup);
+        }
+
+        // Create Entity objects to match DataverseTests.AllAttributeModel;
+        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null)
+        {
+            var entity1 = new Entity("allattributes", _g1);
+
+            entity1.Attributes["money"] = new Money(123);
+
+            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
+            EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
+
+            entityLookup.Add(CancellationToken.None, entity1);
 
             CdsEntityMetadataProvider metadataCache;
             if (policy is SingleOrgPolicy policy2)
