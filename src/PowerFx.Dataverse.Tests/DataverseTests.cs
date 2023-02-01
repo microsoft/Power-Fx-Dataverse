@@ -85,9 +85,9 @@ AS BEGIN
     SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(38,10)))
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
