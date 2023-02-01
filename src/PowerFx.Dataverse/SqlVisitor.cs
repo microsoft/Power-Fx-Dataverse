@@ -127,9 +127,12 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             context.DivideByZeroCheck(right);
                         }
+
                         var returnType = new SqlBigType();
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, returnType)} {op} {Library.CoerceNullToNumberType (right, returnType)})");
+                        var decimalType = new SqlDecimalType();
+                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
                         context.PerformRangeChecks(result, node);
+
                         return result;
                     }
 
