@@ -10,7 +10,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -114,6 +113,13 @@ namespace Microsoft.PowerFx.Dataverse
                 value = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.Local);
             }
 
+            // For some specific column types we need to extract the primitive value.
+            if (value is Money money)
+            {
+                result = FormulaValue.New(money.Value);
+                return true;
+            }
+
             // Handle primitives
             if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
             {
@@ -130,9 +136,16 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Unhandled case... 
-            result = null;
-            return false;
+            // Not supported FormulaType types.
+            var expressionError = new ExpressionError()
+            {
+                Kind = ErrorKind.Unknown,
+                Severity = ErrorSeverity.Critical,
+                Message = string.Format("{0} column type not supported.", fieldType)
+            };
+
+            result = NewError(expressionError);
+            return true;
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
