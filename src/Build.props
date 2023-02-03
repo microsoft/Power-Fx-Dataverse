@@ -3,7 +3,7 @@
 
     <!-- 0.2.3-preview.20230118-1002 -->
   <PropertyGroup>
-    <PowerFxVersion>0.2.3-preview.20230125-1003</PowerFxVersion>
+    <PowerFxVersion>0.2.3-preview.20230203-1001</PowerFxVersion>
     <DataverseParserVersion>0.1.0-ci-20230118-67296243</DataverseParserVersion>
   </PropertyGroup>
 

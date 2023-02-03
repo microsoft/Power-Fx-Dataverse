@@ -47,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.
         /// </summary>
-        protected readonly SymbolTable _symbols;
+        protected readonly ReadOnlySymbolTable _symbols;
 
         public ReadOnlySymbolTable Symbols => _symbols;
 
@@ -56,7 +56,21 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// Values of global tables that we've added.
         /// </summary>
-        public ReadOnlySymbolValues SymbolValues { get; private set; }
+        public ReadOnlySymbolValues SymbolValues
+        {
+            get
+            {
+                _policy.AddPendingTables();
+                return _symbolValues;
+            }         
+        }
+
+        internal void Set(ISymbolSlot slot, DataverseTableValue value)
+        {
+            _symbolValues.Set(slot, value);
+        }
+
+        private readonly ReadOnlySymbolValues _symbolValues;
 
         IDataverseServices IConnectionValueContext.Services => _dvServices;
 
@@ -100,8 +114,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             this._policy = policy ?? new MultiOrgPolicy(); 
 
-            this._symbols = _policy.CreateSymbols(this, _metadataCache);            
-            this.SymbolValues = this._symbols.CreateValues();
+            this._symbols = _policy.CreateSymbols(this, _metadataCache);
+            _symbolValues = this._symbols.CreateValues();
         }
 
         // Identity is important so that we can correlate bindings from Check and result. 

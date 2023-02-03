@@ -46,48 +46,4 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
     }
-
-    // Lazily load anything. 
-    // See DVSymbolTable
-    // See https://github.com/microsoft/Power-Fx/issues/1017
-    public class DVLazySymbolTable : DVSymbolTable
-    {
-        // All possible tables we could add. 
-        private readonly DisplayNameProvider _displayNameLookup;
-
-        // Add (Logical,Display) name. 
-        private readonly Action<string, string> _funcAdd;
-
-        // Suppress VersionHash - we're logically fixed (to display names at startup). 
-        private static readonly VersionHash _constant = VersionHash.New();
-        internal override VersionHash VersionHash => _constant;
-
-        public DVLazySymbolTable(
-            CdsEntityMetadataProvider provider,
-            DisplayNameProvider displayNameLookup,
-            Action<string, string> funcAdd)
-            : base(provider)
-        {
-            _displayNameLookup = displayNameLookup ?? throw new ArgumentNullException(nameof(displayNameLookup));
-            _funcAdd = funcAdd ?? throw new ArgumentNullException(nameof(funcAdd));
-
-            DebugName = "DataverseLazyGlobals";
-        }
-
-        internal override bool TryLookup(DName name, out NameLookupInfo nameInfo)
-        {
-            if (_displayNameLookup.TryGetLogicalName(name, out var logicalName))
-            {
-                // This callback will add the symbol, so that when we return, our caller will naturally find it. 
-                // But that add will inc the VersionHash, so we override to disable it. 
-                _funcAdd(logicalName.Value, name.Value);
-            } 
-            else if (_displayNameLookup.TryGetDisplayName(name, out var displayName))
-            {
-                _funcAdd(name.Value, displayName.Value);
-            }
-
-            return base.TryLookup(name, out nameInfo);
-        }        
-    }
 }
