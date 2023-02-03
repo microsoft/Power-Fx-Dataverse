@@ -10,7 +10,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -135,6 +134,18 @@ namespace Microsoft.PowerFx.Dataverse
                     result = osResult;
                     return true;
                 }
+            }
+
+            // Hyperlink column is currently not supported.
+            if (fieldType == FormulaType.Hyperlink)
+            {
+                var expressionError = new ExpressionError() {
+                    Kind = ErrorKind.Unknown,
+                    Severity = ErrorSeverity.Critical,
+                    Message = "Hyperlink column type not supported."};
+
+                result = NewError(expressionError);
+                return true;
             }
 
             // Unhandled case... 
