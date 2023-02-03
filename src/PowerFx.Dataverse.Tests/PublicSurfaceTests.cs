@@ -39,6 +39,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.MultiOrgPolicy",
 
                 // Optional services / Mocks.
+                "Microsoft.PowerFx.Dataverse.DataverseService",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse`1",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse",
                 "Microsoft.PowerFx.Dataverse.IDataverseServices",
@@ -64,7 +65,6 @@ namespace Microsoft.PowerFx.Tests
 
                 // used for Eval, but here because they need Fx Core Internals. 
                 "Microsoft.PowerFx.Dataverse.DVSymbolTable",
-                "Microsoft.PowerFx.Dataverse.DVLazySymbolTable",
                 
                 // SQL compilation 
                 "Microsoft.PowerFx.Dataverse.DataverseEngine",

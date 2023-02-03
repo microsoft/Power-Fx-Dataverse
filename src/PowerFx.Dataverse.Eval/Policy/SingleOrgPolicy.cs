@@ -72,13 +72,15 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotSupportedException($"Only explicit policy supports AddTable");
         }
 
+        ReadOnlySymbolTable _allEntitieSymbols;
+
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            var allEntitiesSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, "DataverseLazyGlobals");
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, "DataverseLazyGlobals");
 
             var optionSetSymbols = new DVSymbolTable(metadataCache);
 
-            _symbols = ReadOnlySymbolTable.Compose(allEntitiesSymbols, optionSetSymbols);
+            _symbols = ReadOnlySymbolTable.Compose(_allEntitieSymbols, optionSetSymbols);
             return _symbols;
         }
 
@@ -117,11 +119,32 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _tablesLogical2Value.Add(logicalName, tableValue);
 
-                _parent.SymbolValues.Set(slot, tableValue);
+                // The slot doesn't exist yet, so we can't populate the symbol values. 
+                // Add to derred list and DataverseConnection will handle. 
+                _pendingTables.Add(Tuple.Create(logicalName, tableValue));
 
                 return tableValue.Type;
             } 
         }
+
+        List<Tuple<string, DataverseTableValue>> _pendingTables = new List<Tuple<string, DataverseTableValue>>();
+
+        internal override void AddPendingTables()
+        {
+            foreach(var kv in _pendingTables)
+            {
+                if (_allEntitieSymbols.TryLookupSlot(kv.Item1, out var slot))
+                {
+                    _parent.Set(slot, kv.Item2);
+                } 
+                else
+                {
+
+                }
+            }
+            _pendingTables.Clear();
+        }
+
 
         // Get logical names of tables that this specific expression depends on. 
         // This will be a subset of all known tables. 

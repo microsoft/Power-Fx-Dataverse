@@ -549,7 +549,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var ok = dv.Symbols.TryLookupSlot(name, out var s1);
                 Assert.IsTrue(ok);
                 Assert.IsNotNull(s1);
-                Assert.AreSame(dv.Symbols, s1.Owner);
             }
         }
 

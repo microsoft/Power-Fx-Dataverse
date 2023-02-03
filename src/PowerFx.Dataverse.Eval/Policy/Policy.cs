@@ -52,5 +52,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="tableLogicalName"></param>
         /// <returns></returns>
         internal abstract TableValue AddTable(string variableName, string tableLogicalName);
+
+        internal virtual void AddPendingTables()
+        {
+        }
     }
 }
