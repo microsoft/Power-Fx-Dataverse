@@ -47,6 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
+#if false
     // Lazily load anything. 
     // See DVSymbolTable
     // See https://github.com/microsoft/Power-Fx/issues/1017
@@ -90,4 +91,5 @@ namespace Microsoft.PowerFx.Dataverse
             return base.TryLookup(name, out nameInfo);
         }        
     }
+#endif
 }

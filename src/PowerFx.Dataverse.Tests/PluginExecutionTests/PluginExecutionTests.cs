@@ -519,10 +519,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var results = engine.Suggest(check, 2);
             var list = results.Suggestions.ToArray();
 
-            // BUG - we should see the symbol names show up here,
-            // need https://github.com/microsoft/Power-Fx/issues/1017
-            // we don't see symbols until they've been lazily loaded. 
-            Assert.AreEqual(0, list.Length);
+            Assert.AreEqual(1, list.Length);
+            Assert.AreEqual("xxxt1", list[0].DisplayText.Text);
 
             // Triggers a lazy load
             var check2 = engine.Check("First(xxxt1)", symbolTable: dv2.Symbols); 

@@ -47,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.
         /// </summary>
-        protected readonly SymbolTable _symbols;
+        protected readonly ReadOnlySymbolTable _symbols;
 
         public ReadOnlySymbolTable Symbols => _symbols;
 

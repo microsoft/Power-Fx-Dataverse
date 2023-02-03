@@ -25,6 +25,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly DisplayNameProvider _displayNameLookup;
 
+        private ReadOnlySymbolTable _symbols;
+
         // Mapping of Table logical names to values. 
         // Since this is a single-org case, the "Variable Name" is just the display name.
         private protected readonly Dictionary<string, DataverseTableValue> _tablesLogical2Value = new Dictionary<string, DataverseTableValue>();
@@ -70,22 +72,32 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotSupportedException($"Only explicit policy supports AddTable");
         }
 
-        internal override SymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
+        internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            var symbols = new DVLazySymbolTable(metadataCache, _displayNameLookup, LazyAddTable);
-            return symbols;
+            var allEntitiesSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, "DataverseLazyGlobals");
+
+            var optionSetSymbols = new DVSymbolTable(metadataCache);
+
+            _symbols = ReadOnlySymbolTable.Compose(allEntitiesSymbols, optionSetSymbols);
+            return _symbols;
         }
 
+        // This can be called on multiple threads, and multiple times. 
         // Called lazily when we encounter a new name and add the table.
         // Only called on explicit access by resolved; not called when we pickup via relationships. 
-        protected void LazyAddTable(string logicalName, string displayName)
+        private FormulaType LazyAddTable(string logicalName, string displayName)
         {
-            if (_tablesLogical2Value.ContainsKey(logicalName))
+            lock (_tablesLogical2Value)
             {
-                // Already present.
-                return;
+                if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
+                {
+                    // Already present.
+                    return table.Type;
+                }
             }
 
+            // Can't be under lock - this may invoke metadata callback interfaces and network requests.
+            // Safe to call this multiple times since we don't update any state. 
             EntityMetadata entityMetadata = _parent.GetMetadataOrThrow(logicalName);
             RecordType recordType = _parent._metadataCache.GetRecordType(logicalName);
 
@@ -94,9 +106,21 @@ namespace Microsoft.PowerFx.Dataverse
             // This is critical for dependency finder. 
             Contract.Assert(logicalName == tableValue.Type.TableSymbolName);
 
-            var slot = _symbols.AddVariable(logicalName, tableValue.Type, displayName: displayName);
-            _tablesLogical2Value[logicalName] = tableValue;
-            _parent.SymbolValues.Set(slot, tableValue);
+            lock (_tablesLogical2Value)
+            {
+                // Race - somebody else added.
+                if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
+                {
+                    // Already present.
+                    return table.Type;
+                }
+
+                _tablesLogical2Value.Add(logicalName, tableValue);
+
+                _parent.SymbolValues.Set(slot, tableValue);
+
+                return tableValue.Type;
+            } 
         }
 
         // Get logical names of tables that this specific expression depends on. 

@@ -24,24 +24,22 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public abstract class Policy
     {
-        protected SymbolTable _symbols;
         protected DataverseConnection _parent;
 
         // Called once on init by DataverseConnection. 
-        internal SymbolTable CreateSymbols(DataverseConnection parent, CdsEntityMetadataProvider metadataCache)
+        internal ReadOnlySymbolTable CreateSymbols(DataverseConnection parent, CdsEntityMetadataProvider metadataCache)
         {
-            if (_symbols != null)
+            if (_parent != null)
             {
                 throw new InvalidOperationException($"Symbols already created");
             }
 
             _parent = parent;
-            _symbols = this.CreateSymbols(metadataCache);
-
-            return _symbols;
+            var symbols = this.CreateSymbols(metadataCache);
+            return symbols;
         }
 
-        internal abstract SymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache);
+        internal abstract ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache);
 
         // Given a logical name, get the "variable name" - which is the name that should 
         // be used in an expression to refer to this.

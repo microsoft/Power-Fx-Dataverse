@@ -18,16 +18,18 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public class MultiOrgPolicy : Policy
     {
+        private SymbolTable _symbols;
+
         // Mapping of logical name back to variable name.
         internal readonly Dictionary<string, string> _logical2Variable = new Dictionary<string, string>();
 
         // Mapping of Table variable names (what's used in expression) to values. 
         private protected readonly Dictionary<string, DataverseTableValue> _tablesDisplay2Value = new Dictionary<string, DataverseTableValue>();
 
-        internal override SymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
+        internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            var symbols = new DVSymbolTable(metadataCache);
-            return symbols;
+            _symbols = new DVSymbolTable(metadataCache);
+            return _symbols;
         }
 
 
