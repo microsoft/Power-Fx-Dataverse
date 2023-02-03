@@ -136,21 +136,16 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Hyperlink column is currently not supported.
-            if (fieldType == FormulaType.Hyperlink)
+            // Not supported FormulaType types.
+            var expressionError = new ExpressionError()
             {
-                var expressionError = new ExpressionError() {
-                    Kind = ErrorKind.Unknown,
-                    Severity = ErrorSeverity.Critical,
-                    Message = "Hyperlink column type not supported."};
+                Kind = ErrorKind.Unknown,
+                Severity = ErrorSeverity.Critical,
+                Message = string.Format("{0} column type not supported.", fieldType)
+            };
 
-                result = NewError(expressionError);
-                return true;
-            }
-
-            // Unhandled case... 
-            result = null;
-            return false;
+            result = NewError(expressionError);
+            return true;
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))

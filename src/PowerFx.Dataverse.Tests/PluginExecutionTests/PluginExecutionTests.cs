@@ -528,9 +528,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        [DataRow("First(t1).hyperlink")]
-        [DataRow("With({x:First(t1)}, x.hyperlink)")]
-        public void HyperlinkColumnErrorTest(string expr)
+        [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
+        [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
+        public void NotSupportedColumnTypeErrorTest(string expr, string exptected)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -551,7 +551,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.IsInstanceOfType(result, typeof(ErrorValue));
-            Assert.AreEqual("Hyperlink column type not supported.", ((ErrorValue)result).Errors.First().Message);
+            Assert.AreEqual(exptected, ((ErrorValue)result).Errors.First().Message);
         }
 
         // Ensure a custom function shows up in intellisense. 
