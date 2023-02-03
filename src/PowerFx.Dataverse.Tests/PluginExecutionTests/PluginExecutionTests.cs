@@ -519,12 +519,39 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine.Config.SymbolTable.EnableMutationFunctions();
 
             var opts = new ParserOptions { AllowsSideEffects = true };
-            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.AreEqual(expected, result.ToObject());
+        }
+
+        [DataTestMethod]
+        [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
+        [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
+        public void NotSupportedColumnTypeErrorTest(string expr, string exptected)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            Assert.AreEqual(exptected, ((ErrorValue)result).Errors.First().Message);
         }
 
         // Ensure a custom function shows up in intellisense. 
@@ -1352,6 +1379,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity1 = new Entity("allattributes", _g1);
 
             entity1.Attributes["money"] = new Money(123);
+            entity1.Attributes["hyperlink"] = "teste_url";
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
