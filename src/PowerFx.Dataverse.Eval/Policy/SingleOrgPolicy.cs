@@ -127,22 +127,41 @@ namespace Microsoft.PowerFx.Dataverse
             } 
         }
 
+        // Protected under lock. 
         List<Tuple<string, DataverseTableValue>> _pendingTables = new List<Tuple<string, DataverseTableValue>>();
 
         internal override void AddPendingTables()
         {
-            foreach(var kv in _pendingTables)
+            // Copy to local for thread safety
+            Tuple<string, DataverseTableValue>[] list;
+
+            lock (_tablesLogical2Value)
             {
+                list = _pendingTables.ToArray();
+                _pendingTables.Clear();
+            }
+
+            var slots = new Dictionary<ISymbolSlot, DataverseTableValue>();
+
+            foreach (var kv in list)
+            {
+                // Can't call TryLookup under a lock, 
+                // so create the list outside the lock. 
                 if (_allEntitieSymbols.TryLookupSlot(kv.Item1, out var slot))
                 {
-                    _parent.Set(slot, kv.Item2);
-                } 
-                else
-                {
-
+                    // _parent.Set(slot, kv.Item2);
+                    slots.Add(slot, kv.Item2);
                 }
             }
-            _pendingTables.Clear();
+
+            // Now process the items again under the lock. 
+            lock (_tablesLogical2Value)
+            {
+                foreach (var kv in slots)
+                {
+                    _parent.SetInternal(kv.Key, kv.Value);
+                }
+            }
         }
 
 

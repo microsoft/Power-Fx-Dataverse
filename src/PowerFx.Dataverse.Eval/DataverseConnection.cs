@@ -64,8 +64,8 @@ namespace Microsoft.PowerFx.Dataverse
                 return _symbolValues;
             }         
         }
-
-        internal void Set(ISymbolSlot slot, DataverseTableValue value)
+                
+        internal void SetInternal(ISymbolSlot slot, DataverseTableValue value)
         {
             _symbolValues.Set(slot, value);
         }

@@ -83,7 +83,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            Entity entity = record.ToEntity(_entityMetadata);
+            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out var error1);
+            if (error1 != null)
+            {
+                return error1;
+            }
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
 
             if (response.HasError)
