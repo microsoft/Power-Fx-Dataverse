@@ -29,7 +29,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             return result;
         }
 
-        public static RetVal MathNaryFunction(SqlVisitor visitor, CallNode node, Context context, string function, int arity, bool coerceNulls = true)
+        // Blank coercion was already handled by IR. 
+        public static RetVal MathNaryFunction(SqlVisitor visitor, CallNode node, Context context, string function, int arity)
         {
             if (node.Args.Count != arity)
             {
@@ -42,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 ValidateNumericArgument(node.Args[i]);
                 var arg = node.Args[i].Accept(visitor, context);
-                var argString = coerceNulls ? CoerceNullToInt(arg) : arg.ToString();
+                var argString = arg.ToString();
                 args.Add(argString);
             }
             context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type)})");
