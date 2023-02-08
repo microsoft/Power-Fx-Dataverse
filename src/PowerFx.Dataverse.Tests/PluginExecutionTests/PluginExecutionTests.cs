@@ -835,14 +835,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
-        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
-        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
-        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200)]
-        [DataRow("Collect(t1, { Price : 200}).Price", 200)] 
-        // [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
-        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255)]        
-        public void PatchFunction(string expr, double expected)
-        {
+        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
+        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
+        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
+        [DataRow("Collect(t1, { Price : 200}).Price", 200.0)] 
+        [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
+        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
+        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
+        public void PatchFunction(string expr, double? expected)
+        {            
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
@@ -871,7 +872,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
                 var entity = (Entity)r2.ToObject();
                 var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-                Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+                var actualValue = e2.Attributes["new_price"];
+                if (expected.HasValue)
+                {
+                    Assert.AreEqual(new Decimal(200.0), actualValue);
+                }
+                else
+                {
+                    Assert.IsNull(actualValue);
+                }
             }
         }
 
