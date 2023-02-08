@@ -101,7 +101,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Use this for local testing of a single testcase (uncomment "TestMethod")
-        [TestMethod]
+        //[TestMethod]
         public void RunSingleTestCase()
         { 
             using (var sql = new SqlRunner(ConnectionString))

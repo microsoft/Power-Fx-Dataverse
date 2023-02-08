@@ -155,7 +155,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     if (node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0)
                     {
-                        if (node.Args[0].IRContext.ResultType == FormulaType.Number)
+                        var arg0 = node.Args[0].IRContext.ResultType;
+                        if (arg0 == FormulaType.Number || arg0 == FormulaType.Blank)
                         {
                             Library.ValidateNumericArgument(node.Args[0]);
                             var arg = node.Args[0].Accept(runner, context);
