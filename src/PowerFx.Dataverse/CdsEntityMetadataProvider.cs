@@ -255,7 +255,33 @@ namespace Microsoft.PowerFx.Dataverse
                     case AttributeTypeCode.Boolean:
                         if (CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet))
                         {
-                            optionSets[columnName] = optionSet;
+                            // !!!??? Adding similar code used by other option types
+                            var dataverseOptionSet = optionSet as DataverseOptionSet;
+                            Contracts.Assert(dataverseOptionSet != null);
+
+                            var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
+                            var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+                            if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
+                            {
+                                // if the global option set is already registered, re-use the original, since binding assumes object equality
+                                dataverseOptionSet = globalOptionSet;
+                            }
+                            else
+                            {
+                                if (!dataverseOptionSet.IsGlobal)
+                                {
+                                    // tag non-global option sets with the entity display name
+                                    dataverseOptionSet.EntityDisplayCollectionName = entityDisplayName;
+                                }
+
+                                // register the option set with the document for global access using the display name
+                                RegisterOptionSet(uniqueName, dataverseOptionSet);
+
+                                // also register them with an invariant name
+                                var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
+                                RegisterOptionSet(logicalName, dataverseOptionSet);
+                            }
+                            optionSets[columnName] = dataverseOptionSet;
                         }
                         break;
                     default:

@@ -639,6 +639,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
         }
 
+        [TestMethod]
+        public void TODELETE()
+        {
+            string tableName = "PFxTables";
+            
+            string expr = $"If(First(PFxTables).Choice, \"YES\", \"NO\")";
+            
+            //string expr = $"'Choice (PFxTables)'.Negative";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
+
+                Assert.IsNotNull(result);
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             ServiceClient svcClient = GetClient();

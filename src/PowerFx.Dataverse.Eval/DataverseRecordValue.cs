@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -117,6 +118,23 @@ namespace Microsoft.PowerFx.Dataverse
             if (value is Money money)
             {
                 result = FormulaValue.New(money.Value);
+                return true;
+            }
+
+            // !!!??? Previous test when trying to coerce BooleanOptionSet to string
+            if (Metadata.TryGetAttribute(fieldName, out var attr) && attr is BooleanAttributeMetadata boolAttr)
+            {
+                PrimitiveValueConversions.TryMarshal(value, fieldType, out result);
+
+                if (((BooleanValue)result).Value)
+                {
+                    result = FormulaValue.New(boolAttr.OptionSet.TrueOption.Label.LocalizedLabels.First().Label);
+                }
+                else
+                {
+                    result = FormulaValue.New(boolAttr.OptionSet.FalseOption.Label.LocalizedLabels.First().Label);
+                }
+
                 return true;
             }
 
