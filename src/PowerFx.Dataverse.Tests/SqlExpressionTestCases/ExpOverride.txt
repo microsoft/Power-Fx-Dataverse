@@ -2,4 +2,4 @@
 
 // Excel returns 5.5799E+186 - overrides SQL Decimal
 >> Exp(430)
-#Error
+Error()

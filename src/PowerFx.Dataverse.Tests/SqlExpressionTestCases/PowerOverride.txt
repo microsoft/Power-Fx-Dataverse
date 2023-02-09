@@ -3,10 +3,10 @@
 // These overflow the SQL decimal
 
 >> Power(230,10)
-#Error
+Error()
 
 >> Power(-456,9)
-#Error
+Error()
 
 >> Power(Exp(42.5),2)
-#Error
+Error()

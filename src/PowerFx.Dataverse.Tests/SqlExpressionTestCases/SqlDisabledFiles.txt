@@ -21,6 +21,14 @@
 
 #DISABLE: FilterFunctions.txt
 
+// Tabular functions not implemented 
+#DISABLE: CharT.txt
+#DISABLE: ExpT.txt
+#DISABLE: LnT.txt
+#DISABLE: SqrtT.txt
+#DISABLE: TabularOverloadsBlanksAndErrors.txt
+#DISABLE: RoundTable.txt
+
 
 #DISABLE: Find.txt
 #DISABLE: FindT.txt
