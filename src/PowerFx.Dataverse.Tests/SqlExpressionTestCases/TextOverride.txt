@@ -36,13 +36,14 @@ Errors: Error 5-22: 'Date' is an unknown or unsupported function.
 
 // Sql Text only supports whole numbers. 
 >> Text(123.4)
-Error
+Error()
 
 >> Text(1/2)
-Error
+Error()
 
 >> Text(-123.4)
-Error
+Error()
 
 >> Text(1234567.89)
-Error
+Error()
+

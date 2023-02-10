@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected override IEnumerable<ExpressionError> PostCheck(CheckResult result)
         {
             var errors = PostCheck2(result);
-            return ExpressionError.New(errors, result.CultureInfo);
+            return ExpressionError.New(errors);
         }
 
         private IEnumerable<IDocumentError> PostCheck2(CheckResult result)

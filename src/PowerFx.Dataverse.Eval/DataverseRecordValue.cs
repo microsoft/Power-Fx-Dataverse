@@ -10,7 +10,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -114,6 +113,13 @@ namespace Microsoft.PowerFx.Dataverse
                 value = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.Local);
             }
 
+            // For some specific column types we need to extract the primitive value.
+            if (value is Money money)
+            {
+                result = FormulaValue.New(money.Value);
+                return true;
+            }
+
             // Handle primitives
             if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
             {
@@ -130,9 +136,16 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Unhandled case... 
-            result = null;
-            return false;
+            // Not supported FormulaType types.
+            var expressionError = new ExpressionError()
+            {
+                Kind = ErrorKind.Unknown,
+                Severity = ErrorSeverity.Critical,
+                Message = string.Format("{0} column type not supported.", fieldType)
+            };
+
+            result = NewError(expressionError);
+            return true;
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
@@ -169,47 +182,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Record should already be logical names. 
         private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
-            // Contains only the modified fields.
-            var leanEntity = new Entity(_entity.LogicalName, _entity.Id);
-
-            error = null;
-
-            foreach (var field in record.Fields)
-            {
-                if (!_metadata.TryGetAttribute(field.Name, out var amd))
-                {
-                    if (_metadata.TryGetRelationship(field.Name, out var realAttributeName))
-                    {
-                        // Get primary key, set as guid. 
-                        var dvr = field.Value as DataverseRecordValue;
-                        if (dvr == null)
-                        {
-                            // Binder should have stopped this. 
-                            error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
-                            return null;
-                        }
-                        var entityRef = dvr.Entity.ToEntityReference();
-
-                        leanEntity.Attributes.Add(realAttributeName, entityRef);
-                        return leanEntity;
-                    }
-                }
-
-                try
-                {
-                    object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
-
-                    string fieldName = field.Name;
-                    
-                    leanEntity.Attributes.Add(fieldName, fieldValue);
-                }
-                catch (NotImplementedException)
-                {
-                    error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} with type {_entity.Attributes[field.Name].GetType().Name}/{field.Value.Type} is not supported yet.", methodName);
-                    return null;
-                }
-            }
-
+            var leanEntity = record.ConvertRecordToEntity(_metadata, out error);
+            leanEntity.Id = _entity.Id;
             return leanEntity;
         }
 

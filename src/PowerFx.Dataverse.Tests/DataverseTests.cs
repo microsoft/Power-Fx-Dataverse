@@ -85,9 +85,9 @@ AS BEGIN
     SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(38,10)))
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
@@ -870,7 +870,7 @@ END
         [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
         [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]
+        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
         public void CheckTextFailures(string expr, bool success, string message = null)
         {
             var engine = new PowerFx2SqlEngine();
@@ -1562,6 +1562,15 @@ END
             {
                 Assert.IsFalse(result.IsSuccess);
             }
+        }
+
+        [TestMethod]
+        public void Coalesce()
+        {
+            // Once we add Coalesce to Library.cs, remove TryCoalesceNum.
+            var ok = Functions.Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
+            Assert.IsFalse(ok);
+            Assert.IsNull(ptr);
         }
 
         private static string ToStableString(IEnumerable<string> items)

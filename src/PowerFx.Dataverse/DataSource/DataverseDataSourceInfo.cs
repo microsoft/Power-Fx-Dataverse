@@ -175,7 +175,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         #region IDataEntityMetadata implementation
-        string IDataEntityMetadata.EntityName => throw new NotImplementedException();
+        string IDataEntityMetadata.EntityName => this.EntityName;
 
         bool IDataEntityMetadata.IsConvertingDisplayNameMapping { get => false; set => throw new NotImplementedException(); }
 

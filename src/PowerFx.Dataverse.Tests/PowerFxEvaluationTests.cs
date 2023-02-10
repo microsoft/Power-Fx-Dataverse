@@ -56,17 +56,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Use this for local testing of a single testcase (uncomment "TestMethod")
-        [TestMethod]
+        //[TestMethod]
         public void RunSingleTestCase()
         { 
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                runner.AddFile("Find.txt");
-                //foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
-                //{
-                //    runner.AddFile(path);
-                //}
+                //runner.AddFile(@"c:\temp\test.txt");
+                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
+                {
+                    runner.AddFile(path);
+                }
 
                 var result = runner.RunTests();
 

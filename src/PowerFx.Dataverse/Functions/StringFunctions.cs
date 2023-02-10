@@ -300,7 +300,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
                 var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
                 // find the appropriate instance (case sensitive) in the original string
-                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({oldStr} {SqlStatementFormat.CollateString}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 
                 context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({CoerceNullToString(str)}, {idx}, {oldLen}, {CoerceNullToString(newStr)}), {CoerceNullToString(str)})");
             }

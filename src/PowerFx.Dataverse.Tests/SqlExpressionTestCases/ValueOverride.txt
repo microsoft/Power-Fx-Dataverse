@@ -17,26 +17,26 @@ Errors: Error 6-22: This argument can not be passed as this type in formula colu
 
 // SQL Value() only supports whole numbers 
 >> Value("0.0")
-Error
+Error()
 
 >> Value("123,456.78")
-Error
+Error()
 
 >> Value( "$ 12.34" )
-Error
+Error()
 
 >> Value( "24e3" )
-Error
+Error()
 
 >> Value( "12.34%" )
-Error
+Error()
 
 >> Value(" %10")
-Error
+Error()
 
 >> Value("10% ")
-Error
+Error()
 
 >> Value("%10")
-Error
+Error()
 

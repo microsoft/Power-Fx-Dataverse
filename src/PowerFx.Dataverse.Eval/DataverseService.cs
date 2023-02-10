@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    internal class DataverseService : IDataverseServices
+    public class DataverseService : IDataverseServices
     {
         private readonly IOrganizationService _organizationService;
 
-        internal DataverseService(IOrganizationService service)
+        public DataverseService(IOrganizationService service)
         {
-            _organizationService = service;
+            _organizationService = service ?? throw new ArgumentNullException(nameof(service));
         }
 
         public async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
@@ -47,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query.ToString()} returned nothing");
         }
 
-        public HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
+        internal HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }

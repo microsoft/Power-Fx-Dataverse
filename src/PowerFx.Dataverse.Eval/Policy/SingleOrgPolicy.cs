@@ -25,6 +25,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly DisplayNameProvider _displayNameLookup;
 
+        private ReadOnlySymbolTable _symbols;
+
         // Mapping of Table logical names to values. 
         // Since this is a single-org case, the "Variable Name" is just the display name.
         private protected readonly Dictionary<string, DataverseTableValue> _tablesLogical2Value = new Dictionary<string, DataverseTableValue>();
@@ -70,22 +72,34 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotSupportedException($"Only explicit policy supports AddTable");
         }
 
-        internal override SymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
+        ReadOnlySymbolTable _allEntitieSymbols;
+
+        internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            var symbols = new DVLazySymbolTable(metadataCache, _displayNameLookup, LazyAddTable);
-            return symbols;
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, "DataverseLazyGlobals");
+
+            var optionSetSymbols = new DVSymbolTable(metadataCache);
+
+            _symbols = ReadOnlySymbolTable.Compose(_allEntitieSymbols, optionSetSymbols);
+            return _symbols;
         }
 
+        // This can be called on multiple threads, and multiple times. 
         // Called lazily when we encounter a new name and add the table.
         // Only called on explicit access by resolved; not called when we pickup via relationships. 
-        protected void LazyAddTable(string logicalName, string displayName)
+        private FormulaType LazyAddTable(string logicalName, string displayName)
         {
-            if (_tablesLogical2Value.ContainsKey(logicalName))
+            lock (_tablesLogical2Value)
             {
-                // Already present.
-                return;
+                if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
+                {
+                    // Already present.
+                    return table.Type;
+                }
             }
 
+            // Can't be under lock - this may invoke metadata callback interfaces and network requests.
+            // Safe to call this multiple times since we don't update any state. 
             EntityMetadata entityMetadata = _parent.GetMetadataOrThrow(logicalName);
             RecordType recordType = _parent._metadataCache.GetRecordType(logicalName);
 
@@ -94,10 +108,62 @@ namespace Microsoft.PowerFx.Dataverse
             // This is critical for dependency finder. 
             Contract.Assert(logicalName == tableValue.Type.TableSymbolName);
 
-            var slot = _symbols.AddVariable(logicalName, tableValue.Type, displayName: displayName);
-            _tablesLogical2Value[logicalName] = tableValue;
-            _parent.SymbolValues.Set(slot, tableValue);
+            lock (_tablesLogical2Value)
+            {
+                // Race - somebody else added.
+                if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
+                {
+                    // Already present.
+                    return table.Type;
+                }
+
+                _tablesLogical2Value.Add(logicalName, tableValue);
+
+                // The slot doesn't exist yet, so we can't populate the symbol values. 
+                // Add to derred list and DataverseConnection will handle. 
+                _pendingTables.Add(Tuple.Create(logicalName, tableValue));
+
+                return tableValue.Type;
+            } 
         }
+
+        // Protected under lock. 
+        List<Tuple<string, DataverseTableValue>> _pendingTables = new List<Tuple<string, DataverseTableValue>>();
+
+        internal override void AddPendingTables()
+        {
+            // Copy to local for thread safety
+            Tuple<string, DataverseTableValue>[] list;
+
+            lock (_tablesLogical2Value)
+            {
+                list = _pendingTables.ToArray();
+                _pendingTables.Clear();
+            }
+
+            var slots = new Dictionary<ISymbolSlot, DataverseTableValue>();
+
+            foreach (var kv in list)
+            {
+                // Can't call TryLookup under a lock, 
+                // so create the list outside the lock. 
+                if (_allEntitieSymbols.TryLookupSlot(kv.Item1, out var slot))
+                {
+                    // _parent.Set(slot, kv.Item2);
+                    slots.Add(slot, kv.Item2);
+                }
+            }
+
+            // Now process the items again under the lock. 
+            lock (_tablesLogical2Value)
+            {
+                foreach (var kv in slots)
+                {
+                    _parent.SetInternal(kv.Key, kv.Value);
+                }
+            }
+        }
+
 
         // Get logical names of tables that this specific expression depends on. 
         // This will be a subset of all known tables. 

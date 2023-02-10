@@ -12,6 +12,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using static Microsoft.PowerFx.Dataverse.DataverseHelpers;
@@ -34,18 +35,54 @@ namespace Microsoft.PowerFx.Dataverse
             result = transform(resp.Response);
             return true;
         }
-
-        public static Entity ToEntity(this RecordValue record, EntityMetadata entityMetadata)
+       
+        // Record should already be logical names. 
+        public static Entity ConvertRecordToEntity(this RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
-            Entity entity = new(entityMetadata.LogicalName);
+            // Contains only the modified fields.
+            var leanEntity = new Entity(metadata.LogicalName);
 
-            foreach (NamedValue field in record.Fields)
+            error = null;
+
+            foreach (var field in record.Fields)
             {
-                entity.Attributes.Add(field.Name, field.Value.ToObject());
+                if (!metadata.TryGetAttribute(field.Name, out var amd))
+                {
+                    if (metadata.TryGetRelationship(field.Name, out var realAttributeName))
+                    {
+                        // Get primary key, set as guid. 
+                        var dvr = field.Value as DataverseRecordValue;
+                        if (dvr == null)
+                        {
+                            // Binder should have stopped this. 
+                            error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
+                            return null;
+                        }
+                        var entityRef = dvr.Entity.ToEntityReference();
+
+                        leanEntity.Attributes.Add(realAttributeName, entityRef);
+                        continue;
+                    }
+                }
+
+                try
+                {
+                    object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
+
+                    string fieldName = field.Name;
+
+                    leanEntity.Attributes.Add(fieldName, fieldValue);
+                }
+                catch (NotImplementedException)
+                {
+                    error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} with type {amd.AttributeType.Value}/{field.Value.Type} is not supported yet.", methodName);
+                    return null;
+                }
             }
 
-            return entity;
+            return leanEntity;
         }
+
 
         private static string DisplayName(this Type t)
         {

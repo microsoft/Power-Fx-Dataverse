@@ -498,6 +498,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());         
         }
 
+        // Run with 2 tables registered. 
+        [DataTestMethod]
+        [DataRow("First(t1).money", 123.0)]
+        [DataRow("With({x:First(t1).money, y:First(t1)}, x + y.money)", 246.0)]
+        [DataRow("With({x:Collect(t1,{money:40})}, x.money + First(t1).money)", 163.0)]
+        [DataRow("Patch(t1, First(t1), {money:321});First(t1).money", 321.0)]
+        public void ExtractPrimitiveValueTest(string expr, object expected)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
+        [DataTestMethod]
+        [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
+        [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
+        public void NotSupportedColumnTypeErrorTest(string expr, string exptected)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            Assert.AreEqual(exptected, ((ErrorValue)result).Errors.First().Message);
+        }
+
         // Ensure a custom function shows up in intellisense. 
         [TestMethod]
         public void IntellisenseWithWholeOrgPolicy()
@@ -519,10 +575,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var results = engine.Suggest(check, 2);
             var list = results.Suggestions.ToArray();
 
-            // BUG - we should see the symbol names show up here,
-            // need https://github.com/microsoft/Power-Fx/issues/1017
-            // we don't see symbols until they've been lazily loaded. 
-            Assert.AreEqual(0, list.Length);
+            Assert.AreEqual(1, list.Length);
+            Assert.AreEqual("xxxt1", list[0].DisplayText.Text);
 
             // Triggers a lazy load
             var check2 = engine.Check("First(xxxt1)", symbolTable: dv2.Symbols); 
@@ -551,7 +605,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var ok = dv.Symbols.TryLookupSlot(name, out var s1);
                 Assert.IsTrue(ok);
                 Assert.IsNotNull(s1);
-                Assert.AreSame(dv.Symbols, s1.Owner);
             }
         }
 
@@ -782,14 +835,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
-        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200)]
-        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100)] // Expected, x.Price is still old value!
-        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200)]
-        [DataRow("Collect(t1, { Price : 200}).Price", 200)] 
-        // [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1)] // https://github.com/microsoft/Power-Fx-Dataverse/issues/32
-        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255)]        
-        public void PatchFunction(string expr, double expected)
-        {
+        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
+        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
+        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
+        [DataRow("Collect(t1, { Price : 200}).Price", 200.0)] 
+        [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
+        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
+        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
+        public void PatchFunction(string expr, double? expected)
+        {            
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
@@ -818,7 +872,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
                 var entity = (Entity)r2.ToObject();
                 var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-                Assert.AreEqual(new Decimal(200.0), e2.Attributes["new_price"]);
+                var actualValue = e2.Attributes["new_price"];
+                if (expected.HasValue)
+                {
+                    Assert.AreEqual(new Decimal(200.0), actualValue);
+                }
+                else
+                {
+                    Assert.IsNull(actualValue);
+                }
             }
         }
 
@@ -1301,6 +1363,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2);
+
+            CdsEntityMetadataProvider metadataCache;
+            if (policy is SingleOrgPolicy policy2)
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
+            }
+            else
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+            }
+
+            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
+
+            return (dvConnection, entityLookup);
+        }
+
+        // Create Entity objects to match DataverseTests.AllAttributeModel;
+        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null)
+        {
+            var entity1 = new Entity("allattributes", _g1);
+
+            entity1.Attributes["money"] = new Money(123);
+            entity1.Attributes["hyperlink"] = "teste_url";
+
+            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
+            EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
+
+            entityLookup.Add(CancellationToken.None, entity1);
 
             CdsEntityMetadataProvider metadataCache;
             if (policy is SingleOrgPolicy policy2)

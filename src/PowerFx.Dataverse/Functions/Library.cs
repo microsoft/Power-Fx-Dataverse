@@ -7,6 +7,7 @@
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Types;
 using System.Collections.Generic;
 using System.Linq;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
@@ -25,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         // Some TexlFunctions are overloaded
         private static Dictionary<TexlFunction, FunctionPtr> _funcsByName = new Dictionary<TexlFunction, FunctionPtr>
         {
-            { BuiltinFunctionsCore.Abs, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ABS", 1, coerceNulls: true) },
+            { BuiltinFunctionsCore.Abs, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ABS", 1) },
             //{ BuiltinFunctionsCore.AddColumns, AddColumns },
             { BuiltinFunctionsCore.And, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "AND", false) },
             { BuiltinFunctionsCore.Average, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "AVG", errorOnNulls:true) },
@@ -58,7 +59,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Hour, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Hour) },
             { BuiltinFunctionsCore.If, If },
             { BuiltinFunctionsCore.IfError, IfError },
-            { BuiltinFunctionsCore.Int, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "FLOOR", 1, coerceNulls: true) },
+            { BuiltinFunctionsCore.Int, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "FLOOR", 1) },
             { BuiltinFunctionsCore.IsBlank, IsBlank },
             { BuiltinFunctionsCore.IsBlankOptionSetValue, IsBlank },
             { BuiltinFunctionsCore.IsError, IsError },
@@ -141,6 +142,40 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var args = func.GetParamNames().ToArray();
             Contracts.Assert(argumentIndex < args.Length);
             return args[argumentIndex];
+        }
+
+        // Try Coalesce(number,0) pattern.
+        // IR emits this specifically for Number-->Blank coercions. 
+        // This is only a partial implementation for Coalesce. 
+        // Once Coalesce is in the dictionary, then we can remove this. 
+        public static bool TryCoalesceNum(SqlVisitor runner, CallNode node, Context context, out RetVal ret)
+        {
+            if (node.Function == BuiltinFunctionsCore.Coalesce)
+            {
+                if (node.Args.Count == 2)
+                {
+                    if (node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0)
+                    {
+                        var arg0 = node.Args[0].IRContext.ResultType;
+                        if (arg0 == FormulaType.Number || arg0 == FormulaType.Blank)
+                        {
+                            Library.ValidateNumericArgument(node.Args[0]);
+                            var arg = node.Args[0].Accept(runner, context);
+
+                            var argString = Library.CoerceNullToInt(arg);
+
+                            var result = context.GetTempVar(new SqlBigType());
+                            context.SetIntermediateVariable(result, argString);
+
+                            ret = result;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            ret = null;
+            return false;
         }
     }
 }
