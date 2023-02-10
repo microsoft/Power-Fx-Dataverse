@@ -1,7 +1,4 @@
-﻿>> Substitute("abcabcabc", Blank(), "xx", 2)
-"abcabcabc"
-
-// SQL-specific tests
+﻿// SQL-specific tests
 
 // IsError inside If
 >> If(true, IsError(1/0 + 1))
@@ -15,7 +12,7 @@ true
 
 // If inside IsError
 >> IsError(If(false, 1/0, 1/0))
-true
+true 
 
 >> IsError(If(true, 1/0, 1/0))
 true

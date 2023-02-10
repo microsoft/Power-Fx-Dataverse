@@ -104,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", new SqlDecimalType()), arg);
-            context.SetIntermediateVariable(result, $"EXP({CoerceNullToInt(arg)})");
+            context.SetIntermediateVariable(result, $"EXP({arg})");
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -116,8 +116,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var exponent = node.Args[1].Accept(visitor, context);
-            context.PowerOverflowCheck(RetVal.FromSQL(CoerceNullToInt(number), result.type), exponent);
-            context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNullToNumberType(number, result.type)},{CoerceNullToNumberType(exponent, result.type)}) AS {ToSqlType(result.type)})");
+            context.PowerOverflowCheck(number, exponent);
+            context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type)},{CoerceNullToNumberType(exponent, result.type)}) AS {ToSqlType(result.type)})");
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -128,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.NegativeNumberCheck(arg);
-            context.SetIntermediateVariable(result, $"SQRT({CoerceNullToInt(arg)})");
+            context.SetIntermediateVariable(result, $"SQRT({arg})");
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -138,8 +138,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var result = context.GetTempVar(new SqlBigType());
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
-            context.NonPositiveNumberCheck(RetVal.FromSQL(CoerceNullToInt(arg), new SqlDecimalType()));
-            context.SetIntermediateVariable(result, $"LOG({CoerceNullToInt(arg)})");
+            context.NonPositiveNumberCheck(arg);
+            context.SetIntermediateVariable(result, $"LOG({arg})");
             context.PerformRangeChecks(result, node);
             return result;
         }

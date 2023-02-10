@@ -156,7 +156,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(val));
+            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -205,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var rawOffset = node.Args[1].Accept(visitor, context);
-            var offset = context.SetIntermediateVariable(new SqlBigType(), function == "LEFT" ? RoundDownNullToInt(rawOffset) : RoundDownNullToInt(rawOffset));
+            var offset = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(rawOffset));
             context.NegativeNumberCheck(offset);
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
@@ -289,7 +289,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownToInt(RetVal.FromSQL(CoerceNullToInt(instance), new SqlIntType())));
+                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownNullToInt(instance));
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
@@ -310,34 +310,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.SetIntermediateVariable(result, $"REPLACE({CoerceNullToString(str)}, {CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(newStr)})");
             }
             return result;
-        }
-
-        public static RetVal Find(SqlVisitor visitor, CallNode node, Context context)
-        {
-            var result = context.GetTempVar(context.GetReturnType(node));
-            var findStr = node.Args[0].Accept(visitor, context);
-            var inStr = node.Args[1].Accept(visitor, context);
-            RetVal instance;
-            if (node.Args.Count == 3)
-            {
-                ValidateNumericArgument(node.Args[2]);
-                var rawInstance = node.Args[2].Accept(visitor, context);
-                instance = context.SetIntermediateVariable(new SqlIntType(), RoundDownToInt(RetVal.FromSQL(CoerceNullToInt(rawInstance), new SqlIntType())));
-                context.LessThanOneNumberCheck(instance);
-                // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                var inLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({CoerceNullToString(inStr)}+N'x')-1");
-                context.ErrorCheck($"{instance} <> 1 AND {instance} > {inLen}", Context.InvalidArgumentErrorCode);
-            }
-            else
-            {
-                instance = RetVal.FromSQL("1", new SqlIntType());
-            }
-
-            // Find always returns the index if the search string is null or empty, but CHARINDEX considers that to not be found
-            result = context.SetIntermediateVariable(result, $"IIF({CoerceNullToString(findStr)} = N'', {instance}, CHARINDEX({CoerceNullToString(findStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(inStr)}, {instance}))");
-
-            // CHARINDEX returns 0 for not found, but Find returns Blank in that case
-            return context.SetIntermediateVariable(result, $"IIF({result} = 0, NULL, {result})");
         }
 
         public static RetVal Replace(SqlVisitor visitor, CallNode node, Context context)

@@ -15,10 +15,6 @@ Errors: Error 8-10: This operation cannot be performed on type ObjNull in formul
 >> If(false, "", Blank()) in "abc"
 Errors: Error 0-22: Only a literal value is supported for this argument.
 
-// Not sure why blank should NOT be coerced
->> "" in If(true, Blank(), "")
-true
-
 >> 5 in "5"
 Errors: Error 2-4: Only a literal value is supported for this argument.
 
