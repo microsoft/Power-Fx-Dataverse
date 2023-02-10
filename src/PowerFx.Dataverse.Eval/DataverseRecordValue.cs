@@ -121,23 +121,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            // !!!??? Previous test when trying to coerce BooleanOptionSet to string
-            if (Metadata.TryGetAttribute(fieldName, out var attr) && attr is BooleanAttributeMetadata boolAttr)
-            {
-                PrimitiveValueConversions.TryMarshal(value, fieldType, out result);
-
-                if (((BooleanValue)result).Value)
-                {
-                    result = FormulaValue.New(boolAttr.OptionSet.TrueOption.Label.LocalizedLabels.First().Label);
-                }
-                else
-                {
-                    result = FormulaValue.New(boolAttr.OptionSet.FalseOption.Label.LocalizedLabels.First().Label);
-                }
-
-                return true;
-            }
-
             // Handle primitives
             if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
             {
@@ -217,6 +200,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 logicalName = xrmOptionSet.Value.ToString();
             }
+            else if (value is bool b)
+            {
+                // Support for 2-value option sets 
+                logicalName = b ? "1" : "0";
+            }
+
             else
             {
                 logicalName = value.ToString();

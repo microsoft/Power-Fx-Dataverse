@@ -639,12 +639,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
         }
 
-        [TestMethod]
-        public void TODELETE()
+        [DataTestMethod]
+        [DataRow("If(First(PFxTables).Choice, \"YES\", \"NO\")", "NO")]
+        [DataRow("If(First(PFxTables).Choice = 'Choice (PFxTables)'.Positive, \"YES\", \"NO\")", "NO")]
+        [DataRow("Text(First(PFxTables).Choice)", "Negative")]
+        [DataRow("Text(First(PFxTables).Choice) & 'Choice (PFxTables)'.Positive", "NegativePositive")]
+        [DataRow("Patch(PFxTables, First(PFxTables), {'Choice':'Choice (PFxTables)'.Negative,'Name':\"PATCH1\"});First(PFxTables).Name", "PATCH1")]
+        [DataRow("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"COLLECT1\"});LookUp(PFxTables, Name = \"COLLECT1\").Name", "COLLECT1")]
+        [DataRow("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"POSITIVE1\"});If(LookUp(PFxTables, Name = \"COLLECT1\").Choice, \"Affirmitive\", \"Nope\")", "Affirmitive")]
+        public void BooleanOptionSetCoercionTest(string expr, string expected)
         {
             string tableName = "PFxTables";
-            
-            string expr = $"If(First(PFxTables).Choice, \"YES\", \"NO\")";
             
             //string expr = $"'Choice (PFxTables)'.Negative";
 
@@ -652,10 +657,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             try
             {
-                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
+                StringValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true) as StringValue;
 
                 Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.AreEqual(expected, result.Value);
             }
             finally
             {

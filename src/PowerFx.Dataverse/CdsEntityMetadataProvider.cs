@@ -215,77 +215,51 @@ namespace Microsoft.PowerFx.Dataverse
             var optionSets = new Dictionary<string, IExternalOptionSet>();
             foreach (var attribute in entity.Attributes)
             {
-                string columnName;
-                IExternalOptionSet optionSet;
+                string columnName = string.Empty;
+                bool parsed = false;
+                IExternalOptionSet optionSet = null;
                 switch (attribute.AttributeType.Value)
                 {
                     case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.State:
                     case AttributeTypeCode.Status:
-                        if (CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet))
-                        {
-                            var dataverseOptionSet = optionSet as DataverseOptionSet;
-                            Contracts.Assert(dataverseOptionSet != null);
-
-                            var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
-                            var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
-                            if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
-                            {
-                                // if the global option set is already registered, re-use the original, since binding assumes object equality
-                                dataverseOptionSet = globalOptionSet;
-                            }
-                            else
-                            {
-                                if (!dataverseOptionSet.IsGlobal)
-                                {
-                                    // tag non-global option sets with the entity display name
-                                    dataverseOptionSet.EntityDisplayCollectionName = entityDisplayName;
-                                }
-
-                                // register the option set with the document for global access using the display name
-                                RegisterOptionSet(uniqueName, dataverseOptionSet);
-
-                                // also register them with an invariant name
-                                var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
-                                RegisterOptionSet(logicalName, dataverseOptionSet);
-                            }
-                            optionSets[columnName] = dataverseOptionSet;
-                        }
+                        parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
                     case AttributeTypeCode.Boolean:
-                        if (CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet))
-                        {
-                            // !!!??? Adding similar code used by other option types
-                            var dataverseOptionSet = optionSet as DataverseOptionSet;
-                            Contracts.Assert(dataverseOptionSet != null);
-
-                            var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
-                            var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
-                            if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
-                            {
-                                // if the global option set is already registered, re-use the original, since binding assumes object equality
-                                dataverseOptionSet = globalOptionSet;
-                            }
-                            else
-                            {
-                                if (!dataverseOptionSet.IsGlobal)
-                                {
-                                    // tag non-global option sets with the entity display name
-                                    dataverseOptionSet.EntityDisplayCollectionName = entityDisplayName;
-                                }
-
-                                // register the option set with the document for global access using the display name
-                                RegisterOptionSet(uniqueName, dataverseOptionSet);
-
-                                // also register them with an invariant name
-                                var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
-                                RegisterOptionSet(logicalName, dataverseOptionSet);
-                            }
-                            optionSets[columnName] = dataverseOptionSet;
-                        }
+                        parsed = CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
                     default:
                         break;
+                }
+
+                if (parsed) 
+                {
+                    var dataverseOptionSet = optionSet as DataverseOptionSet;
+                    Contracts.Assert(dataverseOptionSet != null);
+
+                    var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
+                    var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+                    if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
+                    {
+                        // if the global option set is already registered, re-use the original, since binding assumes object equality
+                        dataverseOptionSet = globalOptionSet;
+                    }
+                    else
+                    {
+                        if (!dataverseOptionSet.IsGlobal)
+                        {
+                            // tag non-global option sets with the entity display name
+                            dataverseOptionSet.EntityDisplayCollectionName = entityDisplayName;
+                        }
+
+                        // register the option set with the document for global access using the display name
+                        RegisterOptionSet(uniqueName, dataverseOptionSet);
+
+                        // also register them with an invariant name
+                        var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
+                        RegisterOptionSet(logicalName, dataverseOptionSet);
+                    }
+                    optionSets[columnName] = dataverseOptionSet;
                 }
             }
 

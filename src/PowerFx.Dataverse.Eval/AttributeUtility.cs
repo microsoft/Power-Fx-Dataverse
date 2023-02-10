@@ -71,6 +71,15 @@ namespace Microsoft.PowerFx.Dataverse
             switch (amd.AttributeType.Value)
             {
                 case AttributeTypeCode.Boolean:
+                    if (fxValue is BooleanValue booleanValue)
+                    {
+                        return booleanValue.Value;
+                    }
+                    else if (fxValue is FxOptionSetValue optionSetValue)
+                    {
+                        return optionSetValue.Option == "1" ? true : false;
+                    }
+
                     return ((BooleanValue)fxValue).Value;
 
                 case AttributeTypeCode.DateTime:

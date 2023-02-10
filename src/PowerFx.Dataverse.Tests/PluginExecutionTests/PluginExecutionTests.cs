@@ -528,6 +528,37 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow("If(First(t1).boolean, \"YES\", \"NO\")", "YES")]
+        [DataRow("If(First(t1).boolean = allattributes_boolean_optionSet.'1', \"YES\", \"NO\")", "YES")]
+        [DataRow("Text(First(t1).boolean)", "Yes")]
+        [DataRow("Text(First(t1).boolean) & \"Maybe\"", "YesMaybe")]
+        [DataRow("Patch(t1, First(t1), {boolean:allattributes_boolean_optionSet.'0',email:\"dummy@email.com\"});First(t1).email", "dummy@email.com")]
+        [DataRow("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy1@email.com\"});LookUp(t1, email = \"dummy1@email.com\").email", "dummy1@email.com")]
+        [DataRow("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy2@email.com\"});If(LookUp(t1, email = \"dummy2@email.com\").boolean, \"Affirmitive\", \"Nope\")", "Affirmitive")]
+        public void BooleanOptionSetCoercionTest(string expr, string expected)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
+        [DataTestMethod]
         [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
         [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
         public void NotSupportedColumnTypeErrorTest(string expr, string exptected)
@@ -1386,6 +1417,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             entity1.Attributes["money"] = new Money(123);
             entity1.Attributes["hyperlink"] = "teste_url";
+            entity1.Attributes["email"] = "joe@doe.com";
+            entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
