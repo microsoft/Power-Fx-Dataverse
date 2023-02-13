@@ -870,7 +870,7 @@ END
         [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
         [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]
+        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
         public void CheckTextFailures(string expr, bool success, string message = null)
         {
             var engine = new PowerFx2SqlEngine();
@@ -1562,6 +1562,15 @@ END
             {
                 Assert.IsFalse(result.IsSuccess);
             }
+        }
+
+        [TestMethod]
+        public void Coalesce()
+        {
+            // Once we add Coalesce to Library.cs, remove TryCoalesceNum.
+            var ok = Functions.Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
+            Assert.IsFalse(ok);
+            Assert.IsNull(ptr);
         }
 
         private static string ToStableString(IEnumerable<string> items)

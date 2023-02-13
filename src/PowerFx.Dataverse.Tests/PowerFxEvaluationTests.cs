@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Ideally, this should only go down as the rest of the functions/capabilities are added
                 // TODO: replace error count with locally based overlays of specific differences
-                Assert.AreEqual(112, result.Fail);
+                Assert.AreEqual(102, result.Fail);
             }
         }
 
@@ -103,7 +103,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Use this for local testing of a single testcase (uncomment "TestMethod")
         //[TestMethod]
         public void RunSingleTestCase()
-        {
+        { 
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
