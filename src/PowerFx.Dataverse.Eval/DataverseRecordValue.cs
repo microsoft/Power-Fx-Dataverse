@@ -203,7 +203,7 @@ namespace Microsoft.PowerFx.Dataverse
             else if (value is bool b)
             {
                 // Support for 2-value option sets 
-                logicalName = b ? "1" : "0";
+                AttributeUtility.ConvertBoolToBooleanOptionSetOption(b, out logicalName);
             }
 
             else

@@ -73,7 +73,12 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.Boolean:
                     if (fxValue is FxOptionSetValue optionSetValue)
                     {
-                        return optionSetValue.Option == "1" ? true : false;
+                        if (AttributeUtility.TryConvertBooleanOptionSetOptionToBool(optionSetValue.Option, out bool result))
+                        {
+                            return result;
+                        }
+
+                        throw new NotImplementedException($"BooleanOptionSet {optionSetValue.Option} not supported");
                     }
 
                     return ((BooleanValue)fxValue).Value;
@@ -115,6 +120,34 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.Status:
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
+            }
+        }
+
+        public static bool TryConvertBooleanOptionSetOptionToBool(string opt, out bool result)
+        {
+            result = false;
+
+            if (opt == "0")
+            {
+                return true;
+            }
+            else if (opt == "1")
+            {
+                result = true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public static void ConvertBoolToBooleanOptionSetOption(bool value, out string opt)
+        {
+            opt = "0";
+
+            if (value)
+            {
+                opt = "1";
             }
         }
     }

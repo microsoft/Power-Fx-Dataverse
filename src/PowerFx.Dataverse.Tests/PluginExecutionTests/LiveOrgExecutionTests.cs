@@ -650,8 +650,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void BooleanOptionSetCoercionTest(string expr, string expected)
         {
             string tableName = "PFxTables";
-            
-            //string expr = $"'Choice (PFxTables)'.Negative";
 
             List<IDisposable> disposableObjects = null;
 
