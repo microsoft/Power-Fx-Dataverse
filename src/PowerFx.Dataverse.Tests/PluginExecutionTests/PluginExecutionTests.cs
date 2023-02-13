@@ -530,9 +530,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
         [DataRow("If(First(t1).boolean, \"YES\", \"NO\")", "YES")]
         [DataRow("If(First(t1).boolean = allattributes_boolean_optionSet.'1', \"YES\", \"NO\")", "YES")]
+        [DataRow("If(First(t1).boolean = 'Boolean (All Attributes)'.'1', \"YES\", \"NO\")", "YES")]
         [DataRow("Text(First(t1).boolean)", "Yes")]
         [DataRow("Text(First(t1).boolean) & \"Maybe\"", "YesMaybe")]
         [DataRow("Patch(t1, First(t1), {boolean:allattributes_boolean_optionSet.'0',email:\"dummy@email.com\"});First(t1).email", "dummy@email.com")]
+        [DataRow("With({before: First(t1).boolean}, Patch(t1, First(t1), {boolean:'Boolean (All Attributes)'.'0'});If(First(t1).boolean <> before, \"good\", \"bad\"))", "good")]
         [DataRow("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy1@email.com\"});LookUp(t1, email = \"dummy1@email.com\").email", "dummy1@email.com")]
         [DataRow("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy2@email.com\"});If(LookUp(t1, email = \"dummy2@email.com\").boolean, \"Affirmitive\", \"Nope\")", "Affirmitive")]
         public void BooleanOptionSetCoercionTest(string expr, string expected)
