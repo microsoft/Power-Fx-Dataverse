@@ -167,7 +167,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var arg2 = RetVal.FromSQL(match, FormulaType.String);
-                        return context.SetIntermediateVariable(node, $"({arg1} LIKE {arg2})");
+                        return context.SetIntermediateVariable(node, $"({Library.CoerceNullToString(arg1)} LIKE {arg2})");
                     }
 
                 //case BinaryOpKind.EqBlob:
@@ -368,7 +368,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(node, $"ISNULL({arg},N'') <> N'true'");
+                    var coercedArg = RetVal.FromSQL($"IIF({arg} IS NULL OR {arg} = N'', N'false', {arg})", FormulaType.String);
+                    context.ErrorCheck($"{coercedArg} <> N'true' AND {coercedArg} <> N'false'", Context.ValidationErrorCode);
+                    return context.SetIntermediateVariable(node, $"{coercedArg} = N'true'");
 
                 case UnaryOpKind.BooleanOptionSetToBoolean:
                     // converting a boolean option set to a boolean is a noop
@@ -502,30 +504,36 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal string EncodeLikeArgument(IntermediateNode node, MatchType matchType, Context context)
         {
-            // encode string literal for SQL wildcards
-            if (!(node is TextLiteralNode || (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)))
+            if (node is TextLiteralNode)
+            {
+                // use an inline literal context to get the like argument as a raw string to properly format the SQL parameter
+                using (context.NewInlineLiteralContext())
+                {
+                    var arg = node.Accept(this, context);
+                    var match = arg.ToString();
+
+                    // encode SQL placeholders and quotes
+                    match = match.Replace("_", "[_]");
+                    match = match.Replace("[", "[[]");
+                    match = match.Replace("%", "[%]");
+                    match = match.Replace("'", "''");
+
+                    // append start and end wildcards, as needed
+                    var startWildcard = matchType != MatchType.Prefix ? "%" : "";
+                    var endWildcard = matchType != MatchType.Suffix ? "%" : "";
+                    return $"N'{startWildcard}{match}{endWildcard}'";
+                }
+            }
+            else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)
+            {
+                // blank coerces to empty string, which matches everything, so emit a wildcard
+                return "N'%'";
+            }
+            else
             {
                 // TODO: allow runtime encoding of string inputs
                 context._unsupportedWarnings.Add("Only string literals allowed");
                 throw Library.BuildLiteralArgumentException(node.IRContext.SourceContext);
-            }
-
-            // use an inline literal context to get the like argument as a raw string to properly format the SQL parameter
-            using (context.NewInlineLiteralContext())
-            {
-                var arg = node.Accept(this, context);
-                var match = arg.ToString();
-
-                // encode SQL placeholders and quotes
-                match = match.Replace("_", "[_]");
-                match = match.Replace("[", "[[]");
-                match = match.Replace("%", "[%]");
-                match = match.Replace("'", "''");
-
-                // append start and end wildcards, as needed
-                var startWildcard = matchType != MatchType.Prefix ? "%" : "";
-                var endWildcard = matchType != MatchType.Suffix ? "%" : "";
-                return $"N'{startWildcard}{match}{endWildcard}'";
             }
         }
 
@@ -980,10 +988,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             #region SQL Building
 
-            // TODO: these error codes are not defined in the language anywhere, only hardcoded in the EnumStore definition
-            // Should they be added to an enum
-            internal const string ValidationErrorCode = "11";
-            internal const string Div0ErrorCode = "13";
+            internal static string GetErrorCode(ErrorKind kind)
+            {
+                return ((int)kind).ToString();
+            }
+            internal static string ValidationErrorCode => GetErrorCode(ErrorKind.Validation);
+            internal static string Div0ErrorCode => GetErrorCode(ErrorKind.Div0);
+            internal static string InvalidArgumentErrorCode => GetErrorCode(ErrorKind.InvalidArgument);
 
             internal StringBuilder _sbContent = new StringBuilder();
             int _indentLevel = 1;
@@ -1083,6 +1094,14 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_checkOnly) return;
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NonPositiveNumberCondition, retVal);
+                ErrorCheck(condition, ValidationErrorCode);
+            }
+
+            internal void LessThanOneNumberCheck(RetVal retVal)
+            {
+                if (_checkOnly) return;
+
+                var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.LessThanOneNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
             }
 

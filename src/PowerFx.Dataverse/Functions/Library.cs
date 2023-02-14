@@ -52,6 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Error, Error },
             { BuiltinFunctionsCore.Exp, Exp },
             //{ BuiltinFunctionsCore.Filter, FilterTable },
+            //{ BuiltinFunctionsCore.Find, Find },
             //{ BuiltinFunctionsCore.First, First },
             //{ BuiltinFunctionsCore.FirstN, FirstN },
             //{ BuiltinFunctionsCore.ForAll, ForAll },

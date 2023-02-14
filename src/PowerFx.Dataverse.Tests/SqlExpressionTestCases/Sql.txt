@@ -12,7 +12,7 @@ true
 
 // If inside IsError
 >> IsError(If(false, 1/0, 1/0))
-true
+true 
 
 >> IsError(If(true, 1/0, 1/0))
 true
@@ -96,3 +96,13 @@ false
 
 >> 0.233493931 / 2.123597820
 0.1099520487
+
+// ensure Substitute is case sensitive
+>> Substitute("HelloHELLOhello", "he", "je")
+"HelloHELLOjello"
+
+>> Substitute("HelloHelloHello", "he", "je", 2)
+"HelloHelloHello"
+
+>> Substitute("HelloHELLOhelloHelloHELLOhello", "he", "je", 2)
+"HelloHELLOhelloHelloHELLOjello"

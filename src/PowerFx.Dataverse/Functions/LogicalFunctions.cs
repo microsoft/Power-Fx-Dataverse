@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     // if there is a single parameter, this is a pass thru
                     if (i == 0 && node.Args.Count == 1)
                     {
-                        return context.SetIntermediateVariable(node, fromRetVal: arg);
+                        return context.SetIntermediateVariable(node, fromRetVal: coercedArg);
                     }
                     else if (result == null)
                     {
@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     var condition = shortCircuitTest ? coercedArg.ToString() : $"(NOT {coercedArg})";
                     using (indenter.EmitIfCondition(condition))
                     {
-                        result = context.SetIntermediateVariable(result, fromRetVal:arg);
+                        result = context.SetIntermediateVariable(result, fromRetVal:coercedArg);
                     }
                 }
                 return result;

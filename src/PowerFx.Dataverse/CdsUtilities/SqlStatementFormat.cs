@@ -73,6 +73,11 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
 		public const string NonPositiveNumberCondition = "{0} <= 0";
 
 		/// <summary>
+		/// Less than one number condition
+		/// </summary>
+		public const string LessThanOneNumberCondition = "{0} < 1";
+
+		/// <summary>
 		/// Overflow condition
 		/// </summary>
 		public const string OverflowCondition = "{0}<{1} OR {0}>{2}";

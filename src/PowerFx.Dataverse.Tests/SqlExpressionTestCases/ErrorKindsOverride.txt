@@ -1,0 +1,8 @@
+#override: ErrorKinds.txt
+
+//tabular versions of Max not supported
+>> Max([3, 2, 1, 0, -1, -2], Sqrt(1/Value))
+#Skip
+
+>> Min([3, 2, 1, 0, -1, -2], Sqrt(1/Value))
+#Skip

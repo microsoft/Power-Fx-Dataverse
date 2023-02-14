@@ -104,7 +104,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", new SqlDecimalType()), arg);
-            // Do not coerce Blank() to zero
             context.SetIntermediateVariable(result, $"EXP({arg})");
             context.PerformRangeChecks(result, node);
             return result;
@@ -118,8 +117,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var exponent = node.Args[1].Accept(visitor, context);
             context.PowerOverflowCheck(number, exponent);
-            // a null is not coerced to zero, but always returns 0, unless the exponent is also null, in which case it returns null
-            context.SetIntermediateVariable(result, $"IIF({number} IS NULL, IIF({exponent} IS NULL, NULL, 0), TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type)},{CoerceNullToNumberType(exponent, result.type)}) AS {ToSqlType(result.type)}))");
+            context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type)},{CoerceNullToNumberType(exponent, result.type)}) AS {ToSqlType(result.type)})");
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -130,7 +128,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.NegativeNumberCheck(arg);
-            // Do not coerce Blank() to zero
             context.SetIntermediateVariable(result, $"SQRT({arg})");
             context.PerformRangeChecks(result, node);
             return result;
@@ -142,7 +139,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.NonPositiveNumberCheck(arg);
-            // Do not coerce Blank() to zero
             context.SetIntermediateVariable(result, $"LOG({arg})");
             context.PerformRangeChecks(result, node);
             return result;

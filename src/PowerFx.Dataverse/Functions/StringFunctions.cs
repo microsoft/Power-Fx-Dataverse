@@ -13,6 +13,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Types;
 using System.Text.RegularExpressions;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -20,6 +21,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Value(SqlVisitor visitor, CallNode node, Context context)
         {
+            if (node.Args.Count > 1)
+            {
+                throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
+            }
+
             var arg0 = node.Args[0];
             var arg = arg0.Accept(visitor, context);
             if (arg.type is StringType)
@@ -199,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var rawOffset = node.Args[1].Accept(visitor, context);
-            var offset = context.SetIntermediateVariable(new SqlBigType(), function == "LEFT" ? RoundDownNullToInt(rawOffset) : RoundUpNullToInt(rawOffset));
+            var offset = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(rawOffset));
             context.NegativeNumberCheck(offset);
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
@@ -252,7 +258,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var str = node.Args[0].Accept(visitor, context);
             var match = visitor.EncodeLikeArgument(node.Args[1], matchType, context);
-            return context.SetIntermediateVariable(node, $"{str} LIKE {match}");
+            return context.SetIntermediateVariable(node, $"{CoerceNullToString(str)} LIKE {match}");
         }
 
         public static RetVal TrimEnds(SqlVisitor visitor, CallNode node, Context context)
@@ -278,39 +284,30 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var str = node.Args[0].Accept(visitor, context);
             var oldStr = node.Args[1].Accept(visitor, context);
             var newStr = node.Args[2].Accept(visitor, context);
-            var replaceAll = $"REPLACE({str}, {CoerceNullToString(oldStr)}, {CoerceNullToString(newStr)})";
             if (node.Args.Count == 4)
             {
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                context.NonPositiveNumberCheck(instance);
+                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownNullToInt(instance));
 
-                using (var indenter = context.NewIfIndenter())
-                {
-                    // if the instance is null, replace all
-                    using (indenter.EmitIfCondition($"{instance} IS NULL"))
-                    {
-                        context.SetIntermediateVariable(result, replaceAll);
-                    }
-                    using (indenter.EmitElse())
-                    {
-                        var idx = context.GetTempVar(new SqlIntType());
-                        var matchCount = context.GetTempVar(new SqlIntType());
-                        context.SetIntermediateVariable(idx, $"1");
-                        context.SetIntermediateVariable(matchCount, $"1");
-                        // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                        var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
-                        context.AppendContentLine($"WHILE({matchCount} <= {instance}) BEGIN set {idx}=CHARINDEX({oldStr}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={instance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+                context.LessThanOneNumberCheck(coercedInstance);
 
-                        context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({str}, {idx}, {oldLen}, {newStr}), {str})");
-                    }
-                }
+                var idx = context.GetTempVar(new SqlIntType());
+                var matchCount = context.GetTempVar(new SqlIntType());
+                context.SetIntermediateVariable(idx, $"1");
+                context.SetIntermediateVariable(matchCount, $"1");
+                // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
+                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
+                // find the appropriate instance (case sensitive) in the original string
+                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+
+                context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({CoerceNullToString(str)}, {idx}, {oldLen}, {CoerceNullToString(newStr)}), {CoerceNullToString(str)})");
             }
             else
             {
                 // if no instance is indicated, replace all
-                context.SetIntermediateVariable(result, replaceAll);
+                context.SetIntermediateVariable(result, $"REPLACE({CoerceNullToString(str)}, {CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(newStr)})");
             }
             return result;
         }
@@ -319,15 +316,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var str = node.Args[0].Accept(visitor, context);
+            var coercedStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(str));
             ValidateNumericArgument(node.Args[1]);
             var start = node.Args[1].Accept(visitor, context);
+            // the start value must be 1 or larger
+            context.NonPositiveNumberCheck(start);
             ValidateNumericArgument(node.Args[2]);
             var count = node.Args[2].Accept(visitor, context);
-            context.NonPositiveNumberCheck(count);
+            // the count value must be 0 or larger
+            context.NegativeNumberCheck(count);
             var newStr = node.Args[3].Accept(visitor, context);
-            // STUFF will return null if the start index or count are larger than the string, so concatenate the strings in that case
-            context.SetIntermediateVariable(result, $"ISNULL(STUFF({str}, {start}, {count}, {newStr}), {str} + {newStr})");
-            return result;
+            // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case
+            return context.SetIntermediateVariable(result, $"ISNULL(STUFF({coercedStr}, {start}, {count}, {newStr}), {coercedStr} + {newStr})");
         }
 
         public static string CoerceNullToString(RetVal retVal)
