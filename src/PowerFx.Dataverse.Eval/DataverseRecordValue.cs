@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -199,6 +200,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 logicalName = xrmOptionSet.Value.ToString();
             }
+            else if (value is bool b)
+            {
+                // Support for 2-value option sets 
+                AttributeUtility.ConvertBoolToBooleanOptionSetOption(b, out logicalName);
+            }
+
             else
             {
                 logicalName = value.ToString();
