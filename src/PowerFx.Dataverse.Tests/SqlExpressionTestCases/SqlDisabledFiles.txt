@@ -29,6 +29,19 @@
 #DISABLE: TabularOverloadsBlanksAndErrors.txt
 #DISABLE: RoundTable.txt
 
+#DISABLE: ArgCoercionT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: CharT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: ConcatenateT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: Distinct_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: ExpT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: FindT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: LenT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: LnT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: RoundT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: Split_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: SqrtT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: TabularOverloadsBlanksAndErrorsT_ConsistentOneColumnTableResultDisabled.txt
+#DISABLE: TableStringfuncsT_ConsistentOneColumnTableResultDisabled.txt
 
 #DISABLE: Find.txt
 #DISABLE: FindT.txt
