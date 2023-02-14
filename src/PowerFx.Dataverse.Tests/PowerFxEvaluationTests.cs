@@ -52,6 +52,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Any failures introduced by new tests or unsupported features should be overridden
                 Assert.AreEqual(0, result.Fail, result.Output);
+
+                // Verify that we're actually running tests. 
+                Assert.IsTrue(result.Total > 4000);
+                Assert.IsTrue(result.Pass > 1000);
             }
         }
 
