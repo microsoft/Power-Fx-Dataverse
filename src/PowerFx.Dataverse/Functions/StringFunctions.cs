@@ -144,7 +144,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var val = node.Args[0].Accept(visitor, context);
             // Null values are coerced to empty string
-            return context.SetIntermediateVariable(node, $"{function}({CoerceNullToString(val)})");
+            return context.SetIntermediateVariable(node, $"{function}({val})");
         }
 
         public static RetVal StringUnaryFunction(SqlVisitor visitor, CallNode node, Context context, string function)
@@ -205,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var rawOffset = node.Args[1].Accept(visitor, context);
-            var offset = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(rawOffset));
+            var offset = context.SetIntermediateVariable(new SqlBigType(), $"{rawOffset}");
             context.NegativeNumberCheck(offset);
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
@@ -243,11 +243,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // SQL ignores trailing spaces when counting the length
                 return context.SetIntermediateVariable(node, $"LEN({arg} + N'x')-1");
             }
-            else if (arg.type is BlankType)
-            {
-                // the length of blank is 0
-                return context.SetIntermediateVariable(node, "0");
-            }
             else
             {
                 throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
@@ -265,7 +260,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var str = node.Args[0].Accept(visitor, context);
-            context.SetIntermediateVariable(result, $"ISNULL(RTRIM(LTRIM({str})), N'')");
+            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({str}))");
             return result;
         }
 
@@ -273,7 +268,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var str = node.Args[0].Accept(visitor, context);
-            context.SetIntermediateVariable(result, $"ISNULL(RTRIM(LTRIM({str})), N'')");
+            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({str}))");
             context.AppendContentLine($"WHILE (CHARINDEX(N'  ',{result}) <> 0) BEGIN set {result}=REPLACE({result}, N'  ', N' ') END");
             return result;
         }
