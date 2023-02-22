@@ -204,8 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal LeftRight(SqlVisitor visitor, CallNode node, Context context, string function)
         {
             var strArg = node.Args[0].Accept(visitor, context);
-            var rawOffset = node.Args[1].Accept(visitor, context);
-            var offset = context.SetIntermediateVariable(new SqlBigType(), $"{rawOffset}");
+            var offset = node.Args[1].Accept(visitor, context);
             context.NegativeNumberCheck(offset);
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
