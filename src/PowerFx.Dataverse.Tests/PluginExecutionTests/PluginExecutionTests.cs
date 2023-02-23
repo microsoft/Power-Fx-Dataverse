@@ -697,6 +697,115 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [TestMethod]
+        public void RefreshDataverseConnectionSingleOrgPolicyTest()
+        {
+            var logicalName = "local";
+            
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+
+            var policy = new SingleOrgPolicy(map);
+
+            var expr = "Sum(t1,Price)";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+
+            var engine1 = new RecalcEngine(config);
+            var check1 = engine1.Check(expr, options: opts, symbolTable: symbols);
+            Assert.IsTrue(check1.IsSuccess);
+
+            var run1 = check1.GetEvaluator();
+            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(100.0, result1.ToObject());
+
+            // Simulates a row being deleted by an external force
+            el.DeleteAsync(logicalName, _g1);
+
+            // Evals the same expression by a new engine. Should return a wrong result.
+            var engine2 = new RecalcEngine(config);
+            var check2 = engine2.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check2.IsSuccess);
+
+            var run2 = check2.GetEvaluator();
+            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreNotEqual(0, result2.ToObject());
+
+            // Refresh connection cache.
+            dv.RefreshCache();
+
+            // Evals the same expression by a new engine. Sum should now return the refreshed value.
+            var engine3 = new RecalcEngine(config);
+            var check3 = engine3.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check3.IsSuccess);
+
+            var run3 = check3.GetEvaluator();
+            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsInstanceOfType(result3, typeof(BlankValue));
+        }
+
+        [TestMethod]
+        public void RefreshDataverseConnectionMultiOrgPolicyTest()
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            var expr = "Sum(t1,Price)";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+
+            var engine1 = new RecalcEngine(config);
+            var check1 = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check1.IsSuccess);
+
+            var run1 = check1.GetEvaluator();
+            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(100.0, result1.ToObject());
+
+            // Simulates a row being deleted by an external force
+            el.DeleteAsync(logicalName, _g1);
+
+            // Evals the same expression by a new engine. Should return a wrong result.
+            var engine2 = new RecalcEngine(config);
+            var check2 = engine2.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check2.IsSuccess);
+
+            var run2 = check2.GetEvaluator();
+            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreNotEqual(0, result2.ToObject());
+
+            // Refresh connection cache.
+            dv.RefreshCache();
+
+            // Evals the same expression by a new engine. Sum should now return the refreshed value.
+            var engine3 = new RecalcEngine(config);
+            var check3 = engine3.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check3.IsSuccess);
+
+            var run3 = check3.GetEvaluator();
+            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsInstanceOfType(result3, typeof(BlankValue));
+        }
+
         // Dependency finder. 
         [DataTestMethod]
         [DataRow("1+2", "")] // none
@@ -944,58 +1053,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;            
 
             Assert.AreEqual(expected, result.ToObject());
-        }
-
-        // https://github.com/microsoft/Power-Fx-Dataverse/issues/80
-        [TestMethod]
-        public void Cache2Bug()
-        {
-            var logicalName = "local";
-            var displayName = "t1";
-
-            var expr = "Sum(t1,Price)";
-
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName);
-
-            var opts = new ParserOptions { AllowsSideEffects = true };
-            var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
-
-            var engine1 = new RecalcEngine(config);
-            var check1 = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check1.IsSuccess);
-
-            var run1 = check1.GetEvaluator();
-            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            Assert.AreEqual(100.0, result1.ToObject());
-
-            // Simulates a row being deleted by an external force
-            el.DeleteAsync(logicalName, _g1);
-
-            // Evals the same expression by a new engine. Should return a wrong result.
-            var engine2 = new RecalcEngine(config);
-            var check2 = engine2.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check2.IsSuccess);
-
-            var run2 = check2.GetEvaluator();
-            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            Assert.AreNotEqual(0, result2.ToObject());
-
-            // Refresh connection cache.
-            dv.RefreshCache();
-
-            // Evals the same expression by a new engine. Sum should now return the refreshed value.
-            var engine3 = new RecalcEngine(config);
-            var check3 = engine3.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check3.IsSuccess);
-
-            var run3 = check3.GetEvaluator();
-            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            Assert.IsInstanceOfType(result3, typeof(BlankValue));
         }
 
         [DataTestMethod]

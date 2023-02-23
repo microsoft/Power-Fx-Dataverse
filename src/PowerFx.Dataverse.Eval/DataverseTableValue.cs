@@ -172,14 +172,6 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<BooleanValue>.Of(BooleanValue.New(true));
         }
 
-        /// <summary>
-        /// API to wipe out previous stored rows.
-        /// </summary>
-        public void RefreshCache()
-        {
-            Refresh();
-        }
-
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
         {
             // Serialize table as the table name.

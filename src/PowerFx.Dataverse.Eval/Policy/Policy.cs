@@ -56,5 +56,10 @@ namespace Microsoft.PowerFx.Dataverse
         internal virtual void AddPendingTables()
         {
         }
+
+        /// <summary>
+        /// Wipes out previous stored rows from all TableValues.
+        /// </summary>
+        public abstract void RefreshCache();
     }
 }

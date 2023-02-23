@@ -301,15 +301,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         public void RefreshCache()
         {
-            foreach (var symbolName in _symbols.SymbolNames)
-            {
-                if (symbolName.Type is TableType && Symbols.TryLookupSlot(symbolName.Name, out ISymbolSlot slot))
-                {
-                    var dataverseTableValue = (DataverseTableValue)SymbolValues.Get(slot);
-
-                    dataverseTableValue.RefreshCache();
-                }
-            }
+            _policy.RefreshCache();
         }
     }
 }

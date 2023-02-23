@@ -72,6 +72,14 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotSupportedException($"Only explicit policy supports AddTable");
         }
 
+        public override void RefreshCache()
+        {
+            foreach (var dataverseTableValue in _tablesLogical2Value.Values)
+            {
+                dataverseTableValue.Refresh();
+            }
+        }
+
         ReadOnlySymbolTable _allEntitieSymbols;
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
