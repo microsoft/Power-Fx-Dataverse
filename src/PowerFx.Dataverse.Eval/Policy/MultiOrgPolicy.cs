@@ -69,5 +69,13 @@ namespace Microsoft.PowerFx.Dataverse
             _parent.SymbolValues.Set(slot, tableValue);
             return tableValue;
         }
+
+        public override void RefreshCache()
+        {
+            foreach (var dataverseTableValue in _tablesDisplay2Value.Values)
+            {
+                dataverseTableValue.RefreshCache();
+            }
+        }
     }
 }

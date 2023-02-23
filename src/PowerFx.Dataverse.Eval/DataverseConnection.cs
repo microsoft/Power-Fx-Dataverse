@@ -295,5 +295,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return this.GetMetadataOrThrow(tableLogicalName);
         }
+
+        /// <summary>
+        /// The tables in SymbolValues may cache the data they receive from Dataverse.
+        /// These caches can become stale if dataverse is updated outside of this connection object.
+        /// This clears any cached data so that subsequent operations will fetch current data.
+        /// </summary>
+        public void RefreshCache()
+        {
+            _policy.RefreshCache();
+        }
     }
 }

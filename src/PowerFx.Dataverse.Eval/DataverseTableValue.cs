@@ -179,5 +179,13 @@ namespace Microsoft.PowerFx.Dataverse
             var name = this._connection.GetSerializationName(_entityMetadata.LogicalName);
             sb.Append(IdentToken.MakeValidIdentifier(name));
         }
+
+        /// <summary>
+        /// API to clear previous stored rows.
+        /// </summary>
+        public void RefreshCache()
+        {
+            Refresh();
+        }
     }
 }
