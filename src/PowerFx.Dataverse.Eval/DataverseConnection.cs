@@ -295,5 +295,21 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return this.GetMetadataOrThrow(tableLogicalName);
         }
+
+        /// <summary>
+        /// API to wipe out previous stored rows from all TableValues addded to DataverseConnection instance.
+        /// </summary>
+        public void RefreshCache()
+        {
+            foreach (var symbolName in _symbols.SymbolNames)
+            {
+                if (symbolName.Type is TableType && Symbols.TryLookupSlot(symbolName.Name, out ISymbolSlot slot))
+                {
+                    var dataverseTableValue = (DataverseTableValue)SymbolValues.Get(slot);
+
+                    dataverseTableValue.RefreshCache();
+                }
+            }
+        }
     }
 }
