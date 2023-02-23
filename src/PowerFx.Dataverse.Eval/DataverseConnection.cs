@@ -297,7 +297,9 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// API to wipe out previous stored rows from all TableValues addded to DataverseConnection instance.
+        /// The tables in SymbolValues may cache the data they receive from Dataverse.
+        /// These caches can become stale if dataverse is updated outside of this connection object.
+        /// This clears any cached data so that subsequent operations will fetch current data.
         /// </summary>
         public void RefreshCache()
         {
