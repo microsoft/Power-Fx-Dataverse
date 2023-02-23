@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             foreach (var dataverseTableValue in _tablesLogical2Value.Values)
             {
-                dataverseTableValue.Refresh();
+                dataverseTableValue.RefreshCache();
             }
         }
 

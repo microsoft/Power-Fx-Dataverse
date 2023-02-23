@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Wipes out previous stored rows from all TableValues.
+        /// Clears previous stored rows from all TableValues.
         /// </summary>
         public abstract void RefreshCache();
     }
