@@ -376,6 +376,10 @@ namespace Microsoft.PowerFx.Dataverse
                     // converting a boolean option set to a boolean is a noop
                     return node.Child.Accept(this, context);
 
+                case UnaryOpKind.BlankToEmptyString:
+                    arg = node.Child.Accept(this, context);
+                    return context.SetIntermediateVariable(node, $"IIF({arg} IS NULL, N'', {arg})");
+
                 case UnaryOpKind.DateTimeToNumber:
                 case UnaryOpKind.DateTimeToTime:
                 case UnaryOpKind.DateTimeToDate:
