@@ -805,70 +805,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsInstanceOfType(result3, typeof(BlankValue));
         }
-
-        [TestMethod]
-        public async Task DataverseTableValueOperationWithSameBehaviorTest()
-        {
-            var logicalName = "local";
-            var displayName = "t1";
-
-            var exprSum = "Sum(t1,Price)";
-            var exprFirstN = "CountRows(FirstN(t1,2))";
-            var exprFilter = "CountRows(Filter(t1,Price > 10))";
-
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName);
-
-            var opts = new ParserOptions { AllowsSideEffects = true };
-            var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
-
-            // New engines to simulate how Cards eval all expressions
-            var engine1 = new RecalcEngine(config);
-            var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(100.0, result1.ToObject());
-
-            var engine2 = new RecalcEngine(config);
-            var result2 = await engine1.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result2.ToObject());
-
-            var engine3 = new RecalcEngine(config);
-            var result3 = await engine1.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result3.ToObject());
-
-            // Simulates a row being deleted by an external force
-            await el.DeleteAsync(logicalName, _g1);
-
-            // Evals the same expression by a new engine. Should return a wrong result.
-            var engine4 = new RecalcEngine(config);
-            var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(100.0, result4.ToObject());
-
-            var engine5 = new RecalcEngine(config);
-            var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result5.ToObject());
-
-            var engine6 = new RecalcEngine(config);
-            var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result6.ToObject());
-
-            // Refresh connection cache.
-            dv.RefreshCache();
-
-            // Evals the same expression by a new engine. Sum should now return the refreshed value.
-            var engine7 = new RecalcEngine(config);
-            var result7 = await engine7.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.IsInstanceOfType(result7, typeof(BlankValue));
-
-            var engine8 = new RecalcEngine(config);
-            var result8 = await engine8.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0.0, result8.ToObject());
-
-            var engine9 = new RecalcEngine(config);
-            var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0.0, result9.ToObject());
-        }
-
+        
         // Dependency finder. 
         [DataTestMethod]
         [DataRow("1+2", "")] // none
@@ -1538,7 +1475,69 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.AreEqual(250.0, result.ToObject());
         }
+        
+        [TestMethod]
+        public async Task DataverseTableValueOperationWithSameBehaviorTest()
+        {
+            var logicalName = "local";
+            var displayName = "t1";
 
+            var exprSum = "Sum(t1,Price)";
+            var exprFirstN = "CountRows(FirstN(t1,2))";
+            var exprFilter = "CountRows(Filter(t1,Price > 10))";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+
+            // New engines to simulate how Cards eval all expressions
+            var engine1 = new RecalcEngine(config);
+            var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(100.0, result1.ToObject());
+
+            var engine2 = new RecalcEngine(config);
+            var result2 = await engine1.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(1.0, result2.ToObject());
+
+            var engine3 = new RecalcEngine(config);
+            var result3 = await engine1.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(1.0, result3.ToObject());
+
+            // Simulates a row being deleted by an external force
+            await el.DeleteAsync(logicalName, _g1);
+
+            // Evals the same expression by a new engine. Should return a wrong result.
+            var engine4 = new RecalcEngine(config);
+            var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(100.0, result4.ToObject());
+
+            var engine5 = new RecalcEngine(config);
+            var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(1.0, result5.ToObject());
+
+            var engine6 = new RecalcEngine(config);
+            var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(1.0, result6.ToObject());
+
+            // Refresh connection cache.
+            dv.RefreshCache();
+
+            // Evals the same expression by a new engine. Sum should now return the refreshed value.
+            var engine7 = new RecalcEngine(config);
+            var result7 = await engine7.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.IsInstanceOfType(result7, typeof(BlankValue));
+
+            var engine8 = new RecalcEngine(config);
+            var result8 = await engine8.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(0.0, result8.ToObject());
+
+            var engine9 = new RecalcEngine(config);
+            var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.AreEqual(0.0, result9.ToObject());
+        }
                 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
