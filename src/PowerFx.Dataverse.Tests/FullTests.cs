@@ -616,7 +616,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // use the schema name for the primary id attribute, or the primary id logical name if not found
 
             var primaryId = GetPrimaryIdSchemaName(model);
-            var baseTable = $@"{op} TABLE {model.SchemaName } Base (
+            var baseTable = $@"{op} TABLE {model.SchemaName }Base (
 [{primaryId}] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY";
             foreach (var attr in model.Attributes)
             {
@@ -670,7 +670,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var dropCmd = cx.CreateCommand();
             dropCmd.Transaction = tx;
-            dropCmd.CommandText = $"DROP TABLE IF EXISTS {metadata.SchemaName}";
+            dropCmd.CommandText = $"DROP TABLE IF EXISTS {metadata.SchemaName}Base";
             dropCmd.ExecuteNonQuery();
         }
 
