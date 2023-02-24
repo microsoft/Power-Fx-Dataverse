@@ -616,7 +616,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // use the schema name for the primary id attribute, or the primary id logical name if not found
 
             var primaryId = GetPrimaryIdSchemaName(model);
-            var baseTable = $@"{op} TABLE {model.SchemaName} (
+            var baseTable = $@"{op} TABLE {model.SchemaName } Base (
 [{primaryId}] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY";
             foreach (var attr in model.Attributes)
             {
