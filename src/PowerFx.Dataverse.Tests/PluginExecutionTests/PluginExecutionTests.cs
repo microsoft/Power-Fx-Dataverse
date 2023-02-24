@@ -823,7 +823,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
-            // New engines o simulate how Cards eval all expressions
+            // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result1.ToObject());
