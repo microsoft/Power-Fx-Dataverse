@@ -678,7 +678,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var insertCmd = cx.CreateCommand();
             insertCmd.Transaction = tx;
-            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName} ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
+            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
             insertCmd.ExecuteNonQuery();
         }
 
