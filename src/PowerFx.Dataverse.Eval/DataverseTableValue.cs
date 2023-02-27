@@ -46,7 +46,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override ODataQueryableTableValue WithParameters(ODataParameters odataParameters)
         {
-            if (!odataParameters.IsSupported())
+            // Deactivated due to inconsistant behavior for Cards
+            // https://github.com/microsoft/Power-Fx-Dataverse/issues/80
+            if (/*!odataParameters.IsSupported()*/ true)
                 throw new NotDelegableException();
 
             var oData = _oDataParameters;
