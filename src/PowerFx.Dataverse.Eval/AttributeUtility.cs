@@ -8,7 +8,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
@@ -93,7 +92,12 @@ namespace Microsoft.PowerFx.Dataverse
                     return ((NumberValue)fxValue).Value;
 
                 case AttributeTypeCode.Integer:
-                    return (int)((NumberValue)fxValue).Value;
+                    if (fxValue.TryCoerceTo(out NumberValue numberValue))
+                    {
+                        return numberValue;
+                    }
+
+                    throw new NotImplementedException($"{fxValue.Type} to {FormulaType.Number} is not a supported coercion.");
 
                 case AttributeTypeCode.String:
                     return ((StringValue)fxValue).Value;
