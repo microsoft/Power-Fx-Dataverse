@@ -1480,6 +1480,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Collect(t1, {Int:Date(2023,2,27)})")]
         [DataRow("Collect(t1, {Int:Date(1889,12,31)})")]
         [DataRow("Collect(t1, {Int:Date(1,1,1)})")]
+        [DataRow("Abs(Date(2023,2,27))")]
         public async Task DateNumberCoercionTest(string expr)
         {
             // create table "local"
