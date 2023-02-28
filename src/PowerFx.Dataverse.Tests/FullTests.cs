@@ -515,7 +515,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;
-                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? "" : $"FROM {metadata[0].SchemaName}";
+                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? "" : $"FROM {metadata[0].SchemaName}Base";
                     if (from != "" && rowid.HasValue)
                     {
                         from = $"{from} WHERE {GetPrimaryIdSchemaName(metadata[0])} = '{rowid}'";
