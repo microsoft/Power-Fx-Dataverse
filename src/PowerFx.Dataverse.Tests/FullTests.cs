@@ -64,9 +64,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     var alterCmd = cx.CreateCommand();
                     alterCmd.Transaction = tx;
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc1]  AS ([dbo].{calc1.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc1]  AS ([dbo].{calc1.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc2]  AS ([dbo].{calc2.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc2]  AS ([dbo].{calc2.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
 
                     tx.Commit();
@@ -78,13 +78,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     var alterCmd = cx.CreateCommand();
                     alterCmd.Transaction = tx;
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc3]  AS ([dbo].{calc3.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc3]  AS ([dbo].{calc3.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
                     tx.Commit();
                 }
 
                 var selectCmd = cx.CreateCommand();
-                selectCmd.CommandText = $"select {rawField}, calc1, calc2, calc3 from {metadata.SchemaName}";
+                selectCmd.CommandText = $"select {rawField}, calc1, calc2, calc3 from {metadata.SchemaName}Base";
                 var reader = selectCmd.ExecuteReader();
 
                 reader.Read();
