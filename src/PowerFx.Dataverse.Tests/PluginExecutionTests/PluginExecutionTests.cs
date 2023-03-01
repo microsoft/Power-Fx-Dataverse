@@ -1543,7 +1543,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Collect(t1, {Int:Date(2023,2,27)})")]
         [DataRow("Collect(t1, {Int:Date(1889,12,31)})")]
         [DataRow("Collect(t1, {Int:Date(1,1,1)})")]
-        [DataRow("Abs(Date(2023,2,27))")]
+        [DataRow("With({new_number: Date(2023,2,27)}, Collect(t1, {Int:new_number}))")]
         public async Task DateNumberCoercionTest(string expr)
         {
             // create table "local"
@@ -1560,10 +1560,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var opts = new ParserOptions { AllowsSideEffects = true };
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
-            var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            Assert.IsNotInstanceOfType(result, typeof(ErrorValue));
+            Assert.IsFalse(check.IsSuccess);
+            Assert.IsTrue(check.Errors.First().Message.Contains("Incompatible type. The 'Int' column in the data source you’re updating expects a 'Number' type and you’re using a 'Date' type"));
         }
               
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");

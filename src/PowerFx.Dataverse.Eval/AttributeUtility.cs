@@ -92,12 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return ((NumberValue)fxValue).Value;
 
                 case AttributeTypeCode.Integer:
-                    if (fxValue.TryCoerceTo(out NumberValue numberValue))
-                    {
-                        return numberValue;
-                    }
-
-                    throw new NotImplementedException($"{fxValue.Type} to {FormulaType.Number} is not a supported coercion.");
+                    return (int)((NumberValue)fxValue).Value;
 
                 case AttributeTypeCode.String:
                     return ((StringValue)fxValue).Value;
