@@ -219,6 +219,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
+                            
+                            // Table Schema name returns table view and we need to refer Base tables in UDF hence Suffixing Base to the Schema Name
+                            tableSchemaName = tableSchemaName + "Base";
+
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
                             var key = new Tuple<string, string, string>(tableSchemaName, referencingVar, referenced);
                             if (!initRefFieldsMap.TryGetValue(key, out var fields))
