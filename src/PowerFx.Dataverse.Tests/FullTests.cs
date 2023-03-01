@@ -64,9 +64,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     var alterCmd = cx.CreateCommand();
                     alterCmd.Transaction = tx;
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc1]  AS ([dbo].{calc1.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc1]  AS ([dbo].{calc1.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc2]  AS ([dbo].{calc2.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc2]  AS ([dbo].{calc2.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
 
                     tx.Commit();
@@ -78,13 +78,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     var alterCmd = cx.CreateCommand();
                     alterCmd.Transaction = tx;
-                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName} ADD [calc3]  AS ([dbo].{calc3.SqlCreateRow})";
+                    alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc3]  AS ([dbo].{calc3.SqlCreateRow})";
                     alterCmd.ExecuteNonQuery();
                     tx.Commit();
                 }
 
                 var selectCmd = cx.CreateCommand();
-                selectCmd.CommandText = $"select {rawField}, calc1, calc2, calc3 from {metadata.SchemaName}";
+                selectCmd.CommandText = $"select {rawField}, calc1, calc2, calc3 from {metadata.SchemaName}Base";
                 var reader = selectCmd.ExecuteReader();
 
                 reader.Read();
@@ -515,7 +515,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;
-                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? "" : $"FROM {metadata[0].SchemaName}";
+                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? "" : $"FROM {metadata[0].SchemaName}Base";
                     if (from != "" && rowid.HasValue)
                     {
                         from = $"{from} WHERE {GetPrimaryIdSchemaName(metadata[0])} = '{rowid}'";
@@ -616,7 +616,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // use the schema name for the primary id attribute, or the primary id logical name if not found
 
             var primaryId = GetPrimaryIdSchemaName(model);
-            var baseTable = $@"{op} TABLE {model.SchemaName} (
+            var baseTable = $@"{op} TABLE {model.SchemaName}Base (
 [{primaryId}] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY";
             foreach (var attr in model.Attributes)
             {
@@ -670,7 +670,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var dropCmd = cx.CreateCommand();
             dropCmd.Transaction = tx;
-            dropCmd.CommandText = $"DROP TABLE IF EXISTS {metadata.SchemaName}";
+            dropCmd.CommandText = $"DROP TABLE IF EXISTS {metadata.SchemaName}Base";
             dropCmd.ExecuteNonQuery();
         }
 
@@ -678,7 +678,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var insertCmd = cx.CreateCommand();
             insertCmd.Transaction = tx;
-            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName} ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
+            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
             insertCmd.ExecuteNonQuery();
         }
 
