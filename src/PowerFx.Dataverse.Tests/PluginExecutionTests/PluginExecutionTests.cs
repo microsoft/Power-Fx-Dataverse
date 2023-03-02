@@ -1497,7 +1497,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine1 = new RecalcEngine(config);
             var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result1.ToObject());
-
+            
             var engine2 = new RecalcEngine(config);
             var result2 = await engine1.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(1.0, result2.ToObject());
@@ -1538,7 +1538,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(0.0, result9.ToObject());
         }
-                
+        
+        [DataTestMethod]
+        [DataRow("Collect(t1, {Int:Date(2023,2,27)})")]
+        [DataRow("Collect(t1, {Int:Date(1889,12,31)})")]
+        [DataRow("Collect(t1, {Int:Date(1,1,1)})")]
+        [DataRow("With({new_number: Date(2023,2,27)}, Collect(t1, {Int:new_number}))")]
+        public async Task DateNumberCoercionTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine();
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            Assert.IsFalse(check.IsSuccess);
+            Assert.IsTrue(check.Errors.First().Message.Contains("Incompatible type. The 'Int' column in the data source you’re updating expects a 'Number' type and you’re using a 'Date' type"));
+        }
+              
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
