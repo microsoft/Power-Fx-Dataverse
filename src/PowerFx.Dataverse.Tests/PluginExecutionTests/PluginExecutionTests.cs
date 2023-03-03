@@ -1561,7 +1561,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.IsFalse(check.IsSuccess);
-            Assert.IsTrue(check.Errors.First().Message.Contains("Incompatible type. The 'Int' column in the data source you’re updating expects a 'Number' type and you’re using a 'Date' type"));
+            Assert.IsTrue(check.Errors.First().Message.Contains("The type of this argument 'int' does not match the expected type 'Number'. Found type 'Date'."));
         }
 
         [DataTestMethod]
