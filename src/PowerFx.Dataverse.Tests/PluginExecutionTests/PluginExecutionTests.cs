@@ -1561,9 +1561,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.IsFalse(check.IsSuccess);
-            Assert.IsTrue(check.Errors.First().Message.Contains("Incompatible type. The 'Int' column in the data source you’re updating expects a 'Number' type and you’re using a 'Date' type"));
+            Assert.IsTrue(check.Errors.First().Message.Contains("The type of this argument 'int' does not match the expected type 'Number'. Found type 'Date'."));
         }
-              
+
+        [DataTestMethod]
+        [DataRow("Collect(t1,{ DoesNotExist: 10})")]
+        public async Task NullReferenceExceptionTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine();
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            Assert.IsFalse(check.IsSuccess);
+            Assert.IsTrue(check.Errors.First().Message.Contains("The specified column 'DoesNotExist' does not exist."));
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
