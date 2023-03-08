@@ -1346,6 +1346,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 () => dv.AddTable("variableName", "local"),
                 "Table with logical name 'local' was already added as variableName.");
 
+            Assert.ThrowsException<InvalidOperationException>(
+                () => dv.AddTable("missing_table", "missingtable"),
+                "No table metadata for missingtable");
+
             RecordType r = dv.GetRecordType("local");
             Assert.AreEqual("variableName", r.TableSymbolName);
 

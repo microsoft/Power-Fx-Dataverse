@@ -145,6 +145,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="variableName"> name to use in the expressions. This is often the table's display name, 
         /// but the host can adjust to disambiguiate (Accounts, Accounts_1).</param>
         /// <param name="tableLogicalName">The table logical name in dataverse.</param>
+        /// <exception cref="InvalidOperationException">When tableLogicalName does not exist.</exception>
         /// <returns></returns>
         public TableValue AddTable(string variableName, string tableLogicalName)
         {
