@@ -73,24 +73,29 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DType Type => _invariantType;
 
-        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.Number;
+        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.String;
 
         bool IExternalOptionSet.IsConvertingDisplayNameMapping => false;
 
-
         public bool TryGetValue(DName fieldName, out OptionSetValue optionSetValue)
         {
+            if (!OptionNames.Contains(fieldName))
+            {
+                optionSetValue = null;
+                return false;
+            }
+
             var osft = new OptionSetValueType(_invariantType.OptionSetInfo);
             if (IsBooleanValued)
             {
                 // Dataverse registers boolean option sets with "1" and "0" as the field names for true and false values           
-                optionSetValue =  new OptionSetValue(fieldName.Value, osft, fieldName.Value == "1");
+                optionSetValue = new OptionSetValue(fieldName.Value, osft, fieldName.Value == "1");
                 return true;
             }
             else
             {
-                var result = osft.TryGetValue(fieldName, out optionSetValue);
-                return result;
+                optionSetValue = new OptionSetValue(fieldName.Value, osft);
+                return true;
             }
         }
     }

@@ -334,8 +334,8 @@ END
         [DataRow("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.", DisplayName = "File not added to entity")]
         [DataRow("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Picklist")]
         [DataRow("MultiSelect", "Error 0-11: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Multi Select Picklist")]
-        [DataRow("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Built picklist")]
-        [DataRow("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Built hybrid picklist")]
+        [DataRow("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", DisplayName = "Built picklist")]
+        [DataRow("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.", DisplayName = "Built hybrid picklist")]
         public void CompileInvalidTypes(string expr, string error)
         {
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
