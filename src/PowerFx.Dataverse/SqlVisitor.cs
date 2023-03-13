@@ -372,7 +372,7 @@ namespace Microsoft.PowerFx.Dataverse
                     context.ErrorCheck($"{coercedArg} <> N'true' AND {coercedArg} <> N'false'", Context.ValidationErrorCode);
                     return context.SetIntermediateVariable(node, $"{coercedArg} = N'true'");
 
-                case UnaryOpKind.BooleanOptionSetToBoolean:
+                case UnaryOpKind.OptionSetToBoolean:
                     // converting a boolean option set to a boolean is a noop
                     return node.Child.Accept(this, context);
 

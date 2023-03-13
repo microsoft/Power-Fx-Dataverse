@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
             _provider = provider;
         }
 
-        internal override IEnumerable<EnumSymbol> EnumSymbols => base.EnumSymbols.Where(symbol => _supportedEnums.Contains(symbol.Name) );
+        internal override IEnumerable<EnumSymbol> EnumSymbols => base.EnumSymbols.Where(symbol => _supportedEnums.Contains(symbol.EntityName) );
 
         public override void AddSuggestionsForConstantKeywords() =>
             IntellisenseHelper.AddSuggestionsForMatches(
