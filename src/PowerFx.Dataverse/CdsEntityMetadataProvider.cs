@@ -74,6 +74,30 @@ namespace Microsoft.PowerFx.Dataverse
             _document = new DataverseDocument(this);
         }
 
+        private CdsEntityMetadataProvider(IXrmMetadataProvider provider, CdsEntityMetadataProvider original, Func<string, string> displayNameLookup = null)
+        {
+            this._innerProvider = provider;
+            this._document = new DataverseDocument(this);
+
+            // Share all caches
+            this._optionSets = original._optionSets;
+            this._xrmCache = original._xrmCache;
+            this._cdsCache = original._cdsCache;
+            this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;            
+        }
+
+        /// <summary>
+        /// Create a metadata provider that shares the cache, but is accessed via a new provider. 
+        /// This is important when the IXrmMetadataProvider are based on short lived IOranizationService objects,
+        /// but we want to share the cached results longer. 
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <returns></returns>
+        public CdsEntityMetadataProvider Clone(IXrmMetadataProvider provider, Func<string, string> displayNameLookup = null)
+        {
+            return new CdsEntityMetadataProvider(provider, this, displayNameLookup);
+        }
+
         // Called by operations that just want to get the metadata. 
         internal bool TryGetDataSource(string logicalName, out DataverseDataSourceInfo dataSource)
         {
