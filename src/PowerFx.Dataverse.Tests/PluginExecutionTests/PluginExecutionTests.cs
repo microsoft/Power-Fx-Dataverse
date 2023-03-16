@@ -528,6 +528,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow("Patch(t1, First(t1), {Memo:\"LOREM\nIPSUM\nDOLOR\nSIT\nAMET\"})")]
+        [DataRow("First(t1).Memo")]
+        public void SupportAllColumnTypesTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsNotInstanceOfType(result, typeof(ErrorValue));
+        }
+
+        [DataTestMethod]
         [DataRow("If(First(t1).boolean, \"YES\", \"NO\")", "YES")]
         [DataRow("If(First(t1).boolean = allattributes_boolean_optionSet.'1', \"YES\", \"NO\")", "YES")]
         [DataRow("If(First(t1).boolean = 'Boolean (All Attributes)'.'1', \"YES\", \"NO\")", "YES")]
@@ -1638,6 +1664,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["money"] = new Money(123);
             entity1.Attributes["hyperlink"] = "teste_url";
             entity1.Attributes["email"] = "joe@doe.com";
+            entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
