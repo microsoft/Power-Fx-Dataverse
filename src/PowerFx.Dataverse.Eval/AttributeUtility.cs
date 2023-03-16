@@ -94,6 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.Integer:
                     return (int)((NumberValue)fxValue).Value;
 
+                case AttributeTypeCode.Memo:
                 case AttributeTypeCode.String:
                     return ((StringValue)fxValue).Value;
 
@@ -106,14 +107,13 @@ namespace Microsoft.PowerFx.Dataverse
                     
                 case AttributeTypeCode.Money:
                     return new Money((decimal)((NumberValue)fxValue).Value);
-                                    
+
                 case AttributeTypeCode.CalendarRules:
                 case AttributeTypeCode.Customer:
                 case AttributeTypeCode.EntityName:
                 case AttributeTypeCode.Virtual:
                 case AttributeTypeCode.Lookup: // EntityReference
                 case AttributeTypeCode.ManagedProperty:
-                case AttributeTypeCode.Memo:
                 case AttributeTypeCode.PartyList:
                 case AttributeTypeCode.State:
                 case AttributeTypeCode.Status:
