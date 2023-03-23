@@ -104,6 +104,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 var newMetadata = _connection.GetMetadataOrThrow(newEntity.Response.LogicalName);
 
+                if (fieldType is not RecordType)
+                {
+                    // Polymorphic case. 
+                    fieldType = RecordType.Empty();
+                }
+
                 result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
                 return true;
             }

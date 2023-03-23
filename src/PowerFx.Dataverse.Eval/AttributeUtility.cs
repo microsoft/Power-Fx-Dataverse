@@ -9,6 +9,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Linq;
+using System.Xml;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -48,6 +49,32 @@ namespace Microsoft.PowerFx.Dataverse
                         realAttributeName = relationships.ReferencingAttribute;
                         return realAttributeName != null;
                     }
+                }
+            }
+
+            if (TryGetLogicalNameFromOdataName(fieldName, out realAttributeName))
+            {
+                return true;
+            }
+          
+            realAttributeName = null;
+            return false;
+        }
+
+        // OData polymorphic case. fieldname is mangled by convention, and not reflected in metadata. 
+        // The IR is passing the Odata name (not logical name), and we need to extract the logical name from it. 
+        // The odata name is: $"_{logicalName}_value"
+        internal static bool TryGetLogicalNameFromOdataName(string fieldName, out string realAttributeName)
+        {
+            var start = "_";
+            var end = "_value";
+            if (fieldName.StartsWith(start, StringComparison.Ordinal) && fieldName.EndsWith(end, StringComparison.Ordinal))
+            {
+                int len = fieldName.Length - start.Length - end.Length;
+                if (len > 0)
+                {
+                    realAttributeName = fieldName.Substring(start.Length, len);
+                    return true;
                 }
             }
             realAttributeName = null;
