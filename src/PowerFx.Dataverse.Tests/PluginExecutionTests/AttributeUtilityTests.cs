@@ -4,21 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.ServiceModel;
-using System.Threading;
-using System.Threading.Tasks;
-using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
