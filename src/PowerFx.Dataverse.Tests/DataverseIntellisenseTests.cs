@@ -109,7 +109,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "TimeUnit.Years")]
         [DataRow("ErrorKin|", DisplayName = "ErrorKind is excluded")]
         [DataRow("DateTimeFo|", DisplayName = "DateTimeFormat is excluded")]
-        [DataRow("Ye|", "Year", "TimeUnit.Years", DisplayName = "Only Namespaced Enums")]
+        [DataRow("Ye|", "TimeUnit.Years", "Year", DisplayName = "Only Namespaced Enums")]
         [DataRow("DateAdd(x, 1,|",
             "'Global Picklist'",
             "'Rating (Locals)'",
