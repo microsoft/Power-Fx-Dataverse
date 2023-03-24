@@ -586,10 +586,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());
         }
 
+        // https://github.com/microsoft/Power-Fx-Dataverse/issues/102
+        [DataTestMethod]
+        [DataRow("Collect(t1, {Price:111, Other: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))});Text(Last(t1).Price)", "111")]
+        [DataRow("With({remote: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))}, Collect(t1, {Price:111, Other: remote});Text(Last(t1).Price))", "111")]
+        [DataRow("Patch(t1, LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")), {Other: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\")), Price: 222});Text(LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")).Price)", "222")]
+        [DataRow("With({local: LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")), remote: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))}, Patch(t1, local, {Other: remote, Price: 222});Text(LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")).Price))", "222")]
+        public void CardsRegressionRelationshipModelsTest(string expr, string expected)
+        {
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable("t1", "local");
+            dv.AddTable("Remote", "remote");
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = new ParserOptions { AllowsSideEffects = true };
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
         [DataTestMethod]
         [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
         [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
-        public void NotSupportedColumnTypeErrorTest(string expr, string exptected)
+        public void NotSupportedColumnTypeErrorTest(string expr, string expected)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -610,7 +636,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.IsInstanceOfType(result, typeof(ErrorValue));
-            Assert.AreEqual(exptected, ((ErrorValue)result).Errors.First().Message);
+            Assert.AreEqual(expected, ((ErrorValue)result).Errors.First().Message);
         }
 
         // Ensure a custom function shows up in intellisense. 

@@ -2,7 +2,7 @@
 <Project>
 
   <PropertyGroup>
-	  <PowerFxVersion>0.2.3-preview.20230323-1001</PowerFxVersion>
+	  <PowerFxVersion>0.2.3-preview.20230323-1008</PowerFxVersion>
     <DataverseParserVersion>0.1.0-ci-20230313-70017436</DataverseParserVersion>
   </PropertyGroup>
 
