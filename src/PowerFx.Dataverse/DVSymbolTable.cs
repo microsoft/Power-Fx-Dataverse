@@ -10,6 +10,8 @@ using Microsoft.PowerFx.Core.Binding.BindInfo;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -17,9 +19,26 @@ namespace Microsoft.PowerFx.Dataverse
     /// Hook into symbol table to support Dataverse OptionSets which are populated 
     /// lazily from the metadata cache. 
     /// </summary>
-    public class DVSymbolTable : SymbolTable
+    public class DVSymbolTable : SymbolTable, IGlobalSymbolNameResolver
     {
         protected readonly CdsEntityMetadataProvider _metadataCache;
+
+        IEnumerable<KeyValuePair<string, NameLookupInfo>> IGlobalSymbolNameResolver.GlobalSymbols
+        {
+            get
+            {
+                foreach (var variable in _variables)
+                {
+                    yield return variable;
+                }
+
+                var _options = _metadataCache.OptionSets.Select(optionSet => new NameLookupInfo(BindKind.OptionSet, DType.CreateOptionSetType(optionSet), DPath.Root, 0, optionSet, new DName(optionSet.DisplayName)));
+                foreach (var option in _options)
+                {
+                    yield return new KeyValuePair<string, NameLookupInfo>(option.DisplayName, option);
+                }
+            }
+        }
 
         // Loaded tables are tracked in the base class's AddVariable.
 
