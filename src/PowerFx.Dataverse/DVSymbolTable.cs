@@ -34,10 +34,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // Below is for option sets.
-                var _options = _metadataCache.OptionSets.Select(optionSet => new NameLookupInfo(BindKind.OptionSet, DType.CreateOptionSetType(optionSet), DPath.Root, 0, optionSet, new DName(optionSet.DisplayName)));
-                foreach (var option in _options)
+                var options = _metadataCache.OptionSets;
+                foreach (var option in options)
                 {
-                    yield return new KeyValuePair<string, NameLookupInfo>(option.DisplayName, option);
+                    if(this.TryLookup(option.EntityName, out var optionNameInfo))
+                    {
+                        yield return new KeyValuePair<string, NameLookupInfo>(option.DisplayName, optionNameInfo);
+                    }
+                    else
+                    {
+                        // Lookup should never have failed.
+                        throw new InvalidOperationException();
+                    }
                 }
             }
         }
