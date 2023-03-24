@@ -27,11 +27,13 @@ namespace Microsoft.PowerFx.Dataverse
         {
             get
             {
+                // Below does same as the base class.
                 foreach (var variable in _variables)
                 {
                     yield return variable;
                 }
 
+                // Below is for option sets.
                 var _options = _metadataCache.OptionSets.Select(optionSet => new NameLookupInfo(BindKind.OptionSet, DType.CreateOptionSetType(optionSet), DPath.Root, 0, optionSet, new DName(optionSet.DisplayName)));
                 foreach (var option in _options)
                 {
