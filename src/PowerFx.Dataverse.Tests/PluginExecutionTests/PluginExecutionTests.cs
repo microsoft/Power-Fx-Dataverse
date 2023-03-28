@@ -750,7 +750,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        /*
         [DataRow("1+2", "")] // none
         [DataRow("ThisRecord.Price * Quantity", "Read local: new_price, new_quantity;")] // basic read
         [DataRow("Price%", "Read local: new_price;")] // unary op
@@ -772,7 +771,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("t1", "Read local: ;")] // whole table
         [DataRow("12 & true & \"abc\" ", "")] // walker ignores literals
         [DataRow("12;Price;12", "Read local: new_price;")] // chaining
-        */
         [DataRow("ParamLocal1.Price", "Read local: new_price;")] // basic read
         public void GetDependencies(string expr, string expected)
         {
@@ -791,6 +789,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
 
+            // Simulate a parameter
             var parameterSymbols = new SymbolTable { DebugName = "Parameters " };
             parameterSymbols.AddVariable("ParamLocal1", dv.GetRecordType("local"));
 
