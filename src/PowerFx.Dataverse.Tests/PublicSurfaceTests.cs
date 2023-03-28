@@ -30,7 +30,6 @@ namespace Microsoft.PowerFx.Tests
             {
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
-                "Microsoft.PowerFx.Dataverse.AttributeUtility",
                 "Microsoft.PowerFx.Dataverse.MetadataExtensions",
 
                 // Policies 
@@ -59,6 +58,9 @@ namespace Microsoft.PowerFx.Tests
 
             var allowed = new HashSet<string>()
             {
+                "Microsoft.PowerFx.Dataverse.AttributeUtility",
+                "Microsoft.PowerFx.Dataverse.DependencyInfo",
+
                 // Common Entity metadata providers
                 "Microsoft.PowerFx.Dataverse.IXrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider",
