@@ -783,7 +783,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var policy = new SingleOrgPolicy(map);
 
             var config = new PowerFxConfig();
-            config.EnableSetFunction();
             config.SymbolTable.EnableMutationFunctions();
             var engine = new RecalcEngine(config);
 
