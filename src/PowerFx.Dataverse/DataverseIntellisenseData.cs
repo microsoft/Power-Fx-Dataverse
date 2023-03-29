@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// should therefore be excluded from being suggested
         /// Note that ErrorKind is supported by the infra, but not in maker scenarios, so should be excluded
         /// </summary>
-        private readonly static string[] _supportedEnums = new [] { EnumConstants.TimeUnitEnumString };
+        private readonly static string[] _supportedEnums = new [] { Microsoft.PowerFx.Core.Utils.LanguageConstants.TimeUnitEnumString };
 
         /// <summary>
         /// Not all functions supported by the name resolver should be suggested for makers
