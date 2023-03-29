@@ -772,6 +772,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("12 & true & \"abc\" ", "")] // walker ignores literals
         [DataRow("12;Price;12", "Read local: new_price;")] // chaining
         [DataRow("ParamLocal1.Price", "Read local: new_price;")] // basic read
+        [DataRow("First(t1).Price + First(Remote).'Other Other'.'Data Two'", "Read local: new_price; Read remote: otherotherid; Read doubleremote: data2;")] // 3 entities
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -780,6 +781,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "Remote");
+            map.Add("doubleremote", "Remote2");
             var policy = new SingleOrgPolicy(map);
 
             var config = new PowerFxConfig();
