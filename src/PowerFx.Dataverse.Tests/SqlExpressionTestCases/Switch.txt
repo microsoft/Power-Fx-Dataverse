@@ -1,0 +1,14 @@
+#override: Switch.txt
+
+// https://github.com/microsoft/Power-Fx-Dataverse/issues/115
+
+>> Switch(Blank(),0,3,Blank(),5,2,7,11)
+#Skip
+
+
+>> Switch(Blank(),"zero","3",Blank(),"5","two","7","11")
+#Skip
+
+
+>> Switch(Blank(),0,"3",Blank(),"5",2,"7","11")
+#Skip
