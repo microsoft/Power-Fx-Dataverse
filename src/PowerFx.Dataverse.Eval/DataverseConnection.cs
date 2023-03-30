@@ -53,6 +53,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly Policy _policy;
 
+        public CdsEntityMetadataProvider MetadataCache => _metadataCache;
+
         /// <summary>
         /// Values of global tables that we've added.
         /// </summary>

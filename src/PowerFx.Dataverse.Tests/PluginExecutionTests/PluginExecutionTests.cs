@@ -749,6 +749,65 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [DataTestMethod]
+        [DataRow("1+2", "")] // none
+        [DataRow("ThisRecord.Price * Quantity", "Read local: new_price, new_quantity;")] // basic read
+        [DataRow("Price%", "Read local: new_price;")] // unary op
+        [DataRow("ThisRecord", "Read local: ;")] // whole scope 
+        [DataRow("First(Remote).Data", "Read remote: data;")] // other table
+        [DataRow("Set(Price, 200)", "Read local: new_price; Write local: new_price;")] // set 
+        [DataRow("ThisRecord.Other.Data", "Read local: otherid; Read remote: data;")] //relationship
+        [DataRow("{x:5}.x", "")] // non dataverse record
+        [DataRow("With({x : ThisRecord}, x.Price)", "Read local: new_price;")] // alias
+        [DataRow("With({Price : 5}, Price + Quantity)", "Read local: new_quantity;")] // Price is shadowed
+        [DataRow("With({Price : 5}, ThisRecord.Price)", "")] // shadowed
+        [DataRow("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
+        [DataRow("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1. 
+        [DataRow("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("LookUp(t1,Price=255)", "Read local: new_price;")] // Lookup and RowScope
+        [DataRow("Filter(t1,Price > 200)", "Read local: new_price;")] // Lookup and RowScope
+        [DataRow("First(t1)", "Read local: ;")]
+        [DataRow("Last(t1)", "Read local: ;")]
+        [DataRow("t1", "Read local: ;")] // whole table
+        [DataRow("12 & true & \"abc\" ", "")] // walker ignores literals
+        [DataRow("12;Price;12", "Read local: new_price;")] // chaining
+        [DataRow("ParamLocal1.Price", "Read local: new_price;")] // basic read
+        [DataRow("First(t1).Price + First(Remote).'Other Other'.'Data Two'", "Read local: new_price; Read remote: otherotherid; Read doubleremote: data2;")] // 3 entities
+        public void GetDependencies(string expr, string expected)
+        {
+            var logicalName = "local";
+
+            // Everything policy 
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            map.Add("doubleremote", "Remote2");
+            var policy = new SingleOrgPolicy(map);
+
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+            var engine = new RecalcEngine(config);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            // Simulate a parameter
+            var parameterSymbols = new SymbolTable { DebugName = "Parameters " };
+            parameterSymbols.AddVariable("ParamLocal1", dv.GetRecordType("local"));
+
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);
+
+            var check = new CheckResult(engine)
+                .SetText(expr, new ParserOptions { AllowsSideEffects = true })
+                .SetBindingInfo(symbols);
+
+            var info = DependencyInfo.Scan(check, dv.MetadataCache);
+
+            var actual = info.ToString().Replace("\r", "").Replace("\n", "").Trim();
+
+            Assert.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void RefreshDataverseConnectionSingleOrgPolicyTest()
         {
