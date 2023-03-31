@@ -172,7 +172,9 @@ namespace Microsoft.PowerFx.Dataverse
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+                string returnType = retType is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(retType);
+
+                tw.WriteLine($") RETURNS {returnType}");
                 // schemabinding only applies if there are no reference fields
                 var refFieldCount = ctx.GetReferenceFields().Count();
                 if (refFieldCount == 0)

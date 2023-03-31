@@ -151,7 +151,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (returnType is NumberType)
                 {
                     // TODO: better type validation
-                    if (hintType is NumberType)
+                    if (hintType is NumberType || hintType is SqlMoneyType)
                     {
                         returnType = hintType;
                         return true;
@@ -175,6 +175,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is SqlDecimalType ||
                 type is BooleanType ||
                 type is StringType ||
+                type is SqlBigType ||
                 Library.IsDateTimeType(type);
         }
 
@@ -187,8 +188,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (type.Kind == DKind.Currency)
             {
-                // Currency isn't supported yet, for now, return decimal
-                return new SqlDecimalType();
+                return new SqlBigType();
             }
             else
             {
