@@ -157,11 +157,16 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopeTypes[node.Scope.Id] = arg0.IRContext.ResultType;
             }
 
+            // If arg0 is a write-only arg, then skip it for reading. 
+            bool firstArgIsWrite = false;
+
             // Patch, Collect
             // Set
             var func = node.Function.Name;
             if (func == "Set")
             {
+                firstArgIsWrite = true;
+
                 // Set(field, ...);
                 var arg0 = node.Args[0];
                 if (arg0 is ResolvedObjectNode r)
@@ -183,14 +188,11 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // If arg0 is a write-only arg, then skip it for reading. 
-            int skipReadArg = 0;
-
             int argRecordWrite = 0;
             if (func == "Patch")
             {
                 // Patch(table, record, fields);
-                skipReadArg = 1;
+                firstArgIsWrite = true;
                 argRecordWrite = 2;
                 if (node.Args.Count != 3)
                 {
@@ -200,7 +202,7 @@ namespace Microsoft.PowerFx.Dataverse
             else if (func == "Collect")
             {
                 // Collect(table, fields);
-                skipReadArg = 1;
+                firstArgIsWrite = true;
                 argRecordWrite = 1;
                 if (node.Args.Count != 2)
                 {
@@ -232,7 +234,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Find all dependencies in args
             // This will catch reads. 
-            foreach (var arg in node.Args.Skip(skipReadArg))
+            foreach (var arg in node.Args.Skip(firstArgIsWrite ? 1 : 0))
             {
                 arg.Accept(this, context);
             }

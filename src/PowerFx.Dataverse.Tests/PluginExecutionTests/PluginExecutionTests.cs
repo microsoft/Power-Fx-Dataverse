@@ -755,7 +755,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Price%", "Read local: new_price;")] // unary op
         [DataRow("ThisRecord", "Read local: ;")] // whole scope 
         [DataRow("First(Remote).Data", "Read remote: data;")] // other table
-        [DataRow("Set(Price, 200)", "Read local: new_price; Write local: new_price;")] // set 
+        [DataRow("Set(Price, 200)", "Write local: new_price;")] // set, 
+        [DataRow("Set(Price, Quantity)", "Read local: new_quantity; Write local: new_price;")] // set, 
+        [DataRow("Set(Price, Price + 1)", "Read local: new_price; Write local: new_price;")] // set, 
         [DataRow("ThisRecord.Other.Data", "Read local: otherid; Read remote: data;")] //relationship
         [DataRow("{x:5}.x", "")] // non dataverse record
         [DataRow("With({x : ThisRecord}, x.Price)", "Read local: new_price;")] // alias
