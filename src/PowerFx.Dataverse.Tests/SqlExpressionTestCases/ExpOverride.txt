@@ -3,3 +3,7 @@
 // Excel returns 5.5799E+186 - overflows SQL Decimal
 >> Exp(430)
 Error()
+
+// Out of range 
+>> Exp(66)
+Error()

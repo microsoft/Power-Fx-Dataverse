@@ -58,6 +58,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        public override RetVal Visit(DecimalLiteralNode node, Context context)
+        {
+            throw new NotImplementedException();
+        }
+
         public override RetVal Visit(BooleanLiteralNode node, Context context)
         {
             string val = node.LiteralValue ? "1" : "0";

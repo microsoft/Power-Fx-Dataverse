@@ -122,6 +122,11 @@ namespace Microsoft.PowerFx.Dataverse
             return null;
         }
 
+        public override RetVal Visit(DecimalLiteralNode node, Context context)
+        {
+            return null;
+        }
+
         public override RetVal Visit(ColorLiteralNode node, Context context)
         {
             return null;

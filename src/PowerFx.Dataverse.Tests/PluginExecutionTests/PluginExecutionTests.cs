@@ -27,6 +27,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     [TestClass]
     public class PluginExecutionTests
     {
+        ParserOptions _parserAllowSideEffects = new ParserOptions
+        {
+            AllowsSideEffects = true,
+            NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat
+        };
+
         EntityMetadataModel _trivialModel = new EntityMetadataModel
         {
             Attributes = new AttributeMetadataModel[]
@@ -518,13 +524,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            Assert.AreEqual(expected, result.ToObject());
+            Assert.AreEqual(expected, result.ToDouble());
         }
 
         [DataTestMethod]
@@ -544,7 +550,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
@@ -577,7 +583,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
@@ -603,7 +609,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
@@ -629,7 +635,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
@@ -733,7 +739,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     // Get invariant
                     var check = new CheckResult(engine)
-                        .SetText(expr, new ParserOptions { AllowsSideEffects = true })
+                        .SetText(expr, _parserAllowSideEffects)
                         .SetBindingInfo(symbols);
 
                     check.ApplyBinding();
@@ -800,7 +806,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);
 
             var check = new CheckResult(engine)
-                .SetText(expr, new ParserOptions { AllowsSideEffects = true })
+                .SetText(expr, _parserAllowSideEffects)
                 .SetBindingInfo(symbols);
 
             var info = DependencyInfo.Scan(check, dv.MetadataCache);
@@ -828,7 +834,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
@@ -879,7 +885,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
@@ -1055,7 +1061,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1106,7 +1112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1153,7 +1159,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1181,7 +1187,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             el._getTargetedColumnName = () => "new_price";
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1215,7 +1221,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1267,7 +1273,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return null;
             };
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1307,7 +1313,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 el._getCustomErrorMessage = () => errorMessage;
             }
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
@@ -1602,7 +1608,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
@@ -1670,7 +1676,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.IsFalse(check.IsSuccess);
@@ -1692,7 +1698,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             engine.Config.SymbolTable.EnableMutationFunctions();
 
-            var opts = new ParserOptions { AllowsSideEffects = true };
+            var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.IsFalse(check.IsSuccess);
@@ -1808,6 +1814,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public NumberValue Execute(NumberValue value)
         {
             return FormulaValue.New(value.Value * 2);
+        }
+    }
+
+    public static class Helpers
+    {
+        public static double ToDouble(this FormulaValue value)
+        {
+            if (value is NumberValue num)
+            {
+                return num.Value;
+            }
+            if (value is DecimalValue dec)
+            {
+                return (double) dec.Value;
+            }
+            throw new InvalidOperationException($"Not a number: {value.GetType().FullName}");
         }
     }
 }

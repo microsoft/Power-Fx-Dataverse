@@ -45,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
-                    runner.AddFile(path);
+                    runner.AddFile(DataverseEngine.NumberIsFloat, path);
                 }
 
                 var result = runner.RunTests();
@@ -69,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 //runner.AddFile(@"c:\temp\test.txt");
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
                 {
-                    runner.AddFile(path);
+                    runner.AddFile(DataverseEngine.NumberIsFloat, path);
                 }
 
                 var result = runner.RunTests();

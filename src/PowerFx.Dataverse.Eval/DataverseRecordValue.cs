@@ -123,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse
             // For some specific column types we need to extract the primitive value.
             if (value is Money money)
             {
-                result = FormulaValue.New(money.Value);
+                result = PrimitiveValueConversions.Marshal(money.Value, fieldType);
                 return true;
             }
 
