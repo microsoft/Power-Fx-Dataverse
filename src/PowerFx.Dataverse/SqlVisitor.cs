@@ -399,6 +399,14 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.TimeToNumber:
                     throw Library.BuildUnsupportedArgumentTypeException(node.IRContext.ResultType._type.GetKindString(), node.Child.IRContext.SourceContext);
 
+                case UnaryOpKind.OptionSetToText:
+                    if (node.Child is RecordFieldAccessNode fieldNode)
+                    {
+                        string name = fieldNode.Field.ToString();
+                        return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
+                    }
+                    goto default;
+
                 // TODO: other coorcions as new type support is added
                 default:
                     throw new SqlCompileException(node.IRContext.SourceContext);
