@@ -2,7 +2,7 @@
 <Project>
 
   <PropertyGroup>
-	  <PowerFxVersion>0.3.0-local</PowerFxVersion>
+	  <PowerFxVersion>0.2.3-preview.20230404-1001</PowerFxVersion>
       
       <!-- https://msazure.visualstudio.com/OneAgile/_artifacts/feed/PowerApps-Studio-Official/NuGet/Microsoft.PowerFx.Dataverse.Parser       -->
     <DataverseParserVersion>0.1.0-ci-20230403-71123572</DataverseParserVersion>
