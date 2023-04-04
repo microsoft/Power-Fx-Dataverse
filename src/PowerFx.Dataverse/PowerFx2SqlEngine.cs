@@ -122,6 +122,7 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var error in sqlResult.Errors)
                 {
                     if (error.MessageKey == "ErrUnknownFunction" || 
+                        error.MessageKey == "ErrUnimplementedFunction" ||
                         (error.MessageKey == "ErrBadType_ExpectedType_ProvidedType" && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);

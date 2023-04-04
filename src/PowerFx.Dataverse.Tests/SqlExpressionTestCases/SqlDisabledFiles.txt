@@ -4,3 +4,22 @@
 
 // SQL has very limited text formatting support
 #DISABLE: Text_Format.txt
+
+// Enable decimal: 
+// https://github.com/microsoft/Power-Fx-Dataverse/issues/117
+#DISABLE: DecimalBoot.txt
+#DISABLE: DecimalNonMathFuncs.txt
+#DISABLE: DecimalOps.txt
+#DISABLE: DecimalOverflow.txt
+#DISABLE: OpMatrix_Div_Decimal.txt
+#DISABLE: OpMatrix_Eq_Decimal.txt
+#DISABLE: OpMatrix_Geq_Decimal.txt
+#DISABLE: OpMatrix_Gt_Decimal.txt
+#DISABLE: OpMatrix_Leq_Decimal.txt
+#DISABLE: OpMatrix_Lt_Decimal.txt
+#DISABLE: OpMatrix_Minus_Decimal.txt
+#DISABLE: OpMatrix_Mul_Decimal.txt
+#DISABLE: OpMatrix_Neq_Decimal.txt
+#DISABLE: OpMatrix_Plus_Decimal.txt
+#DISABLE: OpMatrix_Unary_Decimal.txt
+

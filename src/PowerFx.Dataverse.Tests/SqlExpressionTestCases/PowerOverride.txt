@@ -10,3 +10,6 @@ Error()
 
 >> Power(Exp(42.5),2)
 Error()
+
+>> Power(Exp(29.5),2)
+Error()
