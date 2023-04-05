@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(culture), culture)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(Features.PowerFxV1), culture)
         {
         }
 
@@ -302,7 +302,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
 
                 sqlResult.ReturnType = retType;
-                sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null);
+                sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null, _cultureInfo);
                 sqlResult.SanitizedFormula = sanitizedFormula;
 
                 sqlResult._unsupportedWarnings = ctx._unsupportedWarnings;
