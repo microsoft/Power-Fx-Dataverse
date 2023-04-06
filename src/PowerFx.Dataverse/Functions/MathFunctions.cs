@@ -98,6 +98,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             return result;
         }
 
+        /*
+         * Commenting these functions to filter them out from formula bar as it will return floatiing point soon and formula columsn don't support floating point
+         * 
         public static RetVal Exp(SqlVisitor visitor, CallNode node, Context context)
         {
             var result = context.GetTempVar(new SqlBigType());
@@ -142,7 +145,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             context.SetIntermediateVariable(result, $"LOG({arg})");
             context.PerformRangeChecks(result, node);
             return result;
-        }
+        }*/
 
         public static RetVal RoundUp(SqlVisitor visitor, CallNode node, Context context)
         {
