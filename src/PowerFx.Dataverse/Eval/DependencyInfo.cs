@@ -397,6 +397,10 @@ namespace Microsoft.PowerFx.Dataverse
         // if fieldLogicalName, then we're taking a dependency on entire record. 
         private void AddField(Dictionary<string, HashSet<string>> list, string tableLogicalName, string fieldLogicalName)
         {
+            if (tableLogicalName == null)
+            {
+                return;
+            }
             if (!list.TryGetValue(tableLogicalName, out var fieldReads))
             {
                 fieldReads = new HashSet<string>();
