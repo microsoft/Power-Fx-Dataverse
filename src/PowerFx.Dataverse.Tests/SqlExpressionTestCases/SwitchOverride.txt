@@ -12,3 +12,7 @@
 
 >> Switch(Blank(),0,"3",Blank(),"5",2,"7","11")
 #Skip
+
+
+>> Abs(Switch(1, 1, -2, {x:4}))
+#Skip
