@@ -48,6 +48,12 @@ namespace Microsoft.PowerFx.Dataverse
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
+        public override bool TryGetPrimaryKey(out string key)
+        {
+            key = _entity.Id.ToString();
+            return true;
+        }
+
         private bool TryGetAttributeOrRelationship(string fieldName, out object value)
         {
             // IR should convert the fieldName from display to Logical Name. 
