@@ -1096,7 +1096,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
-        /*
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
@@ -1104,8 +1103,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
         [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
-        */
-        // [DataRow("LookUp(t1,Price=255).Price", 255.0)]
+        [DataRow("LookUp(t1,Price=255).Price", 255.0)]
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", 255.0)]
         public void PatchFunction(string expr, double? expected)
         {            
@@ -1148,6 +1146,45 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Assert.IsNull(actualValue);
                 }
             }
+        }
+
+        // 1 item with Price = 100
+        [DataTestMethod]
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", true, 100.0)]
+        [DataRow("LookUp(t1, GUID(\"00000000-0000-0000-0000-000000000001\") = localid).Price", true, 100.0)] // order
+        [DataRow("LookUp(t1, Price > 50).Price", false, null)] // non ID field
+        [DataRow("LookUp(t1, LocalId=_g1).Price", true, 100.0)] // variable
+        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price", true, 100.0)]
+        [DataRow("LookUp(t1, LocalId=If(false, _g1, _gMissing)).Price", true, null)]
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", false, 100.0)] // delegate Depends on thisRecord!
+        [DataRow("LookUp(Filter(t1, false), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, null)] // wrapper in Filter
+        [DataRow("LookUp(Filter(t1, true), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, 100.0)]
+        public void LookUpDelegation(string expr, bool delegated, double? expected)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
+            engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
+            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            // Verify on expression - this may be old or no
+            Assert.AreEqual(expected, result.ToObject());
         }
 
         [DataTestMethod]

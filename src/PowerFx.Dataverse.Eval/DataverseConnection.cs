@@ -23,6 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         static async Task<DValue<RecordValue>> RetrieveSingleAsync(TableValue table, Guid guid, CancellationToken cancel)
         {
+            // $$$ may not succeed.
             var t2 = (DataverseTableValue)table;
             // var services = t2._connection.Services;
 

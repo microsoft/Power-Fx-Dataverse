@@ -79,6 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public TableType _tableType;
 
+            // $$$$ NOOOOOO - needs to be built at runtime. Fill in the holes.
             // We have the start of a query. 
             public QueryExpression _query;
 
@@ -87,6 +88,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
         public class Context
         {
+            // $$$ Make this a member of the visitor, not the context.
             public ICollection<ExpressionError> _errors;
 
             public void AddError(ExpressionError error)
@@ -141,6 +143,12 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
 
         // public Func<string, EntityMetadata> _tryGetEntityMetadata;
 
+        // Let F = Filter(Accounts, Age > 30);
+        // LookUp(F, Id=Guid);   $$$ 
+
+        // With({ t: Accounts}, LookUp(T, Id=Guid));   $$$ 
+
+        // LookUp(Accounts, Id=Guid)
         public override RetVal Visit(ResolvedObjectNode node, Context context)
         {
             if (node.IRContext.ResultType is TableType aggType)
@@ -271,6 +279,9 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                     if (arg1 is LazyEvalNode arg1b && arg1b.Child is BinaryOpNode binOp)
                     {
                         // Pattern match to see if predicate is delegable.
+                        // - Lookup(Table, Id=Guid) 
+                        // - Lookup(Table, Guid=Id) 
+                        // - Lookup(Table, Id=  If(ThisRecord.Test > Rand(), G1, G2)) ) // NO!!!!
                         if (binOp.Op == BinaryOpKind.EqGuid)
                         {
                             var left = binOp.Left;
@@ -292,6 +303,10 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                                         // Call 
                                         IntermediateNode argGuid = right;
 
+
+                                        // $$$ MAy need to fallback if we can't delegate. 
+                                        // __lookup(table, guid) ?? node;
+
                                         // __lookup(table, guid);
                                         var newNode = RetrieveSingle(arg0b, argGuid);
                                         return Ret(newNode);
@@ -299,18 +314,18 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                                 }
                             }
                         }
-
-                        // Source span 
-                        // !!! Delegation warning. We're operating on a table, but can't delegate. 
-
-                        var error = new ExpressionError
-                        {
-                            Message = "Can't delegate LookUp",
-                            Span = node.IRContext.SourceContext,
-                            Severity = ErrorSeverity.Warning
-                        };
-                        context.AddError(error);
                     }
+
+                    // Source span 
+                    // !!! Delegation warning. We're operating on a table, but can't delegate. 
+
+                    var error = new ExpressionError
+                    {
+                        Message = "Can't delegate LookUp",
+                        Span = node.IRContext.SourceContext,
+                        Severity = ErrorSeverity.Warning
+                    };
+                    context.AddError(error);
                 }            
             }
             // Other delegating functions, continue to compose...
