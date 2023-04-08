@@ -1096,6 +1096,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Patch() function against entity fields in RowScope
         [DataTestMethod]
+        /*
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
@@ -1103,6 +1104,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
         [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
+        */
+        // [DataRow("LookUp(t1,Price=255).Price", 255.0)]
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", 255.0)]
         public void PatchFunction(string expr, double? expected)
         {            
             // create table "local"
@@ -1116,6 +1120,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);

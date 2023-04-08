@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : ODataQueryableTableValue
     {
-        private readonly IConnectionValueContext _connection;
+        internal readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
 
@@ -82,6 +82,21 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return list;
+        }
+
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var result =await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
+
+            if (result.HasError)
+            {
+                return result.DValueError("Retrieve");
+            }
+
+            Entity entity = result.Response;
+            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+
+            return DValue<RecordValue>.Of(row);
         }
 
         public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
