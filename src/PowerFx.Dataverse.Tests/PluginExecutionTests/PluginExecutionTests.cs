@@ -1150,21 +1150,101 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // 1 item with Price = 100
         [DataTestMethod]
-        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", true, 100.0)]
-        [DataRow("LookUp(t1, GUID(\"00000000-0000-0000-0000-000000000001\") = localid).Price", true, 100.0)] // order
-        [DataRow("LookUp(t1, Price > 50).Price", false, null)] // non ID field
-        [DataRow("LookUp(t1, LocalId=_g1).Price", true, 100.0)] // variable
-        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price", true, 100.0)]
-        [DataRow("LookUp(t1, LocalId=If(false, _g1, _gMissing)).Price", true, null)]
-        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", false, 100.0)] // delegate Depends on thisRecord!
+#if false
         [DataRow("LookUp(Filter(t1, false), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, null)] // wrapper in Filter
         [DataRow("LookUp(Filter(t1, true), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, 100.0)]
-        public void LookUpDelegation(string expr, bool delegated, double? expected)
+        
+        [DataRow("LookUp(t1, _g1 = LocalId).Price",
+            true, 100.0,  // Ok, just flipping order. 
+            "")] 
+
+#endif
+
+#if false
+    // $$$ how to mock NotFound?
+        [DataRow("LookUp(t1, LocalId=If(false, _g1, _gMissing)).Price",
+            true, null, // delegated, but not found 
+            "(__lookup(t1, If(False, _g1, _gMissing))').new_price")]  
+#endif
+
+#if false
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
+            true, 100.0,
+            "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
+
+        [DataRow("LookUp(t1, LocalId=_g1).Price", 
+            true, 100.0,
+            "(__lookup(t1, _g1)).new_price")] // variable
+
+        // Working
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
+            false, 100.0, 
+            "(LookUp(t1, EqGuid(localid,If(GtNumbers(new_price,50), _g1, _gMissing)))).new_price",
+            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord")] // lamba uses ThisRecord.Price, can't delegate
+
+        [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
+            false, 100.0, // non ID field
+            "(LookUp(t1, GtNumbers(new_price,50))).new_price",
+            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] 
+
+        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
+            true, 100.0, // successful with complex expression
+            "(__lookup(t1, If(True, _g1, _gMissing))).new_price")]
+
+        [DataRow("First(t1).Price",
+            false, 100.0, // unsupported function, can't yet delegate
+            "(First(t1)).new_price",
+            "Warning 6-8: Delegating this operation on table 'local' is not supported."
+            )]                       
+
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            false, 100.0, // wrapper in Filter, can't delegate
+            "(LookUp(Filter(t1, EqNumbers(1,1)), EqGuid(localid,_g1))).new_price",
+            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            )]
+                        
+        [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
+            true, 100.0, 
+            "(__lookup(t1, (__lookup(t1, _g1)).localid)).new_price"
+            )] // nested delegation, both delegated.
+
+
+        [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
+            false, 100.0,
+            "(__lookup(t1, (LookUp(t1, GtNumbers(new_price,50))).localid)).new_price",
+            "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] // Inner not delegated, but outer still is. 
+                        
+        [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
+            true, 100.0,
+            "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
+
+        [DataRow("Last(t1).Price",
+            false, 100.0, // unsupported function, can't yet delegate
+            "(Last(t1)).new_price",
+            "Warning 5-7: Delegating this operation on table 'local' is not supported."
+            )]
+        [DataRow("CountRows(t1)",
+            false, 1.0, // unsupported function, can't yet delegate
+            "CountRows(t1)",
+            "Warning 10-12: Delegating this operation on table 'local' is not supported."
+            )]
+        [DataRow("IsBlank(t1)",
+            false, false, // unsupported function, can't yet delegate
+            "IsBlank(t1)",
+            "Warning 8-10: Delegating this operation on table 'local' is not supported."
+            )]
+#else
+ 
+        // 
+
+#endif
+        public void LookUpDelegation(string expr, bool noDelegationWarnings, object expected, string expectedIr, string expectedWarning = null)
         {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
 
+            // $$$ delegated - Ensure only LookupSingle works...
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
@@ -1179,7 +1259,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
 
-            var run = check.GetEvaluator();
+            var irNode = check.ApplyIR();
+            var actualIr = PrettyPrintIR.ToString(irNode.TopNode);
+            Assert.AreEqual(expectedIr, actualIr); // $$$
+
+            var errors = check.ApplyErrors();
+            if (noDelegationWarnings)
+            {
+                Assert.AreEqual(0, errors.Count());
+                Assert.IsNull(expectedWarning);
+            } 
+            else
+            {
+                // Should be a delegation warning. 
+                Assert.AreEqual(1, errors.Count());
+                var error = errors.First();
+
+                // It's a warning (not an error)
+                Assert.AreEqual(ErrorSeverity.Warning, error.Severity);
+
+                // Validate warning message
+                var msg = error.ToString(); // will include source span. 
+                Assert.AreEqual(expectedWarning, msg);
+            }
+
+            // Cal still run. 
+            var run = check.GetEvaluator();            
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 

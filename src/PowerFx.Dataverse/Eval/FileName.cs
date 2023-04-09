@@ -1,5 +1,6 @@
 ﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -44,25 +45,33 @@ namespace Microsoft.PowerFx.Dataverse
     public static class DelegationHelpers
     {
         public static void EnableDelegation2(this Engine engine, Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> retrieveSingle)
-        {
-            var v = new DelegationVisitor
-            {
-                _retrieveSingle = retrieveSingle
-            };
-            
-            IRTransform t =  (IntermediateNode node, ICollection<ExpressionError> errors) => node.Accept(v, new DelegationVisitor.Context { _errors = errors })._node;
+        {   
+            IRTransform t =  (IntermediateNode node, ICollection<ExpressionError> errors) => 
+                node.Accept(new DelegationVisitor
+                {
+                    _retrieveSingle = retrieveSingle,
+                    _errors = errors
+                }, new DelegationVisitor.Context())._node;
             engine._irTransforms.Add(t);
         }
     }
 
 
     // Rewrite the tree inject delegation 
-    internal class DelegationVisitor : IdentityIRVisitor<DelegationVisitor.RetVal, DelegationVisitor.Context>
+    internal class DelegationVisitor : RewritingIRVisitor<DelegationVisitor.RetVal, DelegationVisitor.Context>
     {
         // IDeally, this would just be in Dataverse.Eval nuget, but 
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
         public Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> _retrieveSingle;
+
+        // $$$ Make this a member of the visitor, not the context.
+        public ICollection<ExpressionError> _errors;
+
+        public void AddError(ExpressionError error)
+        {
+            _errors.Add(error);
+        }
 
         public DelegationVisitor()
         {
@@ -71,42 +80,61 @@ namespace Microsoft.PowerFx.Dataverse
 
         public class RetVal
         {
-            public IntermediateNode _node;
+            // Non-delegating path 
+            public RetVal(IntermediateNode node)
+            {
+                _node = node;
+            }
+
+            // Delegating path 
+            public RetVal(IntermediateNode node, EntityMetadata metadata, ResolvedObjectNode tableIRNode, TableType tableType)
+                : this(node)
+            {
+                _metadata = metadata;
+                _table = tableIRNode;
+                _tableType = tableType;
+            }
+
+            // Non-delegating path 
+            public readonly IntermediateNode _node;
+
+            // If any fields below are set, we're in the middle of building a delegation 
+            public bool IsDelegating => _metadata != null;
+
+            // $$$ DVC Connection? CDS
+            public readonly EntityMetadata _metadata;
 
             // IR node that will resolve to the TableValue at runtime. 
             // From here, we can downcast at get the services. 
-            public ResolvedObjectNode _table;
+            public readonly ResolvedObjectNode _table;
 
-            public TableType _tableType;
+            public readonly TableType _tableType;
 
             // $$$$ NOOOOOO - needs to be built at runtime. Fill in the holes.
             // We have the start of a query. 
-            public QueryExpression _query;
-
-            // $$$ DVC Connection? CDS
-            public EntityMetadata _metadata;
+            //public QueryExpression _query;            
         }
+
         public class Context
         {
-            // $$$ Make this a member of the visitor, not the context.
-            public ICollection<ExpressionError> _errors;
-
-            public void AddError(ExpressionError error)
-            {
-                _errors.Add(error);
-            }
         }
+                        
 
         protected override IntermediateNode Materialize(RetVal ret)
         {
-            if (ret._node != null)
+            if (ret.IsDelegating)
             {
-                return ret._node;
-            }
+                // Failed to delegate. 
+                var reason = new ExpressionError
+                {
+                    Message = $"Delegating this operation on table '{ret._metadata.LogicalName}' is not supported.",
+                    Span = ret._table.IRContext.SourceContext,
+                    Severity = ErrorSeverity.Warning
+                };
+                this.AddError(reason);
 
-            var q = ret._query;
-            if (q != null)
-            {
+                /*
+                var q = ret._query;
                 if (q.TopCount.HasValue || q.Criteria.Conditions.Count > 0)
                 {
                     // We have an actionable filter. 
@@ -114,18 +142,17 @@ namespace Microsoft.PowerFx.Dataverse
                     // $$$$
                     
                 }
-
+                */
                 // Error! Attempting to access a table, but not delegatable. 
                 // $$$
             }
 
-            // Binder should ensure this never happens.
-            throw new InvalidOperationException();
+            return ret._node;            
         }
 
         protected override RetVal Ret(IntermediateNode node)
         {
-            return new RetVal { _node = node};
+            return new RetVal(node);
         }
 
 
@@ -156,6 +183,8 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                 // DType holds onto the metadata provider. 
                 //var tableLogicalName = aggType.TableSymbolName; // VariableName/DisplayName (for multi-org policy)
 
+                // $$$ Enure it's directly the table, and not some other expression.
+
                 var type = aggType._type;
 
                 var ads = type.AssociatedDataSources.FirstOrDefault();
@@ -168,13 +197,8 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                         if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
                         {
                             // It's a delegatable table. 
-                            var ret = new RetVal
-                            {
-                                _tableType = aggType,
-                                _table = node,
-                                _query = new QueryExpression(tableLogicalName),
-                                _metadata = metadata
-                            };
+                            var ret = new RetVal(node, metadata, node, aggType);
+
                             return ret;
                         }
                     }
@@ -273,11 +297,24 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
 
             if (func == "LookUp")
             {            
-                if (arg0b._metadata != null)
+                if (arg0b.IsDelegating)
                 {
                     var arg1 = node.Args[1];
+
+                    ExpressionError reason = new ExpressionError
+                    {
+                        Message = $"Can't delegate LookUp: only support delegation for lookup on primary key field '{arg0b._metadata.PrimaryIdAttribute}'",
+                        Span = arg1.IRContext.SourceContext,
+                        Severity = ErrorSeverity.Warning
+                    };
+
                     if (arg1 is LazyEvalNode arg1b && arg1b.Child is BinaryOpNode binOp)
                     {
+                        var i1 = binOp.Left.IRContext.SourceContext.Min;
+                        var i2 = binOp.Right.IRContext.SourceContext.Lim;
+                        var span = new Span(i1, i2);
+                        reason.Span = span;
+
                         // Pattern match to see if predicate is delegable.
                         // - Lookup(Table, Id=Guid) 
                         // - Lookup(Table, Guid=Id) 
@@ -285,6 +322,10 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                         if (binOp.Op == BinaryOpKind.EqGuid)
                         {
                             var left = binOp.Left;
+                            var right = binOp.Right;
+
+                            // $$$ Normalize order?
+
                             if (left is ScopeAccessNode left1)
                             {
                                 if (left1.Value is ScopeAccessSymbol s)
@@ -294,38 +335,49 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                                     {
 
                                         // $$$ Verify 2nd arg is a guid, does not depend on ThisRecord. 
+                                        // This also means loop-invariant code motion.... 
+                                        // So once we have LICM, this check will be easy 
 
-
-                                        var right = binOp.Right;
                                         // Left = PrimaryKey on metadata? 
                                         // Right = Guid? We can evaluate this. 
 
                                         // Call 
-                                        IntermediateNode argGuid = right;
+
+                                        // We may have nested delegation. 
+                                        // Although LICM would also have hoisted this. 
+                                        // Also catch any delegation errors in nested. 
+                                        var retVal2 = right.Accept(this, context);
+
+                                        right = Materialize(retVal2);
+
+                                        var x = ThisRecordVisitor.FindThisRecordUsage(node, right);
+                                        if (x == null)
+                                        {
 
 
-                                        // $$$ MAy need to fallback if we can't delegate. 
-                                        // __lookup(table, guid) ?? node;
+                                            // $$$ May need to fallback if we can't delegate. 
+                                            // __lookup(table, guid) ?? node;
 
-                                        // __lookup(table, guid);
-                                        var newNode = RetrieveSingle(arg0b, argGuid);
-                                        return Ret(newNode);
+                                            // __lookup(table, guid);
+                                            var newNode = RetrieveSingle(arg0b, right);
+                                            return Ret(newNode);
+                                        }
+
+                                        reason = new ExpressionError
+                                        {
+                                            Message = "Can't delegate LookUp: Id expression refers to ThisRecord",
+                                            Span = x.Span,
+                                            Severity = ErrorSeverity.Warning
+                                        };
                                     }
                                 }
                             }
                         }
                     }
-
-                    // Source span 
-                    // !!! Delegation warning. We're operating on a table, but can't delegate. 
-
-                    var error = new ExpressionError
-                    {
-                        Message = "Can't delegate LookUp",
-                        Span = node.IRContext.SourceContext,
-                        Severity = ErrorSeverity.Warning
-                    };
-                    context.AddError(error);
+                                        
+                    // Failed to delegate. Add the warning and continue. 
+                    this.AddError(reason);
+                    return this.Ret(node);
                 }            
             }
             // Other delegating functions, continue to compose...
@@ -333,7 +385,7 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
             // - Filter
             // - Sort            
 
-            return base.Visit(node, context);
+            return base.Visit(node, context, arg0b);
 
             // Other non-delegating supported function....
             
