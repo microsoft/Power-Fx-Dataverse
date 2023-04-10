@@ -1230,14 +1230,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             )]
 
         // $$$ Like, Collect,Patch, this shouldn't require delegation. Just excuse it. 
-        [DataRow("IsBlank(t1)",
-            false, false, // unsupported function, can't yet delegate
-            "IsBlank(t1)",
-            "Warning 8-10: Delegating this operation on table 'local' is not supported."
+         [DataRow("IsBlank(t1)",
+            true, false, // nothing to delegate
+            "IsBlank(t1)"            
             )]
 #else
- 
-        // 
+        [DataRow("IsBlank(t1)",
+            true, false, // nothing to delegate
+            "IsBlank(t1)"            
+            )]
 
 #endif
         public void LookUpDelegation(string expr, bool noDelegationWarnings, object expected, string expectedIr, string expectedWarning = null)

@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
     // If we encounter a dataverse table (something that should be delegated) during the walk, we either:
     // - successfully delegate, which means rewriting to a call an efficient DelegatedFunction,
     // - leave IR unchanged (don't delegate), but issue a warning. 
-    internal class DelegationVisitor : RewritingIRVisitor<DelegationVisitor.RetVal, DelegationVisitor.Context>
+    internal class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         // Ideally, this would just be in Dataverse.Eval nuget, but 
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
         // $$$ Make this a member of the visitor, not the context.
         private readonly ICollection<ExpressionError> _errors;
 
-        public DelegationVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
+        public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));   
@@ -76,6 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public class Context
         {
+            public bool _ignoreDelegation;
         }
 
         // If an attempted delegation can't be complete, then fail it. 
@@ -123,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse
         // All Table references start as resolved objects. 
         public override RetVal Visit(ResolvedObjectNode node, Context context)
         {
-            if (node.IRContext.ResultType is TableType aggType)
+            if (!context._ignoreDelegation && node.IRContext.ResultType is TableType aggType)
             {
                 // Does the resolve object refer to a dataverse Table?
                 var type = aggType._type;
@@ -152,14 +153,22 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(CallNode node, Context context)
         {
+            var func = node.Function.Name;
+
+            // Some functions don't require delegation.
+            if (func == "IsBlank" || func == "IsError" || func == "Patch" || func == "Collect")
+            {
+                var context2 = new Context { _ignoreDelegation = true };    
+                return base.Visit(node, context2);
+            }
+
             // Pattern match
             // - Lookup(Table, Id=Guid)  --> Retrieve
             // - Filter(Table, Key=Value1  && Key=Value2)  -->FetchXml
 
+
             RetVal arg0b = node.Args[0].Accept(this, context);
-
-            var func = node.Function.Name;
-
+            
             if (func == "LookUp")
             {            
                 if (arg0b.IsDelegating)
@@ -215,7 +224,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                                         right = Materialize(retVal2);
 
-                                        var x = ThisRecordVisitor.FindThisRecordUsage(node, right);
+                                        var x = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
                                         if (x == null)
                                         {
 

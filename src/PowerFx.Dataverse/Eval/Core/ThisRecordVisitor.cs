@@ -7,7 +7,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
     // Search tree to see if a branch uses 'ThisRecord'. 
     // This can be used for detecting Loop Invariant Code Motion, which is essential for determining
     // if a predicate is delegable. 
-    internal class ThisRecordVisitor : SearchIRVisitor<ThisRecordVisitor.RetVal, ThisRecordVisitor.Context>
+    internal class ThisRecordIRVisitor : SearchIRVisitor<ThisRecordIRVisitor.RetVal, ThisRecordIRVisitor.Context>
     {
         private CallNode _caller;
 
@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // Does expr use 'ThisRecord' for CallNode?
         public static RetVal FindThisRecordUsage(CallNode call, IntermediateNode expr)
         {
-            var v = new ThisRecordVisitor { _caller = call };
+            var v = new ThisRecordIRVisitor { _caller = call };
             var ret = expr.Accept(v, null);
             return ret;
         }

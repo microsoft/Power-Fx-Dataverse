@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Generate a lookup call for: Lookup(Table, Id=Guid)  
-            internal CallNode MakeRetrieveCall(DelegationVisitor.RetVal query, IntermediateNode argGuid)
+            internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
             {
                 var func = new DelegateLookupFunction(this, query._tableType);
 
@@ -42,8 +42,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IRTransform t = (IntermediateNode node, ICollection<ExpressionError> errors) =>
                 node.Accept(
-                    new DelegationVisitor(hooks, errors),
-                    new DelegationVisitor.Context())._node;
+                    new DelegationIRVisitor(hooks, errors),
+                    new DelegationIRVisitor.Context())._node;
             engine._irTransforms.Add(t);
         }
     }
