@@ -1254,7 +1254,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 10-12: Delegating this operation on table 'local' is not supported."
             )]
 
-        // $$$ Like, Collect,Patch, this shouldn't require delegation. Just excuse it. 
+        // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
          [DataRow("IsBlank(t1)",
             true, false, // nothing to delegate
             "IsBlank(t1)"            

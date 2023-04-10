@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
         private readonly DelegationHooks _hooks;
 
-        // $$$ Make this a member of the visitor, not the context.
+        // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
@@ -89,27 +89,17 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (ret.IsDelegating)
             {
+                // $$$ todo - look at delegation info and attempt to generate a delegation call. 
+                // If we can't, then issue a warning.
+
                 // Failed to delegate. 
                 var reason = new ExpressionError
                 {
-                    Message = $"Delegating this operation on table '{ret._metadata.LogicalName}' is not supported.",
+                    Message = $"Delegating this operation on table '{ret._metadata.LogicalName}' is not supported.", // $$$ Localize
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
-                this.AddError(reason);
-
-                /*
-                var q = ret._query;
-                if (q.TopCount.HasValue || q.Criteria.Conditions.Count > 0)
-                {
-                    // We have an actionable filter. 
-                    // Return custom node to execute that filter. 
-                    // $$$$
-                    
-                }
-                */
-                // Error! Attempting to access a table, but not delegatable. 
-                // $$$
+                this.AddError(reason);                
             }
 
             return ret._node;            
@@ -204,7 +194,7 @@ namespace Microsoft.PowerFx.Dataverse
                             var left = binOp.Left;
                             var right = binOp.Right;
 
-                            // $$$ Normalize order?
+                            // $$$ Normalize order? (Id=Guid) vs (Guid=Id)
 
                             if (left is ScopeAccessNode left1)
                             {
@@ -212,32 +202,15 @@ namespace Microsoft.PowerFx.Dataverse
                                 {
                                     var fieldName = s.Name;
                                     if (fieldName == arg0b._metadata.PrimaryIdAttribute)
-                                    {
-
-                                        // $$$ Verify 2nd arg is a guid, does not depend on ThisRecord. 
-                                        // This also means loop-invariant code motion.... 
-                                        // So once we have LICM, this check will be easy 
-
-                                        // Left = PrimaryKey on metadata? 
-                                        // Right = Guid? We can evaluate this. 
-
-                                        // Call 
-
-                                        // We may have nested delegation. 
-                                        // Although LICM would also have hoisted this. 
-                                        // Also catch any delegation errors in nested. 
+                                    {                                                                                
                                         var retVal2 = right.Accept(this, context);
 
                                         right = Materialize(retVal2);
 
                                         var x = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
                                         if (x == null)
-                                        {
-
-
-                                            // $$$ May need to fallback if we can't delegate. 
-                                            // __lookup(table, guid) ?? node;
-
+                                        {   
+                                            // We can successfully delegate this call. 
                                             // __lookup(table, guid);
                                             var newNode = _hooks.MakeRetrieveCall(arg0b, right);
                                             return Ret(newNode);
@@ -245,7 +218,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                                         reason = new ExpressionError
                                         {
-                                            Message = "Can't delegate LookUp: Id expression refers to ThisRecord",
+                                            Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
                                             Span = x.Span,
                                             Severity = ErrorSeverity.Warning
                                         };
