@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : ODataQueryableTableValue
     {
-        internal readonly IConnectionValueContext _connection;
+        private readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
 
