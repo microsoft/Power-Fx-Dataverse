@@ -1705,6 +1705,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(check.Errors.First().Message.Contains("The specified column 'DoesNotExist' does not exist."));
         }
 
+        [DataTestMethod]
+        [DataRow("LookUp(t1, localid = GUID(\"00000000-0000-0000-9999-000000000001\")).Price")]
+        public async Task LookUpNotFoundExceptionTest(string expr)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable("t1", "local");
+
+            var engine = new RecalcEngine();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+            var result = check.GetEvaluator().EvalAsync(CancellationToken.None);
+
+            Assert.IsTrue(check.IsSuccess);
+            Assert.IsNotNull(result.Exception);
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
