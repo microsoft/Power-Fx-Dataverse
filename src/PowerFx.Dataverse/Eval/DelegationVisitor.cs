@@ -166,12 +166,18 @@ namespace Microsoft.PowerFx.Dataverse
             // - Lookup(Table, Id=Guid)  --> Retrieve
             // - Filter(Table, Key=Value1  && Key=Value2)  -->FetchXml
 
+            if (node.Args.Count == 0)
+            {
+                // Delegated functions require arg0 is the table. 
+                // So a 0-length args can't delegate.
+                return base.Visit(node, context);
+            }
 
             RetVal arg0b = node.Args[0].Accept(this, context);
             
             if (func == "LookUp")
             {            
-                if (arg0b.IsDelegating)
+                if (arg0b.IsDelegating && node.Args.Count == 2)
                 {
                     var arg1 = node.Args[1];
 

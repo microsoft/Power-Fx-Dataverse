@@ -24,6 +24,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         }
 
+        internal static string ToString(CheckResult check)
+        {
+            var irNode = check.ApplyIR();
+            return ToString(irNode.TopNode);
+        }
+
         public static string ToString(IntermediateNode node)
         {
             var visitor = new PrettyPrintIR();
