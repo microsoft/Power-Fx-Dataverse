@@ -82,7 +82,8 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(38,10)
     DECLARE @v5 decimal(38,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
     SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
