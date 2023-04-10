@@ -1167,7 +1167,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__lookup(t1, If(False, _g1, _gMissing))').new_price")]  
 #endif
 
-#if false
+#if true
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             true, 100.0,
             "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
@@ -1191,12 +1191,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true, 100.0, // successful with complex expression
             "(__lookup(t1, If(True, _g1, _gMissing))).new_price")]
 
-        [DataRow("First(t1).Price",
-            false, 100.0, // unsupported function, can't yet delegate
-            "(First(t1)).new_price",
-            "Warning 6-8: Delegating this operation on table 'local' is not supported."
-            )]                       
-
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             false, 100.0, // wrapper in Filter, can't delegate
             "(LookUp(Filter(t1, EqNumbers(1,1)), EqGuid(localid,_g1))).new_price",
@@ -1218,6 +1212,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true, 100.0,
             "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
 
+        [DataRow("First(t1).Price",
+            false, 100.0, // unsupported function, can't yet delegate
+            "(First(t1)).new_price",
+            "Warning 6-8: Delegating this operation on table 'local' is not supported."
+            )]
+
         [DataRow("Last(t1).Price",
             false, 100.0, // unsupported function, can't yet delegate
             "(Last(t1)).new_price",
@@ -1228,6 +1228,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "CountRows(t1)",
             "Warning 10-12: Delegating this operation on table 'local' is not supported."
             )]
+
+        // $$$ Like, Collect,Patch, this shouldn't require delegation. Just excuse it. 
         [DataRow("IsBlank(t1)",
             false, false, // unsupported function, can't yet delegate
             "IsBlank(t1)",
@@ -1283,7 +1285,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.AreEqual(expectedWarning, msg);
             }
 
-            // Cal still run. 
+            // Can still run. 
             var run = check.GetEvaluator();            
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
