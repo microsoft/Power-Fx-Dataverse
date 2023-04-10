@@ -4,18 +4,8 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -49,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// Hook called by <see cref="DataverseConnection.AddTable(string, string)"/>.
         /// </summary>
         /// <param name="variableName"></param>
-        /// <param name="tableLogicalName"></param>
+        /// <param name="tableLogicalName"></param>               
         /// <returns></returns>
         internal abstract TableValue AddTable(string variableName, string tableLogicalName);
 

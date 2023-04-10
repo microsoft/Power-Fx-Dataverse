@@ -12,7 +12,7 @@ using System.Collections.Generic;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Only include things that are explicitly added by <see cref="DataverseConnection.AddTable(string, string)"/>.
+    /// Only include things that are explicitly added by <see cref="DataverseConnection.AddTable(string, string, int)"/>.
     /// Tables are explicitly added with their variable name and don't get localized. 
     /// This is condusive to allowing multiple orgs.
     /// </summary>
@@ -26,12 +26,18 @@ namespace Microsoft.PowerFx.Dataverse
         // Mapping of Table variable names (what's used in expression) to values. 
         private protected readonly Dictionary<string, DataverseTableValue> _tablesDisplay2Value = new Dictionary<string, DataverseTableValue>();
 
+        private readonly int _maxRows;
+
+        public MultiOrgPolicy(int maxRows = DataverseConnection.DefaultMaxRows)
+        {
+            _maxRows = maxRows;
+        }
+
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
             _symbols = new DVSymbolTable(metadataCache);
             return _symbols;
         }
-
 
         public override bool TryGetVariableName(string logicalName, out string variableName)
         {
@@ -61,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
             _logical2Variable.Add(tableLogicalName, variableName);
 
             RecordType recordType = _parent.GetRecordType(entityMetadata);
-            DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
+            DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata, _maxRows);
 
             var slot = _symbols.AddVariable(variableName, tableValue.Type);
 

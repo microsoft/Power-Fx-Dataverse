@@ -4,15 +4,14 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
@@ -54,6 +53,10 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly Policy _policy;
 
         public CdsEntityMetadataProvider MetadataCache => _metadataCache;
+        
+        private readonly int _maxRows;
+
+        public const int DefaultMaxRows = 1000;
 
         /// <summary>
         /// Values of global tables that we've added.
@@ -82,13 +85,13 @@ namespace Microsoft.PowerFx.Dataverse
         /// DataverseConnection constructor.
         /// </summary>
         /// <param name="service"></param>
-        public DataverseConnection(IOrganizationService service)
-            : this(new DataverseService(service), new XrmMetadataProvider(service))
+        public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows)
+            : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows)
         {
         }
 
-        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider)
-            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider))
+        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows)
+            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider), maxRows)
         {
         }
 
@@ -99,25 +102,26 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="metadataProvider">Metadata provider that can be cached. 
         /// IMPORTANT: There is NO security management in this code, so the caller is responsible for not calling AddTable later for a table
         /// for which the user authenticated for <paramref name="service"/> parameter doesn't have permissions.</param>
-        public DataverseConnection(IOrganizationService service, CdsEntityMetadataProvider metadataProvider)
-            : this(new DataverseService(service), metadataProvider)
+        public DataverseConnection(IOrganizationService service, CdsEntityMetadataProvider metadataProvider, int maxRows = DefaultMaxRows)
+            : this(new DataverseService(service), metadataProvider, maxRows)
         {
         }
 
-        public DataverseConnection(IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider)
-            : this(null, dvServices, cdsEntityMetadataProvider)
+        public DataverseConnection(IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider, int maxRows = DefaultMaxRows)
+            : this(null, dvServices, cdsEntityMetadataProvider, maxRows)
         {            
         }
 
-        public DataverseConnection(Policy policy, IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider)
+        public DataverseConnection(Policy policy, IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider, int maxRows = DefaultMaxRows)
         {
             _dvServices = dvServices;
             _metadataCache = cdsEntityMetadataProvider;
 
-            this._policy = policy ?? new MultiOrgPolicy(); 
+            this._policy = policy ?? new MultiOrgPolicy(maxRows); 
 
             this._symbols = _policy.CreateSymbols(this, _metadataCache);
             _symbolValues = this._symbols.CreateValues();
+            _maxRows = maxRows;
         }
 
         // Identity is important so that we can correlate bindings from Check and result. 
@@ -147,14 +151,15 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="variableName"> name to use in the expressions. This is often the table's display name, 
         /// but the host can adjust to disambiguiate (Accounts, Accounts_1).</param>
         /// <param name="tableLogicalName">The table logical name in dataverse.</param>
+        /// <param name="maxRows">Maximum number of rows supported for that table.</param>
         /// <returns></returns>
         public TableValue AddTable(string variableName, string tableLogicalName)
-        {
+        {            
             return this._policy.AddTable(variableName, tableLogicalName);
         }
 
         /// <summary>
-        /// Given a table previously added via <see cref="AddTable(string, string)"/>, get the 
+        /// Given a table previously added via <see cref="AddTable(string, string, int)"/>, get the 
         /// variable name from a given logical name. 
         /// If the table wasn't added, return false. 
         /// </summary>
@@ -231,7 +236,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
         /// <exception cref="ArgumentException">When no Id is provided</exception>
-        public async Task<FormulaValue[]> RetrieveMultipleAsync(string logicalName, Guid[] ids, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<FormulaValue> RetrieveMultipleAsync(string logicalName, Guid[] ids, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             if (ids.Length == 0)
                 throw new ArgumentException("No Id provided", nameof(ids));
@@ -243,12 +248,34 @@ namespace Microsoft.PowerFx.Dataverse
             query.ColumnSet.AllColumns = true;
             query.Criteria.AddCondition(new ConditionExpression(metadata.PrimaryIdAttribute, ConditionOperator.In, ids));
 
+            if (_maxRows > 0)
+            {                               
+                query.PageInfo = new PagingInfo();
+
+                // use one more row to determine if the table has more rows than expected
+                query.PageInfo.Count = _maxRows + 1; 
+                query.PageInfo.PageNumber = 1;
+                query.PageInfo.PagingCookie = null;
+            }
+
             DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken);
             RecordType type = GetRecordType(metadata.LogicalName);
 
-            return response.HasError
-                ? new FormulaValue[] { response.GetErrorValue(type) }
-                : response.Response.Entities.Select(e => new DataverseRecordValue(e, metadata, type, this)).ToArray();
+            if (response.HasError)
+            {
+                yield return response.GetErrorValue(type);
+            }
+
+            foreach (Entity entity in response.Response.Entities)
+            {
+                yield return new DataverseRecordValue(entity, metadata, type, this);
+            }
+
+            if (_maxRows > 0 && response.Response.Entities.Count > _maxRows)
+            {
+                string message = $"Too many entities in table {logicalName}, more than {_maxRows} rows";
+                yield return FormulaValue.NewError(DataverseHelpers.GetExpressionError(message, messageKey: nameof(RetrieveMultipleAsync)));
+            }            
         }
 
         /// <summary>

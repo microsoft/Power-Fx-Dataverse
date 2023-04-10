@@ -27,16 +27,18 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
+        private readonly int _maxRows;
 
         public readonly EntityMetadata _entityMetadata;
 
-        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata, ODataParameters oDataParameters = default)
+        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata, int maxRows, ODataParameters oDataParameters = default)
             : base(recordType.ToTable(), oDataParameters)
         {
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _oDataParameters = oDataParameters;
+            _maxRows = maxRows;
         }
 
         public override object ToObject()
@@ -58,24 +60,29 @@ namespace Microsoft.PowerFx.Dataverse
             if (!string.IsNullOrEmpty(odataParameters.Filter))
                 oData = oData.WithFilter(odataParameters.Filter);
 
-            return new DataverseTableValue(_recordType, _connection, _entityMetadata, oData);
+            return new DataverseTableValue(_recordType, _connection, _entityMetadata, 0, oData);
         }
 
-        protected override async Task<List<DValue<RecordValue>>> GetRowsAsync()
+        protected override async IAsyncEnumerable<DValue<RecordValue>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters);
+            DataverseResponse<EntityCollection> entities = null;
+
+            entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _maxRows + 1);
 
             if (entities.HasError)
-                return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
+                yield return entities.DValueError(nameof(QueryExtensions.QueryAsync));
 
             foreach (Entity entity in entities.Response.Entities)
             {
                 var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
-                list.Add(DValue<RecordValue>.Of(row));
+                yield return DValue<RecordValue>.Of(row);
             }
 
-            return list;
+            if (entities.Response.Entities.Count > _maxRows)
+            {
+                yield return DataverseExtensions.DataverseError<RecordValue>($"Too many entities in table {_entityMetadata.LogicalName}, more than {_maxRows} rows", nameof(GetRowsAsync));
+            }
         }
 
         public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))

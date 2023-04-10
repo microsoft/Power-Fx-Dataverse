@@ -363,26 +363,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }))[0] as RecordValue;
 
-            // Test the serializer! 
-            var expr = record.ToExpression();
+            await foreach (FormulaValue fv in dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }).ConfigureAwait(false))
+            {
+                RecordValue record = fv as RecordValue;
 
-            // Should be short form - not flattened.  
-            Assert.AreEqual("LookUp(t1, localid=GUID(\"" + id + "\"))", expr);
+                // Test the serializer! 
+                var expr = record.ToExpression();
 
-            // Deserialize 
-            var engine = new RecalcEngine();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+                // Should be short form - not flattened.  
+                Assert.AreEqual("LookUp(t1, localid=GUID(\"" + id + "\"))", expr);
 
-            var entity = (Entity)result.ToObject();
-            Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
+                // Deserialize 
+                var engine = new RecalcEngine();
+                var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
-            Assert.AreEqual(entityOriginal.LogicalName, entity.LogicalName);
-            Assert.AreEqual(entityOriginal.Id, entity.Id);
+                var entity = (Entity)result.ToObject();
+                Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
+
+                Assert.AreEqual(entityOriginal.LogicalName, entity.LogicalName);
+                Assert.AreEqual(entityOriginal.Id, entity.Id);
+
+                break;
+            }
         }
 
         [TestMethod]

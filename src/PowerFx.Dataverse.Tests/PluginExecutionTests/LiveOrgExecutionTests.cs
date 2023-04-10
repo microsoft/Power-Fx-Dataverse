@@ -32,6 +32,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
+            // cx = "Url=https://aurorabapenvb94a8.crm10.dynamics.com/;Username=aurorauser07@capintegration01.onmicrosoft.com;Password=7wS7W!@Wr;authtype=OAuth";
+
             // short-circuit if connection string is not set
             if (cx == null)
             {
@@ -202,15 +204,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void ExecuteViaInterpreterFilter()
         {
-            string tableName = "TableTest1S";
-            string expr = "First(Filter(TableTest1S, Name = \"N2\"))";
+            string tableName = "account";
+            string expr = "Filter(account, ThisRecord.Currency.'Currency Code' = \"USD\"); ";
             List<IDisposable> disposableObjects = null;
 
             try
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                var obj = result.ToObject() as Entity;
+                object obj = result.ToObject();
+                Entity entity = result.ToObject() as Entity;
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("No exception", $"{ex.Message} - {ex.StackTrace}");
             }
             finally
             {
@@ -675,6 +682,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
             Assert.IsTrue(b1);
 
+            //string logicalName = tableName;
+
             DataverseConnection dv = null;
 
             if (async)
@@ -687,6 +696,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 dv = new DataverseConnection(svcClient);
             }
+
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
             symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
@@ -702,13 +712,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 return null;
             }
-
+    
             CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
             Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             IExpressionEvaluator run = check.GetEvaluator();
             FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
-
+         
             return result;
         }
 

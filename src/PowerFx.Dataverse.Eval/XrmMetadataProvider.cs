@@ -9,7 +9,6 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -37,8 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             qe.ColumnSet.AddColumn("logicalname");
             qe.Criteria.AddFilter(fe);
 
-            var resp = DataverseExtensions.DataverseCall<EntityCollection>(
-                () => _serviceClient.RetrieveMultiple(qe), $"Get logical name for '{displayName}'");
+            var resp = DataverseExtensions.DataverseCall<EntityCollection>(() => _serviceClient.RetrieveMultiple(qe), $"Get logical name for '{displayName}'");
 
             if (!resp.HasError)
             {

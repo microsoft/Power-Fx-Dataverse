@@ -33,9 +33,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DisplayNameProvider AllTables => _displayNameLookup;
 
-        public SingleOrgPolicy(DisplayNameProvider displayNameLookup)
+        private int _maxRows;
+
+        public SingleOrgPolicy(DisplayNameProvider displayNameLookup, int maxRows = 1000)
         {
             _displayNameLookup = displayNameLookup;
+            _maxRows = maxRows;
         }
 
         // HElper to create a DV connection over the given service client. 
@@ -111,7 +114,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata entityMetadata = _parent.GetMetadataOrThrow(logicalName);
             RecordType recordType = _parent._metadataCache.GetRecordType(logicalName);
 
-            DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
+            DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata, _maxRows);
 
             // This is critical for dependency finder. 
             Contract.Assert(logicalName == tableValue.Type.TableSymbolName);
