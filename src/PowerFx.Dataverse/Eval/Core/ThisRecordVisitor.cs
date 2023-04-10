@@ -1,35 +1,12 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
+﻿using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
-namespace Microsoft.PowerFx.Dataverse
+namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
-    // Rewrite the tree inject delegation 
+    // Search tree to see if a branch uses 'ThisRecord'. 
+    // This can be used for detecting Loop Invariant Code Motion, which is essential for determining
+    // if a predicate is delegable. 
     internal class ThisRecordVisitor : SearchIRVisitor<ThisRecordVisitor.RetVal, ThisRecordVisitor.Context>
     {
         private CallNode _caller;
@@ -43,7 +20,6 @@ namespace Microsoft.PowerFx.Dataverse
         }
         public class Context
         {
-
         }
 
         // Does expr use 'ThisRecord' for CallNode?

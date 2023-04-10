@@ -1,35 +1,14 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
+﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
-using Span = Microsoft.PowerFx.Syntax.Span;
 
-namespace Microsoft.PowerFx.Dataverse
+namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
-    // Rewrite the tree inject delegation 
+    // Common helper for IR Rewriting. 
+    // IR trees are immutable, so we need to walk and rewrite the tree to include any new nodes.
+    // Only return new nodes if needed, so if there are no changes, the original object instances are returned.
     internal abstract class RewritingIRVisitor<TRet, TCtx> : IRNodeVisitor<TRet, TCtx>
     {
         protected abstract IntermediateNode Materialize(TRet ret);
@@ -75,19 +54,19 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Visit each field. If no changes, then return null, signalling to caller to just pass the origina dictionary. 
         // If anything changes, return a new dictionary with the updates. 
-        private IReadOnlyDictionary<DName, IntermediateNode> VisitDict(IReadOnlyDictionary<DName, IntermediateNode>  fields, TCtx context)
-        { 
+        private IReadOnlyDictionary<DName, IntermediateNode> VisitDict(IReadOnlyDictionary<DName, IntermediateNode> fields, TCtx context)
+        {
             // Dictionary order is arbitrary, so just make a copy upfront rather than enumerate multiple times. 
             Dictionary<DName, IntermediateNode> newFields = new Dictionary<DName, IntermediateNode>();
 
             bool rewrite = false;
-            foreach(var kv in fields)
+            foreach (var kv in fields)
             {
                 var child = Materialize(kv.Value.Accept(this, context));
 
                 newFields[kv.Key] = child;
 
-                if (!object.ReferenceEquals(child, kv.Value))
+                if (!ReferenceEquals(child, kv.Value))
                 {
                     rewrite = true;
                 }
@@ -115,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Derived visitor gets first chance. 
             // Can callback to base if it doesn't handle. 
 
-            TRet arg0 = default(TRet);
+            TRet arg0 = default;
             if (node.Args.Count > 0)
             {
                 arg0 = node.Args[0].Accept(this, context);
@@ -125,18 +104,18 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Return null if no change. 
         // Else returns a new copy ofthe list with changes. 
-        private IList<IntermediateNode> VisitList(IList<IntermediateNode> list, TCtx context, TRet arg0 = default(TRet))
+        private IList<IntermediateNode> VisitList(IList<IntermediateNode> list, TCtx context, TRet arg0 = default)
         {
             List<IntermediateNode> newArgs = null;
 
             for (int i = 0; i < list.Count; i++)
             {
                 var arg = list[i];
-                var ret = (i == 0 && arg0 != null) ? arg0 : arg.Accept(this, context);
+                var ret = i == 0 && arg0 != null ? arg0 : arg.Accept(this, context);
 
                 var result = Materialize(ret);
 
-                if (newArgs == null && !object.ReferenceEquals(arg, result))
+                if (newArgs == null && !ReferenceEquals(arg, result))
                 {
                     newArgs = new List<IntermediateNode>(list.Count);
 
@@ -171,7 +150,8 @@ namespace Microsoft.PowerFx.Dataverse
             if (node.Scope == null)
             {
                 return Ret(new CallNode(node.IRContext, node.Function, newArgs));
-            } else
+            }
+            else
             {
                 return Ret(new CallNode(node.IRContext, node.Function, node.Scope, newArgs));
             }
@@ -182,7 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
             var left = Materialize(node.Left.Accept(this, context));
             var right = Materialize(node.Right.Accept(this, context));
 
-            if (object.ReferenceEquals(left, node.Left) && object.ReferenceEquals(right, node.Right))
+            if (ReferenceEquals(left, node.Left) && ReferenceEquals(right, node.Right))
             {
                 // same
                 return Ret(node);
@@ -196,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override TRet Visit(UnaryOpNode node, TCtx context)
         {
             var child = Materialize(node.Child.Accept(this, context));
-            if (object.ReferenceEquals(child, node.Child))
+            if (ReferenceEquals(child, node.Child))
             {
                 return Ret(node.Child);
             }
@@ -212,7 +192,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override TRet Visit(RecordFieldAccessNode node, TCtx context)
         {
             var left = Materialize(node.From.Accept(this, context));
-            if (object.ReferenceEquals(left, node))
+            if (ReferenceEquals(left, node))
             {
                 return Ret(node);
             }
@@ -247,7 +227,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var newFields = VisitDict(node.FieldCoercions, context);
 
-            if (newFields != null || !object.ReferenceEquals(child, node.Child))
+            if (newFields != null || !ReferenceEquals(child, node.Child))
             {
                 var newNode = new AggregateCoercionNode(node.IRContext, node.Op, node.Scope, child, newFields);
                 return Ret(newNode);

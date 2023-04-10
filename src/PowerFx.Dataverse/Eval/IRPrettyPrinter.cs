@@ -1,35 +1,13 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
+﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
-using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Pretty printer for tests:
+    // Pretty printer for tests. 
     // Stable  - tests rely on this, so we need to fix the format 
     // Compact / No newlines - ideally can fit on a single line in Theorys
     // Deterministic ordering - when traversing dictionaries
@@ -37,6 +15,14 @@ namespace Microsoft.PowerFx.Dataverse
     internal class PrettyPrintIR : IRNodeVisitor<PrettyPrintIR.RetVal, PrettyPrintIR.Context>
     {
         private StringBuilder _sb = new StringBuilder();
+
+        public class RetVal
+        {
+        }
+        public class Context
+        {
+
+        }
 
         public static string ToString(IntermediateNode node)
         {
@@ -207,14 +193,6 @@ namespace Microsoft.PowerFx.Dataverse
         public override RetVal Visit(AggregateCoercionNode node, Context context)
         {
             throw new NotImplementedException();
-        }
-
-        public class RetVal
-        {
-        }
-        public class Context
-        {
-
         }
     } 
 }

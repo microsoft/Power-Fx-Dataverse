@@ -1,83 +1,44 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx.Core.Functions;
+﻿using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
 using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
-using System.Security.Cryptography.Xml;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
+using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-#if false
-
-    - can we get metadata without a DVC?
-        from TableType , buried in Dtype?
-
-
-    - at runtime, can we get OrgService from TableValue?
-
-#endif
-
-
-    public static class DelegationHelpers
-    {
-        public static void EnableDelegation2(this Engine engine, Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> retrieveSingle)
-        {   
-            IRTransform t =  (IntermediateNode node, ICollection<ExpressionError> errors) => 
-                node.Accept(new DelegationVisitor
-                {
-                    _retrieveSingle = retrieveSingle,
-                    _errors = errors
-                }, new DelegationVisitor.Context())._node;
-            engine._irTransforms.Add(t);
-        }
-    }
-
-
-    // Rewrite the tree inject delegation 
+    // Rewrite the tree to inject delegation.
+    // If we encounter a dataverse table (something that should be delegated) during the walk, we either:
+    // - successfully delegate, which means rewriting to a call an efficient DelegatedFunction,
+    // - leave IR unchanged (don't delegate), but issue a warning. 
     internal class DelegationVisitor : RewritingIRVisitor<DelegationVisitor.RetVal, DelegationVisitor.Context>
     {
-        // IDeally, this would just be in Dataverse.Eval nuget, but 
+        // Ideally, this would just be in Dataverse.Eval nuget, but 
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
-        public Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> _retrieveSingle;
+        private readonly DelegationHooks _hooks;
 
         // $$$ Make this a member of the visitor, not the context.
-        public ICollection<ExpressionError> _errors;
+        private readonly ICollection<ExpressionError> _errors;
 
-        public void AddError(ExpressionError error)
+        public DelegationVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
         {
-            _errors.Add(error);
+            _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
+            _errors = errors ?? throw new ArgumentNullException(nameof(errors));   
         }
 
-        public DelegationVisitor()
-        {
-        }
-
-
+        // Return Value passed through at each phase of the walk. 
         public class RetVal
         {
             // Non-delegating path 
@@ -91,34 +52,37 @@ namespace Microsoft.PowerFx.Dataverse
                 : this(node)
             {
                 _metadata = metadata;
-                _table = tableIRNode;
+                _sourceTableIRNode = tableIRNode;
                 _tableType = tableType;
             }
 
-            // Non-delegating path 
+            // Original IR node for non-delegating path.
+            // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation. 
             public readonly IntermediateNode _node;
 
-            // If any fields below are set, we're in the middle of building a delegation 
+            // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating => _metadata != null;
-
-            // $$$ DVC Connection? CDS
-            public readonly EntityMetadata _metadata;
-
+                        
+            
             // IR node that will resolve to the TableValue at runtime. 
             // From here, we can downcast at get the services. 
-            public readonly ResolvedObjectNode _table;
+            public readonly ResolvedObjectNode _sourceTableIRNode;
 
+            // Table type  and original metadata for table that we're delegating to. 
             public readonly TableType _tableType;
 
-            // $$$$ NOOOOOO - needs to be built at runtime. Fill in the holes.
-            // We have the start of a query. 
-            //public QueryExpression _query;            
+            public readonly EntityMetadata _metadata;
         }
 
         public class Context
         {
         }
-                        
+
+        // If an attempted delegation can't be complete, then fail it. 
+        private void AddError(ExpressionError error)
+        {
+            _errors.Add(error);
+        }
 
         protected override IntermediateNode Materialize(RetVal ret)
         {
@@ -128,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var reason = new ExpressionError
                 {
                     Message = $"Delegating this operation on table '{ret._metadata.LogicalName}' is not supported.",
-                    Span = ret._table.IRContext.SourceContext,
+                    Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
                 this.AddError(reason);
@@ -155,36 +119,13 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
-
-        /*
-private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata metadata)
-{
-    // DataverseConnection
-    // - public bool TryGetVariableName(string logicalName, out string variableName)
-    // - internal EntityMetadata GetMetadataOrThrow(string tableLogicalName)
-
-    metadata = null;
-    return false;
-}
-*/
-
-        // public Func<string, EntityMetadata> _tryGetEntityMetadata;
-
-        // Let F = Filter(Accounts, Age > 30);
-        // LookUp(F, Id=Guid);   $$$ 
-
-        // With({ t: Accounts}, LookUp(T, Id=Guid));   $$$ 
-
-        // LookUp(Accounts, Id=Guid)
+        // ResolvedObject is a symbol injected by the host.
+        // All Table references start as resolved objects. 
         public override RetVal Visit(ResolvedObjectNode node, Context context)
         {
             if (node.IRContext.ResultType is TableType aggType)
             {
-                // DType holds onto the metadata provider. 
-                //var tableLogicalName = aggType.TableSymbolName; // VariableName/DisplayName (for multi-org policy)
-
-                // $$$ Enure it's directly the table, and not some other expression.
-
+                // Does the resolve object refer to a dataverse Table?
                 var type = aggType._type;
 
                 var ads = type.AssociatedDataSources.FirstOrDefault();
@@ -203,86 +144,10 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                         }
                     }
                 }
-
-                if (type.IsExpandEntity)
-                {
-                    /*
-                    var expandInfo = type.ExpandInfo;
-                    var metadataProvider = expandInfo.ParentDataSource.DataEntityMetadataProvider;
-
-                    var m2 = (CdsEntityMetadataProvider)metadataProvider;
-
-                    if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
-                    {
-                        // It's a delegatable table. 
-                        var ret = new RetVal
-                        {
-                            _tableType = aggType,
-                            _table = node,
-                            _query = new QueryExpression(tableLogicalName),
-                            _metadata = metadata
-                        };
-                        return ret;
-                    }*/
-                };
             }   
 
+            // Just a regular variable, don't bother delegating. 
             return Ret(node);
-        }
-
-        // To inject custom actions, 
-        // Inject a CallNode with a custom function.
-        // It still gets args at runtime. 
-
-        class DelegateFunction : TexlFunction, IAsyncTexlFunction
-        {
-            public Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> _retrieveSingle;
-
-            public DelegateFunction(string name, FormulaType returnType, params FormulaType[] paramTypes)
-              : this(name, returnType._type, Array.ConvertAll(paramTypes, x => x._type))
-            {
-            }
-            public DelegateFunction(string name, DType returnType, params DType[] paramTypes)
-            : base(DPath.Root, name, name, SG("Custom func " + name), FunctionCategories.MathAndStat, returnType, 0, paramTypes.Length, paramTypes.Length, paramTypes)
-            {
-            }
-
-            public static TexlStrings.StringGetter SG(string text)
-            {
-                return (string locale) => text;
-            }
-
-            public override bool IsSelfContained => false;
-
-            public override IEnumerable<TexlStrings.StringGetter[]> GetSignatures()
-            {
-                yield return new TexlStrings.StringGetter[0];
-            }
-
-            // Run the Query
-            // TableValue, Guid
-            public async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
-            {
-                var table = (TableValue) args[0];
-                var guid = ((GuidValue)args[1]).Value;
-
-                var result = await  _retrieveSingle(table, guid, cancellationToken);
-
-                // $$$ Error? Throw?
-                return result.Value;
-            }
-        }
-
-        // Generate a lookup call for: Lookup(Table, Id=Guid)  
-        private CallNode RetrieveSingle(RetVal query, IntermediateNode argGuid)
-        {
-            var func = new DelegateFunction("__lookup", query._tableType.ToRecord(), query._tableType, FormulaType.Guid)
-            {
-                _retrieveSingle = this._retrieveSingle
-            };
-
-            var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._table, argGuid);
-            return node;
         }
 
         public override RetVal Visit(CallNode node, Context context)
@@ -359,7 +224,7 @@ private bool TryGetEntityMetadata(IntermediateNode node, out EntityMetadata meta
                                             // __lookup(table, guid) ?? node;
 
                                             // __lookup(table, guid);
-                                            var newNode = RetrieveSingle(arg0b, right);
+                                            var newNode = _hooks.MakeRetrieveCall(arg0b, right);
                                             return Ret(newNode);
                                         }
 

@@ -11,34 +11,13 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.Xml;
 using System.Threading;
 using System.Threading.Tasks;
+using static Microsoft.PowerFx.Dataverse.EngineExtensions;
 using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-
-    public static class DelegationHelpers2
-    {
-        static async Task<DValue<RecordValue>> RetrieveSingleAsync(TableValue table, Guid guid, CancellationToken cancel)
-        {
-            // $$$ may not succeed.
-            var t2 = (DataverseTableValue)table;
-            // var services = t2._connection.Services;
-
-            var result = await t2.RetrieveAsync(guid, cancel);
-            return result;
-        }
-
-        public static void EnableDelegation(this Engine engine)
-        {
-            Func<TableValue, Guid, CancellationToken, Task<DValue<RecordValue>>> retrieveSingle = RetrieveSingleAsync;
-
-            engine.EnableDelegation2(retrieveSingle);
-        }
-    }
-
     /// <summary>
     /// Veneer of <see cref="DataverseConnection"/> for <see cref="DataverseRecordValue"/> and <see cref="DataverseTableValue"/>.
     /// These values need a connection back to the org. 

@@ -1,36 +1,12 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
+﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
-using Span = Microsoft.PowerFx.Syntax.Span;
 
-namespace Microsoft.PowerFx.Dataverse
+namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
-    // Walk everything
-    // Propagate first non-null TResult
+    // Search the IR for a condition.
+    // This will walk the entire tree until it gets a non-null TResult, and then returns it. 
+    // Beware some traversals (record fields, etc) are unordered. 
     internal class SearchIRVisitor<TResult, TContext> : IRNodeVisitor<TResult, TContext>
         where TResult : class
     {
@@ -61,8 +37,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override TResult Visit(RecordNode node, TContext context)
         {
-            foreach(var child in node.Fields)
-            { 
+            foreach (var child in node.Fields)
+            {
                 var ret = child.Value.Accept(this, context);
                 if (ret != null)
                 {
@@ -84,13 +60,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override TResult Visit(CallNode node, TContext context)
         {
-            foreach(var arg in node.Args)
+            foreach (var arg in node.Args)
             {
                 var ret = arg.Accept(this, context);
                 if (ret != null)
                 {
                     return ret;
-                }       
+                }
             }
             return null;
         }
@@ -129,13 +105,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override TResult Visit(ChainingNode node, TContext context)
         {
-            foreach(var child in node.Nodes)
+            foreach (var child in node.Nodes)
             {
                 var ret = child.Accept(this, context);
                 if (ret != null)
                 {
                     return ret;
-                }   
+                }
             }
             return null;
         }
@@ -148,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return ret2;
             }
 
-            foreach(var child in node.FieldCoercions)
+            foreach (var child in node.FieldCoercions)
             {
                 var ret = child.Value.Accept(this, context);
                 if (ret != null)
