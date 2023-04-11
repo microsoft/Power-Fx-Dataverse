@@ -15,13 +15,23 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class QueryExtensions
     { 
-        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this IDataverseReader reader, string tableName, ODataParameters odataParameters, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this IDataverseReader reader, string tableName, ODataParameters odataParameters, int maxRows, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!odataParameters.IsSupported())
                 throw new NotSupportedException($"Unsupported OData query");
 
             QueryExpression query = new(tableName);
             query.ColumnSet.AllColumns = true;
+
+            if (maxRows > 0)
+            {
+                query.PageInfo = new PagingInfo();
+
+                // use one more row to determine if the table has more rows than expected
+                query.PageInfo.Count = maxRows + 1;
+                query.PageInfo.PageNumber = 1;
+                query.PageInfo.PagingCookie = null;
+            }
 
             if (odataParameters.Top > 0)
                 query.TopCount = odataParameters.Top;
