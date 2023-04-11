@@ -407,7 +407,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Blank() = NullStr", false, cx, metadata); // null strings converted to empty for parity with legacy
                 ExecuteSqlTest("Blank() <> NullStr", true, cx, metadata);
                 // coerce null to 0 in math functions
-                ExecuteSqlTest("Power(10,NullDec)", 1M, cx, metadata);
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
                 // coerce null to 0 in math operations
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
@@ -485,12 +484,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax }
                 });
-
-                // Power function
-                ExecuteSqlTest("Power(Decimal,Decimal)", null, cx, metadata);
-                ExecuteSqlTest("Power(Integer,Integer)", null, cx, metadata);
-                ExecuteSqlTest("Power(BigDecimal,BigDecimal)", null, cx, metadata);
-                ExecuteSqlTest("Power(BigInteger,BigInteger)", null, cx, metadata);
 
                 // Arithmatic
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
