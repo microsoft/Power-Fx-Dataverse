@@ -74,6 +74,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("LookUp(JV1S, reg = LookUp(JVLookups, Name <> \"test1\"))", "Result is Blank", true)]
+        [DataRow("LookUp(JV1S, reg = LookUp(JVLookups, Name = \"test1\"))", "Name1", false)]
+        [DataRow("LookUp(JV1S, reg <> LookUp(JVLookups, Name <> \"test1\"))", "Name2", false)]
+        [DataRow("LookUp(JV1S, reg <> LookUp(JVLookups, Name = \"test1\"))", "Name2", false)]
+        [DataRow("LookUp(JV1S, reg = {test:1})", "Result is Blank", true)]
+        [DataRow("LookUp(JV1S, {test:1} = reg)", "Result is Blank", true)]
+        [DataRow("LookUp(JV1S, reg <> {test:1})", "Name2", false)]
+        [DataRow("LookUp(JV1S, {test:1} <> reg)", "Name2", false)]
+        public void ExecuteViaInterpreterPolymorphicComparison(string expression, string expected, bool isResultEmpty = false)
+        {
+            var tableName = new string[] { "JV1S", "JVLookups" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                if (!isResultEmpty)
+                {
+                    var obj = result.ToObject() as Entity;
+                    Assert.AreEqual(expected, obj.Attributes["crcbc_name"].ToString());
+                }
+                else
+                {
+                    Assert.AreEqual(null, result.ToObject());
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public void ExecuteViaInterpreterFirstWithDisplayName()
         {
             string tableName = "TableTest1S";
@@ -629,6 +663,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
         }
 
+        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
+        }
+
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
@@ -664,6 +703,59 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+        }
+
+        private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            ServiceClient svcClient = GetClient();
+            XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
+            disposableObjects = new List<IDisposable>() { svcClient };
+
+            DataverseConnection dv = null;
+
+            if (async)
+            {
+                var asyncClient = new DataverseAsyncClient(svcClient);
+                disposableObjects.Add(asyncClient);
+                dv = new DataverseConnection(asyncClient, new XrmMetadataProvider(svcClient));
+            }
+            else
+            {
+                dv = new DataverseConnection(svcClient);
+            }
+
+            symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
+            foreach (string tableName in tableNames)
+            {
+                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
+                Assert.IsTrue(b1);
+
+                TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
+
+                Assert.IsNotNull(tableValue);
+                symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
+            }
+            
+
+            Assert.IsNotNull(symbols);
+
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+            engine = new RecalcEngine(config);
+            runtimeConfig = dv.SymbolValues;
+
+            if (string.IsNullOrEmpty(expr))
+            {
+                return null;
+            }
+
+            CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            IExpressionEvaluator run = check.GetEvaluator();
+            FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+            return result;
         }
 
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
