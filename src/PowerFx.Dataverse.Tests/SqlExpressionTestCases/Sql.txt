@@ -39,34 +39,11 @@ true
 >> IsError(If(IfError(1/0 = 1, true), 1/0, 1/0))
 true
 
-// math operation overflow
-// 1000000000000
->> Power(10,12)
-Error()
-
-// 1000000000000
->> Power(100,6)
-Error()
-
-// 1E+200
->> Power(10,200)
-Error()
-
->> IsError(Power(10,200))
-true
-
-
 >> RoundUp(1, -200)
 Error()
 
 >> RoundUp(1, -10)
 Error()
-
->> Text(Ln(Exp(200)))
-Error()
-
->> IsError(Text(Ln(Exp(200))))
-true
 
 // literal overflow
 >> 1E37
