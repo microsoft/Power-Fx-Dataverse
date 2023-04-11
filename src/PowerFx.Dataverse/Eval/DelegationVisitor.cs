@@ -157,6 +157,45 @@ namespace Microsoft.PowerFx.Dataverse
             return Ret(node);
         }
 
+        // Does this match:
+        //    primaryKey=value
+        private bool MatchPrimaryId(IntermediateNode primaryIdField, IntermediateNode value, RetVal tableArg)
+        {
+            if (primaryIdField is ScopeAccessNode left1)
+            {
+                if (left1.Value is ScopeAccessSymbol s)
+                {
+                    var fieldName = s.Name;
+                    if (fieldName == tableArg._metadata.PrimaryIdAttribute)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // Normalize order? (Id=Guid) vs (Guid=Id)
+        private bool TryMatchPrimaryId(IntermediateNode left, IntermediateNode right, out IntermediateNode primaryIdField, out IntermediateNode guidValue, RetVal tableArg)
+        {
+            if (MatchPrimaryId(left, right, tableArg))
+            {
+                primaryIdField = left;
+                guidValue = right;
+                return true;
+            }
+            else if (MatchPrimaryId(right, left, tableArg))
+            {
+                primaryIdField = right;
+                guidValue = left;
+                return true;
+            }
+
+            primaryIdField = null;
+            guidValue = null;
+            return false;
+        }
+
         public override RetVal Visit(CallNode node, Context context)
         {
             var func = node.Function.Name;
@@ -179,17 +218,17 @@ namespace Microsoft.PowerFx.Dataverse
                 return base.Visit(node, context);
             }
 
-            RetVal arg0b = node.Args[0].Accept(this, context);
+            RetVal tableArg = node.Args[0].Accept(this, context);
 
             if (func == "LookUp")
             {            
-                if (arg0b.IsDelegating && node.Args.Count == 2)
+                if (tableArg.IsDelegating && node.Args.Count == 2)
                 {
-                    var arg1 = node.Args[1];
+                    var arg1 = node.Args[1]; // the predicate to analyze. 
 
                     ExpressionError reason = new ExpressionError
                     {
-                        Message = $"Can't delegate LookUp: only support delegation for lookup on primary key field '{arg0b._metadata.PrimaryIdAttribute}'",
+                        Message = $"Can't delegate LookUp: only support delegation for lookup on primary key field '{tableArg._metadata.PrimaryIdAttribute}'",
                         Span = arg1.IRContext.SourceContext,
                         Severity = ErrorSeverity.Warning
                     };
@@ -204,55 +243,44 @@ namespace Microsoft.PowerFx.Dataverse
                         // Pattern match to see if predicate is delegable.
                         //  Lookup(Table, Id=Guid) 
                         if (binOp.Op == BinaryOpKind.EqGuid)
-                        {
-                            var left = binOp.Left;
-                            var right = binOp.Right;
-
-                            // $$$ Normalize order? (Id=Guid) vs (Guid=Id)
-
-                            if (left is ScopeAccessNode left1)
+                        {                          
+                            // Matches (Id=Guid) or (Guid=Id)
+                            if (TryMatchPrimaryId(binOp.Left, binOp.Right, out var primaryIdField, out var guidValue, tableArg))
                             {
-                                if (left1.Value is ScopeAccessSymbol s)
+                                var retVal2 = guidValue.Accept(this, context);
+                                var right = Materialize(retVal2);
+
+                                var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
+                                if (findThisRecord != null)
                                 {
-                                    var fieldName = s.Name;
-                                    if (fieldName == arg0b._metadata.PrimaryIdAttribute)
-                                    {                                                                                
-                                        var retVal2 = right.Accept(this, context);
-
-                                        right = Materialize(retVal2);
-
-                                        var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
-                                        if (findThisRecord != null)
+                                    reason = new ExpressionError
+                                    {
+                                        Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
+                                        Span = findThisRecord.Span,
+                                        Severity = ErrorSeverity.Warning
+                                    };
+                                }
+                                else
+                                {
+                                    var findBehaviorFunc = BehaviorIRVisitor.Find(right);
+                                    if (findBehaviorFunc != null)
+                                    {
+                                        reason = new ExpressionError
                                         {
-                                            reason = new ExpressionError
-                                            {
-                                                Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
-                                                Span = findThisRecord.Span,
-                                                Severity = ErrorSeverity.Warning
-                                            };
-                                        } else
-                                        { 
-                                            var findBehaviorFunc = BehaviorIRVisitor.Find(right);
-                                            if (findBehaviorFunc != null)
-                                            {
-                                                reason = new ExpressionError
-                                                {
-                                                    Message = $"Can't delegate LookUp: contains a behavior function '{findBehaviorFunc.Name}'", // $$$ Localize
-                                                    Span = findBehaviorFunc.Span,
-                                                    Severity = ErrorSeverity.Warning
-                                                };
-                                            }
-                                            else
-                                            {
-                                                // We can successfully delegate this call. 
-                                                // __lookup(table, guid);
-                                                var newNode = _hooks.MakeRetrieveCall(arg0b, right);
-                                                return Ret(newNode);
-                                            }
-                                        }                                        
+                                            Message = $"Can't delegate LookUp: contains a behavior function '{findBehaviorFunc.Name}'", // $$$ Localize
+                                            Span = findBehaviorFunc.Span,
+                                            Severity = ErrorSeverity.Warning
+                                        };
+                                    }
+                                    else
+                                    {
+                                        // We can successfully delegate this call. 
+                                        // __lookup(table, guid);
+                                        var newNode = _hooks.MakeRetrieveCall(tableArg, right);
+                                        return Ret(newNode);
                                     }
                                 }
-                            }
+                            }                  
                         }
                     }
                                         
@@ -266,7 +294,7 @@ namespace Microsoft.PowerFx.Dataverse
             // - Filter
             // - Sort            
 
-            return base.Visit(node, context, arg0b);
+            return base.Visit(node, context, tableArg);
         }
     }
 }

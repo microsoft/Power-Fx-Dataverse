@@ -1173,22 +1173,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        // 1 item with Price = 100
+        // Table 't1' has 1 item with Price = 100
         [DataTestMethod]
-#if false
-        [DataRow("LookUp(Filter(t1, false), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, null)] // wrapper in Filter
-        [DataRow("LookUp(Filter(t1, true), localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price", false, 100.0)]
-        
-        [DataRow("LookUp(t1, _g1 = LocalId).Price",
-            true, 100.0,  // Ok, just flipping order. 
-            "")] 
-
-#endif
-
-#if false
-
-#endif
-
 #if true
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             100.0,
@@ -1197,6 +1183,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=_g1).Price", 
             100.0,
             "(__lookup(t1, _g1)).new_price")] // variable
+
+        [DataRow("LookUp(t1, _g1 = LocalId).Price", 
+            100.0, // reversed order still ok 
+            "(__lookup(t1, _g1)).new_price")]
 
         [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price", 
             100.0, // explicit ThisRecord is ok. IR will handle. 
@@ -1291,7 +1281,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(LookUp(t1, EqGuid(localid,(Collect(t1, {new_price:200})).localid))).new_price",
             "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'")]
 
-        // $$$ Does using blankT1, same as t1, cause warnings?
+        // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
             100.0,
             "(LookUp(fakeT1, EqGuid(localid,_g1))).new_price")] // variable
@@ -1302,7 +1292,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 #else
         // Succeed:
         // ForAll([g1,g2] As I1, LookUp(t1, LocalId = I1.Value).Price;  
-
 #endif
         public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
         {
@@ -1311,8 +1300,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
-
-            // $$$ delegated - Ensure only LookupSingle works...
+                        
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             var tableT1 = dv.AddTable(displayName, logicalName);
 
@@ -1326,16 +1314,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Add a variable with same table type.
             // But it's not in the same symbol table, so we can't delegate this. 
-            //engine1.UpdateVariable("blankT1", FormulaValue.NewBlank(tableT1.Type));
             engine1.UpdateVariable("fakeT1", tableT1);
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
 
+            // comapre IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
             var actualIr = PrettyPrintIR.ToString(irNode.TopNode);
-            Assert.AreEqual(expectedIr, actualIr); // $$$
+            Assert.AreEqual(expectedIr, actualIr);
 
+            // Validate delegation warnings.
             var errors = check.ApplyErrors();
             if (noDelegationWarnings)
             {
@@ -1356,12 +1345,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.AreEqual(expectedWarning, msg);
             }
 
-            // Can still run. 
+            // Can still run and verify results. 
             var run = check.GetEvaluator();            
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            // Verify on expression - this may be old or no
             Assert.AreEqual(expected, result.ToObject());
         }
 
