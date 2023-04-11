@@ -22,4 +22,6 @@
 #DISABLE: OpMatrix_Neq_Decimal.txt
 #DISABLE: OpMatrix_Plus_Decimal.txt
 #DISABLE: OpMatrix_Unary_Decimal.txt
+#DISABLE: Exp.txt
+#DISABLE: Power.txt
 

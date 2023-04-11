@@ -54,6 +54,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
         }
 
+        [TestMethod]
+        public void PowerFunctionBlockedTest()
+        {
+            var expr = "Power(2,5)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Power' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void SqrtFunctionBlockedTest()
+        {
+            var expr = "Sqrt(16)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Sqrt' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void LnFunctionBlockedTest()
+        {
+            var expr = "Ln(20)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Ln' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void ExpFunctionBlockedTest()
+        {
+            var expr = "Exp(10)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Exp' is an unknown or unsupported function.");
+        }
+
         // baseline parameters for compilation
         public const string BaselineFormula = "new_CurrencyPrice + Calc + Latitude";
         public static EntityMetadataModel BaselineMetadata = new EntityMetadataModel
