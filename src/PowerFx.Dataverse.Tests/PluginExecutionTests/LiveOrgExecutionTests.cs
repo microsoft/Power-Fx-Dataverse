@@ -108,6 +108,55 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("AsType(Index(JV1S, 2).poly_field, JVLookups).Name", "test1", false)]
+        [DataRow("AsType(Index(JV1S, 1).poly_field, JVLookups)", "Result is Error", true)] // polymorphic field is of jvlookups2 type.
+        [DataRow("AsType(Index(JV1S, 1).poly_field, JVLookup2S).Name", "jvlookup2 Name1", false)] // polymorphic field is of jvlookups2 type.
+        public void ExecuteViaInterpreterAsType(string expression, object expected, bool isResultError = false)
+        {
+            var tableName = new string[] { "JV1S", "JVLookups", "JVLookup2S" };
+ 
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                if (!isResultError)
+                {
+                    Assert.AreEqual(expected, result.ToObject());
+                }
+                else
+                {
+                    Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        [DataRow("AsType(Blank(), JVLookups)")]
+        [DataRow("AsType({test:1}, JVLookups)")]
+        [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
+        [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
+        public void ExecuteViaInterpreterAsType_Negative(string expression)
+        {
+            var tableName = new string[] { "JVLookups" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                RunDataverseTest(tableName, expression, out disposableObjects, isCheckSucess: false);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public void ExecuteViaInterpreterFirstWithDisplayName()
         {
             string tableName = "TableTest1S";
@@ -663,9 +712,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
         }
 
-        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
+        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async);
         }
 
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
@@ -705,7 +754,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
             ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
@@ -750,7 +799,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
-            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.AreEqual(isCheckSucess, check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            if (!isCheckSucess)
+            {
+                return null;
+            }
 
             IExpressionEvaluator run = check.GetEvaluator();
             FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;

@@ -189,5 +189,24 @@ namespace Microsoft.PowerFx.Dataverse
         {
             Refresh();
         }
+
+        public override DValue<RecordValue> CastRecord(RecordValue record, CancellationToken cancellationToken)
+        {
+            if( record is not DataverseRecordValue)
+            {
+                throw new CustomFunctionErrorException($"Given record was not of dataverse type");
+            }
+
+            var dvRecord = (DataverseRecordValue) record;
+            if (dvRecord.Entity.LogicalName != _entityMetadata.LogicalName)
+            {
+                var error = new ExpressionError() { MessageKey = "InvalidCast", MessageArgs = new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName } };
+                throw new CustomFunctionErrorException(error);
+            }
+            
+            var row = new DataverseRecordValue(dvRecord.Entity, dvRecord.Metadata, Type.ToRecord(),  _connection);
+
+            return DValue<RecordValue>.Of(row);
+        }
     }
 }
