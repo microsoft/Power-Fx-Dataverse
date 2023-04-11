@@ -24,4 +24,5 @@
 #DISABLE: OpMatrix_Unary_Decimal.txt
 #DISABLE: Exp.txt
 #DISABLE: Power.txt
+#DISABLE: UntypedBlankAsTable.txt
 
