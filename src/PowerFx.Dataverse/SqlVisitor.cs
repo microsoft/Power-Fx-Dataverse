@@ -270,6 +270,11 @@ namespace Microsoft.PowerFx.Dataverse
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
             {
+                if (leftVal.type is StringType && rightVal.type is BlankType)
+                {
+                    return context.SetIntermediateVariable(type, $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = N''))");
+                }
+
                 return context.SetIntermediateVariable(type, $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = {rightVal}))");
             }
             else
