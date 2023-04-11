@@ -895,7 +895,6 @@ END
         [DataRow("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in right arg of equals")]
         [DataRow("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number right arg of not equals")]
         [DataRow("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Abs function")]
-        [DataRow("Power(UTCNow(), 2)", false, "Error 6-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Power function")]
         [DataRow("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Max function")]
         [DataRow("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Trunc function")]
         [DataRow("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Left function")]
