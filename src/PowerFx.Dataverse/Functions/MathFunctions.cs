@@ -99,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         }
 
         /*
-         * Commenting these functions to filter them out from formula bar as it will return floatiing point soon and formula columsn don't support floating point
+         * Commenting these functions to filter them out from formula bar as it will return floating point soon and formula columsn don't support floating point
          * 
         public static RetVal Exp(SqlVisitor visitor, CallNode node, Context context)
         {
