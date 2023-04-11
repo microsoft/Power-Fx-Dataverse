@@ -176,6 +176,11 @@ namespace Microsoft.PowerFx.Dataverse
                 // thrown if we can't auth to server.                 
                 message = e.Message;
             }
+            catch (InvalidOperationException e)
+            {
+                // Retrieve on missing entity will throw System.Net.WebException, which derives from System.InvalidOperationException
+                message = e.Message;
+            }
             catch (IOException e)
             {
                 // Network is bad - such as network is offline. 

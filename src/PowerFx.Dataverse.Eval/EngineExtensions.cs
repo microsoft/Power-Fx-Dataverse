@@ -25,6 +25,15 @@ namespace Microsoft.PowerFx.Dataverse
                 var result = await t2.RetrieveAsync(id, cancel);
                 return result;
             }
+
+            public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
+            {
+                bool isRealTable = 
+                    symbolTable.DebugName == SingleOrgPolicy.SymTableName || 
+                    symbolTable.DebugName == DVSymbolTable.SymTableName;
+
+                return isRealTable;
+            }
         }
 
         /// <summary>

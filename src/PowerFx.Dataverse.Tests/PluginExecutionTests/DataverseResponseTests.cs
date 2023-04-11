@@ -78,22 +78,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public async Task  RunHardError1()
         {
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            await Assert.ThrowsExceptionAsync<MyException>(
                 async () =>
                     await DataverseResponse<FakeMessage>.RunAsync(
-                        ()=> throw new InvalidOperationException("unknown ex"), "op"));            
+                        ()=> throw new MyException("unknown ex"), "op"));            
         }
         
         // Async callback
         [TestMethod]
         public async Task RunHardError2()
         {
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+            await Assert.ThrowsExceptionAsync<MyException>(
                 async () =>
                     await DataverseResponse<FakeMessage>.RunAsync(
-                        async () => throw new InvalidOperationException("unknown ex"), "op"));
+                        async () => throw new MyException("unknown ex"), "op"));
         }
 
+        // Not a dataverse exception
+        class MyException : Exception
+        {
+            public MyException(string message) : base(message)
+            {
+            }
+        }
 
         class FakeMessage
         {

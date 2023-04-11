@@ -23,6 +23,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public class SingleOrgPolicy : Policy
     {
+        internal const string SymTableName = "DataverseLazyGlobals";
+
         private readonly DisplayNameProvider _displayNameLookup;
 
         private ReadOnlySymbolTable _symbols;
@@ -84,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, "DataverseLazyGlobals");
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, SymTableName);
 
             var optionSetSymbols = new DVSymbolTable(metadataCache);
 

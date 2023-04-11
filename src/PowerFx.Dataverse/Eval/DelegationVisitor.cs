@@ -1,18 +1,11 @@
-﻿using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
+﻿using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
@@ -85,6 +78,16 @@ namespace Microsoft.PowerFx.Dataverse
             _errors.Add(error);
         }
 
+        // If RetVal just represent a table, then ok. 
+        // If it's any other in-progress delegation, then it's a warning. 
+        private RetVal MaterializeTableOnly(RetVal ret)
+        {
+            // IsBlank(table) // ok
+            // IsBlank(Filter(table,true)) // warning
+
+            return new RetVal(ret._node);
+        }
+
         protected override IntermediateNode Materialize(RetVal ret)
         {
             if (ret.IsDelegating)
@@ -117,21 +120,34 @@ namespace Microsoft.PowerFx.Dataverse
             if (!context._ignoreDelegation && node.IRContext.ResultType is TableType aggType)
             {
                 // Does the resolve object refer to a dataverse Table?
-                var type = aggType._type;
 
-                var ads = type.AssociatedDataSources.FirstOrDefault();
-                if (ads != null)
+                if (node.Value is NameSymbol nameSym)
                 {
-                    var tableLogicalName = ads.TableMetadata.Name; // logical name
+                    var symbolTable = nameSym.Owner;
 
-                    if (ads.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                    // We need to tell the difference between a direct table, 
+                    // and another global variable that has that table's type (such as global := Filter(table, true). 
+                    bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
+                    if (isRealTable)
                     {
-                        if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
-                        {
-                            // It's a delegatable table. 
-                            var ret = new RetVal(node, metadata, node, aggType);
+                        var type = aggType._type;
 
-                            return ret;
+                        // Verify type match 
+                        var ads = type.AssociatedDataSources.FirstOrDefault();
+                        if (ads != null)
+                        {
+                            var tableLogicalName = ads.TableMetadata.Name; // logical name
+
+                            if (ads.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                            {
+                                if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
+                                {
+                                    // It's a delegatable table. 
+                                    var ret = new RetVal(node, metadata, node, aggType);
+
+                                    return ret;
+                                }
+                            }
                         }
                     }
                 }
@@ -146,15 +162,15 @@ namespace Microsoft.PowerFx.Dataverse
             var func = node.Function.Name;
 
             // Some functions don't require delegation.
+            // Using a table diretly as arg0 here doesn't generate a warning. 
             if (func == "IsBlank" || func == "IsError" || func == "Patch" || func == "Collect")
             {
-                var context2 = new Context { _ignoreDelegation = true };    
-                return base.Visit(node, context2);
-            }
+                RetVal arg0c = node.Args[0].Accept(this, context);
 
-            // Pattern match
-            // - Lookup(Table, Id=Guid)  --> Retrieve
-            // - Filter(Table, Key=Value1  && Key=Value2)  -->FetchXml
+                arg0c = MaterializeTableOnly(arg0c);
+                                
+                return base.Visit(node, context, arg0c);
+            }
 
             if (node.Args.Count == 0)
             {
@@ -164,7 +180,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             RetVal arg0b = node.Args[0].Accept(this, context);
-            
+
             if (func == "LookUp")
             {            
                 if (arg0b.IsDelegating && node.Args.Count == 2)
@@ -186,9 +202,7 @@ namespace Microsoft.PowerFx.Dataverse
                         reason.Span = span;
 
                         // Pattern match to see if predicate is delegable.
-                        // - Lookup(Table, Id=Guid) 
-                        // - Lookup(Table, Guid=Id) 
-                        // - Lookup(Table, Id=  If(ThisRecord.Test > Rand(), G1, G2)) ) // NO!!!!
+                        //  Lookup(Table, Id=Guid) 
                         if (binOp.Op == BinaryOpKind.EqGuid)
                         {
                             var left = binOp.Left;
@@ -207,21 +221,35 @@ namespace Microsoft.PowerFx.Dataverse
 
                                         right = Materialize(retVal2);
 
-                                        var x = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
-                                        if (x == null)
-                                        {   
-                                            // We can successfully delegate this call. 
-                                            // __lookup(table, guid);
-                                            var newNode = _hooks.MakeRetrieveCall(arg0b, right);
-                                            return Ret(newNode);
-                                        }
-
-                                        reason = new ExpressionError
+                                        var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
+                                        if (findThisRecord != null)
                                         {
-                                            Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
-                                            Span = x.Span,
-                                            Severity = ErrorSeverity.Warning
-                                        };
+                                            reason = new ExpressionError
+                                            {
+                                                Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
+                                                Span = findThisRecord.Span,
+                                                Severity = ErrorSeverity.Warning
+                                            };
+                                        } else
+                                        { 
+                                            var findBehaviorFunc = BehaviorIRVisitor.Find(right);
+                                            if (findBehaviorFunc != null)
+                                            {
+                                                reason = new ExpressionError
+                                                {
+                                                    Message = $"Can't delegate LookUp: contains a behavior function '{findBehaviorFunc.Name}'", // $$$ Localize
+                                                    Span = findBehaviorFunc.Span,
+                                                    Severity = ErrorSeverity.Warning
+                                                };
+                                            }
+                                            else
+                                            {
+                                                // We can successfully delegate this call. 
+                                                // __lookup(table, guid);
+                                                var newNode = _hooks.MakeRetrieveCall(arg0b, right);
+                                                return Ret(newNode);
+                                            }
+                                        }                                        
                                     }
                                 }
                             }
@@ -239,47 +267,6 @@ namespace Microsoft.PowerFx.Dataverse
             // - Sort            
 
             return base.Visit(node, context, arg0b);
-
-            // Other non-delegating supported function....
-            
-
-
-
-            // Table - 
-
-            // First(Filter(...)) 
-            // FirstN(Filter(...), N) 
-            // First(Table) 
-            //  qe.TopCount
-
-
-            // FirstN(FirstN(...))  - silly, but compose?
-            // Filter(Filter(Table)) - compose?
-
-            // Sort(...)
-            //    qe.Orders
-
-            // Distint() 
-
-            // First(Sort(Table))
-            // Sort(First(Table))  ???? which one takes precedence. 
-
-            // ColumnSets? - what is retrieved.
-
-            //  Relationships???
-
-            // Paging?
-
-            // Capabilities
-            //  CountRows(Table); // not supported
-
-            // Warnings on things we can't delegate?
-            //  Last(Table) 
-            //  Filter(Table, F(ThisRecord.Field) > 2);
-
         }
-
-        // First(Table).Field + 3
-        // XXX().Field + 3
     }
 }

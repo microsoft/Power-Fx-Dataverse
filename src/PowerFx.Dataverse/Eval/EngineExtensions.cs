@@ -22,9 +22,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Nested class to decrease visibility. 
         public class DelegationHooks
         {
+            // Return Blank if not found. 
             public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
             {
                 throw new NotImplementedException();
+            }
+
+            // Are symbols from this table delegable?
+            public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
+            {
+                return false;
             }
 
             // Generate a lookup call for: Lookup(Table, Id=Guid)  

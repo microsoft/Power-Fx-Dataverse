@@ -86,7 +86,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
         public override TRet Visit(LazyEvalNode node, TCtx context)
         {
-            return Ret(node);
+            var child = Materialize(node.Child.Accept(this, context));
+
+            if (object.ReferenceEquals(child, node.Child))
+            {
+                return Ret(node);
+            }
+
+            return Ret(new LazyEvalNode(node.IRContext, child));
         }
 
         public override TRet Visit(CallNode node, TCtx context)
@@ -111,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             for (int i = 0; i < list.Count; i++)
             {
                 var arg = list[i];
-                var ret = i == 0 && arg0 != null ? arg0 : arg.Accept(this, context);
+                var ret = (i == 0 && arg0 != null) ? arg0 : arg.Accept(this, context);
 
                 var result = Materialize(ret);
 
@@ -178,7 +185,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             var child = Materialize(node.Child.Accept(this, context));
             if (ReferenceEquals(child, node.Child))
             {
-                return Ret(node.Child);
+                return Ret(node);
             }
             var newNode = new UnaryOpNode(node.IRContext, node.Op, child);
             return Ret(newNode);
@@ -213,12 +220,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         public override TRet Visit(ChainingNode node, TCtx context)
         {
             var newArgs = VisitList(node.Nodes, context);
-            if (newArgs != null)
+            if (newArgs == null)
             {
-                var newNode = new ChainingNode(node.IRContext, newArgs);
-                return Ret(newNode);
+                return Ret(node);
             }
-            return Ret(node);
+
+            var newNode = new ChainingNode(node.IRContext, newArgs);
+            return Ret(newNode);
         }
 
         public override TRet Visit(AggregateCoercionNode node, TCtx context)
@@ -227,13 +235,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
             var newFields = VisitDict(node.FieldCoercions, context);
 
-            if (newFields != null || !ReferenceEquals(child, node.Child))
+            if (newFields == null && ReferenceEquals(child, node.Child))
             {
-                var newNode = new AggregateCoercionNode(node.IRContext, node.Op, node.Scope, child, newFields);
-                return Ret(newNode);
+                return Ret(node);
             }
-            return Ret(node);
 
+            var newNode = new AggregateCoercionNode(node.IRContext, node.Op, node.Scope, child, newFields ?? node.FieldCoercions);
+            return Ret(newNode);
         }
     }
 }

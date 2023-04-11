@@ -1128,7 +1128,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Collect(t1, { Price : 200}).Price", 200.0)] 
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
-        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
+        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out       
         public void PatchFunction(string expr, double? expected)
         {            
             // create table "local"
@@ -1186,102 +1186,135 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 #endif
 
 #if false
-    // $$$ how to mock NotFound?
-        [DataRow("LookUp(t1, LocalId=If(false, _g1, _gMissing)).Price",
-            true, null, // delegated, but not found 
-            "(__lookup(t1, If(False, _g1, _gMissing))').new_price")]  
+
 #endif
 
 #if true
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
-            true, 100.0,
+            100.0,
             "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
 
         [DataRow("LookUp(t1, LocalId=_g1).Price", 
-            true, 100.0,
+            100.0,
+            "(__lookup(t1, _g1)).new_price")] // variable
+
+        [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price", 
+            100.0, // explicit ThisRecord is ok. IR will handle. 
+            "(__lookup(t1, _g1)).new_price")] // variable
+                    
+        [DataRow("LookUp(t1 As XYZ, XYZ.LocalId=_g1).Price",
+            100.0, // Alias is ok. IR will handle. 
             "(__lookup(t1, _g1)).new_price")] // variable
 
         // Working
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
-            false, 100.0, 
+            100.0, 
             "(LookUp(t1, EqGuid(localid,If(GtNumbers(new_price,50), _g1, _gMissing)))).new_price",
             "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord")] // lamba uses ThisRecord.Price, can't delegate
 
         [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
-            false, 100.0, // non ID field
+            100.0, // non ID field
             "(LookUp(t1, GtNumbers(new_price,50))).new_price",
             "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] 
 
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
-            true, 100.0, // successful with complex expression
+            100.0, // successful with complex expression
             "(__lookup(t1, If(True, _g1, _gMissing))).new_price")]
 
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            false, 100.0, // wrapper in Filter, can't delegate
+            100.0, // wrapper in Filter, can't delegate
             "(LookUp(Filter(t1, EqNumbers(1,1)), EqGuid(localid,_g1))).new_price",
             "Warning 14-16: Delegating this operation on table 'local' is not supported."
             )]
                         
         [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
-            true, 100.0, 
+            100.0, 
             "(__lookup(t1, (__lookup(t1, _g1)).localid)).new_price"
             )] // nested delegation, both delegated.
 
 
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
-            false, 100.0,
+            100.0,
             "(__lookup(t1, (LookUp(t1, GtNumbers(new_price,50))).localid)).new_price",
             "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] // Inner not delegated, but outer still is. 
                         
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
-            true, 100.0,
+            100.0,
             "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
 
         [DataRow("First(t1).Price",
-            false, 100.0, // unsupported function, can't yet delegate
+            100.0, // unsupported function, can't yet delegate
             "(First(t1)).new_price",
             "Warning 6-8: Delegating this operation on table 'local' is not supported."
             )]
 
         [DataRow("Last(t1).Price",
-            false, 100.0, // unsupported function, can't yet delegate
+            100.0, // unsupported function, can't yet delegate
             "(Last(t1)).new_price",
             "Warning 5-7: Delegating this operation on table 'local' is not supported."
             )]
         [DataRow("CountRows(t1)",
-            false, 1.0, // unsupported function, can't yet delegate
+            1.0, // unsupported function, can't yet delegate
             "CountRows(t1)",
             "Warning 10-12: Delegating this operation on table 'local' is not supported."
             )]
 
         // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
          [DataRow("IsBlank(t1)",
-            true, false, // nothing to delegate
+            false, // nothing to delegate
             "IsBlank(t1)"            
             )]
 
+        [DataRow("IsBlank(Filter(t1, 1=1))",
+            false, // nothing to delegate
+            "IsBlank(Filter(t1, EqNumbers(1,1)))",
+            "Warning 15-17: Delegating this operation on table 'local' is not supported.")]
+
+
         [DataRow("Collect(t1, { Price : 200}).Price",
-            true, 200.0, // Collect shouldn't give warnings. 
+            200.0, // Collect shouldn't give warnings. 
             "(Collect(t1, {new_price:200})).new_price"
             )]
 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
-            false, 100.0, // Aliasing prevents delegation. 
+            100.0, // Aliasing prevents delegation. 
             "With({r:t1}, (LookUp(r, EqGuid(localid,_g1))).new_price)",
             "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
-#else
 
+        // $$$ Confirm is NotFound Error or Blank? 
+        [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
+            true, // delegated, but not found is blank()
+            "IsError(__lookup(t1, If(False, _g1, _gMissing)))")]
+            
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            null, // Bad practice, modifying the collection while we enumerate.
+            "(LookUp(t1, EqGuid(localid,(Collect(t1, {new_price:200})).localid))).new_price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'")]
+
+        // $$$ Does using blankT1, same as t1, cause warnings?
+        [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
+            100.0,
+            "(LookUp(fakeT1, EqGuid(localid,_g1))).new_price")] // variable
+
+        [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
+            100.0,
+            "(With({f:_g1}, __lookup(t1, f))).new_price")] // variable
+#else
+        // Succeed:
+        // ForAll([g1,g2] As I1, LookUp(t1, LocalId = I1.Value).Price;  
 
 #endif
-        public void LookUpDelegation(string expr, bool noDelegationWarnings, object expected, string expectedIr, string expectedWarning = null)
+        public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
         {
+            bool noDelegationWarnings = string.IsNullOrEmpty(expectedWarning);
+
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
 
             // $$$ delegated - Ensure only LookupSingle works...
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName);
+            var tableT1 = dv.AddTable(displayName, logicalName);
 
             var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
@@ -1290,6 +1323,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation();
             engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+
+            // Add a variable with same table type.
+            // But it's not in the same symbol table, so we can't delegate this. 
+            //engine1.UpdateVariable("blankT1", FormulaValue.NewBlank(tableT1.Type));
+            engine1.UpdateVariable("fakeT1", tableT1);
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
@@ -1885,6 +1923,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsFalse(check.IsSuccess);
             Assert.IsTrue(check.Errors.First().Message.Contains("The specified column 'DoesNotExist' does not exist."));
+        }
+
+        [DataTestMethod]
+        [DataRow("LookUp(t1, localid = GUID(\"00000000-0000-0000-9999-000000000001\"))")]
+        public async Task LookUpMissingEntityReturnsBlank(string expr)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable("t1", "local");
+
+            var engine = new RecalcEngine();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
+
+            // Failed lookup is blank
+            Assert.IsNotNull(result as BlankValue);
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");

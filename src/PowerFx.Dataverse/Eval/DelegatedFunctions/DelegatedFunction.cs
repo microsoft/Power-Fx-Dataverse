@@ -34,7 +34,8 @@ namespace Microsoft.PowerFx.Dataverse
             return (string locale) => text;
         }
 
-        public override bool IsSelfContained => false;
+        // Not a behavior function. Behavior functions block delegation
+        public override bool IsSelfContained => true;
 
         public override IEnumerable<TexlStrings.StringGetter[]> GetSignatures()
         {
