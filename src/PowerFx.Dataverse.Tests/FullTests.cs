@@ -108,7 +108,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteScript(cx, TestCreateTableScript);
                 ExecuteScript(cx, "drop view if exists account1;");
                 ExecuteScript(cx, TestCreateViewScript);
-                ExecuteScript(cx, "drop function [dbo].[fn_testUdf1]");
+                ExecuteScript(cx, "drop function if exists [dbo].[fn_testUdf1]");
                 ExecuteScript(cx, DataverseTests.BaselineFunction);
 
                 var alterCmd = cx.CreateCommand();
