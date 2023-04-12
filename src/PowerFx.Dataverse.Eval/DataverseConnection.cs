@@ -4,16 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using System.ServiceModel.Channels;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
@@ -34,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
         EntityMetadata GetMetadataOrThrow(string tableLogicalName);
 
         // Get the name of a table to use in serialization. 
-        public string GetSerializationName(string tableLogicalName);
+        public string GetSerializationName(string tableLogicalName);    
     }
 
     /// <summary>
