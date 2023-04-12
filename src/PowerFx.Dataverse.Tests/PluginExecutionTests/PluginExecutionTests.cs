@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -1148,7 +1149,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var actualIr = PrettyPrintIR.ToString(check);
+            var actualIr = check.GetCompactIRString();
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
@@ -1197,22 +1198,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Working
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
-            100.0, 
-            "(LookUp(t1, EqGuid(localid,If(GtNumbers(new_price,50), _g1, _gMissing)))).new_price",
+            100.0,
+            "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
             "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord")] // lamba uses ThisRecord.Price, can't delegate
 
         [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
             100.0, // non ID field
-            "(LookUp(t1, GtNumbers(new_price,50))).new_price",
+            "(LookUp(t1, (GtNumbers(new_price,50)))).new_price",
             "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] 
 
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
             100.0, // successful with complex expression
-            "(__lookup(t1, If(True, _g1, _gMissing))).new_price")]
+            "(__lookup(t1, If(True, (_g1), (_gMissing)))).new_price")]
 
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             100.0, // wrapper in Filter, can't delegate
-            "(LookUp(Filter(t1, EqNumbers(1,1)), EqGuid(localid,_g1))).new_price",
+            "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
             "Warning 14-16: Delegating this operation on table 'local' is not supported."
             )]
                         
@@ -1224,7 +1225,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
             100.0,
-            "(__lookup(t1, (LookUp(t1, GtNumbers(new_price,50))).localid)).new_price",
+            "(__lookup(t1, (LookUp(t1, (GtNumbers(new_price,50)))).localid)).new_price",
             "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] // Inner not delegated, but outer still is. 
                         
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
@@ -1256,7 +1257,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("IsBlank(Filter(t1, 1=1))",
             false, // nothing to delegate
-            "IsBlank(Filter(t1, EqNumbers(1,1)))",
+            "IsBlank(Filter(t1, (EqNumbers(1,1))))",
             "Warning 15-17: Delegating this operation on table 'local' is not supported.")]
 
 
@@ -1267,27 +1268,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0, // Aliasing prevents delegation. 
-            "With({r:t1}, (LookUp(r, EqGuid(localid,_g1))).new_price)",
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
             "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
 
         // $$$ Confirm is NotFound Error or Blank? 
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
             true, // delegated, but not found is blank()
-            "IsError(__lookup(t1, If(False, _g1, _gMissing)))")]
+            "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
             
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, EqGuid(localid,(Collect(t1, {new_price:200})).localid))).new_price",
+            "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
             "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'")]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
             100.0,
-            "(LookUp(fakeT1, EqGuid(localid,_g1))).new_price")] // variable
+            "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price")] // variable
 
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
             100.0,
-            "(With({f:_g1}, __lookup(t1, f))).new_price")] // variable
+            "(With({f:_g1}, (__lookup(t1, f)))).new_price")] // variable
         public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
         {
             bool noDelegationWarnings = string.IsNullOrEmpty(expectedWarning);
@@ -1316,7 +1317,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // comapre IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
-            var actualIr = PrettyPrintIR.ToString(irNode.TopNode);
+            var actualIr = check.GetCompactIRString();
             Assert.AreEqual(expectedIr, actualIr);
 
             // Validate delegation warnings.

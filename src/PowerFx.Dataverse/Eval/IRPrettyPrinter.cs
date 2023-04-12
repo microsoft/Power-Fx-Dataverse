@@ -7,6 +7,7 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse
 {
+#if false
     // Pretty printer for tests. 
     // Stable  - tests rely on this, so we need to fix the format 
     // Compact / No newlines - ideally can fit on a single line in Theorys
@@ -201,4 +202,5 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException();
         }
     } 
+#endif
 }
