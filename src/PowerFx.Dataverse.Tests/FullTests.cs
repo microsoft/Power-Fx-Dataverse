@@ -373,8 +373,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("NullDec <> Blank()", false, cx, metadata);
                 ExecuteSqlTest("Blank() = NullDec", true, cx, metadata);
                 ExecuteSqlTest("NullDec = Blank()", true, cx, metadata);
-                ExecuteSqlTest("Blank() = NullStr", false, cx, metadata); // null strings converted to empty for parity with legacy
-                ExecuteSqlTest("Blank() <> NullStr", true, cx, metadata);
+                ExecuteSqlTest("Blank() = NullStr", true, cx, metadata); 
+                ExecuteSqlTest("Blank() <> NullStr", false, cx, metadata);
+                ExecuteSqlTest("Blank() = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Blank() <> \"\"", false, cx, metadata);
+                ExecuteSqlTest("Blank() = String", false, cx, metadata);
+                ExecuteSqlTest("Blank() <> String", true, cx, metadata);
                 // coerce null to 0 in math functions
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
                 // coerce null to 0 in math operations

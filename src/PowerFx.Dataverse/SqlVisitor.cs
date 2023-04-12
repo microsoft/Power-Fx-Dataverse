@@ -267,14 +267,16 @@ namespace Microsoft.PowerFx.Dataverse
             var rightVal = right.Accept(this, context);
             Library.ValidateTypeCompatibility(leftVal, rightVal, sourceContext);
 
+            if ((leftVal.type is StringType && rightVal.type is BlankType) || (leftVal.type is BlankType && rightVal.type is StringType))
+            {
+                var operation = equals ? "=" : "<>";
+                leftVal = (leftVal.type is StringType) ? leftVal : rightVal;
+                return context.SetIntermediateVariable(type, $"({leftVal} {operation} N'')");
+            }
+
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
             {
-                if (leftVal.type is StringType && rightVal.type is BlankType)
-                {
-                    return context.SetIntermediateVariable(type, $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = N''))");
-                }
-
                 return context.SetIntermediateVariable(type, $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = {rightVal}))");
             }
             else
