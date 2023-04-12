@@ -82,16 +82,18 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            if (fieldType is UnsupportedType)
+            if (_metadata.TryGetAttribute(fieldName, out var amd))
             {
-                result = NewError(new ExpressionError()
+                if (amd is ImageAttributeMetadata)
                 {
-                    Kind = ErrorKind.Unknown,
-                    Severity = ErrorSeverity.Critical,
-                    Message = string.Format("{0} column type not supported.", fieldType)
-                });
-
-                return true;
+                    result = NewError(new ExpressionError()
+                    {
+                        Kind = ErrorKind.Unknown,
+                        Severity = ErrorSeverity.Critical,
+                        Message = "Image column type not supported."
+                    }); ;
+                    return true;
+                }
             }
 
             // IR should convert the fieldName from display to Logical Name. 

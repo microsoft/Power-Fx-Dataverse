@@ -991,7 +991,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
 
         // Row Scope
-        [DataRow("new_price + new_quantity", 100.0)] // new_quantity is blank.  
+        [DataRow("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names
+        [DataRow("new_price + new_quantity", 100.0)] // new_quantity is blank. 
+
+        [DataRow("Price + 10", 110.0, true)] //using Display name for Price
+        [DataRow("ThisRecord.Other.Data", 200.0)] // Relationship 
+        [DataRow("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
+        [DataRow("ThisRecord.Price + 10", 110.0, true)] // Basic field lookup (RowScope)
+        [DataRow("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets                 
+
+        // Single Global record
+        [DataRow("First(t1).new_price", 100.0, false)]
+        [DataRow("First(t1).Price", 100.0, false)]
+
+        // Aggregates
+        [DataRow("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
+        [DataRow("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
+        [DataRow("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias  
 
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
@@ -1706,7 +1722,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var expectedErrors = new List<string>()
             {
                 "Hyperlink column type not supported.",
-                "Microsoft.PowerFx.Types.UnsupportedType column type not supported.",
+                "Image column type not supported.",
             };
 
             try
@@ -1787,7 +1803,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["email"] = "joe@doe.com";
             entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
-            entity1.Attributes["image"] = new Bitmap(1, 1);
+            entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
