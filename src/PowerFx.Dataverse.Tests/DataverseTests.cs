@@ -54,6 +54,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
         }
 
+        [TestMethod]
+        public void PowerFunctionBlockedTest()
+        {
+            var expr = "Power(2,5)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Power' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void SqrtFunctionBlockedTest()
+        {
+            var expr = "Sqrt(16)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Sqrt' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void LnFunctionBlockedTest()
+        {
+            var expr = "Ln(20)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Ln' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void ExpFunctionBlockedTest()
+        {
+            var expr = "Exp(10)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Exp' is an unknown or unsupported function.");
+        }
+
         // baseline parameters for compilation
         public const string BaselineFormula = "new_CurrencyPrice + Calc + Latitude";
         public static EntityMetadataModel BaselineMetadata = new EntityMetadataModel
@@ -82,7 +138,8 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(38,10)
     DECLARE @v5 decimal(38,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
     SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
@@ -839,7 +896,6 @@ END
         [DataRow("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in right arg of equals")]
         [DataRow("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number right arg of not equals")]
         [DataRow("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Abs function")]
-        [DataRow("Power(UTCNow(), 2)", false, "Error 6-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Power function")]
         [DataRow("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Max function")]
         [DataRow("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Trunc function")]
         [DataRow("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Left function")]

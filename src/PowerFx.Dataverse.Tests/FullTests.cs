@@ -101,6 +101,37 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        public void FormulaUDFTest()
+        {
+            using (var cx = GetSql())
+            { 
+                ExecuteScript(cx, TestCreateTableScript);
+                ExecuteScript(cx, "drop view if exists account1;");
+                ExecuteScript(cx, TestCreateViewScript);
+                ExecuteScript(cx, "drop function if exists [dbo].[fn_testUdf1]");
+                ExecuteScript(cx, DataverseTests.BaselineFunction);
+
+                var alterCmd = cx.CreateCommand();
+                alterCmd.CommandText = @"SELECT object_id FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[fn_testUdf1]');";
+                var actualResult = alterCmd.ExecuteScalar();
+
+                Assert.IsNotNull(actualResult);
+            }
+        }
+
+        public void ExecuteScript(SqlConnection connection, String script)
+        {
+            using (var tx = connection.BeginTransaction())
+            {
+                var alterCmd = connection.CreateCommand();
+                alterCmd.Transaction = tx;
+                alterCmd.CommandText = script;
+                alterCmd.ExecuteNonQuery();
+                tx.Commit();
+            }
+        }
+
+        [TestMethod]
         public void SqlCalculatedReferenceTest()
         {
             using (var cx = GetSql())
@@ -376,7 +407,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Blank() = NullStr", false, cx, metadata); // null strings converted to empty for parity with legacy
                 ExecuteSqlTest("Blank() <> NullStr", true, cx, metadata);
                 // coerce null to 0 in math functions
-                ExecuteSqlTest("Power(10,NullDec)", 1M, cx, metadata);
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
                 // coerce null to 0 in math operations
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
@@ -454,12 +484,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax }
                 });
-
-                // Power function
-                ExecuteSqlTest("Power(Decimal,Decimal)", null, cx, metadata);
-                ExecuteSqlTest("Power(Integer,Integer)", null, cx, metadata);
-                ExecuteSqlTest("Power(BigDecimal,BigDecimal)", null, cx, metadata);
-                ExecuteSqlTest("Power(BigInteger,BigInteger)", null, cx, metadata);
 
                 // Arithmatic
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
@@ -683,5 +707,56 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         #endregion
+
+        public const string TestCreateTableScript = @"drop table if exists [dbo].AccountBase1;
+drop table if exists [dbo].CustomerBase;
+CREATE TABLE [dbo].CustomerBase(
+customerId INT NOT NULL,
+name VARCHAR NOT NULL,
+address VARCHAR NOT NULL,
+city VARCHAR NOT NULL,
+state VARCHAR NOT NULL,
+CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
+(
+[customerId] ASC
+)
+);
+    CREATE TABLE [dbo].AccountBase1(
+    AccountId int,
+    new_Calc_Schema varchar(255),
+    customerId INT NOT NULL,
+ FOREIGN KEY(customerId) REFERENCES CustomerBase(customerId)
+);
+";
+
+        public const string TestCreateViewScript = @"CREATE VIEW [dbo].ACCOUNT1(
+   AccountId, new_Calc_Schema, address1_latitude) with view_metadata as
+(select t1.AccountId, t1.new_Calc_Schema,t2.address from[dbo].AccountBase1 t1 join[dbo].CustomerBase t2 on t1.customerId = t2.customerId);";
+
+        public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10), -- new_CurrencyPrice
+    @v2 uniqueidentifier -- accountid
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v3 decimal(38,10)
+    DECLARE @v5 decimal(38,10)
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase1] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account1] WHERE[AccountId] = @v2
+
+    -- expression body
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
+    -- end expression body
+
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 10)
+END
+";
+
     }
+
+    
 }
