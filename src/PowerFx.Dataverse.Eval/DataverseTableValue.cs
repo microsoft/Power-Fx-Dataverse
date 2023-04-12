@@ -84,6 +84,21 @@ namespace Microsoft.PowerFx.Dataverse
             return list;
         }
 
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var result =await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
+
+            if (result.HasError)
+            {
+                return result.DValueError("Retrieve");
+            }
+
+            Entity entity = result.Response;
+            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+
+            return DValue<RecordValue>.Of(row);
+        }
+
         public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (record == null)
