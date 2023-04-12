@@ -1,4 +1,5 @@
-﻿using Microsoft.PowerFx.Core.IR.Nodes;
+﻿using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
@@ -92,7 +93,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (ret.IsDelegating)
             {
-                // $$$ todo - look at delegation info and attempt to generate a delegation call. 
+                // Look at delegation info and attempt to generate a delegation call. 
+                // Some delegation operations can span multiple nodes, like FirstN(Filter(..))
                 // If we can't, then issue a warning.
 
                 // Failed to delegate. 

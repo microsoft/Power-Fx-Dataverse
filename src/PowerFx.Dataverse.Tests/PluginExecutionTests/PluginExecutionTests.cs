@@ -1175,7 +1175,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Table 't1' has 1 item with Price = 100
         [DataTestMethod]
-#if true
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             100.0,
             "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
@@ -1289,10 +1288,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
             100.0,
             "(With({f:_g1}, __lookup(t1, f))).new_price")] // variable
-#else
-        // Succeed:
-        // ForAll([g1,g2] As I1, LookUp(t1, LocalId = I1.Value).Price;  
-#endif
         public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
         {
             bool noDelegationWarnings = string.IsNullOrEmpty(expectedWarning);

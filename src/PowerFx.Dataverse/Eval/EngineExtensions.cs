@@ -44,14 +44,30 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        private class DelegationIRTransform : IRTransform
+        {
+            private readonly DelegationEngineExtensions.DelegationHooks _hooks;
+
+            public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks)
+                : base("DelegationIRTransform")
+            {
+                _hooks = hooks; 
+            }
+
+            public override IntermediateNode Transform(IntermediateNode node, ICollection<ExpressionError> errors)
+            {
+                return node.Accept(
+                    new DelegationIRVisitor(_hooks, errors),
+                    new DelegationIRVisitor.Context())._node;
+            }
+        }
+
         // Called by extensions in Dataverse.Eval, which will pass in retrieveSingle.
         public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks)
         {
-            IRTransform t = (IntermediateNode node, ICollection<ExpressionError> errors) =>
-                node.Accept(
-                    new DelegationIRVisitor(hooks, errors),
-                    new DelegationIRVisitor.Context())._node;
-            engine._irTransforms.Add(t);
+            IRTransform t = new DelegationIRTransform(hooks);
+
+            engine.IRTransformList.Add(t);
         }
     }
 }
