@@ -91,7 +91,7 @@ namespace Microsoft.PowerFx.Dataverse
                         Kind = ErrorKind.Unknown,
                         Severity = ErrorSeverity.Critical,
                         Message = "Image column type not supported."
-                    }); ;
+                    });
                     return true;
                 }
             }
