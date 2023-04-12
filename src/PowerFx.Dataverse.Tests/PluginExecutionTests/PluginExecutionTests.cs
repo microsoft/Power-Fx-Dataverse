@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1944,6 +1945,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 "Hyperlink column type not supported.",
                 "Image column type not supported.",
+                "File column type not supported.",
             };
 
             try
@@ -2024,6 +2026,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
+            entity1.Attributes["bigint"] = 934157136952;
+            entity1.Attributes["double"] = 1d / 3d;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);

@@ -84,13 +84,27 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (_metadata.TryGetAttribute(fieldName, out var amd))
             {
+                bool unsupportedType = false;
+                string errorMessage = string.Empty;
+
                 if (amd is ImageAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Image column type not supported.";                    
+                }
+                else if (amd is FileAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "File column type not supported.";
+                }
+
+                if (unsupportedType)
                 {
                     result = NewError(new ExpressionError()
                     {
                         Kind = ErrorKind.Unknown,
                         Severity = ErrorSeverity.Critical,
-                        Message = "Image column type not supported."
+                        Message = errorMessage
                     });
                     return true;
                 }
