@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected override async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters);
+            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _connection.MaxRows);
 
             if (entities.HasError)
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
@@ -73,6 +73,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
                 list.Add(DValue<RecordValue>.Of(row));
+            }
+
+            if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)
+            {
+                list.Remove(list.Last());
+                list.Add(DataverseExtensions.DataverseError<RecordValue>($"Too many entities in table {_entityMetadata.LogicalName}, more than {_connection.MaxRows} rows", nameof(GetRowsAsync)));
             }
 
             return list;
