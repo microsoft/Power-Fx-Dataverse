@@ -275,7 +275,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 records.Remove(records.Last());
                 string message = $"Too many entities in table {logicalName}, more than {_maxRows} rows";
-                records.Add(FormulaValue.NewError(DataverseHelpers.GetExpressionError(message, messageKey: nameof(RetrieveMultipleAsync))));
+                records.Add(FormulaValue.NewError(DataverseHelpers.GetExpressionError(message, messageKey: nameof(RetrieveMultipleAsync)), type));
             }
 
             return records.ToArray();
