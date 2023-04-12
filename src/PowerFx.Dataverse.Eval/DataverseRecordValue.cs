@@ -10,7 +10,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -80,6 +79,18 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldName == _metadata.PrimaryIdAttribute)
             {
                 result = FormulaValue.New(_entity.Id);
+                return true;
+            }
+
+            if (fieldType is UnsupportedType)
+            {
+                result = NewError(new ExpressionError()
+                {
+                    Kind = ErrorKind.Unknown,
+                    Severity = ErrorSeverity.Critical,
+                    Message = string.Format("{0} column type not supported.", fieldType)
+                });
+
                 return true;
             }
 
