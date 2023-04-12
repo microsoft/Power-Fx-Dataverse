@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -280,6 +281,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable(displayName, logicalName);
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             // Test the serializer! 
@@ -313,6 +315,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             
             var entity = (Entity) result.ToObject();
@@ -345,6 +348,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
@@ -377,6 +381,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
@@ -407,6 +412,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
@@ -432,6 +438,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Deserialize 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             Assert.IsInstanceOfType(result, typeof(DataverseTableValue));
@@ -452,6 +459,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             TableValue table1 = dv.AddTable(displayName, logicalName);
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             Func<string, DataverseConnection, FormulaValue> eval = 
                 (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
 
@@ -493,6 +501,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName2 = "t2";
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
             Func<string, DataverseConnection, FormulaValue> eval =
                 (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
 
@@ -518,6 +527,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
@@ -544,6 +554,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
@@ -577,6 +588,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
@@ -602,6 +614,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CardsRegressionRelationshipModelsTest(string expr, string expected)
         {
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
@@ -629,6 +642,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
@@ -658,6 +672,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv2, EntityLookup el2) = CreateMemoryForRelationshipModels(policy);
 
             var engine = new RecalcEngine();
+            engine.EnableDelegation();
 
             // Intellisense doesn't return anything on pure empty, 
             // needs at least first char of identifier. 
@@ -729,6 +744,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();
                 var engine = new RecalcEngine(config);
+                engine.EnableDelegation();
 
                 // Check conversion against all forms. 
                 foreach (var expr in new string[] { logical, display, mixed })
@@ -796,6 +812,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
             var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
 
@@ -840,6 +857,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             config.SymbolTable.EnableMutationFunctions();
 
             var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
+
             var check1 = engine1.Check(expr, options: opts, symbolTable: symbols);
             Assert.IsTrue(check1.IsSuccess);
 
@@ -853,6 +872,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
+            engine2.EnableDelegation();
             var check2 = engine2.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check2.IsSuccess);
 
@@ -866,6 +886,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine3 = new RecalcEngine(config);
+            engine3.EnableDelegation();
             var check3 = engine3.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check3.IsSuccess);
 
@@ -891,6 +912,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             config.SymbolTable.EnableMutationFunctions();
 
             var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
             var check1 = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check1.IsSuccess);
 
@@ -904,6 +926,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
+            engine2.EnableDelegation();
             var check2 = engine2.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check2.IsSuccess);
 
@@ -917,6 +940,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine3 = new RecalcEngine(config);
+            engine3.EnableDelegation();
             var check3 = engine3.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check3.IsSuccess);
 
@@ -951,6 +975,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();
                 var engine = new RecalcEngine(config);
+                engine.EnableDelegation();
 
                 var check = new CheckResult(engine)
                     .SetText(expression)
@@ -1021,6 +1046,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
 
                 var engine1 = new RecalcEngine();
+                engine1.EnableDelegation();
                 var check = engine1.Check(expr, symbolTable: symbols);
                 Assert.IsTrue(check.IsSuccess);
 
@@ -1066,6 +1092,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
 
             var allSymbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
             var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
@@ -1103,7 +1130,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Collect(t1, { Price : 200}).Price", 200.0)] 
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
-        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out        
+        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out       
         public void PatchFunction(string expr, double? expected)
         {            
             // create table "local"
@@ -1117,11 +1144,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
 
             var run = check.GetEvaluator();
+            var actualIr = check.GetCompactIRString();
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
@@ -1144,6 +1173,181 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Assert.IsNull(actualValue);
                 }
             }
+        }
+
+        // Table 't1' has 1 item with Price = 100
+        [DataTestMethod]
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
+            100.0,
+            "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
+
+        [DataRow("LookUp(t1, LocalId=_g1).Price", 
+            100.0,
+            "(__lookup(t1, _g1)).new_price")] // variable
+
+        [DataRow("LookUp(t1, _g1 = LocalId).Price", 
+            100.0, // reversed order still ok 
+            "(__lookup(t1, _g1)).new_price")]
+
+        [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price", 
+            100.0, // explicit ThisRecord is ok. IR will handle. 
+            "(__lookup(t1, _g1)).new_price")] // variable
+                    
+        [DataRow("LookUp(t1 As XYZ, XYZ.LocalId=_g1).Price",
+            100.0, // Alias is ok. IR will handle. 
+            "(__lookup(t1, _g1)).new_price")] // variable
+
+        // Working
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
+            100.0,
+            "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
+            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord")] // lamba uses ThisRecord.Price, can't delegate
+
+        [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
+            100.0, // non ID field
+            "(LookUp(t1, (GtNumbers(new_price,50)))).new_price",
+            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] 
+
+        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
+            100.0, // successful with complex expression
+            "(__lookup(t1, If(True, (_g1), (_gMissing)))).new_price")]
+
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            100.0, // wrapper in Filter, can't delegate
+            "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
+            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            )]
+                        
+        [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
+            100.0, 
+            "(__lookup(t1, (__lookup(t1, _g1)).localid)).new_price"
+            )] // nested delegation, both delegated.
+
+
+        [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
+            100.0,
+            "(__lookup(t1, (LookUp(t1, (GtNumbers(new_price,50)))).localid)).new_price",
+            "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] // Inner not delegated, but outer still is. 
+                        
+        [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
+            100.0,
+            "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
+
+        [DataRow("First(t1).Price",
+            100.0, // unsupported function, can't yet delegate
+            "(First(t1)).new_price",
+            "Warning 6-8: Delegating this operation on table 'local' is not supported."
+            )]
+
+        [DataRow("Last(t1).Price",
+            100.0, // unsupported function, can't yet delegate
+            "(Last(t1)).new_price",
+            "Warning 5-7: Delegating this operation on table 'local' is not supported."
+            )]
+        [DataRow("CountRows(t1)",
+            1.0, // unsupported function, can't yet delegate
+            "CountRows(t1)",
+            "Warning 10-12: Delegating this operation on table 'local' is not supported."
+            )]
+
+        // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
+         [DataRow("IsBlank(t1)",
+            false, // nothing to delegate
+            "IsBlank(t1)"            
+            )]
+
+        [DataRow("IsBlank(Filter(t1, 1=1))",
+            false, // nothing to delegate
+            "IsBlank(Filter(t1, (EqNumbers(1,1))))",
+            "Warning 15-17: Delegating this operation on table 'local' is not supported.")]
+
+
+        [DataRow("Collect(t1, { Price : 200}).Price",
+            200.0, // Collect shouldn't give warnings. 
+            "(Collect(t1, {new_price:200})).new_price"
+            )]
+
+        [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
+            100.0, // Aliasing prevents delegation. 
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
+            "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
+
+        // $$$ Confirm is NotFound Error or Blank? 
+        [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
+            true, // delegated, but not found is blank()
+            "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
+            
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            null, // Bad practice, modifying the collection while we enumerate.
+            "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'")]
+
+        // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
+        [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
+            100.0,
+            "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price")] // variable
+
+        [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
+            100.0,
+            "(With({f:_g1}, (__lookup(t1, f)))).new_price")] // variable
+        public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
+        {
+            bool noDelegationWarnings = string.IsNullOrEmpty(expectedWarning);
+
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+                        
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
+            engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
+            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+
+            // Add a variable with same table type.
+            // But it's not in the same symbol table, so we can't delegate this. 
+            engine1.UpdateVariable("fakeT1", tableT1);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            // comapre IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.AreEqual(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            var errors = check.ApplyErrors();
+            if (noDelegationWarnings)
+            {
+                Assert.AreEqual(0, errors.Count());
+                Assert.IsNull(expectedWarning);
+            } 
+            else
+            {
+                // Should be a delegation warning. 
+                Assert.AreEqual(1, errors.Count());
+                var error = errors.First();
+
+                // It's a warning (not an error)
+                Assert.AreEqual(ErrorSeverity.Warning, error.Severity);
+
+                // Validate warning message
+                var msg = error.ToString(); // will include source span. 
+                Assert.AreEqual(expectedWarning, msg);
+            }
+
+            // Can still run and verify results. 
+            var run = check.GetEvaluator();            
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
         }
 
         [DataTestMethod]
@@ -1706,6 +1910,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(check.Errors.First().Message.Contains("The specified column 'DoesNotExist' does not exist."));
         }
 
+        [DataTestMethod]
+        [DataRow("LookUp(t1, localid = GUID(\"00000000-0000-0000-9999-000000000001\"))")]
+        public async Task LookUpMissingEntityReturnsBlank(string expr)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable("t1", "local");
+
+            var engine = new RecalcEngine();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
+
+            // Failed lookup is blank
+            Assert.IsNotNull(result as BlankValue);
+        }
+        
         [TestMethod]
         public async Task AllNotSupportedAttributesTest()
         {
@@ -1745,8 +1966,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             catch (Exception ex)
             {
                 Assert.IsTrue(false, ex.Message);
-            }
-            
+            }            
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
