@@ -10,7 +10,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -83,6 +82,39 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 result = FormulaValue.New(_entity.Id);
                 return true;
+            }
+
+            if (_metadata.TryGetAttribute(fieldName, out var amd))
+            {
+                bool unsupportedType = false;
+                string errorMessage = string.Empty;
+
+                if (amd is ImageAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Image column type not supported.";                    
+                }
+                else if (amd is FileAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "File column type not supported.";
+                }
+                else if (amd is ManagedPropertyAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Managed property column type not supported.";
+                }                
+
+                if (unsupportedType)
+                {
+                    result = NewError(new ExpressionError()
+                    {
+                        Kind = ErrorKind.Unknown,
+                        Severity = ErrorSeverity.Critical,
+                        Message = errorMessage
+                    });
+                    return true;
+                }
             }
 
             // IR should convert the fieldName from display to Logical Name. 
