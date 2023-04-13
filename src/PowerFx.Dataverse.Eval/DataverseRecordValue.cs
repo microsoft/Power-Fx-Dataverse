@@ -47,6 +47,8 @@ namespace Microsoft.PowerFx.Dataverse
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
+        public EntityReference EntityReference => _entity.ToEntityReference();
+
         public override bool TryGetPrimaryKey(out string key)
         {
             key = _entity.Id.ToString();

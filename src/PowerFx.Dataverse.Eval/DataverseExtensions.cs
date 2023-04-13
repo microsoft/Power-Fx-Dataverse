@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 try
                 {
-                    object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
+                    object fieldValue = amd.ToAttributeObject(field.Value);
 
                     string fieldName = field.Name;
 
