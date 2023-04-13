@@ -29,6 +29,7 @@ namespace Microsoft.PowerFx.Tests
             var allowed = new HashSet<string>()
             {
                 "Microsoft.PowerFx.Dataverse.EngineExtensions",
+                "Microsoft.PowerFx.Dataverse.AttributeUtilityExtensions",
 
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
