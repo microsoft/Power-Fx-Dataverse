@@ -97,6 +97,11 @@ namespace Microsoft.PowerFx.Dataverse
                     unsupportedType = true;
                     errorMessage = "File column type not supported.";
                 }
+                else if (amd is ManagedPropertyAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Managed property column type not supported.";
+                }                
 
                 if (unsupportedType)
                 {

@@ -2028,6 +2028,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
             entity1.Attributes["bigint"] = 934157136952;
             entity1.Attributes["double"] = 1d / 3d;
+            entity1.Attributes["new_field"] = 1m / 3m;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);

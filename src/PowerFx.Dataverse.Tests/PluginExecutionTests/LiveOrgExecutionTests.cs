@@ -754,6 +754,54 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [TestMethod]
+        public void AllNotSupportedAttributesTest()
+        {
+            string tableName = "PFxColumns";
+            string baseExpr = "First(PFxColumns)";
+
+            var expectedErrors = new List<string>()
+            {
+                "Hyperlink column type not supported.",
+                "Image column type not supported.",
+                "File column type not supported.",
+            };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var dataverseResult = RunDataverseTest(tableName, baseExpr, out disposableObjects, async: true) as DataverseRecordValue;
+
+                foreach (var attr in dataverseResult.Entity.Attributes.Where(attr => attr.Key.Contains("cr100_aa")))
+                {
+                    try
+                    {
+                        var expr = string.Format("{0}.{1}", baseExpr, attr.Key);
+
+                        var result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
+
+                        if (result is ErrorValue errorValue)
+                        {
+                            Assert.IsTrue(expectedErrors.Contains(errorValue.Errors.First().Message));
+                        }
+                        else
+                        {
+                            Assert.IsInstanceOfType(result, typeof(FormulaValue));
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
             ServiceClient svcClient = GetClient();
