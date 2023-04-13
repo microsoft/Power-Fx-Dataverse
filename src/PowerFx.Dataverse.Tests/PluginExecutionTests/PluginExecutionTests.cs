@@ -1031,8 +1031,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Aggregates
         [DataRow("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
         [DataRow("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
-        [DataRow("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias        
-        
+        [DataRow("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias  
+
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
@@ -1925,6 +1925,49 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Failed lookup is blank
             Assert.IsNotNull(result as BlankValue);
         }
+        
+        [TestMethod]
+        public async Task AllNotSupportedAttributesTest()
+        {
+            var baseExpr = "First(t1).{0}";
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable("t1", "allattributes");
+
+            var entity = el.RetrieveAsync("allattributes", _g1).Result.Response;
+
+            // Hyperlink is a known type but not supported.
+            var expectedErrors = new List<string>()
+            {
+                "Hyperlink column type not supported.",
+                "Image column type not supported.",
+                "File column type not supported.",
+            };
+
+            try
+            {
+                foreach (var attr in entity.Attributes)
+                {
+                    var expr = string.Format(baseExpr, attr.Key);
+                    var result = engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+
+                    if (result is ErrorValue errorValue)
+                    {
+                        Assert.IsTrue(expectedErrors.Contains(errorValue.Errors.First().Message));
+                    }
+                    else
+                    {
+                        Assert.IsNotInstanceOfType(result, typeof(BlankValue));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(false, ex.Message);
+            }            
+        }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
@@ -1980,6 +2023,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["email"] = "joe@doe.com";
             entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
+            entity1.Attributes["bigint"] = 934157136952;
+            entity1.Attributes["double"] = 1d / 3d;
+            entity1.Attributes["new_field"] = 1m / 3m;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
