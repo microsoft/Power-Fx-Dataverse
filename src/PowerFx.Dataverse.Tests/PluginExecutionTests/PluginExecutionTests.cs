@@ -1289,10 +1289,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
             100.0,
             "(With({f:_g1}, (__lookup(t1, f)))).new_price")] // variable
-        public void LookUpDelegation(string expr, object expected, string expectedIr, string expectedWarning = null)
-        {
-            bool noDelegationWarnings = string.IsNullOrEmpty(expectedWarning);
 
+        [DataRow("LookUp(t1, LocalId=LocalId).Price",
+            100.0,
+            "(LookUp(t1, (EqGuid(localid,localid)))).new_price",
+            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
+            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord")] // variable
+        public void LookUpDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
+        {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
@@ -1321,24 +1325,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expectedIr, actualIr);
 
             // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
             var errors = check.ApplyErrors();
-            if (noDelegationWarnings)
-            {
-                Assert.AreEqual(0, errors.Count());
-                Assert.IsNull(expectedWarning);
-            } 
-            else
-            {
-                // Should be a delegation warning. 
-                Assert.AreEqual(1, errors.Count());
-                var error = errors.First();
 
-                // It's a warning (not an error)
-                Assert.AreEqual(ErrorSeverity.Warning, error.Severity);
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
-                // Validate warning message
-                var msg = error.ToString(); // will include source span. 
-                Assert.AreEqual(expectedWarning, msg);
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            for(int i = 0; i< errorList.Length; i++)
+            {
+                Assert.AreEqual(expectedWarnings[i], errorList[i]);
             }
 
             // Can still run and verify results. 
