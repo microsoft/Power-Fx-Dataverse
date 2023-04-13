@@ -198,9 +198,53 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
+        // Issue warning on typo:
+        //  Filter(table, id=id)
+        //  LookUp(table, id=id)
+        //
+        // It's legal (so must be warning, not error). Likely, correct behavior is:
+        //  LookUp(table, ThisRecord.id=[@id])
+        private void CheckForNopLookup(CallNode node)
+        {
+            var func = node.Function.Name;
+            if (func == "LookUp" || func == "Filter")
+            {
+                if (node.Args.Count == 2)
+                {
+                    if (node.Args[1] is LazyEvalNode arg1b && arg1b.Child is BinaryOpNode predicate)
+                    {
+                        var left = predicate.Left;
+                        var right = predicate.Right;
+
+                        if (left is ScopeAccessNode left1 && right is ScopeAccessNode right1)
+                        {
+                            if (left1.Value is ScopeAccessSymbol left2 && right1.Value is ScopeAccessSymbol right2)                            
+                            {
+                                if (left2.Parent.Id == right2.Parent.Id && 
+                                    left2.Name == right2.Name)
+                                {
+                                    // Issue warning
+                                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
+                                    var reason = new ExpressionError
+                                    {
+                                        Message = $"This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
+                                        Span = predicate.IRContext.SourceContext,
+                                        Severity = ErrorSeverity.Warning
+                                    };
+                                    this.AddError(reason);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public override RetVal Visit(CallNode node, Context context)
         {
             var func = node.Function.Name;
+
+            CheckForNopLookup(node);
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning. 
