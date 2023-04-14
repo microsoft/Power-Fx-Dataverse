@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Microsoft.PowerFx.Dataverse
 {
     public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter
-    {       
+    {
     }
 
     public interface IDataverseCreator
