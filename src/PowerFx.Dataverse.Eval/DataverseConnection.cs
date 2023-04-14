@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         internal readonly CdsEntityMetadataProvider _metadataCache;
 
-        private readonly IDataverseServices _dvServices;        
+        private readonly IDataverseServices _dvServices;
 
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.

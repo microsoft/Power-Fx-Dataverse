@@ -215,7 +215,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterCollectNoKey()
         {
             string tableName = "account";
-            string expr = "Collect(Accounts,{'Account Name': \"test\", 'Primary Contact':First(Contacts)})";  //"First(Filter(account, ThisRecord.Currency.'Currency Code' = \"USD\" ))";
+            string expr = "Collect(Accounts,{'Account Name': \"test\", 'Primary Contact':First(Contacts)})";
             List<IDisposable> disposableObjects = null;
 
             try

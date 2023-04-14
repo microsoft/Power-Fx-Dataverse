@@ -17,6 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Cached entry lifetime
         TimeSpan LifeTime { get; }
 
+        // Current size of the cache
         int CacheSize { get; }
 
         // Add entity. If an entity exists with the same Id, it is replaced.

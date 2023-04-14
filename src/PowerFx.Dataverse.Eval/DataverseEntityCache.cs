@@ -27,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Stores all entities, sorted by Id (key) with their timestamp (value)
         private Dictionary<Guid, DataverseCachedEntity> _cache = new ();
 
-        // Stored the list of cached entry Ids in order they are cached
+        // Stores the list of cached entry Ids in order they are cached
         private List<Guid> _cacheList = new ();
 
         // Lock used for cache dictionary and list
