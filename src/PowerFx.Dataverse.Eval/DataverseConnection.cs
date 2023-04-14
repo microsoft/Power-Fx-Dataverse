@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         internal readonly CdsEntityMetadataProvider _metadataCache;
 
-        private readonly IDataverseServices _dvServices;
+        private readonly IDataverseServices _dvServices;        
 
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.
@@ -91,6 +91,11 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="service"></param>
         public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows)
             : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows)
+        {
+        }
+
+        public DataverseConnection(IDataverseServices dvServices, int maxRows = DefaultMaxRows)
+            : this(dvServices, new XrmMetadataProvider(dvServices.OrganizationService), maxRows)
         {
         }
 

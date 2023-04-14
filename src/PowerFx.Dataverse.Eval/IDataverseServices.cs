@@ -14,6 +14,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter
     {
+        IOrganizationService OrganizationService { get; }
     }
 
     public interface IDataverseCreator

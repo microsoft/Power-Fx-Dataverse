@@ -1036,8 +1036,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
-            var logicalName = "local";
-            var displayName = "t1";
+            var logicalName = "local";            
 
             foreach ((DataverseConnection dv, EntityLookup el) in Setups())
             {

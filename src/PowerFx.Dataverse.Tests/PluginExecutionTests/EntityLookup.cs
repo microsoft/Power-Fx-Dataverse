@@ -113,6 +113,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
         public Func<string> _getTargetedColumnName;
 
+        public IOrganizationService OrganizationService => throw new NotImplementedException();
+
         // Gets a copy of the entity. 
         // modifying the storage still requires a call to Update. 
         public Entity LookupRef(EntityReference entityRef, CancellationToken cancellationToken)

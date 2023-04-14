@@ -1,0 +1,192 @@
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//------------------------------------------------------------------------------
+
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Microsoft.PowerFx.Dataverse
+{
+    public class DataverseEntityCache : DataverseService, IDataverseEntityCache
+    {
+        public int MaxEntries { get; } // 0 = no cache
+
+        public TimeSpan LifeTime { get; }
+
+        public TimeSpan DefaultLifeTime => new(0, 5, 0); // 5 minutes
+
+        public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
+
+        // Stores all entities, sorted by Id (key) with their timestamp (value)
+        private Dictionary<Guid, DataverseCachedEntity> _cache = new ();
+
+        // Stored the list of cached entry Ids in order they are cached
+        private List<Guid> _cacheList = new ();
+
+        // Lock used for cache dictionary and list
+        private object _lock = new ();
+
+        public DataverseEntityCache(IOrganizationService service, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
+            : base(service)
+        {
+            MaxEntries = maxEntries < 0 ? 4096 : maxEntries;
+            LifeTime = cacheLifeTime.TotalMilliseconds <= 0 ? DefaultLifeTime : cacheLifeTime;
+        }
+
+        public void AddCacheEntry(Entity entity)
+        {
+            if (entity == null || MaxEntries == 0)
+            {
+                return;
+            }
+
+            Guid id = entity.Id;
+            
+            lock (_lock)
+            {
+                DataverseCachedEntity dce = new (entity);
+
+                if (_cache.ContainsKey(id))
+                {
+                    _cache[id] = dce;
+                    _cacheList.Remove(id);
+                }
+                else
+                { 
+                    _cache.Add(id, dce);                    
+                }
+
+                _cacheList.Add(id);
+
+                if (_cacheList.Count > MaxEntries)
+                {
+                    Guid idToRemove = _cacheList.First();
+
+                    _cacheList.RemoveAt(0);
+                    _cache.Remove(idToRemove);
+                }
+            }
+        }
+
+        public void RemoveCacheEntry(Guid id)
+        {
+            lock (_lock)
+            {
+                _cacheList.Remove(id);
+                _cache.Remove(id);
+            }
+        }
+
+        public void ClearCache(string logicalTableName = null)
+        {
+            lock (_lock)
+            {
+                if (string.IsNullOrEmpty(logicalTableName))
+                {
+                    _cache.Clear();
+                    _cacheList.Clear();
+                    return;
+                }
+
+                foreach (var entityKvp in _cache.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)).ToList())
+                {
+                    RemoveCacheEntry(entityKvp.Key);
+                }
+            }
+        }
+
+        public Entity GetEntityFromCache(Guid id)
+        {
+            lock (_lock)
+            {
+                if (!_cache.ContainsKey(id))
+                {
+                    // Unknown Id in cache
+                    return null;
+                }
+
+                DataverseCachedEntity dce = _cache[id];
+
+                // Is entry still valid?
+                if (dce.TimeStamp > DateTime.UtcNow.Add(-LifeTime))
+                {
+                    return dce.Entity;
+                }
+
+                // Entry expired
+                RemoveCacheEntry(id);
+                return null;
+            }
+        }
+
+        public override async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            DataverseResponse<Guid> result = await base.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
+
+            if (!result.HasError)
+            {
+                // Should never happen, but make sure this Id isn't in the cache
+                RemoveCacheEntry(result.Response);
+            }
+
+            return result;
+        }
+
+        public override Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            // Remove this Id from cache, even if Delete would fail
+            RemoveCacheEntry(id);
+            return base.DeleteAsync(entityName, id, cancellationToken);
+        }
+
+        public override async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            lock (_lock)
+            {
+                Entity e = GetEntityFromCache(id);
+
+                if (e != null)
+                {
+                    return new DataverseResponse<Entity>(e);
+                }
+            }
+
+            DataverseResponse<Entity> result = await base.RetrieveAsync(entityName, id, cancellationToken).ConfigureAwait(false);
+
+            if (!result.HasError)
+            {
+                AddCacheEntry(result.Response);
+            }
+
+            return result;
+        }
+        
+        public override async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            DataverseResponse<EntityCollection> result = await base.RetrieveMultipleAsync(query, cancellationToken);
+
+            if (!result.HasError)
+            {
+                foreach (Entity e in result.Response.Entities)
+                {
+                    AddCacheEntry(e);
+                }
+            }
+
+            return result;
+        }
+
+        public override Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            RemoveCacheEntry(entity.Id);
+            return base.UpdateAsync(entity, cancellationToken);
+        }
+    }
+}
