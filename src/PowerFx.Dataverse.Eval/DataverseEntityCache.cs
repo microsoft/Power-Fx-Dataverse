@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Lock used for cache dictionary and list
         private readonly object _lock = new ();
 
-        private IDataverseServices _innerService;
+        private readonly IDataverseServices _innerService;
 
         public DataverseEntityCache(IOrganizationService orgService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
             : this(new DataverseService(orgService), maxEntries, cacheLifeTime)

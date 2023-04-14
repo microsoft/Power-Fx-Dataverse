@@ -338,7 +338,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _policy.RefreshCache();
 
-            if (_dvServices is IDataverseEntityCache dec)
+            if (_dvServices is IDataverseEntityCacheCleaner dec)
             {
                 dec.ClearCache();
             }
