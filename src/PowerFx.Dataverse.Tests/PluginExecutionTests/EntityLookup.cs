@@ -111,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public Func<string> _getCustomErrorMessage;
 
         // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
-        public Func<string> _getTargetedColumnName;        
+        public Func<string> _getTargetedColumnName;
 
         // Gets a copy of the entity. 
         // modifying the storage still requires a call to Update. 
