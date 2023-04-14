@@ -94,11 +94,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        public DataverseConnection(IDataverseServices dvServices, int maxRows = DefaultMaxRows)
-            : this(dvServices, new XrmMetadataProvider(dvServices.OrganizationService), maxRows)
-        {
-        }
-
         internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows)
             : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider), maxRows)
         {
