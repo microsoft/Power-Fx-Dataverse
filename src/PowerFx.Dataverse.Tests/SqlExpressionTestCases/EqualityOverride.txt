@@ -1,0 +1,15 @@
+#override: Equality.txt
+
+// This is now illegal, https://github.com/microsoft/Power-Fx/pull/1352
+>> "abc" = 23
+#skip
+
+>> 23 = "abc"
+#skip
+
+>> "abc" <> 23
+#skip
+
+>> 23 <> "abc"
+#skip
+
