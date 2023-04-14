@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseEntityCache : DataverseService, IDataverseEntityCache
+    public class DataverseEntityCache : IDataverseServices, IDataverseEntityCache
     {
         public int MaxEntries { get; } // 0 = no cache
 
@@ -33,11 +33,18 @@ namespace Microsoft.PowerFx.Dataverse
         // Lock used for cache dictionary and list
         private object _lock = new ();
 
-        public DataverseEntityCache(IOrganizationService service, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
-            : base(service)
+        private IDataverseServices _innerService;
+
+        public DataverseEntityCache(IOrganizationService orgService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
+            : this(new DataverseService(orgService), maxEntries, cacheLifeTime)
+        {
+        }
+
+        public DataverseEntityCache(IDataverseServices innerService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)            
         {
             MaxEntries = maxEntries < 0 ? 4096 : maxEntries;
             LifeTime = cacheLifeTime.TotalMilliseconds <= 0 ? DefaultLifeTime : cacheLifeTime;
+            _innerService = innerService;
         }
 
         public void AddCacheEntry(Entity entity)
@@ -126,9 +133,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
-            DataverseResponse<Guid> result = await base.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Guid> result = await _innerService.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {
@@ -139,14 +146,14 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Remove this Id from cache, even if Delete would fail
             RemoveCacheEntry(id);
-            return base.DeleteAsync(entityName, id, cancellationToken);
+            return _innerService.DeleteAsync(entityName, id, cancellationToken);
         }
 
-        public override async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
             lock (_lock)
             {
@@ -158,7 +165,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            DataverseResponse<Entity> result = await base.RetrieveAsync(entityName, id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {
@@ -168,9 +175,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
         
-        public override async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
-            DataverseResponse<EntityCollection> result = await base.RetrieveMultipleAsync(query, cancellationToken);
+            DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
 
             if (!result.HasError)
             {
@@ -183,10 +190,10 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
             RemoveCacheEntry(entity.Id);
-            return base.UpdateAsync(entity, cancellationToken);
+            return _innerService.UpdateAsync(entity, cancellationToken);
         }
     }
 }
