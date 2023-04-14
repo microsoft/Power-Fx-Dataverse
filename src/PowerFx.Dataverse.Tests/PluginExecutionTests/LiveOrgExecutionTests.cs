@@ -960,9 +960,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;
-
-        public IOrganizationService OrganizationService => _svcClient;
+        private bool disposedValue;        
 
         public DataverseAsyncClient(ServiceClient client)
         {
