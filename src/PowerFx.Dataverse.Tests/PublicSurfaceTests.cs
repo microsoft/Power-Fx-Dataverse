@@ -34,6 +34,9 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.MetadataExtensions",
+                "Microsoft.PowerFx.Dataverse.DataverseEntityCache",
+                "Microsoft.PowerFx.Dataverse.IDataverseEntityCache",
+                "Microsoft.PowerFx.Dataverse.IDataverseEntityCacheCleaner",
 
                 // Policies 
                 "Microsoft.PowerFx.Dataverse.Policy",

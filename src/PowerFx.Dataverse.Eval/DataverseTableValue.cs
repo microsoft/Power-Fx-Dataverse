@@ -111,6 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return error1;
             }
+
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
 
             if (response.HasError)
@@ -124,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
 
-            // After mutation, lazely refresh Rows from server.
+            // After mutation, lazily refresh Rows from server.
             Refresh();
 
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
@@ -209,6 +210,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void RefreshCache()
         {
             Refresh();
+
+            if (_connection.Services is IDataverseEntityCacheCleaner dec)
+            {
+                dec.ClearCache(_entityMetadata.LogicalName);
+            }
         }
 
         public override DValue<RecordValue> CastRecord(RecordValue record, CancellationToken cancellationToken)

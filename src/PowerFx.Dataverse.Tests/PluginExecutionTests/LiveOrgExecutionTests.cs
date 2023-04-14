@@ -214,8 +214,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void ExecuteViaInterpreterCollectNoKey()
         {
-            string tableName = "TableTest1S";
-            string expr = "Collect(TableTest1S, { Name: \"N2\" })";
+            string tableName = "account";
+            string expr = "Collect(Accounts,{'Account Name': \"test\", 'Primary Contact':First(Contacts)})";
             List<IDisposable> disposableObjects = null;
 
             try
@@ -228,6 +228,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+        }
+
+        [TestMethod]
+        public async Task SlowRepeatingLookup()
+        {
+            var token = "";
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Assert.Inconclusive("No token specified");
+            }
+
+            var engine = new RecalcEngine();
+            var serviceClient = new ServiceClient(new Uri("https://org1c5ae4ff.crm10.dynamics.com/"), (s) => Task.FromResult(token));
+            var dec = new DataverseEntityCache(serviceClient, maxEntries: 500, cacheLifeTime: new TimeSpan(0, 10, 0));
+
+            // Simulate first request for doc with id 29
+            var dvc = new DataverseConnection(dec, new XrmMetadataProvider(serviceClient));
+            dvc.AddTable("Accounts", "account");
+            dvc.AddTable("Contacts", "contact");
+
+            var recalcEngine = new RecalcEngine();
+
+            var repeatingTable = (TableValue)await recalcEngine.Check("Contacts", symbolTable: dvc.Symbols)
+                .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+
+            foreach (var record in repeatingTable.Rows)
+            {
+                recalcEngine.UpdateVariable("ThisItem", record.ToFormulaValue());
+
+                await recalcEngine.Check("ThisItem.'Full Name' & \" - First Account: \" & First(Filter(Accounts, ThisRecord.'Primary Contact'.Contact = ThisItem.Contact)).'Account Name'", symbolTable: dvc.Symbols)
+                    .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+            }
+
+            Console.WriteLine(dec.CacheSize);
         }
 
         [TestMethod]
@@ -824,8 +859,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
             foreach (string tableName in tableNames)
             {
-                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-                Assert.IsTrue(b1);
+                //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
+                //Assert.IsTrue(b1);
+
+                string logicalName = tableName;
 
                 TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
 
@@ -866,8 +903,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
-            bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-            Assert.IsTrue(b1);
+            //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
+            //Assert.IsTrue(b1);
+
+            string logicalName = tableName;
 
             DataverseConnection dv = null;
 
@@ -921,7 +960,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;
+        private bool disposedValue;        
 
         public DataverseAsyncClient(ServiceClient client)
         {

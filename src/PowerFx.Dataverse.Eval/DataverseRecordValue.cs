@@ -138,7 +138,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (newEntity.HasError)
                 {
-                    result = newEntity.DValueError(nameof(IDataverseUpdater.UpdateAsync)).ToFormulaValue();
+                    result = newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync)).ToFormulaValue();
                     return true;
                 }
 
