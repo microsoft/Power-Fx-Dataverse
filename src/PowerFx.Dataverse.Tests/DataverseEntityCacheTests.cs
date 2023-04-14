@@ -32,6 +32,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(3, cache.CacheSize); // cache: 0, 1, 2
 
             cache.AddCacheEntry(entities[3]);
+            cache.AddCacheEntry(entities[3]);
             Assert.AreEqual(3, cache.CacheSize); // cache: 1, 2, 3
 
             cache.AddCacheEntry(entities[4]);
@@ -85,6 +86,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.AreEqual(1, cache.CacheSize);
             Assert.AreEqual(entities[0].Id, cache.GetEntityFromCache(entities[0].Id).Id);
+
+            cache.RemoveCacheEntry(entities[0].Id);
+            cache.RemoveCacheEntry(entities[0].Id);
         }
 
         [TestMethod]

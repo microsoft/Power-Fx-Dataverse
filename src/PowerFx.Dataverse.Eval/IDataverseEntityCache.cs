@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         void AddCacheEntry(Entity entity);
 
         // Remove all cached entried from cache
-        // When logicalTableName is specified, all Entiities from that table are removed from the cache
+        // When logicalTableName is specified, all Entities from that table are removed from the cache
         void ClearCache(string logicalTableName = null);
 
         // Remove an entry from cache

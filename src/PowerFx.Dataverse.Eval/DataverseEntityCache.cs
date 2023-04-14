@@ -25,13 +25,13 @@ namespace Microsoft.PowerFx.Dataverse
         public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
-        private Dictionary<Guid, DataverseCachedEntity> _cache = new ();
+        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new ();
 
         // Stores the list of cached entry Ids in order they are cached
-        private List<Guid> _cacheList = new ();
+        private readonly List<Guid> _cacheList = new ();
 
         // Lock used for cache dictionary and list
-        private object _lock = new ();
+        private readonly object _lock = new ();
 
         private IDataverseServices _innerService;
 
@@ -113,13 +113,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             lock (_lock)
             {
-                if (!_cache.ContainsKey(id))
+                if (!_cache.TryGetValue(id, out DataverseCachedEntity dce))                
                 {
-                    // Unknown Id in cache
+                    // Unknown Id (not in cache)
                     return null;
                 }
-
-                DataverseCachedEntity dce = _cache[id];
 
                 // Is entry still valid?
                 if (dce.TimeStamp > DateTime.UtcNow.Add(-LifeTime))

@@ -210,6 +210,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void RefreshCache()
         {
             Refresh();
+
+            if (_connection.Services is IDataverseEntityCache dec)
+            {
+                dec.ClearCache(_entityMetadata.LogicalName);
+            }
         }
 
         public override DValue<RecordValue> CastRecord(RecordValue record, CancellationToken cancellationToken)
