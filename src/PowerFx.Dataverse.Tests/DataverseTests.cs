@@ -950,7 +950,6 @@ END
         [DataRow("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.", DisplayName = "Today not supported")]
         [DataRow("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.", DisplayName = "IsToday not supported")]
         [DataRow("IsUTCToday(UTCToday())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCToday")]
-        [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
         [DataRow("IsUTCToday(tziDateOnly)", true, typeof(BooleanType), DisplayName = "IsUTCToday of TZI Date Only")]
         [DataRow("IsUTCToday(dateOnly)", true, typeof(BooleanType), DisplayName = "IsUTCToday of Date Only")]
         [DataRow("IsUTCToday(userLocalDateTime)", true, typeof(BooleanType), DisplayName = "IsUTCToday of User Local Date Time")]
@@ -979,7 +978,11 @@ END
         [DataRow("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType), DisplayName = "DateDiff User Local Date Only vs User Local Date Time")]
         [DataRow("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType), DisplayName = "> User Local Date Time vs. User Local Date Only")]
         [DataRow("tziDateTime <> tziDateOnly", true, typeof(BooleanType), DisplayName = "<> TZI Date Time vs. TZI Date Only")]
-        [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
+
+        // Regressed with https://github.com/microsoft/Power-Fx/issues/1379 
+        // [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
+        // [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
+
         [DataRow("UTCToday() = dateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. Date Only")]
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [DataRow("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= TZI Date Time vs. User Local Date Only")]

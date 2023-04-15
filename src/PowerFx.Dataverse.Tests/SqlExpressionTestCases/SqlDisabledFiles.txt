@@ -8,6 +8,7 @@
 // Enable decimal: 
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
 #DISABLE: DecimalBoot.txt
+#DISABLE: DecimalMathFuncs.txt
 #DISABLE: DecimalNonMathFuncs.txt
 #DISABLE: DecimalOps.txt
 #DISABLE: DecimalOverflow.txt
