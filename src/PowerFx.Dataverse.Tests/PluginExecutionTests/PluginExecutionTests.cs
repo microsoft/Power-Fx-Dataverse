@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         //  expected: 'Rating (Locals)'.Warm     // but this won't parse, needs metadata.
 
         [DataTestMethod]
-        [DataRow("First(t1).Price", "100")] // trivial 
+        [DataRow("First(t1).Price", "Float(100)")] // trivial 
         [DataRow("t1", "t1")] // table
         [DataRow("First(t1)", "LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\"))")] // record
         [DataRow("LookUp(t1, false)", "If(false,First(FirstN(t1,0)))")] // blank
@@ -631,10 +631,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());
         }
 
+        // Hyperlink types are imported as String
         [DataTestMethod]
         [DataRow("First(t1).hyperlink", "Hyperlink column type not supported.")]
         [DataRow("With({x:First(t1)}, x.hyperlink)", "Hyperlink column type not supported.")]
-        public void NotSupportedColumnTypeErrorTest(string expr, string expected)
+        public void HyperlinkIsString(string expr, string expected)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -654,9 +655,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            
+            Assert.IsInstanceOfType(result, typeof(StringValue));
+            Assert.AreEqual(FormulaType.String, result.Type);
 
-            Assert.IsInstanceOfType(result, typeof(ErrorValue));
-            Assert.AreEqual(expected, ((ErrorValue)result).Errors.First().Message);
+            Assert.AreEqual("teste_url", result.ToObject());            
         }
 
         // Ensure a custom function shows up in intellisense. 

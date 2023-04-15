@@ -385,10 +385,13 @@ namespace Microsoft.PowerFx.Dataverse
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(node, $"IIF({arg} IS NULL, N'', {arg})");
 
+                // Nop coercions
+                case UnaryOpKind.DateToDateTime:
+                    return node.Child.Accept(this, context);
+
                 case UnaryOpKind.DateTimeToNumber:
                 case UnaryOpKind.DateTimeToTime:
                 case UnaryOpKind.DateTimeToDate:
-                case UnaryOpKind.DateToDateTime:
                 case UnaryOpKind.DateToNumber:
                 case UnaryOpKind.DateToTime:
                 case UnaryOpKind.NumberToDate:
