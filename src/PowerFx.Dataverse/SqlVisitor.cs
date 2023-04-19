@@ -135,10 +135,22 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var returnType = new SqlBigType();
-                        var decimalType = new SqlDecimalType();
+                        SqlNumberBase leftDecimalType = new SqlDecimalType();
+                        SqlNumberBase rightDecimalType = new SqlDecimalType();
+
+                        if (left.type is SqlBigType)
+                        {
+                            leftDecimalType = new SqlBigType(); 
+                        }
+
+                        if (right.type is SqlBigType)
+                        {
+                            rightDecimalType = new SqlBigType();
+                        }
+
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
+                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, leftDecimalType)} {op} {Library.CoerceNullToNumberType(right, rightDecimalType)})");
                         context.PerformRangeChecks(result, node);
 
                         return result;
