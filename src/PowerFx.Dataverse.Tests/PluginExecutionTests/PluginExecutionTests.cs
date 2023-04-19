@@ -233,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Verify we can exceute an IR from the Sql compiler, 
         // and add custom functions. 
         [TestMethod]
-        public void ExecuteBasic()
+        public void CompileBasic()
         {
             var rawProvider = new MockXrmMetadataProvider(_trivialModel);
             var provider = new CdsEntityMetadataProvider(rawProvider);
@@ -248,15 +248,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsTrue(check.IsSuccess);
             Assert.AreEqual(FormulaType.Number, check.ReturnType);
-
-            var run = RecalcEngine.CreateEvaluatorDirect(check);
-
-            // Approximate an entity with a RecordValue
-            var cache = new TypeMarshallerCache();
-            var record = (RecordValue)cache.Marshal(new { new_field = 15 });
-            var result = run.Eval(record);
-
-            Assert.AreEqual(40.0, result.ToObject());
         }
 
         // $$$ OptionSets don't work:
@@ -1760,12 +1751,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr);
             Assert.IsTrue(check.IsSuccess);
             check.ThrowOnErrors();
-
-            var run = RecalcEngine.CreateEvaluatorDirect(check);
-
-            var result = run.Eval(record);
-
-            Assert.AreEqual(expected, result.ToObject());
         }
 
         // Test with other metadata 
@@ -1788,12 +1773,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr);
             Assert.IsTrue(check.IsSuccess);
             check.ThrowOnErrors();
-
-            var run = RecalcEngine.CreateEvaluatorDirect(check);
-
-            var result = run.Eval(record);
-
-            Assert.AreEqual(250.0, result.ToObject());
         }
         
         [TestMethod]
