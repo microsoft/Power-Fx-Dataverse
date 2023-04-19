@@ -12,6 +12,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading;
@@ -1193,12 +1194,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
             100.0,
             "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
-            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord")] // lamba uses ThisRecord.Price, can't delegate
+            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.")] // lamba uses ThisRecord.Price, can't delegate
 
         [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
             100.0, // non ID field
             "(LookUp(t1, (GtNumbers(new_price,50)))).new_price",
-            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] 
+            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")] 
 
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
             100.0, // successful with complex expression
@@ -1219,7 +1220,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
             100.0,
             "(__lookup(t1, (LookUp(t1, (GtNumbers(new_price,50)))).localid)).new_price",
-            "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'")] // Inner not delegated, but outer still is. 
+            "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")] // Inner not delegated, but outer still is. 
                         
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
             100.0,
@@ -1272,7 +1273,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             null, // Bad practice, modifying the collection while we enumerate.
             "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'")]
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
@@ -1287,7 +1288,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             100.0,
             "(LookUp(t1, (EqGuid(localid,localid)))).new_price",
             "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
-            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord")] // variable
+            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord.")] // variable
         public void LookUpDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -1335,6 +1336,49 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.AreEqual(expected, result.ToObject());
+        }
+
+        // The new test cases will fail once new delegation warning messages are translated.
+        // We'll then update them on that.
+        [DataTestMethod]
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
+            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.")]
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            )]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
+        [DataRow("LookUp(t1, LocalId=LocalId).Price",
+            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
+            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord.")]
+        public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
+            engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
+            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var errors_pt_br = check.GetErrorsInLocale(culture: CultureInfo.CreateSpecificCulture("pt-BR"));
+
+            var errorList = errors_pt_br.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.AreEqual(expectedWarnings[i], errorList[i]);
+            }
         }
 
         [DataTestMethod]
