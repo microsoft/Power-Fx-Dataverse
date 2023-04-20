@@ -167,9 +167,50 @@ namespace Microsoft.PowerFx.Dataverse
                     var del = (i == parameters.Count - 1) ? "" : ",";
                     var fieldName = parameters[i].Item1.LogicalName;
                     var varName = ctx.GetVarName(fieldName, ctx.RootScope, null);
-                    // Existing CDS SQL generation passes money values as big type
-                    var typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                    
+                    String typeName = null;
+                    if(fieldName.Equals("exchangerate"))
+                    {
+                        typeName = "decimal(28,12)";
+                    }
+                    else
+                    {
+                        // Existing CDS SQL generation passes money values as big type
+                        typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                    }
+                    
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
+                }
+
+                String exchangeRateParameter = null;
+
+                if (ctx.GetReferenceFields().Count() > 0)
+                {
+                    int relatedEntityMoneyFieldsCount = ctx.GetReferenceFields().Select((VarDetails varDetail) => 
+                            { return varDetail.Column.DType == AppMagic.Authoring.Importers.ServiceConfig.WadlDType.Currency;}).Count();
+
+                    // load exchange rate and add it as parameter and add it in referenced field query
+                    if(relatedEntityMoneyFieldsCount > 0)
+                    {
+                        var del = ",";
+                        var fieldName = "ExchangeRate";
+                        var typeName = "decimal(28,12)";
+
+                        try
+                        {
+                            exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
+                        }
+                        catch (NullReferenceException e)
+                        {
+                            // if exchange rate not found on primary entity and related entity uses currency field in formula then throw error, set proper error
+                            errors = null;
+                            var errorResult = new SqlCompileResult(errors);
+                            errorResult.SanitizedFormula = sanitizedFormula;
+                            return errorResult;
+                        }
+
+                        tw.WriteLine($"    {del} {exchangeRateParameter} {typeName} -- {fieldName}");
+                    }
                 }
 
                 string returnType = retType is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(retType);
@@ -253,7 +294,19 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
+                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { 
+                                    
+                            if(field.Column.DType == AppMagic.Authoring.Importers.ServiceConfig.WadlDType.Currency)
+                            {
+                                return $"{field.VarName} = [{field.Column.SchemaName}] / [exchangerate] * [{exchangeRateParameter}]";
+                            }
+                            else
+                            {
+                                return $"{field.VarName} = [{field.Column.SchemaName}]";
+                            }
+
+                        }));
+
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
