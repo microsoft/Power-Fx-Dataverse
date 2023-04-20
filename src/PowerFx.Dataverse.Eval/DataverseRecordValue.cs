@@ -145,7 +145,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (value is OneToManyRelationshipMetadata relationshipMetadata)
             {
-                result = await ResolveOneToManyRelationship(relationshipMetadata, cancellationToken);
+                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken);
                 return (true, result);
             }
 
@@ -197,11 +197,17 @@ namespace Microsoft.PowerFx.Dataverse
             return (true, result);
         }
 
-        private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, CancellationToken cancellationToken)
+        private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)
         {
             var refernecingTable = relationshipMetadata.ReferencingEntity;
             string referencingAttribute = relationshipMetadata.ReferencingAttribute;
             FormulaValue result;
+            var recordType = ((TableType)fieldType).ToRecord();
+            if (recordType == null)
+            {
+                throw new InvalidOperationException("Field Type should be a table value");
+            }
+
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
@@ -221,11 +227,11 @@ namespace Microsoft.PowerFx.Dataverse
                 List<RecordValue> list = new();
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
-                    var row = new DataverseRecordValue(entity, _connection.GetMetadataOrThrow(entity.LogicalName), RecordType.Empty(), _connection);
+                    var row = _connection.Marshal(entity);
                     list.Add(row);
                 }
                 
-                result = FormulaValue.NewTable(_connection.GetRecordType(refernecingTable), list);
+                result = FormulaValue.NewTable(recordType, list);
             }
             else
             {
