@@ -228,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                                     var reason = new ExpressionError
                                     {
-                                        MessageKey = "WrnDelagationLookUpPredicate",
+                                        MessageKey = "WrnDelagationPredicate",
                                         Span = predicate.IRContext.SourceContext,
                                         Severity = ErrorSeverity.Warning
                                     };
@@ -275,7 +275,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     ExpressionError reason = new ExpressionError
                     {
-                        MessageKey = "WrnDelagationLookUpOnlyPrimaryKeyField",
+                        MessageKey = "WrnDelagationOnlyPrimaryKeyField",
                         MessageArgs = new object[] { tableArg._metadata.PrimaryIdAttribute },
                         Span = arg1.IRContext.SourceContext,
                         Severity = ErrorSeverity.Warning
@@ -303,7 +303,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 {
                                     reason = new ExpressionError
                                     {
-                                        MessageKey = "WrnDelagationLookUpRefersThisRecord",
+                                        MessageKey = "WrnDelagationRefersThisRecord",
                                         Span = findThisRecord.Span,
                                         Severity = ErrorSeverity.Warning
                                     };
@@ -315,7 +315,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     {
                                         reason = new ExpressionError
                                         {
-                                            MessageKey = "WrnDelagationLookUpBehaviorFunction",
+                                            MessageKey = "WrnDelagationBehaviorFunction",
                                             MessageArgs = new object[] { findBehaviorFunc.Name },
                                             Span = findBehaviorFunc.Span,
                                             Severity = ErrorSeverity.Warning
