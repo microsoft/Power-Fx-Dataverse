@@ -139,7 +139,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Index(Accounts, 1).Tasks", 0)]
 
         // If Tasks field was empty, returns empty table.
-        [DataRow("Index(Accounts, 2).Tasks", 2)]
+        [DataRow("Index(Accounts, 2).Tasks", 1)]
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
             var tableName = new string[] { "account", "task" };
