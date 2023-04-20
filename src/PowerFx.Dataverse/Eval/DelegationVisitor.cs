@@ -276,7 +276,7 @@ namespace Microsoft.PowerFx.Dataverse
                     ExpressionError reason = new ExpressionError
                     {
                         MessageKey = "WrnDelagationOnlyPrimaryKeyField",
-                        MessageArgs = new object[] { tableArg._metadata.PrimaryIdAttribute },
+                        MessageArgs = new object[] { func, tableArg._metadata.PrimaryIdAttribute },
                         Span = arg1.IRContext.SourceContext,
                         Severity = ErrorSeverity.Warning
                     };
@@ -304,6 +304,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     reason = new ExpressionError
                                     {
                                         MessageKey = "WrnDelagationRefersThisRecord",
+                                        MessageArgs = new object[] { func },
                                         Span = findThisRecord.Span,
                                         Severity = ErrorSeverity.Warning
                                     };
@@ -316,7 +317,7 @@ namespace Microsoft.PowerFx.Dataverse
                                         reason = new ExpressionError
                                         {
                                             MessageKey = "WrnDelagationBehaviorFunction",
-                                            MessageArgs = new object[] { findBehaviorFunc.Name },
+                                            MessageArgs = new object[] { func, findBehaviorFunc.Name },
                                             Span = findBehaviorFunc.Span,
                                             Severity = ErrorSeverity.Warning
                                         };
