@@ -35,6 +35,8 @@ namespace Microsoft.PowerFx.Dataverse
         public string GetSerializationName(string tableLogicalName);
 
         public RecordType GetRecordType(string tableLogicalName);
+
+        public RecordValue Marshal(Entity entity);
     }
 
     /// <summary>
