@@ -1842,11 +1842,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(100.0, result1.ToObject());
             
             var engine2 = new RecalcEngine(config);
-            var result2 = await engine1.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result2 = await engine2.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(1m, result2.ToObject());
 
             var engine3 = new RecalcEngine(config);
-            var result3 = await engine1.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result3 = await engine3.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(1m, result3.ToObject());
 
             // Simulates a row being deleted by an external force
