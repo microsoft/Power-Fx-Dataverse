@@ -33,6 +33,27 @@ namespace Microsoft.PowerFx.Dataverse
             return amd != null;
         }
 
+        public static bool TryGetOneToManyRelationship(this EntityMetadata entityMetadata, string fieldName, out OneToManyRelationshipMetadata relationship)
+        {
+            if(entityMetadata?.OneToManyRelationships == null)
+            {
+                relationship = default;
+                return false;
+            }
+
+            foreach (var relation in entityMetadata.OneToManyRelationships ?? Enumerable.Empty<OneToManyRelationshipMetadata>())
+            {
+                if (relation.ReferencedEntityNavigationPropertyName == fieldName)
+                {
+                    relationship = relation;
+                    return true;
+                }
+            }
+
+            relationship = default;
+            return false;
+        }
+
         public static bool TryGetRelationship(this EntityMetadata entityMetadata, string fieldName, out string realAttributeName)
         {
             if (entityMetadata == null)

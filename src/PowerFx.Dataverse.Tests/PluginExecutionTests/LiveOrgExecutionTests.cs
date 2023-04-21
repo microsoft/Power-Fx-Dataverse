@@ -136,6 +136,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("Index(Accounts, 1).Tasks", 0)]
+
+        // If Tasks field was empty, returns empty table.
+        [DataRow("Index(Accounts, 2).Tasks", 2)]
+        public void ExecuteViaInterpreterOneToMany(string expression, int expected)
+        {
+            var tableName = new string[] { "account", "task" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is TableValue);
+                Assert.AreEqual(expected, ((TableValue)result).Count());
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         [DataRow("AsType(Blank(), JVLookups)")]
         [DataRow("AsType({test:1}, JVLookups)")]
         [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
@@ -856,20 +879,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 dv = new DataverseConnection(svcClient);
             }
 
+            dv.AddTable("Accounts", "account");
+            dv.AddTable("Tasks", "task");
+            dv.AddTable("Note", "annotation");
+
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
+
             foreach (string tableName in tableNames)
             {
-                //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-                //Assert.IsTrue(b1);
-
-                string logicalName = tableName;
-
-                TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
-
-                Assert.IsNotNull(tableValue);
-                symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
+                string logicalName = null;
+                TableValue tableValue = null;
+                if (!dv.TryGetVariableName(tableName, out _))
+                {
+                    bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
+                    Assert.IsTrue(b1);
+                    tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
+                    Assert.IsNotNull(tableValue);
+                    symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
+                }
+                else
+                {
+                    symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
+                }
+                
             }
-            
+
 
             Assert.IsNotNull(symbols);
 

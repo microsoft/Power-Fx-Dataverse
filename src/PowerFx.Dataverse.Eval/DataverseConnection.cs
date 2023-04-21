@@ -32,7 +32,11 @@ namespace Microsoft.PowerFx.Dataverse
         EntityMetadata GetMetadataOrThrow(string tableLogicalName);
 
         // Get the name of a table to use in serialization. 
-        public string GetSerializationName(string tableLogicalName);    
+        public string GetSerializationName(string tableLogicalName);
+
+        public RecordType GetRecordType(string tableLogicalName);
+
+        public RecordValue Marshal(Entity entity);
     }
 
     /// <summary>
