@@ -35,7 +35,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static bool TryGetOneToManyRelationship(this EntityMetadata entityMetadata, string fieldName, out OneToManyRelationshipMetadata relationship)
         {
-            foreach (var relation in entityMetadata.OneToManyRelationships)
+            if(entityMetadata?.OneToManyRelationships == null)
+            {
+                relationship = default;
+                return false;
+            }
+
+            foreach (var relation in entityMetadata.OneToManyRelationships ?? Enumerable.Empty<OneToManyRelationshipMetadata>())
             {
                 if (relation.ReferencedEntityNavigationPropertyName == fieldName)
                 {
