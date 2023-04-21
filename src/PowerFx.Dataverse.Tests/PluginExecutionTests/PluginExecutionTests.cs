@@ -1059,7 +1059,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var run = check.GetEvaluator();
                 var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
 
-                Assert.AreEqual(expected, result.ToObject());
+                Assert.AreEqual(expected, result.ToDoubleOrObject());
             }
         }
 
@@ -1843,11 +1843,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             
             var engine2 = new RecalcEngine(config);
             var result2 = await engine1.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result2.ToObject());
+            Assert.AreEqual(1m, result2.ToObject());
 
             var engine3 = new RecalcEngine(config);
             var result3 = await engine1.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result3.ToObject());
+            Assert.AreEqual(1m, result3.ToObject());
 
             // Simulates a row being deleted by an external force
             await el.DeleteAsync(logicalName, _g1);
@@ -1859,11 +1859,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine5 = new RecalcEngine(config);
             var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result5.ToObject());
+            Assert.AreEqual(1m, result5.ToObject());
 
             var engine6 = new RecalcEngine(config);
             var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1.0, result6.ToObject());
+            Assert.AreEqual(1m, result6.ToObject());
 
             // Refresh connection cache.
             dv.RefreshCache();
@@ -1875,11 +1875,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine8 = new RecalcEngine(config);
             var result8 = await engine8.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0.0, result8.ToObject());
+            Assert.AreEqual(0m, result8.ToObject());
 
             var engine9 = new RecalcEngine(config);
             var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0.0, result9.ToObject());
+            Assert.AreEqual(0m, result9.ToObject());
         }
         
         [DataTestMethod]
@@ -1903,8 +1903,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
-            Assert.IsFalse(check.IsSuccess);
-            Assert.IsTrue(check.Errors.First().Message.Contains("The type of this argument 'int' does not match the expected type 'Number'. Found type 'Date'."));
+            // Coercion in Collect() now allowed. Will coerce number/date. 
+            Assert.IsTrue(check.IsSuccess);            
         }
 
         [DataTestMethod]
@@ -2119,5 +2119,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             throw new InvalidOperationException($"Not a number: {value.GetType().FullName}");
         }
+
+        // .Net won't allow us to encode Decimal in a Theory/InlineData attribute.  So we use double.
+        // So we need a n easy conversion to double. 
+        public static object ToDoubleOrObject(this FormulaValue value)
+        {
+            if (value is DecimalValue dec)
+            {
+                return (double)dec.Value;
+            }
+            return value.ToObject();
+        }        
     }
 }
