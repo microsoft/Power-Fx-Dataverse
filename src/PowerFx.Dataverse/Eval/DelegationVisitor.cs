@@ -100,7 +100,8 @@ namespace Microsoft.PowerFx.Dataverse
                 // Failed to delegate. 
                 var reason = new ExpressionError
                 {
-                    Message = $"Delegating this operation on table '{ret._metadata.LogicalName}' is not supported.", // $$$ Localize
+                    MessageKey = "WrnDelagationTableNotSupported",
+                    MessageArgs = new object[] { ret._metadata.LogicalName },
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
@@ -227,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                                     var reason = new ExpressionError
                                     {
-                                        Message = $"This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
+                                        MessageKey = "WrnDelagationPredicate",
                                         Span = predicate.IRContext.SourceContext,
                                         Severity = ErrorSeverity.Warning
                                     };
@@ -274,7 +275,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                     ExpressionError reason = new ExpressionError
                     {
-                        Message = $"Can't delegate LookUp: only support delegation for lookup on primary key field '{tableArg._metadata.PrimaryIdAttribute}'",
+                        MessageKey = "WrnDelagationOnlyPrimaryKeyField",
+                        MessageArgs = new object[] { func, tableArg._metadata.PrimaryIdAttribute },
                         Span = arg1.IRContext.SourceContext,
                         Severity = ErrorSeverity.Warning
                     };
@@ -301,7 +303,8 @@ namespace Microsoft.PowerFx.Dataverse
                                 {
                                     reason = new ExpressionError
                                     {
-                                        Message = "Can't delegate LookUp: Id expression refers to ThisRecord", // $$$ Localize
+                                        MessageKey = "WrnDelagationRefersThisRecord",
+                                        MessageArgs = new object[] { func },
                                         Span = findThisRecord.Span,
                                         Severity = ErrorSeverity.Warning
                                     };
@@ -313,7 +316,8 @@ namespace Microsoft.PowerFx.Dataverse
                                     {
                                         reason = new ExpressionError
                                         {
-                                            Message = $"Can't delegate LookUp: contains a behavior function '{findBehaviorFunc.Name}'", // $$$ Localize
+                                            MessageKey = "WrnDelagationBehaviorFunction",
+                                            MessageArgs = new object[] { func, findBehaviorFunc.Name },
                                             Span = findBehaviorFunc.Span,
                                             Severity = ErrorSeverity.Warning
                                         };

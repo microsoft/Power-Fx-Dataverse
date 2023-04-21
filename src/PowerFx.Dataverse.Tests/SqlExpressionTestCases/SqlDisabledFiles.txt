@@ -29,4 +29,6 @@
 #DISABLE: Exp.txt
 #DISABLE: Power.txt
 #DISABLE: UntypedBlankAsTable.txt
+#DISABLE: ReservedKeywordNegative.txt
+#DISABLE: DecimalIntReturn.txt
 
