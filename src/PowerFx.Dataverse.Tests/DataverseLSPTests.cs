@@ -10,11 +10,12 @@ using Microsoft.PowerFx.LanguageServerProtocol;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Web;
-
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -224,7 +225,115 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 			AssertFixupResult(_sendToClientData, localeExpr);
 		}
 
-		public class JsonRpcExpressionTypeResponse
+		// Get errors  in other locales. 
+		[DataTestMethod]
+        [DataRow("1.2", "en-US")] // success case 
+        [DataRow("1,2", "fr-FR")] // success case 
+        [DataRow("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
+        [DataRow("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding 		
+        [DataRow("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
+        [DataRow("1 + ", "fr-FR", "Opérande attendu. La formule ou l’expression atten...;Type d’argument non valide. L’une des valeurs suiv...")] // Parse error
+        public void ErrorIsLocalized(string expression, string localeName, string expectedError = null)
+		{
+			var expectedErrors = (expectedError == null) ? 
+				new string[0] :
+				expectedError.Split(';');
+
+			ErrorIsLocalized_DidOpen(expression, localeName, expectedErrors);
+            ErrorIsLocalized_DidChange(expression, localeName, expectedErrors);
+        }
+
+		private void AssertErrors(string[] expectedErrors, List<string> sendToClientData)
+		{
+            Assert.AreEqual(1, sendToClientData.Count);
+            var sentToClientData = sendToClientData[0];
+            var json = JsonSerializer.Deserialize<JsonRpcPublishDiagnosticsNotification>(sentToClientData);
+
+			AssertErrors(expectedErrors, json);
+        }
+
+		private static string Truncate(string s, int len)
+		{
+			if (s.Length <= len)
+			{
+				return s;
+			}
+			return s.Substring(0, len) + "...";
+		}
+
+        private void AssertErrors(string[] expectedErrors, JsonRpcPublishDiagnosticsNotification json)
+		{
+            var msgs = json.@params.diagnostics.ToArray();
+            msgs.OrderBy(m => m.ToString()).ToArray(); // make deterministic for tests. 
+            Assert.AreEqual(expectedErrors.Length, msgs.Length);
+            for (int i = 0; i < expectedErrors.Length; i++)
+            {
+				// Some error message sare are too long, just truncate first part for comparison. 
+				var truncatedMessage = Truncate(msgs[i].message, 50);
+                Assert.AreEqual(expectedErrors[i], truncatedMessage);
+            }
+        }
+
+        // Verify errors with didOpen message.
+        private void ErrorIsLocalized_DidOpen(string expression, string localeName, string[] expectedErrors)
+		{ 
+            var _sendToClientData = new List<string>();
+            var _scopeFactory = new PowerFxScopeFactory();
+            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+
+            
+            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            {
+                jsonrpc = "2.0",
+                id = "123456",
+                method = "textDocument/didOpen",
+                @params = new
+                {
+                    textDocument = new
+                    {
+                        uri = "powerfx://field_designer?entityLogicalName=" + _entityLogicalName + "&localeName=" + localeName,
+                        version = 4,
+                        Text = expression
+                    }
+                }
+            }));
+
+			AssertErrors(expectedErrors, _sendToClientData);			
+        }
+
+        // Verify errors with didChange
+        public void ErrorIsLocalized_DidChange(string expression, string localeName, string[] expectedErrors)
+        {
+            var _sendToClientData = new List<string>();
+            var _scopeFactory = new PowerFxScopeFactory();
+            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+
+            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            {
+                jsonrpc = "2.0",
+                id = "123456",
+                method = "textDocument/didChange",
+                @params = new
+                {
+                    textDocument = new
+                    {
+                        uri = "powerfx://field_designer?entityLogicalName=" + _entityLogicalName + "&localeName=" + localeName,
+                        version = 4,                        
+                    },
+					contentchanges = new[]
+					{
+						new {
+							text = expression
+						}
+					}
+                }
+            }));
+
+            AssertErrors(expectedErrors, _sendToClientData);
+        }
+
+
+        public class JsonRpcExpressionTypeResponse
         {
 			public string jsonrpc { get; set; }
 
@@ -287,7 +396,45 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 			}
 		}
 
-		public class TestLanguageServer : LanguageServer
+        public class JsonRpcPublishDiagnosticsNotification
+        {
+            public string jsonrpc { get; set; } = string.Empty;
+
+            public string method { get; set; } = string.Empty;
+
+            public PublishDiagnosticsParams @params { get; set; } = new PublishDiagnosticsParams();
+        }
+
+        public class PublishDiagnosticsParams
+        {
+            /// <summary>
+            /// The URI for which diagnostic information is reported.
+            /// </summary>
+            public string uri { get; set; }
+
+            /// <summary>
+            /// An array of diagnostic information items.
+            /// </summary>
+            public Diagnostic[] diagnostics { get; set; }
+        }
+
+		[DebuggerDisplay("{message}")]
+        public class Diagnostic
+        {
+            /// <summary>
+            /// The diagnostic's message.
+            /// </summary>
+            public string message { get; set; }
+
+            /// <summary>
+            /// A diagnostic instance may represent an error, warning, hint, etc., and each may impose different
+            /// behavior on an editor.  This member indicates the diagnostic's kind.
+            /// </summary>
+            public int severity { get; set; }
+        }
+
+
+        public class TestLanguageServer : LanguageServer
 		{
 			public List<string> _sendToClientData = new List<string>();
 
