@@ -202,8 +202,8 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         catch (NullReferenceException e)
                         {
-                            // if exchange rate not found on primary entity and related entity uses currency field in formula then throw error, set proper error
-                            errors = null;
+                            // if exchange rate not found on primary entity and related entity uses currency field in formula then throw error
+                            errors = new SqlCompileException(irNode.IRContext.SourceContext).GetErrors(irNode.IRContext.SourceContext);
                             var errorResult = new SqlCompileResult(errors);
                             errorResult.SanitizedFormula = sanitizedFormula;
                             return errorResult;
