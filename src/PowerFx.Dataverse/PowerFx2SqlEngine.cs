@@ -195,7 +195,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if(relatedEntityMoneyFieldsCount > 0)
                     {
                         var del = ",";
-                        var fieldName = "ExchangeRate";
+                        var fieldName = "exchangerate";
                         var typeName = "decimal(28,12)";
 
                         try
