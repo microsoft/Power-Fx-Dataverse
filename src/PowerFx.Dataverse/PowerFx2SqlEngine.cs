@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(culture), culture)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(Features.PowerFxV1), culture)
         {
         }
 
@@ -122,6 +122,8 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var error in sqlResult.Errors)
                 {
                     if (error.MessageKey == "ErrUnknownFunction" || 
+                        error.MessageKey == "ErrUnimplementedFunction" ||
+                        error.MessageKey == "ErrNumberExpected" || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
                         (error.MessageKey == "ErrBadType_ExpectedType_ProvidedType" && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);
@@ -262,9 +264,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
-                            
-                            // Table Schema name returns table view and we need to refer Base tables in UDF hence Suffixing Base to the Schema Name
-                            tableSchemaName = tableSchemaName + "Base";
+
+                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields hence Suffixing Base to the Schema Name
+                            // because logical fields can only be referred from view 
+                            if (!field.Column.IsLogical)
+                            {
+                                tableSchemaName = tableSchemaName + "Base";
+                            }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
                             var key = new Tuple<string, string, string>(tableSchemaName, referencingVar, referenced);
@@ -356,7 +362,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
 
                 sqlResult.ReturnType = retType;
-                sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null);
+                sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null, _cultureInfo);
                 sqlResult.SanitizedFormula = sanitizedFormula;
 
                 sqlResult._unsupportedWarnings = ctx._unsupportedWarnings;

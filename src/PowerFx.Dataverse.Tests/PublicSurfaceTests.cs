@@ -28,10 +28,15 @@ namespace Microsoft.PowerFx.Tests
 
             var allowed = new HashSet<string>()
             {
+                "Microsoft.PowerFx.Dataverse.EngineExtensions",
+                "Microsoft.PowerFx.Dataverse.AttributeUtilityExtensions",
+
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
-                "Microsoft.PowerFx.Dataverse.AttributeUtility",
                 "Microsoft.PowerFx.Dataverse.MetadataExtensions",
+                "Microsoft.PowerFx.Dataverse.DataverseEntityCache",
+                "Microsoft.PowerFx.Dataverse.IDataverseEntityCache",
+                "Microsoft.PowerFx.Dataverse.IDataverseEntityCacheCleaner",
 
                 // Policies 
                 "Microsoft.PowerFx.Dataverse.Policy",
@@ -59,12 +64,16 @@ namespace Microsoft.PowerFx.Tests
 
             var allowed = new HashSet<string>()
             {
+                "Microsoft.PowerFx.Dataverse.AttributeUtility",
+                "Microsoft.PowerFx.Dataverse.DependencyInfo",
+
                 // Common Entity metadata providers
                 "Microsoft.PowerFx.Dataverse.IXrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider",
 
                 // used for Eval, but here because they need Fx Core Internals. 
                 "Microsoft.PowerFx.Dataverse.DVSymbolTable",
+                "Microsoft.PowerFx.Dataverse.DelegationEngineExtensions",
                 
                 // SQL compilation 
                 "Microsoft.PowerFx.Dataverse.DataverseEngine",

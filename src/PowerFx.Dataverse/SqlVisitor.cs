@@ -58,6 +58,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        public override RetVal Visit(DecimalLiteralNode node, Context context)
+        {
+            throw new NotImplementedException();
+        }
+
         public override RetVal Visit(BooleanLiteralNode node, Context context)
         {
             string val = node.LiteralValue ? "1" : "0";
@@ -392,10 +397,13 @@ namespace Microsoft.PowerFx.Dataverse
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(node, $"IIF({arg} IS NULL, N'', {arg})");
 
+                // Nop coercions
+                case UnaryOpKind.DateToDateTime:
+                    return node.Child.Accept(this, context);
+
                 case UnaryOpKind.DateTimeToNumber:
                 case UnaryOpKind.DateTimeToTime:
                 case UnaryOpKind.DateTimeToDate:
-                case UnaryOpKind.DateToDateTime:
                 case UnaryOpKind.DateToNumber:
                 case UnaryOpKind.DateToTime:
                 case UnaryOpKind.NumberToDate:
@@ -405,6 +413,14 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.TimeToDateTime:
                 case UnaryOpKind.TimeToNumber:
                     throw Library.BuildUnsupportedArgumentTypeException(node.IRContext.ResultType._type.GetKindString(), node.Child.IRContext.SourceContext);
+
+                case UnaryOpKind.OptionSetToText:
+                    if (node.Child is RecordFieldAccessNode fieldNode)
+                    {
+                        string name = fieldNode.Field.ToString();
+                        return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
+                    }
+                    goto default;
 
                 // TODO: other coorcions as new type support is added
                 default:

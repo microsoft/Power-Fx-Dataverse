@@ -69,36 +69,47 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         private static string GetUnits(CallNode callNode, int argumentIndex, SqlVisitor visitor, Context context)
         {
-            var units = "day";
             var unitsNode = callNode.Args.Count > argumentIndex ? callNode.Args[argumentIndex] : null;
-            if (unitsNode != null)
+            if (unitsNode == null)
             {
-                if (unitsNode is TextLiteralNode)
+                return "day"; // default value
+            }
+
+            string units = null;
+
+            if (unitsNode is UnaryOpNode u)
+            {
+                if (u.Child is RecordFieldAccessNode fieldNode)
                 {
-                    using (context.NewInlineLiteralContext())
-                    {
-                        var unitsEnum = unitsNode.Accept(visitor, context);
-                        units = unitsEnum.inlineSQL.ToLowerInvariant() switch
-                        {
-                            "seconds" => SqlStatementFormat.Second,
-                            "minutes" => SqlStatementFormat.Minute,
-                            "hours" => SqlStatementFormat.Hour,
-                            "days" => SqlStatementFormat.Day,
-                            "weeks" => SqlStatementFormat.Week,
-                            "months" => SqlStatementFormat.Month,
-                            "quarters" => SqlStatementFormat.Quarter,
-                            "years" => SqlStatementFormat.Year,
-                            _ => throw new SqlCompileException(SqlCompileException.InvalidTimeUnit, unitsNode.IRContext.SourceContext, GetArgumentName(callNode.Function, argumentIndex), callNode.Function.Name)
-                        };
-                    }
+                    units = fieldNode.Field.ToString().ToLowerInvariant();
                 }
-                else
+            }
+            else if (unitsNode is TextLiteralNode)
+            {
+                using (context.NewInlineLiteralContext())
                 {
-                    throw BuildLiteralArgumentException(callNode.Args[argumentIndex].IRContext.SourceContext);
+                    var unitsEnum = unitsNode.Accept(visitor, context);
+                    units = unitsEnum.inlineSQL.ToLowerInvariant();
                 }
             }
 
-            return units;
+            if (units != null)
+            {
+                return units switch
+                {
+                    "seconds" => SqlStatementFormat.Second,
+                    "minutes" => SqlStatementFormat.Minute,
+                    "hours" => SqlStatementFormat.Hour,
+                    "days" => SqlStatementFormat.Day,
+                    "weeks" => SqlStatementFormat.Week,
+                    "months" => SqlStatementFormat.Month,
+                    "quarters" => SqlStatementFormat.Quarter,
+                    "years" => SqlStatementFormat.Year,
+                    _ => throw new SqlCompileException(SqlCompileException.InvalidTimeUnit, unitsNode.IRContext.SourceContext, GetArgumentName(callNode.Function, argumentIndex), callNode.Function.Name)
+                };
+            }
+            
+            throw BuildLiteralArgumentException(callNode.Args[argumentIndex].IRContext.SourceContext);            
         }
 
         public static RetVal DatePart(SqlVisitor visitor, CallNode node, Context context, string part)

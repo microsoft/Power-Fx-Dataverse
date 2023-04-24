@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 try
                 {
-                    object fieldValue = AttributeUtility.ToAttributeObject(amd, field.Value);
+                    object fieldValue = amd.ToAttributeObject(field.Value);
 
                     string fieldName = field.Name;
 
@@ -174,6 +174,11 @@ namespace Microsoft.PowerFx.Dataverse
             catch (MessageSecurityException e)
             {
                 // thrown if we can't auth to server.                 
+                message = e.Message;
+            }
+            catch (InvalidOperationException e)
+            {
+                // Retrieve on missing entity will throw System.Net.WebException, which derives from System.InvalidOperationException
                 message = e.Message;
             }
             catch (IOException e)

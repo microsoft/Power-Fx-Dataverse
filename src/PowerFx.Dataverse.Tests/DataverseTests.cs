@@ -54,6 +54,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
         }
 
+        [TestMethod]
+        public void PowerFunctionBlockedTest()
+        {
+            var expr = "Power(2,5)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Power' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void SqrtFunctionBlockedTest()
+        {
+            var expr = "Sqrt(16)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Sqrt' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void LnFunctionBlockedTest()
+        {
+            var expr = "Ln(20)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Ln' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void ExpFunctionBlockedTest()
+        {
+            var expr = "Exp(10)";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(1, result.Errors.Count());
+            StringAssert.Contains(result.Errors.First().ToString(), "'Exp' is an unknown or unsupported function.");
+        }
+
         // baseline parameters for compilation
         public const string BaselineFormula = "new_CurrencyPrice + Calc + Latitude";
         public static EntityMetadataModel BaselineMetadata = new EntityMetadataModel
@@ -82,7 +138,8 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(38,10)
     DECLARE @v5 decimal(38,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
     SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
@@ -839,7 +896,6 @@ END
         [DataRow("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in right arg of equals")]
         [DataRow("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number right arg of not equals")]
         [DataRow("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Abs function")]
-        [DataRow("Power(UTCNow(), 2)", false, "Error 6-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Power function")]
         [DataRow("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Max function")]
         [DataRow("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Trunc function")]
         [DataRow("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Left function")]
@@ -894,7 +950,6 @@ END
         [DataRow("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.", DisplayName = "Today not supported")]
         [DataRow("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.", DisplayName = "IsToday not supported")]
         [DataRow("IsUTCToday(UTCToday())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCToday")]
-        [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
         [DataRow("IsUTCToday(tziDateOnly)", true, typeof(BooleanType), DisplayName = "IsUTCToday of TZI Date Only")]
         [DataRow("IsUTCToday(dateOnly)", true, typeof(BooleanType), DisplayName = "IsUTCToday of Date Only")]
         [DataRow("IsUTCToday(userLocalDateTime)", true, typeof(BooleanType), DisplayName = "IsUTCToday of User Local Date Time")]
@@ -923,7 +978,11 @@ END
         [DataRow("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType), DisplayName = "DateDiff User Local Date Only vs User Local Date Time")]
         [DataRow("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType), DisplayName = "> User Local Date Time vs. User Local Date Only")]
         [DataRow("tziDateTime <> tziDateOnly", true, typeof(BooleanType), DisplayName = "<> TZI Date Time vs. TZI Date Only")]
-        [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
+
+        // Regressed with https://github.com/microsoft/Power-Fx/issues/1379 
+        // [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
+        // [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
+
         [DataRow("UTCToday() = dateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. Date Only")]
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [DataRow("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= TZI Date Time vs. User Local Date Only")]

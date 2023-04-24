@@ -21,6 +21,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public class DVSymbolTable : SymbolTable, IGlobalSymbolNameResolver
     {
+        public const string SymTableName = "DataverseGlobals";
+
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
         IEnumerable<KeyValuePair<string, NameLookupInfo>> IGlobalSymbolNameResolver.GlobalSymbols
@@ -55,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
         public DVSymbolTable(CdsEntityMetadataProvider metadataProvider)
         {
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null);
-            DebugName = "DataverseGlobals";
+            DebugName = SymTableName;
         }
 
         // This requires internal types in PowerFx, so it needs to be in PowerFx.Dataverse
