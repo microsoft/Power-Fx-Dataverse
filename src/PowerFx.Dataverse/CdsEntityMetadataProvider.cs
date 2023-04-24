@@ -51,11 +51,24 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
+        private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
+
         internal IExternalDocument Document => _document;
 
         // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
         // Map logical name to display name
         private readonly Func<string,string> _displayNameLookup;
+
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, List<OptionSetMetadata> globalOpsets, IReadOnlyDictionary<string, string> displayNameLookup = null)
+        {
+            _innerProvider = provider;
+            _globalOptionSets = globalOpsets;
+            if (displayNameLookup != null)
+            {
+                _displayNameLookup = (logicalName) => displayNameLookup.TryGetValue(logicalName, out var displayName) ? displayName : null;
+            }
+            _document = new DataverseDocument(this);
+        }
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null)
         {
@@ -291,7 +304,45 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            var dataverseParserErrors = new List<string>();
+            foreach (var opset in _globalOptionSets)
+            {
+                string columnName = string.Empty;
+                bool parsed = false;
+                IExternalOptionSet optionSet = null;
+                var attribute = new PicklistAttributeMetadata(string.Empty)
+                {
+                    OptionSet = opset,
+                    LogicalName = opset.Name,
+                    MetadataId = Guid.Empty,
+                };
+                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
+
+                if (parsed)
+                {
+                    var dataverseOptionSet = optionSet as DataverseOptionSet;
+                    Contracts.Assert(dataverseOptionSet != null);
+
+                    var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
+                    var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+                    if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
+                    {
+                        // if the global option set is already registered, re-use the original, since binding assumes object equality
+                        dataverseOptionSet = globalOptionSet;
+                    }
+                    else
+                    {
+                        // register the option set with the document for global access using the display name
+                        RegisterOptionSet(uniqueName, dataverseOptionSet);
+
+                        // also register them with an invariant name
+                        var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
+                        RegisterOptionSet(logicalName, dataverseOptionSet);
+                    }
+                    optionSets[columnName] = dataverseOptionSet;
+                }
+            }
+
+             var dataverseParserErrors = new List<string>();
 
             var externalEntity = DataverseEntityDefinitionParser.ParseTable(
                 dataSetName,

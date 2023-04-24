@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -1524,6 +1525,51 @@ END
         };
 
         internal static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
+
+        [TestMethod]
+        public void CheckGlobalOptionSets()
+        {
+            var xrmModel = AllAttributeModel.ToXrm();
+            List<OptionSetMetadata> globalOpsets = new List<OptionSetMetadata>();
+            var opset1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label("one", 1033), Value = 1 },
+                    new OptionMetadata { Label = new Label("two", 1033), Value = 2 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global1",
+                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
+            };
+
+            var opset2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label("three", 1033), Value = 3 },
+                    new OptionMetadata { Label = new Label("four", 1033), Value = 4 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global2",
+                DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0])
+            };
+
+            globalOpsets.Add(opset1);
+            globalOpsets.Add(opset2);
+            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets));
+            var result = engine.Compile("Global2", new SqlCompileOptions());
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result2 = engine2.Compile("Global2", new SqlCompileOptions());
+
+            Assert.IsFalse(result.IsSuccess);
+            StringAssert.Contains(result.Errors.First().ToString(), "Not supported in formula columns.");
+            Assert.IsFalse(result2.IsSuccess);
+            StringAssert.Contains(result2.Errors.First().ToString(), "Name isn't valid.");
+        }
 
         [DataTestMethod]
         [DataRow("new_price * new_quantity", "Price * Quantity", DisplayName = "Logical Names")]
