@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Threading.Tasks;
@@ -37,15 +38,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return;
             }
 
+            var setup = new Dictionary<string, bool>
+            {
+                {  "NumberIsFloat", DataverseEngine.NumberIsFloat }
+            };
+
             // Build step copied all tests to output dir.
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                runner.AddDir();
+                runner.AddDir(setup);
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
-                    runner.AddFile(DataverseEngine.NumberIsFloat, path);
+                    runner.AddFile(setup, path);
                 }
 
                 var result = runner.RunTests();
@@ -62,11 +68,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Use this for local testing of a single testcase (uncomment "TestMethod")
         //[TestMethod]
         public void RunSingleTestCase()
-        { 
+        {
+
+            var setup = new Dictionary<string, bool>
+            {
+                {  "NumberIsFloat", DataverseEngine.NumberIsFloat }
+            };
+
             using (var sql = new SqlRunner(ConnectionString))
             {
                 var runner = new TestRunner(sql);
-                runner.AddFile(DataverseEngine.NumberIsFloat, @"c:\temp\t.txt");
+                runner.AddFile(setup, @"c:\temp\t.txt");
                 /*
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
                 {
