@@ -236,7 +236,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = field.VarType is SqlMoneyType ? new SqlBigType().ToSqlType() : SqlVisitor.ToSqlType(field.VarType);
+
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
