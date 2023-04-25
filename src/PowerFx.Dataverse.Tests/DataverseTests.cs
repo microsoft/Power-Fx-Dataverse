@@ -1560,7 +1560,7 @@ END
             globalOpsets.Add(opset1);
             globalOpsets.Add(opset2);
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets));
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets: globalOpsets));
             var result = engine.Compile("Global2", new SqlCompileOptions());
             var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
