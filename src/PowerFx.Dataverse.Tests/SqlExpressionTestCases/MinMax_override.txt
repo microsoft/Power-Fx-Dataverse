@@ -1,0 +1,14 @@
+﻿#override: MinMax_PowerFxV1CompatibilityRules.txt 
+
+>> Max(Blank())
+#Skip
+
+>> Min(Blank())
+#Skip
+
+>> Max(Blank(), Blank(), Blank())
+#Skip
+
+>> Min(Blank(), Blank(), Blank())
+#Skip
+
