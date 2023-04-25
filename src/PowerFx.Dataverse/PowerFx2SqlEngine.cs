@@ -30,11 +30,13 @@ namespace Microsoft.PowerFx.Dataverse
         // default decimal precision
         internal const int DefaultPrecision = 10;
 
+        internal static readonly Features DefaultFeatures = Features.PowerFxV1;
+
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(Features.PowerFxV1), culture)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
         {
         }
 

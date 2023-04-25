@@ -325,7 +325,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.Percent:
                     arg = node.Child.Accept(this, context);
-                    var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100)");
+                    var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100.0)");
                     context.PerformRangeChecks(result, node);
                     return result;
 
@@ -1210,7 +1210,16 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
-                    return true;
+                    // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
+                    var epsilon = Math.Abs(literal);
+                    if (epsilon < 1e-90 && epsilon > 0)
+                    {
+                        // Fall through to below, unsupported. 
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
                 else if (!(type is NumberType))
                 {

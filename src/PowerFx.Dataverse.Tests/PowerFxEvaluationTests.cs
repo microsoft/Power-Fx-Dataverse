@@ -26,6 +26,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// </summary>
         static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
+        // .txt tests will be filtered to match these seetings. 
+        static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
+        {
+            { "PowerFxV1CompatibilityRules", true },
+            { "NumberIsFloat", DataverseEngine.NumberIsFloat },
+            { "Default", false }              // anything not explicitly called out here is not supported
+        };
+
+        // These need to be consistent with _testSettings.
+        private SqlRunner NewSqlRunner()
+        {
+            return new SqlRunner(ConnectionString)
+            {
+                NumberIsFloat = DataverseEngine.NumberIsFloat,
+                Features = PowerFx2SqlEngine.DefaultFeatures
+            };
+        }
 
         [TestMethod]
         public void RunSqlTestCases()
@@ -38,20 +55,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return;
             }
 
-            var setup = new Dictionary<string, bool>
-            {
-                {  "NumberIsFloat", DataverseEngine.NumberIsFloat }
-            };
-
             // Build step copied all tests to output dir.
-            using (var sql = new SqlRunner(ConnectionString))
+            using (var sql = NewSqlRunner())
             {
                 var runner = new TestRunner(sql);
-                runner.AddDir(setup);
+                runner.AddDir(_testSettings);
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
-                    runner.AddFile(setup, path);
+                    runner.AddFile(_testSettings, path);
                 }
 
                 var result = runner.RunTests();
@@ -69,16 +81,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         //[TestMethod]
         public void RunSingleTestCase()
         {
-
-            var setup = new Dictionary<string, bool>
-            {
-                {  "NumberIsFloat", DataverseEngine.NumberIsFloat }
-            };
-
-            using (var sql = new SqlRunner(ConnectionString))
+            using (var sql = NewSqlRunner())
             {
                 var runner = new TestRunner(sql);
-                runner.AddFile(setup, @"c:\temp\t.txt");
+                runner.AddFile(_testSettings, @"c:\temp\t.txt");
                 /*
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
                 {
@@ -150,7 +156,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             protected override async Task<RunResult> RunAsyncInternal(string expr, string setupHandlerName = null)
             {
-                if (setupHandlerName != null)
+                var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
+
+                //iSetup.Flags != Core.Parser.TexlParser.Flags.None ???
+                if (iSetup.HandlerName != null ||
+                    iSetup.TimeZoneInfo != null)
                 {
                     throw new SetupHandlerNotFoundException();
                 }
