@@ -158,7 +158,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
 
-                //iSetup.Flags != Core.Parser.TexlParser.Flags.None ???
                 if (iSetup.HandlerName != null ||
                     iSetup.TimeZoneInfo != null)
                 {
