@@ -201,6 +201,7 @@ namespace Microsoft.PowerFx.Dataverse
                         try
                         {
                             exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
+                            parameters = ctx.GetParameters().ToList();
                         }
                         catch (NullReferenceException e)
                         {
@@ -305,7 +306,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     
                             if(field.Column.DType == AppMagic.Authoring.Importers.ServiceConfig.WadlDType.Currency)
                             {
-                                return $"{field.VarName} = [{field.Column.SchemaName}] / [exchangerate] * [{exchangeRateParameter}]";
+                                return $"{field.VarName} = [{field.Column.SchemaName}] / [exchangerate] * {exchangeRateParameter}";
                             }
                             else
                             {
