@@ -143,12 +143,12 @@ namespace Microsoft.PowerFx.Dataverse
                         SqlNumberBase leftDecimalType = new SqlDecimalType();
                         SqlNumberBase rightDecimalType = new SqlDecimalType();
 
-                        if (left.type is SqlBigType)
+                        if (left.type is SqlBigType || left.type is SqlMoneyType)
                         {
                             leftDecimalType = new SqlBigType(); 
                         }
 
-                        if (right.type is SqlBigType)
+                        if (right.type is SqlBigType || right.type is SqlMoneyType)
                         {
                             rightDecimalType = new SqlBigType();
                         }
@@ -470,7 +470,10 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     var varName = context.GetVarName(path, scope, node.IRContext.SourceContext, scopeNavType);
-                    return RetVal.FromVar(varName, context.GetReturnType(node));
+                    
+                    // As its lookup referencing field, we need return type of actual field
+                    var varDetails = context.GetVarDetails(varName);
+                    return RetVal.FromVar(varName, varDetails.VarType);
                 }
             }
             else if (node.From is RecordFieldAccessNode)
@@ -493,7 +496,8 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     string varName = context.GetVarName(path, parentVar.Scope, node.IRContext.SourceContext, scopeNavType);
-                    return RetVal.FromVar(varName, context.GetReturnType(node));
+                    var varDetails = context.GetVarDetails(varName);
+                    return RetVal.FromVar(varName, varDetails.VarType);
                 }
             }
             else if (node.From is ResolvedObjectNode resolvedObjectNode1 && resolvedObjectNode1.Value is DataverseOptionSet)
