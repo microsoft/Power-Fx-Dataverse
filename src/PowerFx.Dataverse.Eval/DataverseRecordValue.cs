@@ -225,12 +225,13 @@ namespace Microsoft.PowerFx.Dataverse
             if (!filteredEntityCollection.HasError)
             {
                 List<RecordValue> list = new();
+                var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
-                    var row = _connection.Marshal(entity);
+                    var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
                     list.Add(row);
                 }
-                
+             
                 result = FormulaValue.NewTable(recordType, list);
             }
             else
