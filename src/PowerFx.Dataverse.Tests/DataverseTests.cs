@@ -1560,15 +1560,19 @@ END
             globalOpsets.Add(opset1);
             globalOpsets.Add(opset2);
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets: globalOpsets));
-            var result = engine.Compile("Global2", new SqlCompileOptions());
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
-            var result2 = engine2.Compile("Global2", new SqlCompileOptions());
 
+            // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("Global2", new SqlCompileOptions());
             Assert.IsFalse(result.IsSuccess);
-            StringAssert.Contains(result.Errors.First().ToString(), "Not supported in formula columns.");
+            StringAssert.Contains(result.Errors.First().ToString(), "Name isn't valid. 'Global2' isn't recognized");
+
+            // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets: globalOpsets));
+            var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.IsFalse(result2.IsSuccess);
-            StringAssert.Contains(result2.Errors.First().ToString(), "Name isn't valid.");
+            StringAssert.Contains(result2.Errors.First().ToString(), "Not supported in formula columns.");
+            
         }
 
         [DataTestMethod]

@@ -51,6 +51,10 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
+        /// <summary>
+        /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
+        /// so, we are passing list of all global option sets so that these option sets are also processed and will be suggested in intellisense. 
+        /// </summary>
         private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
 
         internal IExternalDocument Document => _document;
@@ -59,7 +63,6 @@ namespace Microsoft.PowerFx.Dataverse
         // Map logical name to display name
         private readonly Func<string,string> _displayNameLookup;
 
-       
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOpsets = null)
         {
             // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
@@ -270,7 +273,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed) 
                 {
-                    var dataverseOptionSet = RegisterDataverseOptionSetHelper(entity, optionSet);
+                    var dataverseOptionSet = RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
             }
@@ -290,12 +293,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed)
                 {
-                    var dataverseOptionSet = RegisterDataverseOptionSetHelper(entity, optionSet);
+                    var dataverseOptionSet = RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
             }
 
-             var dataverseParserErrors = new List<string>();
+            var dataverseParserErrors = new List<string>();
 
             var externalEntity = DataverseEntityDefinitionParser.ParseTable(
                 dataSetName,
@@ -322,7 +325,7 @@ namespace Microsoft.PowerFx.Dataverse
             return dataSource;
         }
 
-        internal DataverseOptionSet RegisterDataverseOptionSetHelper(EntityMetadata entity, IExternalOptionSet optionSet)
+        private DataverseOptionSet RegisterDataverseOptionSet(EntityMetadata entity, IExternalOptionSet optionSet)
         {
             var dataverseOptionSet = optionSet as DataverseOptionSet;
             Contracts.Assert(dataverseOptionSet != null);
