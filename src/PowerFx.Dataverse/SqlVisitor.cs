@@ -267,7 +267,9 @@ namespace Microsoft.PowerFx.Dataverse
             var rightVal = right.Accept(this, context);
             Library.ValidateTypeCompatibility(leftVal, rightVal, sourceContext);
 
-            if ((leftVal.type is StringType && rightVal.type is BlankType) || (leftVal.type is BlankType && rightVal.type is StringType))
+            if ((left is ScopeAccessNode || right is ScopeAccessNode) && 
+                ((leftVal.type is StringType && rightVal.type is BlankType) || 
+                (leftVal.type is BlankType && rightVal.type is StringType)))
             {
                 var operation = equals ? "=" : "<>";
                 leftVal = (leftVal.type is StringType) ? leftVal : rightVal;
