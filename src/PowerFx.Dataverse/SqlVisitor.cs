@@ -271,7 +271,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var operation = equals ? "=" : "<>";
                 leftVal = (leftVal.type is StringType) ? leftVal : rightVal;
-                return context.SetIntermediateVariable(type, $"({leftVal} {operation} N'')");
+                int idx = int.Parse(leftVal.varName.Substring(2)) + 1;
+                var varDetails = context.GetVarDetails("@v" + idx);
+                return context.SetIntermediateVariable(type, $"({varDetails.VarName} {operation} 1)");
             }
 
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
@@ -891,6 +893,11 @@ namespace Microsoft.PowerFx.Dataverse
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = GetFormulaType(column, sourceContext), Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
+
+                    if (details.VarType is StringType)
+                    {
+                        SetIntermediateVariable(new BooleanType(), $"{varName} IS NULL");
+                    }
 
                     if (column.RequiresReference())
                     {

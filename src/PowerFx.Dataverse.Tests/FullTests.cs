@@ -375,8 +375,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("NullDec = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Blank() = NullStr", true, cx, metadata); 
                 ExecuteSqlTest("Blank() <> NullStr", false, cx, metadata);
-                ExecuteSqlTest("Blank() = \"\"", true, cx, metadata);
-                ExecuteSqlTest("Blank() <> \"\"", false, cx, metadata);
+                ExecuteSqlTest("Blank() = \"\"", false, cx, metadata);
+                ExecuteSqlTest("Blank() <> \"\"", true, cx, metadata);
                 ExecuteSqlTest("Blank() = String", false, cx, metadata);
                 ExecuteSqlTest("Blank() <> String", true, cx, metadata);
                 // coerce null to 0 in math functions
