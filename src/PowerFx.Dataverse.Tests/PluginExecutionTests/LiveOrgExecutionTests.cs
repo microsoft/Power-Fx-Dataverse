@@ -815,6 +815,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("First(Tasks).Owner")]
+        [DataRow("With( {r : First(Tasks).Owner}, r)")]
+        public void ExecuteViaInterpreterWithAndPolymorphic(string expression)
+        {
+            var tableName = new string[] { "account", "task" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is RecordValue);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public void AllNotSupportedAttributesTest()
         {
             string tableName = "PFxColumns";
