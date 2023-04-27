@@ -69,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
         // 
-        public const bool NumberIsFloat = true;
+        public const bool NumberIsFloat = false;
 
         public override ParserOptions GetDefaultParserOptionsCopy()
         {
@@ -177,7 +177,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static bool SupportedReturnType(FormulaType type)
         {
             return
-                type is SqlDecimalType ||
+                type is DecimalType || 
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type);
@@ -185,15 +185,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static FormulaType BuildReturnType(DType type)
         {
-            if (type.Kind == DKind.Number)
+            /*if (type.Kind == DKind.Number)
             {
                 // The default numeric type is decimal
                 return new SqlDecimalType();
             }
-            else if (type.Kind == DKind.Currency)
+            else */
+            if (type.Kind == DKind.Currency)
             {
                 // Currency isn't supported yet, for now, return decimal
-                return new SqlDecimalType();
+                return new SqlBigType();
             }
             else
             {

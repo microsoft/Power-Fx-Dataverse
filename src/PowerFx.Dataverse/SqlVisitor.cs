@@ -60,7 +60,19 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(DecimalLiteralNode node, Context context)
         {
-            throw new NotImplementedException();
+            var type = context.GetReturnType(node);
+
+            var val = RetVal.FromSQL(node.LiteralValue.ToString(), type);
+
+            if (context.InInlineLiteralContext)
+            {
+                return val;
+            }
+            else
+            {
+                return context.SetIntermediateVariable(node, fromRetVal: val);
+            }
+            
         }
 
         public override RetVal Visit(BooleanLiteralNode node, Context context)
@@ -108,7 +120,12 @@ namespace Microsoft.PowerFx.Dataverse
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
                 return ret;
-            }            
+            }
+            
+            if(node.Args.Count == 1)
+            {
+                return node.Args[0].Accept(this, context);
+            }
 
             throw new SqlCompileException(node.IRContext.SourceContext);
         }
@@ -140,7 +157,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var returnType = new SqlBigType();
-                        var decimalType = new SqlDecimalType();
+                        var decimalType = FormulaType.dec;
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
                         var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
@@ -595,6 +612,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // use big as the numeric type if not already resolved (e.g. local variables)
                 return new SqlBigType().ToSqlType();
+            }
+            else if (t is DecimalType)
+            {
+                // use big as the numeric type if not already resolved (e.g. local variables)
+                return SqlStatementFormat.SqlDecimalType;
             }
             else if (t is SqlMoneyType)
             {
