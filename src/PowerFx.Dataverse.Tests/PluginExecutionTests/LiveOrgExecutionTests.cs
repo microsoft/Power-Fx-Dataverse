@@ -137,12 +137,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [TestMethod]
         [DataRow("Index(Accounts, 1).Tasks", 0)]
+        [DataRow("LookUp(Contacts, 'Full Name' = \"Mike\").Accounts", 2)]
 
         // If Tasks field was empty, returns empty table.
         [DataRow("Index(Accounts, 2).Tasks", 2)]
+
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
-            var tableName = new string[] { "account", "task" };
+            var tableName = new string[] { "account", "task", "contact" };
 
             List<IDisposable> disposableObjects = null;
 
@@ -882,6 +884,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable("Accounts", "account");
             dv.AddTable("Tasks", "task");
             dv.AddTable("Note", "annotation");
+            dv.AddTable("Contacts", "contact");
 
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
 
