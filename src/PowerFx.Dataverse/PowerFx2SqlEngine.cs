@@ -350,10 +350,6 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
-            else if(result.type is StringType)
-            {
-                tw.WriteLine($"{indent}RETURN ISNULL({result}, N'')");
-            }
             else
             {
                 tw.WriteLine($"{indent}RETURN {result}");
