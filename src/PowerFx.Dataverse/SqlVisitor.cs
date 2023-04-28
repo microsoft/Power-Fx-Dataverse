@@ -543,6 +543,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)
             {
+                // blank coerces to empty string, which matches everything, so emit a wildcard
                 return "N'%'";
             }
             else

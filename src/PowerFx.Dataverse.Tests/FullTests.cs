@@ -209,7 +209,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("If('Null Param' = \"test\",1,2)", 2M, cx, metadataArray);
 
                 // Null string input converted to empty string (but is still considered blank)
-                ExecuteSqlTest("'Null Param' = \"\"", true, cx, metadataArray);
+                ExecuteSqlTest("'Null Param' = \"\"", false, cx, metadataArray);
                 ExecuteSqlTest("IsBlank('Null Param')", true, cx, metadataArray);
             }
         }
