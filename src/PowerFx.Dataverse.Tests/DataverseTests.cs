@@ -55,39 +55,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        public void CheckBlankFunction()
-        {
-            var expr = "If(Blank() = f1, 10, 20)";
-            var model = new EntityMetadataModel("test")
-            {
-                Attributes = new AttributeMetadataModel[]
-                {
-                    new AttributeMetadataModel
-                    {
-                         LogicalName= "f1",
-                         DisplayName = "f1",
-                         AttributeType = AttributeTypeCode.String,
-                         Format = StringFormat.Text,
-                         SourceType = 1
-                    },
-                    new AttributeMetadataModel
-                    {
-                         LogicalName= "test",
-                         DisplayName = "test",
-                         AttributeType = AttributeTypeCode.Uniqueidentifier,
-                    },
-                }
-            };
-
-            var metadata = model.ToXrm();
-            var engine = new PowerFx2SqlEngine(metadata);
-            var result = engine.Compile(expr, new SqlCompileOptions());
-
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.SqlFunction);
-        }
-
-        [TestMethod]
         public void PowerFunctionBlockedTest()
         {
             var expr = "Power(2,5)";

@@ -267,17 +267,6 @@ namespace Microsoft.PowerFx.Dataverse
             var rightVal = right.Accept(this, context);
             Library.ValidateTypeCompatibility(leftVal, rightVal, sourceContext);
 
-            if ((left is ScopeAccessNode || right is ScopeAccessNode) && 
-                ((leftVal.type is StringType && rightVal.type is BlankType) || 
-                (leftVal.type is BlankType && rightVal.type is StringType)))
-            {
-                var operation = equals ? "=" : "<>";
-                leftVal = (leftVal.type is StringType) ? leftVal : rightVal;
-                int idx = int.Parse(leftVal.varName.Substring(2)) + 1;
-                var varDetails = context.GetVarDetails("@v" + idx);
-                return context.SetIntermediateVariable(type, $"({varDetails.VarName} {operation} 1)");
-            }
-
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
             {
@@ -554,8 +543,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)
             {
-                // blank coerces to empty string, which matches everything, so emit a wildcard
-                return "N'%'";
+                return "NULL";
             }
             else
             {
@@ -895,12 +883,7 @@ namespace Microsoft.PowerFx.Dataverse
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = GetFormulaType(column, sourceContext), Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
-
-                    if (details.VarType is StringType)
-                    {
-                        SetIntermediateVariable(new BooleanType(), $"{varName} IS NULL");
-                    }
-
+                    
                     if (column.RequiresReference())
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
@@ -911,10 +894,10 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     // initialize a string variable to the empty string
-                    if (details.VarType is StringType)
-                    {
-                        AppendContentLine($"IF({varName} IS NULL) BEGIN SET {varName} = N'' END");
-                    }
+                    // if (details.VarType is StringType)
+                    // {
+                    // AppendContentLine($"IF({varName} IS NULL) BEGIN SET {varName} = N'' END");
+                    // }
                 }
                 return details;
             }

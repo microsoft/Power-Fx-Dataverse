@@ -394,6 +394,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(String)", false, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
+
+                ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata); 
+                ExecuteSqlTest("Text(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Upper(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Lower(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Concatenate(NullStr, \"a\", NullStr, \"b\") = \"ab\"", true, cx, metadata);
+                ExecuteSqlTest("Left(NullStr, 2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Right(NullStr, 2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Mid(NullStr,1,2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Len(NullStr) = 0", true, cx, metadata);
+                ExecuteSqlTest("StartsWith(\"abc\", Blank())", false, cx, metadata);
+                ExecuteSqlTest("EndsWith(\"abc\", Blank())", false, cx, metadata);
+                ExecuteSqlTest("StartsWith(\"abc\", \"\")", true, cx, metadata);
+                ExecuteSqlTest("EndsWith(\"abc\", \"\")", true, cx, metadata);
+                ExecuteSqlTest("TrimEnds(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Trim(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Replace(\"ab\", 5, 1, NullStr) = \"ab\"", true, cx, metadata);
+                ExecuteSqlTest("Substitute(NullStr, NullStr, \"a\") = \"\"", true, cx, metadata);
             }
         }
 
