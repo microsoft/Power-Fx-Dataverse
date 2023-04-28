@@ -543,7 +543,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)
             {
-                return "NULL";
+                return "N'%'";
             }
             else
             {
@@ -883,7 +883,7 @@ namespace Microsoft.PowerFx.Dataverse
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = GetFormulaType(column, sourceContext), Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
-                    
+
                     if (column.RequiresReference())
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
