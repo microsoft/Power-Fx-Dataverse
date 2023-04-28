@@ -286,6 +286,11 @@ namespace Microsoft.PowerFx.Dataverse
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
 
+            if (newEntity.HasError)
+            {
+                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
+            }
+
             foreach (var attr in newEntity.Response.Attributes)
             {
                 _entity.Attributes[attr.Key] = attr.Value;

@@ -1989,6 +1989,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }            
         }
 
+        [TestMethod]
+        public void RetrieveAsyncErrorTst()
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+            var errorMessage = "Something wrong happened when retrieving entity from server, after update.";
+            var expr = "Patch(t1, First(t1), {Price:111})";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+
+            // Inject error when retrieving.
+            el._getCustomErrorMessage = () => errorMessage;
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
