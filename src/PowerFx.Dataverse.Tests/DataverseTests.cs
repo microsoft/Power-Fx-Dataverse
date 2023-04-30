@@ -1530,12 +1530,12 @@ END
         public void CheckGlobalOptionSets()
         {
             var xrmModel = AllAttributeModel.ToXrm();
-            List<OptionSetMetadata> globalOpsets = new List<OptionSetMetadata>();
-            var opset1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+            List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
+            var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
                 new OptionMetadata[]
                 {
-                    new OptionMetadata { Label = new Label("one", 1033), Value = 1 },
-                    new OptionMetadata { Label = new Label("two", 1033), Value = 2 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
                 }
             )))
             {
@@ -1544,11 +1544,11 @@ END
                 DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
             };
 
-            var opset2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+            var optionSet2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
                 new OptionMetadata[]
                 {
-                    new OptionMetadata { Label = new Label("three", 1033), Value = 3 },
-                    new OptionMetadata { Label = new Label("four", 1033), Value = 4 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 3 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 4 },
                 }
             )))
             {
@@ -1557,8 +1557,8 @@ END
                 DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0])
             };
 
-            globalOpsets.Add(opset1);
-            globalOpsets.Add(opset2);
+            globalOptionSets.Add(optionSet1);
+            globalOptionSets.Add(optionSet2);
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
 
             // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
@@ -1568,11 +1568,13 @@ END
             StringAssert.Contains(result.Errors.First().ToString(), "Name isn't valid. 'Global2' isn't recognized");
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOpsets: globalOpsets));
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.IsFalse(result2.IsSuccess);
             StringAssert.Contains(result2.Errors.First().ToString(), "Not supported in formula columns.");
-            
+
+            result2 = engine2.Compile("(Global2.Three = Global2.Four)", new SqlCompileOptions());
+            Assert.IsTrue(result2.IsSuccess);
         }
 
         [DataTestMethod]

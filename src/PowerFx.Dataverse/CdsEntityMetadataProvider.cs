@@ -63,16 +63,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Map logical name to display name
         private readonly Func<string,string> _displayNameLookup;
 
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOpsets = null)
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
         {
             // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
             // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
 
             _innerProvider = provider;
-            if(globalOpsets != null)
+            if(globalOptionSets != null)
             {
-                _globalOptionSets = globalOpsets;
+                _globalOptionSets = globalOptionSets;
             }
 
             if (displayNameLookup != null)
@@ -278,15 +278,15 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            foreach (var opset in _globalOptionSets)
+            foreach (var globalOptionSet in _globalOptionSets)
             {
                 string columnName = string.Empty;
                 bool parsed = false;
                 IExternalOptionSet optionSet = null;
                 var attribute = new PicklistAttributeMetadata(string.Empty)
                 {
-                    OptionSet = opset,
-                    LogicalName = opset.Name,
+                    OptionSet = globalOptionSet,
+                    LogicalName = globalOptionSet.Name,
                     MetadataId = Guid.Empty,
                 };
                 parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
