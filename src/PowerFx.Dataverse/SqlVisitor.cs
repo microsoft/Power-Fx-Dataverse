@@ -893,12 +893,6 @@ namespace Microsoft.PowerFx.Dataverse
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));
                         GetVarName(primaryKeyPath, scope, sourceContext, navigation);
                     }
-
-                    // initialize a string variable to the empty string
-                    // if (details.VarType is StringType)
-                    // {
-                    // AppendContentLine($"IF({varName} IS NULL) BEGIN SET {varName} = N'' END");
-                    // }
                 }
                 return details;
             }

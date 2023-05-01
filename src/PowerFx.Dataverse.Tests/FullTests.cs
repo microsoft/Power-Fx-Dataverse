@@ -208,7 +208,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // v0 (return value) is not defaulted to empty string for null string input
                 ExecuteSqlTest("If('Null Param' = \"test\",1,2)", 2M, cx, metadataArray);
 
-                // Null string input converted to empty string (but is still considered blank)
+                // Null string input is not converted to empty string and is considered blank
                 ExecuteSqlTest("'Null Param' = \"\"", false, cx, metadataArray);
                 ExecuteSqlTest("IsBlank('Null Param')", true, cx, metadataArray);
             }
