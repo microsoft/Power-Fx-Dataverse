@@ -256,7 +256,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldType is not RecordType)
             {
                 // Polymorphic case. 
-                fieldType = RecordType.Empty();
+                fieldType = RecordType.Polymorphic();
             }
 
             result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
