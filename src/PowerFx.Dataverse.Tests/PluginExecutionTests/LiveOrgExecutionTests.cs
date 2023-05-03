@@ -136,6 +136,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("Index(Accounts, 1).Tasks", 0)]
+        [DataRow("LookUp(Contacts, 'Full Name' = \"Mike\").Accounts", 2)]
+
+        // If Tasks field was empty, returns empty table.
+        [DataRow("Index(Accounts, 2).Tasks", 2)]
+
+        public void ExecuteViaInterpreterOneToMany(string expression, int expected)
+        {
+            var tableName = new string[] { "account", "task", "contact" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is TableValue);
+                Assert.AreEqual(expected, ((TableValue)result).Count());
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         [DataRow("AsType(Blank(), JVLookups)")]
         [DataRow("AsType({test:1}, JVLookups)")]
         [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
@@ -214,8 +239,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void ExecuteViaInterpreterCollectNoKey()
         {
-            string tableName = "TableTest1S";
-            string expr = "Collect(TableTest1S, { Name: \"N2\" })";
+            string tableName = "account";
+            string expr = "Collect(Accounts,{'Account Name': \"test\", 'Primary Contact':First(Contacts)})";
             List<IDisposable> disposableObjects = null;
 
             try
@@ -228,6 +253,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+        }
+
+        [TestMethod]
+        public async Task SlowRepeatingLookup()
+        {
+            var token = "";
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Assert.Inconclusive("No token specified");
+            }
+
+            var engine = new RecalcEngine();
+            var serviceClient = new ServiceClient(new Uri("https://org1c5ae4ff.crm10.dynamics.com/"), (s) => Task.FromResult(token));
+            var dec = new DataverseEntityCache(serviceClient, maxEntries: 500, cacheLifeTime: new TimeSpan(0, 10, 0));
+
+            // Simulate first request for doc with id 29
+            var dvc = new DataverseConnection(dec, new XrmMetadataProvider(serviceClient));
+            dvc.AddTable("Accounts", "account");
+            dvc.AddTable("Contacts", "contact");
+
+            var recalcEngine = new RecalcEngine();
+
+            var repeatingTable = (TableValue)await recalcEngine.Check("Contacts", symbolTable: dvc.Symbols)
+                .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+
+            foreach (var record in repeatingTable.Rows)
+            {
+                recalcEngine.UpdateVariable("ThisItem", record.ToFormulaValue());
+
+                await recalcEngine.Check("ThisItem.'Full Name' & \" - First Account: \" & First(Filter(Accounts, ThisRecord.'Primary Contact'.Contact = ThisItem.Contact)).'Account Name'", symbolTable: dvc.Symbols)
+                    .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+            }
+
+            Console.WriteLine(dec.CacheSize);
         }
 
         [TestMethod]
@@ -754,6 +814,74 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [TestMethod]
+        [DataRow("First(Tasks).Owner")]
+        [DataRow("With( {r : First(Tasks).Owner}, r)")]
+        public void ExecuteViaInterpreterWithAndPolymorphic(string expression)
+        {
+            var tableName = new string[] { "account", "task" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is RecordValue);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void AllNotSupportedAttributesTest()
+        {
+            string tableName = "PFxColumns";
+            string baseExpr = "First(PFxColumns)";
+
+            var expectedErrors = new List<string>()
+            {
+                "Hyperlink column type not supported.",
+                "Image column type not supported.",
+                "File column type not supported.",
+            };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var dataverseResult = RunDataverseTest(tableName, baseExpr, out disposableObjects, async: true) as DataverseRecordValue;
+
+                foreach (var attr in dataverseResult.Entity.Attributes.Where(attr => attr.Key.Contains("cr100_aa")))
+                {
+                    try
+                    {
+                        var expr = string.Format("{0}.{1}", baseExpr, attr.Key);
+
+                        var result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
+
+                        if (result is ErrorValue errorValue)
+                        {
+                            Assert.IsTrue(expectedErrors.Contains(errorValue.Errors.First().Message));
+                        }
+                        else
+                        {
+                            Assert.IsInstanceOfType(result, typeof(FormulaValue));
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
             ServiceClient svcClient = GetClient();
@@ -773,18 +901,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 dv = new DataverseConnection(svcClient);
             }
 
+            dv.AddTable("Accounts", "account");
+            dv.AddTable("Tasks", "task");
+            dv.AddTable("Note", "annotation");
+            dv.AddTable("Contacts", "contact");
+
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
+
             foreach (string tableName in tableNames)
             {
-                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-                Assert.IsTrue(b1);
-
-                TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
-
-                Assert.IsNotNull(tableValue);
-                symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
+                string logicalName = null;
+                TableValue tableValue = null;
+                if (!dv.TryGetVariableName(tableName, out _))
+                {
+                    bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
+                    Assert.IsTrue(b1);
+                    tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
+                    Assert.IsNotNull(tableValue);
+                    symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
+                }
+                else
+                {
+                    symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
+                }
+                
             }
-            
+
 
             Assert.IsNotNull(symbols);
 
@@ -818,8 +960,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
-            bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-            Assert.IsTrue(b1);
+            //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
+            //Assert.IsTrue(b1);
+
+            string logicalName = tableName;
 
             DataverseConnection dv = null;
 
@@ -873,7 +1017,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;
+        private bool disposedValue;        
 
         public DataverseAsyncClient(ServiceClient client)
         {

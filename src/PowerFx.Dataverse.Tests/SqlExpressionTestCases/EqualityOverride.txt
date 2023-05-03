@@ -1,0 +1,18 @@
+#override: Equality.txt
+
+//  See  https://github.com/microsoft/Power-Fx/pull/1352
+// This is now illegal when PowerFxV1CompatibilityRules=true,
+// These are still in Equality.txt and should just be removed from there
+// since they're covered by OpMatrix_Eq_DifferentTypes*.txt
+>> "abc" = 23
+#skip
+
+>> 23 = "abc"
+#skip
+
+>> "abc" <> 23
+#skip
+
+>> 23 <> "abc"
+#skip
+

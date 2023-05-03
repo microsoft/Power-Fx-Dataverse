@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected override async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters);
+            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _connection.MaxRows);
 
             if (entities.HasError)
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
@@ -75,7 +75,28 @@ namespace Microsoft.PowerFx.Dataverse
                 list.Add(DValue<RecordValue>.Of(row));
             }
 
+            if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)
+            {
+                list.Remove(list.Last());
+                list.Add(DataverseExtensions.DataverseError<RecordValue>($"Too many entities in table {_entityMetadata.LogicalName}, more than {_connection.MaxRows} rows", nameof(GetRowsAsync)));
+            }
+
             return list;
+        }
+
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var result =await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
+
+            if (result.HasError)
+            {
+                return result.DValueError("Retrieve");
+            }
+
+            Entity entity = result.Response;
+            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+
+            return DValue<RecordValue>.Of(row);
         }
 
         public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
@@ -90,6 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return error1;
             }
+
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
 
             if (response.HasError)
@@ -103,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
 
-            // After mutation, lazely refresh Rows from server.
+            // After mutation, lazily refresh Rows from server.
             Refresh();
 
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
@@ -188,6 +210,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void RefreshCache()
         {
             Refresh();
+
+            if (_connection.Services is IDataverseEntityCacheCleaner dec)
+            {
+                dec.ClearCache(_entityMetadata.LogicalName);
+            }
         }
 
         public override DValue<RecordValue> CastRecord(RecordValue record, CancellationToken cancellationToken)

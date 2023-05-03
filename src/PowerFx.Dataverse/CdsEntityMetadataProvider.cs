@@ -59,6 +59,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null)
         {
+            // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
+            // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
+            Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
+
             _innerProvider = provider;
             if (displayNameLookup != null)
             {

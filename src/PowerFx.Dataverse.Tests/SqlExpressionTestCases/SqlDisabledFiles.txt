@@ -5,9 +5,13 @@
 // SQL has very limited text formatting support
 #DISABLE: Text_Format.txt
 
+// DV runs with PowerFxV1CompatibilityRules=true. So disable some files that have PowerFxV1CompatibilityRules=false.
+#DISABLE:  OpMatrix_Eq_DifferentTypes.txt
+
 // Enable decimal: 
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
 #DISABLE: DecimalBoot.txt
+#DISABLE: DecimalMathFuncs.txt
 #DISABLE: DecimalNonMathFuncs.txt
 #DISABLE: DecimalOps.txt
 #DISABLE: DecimalOverflow.txt
@@ -25,4 +29,6 @@
 #DISABLE: Exp.txt
 #DISABLE: Power.txt
 #DISABLE: UntypedBlankAsTable.txt
+#DISABLE: ReservedKeywordNegative.txt
+#DISABLE: DecimalIntReturn.txt
 

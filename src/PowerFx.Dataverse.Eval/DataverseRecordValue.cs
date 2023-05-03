@@ -4,12 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -48,6 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
+        public EntityReference EntityReference => _entity.ToEntityReference();
+
         public override bool TryGetPrimaryKey(out string key)
         {
             key = _entity.Id.ToString();
@@ -69,6 +75,11 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
             }
+            else if (_metadata.TryGetOneToManyRelationship(fieldName, out var relation))
+            {
+                value = relation;
+                return true;
+            }
 
             value = null;
             return false;
@@ -76,48 +87,73 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
+            (bool isSuccess, FormulaValue value) = TryGetFieldAsync(fieldType, fieldName, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            result = value;
+            return isSuccess;
+        }
+
+        protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
+        {
+            FormulaValue result;
+
             // If primary key is missing from Attributes, still get it from the entity. 
             if (fieldName == _metadata.PrimaryIdAttribute)
             {
                 result = FormulaValue.New(_entity.Id);
-                return true;
+                return (true, result);
+            }
+
+            if (_metadata.TryGetAttribute(fieldName, out var amd))
+            {
+                bool unsupportedType = false;
+                string errorMessage = string.Empty;
+
+                if (amd is ImageAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Image column type not supported.";
+                }
+                else if (amd is FileAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "File column type not supported.";
+                }
+                else if (amd is ManagedPropertyAttributeMetadata)
+                {
+                    unsupportedType = true;
+                    errorMessage = "Managed property column type not supported.";
+                }
+
+                if (unsupportedType)
+                {
+                    result = NewError(new ExpressionError()
+                    {
+                        Kind = ErrorKind.Unknown,
+                        Severity = ErrorSeverity.Critical,
+                        Message = errorMessage
+                    });
+                    return (true, result);
+                }
             }
 
             // IR should convert the fieldName from display to Logical Name. 
-            if (!TryGetAttributeOrRelationship(fieldName, out var value))
+            if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
             {
                 result = null;
-                return false;
+                return (false, result);
             }
 
-            if (value == null)
+            if (value is OneToManyRelationshipMetadata relationshipMetadata)
             {
-                // Caller will convert to Blank. 
-                result = null;
-                return false; 
+                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken);
+                return (true, result);
             }
 
             if (value is EntityReference reference)
             {
-                // Blank was already handled, vlaue would have been null. 
-                DataverseResponse<Entity> newEntity = _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id).ConfigureAwait(false).GetAwaiter().GetResult();
-
-                if (newEntity.HasError)
-                {
-                    result = newEntity.DValueError(nameof(IDataverseUpdater.UpdateAsync)).ToFormulaValue();
-                    return true;
-                }
-
-                var newMetadata = _connection.GetMetadataOrThrow(newEntity.Response.LogicalName);
-
-                if (fieldType is not RecordType)
-                {
-                    // Polymorphic case. 
-                    fieldType = RecordType.Empty();
-                }
-
-                result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
-                return true;
+                // Blank was already handled, value would have been null. 
+                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken);
+                return (true, result);
             }
 
             if (value is DateTime dt && dt.Kind == DateTimeKind.Utc)
@@ -130,13 +166,13 @@ namespace Microsoft.PowerFx.Dataverse
             if (value is Money money)
             {
                 result = PrimitiveValueConversions.Marshal(money.Value, fieldType);
-                return true;
+                return (true, result);
             }
 
             // Handle primitives
             if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
             {
-                return true;
+                return (true, result);
             }
 
             // Options, enums, etc?
@@ -145,7 +181,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (TryGetValue(opt, value, out var osResult))
                 {
                     result = osResult;
-                    return true;
+                    return (true, result);
                 }
             }
 
@@ -158,7 +194,73 @@ namespace Microsoft.PowerFx.Dataverse
             };
 
             result = NewError(expressionError);
-            return true;
+            return (true, result);
+        }
+
+        private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)
+        {
+            var refernecingTable = relationshipMetadata.ReferencingEntity;
+            string referencingAttribute = relationshipMetadata.ReferencingAttribute;
+            FormulaValue result;
+            var recordType = ((TableType)fieldType).ToRecord();
+            if (recordType == null)
+            {
+                throw new InvalidOperationException("Field Type should be a table value");
+            }
+
+            var query = new QueryExpression(refernecingTable)
+            {
+                ColumnSet = new ColumnSet(true),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                        {
+                            new ConditionExpression(referencingAttribute, ConditionOperator.Equal, _entity.Id)
+                        }
+                }
+            };
+
+            var filteredEntityCollection = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken);
+
+            if (!filteredEntityCollection.HasError)
+            {
+                List<RecordValue> list = new();
+                var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
+                foreach (var entity in filteredEntityCollection.Response.Entities)
+                {
+                    var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
+                    list.Add(row);
+                }
+             
+                result = FormulaValue.NewTable(recordType, list);
+            }
+            else
+            {
+                result = filteredEntityCollection.DValueError(nameof(IDataverseReader.RetrieveMultipleAsync)).ToFormulaValue();
+            }
+            return result;
+        }
+
+        private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, CancellationToken cancellationToken)
+        {
+            FormulaValue result;
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken);
+
+            if (newEntity.HasError)
+            {
+                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync)).ToFormulaValue();
+            }
+
+            var newMetadata = _connection.GetMetadataOrThrow(newEntity.Response.LogicalName);
+
+            if (fieldType is not RecordType)
+            {
+                // Polymorphic case. 
+                fieldType = RecordType.Polymorphic();
+            }
+
+            result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
+            return result;
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
@@ -183,6 +285,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
+
+            if (newEntity.HasError)
+            {
+                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
+            }
 
             foreach (var attr in newEntity.Response.Attributes)
             {

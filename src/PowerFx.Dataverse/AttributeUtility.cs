@@ -33,6 +33,27 @@ namespace Microsoft.PowerFx.Dataverse
             return amd != null;
         }
 
+        public static bool TryGetOneToManyRelationship(this EntityMetadata entityMetadata, string fieldName, out OneToManyRelationshipMetadata relationship)
+        {
+            if(entityMetadata?.OneToManyRelationships == null)
+            {
+                relationship = default;
+                return false;
+            }
+
+            foreach (var relation in entityMetadata.OneToManyRelationships ?? Enumerable.Empty<OneToManyRelationshipMetadata>())
+            {
+                if (relation.ReferencedEntityNavigationPropertyName == fieldName)
+                {
+                    relationship = relation;
+                    return true;
+                }
+            }
+
+            relationship = default;
+            return false;
+        }
+
         public static bool TryGetRelationship(this EntityMetadata entityMetadata, string fieldName, out string realAttributeName)
         {
             if (entityMetadata == null)
@@ -79,74 +100,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
             realAttributeName = null;
             return false;
-        }
-
-        /// <summary>
-        /// Convert an Power Fx FormulaValue to an entity Object value. 
-        /// </summary>
-        /// <param name="amd"></param>
-        /// <param name="fxValue"></param>
-        /// <returns>object that can be assigned to Entity.Attributes.</returns>
-        public static object ToAttributeObject(AttributeMetadata amd, FormulaValue fxValue)
-        {
-            if (fxValue is BlankValue)
-            {
-                return null;
-            }
-
-            switch (amd.AttributeType.Value)
-            {
-                case AttributeTypeCode.Boolean:
-                    if (fxValue is FxOptionSetValue optionSetValue)
-                    {
-                        if (AttributeUtility.TryConvertBooleanOptionSetOptionToBool(optionSetValue.Option, out bool result))
-                        {
-                            return result;
-                        }
-
-                        throw new NotImplementedException($"BooleanOptionSet {optionSetValue.Option} not supported");
-                    }
-
-                    return ((BooleanValue)fxValue).Value;
-
-                case AttributeTypeCode.DateTime:
-                    return (DateTime) fxValue.ToObject();
-
-                case AttributeTypeCode.Decimal:
-                    return (Decimal)((NumberValue)fxValue).Value;
-
-                case AttributeTypeCode.Double:
-                    return ((NumberValue)fxValue).Value;
-
-                case AttributeTypeCode.Integer:
-                    return (int)((NumberValue)fxValue).Value;
-
-                case AttributeTypeCode.Memo:
-                case AttributeTypeCode.String:
-                    return ((StringValue)fxValue).Value;
-
-                case AttributeTypeCode.BigInt:
-                case AttributeTypeCode.Uniqueidentifier:
-                    return fxValue.ToObject();
-
-                case AttributeTypeCode.Picklist:
-                    return new XrmOptionSetValue(int.Parse(((FxOptionSetValue) fxValue).Option));
-                    
-                case AttributeTypeCode.Money:
-                    return new Money((decimal)((NumberValue)fxValue).Value);
-
-                case AttributeTypeCode.CalendarRules:
-                case AttributeTypeCode.Customer:
-                case AttributeTypeCode.EntityName:
-                case AttributeTypeCode.Virtual:
-                case AttributeTypeCode.Lookup: // EntityReference
-                case AttributeTypeCode.ManagedProperty:
-                case AttributeTypeCode.PartyList:
-                case AttributeTypeCode.State:
-                case AttributeTypeCode.Status:
-                default:
-                    throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
-            }
         }
 
         public static bool TryConvertBooleanOptionSetOptionToBool(string opt, out bool result)
