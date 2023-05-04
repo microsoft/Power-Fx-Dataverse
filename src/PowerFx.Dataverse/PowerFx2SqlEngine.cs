@@ -179,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse
                 tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
                 // schemabinding only applies if there are no reference fields
                 var refFieldCount = ctx.GetReferenceFields().Count();
-                if (refFieldCount == 0)
+                if (refFieldCount == 0 && !(expression.Contains("UTCNow()") || expression.Contains("UTCToday()")))
                 {
                     tw.WriteLine($"  {SqlStatementFormat.WithSchemaBindingFormat}");
                 }
