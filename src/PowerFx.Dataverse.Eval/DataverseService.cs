@@ -44,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse
         public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query.ToString()} returned nothing");
+            return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query} returned nothing");
         }
 
         public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))

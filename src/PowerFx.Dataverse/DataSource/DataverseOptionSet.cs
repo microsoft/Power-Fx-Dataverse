@@ -6,18 +6,13 @@
 
 
 using Microsoft.AppMagic.Authoring;
-using Microsoft.AppMagic.Common;
-using Microsoft.PowerFx.Core.App;
-using System.Collections.Generic;
-using Microsoft.PowerFx.Core.App.Controls;
-using Microsoft.PowerFx.Core.Entities;
-using Microsoft.PowerFx.Core.Errors;
-using Microsoft.PowerFx.Core.UtilityDataStructures;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Core;
-using System.Linq;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Types;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {

@@ -51,14 +51,14 @@ namespace Microsoft.PowerFx.Dataverse
             if (/*!odataParameters.IsSupported()*/ true)
                 throw new NotDelegableException();
 
-            var oData = _oDataParameters;
+            //var oData = _oDataParameters;
 
-            if (odataParameters.Top > 0)
-                oData = oData.WithTop(odataParameters.Top);
-            if (!string.IsNullOrEmpty(odataParameters.Filter))
-                oData = oData.WithFilter(odataParameters.Filter);
+            //if (odataParameters.Top > 0)
+            //    oData = oData.WithTop(odataParameters.Top);
+            //if (!string.IsNullOrEmpty(odataParameters.Filter))
+            //    oData = oData.WithFilter(odataParameters.Filter);
 
-            return new DataverseTableValue(_recordType, _connection, _entityMetadata, oData);
+            //return new DataverseTableValue(_recordType, _connection, _entityMetadata, oData);
         }
 
         protected override async Task<List<DValue<RecordValue>>> GetRowsAsync()
