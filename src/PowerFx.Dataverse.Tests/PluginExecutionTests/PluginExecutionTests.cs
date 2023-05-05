@@ -2022,8 +2022,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
-        static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
-        static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
+        // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
+        // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
         static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 

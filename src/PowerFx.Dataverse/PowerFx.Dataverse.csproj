@@ -10,7 +10,7 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1701;1702;1998</NoWarn>
+    <NoWarn>1702;1998;NU5104;NU1701</NoWarn>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 

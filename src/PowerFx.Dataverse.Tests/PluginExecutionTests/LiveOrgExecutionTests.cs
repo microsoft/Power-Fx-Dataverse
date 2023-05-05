@@ -554,8 +554,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 DateTime dt2 = (result2 as DateTimeValue).Value;
                 Assert.AreEqual(dt, dt2);
+#pragma warning restore CS0618 // Type or member is obsolete
             }
             finally
             {

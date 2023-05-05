@@ -125,7 +125,8 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             BinaryOpKind.AddNumbers => "+",
                             BinaryOpKind.DivNumbers => "/",
-                            BinaryOpKind.MulNumbers => "*"
+                            BinaryOpKind.MulNumbers => "*",
+                            _ => throw new NotImplementedException($"Unsupported BinaryOpKind {node.Op}")
                         };
 
                         Library.ValidateNumericArgument(node.Left);
