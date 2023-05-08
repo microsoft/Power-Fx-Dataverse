@@ -120,28 +120,6 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<T>.Of(FormulaValue.NewError(GetExpressionError(message, messageKey: method)));
         }
 
-        // Return 0 if not found. 
-        private static int GetHttpStatusCode(FaultException<OrganizationServiceFault> e)
-        {
-            return GetHttpStatusCode(e.Detail);
-        }
-
-        private static int GetHttpStatusCode(OrganizationServiceFault e)
-        {
-            var props = e?.ErrorDetails;
-            if (props != null)
-            {
-                if (props.TryGetValue("ApiExceptionHttpStatusCode", out var data))
-                { 
-                    if (data is int code)
-                    {
-                        return code;
-                    }                    
-                }
-            }
-            return 0;
-        }
-
         // Call IOrganizationService and translate responses. 
         // This should be the one place we translate from IOrganizationClient failures.
         public static DataverseResponse<T> DataverseCall<T>(Func<T> call, string operationDescription)

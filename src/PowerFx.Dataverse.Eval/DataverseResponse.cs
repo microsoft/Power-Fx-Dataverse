@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
             Response = response;
         }
 
-        public static DataverseResponse<T> NewError(string error)
+        public new static DataverseResponse<T> NewError(string error)
         {
             // Error and Response are mutually exclusive.
             return new DataverseResponse<T>(default(T))
