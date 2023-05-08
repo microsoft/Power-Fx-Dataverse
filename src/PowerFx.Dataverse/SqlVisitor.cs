@@ -1018,6 +1018,7 @@ namespace Microsoft.PowerFx.Dataverse
             internal static string InvalidArgumentErrorCode => GetErrorCode(ErrorKind.InvalidArgument);
 
             internal StringBuilder _sbContent = new StringBuilder();
+            internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
 
             // TODO: make this private so it is only called from other higher level functions
