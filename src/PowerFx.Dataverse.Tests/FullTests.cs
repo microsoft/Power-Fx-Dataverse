@@ -239,8 +239,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // v0 (return value) is not defaulted to empty string for null string input
                 ExecuteSqlTest("If('Null Param' = \"test\",1,2)", 2M, cx, metadataArray);
 
-                // Null string input converted to empty string (but is still considered blank)
-                ExecuteSqlTest("'Null Param' = \"\"", true, cx, metadataArray);
+                // Null string input is not converted to empty string and is considered blank
+                ExecuteSqlTest("'Null Param' = \"\"", false, cx, metadataArray);
                 ExecuteSqlTest("IsBlank('Null Param')", true, cx, metadataArray);
             }
         }
@@ -404,8 +404,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("NullDec <> Blank()", false, cx, metadata);
                 ExecuteSqlTest("Blank() = NullDec", true, cx, metadata);
                 ExecuteSqlTest("NullDec = Blank()", true, cx, metadata);
-                ExecuteSqlTest("Blank() = NullStr", false, cx, metadata); // null strings converted to empty for parity with legacy
-                ExecuteSqlTest("Blank() <> NullStr", true, cx, metadata);
+                ExecuteSqlTest("Blank() = NullStr", true, cx, metadata); 
+                ExecuteSqlTest("Blank() <> NullStr", false, cx, metadata);
+                ExecuteSqlTest("Blank() = \"\"", false, cx, metadata);
+                ExecuteSqlTest("Blank() <> \"\"", true, cx, metadata);
+                ExecuteSqlTest("Blank() = String", false, cx, metadata);
+                ExecuteSqlTest("Blank() <> String", true, cx, metadata);
                 // coerce null to 0 in math functions
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
                 // coerce null to 0 in math operations
@@ -421,6 +425,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(String)", false, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
+                ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata); 
+                ExecuteSqlTest("Text(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Upper(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Lower(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Concatenate(NullStr, \"a\", NullStr, \"b\") = \"ab\"", true, cx, metadata);
+                ExecuteSqlTest("Left(NullStr, 2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Right(NullStr, 2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Mid(NullStr,1,2) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Len(NullStr) = 0", true, cx, metadata);
+                ExecuteSqlTest("TrimEnds(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Trim(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Replace(\"ab\", 5, 1, NullStr) = \"ab\"", true, cx, metadata);
+                ExecuteSqlTest("Substitute(NullStr, NullStr, \"a\") = \"\"", true, cx, metadata);
             }
         }
 
