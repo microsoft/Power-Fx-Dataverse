@@ -153,9 +153,12 @@ namespace Microsoft.PowerFx.Dataverse
                             rightDecimalType = new SqlBigType();
                         }
 
+                        string leftOperand = left != null && context.GetVarDetails(left.varName).Column.Equals("exchangerate") ? Library.CoerceNullToInt(left) : Library.CoerceNullToNumberType(left, leftDecimalType);
+                        string rightOperand = right != null && context.GetVarDetails(right.varName).Column.Equals("exchangerate") ? Library.CoerceNullToInt(right) : Library.CoerceNullToNumberType(right, rightDecimalType);
+
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, leftDecimalType)} {op} {Library.CoerceNullToNumberType(right, rightDecimalType)})");
+                        var result = context.SetIntermediateVariable(returnType, $"({leftOperand} {op} {rightOperand})");
                         context.PerformRangeChecks(result, node);
 
                         return result;

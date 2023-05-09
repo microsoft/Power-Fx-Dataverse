@@ -289,7 +289,8 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {SqlVisitor.ToSqlType(temp.Item2)}");
+                    string tempVariableType = temp.Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(temp.Item2);
+                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 
                 if (ctx.DoesDateDiffOverflowCheck)
