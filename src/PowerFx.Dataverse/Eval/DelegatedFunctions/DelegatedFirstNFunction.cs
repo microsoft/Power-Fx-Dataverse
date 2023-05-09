@@ -7,7 +7,7 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __Lookup(Table, Id=Guid)  
+    // Generate a lookup call for: __FirstN(Table, count)  
     internal class DelegatedFirstNFunction : DelegateFunction
     {
         public DelegatedFirstNFunction(DelegationHooks hooks, TableType tableType)
