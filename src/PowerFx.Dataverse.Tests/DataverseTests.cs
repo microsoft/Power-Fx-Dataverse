@@ -114,12 +114,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void CheckSchemaBinding()
         {
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                        LogicalName = "new_field",
+                        DisplayName = "field",
+                        AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+
             var expr = "UTCNow()";
-
-            var engine = new PowerFx2SqlEngine();
             var result = engine.Compile(expr, new SqlCompileOptions());
-
             Assert.IsFalse(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
+
+            expr = "field * 10";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.IsTrue(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
         }
 
         // baseline parameters for compilation
