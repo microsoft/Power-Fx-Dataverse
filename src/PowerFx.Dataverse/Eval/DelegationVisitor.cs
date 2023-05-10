@@ -353,6 +353,19 @@ namespace Microsoft.PowerFx.Dataverse
                     return Ret(newNode);
                 }
             }
+            else if (func == BuiltinFunctionsCore.Filter.Name)
+            {
+                if (node.Args.Count == 2)
+                {
+                    var predicate = node.Args[1];
+                    var pr = predicate.Accept(new PredicateIRVisitor(node, _hooks), null); // TODO: Filter gen
+                    if (pr.isDelegable)
+                    {
+                        var newNode = _hooks.MakeFilterCall(tableArg, pr.node);
+                        return Ret(newNode);
+                    }
+                }
+            }
 
             // Other delegating functions, continue to compose...
             // - First, 
