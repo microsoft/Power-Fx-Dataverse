@@ -102,6 +102,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var reason = new ExpressionError
                 {
                     MessageKey = "WrnDelagationTableNotSupported",
+                    MessageArgs = new object[] { ret._metadata.LogicalName },
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
