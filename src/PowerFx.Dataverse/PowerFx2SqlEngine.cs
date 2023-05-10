@@ -197,11 +197,32 @@ namespace Microsoft.PowerFx.Dataverse
                         var del = ",";
                         var fieldName = "exchangerate";
                         var typeName = "decimal(28,12)";
+                        int existingExchangeRateParameterCount = 0;
 
                         try
                         {
-                            exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
-                            parameters = ctx.GetParameters().ToList();
+                            var existingParametersList = ctx.GetParameters().ToList();
+
+                            foreach (Tuple<Microsoft.AppMagic.Authoring.Importers.DataDescription.CdsColumnDefinition, FormulaType> parameter in existingParametersList)
+                            {
+                                if (parameter.Item1.LogicalName.Equals("exchangerate"))
+                                {
+                                    existingExchangeRateParameterCount++;
+                                }
+                            }
+
+                            // if exchange rate is already present in parameter list then no need to add again
+                            if (existingExchangeRateParameterCount == 0)
+                            {
+                                exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
+                                parameters = ctx.GetParameters().ToList();
+                                tw.WriteLine($"    {del} {exchangeRateParameter} {typeName} -- {fieldName}");
+                            }
+                            else if(existingExchangeRateParameterCount == 1)
+                            {
+                                exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
+
+                            }
                         }
                         catch (NullReferenceException e)
                         {
@@ -211,8 +232,6 @@ namespace Microsoft.PowerFx.Dataverse
                             errorResult.SanitizedFormula = sanitizedFormula;
                             return errorResult;
                         }
-
-                        tw.WriteLine($"    {del} {exchangeRateParameter} {typeName} -- {fieldName}");
                     }
                 }
 
