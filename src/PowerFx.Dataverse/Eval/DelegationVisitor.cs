@@ -102,7 +102,6 @@ namespace Microsoft.PowerFx.Dataverse
                 var reason = new ExpressionError
                 {
                     MessageKey = "WrnDelagationTableNotSupported",
-                    MessageArgs = new object[] { ret._metadata.LogicalName },
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
@@ -225,8 +224,6 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (left2.Parent.Id == right2.Parent.Id && 
                                     left2.Name == right2.Name)
                                 {
-                                    // Issue warning
-                                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                                     var reason = new ExpressionError
                                     {
                                         MessageKey = "WrnDelagationPredicate",

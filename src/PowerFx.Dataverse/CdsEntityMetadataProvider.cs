@@ -391,6 +391,11 @@ namespace Microsoft.PowerFx.Dataverse
         }
         internal IEnumerable<DataverseOptionSet> OptionSets => _optionSets.Values.Distinct();
 
+        public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)
+        {
+            return false;
+        }
+
         #region IDisplayNameProvider implementation
         /// <summary>
         /// Get the DisplayCollectionName for an entity, based

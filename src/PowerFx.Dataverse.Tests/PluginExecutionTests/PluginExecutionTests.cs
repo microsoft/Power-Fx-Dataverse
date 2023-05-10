@@ -1208,7 +1208,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             100.0, // wrapper in Filter, can't delegate
             "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
-            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            "Warning 14-16: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets."
             )]
                         
         [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
@@ -1229,18 +1229,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("First(t1).Price",
             100.0, // unsupported function, can't yet delegate
             "(First(t1)).new_price",
-            "Warning 6-8: Delegating this operation on table 'local' is not supported."
+            "Warning 6-8: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets."
             )]
 
         [DataRow("Last(t1).Price",
             100.0, // unsupported function, can't yet delegate
             "(Last(t1)).new_price",
-            "Warning 5-7: Delegating this operation on table 'local' is not supported."
+            "Warning 5-7: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets."
             )]
         [DataRow("CountRows(t1)",
             1.0, // unsupported function, can't yet delegate
             "CountRows(t1)",
-            "Warning 10-12: Delegating this operation on table 'local' is not supported."
+            "Warning 10-12: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets."
             )]
 
         // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
@@ -1252,7 +1252,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("IsBlank(Filter(t1, 1=1))",
             false, // nothing to delegate
             "IsBlank(Filter(t1, (EqNumbers(1,1))))",
-            "Warning 15-17: Delegating this operation on table 'local' is not supported.")]
+            "Warning 15-17: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets.")]
 
 
         [DataRow("Collect(t1, { Price : 200}).Price",
@@ -1263,7 +1263,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0, // Aliasing prevents delegation. 
             "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
-            "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
+            "Warning 10-12: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets.")]
 
         // $$$ Confirm is NotFound Error or Blank? 
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
@@ -1302,7 +1302,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation();
+            engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
 
@@ -1355,7 +1355,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Local Table doesn't get delegated
         [DataRow("FirstN(Filter(t1, 1=1), 1)",
             "FirstN(Filter(t1, (EqNumbers(1,1))), 1)",
-            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            "Warning 14-16: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets."
             )]
 
         // FirstN wrapped in another function
@@ -1365,7 +1365,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, FirstN(r, 100))",
             "With({r:t1}, (FirstN(r, 100)))",
-            "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
+            "Warning 10-12: This operation may not work as expected on large tables (>999 rows). We are working on delegating formulas to support large data sets.")]
         public void FirstNDelegation(string expr, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -1379,7 +1379,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation();
+            engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100));
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
@@ -1409,19 +1409,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(result is TableValue);
         }
 
-        // The new test cases will fail once new delegation warning messages are translated.
-        // We'll then update them on that.
         [DataTestMethod]
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.")]
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: Delegating this operation on table 'local' is not supported."
-            )]
+            "Warning 22-27: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
+            "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
-            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord.")]
+            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+
+        // This is a wrong error message and will fail once the new message keys gets translated.
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            "Warning 14-16: A delegação desta operação na tabela \"999\" não tem suporte."
+            )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
             var logicalName = "local";
@@ -1434,7 +1434,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation();
+            engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
 
@@ -2129,7 +2129,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
             }
 
-            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
+            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache, maxRows: 999);
 
             return (dvConnection, entityLookup);
         }
