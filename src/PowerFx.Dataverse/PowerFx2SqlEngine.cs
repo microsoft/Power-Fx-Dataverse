@@ -177,9 +177,9 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
-                // schemabinding only applies if there are no reference fields
+                // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
-                if (refFieldCount == 0)
+                if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
                 {
                     tw.WriteLine($"  {SqlStatementFormat.WithSchemaBindingFormat}");
                 }

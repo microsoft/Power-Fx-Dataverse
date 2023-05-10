@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -108,6 +109,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsFalse(result.IsSuccess);
             Assert.AreEqual(1, result.Errors.Count());
             StringAssert.Contains(result.Errors.First().ToString(), "'Exp' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void CheckSchemaBinding()
+        {
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                        LogicalName = "new_field",
+                        DisplayName = "field",
+                        AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+
+            var expr = "UTCNow()";
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.IsFalse(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
+
+            expr = "field * 10";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.IsTrue(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
         }
 
         // baseline parameters for compilation
