@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            {
+                throw new NotImplementedException();
+            }
+
             // Are symbols from this table delegable?
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
@@ -40,6 +46,14 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegateLookupFunction(this, query._tableType);
 
                 var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argGuid);
+                return node;
+            }
+
+            // Generate a top call for: FirstN(Table, count) => __top(Table, count)
+            internal CallNode MakeTopCall(DelegationIRVisitor.RetVal query, IntermediateNode argCount)
+            {
+                var func = new DelegatedFirstNFunction(this, query._tableType);
+                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argCount);
                 return node;
             }
         }
