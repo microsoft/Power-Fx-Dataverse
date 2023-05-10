@@ -153,8 +153,26 @@ namespace Microsoft.PowerFx.Dataverse
                             rightDecimalType = new SqlBigType();
                         }
 
-                        string leftOperand = left != null && context.GetVarDetails(left.varName).Column.Equals("exchangerate") ? Library.CoerceNullToInt(left) : Library.CoerceNullToNumberType(left, leftDecimalType);
-                        string rightOperand = right != null && context.GetVarDetails(right.varName).Column.Equals("exchangerate") ? Library.CoerceNullToInt(right) : Library.CoerceNullToNumberType(right, rightDecimalType);
+                        string leftOperand = Library.CoerceNullToNumberType(left, leftDecimalType);
+                        string rightOperand = Library.CoerceNullToNumberType(right, rightDecimalType);
+
+                        if(left != null)
+                        {
+                            CdsColumnDefinition leftColumn = context.GetVarDetails(left.varName).Column;
+                            if(leftColumn != null && leftColumn.LogicalName.Equals("exchangerate"))
+                            {
+                                leftOperand = Library.CoerceNullToInt(left);
+                            }
+                        }
+
+                        if (right != null)
+                        {
+                            CdsColumnDefinition rightColumn = context.GetVarDetails(right.varName).Column;
+                            if (rightColumn != null && rightColumn.LogicalName.Equals("exchangerate"))
+                            {
+                                rightOperand = Library.CoerceNullToInt(right);
+                            }
+                        }
 
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15

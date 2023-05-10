@@ -143,8 +143,18 @@ namespace Microsoft.PowerFx.Dataverse
         private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null)
         {
             errors = null;
-            returnType = BuildReturnType(nodeType);
 
+            // To make it backward compatible when no currency changes are there and using currency field in formula returns decimal.
+            // return type will only be currency when it is passed in hints, in all other cases, it would be decimal only.
+            if(options.TypeHints == null && nodeType._type.Kind == DKind.Currency)
+            {
+                returnType = BuildReturnType(FormulaType.Number);
+            }
+            else
+            {
+                returnType = BuildReturnType(nodeType);
+            }
+            
             if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
