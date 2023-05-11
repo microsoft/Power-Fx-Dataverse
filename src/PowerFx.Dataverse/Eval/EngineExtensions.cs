@@ -72,28 +72,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public override IntermediateNode Transform(IntermediateNode node, ICollection<ExpressionError> errors)
             {
-                var result = node.Accept(
-                    new DelegationIRVisitor(_hooks, errors),
+                return node.Accept(
+                    new DelegationIRVisitor(_hooks, errors, _maxRows),
                     new DelegationIRVisitor.Context())._node;
-
-                ExpressionError[] loopErrors = new ExpressionError[errors.Count];
-
-                errors.CopyTo(loopErrors, 0);
-
-                foreach (var expressionError in loopErrors.Where(err => err.MessageKey == "WrnDelagationTableNotSupported"))
-                {
-                    var error = new ExpressionError
-                    {
-                        MessageKey = "WrnDelagationMaxRows",
-                        MessageArgs = new object[] { _maxRows > 0 ? _maxRows : 1000 },
-                        Span = expressionError.Span,
-                        Severity = ErrorSeverity.Warning
-                    };
-
-                    errors.Add(error);
-                }
-
-                return result;
             }
         }
 

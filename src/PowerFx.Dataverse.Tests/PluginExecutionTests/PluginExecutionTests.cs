@@ -1209,8 +1209,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             100.0, // wrapper in Filter, can't delegate
             "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
-            "Warning 14-16: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 14-16: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 14-16: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
                         
         [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
@@ -1231,21 +1230,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("First(t1).Price",
             100.0, // unsupported function, can't yet delegate
             "(First(t1)).new_price",
-            "Warning 6-8: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 6-8: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 6-8: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
 
         [DataRow("Last(t1).Price",
             100.0, // unsupported function, can't yet delegate
             "(Last(t1)).new_price",
-            "Warning 5-7: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 5-7: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 5-7: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
         [DataRow("CountRows(t1)",
             1.0, // unsupported function, can't yet delegate
             "CountRows(t1)",
-            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 10-12: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
 
         // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
@@ -1257,8 +1253,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("IsBlank(Filter(t1, 1=1))",
             false, // nothing to delegate
             "IsBlank(Filter(t1, (EqNumbers(1,1))))",
-            "Warning 15-17: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 15-17: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 15-17: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
 
 
@@ -1270,8 +1265,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0, // Aliasing prevents delegation. 
             "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
-            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 10-12: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
 
         // $$$ Confirm is NotFound Error or Blank? 
@@ -1364,8 +1358,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Local Table doesn't get delegated
         [DataRow("FirstN(Filter(t1, 1=1), 1)",
             "FirstN(Filter(t1, (EqNumbers(1,1))), 1)",
-            "Warning 14-16: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 14-16: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 14-16: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
 
         // FirstN wrapped in another function
@@ -1375,8 +1368,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, FirstN(r, 100))",
             "With({r:t1}, (FirstN(r, 100)))",
-            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly.",
-            "Warning 10-12: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 10-12: Delegation warning. Table 'local' part might not work correctly on large tables (>999 rows)."
             )]
         public void FirstNDelegation(string expr, string expectedIr, params string[] expectedWarnings)
         {
@@ -1432,8 +1424,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // These are wrong error messages and will fail once the new message keys gets translated.
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: A delegação desta operação na tabela \"local\" não tem suporte.",
-            "Warning 14-16: This operation may not work as expected on large tables (>999 rows)."
+            "Warning 14-16: A delegação desta operação na tabela \"local\" não tem suporte."
             )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {

@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="engine"></param>
         public static void EnableDelegation(this Engine engine)
         {
-            engine.EnableDelegationCore(new DelegationHooksImpl(), 0);
+            engine.EnableDelegationCore(new DelegationHooksImpl(), 1000);
         }
 
         /// <summary>
