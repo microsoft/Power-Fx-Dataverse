@@ -23,21 +23,29 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Wrap a live Dataverse Table. 
     /// </summary>
-    internal class DataverseTableValue : ODataQueryableTableValue
+    internal class DataverseTableValue : TableValue
     {
         private readonly IConnectionValueContext _connection;
         private ODataParameters _oDataParameters;
         private RecordType _recordType;
+        private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
 
+        private Lazy<Task<List<DValue<RecordValue>>>> NewLazyTaskRowsInstance => new Lazy<Task<List<DValue<RecordValue>>>>(() => GetRowsAsync());
+
+        public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
+
+        public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata, ODataParameters oDataParameters = default)
-            : base(recordType.ToTable(), oDataParameters)
+            : base(recordType.ToTable())
         {
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _oDataParameters = oDataParameters;
+
+            _lazyTaskRows = NewLazyTaskRowsInstance;
         }
 
         public override object ToObject()
@@ -45,24 +53,12 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException("DataverseTableValue.ToObject() isn't implemented yet.");
         }
 
-        protected override ODataQueryableTableValue WithParameters(ODataParameters odataParameters)
+        protected void Refresh()
         {
-            // Deactivated due to inconsistant behavior for Cards
-            // https://github.com/microsoft/Power-Fx-Dataverse/issues/80
-            if (/*!odataParameters.IsSupported()*/ true)
-                throw new NotDelegableException();
-
-            //var oData = _oDataParameters;
-
-            //if (odataParameters.Top > 0)
-            //    oData = oData.WithTop(odataParameters.Top);
-            //if (!string.IsNullOrEmpty(odataParameters.Filter))
-            //    oData = oData.WithFilter(odataParameters.Filter);
-
-            //return new DataverseTableValue(_recordType, _connection, _entityMetadata, oData);
+            _lazyTaskRows = NewLazyTaskRowsInstance;
         }
 
-        protected override async Task<List<DValue<RecordValue>>> GetRowsAsync()
+        protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _connection.MaxRows);
@@ -76,7 +72,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var result =await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
 
             if (result.HasError)
             {
@@ -89,7 +85,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count , CancellationToken cancel)
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, CancellationToken cancel)
         {
             var query = new QueryExpression(_entityMetadata.LogicalName)
             {
@@ -229,26 +225,26 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override DValue<RecordValue> CastRecord(RecordValue record, CancellationToken cancellationToken)
         {
-            if( record is not DataverseRecordValue)
+            if (record is not DataverseRecordValue)
             {
                 throw new CustomFunctionErrorException($"Given record was not of dataverse type");
             }
 
-            var dvRecord = (DataverseRecordValue) record;
+            var dvRecord = (DataverseRecordValue)record;
             if (dvRecord.Entity.LogicalName != _entityMetadata.LogicalName)
             {
                 var error = new ExpressionError() { MessageKey = "InvalidCast", MessageArgs = new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName } };
                 throw new CustomFunctionErrorException(error);
             }
-            
-            var row = new DataverseRecordValue(dvRecord.Entity, dvRecord.Metadata, Type.ToRecord(),  _connection);
+
+            var row = new DataverseRecordValue(dvRecord.Entity, dvRecord.Metadata, Type.ToRecord(), _connection);
 
             return DValue<RecordValue>.Of(row);
         }
 
         private List<DValue<RecordValue>> EntityCollectionToRecordValues(DataverseResponse<EntityCollection> entityCollection)
         {
-            if(entityCollection == null)
+            if (entityCollection == null)
             {
                 throw new ArgumentNullException(nameof(entityCollection));
             }
