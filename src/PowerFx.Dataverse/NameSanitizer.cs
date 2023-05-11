@@ -17,16 +17,12 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal class NameSanitizer : ISanitizedNameProvider
     {
-        private DataverseType _scopeType;
-
-        private TexlBinding _binding { get; set; }
+        private DataverseType _scopeType;        
 
         public NameSanitizer(TexlBinding binding)
-        {
-            _binding = binding;
+        {            
             _scopeType = new DataverseType { Type = binding.ContextScope };
         }
-
 
         /// <summary>
         /// Attempt to sanitize a first name node using a custom sanitization scheme.

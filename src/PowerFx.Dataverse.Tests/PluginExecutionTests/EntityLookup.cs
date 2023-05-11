@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Return error message if numeric column is our of range (string: field name, object: number value).
         public Func<string, object, string> _checkColumnRange;
 
-        // When used, it forces a mutation function to return a DataverseResponse error.
+        // When used, returns a DataverseResponse error.
         public Func<string> _getCustomErrorMessage;
 
         // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
@@ -198,6 +198,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (_getCustomErrorMessage != null)
+            {
+                return Task.FromResult(DataverseResponse<Entity>.NewError(_getCustomErrorMessage()));
+            }
+
             return LookupReferenceAsync(new EntityReference(entityName, id));
         }
 

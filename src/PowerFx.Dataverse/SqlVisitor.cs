@@ -125,7 +125,8 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             BinaryOpKind.AddNumbers => "+",
                             BinaryOpKind.DivNumbers => "/",
-                            BinaryOpKind.MulNumbers => "*"
+                            BinaryOpKind.MulNumbers => "*",
+                            _ => throw new NotImplementedException($"Unsupported BinaryOpKind {node.Op}")
                         };
 
                         Library.ValidateNumericArgument(node.Left);
@@ -325,7 +326,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.Percent:
                     arg = node.Child.Accept(this, context);
-                    var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100)");
+                    var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100.0)");
                     context.PerformRangeChecks(result, node);
                     return result;
 
@@ -896,12 +897,6 @@ namespace Microsoft.PowerFx.Dataverse
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));
                         GetVarName(primaryKeyPath, scope, sourceContext, navigation);
                     }
-
-                    // initialize a string variable to the empty string
-                    if (details.VarType is StringType)
-                    {
-                        AppendContentLine($"IF({varName} IS NULL) BEGIN SET {varName} = N'' END");
-                    }
                 }
                 return details;
             }
@@ -1017,6 +1012,7 @@ namespace Microsoft.PowerFx.Dataverse
             internal static string InvalidArgumentErrorCode => GetErrorCode(ErrorKind.InvalidArgument);
 
             internal StringBuilder _sbContent = new StringBuilder();
+            internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
 
             // TODO: make this private so it is only called from other higher level functions
@@ -1210,7 +1206,16 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
-                    return true;
+                    // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
+                    var epsilon = Math.Abs(literal);
+                    if (epsilon < 1e-90 && epsilon > 0)
+                    {
+                        // Fall through to below, unsupported. 
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
                 else if (!(type is NumberType))
                 {

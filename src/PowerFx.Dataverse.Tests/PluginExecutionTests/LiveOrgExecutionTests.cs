@@ -137,12 +137,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [TestMethod]
         [DataRow("Index(Accounts, 1).Tasks", 0)]
+        [DataRow("LookUp(Contacts, 'Full Name' = \"Mike\").Accounts", 2)]
 
         // If Tasks field was empty, returns empty table.
         [DataRow("Index(Accounts, 2).Tasks", 2)]
+
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
-            var tableName = new string[] { "account", "task" };
+            var tableName = new string[] { "account", "task", "contact" };
 
             List<IDisposable> disposableObjects = null;
 
@@ -552,8 +554,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 DateTime dt2 = (result2 as DateTimeValue).Value;
                 Assert.AreEqual(dt, dt2);
+#pragma warning restore CS0618 // Type or member is obsolete
             }
             finally
             {
@@ -813,6 +817,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        [DataRow("First(Tasks).Owner")]
+        [DataRow("With( {r : First(Tasks).Owner}, r)")]
+        public void ExecuteViaInterpreterWithAndPolymorphic(string expression)
+        {
+            var tableName = new string[] { "account", "task" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is RecordValue);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public void AllNotSupportedAttributesTest()
         {
             string tableName = "PFxColumns";
@@ -882,6 +906,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable("Accounts", "account");
             dv.AddTable("Tasks", "task");
             dv.AddTable("Note", "annotation");
+            dv.AddTable("Contacts", "contact");
 
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
 

@@ -43,8 +43,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 var numberType = ToSqlType(result.type);
 
                 // only allow whole numbers to be parsed
-                context.SetIntermediateVariable(result, $"TRY_PARSE({arg} AS int)");
-                context.ErrorCheck($"LEN({arg}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
+                context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+          
                 return result;
             }
             else if (arg.type is NumberType)
@@ -127,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             else if (val.type is StringType)
             {
                 // formatting a string is a pass-thru
-                return context.SetIntermediateVariable(node, $"{val}");
+                return context.SetIntermediateVariable(node, $"{CoerceNullToString(val)}");
             }
             else if (val.type is BlankType)
             {
@@ -144,13 +145,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var val = node.Args[0].Accept(visitor, context);
             // Null values are coerced to empty string
-            return context.SetIntermediateVariable(node, $"{function}({val})");
+            return context.SetIntermediateVariable(node, $"{function}({CoerceNullToString(val)})");
         }
 
         public static RetVal StringUnaryFunction(SqlVisitor visitor, CallNode node, Context context, string function)
         {
             var val = node.Args[0].Accept(visitor, context);
-            return context.SetIntermediateVariable(node, $"{function}({val})");
+            return context.SetIntermediateVariable(node, $"{function}({CoerceNullToString(val)})");
         }
 
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
@@ -228,7 +229,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             else
             {
                 // SQL ignores trailing spaces when counting the length
-                length = RetVal.FromSQL($"LEN({strArg}+N'x')-1", FormulaType.Number);
+                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
             }
 
             return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
@@ -240,7 +241,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             if (arg.type is StringType)
             {
                 // SQL ignores trailing spaces when counting the length
-                return context.SetIntermediateVariable(node, $"LEN({arg} + N'x')-1");
+                return context.SetIntermediateVariable(node, $"LEN({CoerceNullToString(arg)} + N'x')-1");
             }
             else
             {
@@ -259,7 +260,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var str = node.Args[0].Accept(visitor, context);
-            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({str}))");
+            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({CoerceNullToString(str)}))");
             return result;
         }
 
@@ -267,7 +268,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var str = node.Args[0].Accept(visitor, context);
-            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({str}))");
+            context.SetIntermediateVariable(result, $"RTRIM(LTRIM({CoerceNullToString(str)}))");
             context.AppendContentLine($"WHILE (CHARINDEX(N'  ',{result}) <> 0) BEGIN set {result}=REPLACE({result}, N'  ', N' ') END");
             return result;
         }
@@ -292,9 +293,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.SetIntermediateVariable(idx, $"1");
                 context.SetIntermediateVariable(matchCount, $"1");
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({oldStr}+N'x')-1");
+                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
                 // find the appropriate instance (case sensitive) in the original string
-                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {str}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
+                context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(str)}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 
                 context.SetIntermediateVariable(result, $"IIF({idx} <> 0, STUFF({CoerceNullToString(str)}, {idx}, {oldLen}, {CoerceNullToString(newStr)}), {CoerceNullToString(str)})");
             }
@@ -320,8 +321,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             // the count value must be 0 or larger
             context.NegativeNumberCheck(count);
             var newStr = node.Args[3].Accept(visitor, context);
+            var coercedNewStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(newStr));
             // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case
-            return context.SetIntermediateVariable(result, $"ISNULL(STUFF({coercedStr}, {start}, {count}, {newStr}), {coercedStr} + {newStr})");
+            return context.SetIntermediateVariable(result, $"ISNULL(STUFF({coercedStr}, {start}, {count}, {coercedNewStr}), {coercedStr} + {coercedNewStr})");
         }
 
         public static string CoerceNullToString(RetVal retVal)

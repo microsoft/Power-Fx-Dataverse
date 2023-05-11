@@ -229,6 +229,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 		[DataTestMethod]
         [DataRow("1.2", "en-US")] // success case 
         [DataRow("1,2", "fr-FR")] // success case 
+        [DataRow("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;Utilisation non valide de « . »")] // error - no dups, all French
         [DataRow("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
         [DataRow("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding 		
         [DataRow("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error

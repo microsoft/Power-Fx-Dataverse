@@ -225,12 +225,13 @@ namespace Microsoft.PowerFx.Dataverse
             if (!filteredEntityCollection.HasError)
             {
                 List<RecordValue> list = new();
+                var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
-                    var row = _connection.Marshal(entity);
+                    var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
                     list.Add(row);
                 }
-                
+             
                 result = FormulaValue.NewTable(recordType, list);
             }
             else
@@ -255,7 +256,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldType is not RecordType)
             {
                 // Polymorphic case. 
-                fieldType = RecordType.Empty();
+                fieldType = RecordType.Polymorphic();
             }
 
             result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
@@ -284,6 +285,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
+
+            if (newEntity.HasError)
+            {
+                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
+            }
 
             foreach (var attr in newEntity.Response.Attributes)
             {

@@ -5,7 +5,9 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -23,6 +25,15 @@ namespace Microsoft.PowerFx.Dataverse
                 var t2 = (DataverseTableValue)table;
 
                 var result = await t2.RetrieveAsync(id, cancel);
+                return result;
+            }
+
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            {
+                // Binder should have enforced that this always succeeds.
+                var t2 = (DataverseTableValue)table;
+
+                var result = await t2.RetrieveMultipleAsync(filter, count, cancel);
                 return result;
             }
 

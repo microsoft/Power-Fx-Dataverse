@@ -19,11 +19,15 @@ namespace Microsoft.PowerFx.Dataverse
     {
         protected readonly DelegationHooks _hooks;
 
+        protected readonly FormulaType ReturnFormulaType;
+
         public DelegateFunction(DelegationHooks hooks, string name, FormulaType returnType, params FormulaType[] paramTypes)
           : this(hooks, name, returnType._type, Array.ConvertAll(paramTypes, x => x._type))
         {
+            ReturnFormulaType = returnType;
         }
-        public DelegateFunction(DelegationHooks hooks, string name, DType returnType, params DType[] paramTypes)
+
+        private DelegateFunction(DelegationHooks hooks, string name, DType returnType, params DType[] paramTypes)
         : base(DPath.Root, name, name, SG("Custom func " + name), FunctionCategories.Table, returnType, 0, paramTypes.Length, paramTypes.Length, paramTypes)
         {
             _hooks = hooks;

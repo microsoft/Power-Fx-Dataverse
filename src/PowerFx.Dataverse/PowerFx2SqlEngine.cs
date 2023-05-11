@@ -30,11 +30,13 @@ namespace Microsoft.PowerFx.Dataverse
         // default decimal precision
         internal const int DefaultPrecision = 10;
 
+        internal static readonly Features DefaultFeatures = Features.PowerFxV1;
+
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(Features.PowerFxV1), culture)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
         {
         }
 
@@ -175,9 +177,9 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
-                // schemabinding only applies if there are no reference fields
+                // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
-                if (refFieldCount == 0)
+                if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
                 {
                     tw.WriteLine($"  {SqlStatementFormat.WithSchemaBindingFormat}");
                 }

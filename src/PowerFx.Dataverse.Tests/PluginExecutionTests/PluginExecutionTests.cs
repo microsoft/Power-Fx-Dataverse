@@ -1338,6 +1338,77 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());
         }
 
+        [TestMethod]
+
+        // Basic case 
+        [DataRow("FirstN(t1, 2)",
+            "__top(t1, 2)")]
+
+        // Variable as arg 
+        [DataRow("FirstN(t1, _count)",
+            "__top(t1, _count)")]
+
+        // Function as arg 
+        [DataRow("FirstN(t1, If(1<0,_count, 1))",
+            "__top(t1, If(LtNumbers(1,0), (_count), (1)))")]
+
+        // Local Table doesn't get delegated
+        [DataRow("FirstN(Filter(t1, 1=1), 1)",
+            "FirstN(Filter(t1, (EqNumbers(1,1))), 1)",
+            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            )]
+
+        // FirstN wrapped in another function
+        [DataRow("Filter(FirstN(t1, _count), Price > 90)",
+            "Filter(__top(t1, _count), (GtNumbers(new_price,90)))")]
+
+        // Aliasing prevents delegation. 
+        [DataRow("With({r : t1}, FirstN(r, 100))",
+            "With({r:t1}, (FirstN(r, 100)))",
+            "Warning 10-12: Delegating this operation on table 'local' is not supported.")]
+        public void FirstNDelegation(string expr, string expectedIr, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation();
+            engine1.UpdateVariable("_count", FormulaValue.New(100));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            // comapre IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.AreEqual(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.AreEqual(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsTrue(result is TableValue);
+        }
+
         // The new test cases will fail once new delegation warning messages are translated.
         // We'll then update them on that.
         [DataTestMethod]
@@ -1989,11 +2060,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }            
         }
 
+        [TestMethod]
+        public void RetrieveAsyncErrorTst()
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+            var errorMessage = "Something wrong happened when retrieving entity from server, after update.";
+            var expr = "Patch(t1, First(t1), {Price:111})";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+
+            // Inject error when retrieving.
+            el._getCustomErrorMessage = () => errorMessage;
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
-        static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
-        static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
+        // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
+        // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
         static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 
