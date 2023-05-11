@@ -286,15 +286,14 @@ namespace Microsoft.PowerFx.Dataverse
                 var attribute = new PicklistAttributeMetadata(string.Empty)
                 {
                     OptionSet = globalOptionSet,
-                    LogicalName = globalOptionSet.Name,
+                    LogicalName = string.Empty,
                     MetadataId = Guid.Empty,
                 };
                 parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
 
                 if (parsed)
                 {
-                    var dataverseOptionSet = RegisterDataverseOptionSet(entity, optionSet);
-                    optionSets[columnName] = dataverseOptionSet;
+                    RegisterDataverseOptionSet(entity, optionSet);
                 }
             }
 
