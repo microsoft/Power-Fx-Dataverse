@@ -76,10 +76,21 @@ namespace Microsoft.PowerFx.Dataverse
                     new DelegationIRVisitor(_hooks, errors),
                     new DelegationIRVisitor.Context())._node;
 
-                foreach (var expressionError in errors.Where(err => err.MessageKey == "WrnDelagationTableNotSupported"))
+                ExpressionError[] loopErrors = new ExpressionError[errors.Count];
+
+                errors.CopyTo(loopErrors, 0);
+
+                foreach (var expressionError in loopErrors.Where(err => err.MessageKey == "WrnDelagationTableNotSupported"))
                 {
-                    var args = new object[] { expressionError.MessageArgs[0], _maxRows > 0 ? _maxRows : 1000 };
-                    expressionError.MessageArgs = args;
+                    var error = new ExpressionError
+                    {
+                        MessageKey = "WrnDelagationMaxRows",
+                        MessageArgs = new object[] { _maxRows > 0 ? _maxRows : 1000 },
+                        Span = expressionError.Span,
+                        Severity = ErrorSeverity.Warning
+                    };
+
+                    errors.Add(error);
                 }
 
                 return result;
