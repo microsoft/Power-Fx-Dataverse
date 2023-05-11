@@ -19,7 +19,7 @@ using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
-    internal class PredicateIRVisitor : IRNodeVisitor<RetVal, PredicateIRVisitor.Context>
+    internal class PredicateIRVisitor : IRNodeVisitor<QueryExpressionHelper, PredicateIRVisitor.Context>
     {
         private DelegationHooks _hooks;
         private CallNode _caller;
@@ -40,16 +40,16 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             _caller = caller;
         }
 
-        public class RetVal
+        public class QueryExpressionHelper
         {
-            public bool isDelegable;
+            public bool CanGenerateQuery;
             public IntermediateNode node;
             internal int? _top;
 
-            public RetVal(IntermediateNode node, bool isDelegable, int? top = null)
+            public QueryExpressionHelper(IntermediateNode node, bool isDelegable, int? top = null)
             {
                 this.node = node;
-                this.isDelegable = isDelegable;
+                this.CanGenerateQuery = isDelegable;
             }
         }
 
@@ -95,69 +95,69 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         {
         }
 
-        public override RetVal Visit(TextLiteralNode node, Context context)
+        public override QueryExpressionHelper Visit(TextLiteralNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(NumberLiteralNode node, Context context)
+        public override QueryExpressionHelper Visit(NumberLiteralNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(DecimalLiteralNode node, Context context)
+        public override QueryExpressionHelper Visit(DecimalLiteralNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(BooleanLiteralNode node, Context context)
+        public override QueryExpressionHelper Visit(BooleanLiteralNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(ColorLiteralNode node, Context context)
+        public override QueryExpressionHelper Visit(ColorLiteralNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(RecordNode node, Context context)
+        public override QueryExpressionHelper Visit(RecordNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(ErrorNode node, Context context)
+        public override QueryExpressionHelper Visit(ErrorNode node, Context context)
         {
-            return new RetVal(node, false); // Leaf
+            return new QueryExpressionHelper(node, false); // Leaf
         }
 
-        public override RetVal Visit(LazyEvalNode node, Context context)
+        public override QueryExpressionHelper Visit(LazyEvalNode node, Context context)
         {
             return node.Child.Accept(this, context);
         }
 
-        public override RetVal Visit(CallNode node, Context context)
+        public override QueryExpressionHelper Visit(CallNode node, Context context)
         {
             var funcName = node.Function.Name;
             var delegableArgs = ConvertArgsToDelegableArgs(node, context);
 
             if(delegableArgs == null)
             {
-                return new RetVal(node, false);
+                return new QueryExpressionHelper(node, false);
             }
 
             if (funcName == BuiltinFunctionsCore.And.Name ||
                 funcName == BuiltinFunctionsCore.Filter.Name)
             {
                 var andNode = _hooks.MakeAndCall(_callerReturnType, delegableArgs);
-                return new RetVal(andNode, true);
+                return new QueryExpressionHelper(andNode, true);
             }
             else if (funcName == BuiltinFunctionsCore.Or.Name)
             {
                 var orNode = _hooks.MakeOrCall(_callerReturnType, delegableArgs);
-                return new RetVal(orNode, true);
+                return new QueryExpressionHelper(orNode, true);
             }
 
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
         public IList<IntermediateNode> ConvertArgsToDelegableArgs(CallNode node, Context context)
@@ -168,7 +168,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             {
                 var arg = node.Args[i];
                 var retVal = arg.Accept(this, context);
-                isFuncDelegable = isFuncDelegable && retVal.isDelegable;
+                isFuncDelegable = isFuncDelegable && retVal.CanGenerateQuery;
                 delegableArgs[i] = retVal.node;
             }
 
@@ -176,20 +176,20 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             return result;
         }
 
-        public override RetVal Visit(BinaryOpNode node, Context context)
+        public override QueryExpressionHelper Visit(BinaryOpNode node, Context context)
         {
             var left = node.Left.Accept(this, context);
             var right = node.Right.Accept(this, context);
 
-            if(!(left.isDelegable || right.isDelegable))
+            if(!(left.CanGenerateQuery || right.CanGenerateQuery))
             {
-                return new RetVal(node, false);
+                return new QueryExpressionHelper(node, false);
             }
 
             // Either left or right is field (not both)
             if (!TryGetFieldName(left.node, right.node, out var fieldName, out var rightNode))
             {
-                return new RetVal(node, false);
+                return new QueryExpressionHelper(node, false);
             }
 
             switch (node.Op)
@@ -205,79 +205,79 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                 case BinaryOpKind.EqNull:
                 case BinaryOpKind.EqDecimals:
                     var eqNode = _hooks.MakeEqCall(_callerReturnType, fieldName, rightNode);
-                    return new RetVal(eqNode, true);
+                    return new QueryExpressionHelper(eqNode, true);
                 case BinaryOpKind.LtNumbers:
                 case BinaryOpKind.LtDecimals:
                 case BinaryOpKind.LtDateTime:
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtTime:
                     var ltNode = _hooks.MakeLtCall(_callerReturnType, fieldName, rightNode);
-                    return new RetVal(ltNode, true);
+                    return new QueryExpressionHelper(ltNode, true);
                 case BinaryOpKind.LeqNumbers:
                 case BinaryOpKind.LeqDecimals:
                 case BinaryOpKind.LeqDateTime:
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqTime:
                     var leqNode = _hooks.MakeLeqCall(_callerReturnType, fieldName, rightNode);
-                    return new RetVal(leqNode, true);
+                    return new QueryExpressionHelper(leqNode, true);
                 case BinaryOpKind.GtNumbers:
                 case BinaryOpKind.GtDecimals:
                 case BinaryOpKind.GtDateTime:
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtTime:
                     var gtNode = _hooks.MakeGtCall(_callerReturnType, fieldName, rightNode);
-                    return new RetVal(gtNode, true);
+                    return new QueryExpressionHelper(gtNode, true);
                 case BinaryOpKind.GeqNumbers:
                 case BinaryOpKind.GeqDecimals:
                 case BinaryOpKind.GeqDateTime:
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqTime:
                     var geqNode = _hooks.MakeGeqCall(_callerReturnType, fieldName, rightNode);
-                    return new RetVal(geqNode, true);
+                    return new QueryExpressionHelper(geqNode, true);
                 default:
-                    return new RetVal(node, false);
+                    return new QueryExpressionHelper(node, false);
             }
         }
 
-        public override RetVal Visit(UnaryOpNode node, Context context)
+        public override QueryExpressionHelper Visit(UnaryOpNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(ScopeAccessNode node, Context context)
+        public override QueryExpressionHelper Visit(ScopeAccessNode node, Context context)
         {
             if (node.Value is ScopeAccessSymbol x)
             {
                 if (x.Parent.Id == _caller.Scope.Id)
                 {
-                    return new RetVal(node, true);
+                    return new QueryExpressionHelper(node, true);
                 }
             }
 
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(RecordFieldAccessNode node, Context context)
+        public override QueryExpressionHelper Visit(RecordFieldAccessNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(ResolvedObjectNode node, Context context)
+        public override QueryExpressionHelper Visit(ResolvedObjectNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(SingleColumnTableAccessNode node, Context context)
+        public override QueryExpressionHelper Visit(SingleColumnTableAccessNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(ChainingNode node, Context context)
+        public override QueryExpressionHelper Visit(ChainingNode node, Context context)
         {
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
 
-        public override RetVal Visit(AggregateCoercionNode node, Context context)
+        public override QueryExpressionHelper Visit(AggregateCoercionNode node, Context context)
         {
             var ret2 = node.Child.Accept(this, context);
             if (ret2 != null)
@@ -285,7 +285,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                 return ret2;
             }
 
-            return new RetVal(node, false);
+            return new QueryExpressionHelper(node, false);
         }
     }
 }

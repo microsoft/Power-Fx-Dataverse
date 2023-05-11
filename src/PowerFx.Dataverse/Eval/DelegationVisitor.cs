@@ -1,14 +1,21 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
+using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
+using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -36,6 +43,41 @@ namespace Microsoft.PowerFx.Dataverse
         // Return Value passed through at each phase of the walk. 
         public class RetVal
         {
+            public readonly IntermediateNode filter;
+            public readonly IExternalTabularDataSource tableDS;
+            public readonly IntermediateNode topCount;
+            public readonly string tableLogicalName;
+            public readonly DelegationHooks _hooks;
+
+            public RetVal(ResolvedObjectNode tableIRNode, TableType tableType,IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
+            {
+                if(tableIRNode == null || tableDS == null || tableType == null)
+                {
+                    throw new ArgumentNullException(nameof(tableDS));
+                }
+
+                if(count == null)
+                {
+                    count = new CallNode(IRContext.NotInSource(tableType), BuiltinFunctionsCore.Blank);
+                }
+
+                _sourceTableIRNode = tableIRNode;
+                _tableType = tableType;
+                this.filter = filter;
+                this.tableDS = tableDS;
+                this.topCount = count;
+
+                this.tableLogicalName = tableDS.TableMetadata.Name; // logical name
+                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                {
+                    if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
+                    {
+                        this._metadata = metadata;
+                    }
+                }
+                
+            }
+
             // Non-delegating path 
             public RetVal(IntermediateNode node)
             {
@@ -90,10 +132,11 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(ret._node);
         }
 
-        protected override IntermediateNode Materialize(RetVal ret)
+        public override IntermediateNode Materialize(RetVal ret)
         {
             if (ret.IsDelegating)
             {
+                return _hooks.MakeQueryExecutorCall(ret);
                 // Look at delegation info and attempt to generate a delegation call. 
                 // Some delegation operations can span multiple nodes, like FirstN(Filter(..))
                 // If we can't, then issue a warning.
@@ -140,18 +183,9 @@ namespace Microsoft.PowerFx.Dataverse
                         var ads = type.AssociatedDataSources.FirstOrDefault();
                         if (ads != null)
                         {
-                            var tableLogicalName = ads.TableMetadata.Name; // logical name
-
-                            if (ads.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
-                            {
-                                if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
-                                {
-                                    // It's a delegatable table. 
-                                    var ret = new RetVal(node, metadata, node, aggType);
-
-                                    return ret;
-                                }
-                            }
+                            var filter = _hooks.MakeBlankFilterCall(aggType);
+                            var ret = new RetVal(node, aggType, ads, filter, count: null);
+                            return ret;
                         }
                     }
                 }
@@ -349,8 +383,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (node.Args.Count == 2)
                 {
-                    var newNode = _hooks.MakeTopCall(tableArg, node.Args[1]);
-                    return Ret(newNode);
+                    var filter = tableArg.filter;
+                    var topCount = node.Args[1];
+                    var ret = new RetVal(tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filter, topCount);
+                    return ret;
                 }
             }
             else if (func == BuiltinFunctionsCore.Filter.Name)
@@ -358,12 +394,17 @@ namespace Microsoft.PowerFx.Dataverse
                 if (node.Args.Count == 2)
                 {
                     var predicate = node.Args[1];
-                    var pr = predicate.Accept(new PredicateIRVisitor(node, _hooks), null); // TODO: Filter gen
-                    if (pr.isDelegable)
+                    var predicateHelper = predicate.Accept(new PredicateIRVisitor(node, _hooks), null); // TODO: Filter gen
+                    if (predicateHelper.CanGenerateQuery)
                     {
-                        var newNode = _hooks.MakeQueryExecutorCall(tableArg, pr.node);
-                        return Ret(newNode);
+                        var filter = predicateHelper.node;
+                        var filters = new List<IntermediateNode>() { tableArg.filter, filter };
+
+                        var filterCombined = _hooks.MakeAndCall(tableArg._tableType, filters);
+                        var ret = new RetVal(tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filterCombined, tableArg.topCount);
+                        return ret;
                     }
+
                 }
             }
 

@@ -49,18 +49,29 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
+            internal CallNode MakeBlankFilterCall(FormulaType tableType)
+            {
+                var func = new DelegatedBlankFilter(this, (TableType)tableType);
+                var node = new CallNode(IRContext.NotInSource(tableType), func);
+                return node;
+            }
+
             // Generate a top call for: FirstN(Table, count) => __top(Table, count)
             internal CallNode MakeTopCall(DelegationIRVisitor.RetVal query, IntermediateNode argCount)
             {
                 var func = new DelegatedFirstNFunction(this, query._tableType);
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argCount);
+                var node = new CallNode(IRContext.NotInSource(query._tableType), func, argCount);
                 return node;
             }
 
-            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query, IntermediateNode filterValue)
+            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 var func = new DelegatedQueryFunction(this, query._tableType);
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, filterValue);
+                if(query.topCount != null)
+                {
+
+                }
+                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, query.filter, query.topCount);
                 return node;
             }
 
@@ -133,9 +144,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             public override IntermediateNode Transform(IntermediateNode node, ICollection<ExpressionError> errors)
             {
-                return node.Accept(
-                    new DelegationIRVisitor(_hooks, errors),
-                    new DelegationIRVisitor.Context())._node;
+                var visitor = new DelegationIRVisitor(_hooks, errors);
+                var context = new DelegationIRVisitor.Context();
+
+                var ret = node.Accept(visitor,context);
+                if (ret.IsDelegating)
+                {
+                    return visitor.Materialize(ret);
+                }
+                else
+                {
+                    return ret._node;
+                }
             }
         }
 

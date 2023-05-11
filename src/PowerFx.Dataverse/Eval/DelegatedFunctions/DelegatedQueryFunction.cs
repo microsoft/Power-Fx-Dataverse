@@ -20,34 +20,22 @@ namespace Microsoft.PowerFx.Dataverse
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
             var table = (TableValue)args[0];
+            int? topCount = null;
+            FilterExpression filter = null;
 
-            var predicate = args[1];
-
-            if (predicate is DelegationInfoValue delegationInfoValue)
+            if (args[2] is NumberValue count)
             {
-                var filter = (FilterExpression)delegationInfoValue._value;
-                var topCount = (int)((NumberValue)args[2]).Value;
-                var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken);
-                var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
-                return result;
+                topCount = (int)(count).Value;
             }
 
-            if (predicate is BooleanValue booleanPredicate)
+            if (args[1] is DelegationInfoValue delegationInfoValue)
             {
-                if (booleanPredicate.Value)
-                {
-                    var rows = await _hooks.RetrieveMultipleAsync(table, filter: null, null, cancellationToken);
-                    var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
-                    return result;
-                }
-                else
-                {
-                    var result = FormulaValue.NewBlank(ReturnFormulaType);
-                    return result;
-                }
+                filter = (FilterExpression)delegationInfoValue._value;
             }
 
-            throw new System.NotSupportedException(); // $$$ Error? Throw?
+            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken);
+            var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
+            return result;
         }
     }
 }
