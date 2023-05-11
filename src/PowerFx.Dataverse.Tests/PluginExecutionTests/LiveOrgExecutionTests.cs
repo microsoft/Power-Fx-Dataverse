@@ -4,16 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.AppMagic.Authoring.DataToControls;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Globalization;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
@@ -28,9 +28,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Env var we look for to get a dataverse connection string. 
         const string ConnectionStringVariable = "FxTestDataverseCx";
 
-        private ServiceClient GetClient()
+        private CachedServiceClient GetClient(bool cached, string folder = null)
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+
+            // BUGBUG -- remove this line
+            cx = "Url=https://aurorabapenvb94a8.crm10.dynamics.com/; Username=aurorauser07@capintegration01.onmicrosoft.com; Password=7wS7W!@Wr; authtype=OAuth";
+            // BUGBUG -- remove this line
 
             // short-circuit if connection string is not set
             if (cx == null)
@@ -40,10 +44,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             // https://docs.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
-            // For example:
+            // For example:            
             // $"Url=https://aurorabapenv67c10.crm10.dynamics.com/; Username={username}; Password={password}; authtype=OAuth";
 
-            var svcClient = new ServiceClient(cx);
+            string cacheFolder = folder ?? @$"C:\Temp\{DateTime.UtcNow.ToString("yyyy_MM_dd_HH_mm_ss_fff")}";
+            CachedServiceClient svcClient = new CachedServiceClient(cx, cached, cacheFolder);
             svcClient.EnableAffinityCookie = true;
 
             return svcClient;
@@ -352,6 +357,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void CachedTest()
+        {
+            string tableName = "Accounts";
+            string expr = "First(Accounts)";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                string folder =  @"C:\Temp\2023_05_10_20_39_16_650";
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, cached: true, folder: folder);
 
                 var obj = result.ToObject() as Entity;
             }
@@ -769,24 +794,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false, bool cached = false, string folder = null)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async, cached, folder);
         }
 
-        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false)
+        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false, bool cached = false, string folder = null)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async, cached, folder);
         }
 
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false, bool cached = false, string folder = null)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async, cached, folder);
         }
 
-        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false, bool cached = false, string folder = null)
         {
-            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
+            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async, cached, folder);
         }
 
         [DataTestMethod]
@@ -884,9 +909,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
+        private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, 
+            bool async = false, bool cached = false, string folder = null)
         {
-            ServiceClient svcClient = GetClient();
+            CachedServiceClient svcClient = GetClient(cached, folder);
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
@@ -956,16 +982,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        static Dictionary<string, string> PredefinedTables = new ()
         {
-            ServiceClient svcClient = GetClient();
+            { "Accounts", "account" },
+            { "Tasks", "task" },
+            { "Note", "annotation" },
+            { "Contacts", "contact" }
+        };
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, 
+            bool async = false, bool cached = false, string folder = null)
+        {
+            CachedServiceClient svcClient = GetClient(cached, folder);
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
-
-            //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-            //Assert.IsTrue(b1);
-
-            string logicalName = tableName;
+            
+            if (!PredefinedTables.TryGetValue(tableName, out string logicalName))
+            {                
+                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
+                Assert.IsTrue(b1);
+            }
 
             DataverseConnection dv = null;
 
@@ -979,6 +1015,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 dv = new DataverseConnection(svcClient);
             }
+
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
             symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
@@ -1013,73 +1050,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     obj.Dispose();
                 }
             }
-        }
-    }
-
-    internal class DataverseAsyncClient : IDataverseServices, IDisposable
-    {
-        private readonly ServiceClient _svcClient;
-        private bool disposedValue;        
-
-        public DataverseAsyncClient(ServiceClient client)
-        {
-            _svcClient = client ?? throw new ArgumentNullException(nameof(client));
-        }
-
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => _svcClient.CreateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Create");
-        }
-
-        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => _svcClient.DeleteAsync(entityName, id, cancellationToken).ConfigureAwait(false), "Delete");
-        }
-
-        public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return _svcClient.ExecuteWebRequest(method, queryString, body, customHeaders, contentType, cancellationToken);
-        }
-
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, new ColumnSet(true), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
-        }
-
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "RetrieveMultiple");
-        }
-
-        public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _svcClient?.Dispose();
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }
