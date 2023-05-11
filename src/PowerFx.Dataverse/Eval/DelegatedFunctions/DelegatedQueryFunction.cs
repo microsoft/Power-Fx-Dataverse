@@ -7,11 +7,13 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __Filter(Table, predicate)
-    internal class DelegatedFilterFunction : DelegateFunction
+    /// <summary>
+    /// Executes a qury against a table.
+    /// </summary>
+    internal class DelegatedQueryFunction : DelegateFunction
     {
-        public DelegatedFilterFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__filter", tableType, tableType, FormulaType.Number)
+        public DelegatedQueryFunction(DelegationHooks hooks, TableType tableType)
+          : base(hooks, "__query", tableType, tableType, FormulaType.Number)
         {
         }
 
@@ -24,7 +26,8 @@ namespace Microsoft.PowerFx.Dataverse
             if (predicate is DelegationInfoValue delegationInfoValue)
             {
                 var filter = (FilterExpression)delegationInfoValue._value;
-                var rows = await _hooks.RetrieveMultipleAsync(table, filter, null, cancellationToken);
+                var topCount = (int)((NumberValue)args[2]).Value;
+                var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken);
                 var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
                 return result;
             }

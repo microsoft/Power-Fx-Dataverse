@@ -44,8 +44,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         {
             public bool isDelegable;
             public IntermediateNode node;
+            internal int? _top;
 
-            public RetVal(IntermediateNode node, bool isDelegable)
+            public RetVal(IntermediateNode node, bool isDelegable, int? top = null)
             {
                 this.node = node;
                 this.isDelegable = isDelegable;
@@ -154,14 +155,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             {
                 var orNode = _hooks.MakeOrCall(_callerReturnType, delegableArgs);
                 return new RetVal(orNode, true);
-            }
-            else if (funcName == BuiltinFunctionsCore.FirstN.Name)
-            {
-                if (node.Args.Count == 2)
-                {
-                    //var newNode = _hooks.MakeTopCall(tableArg, node.Args[1]);
-                    //return Ret(newNode);
-                }
             }
 
             return new RetVal(node, false);
@@ -281,15 +274,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
         public override RetVal Visit(ChainingNode node, Context context)
         {
-            foreach (var child in node.Nodes)
-            {
-                var ret = child.Accept(this, context);
-                if (ret != null)
-                {
-                    return ret;
-                }
-            }
-
             return new RetVal(node, false);
         }
 

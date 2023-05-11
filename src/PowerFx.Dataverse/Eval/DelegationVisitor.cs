@@ -361,7 +361,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var pr = predicate.Accept(new PredicateIRVisitor(node, _hooks), null); // TODO: Filter gen
                     if (pr.isDelegable)
                     {
-                        var newNode = _hooks.MakeFilterCall(tableArg, pr.node);
+                        var newNode = _hooks.MakeQueryExecutorCall(tableArg, pr.node);
                         return Ret(newNode);
                     }
                 }

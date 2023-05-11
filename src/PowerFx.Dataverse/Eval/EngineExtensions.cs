@@ -57,9 +57,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            internal CallNode MakeFilterCall(DelegationIRVisitor.RetVal query, IntermediateNode filterValue)
+            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query, IntermediateNode filterValue)
             {
-                var func = new DelegatedFilterFunction(this, query._tableType);
+                var func = new DelegatedQueryFunction(this, query._tableType);
                 var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, filterValue);
                 return node;
             }
