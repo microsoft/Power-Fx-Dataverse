@@ -53,7 +53,17 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="engine"></param>
         public static void EnableDelegation(this Engine engine)
         {
-            engine.EnableDelegationCore(new DelegationHooksImpl());
+            engine.EnableDelegationCore(new DelegationHooksImpl(), 1000);
+        }
+
+        /// <summary>
+        /// Public facing API to enable delegation.
+        /// </summary>
+        /// <param name="engine"></param>
+        /// <param name="maxRows">Max number of rows delegation can handle.</param>
+        public static void EnableDelegation(this Engine engine, int maxRows)
+        {
+            engine.EnableDelegationCore(new DelegationHooksImpl(), maxRows);
         }
     }
 }

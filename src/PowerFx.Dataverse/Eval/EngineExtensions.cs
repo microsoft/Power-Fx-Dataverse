@@ -61,25 +61,27 @@ namespace Microsoft.PowerFx.Dataverse
         private class DelegationIRTransform : IRTransform
         {
             private readonly DelegationEngineExtensions.DelegationHooks _hooks;
+            private readonly int _maxRows;
 
-            public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks)
+            public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
                 : base("DelegationIRTransform")
             {
                 _hooks = hooks; 
+                _maxRows = maxRows;
             }
 
             public override IntermediateNode Transform(IntermediateNode node, ICollection<ExpressionError> errors)
             {
                 return node.Accept(
-                    new DelegationIRVisitor(_hooks, errors),
+                    new DelegationIRVisitor(_hooks, errors, _maxRows),
                     new DelegationIRVisitor.Context())._node;
             }
         }
 
         // Called by extensions in Dataverse.Eval, which will pass in retrieveSingle.
-        public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks)
+        public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
         {
-            IRTransform t = new DelegationIRTransform(hooks);
+            IRTransform t = new DelegationIRTransform(hooks, maxRows);
 
             engine.IRTransformList.Add(t);
         }

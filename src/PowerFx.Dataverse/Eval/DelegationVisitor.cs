@@ -23,14 +23,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
         private readonly DelegationHooks _hooks;
+        private readonly int _maxRows;
 
         // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
-        public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
+        public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRows)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-            _errors = errors ?? throw new ArgumentNullException(nameof(errors));   
+            _errors = errors ?? throw new ArgumentNullException(nameof(errors));
+            _maxRows = maxRows;
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -102,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var reason = new ExpressionError
                 {
                     MessageKey = "WrnDelagationTableNotSupported",
-                    MessageArgs = new object[] { ret._metadata.LogicalName },
+                    MessageArgs = new object[] { ret._metadata.LogicalName, _maxRows },
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
@@ -225,8 +227,6 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (left2.Parent.Id == right2.Parent.Id && 
                                     left2.Name == right2.Name)
                                 {
-                                    // Issue warning
-                                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                                     var reason = new ExpressionError
                                     {
                                         MessageKey = "WrnDelagationPredicate",
