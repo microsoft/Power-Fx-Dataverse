@@ -32,7 +32,6 @@ namespace Microsoft.PowerFx.Dataverse
             return _symbols;
         }
 
-
         public override bool TryGetVariableName(string logicalName, out string variableName)
         {
             return _logical2Variable.TryGetValue(logicalName, out variableName);

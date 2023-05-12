@@ -32,6 +32,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
+            // BUGBUG -- remove this line
+            //cx = "Url=https://aurorabapenvb94a8.crm10.dynamics.com/; Username=aurorauser07@capintegration01.onmicrosoft.com; Password=7wS7W!@Wr; authtype=OAuth";
+            // BUGBUG -- remove this line
+
             // short-circuit if connection string is not set
             if (cx == null)
             {
@@ -248,6 +252,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
                 var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterCollectAndRefresh()
+        {
+            string tableName = "Accounts";
+            string expr = "Collect(Accounts, {'Account Name': \"Account1\" }); Refresh(Accounts); Accounts";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);                
             }
             finally
             {
@@ -929,7 +950,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 
             }
 
-
             Assert.IsNotNull(symbols);
 
             var config = new PowerFxConfig();
@@ -956,16 +976,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
+        static Dictionary<string, string> PredefinedTables = new()
+        {
+            { "Accounts", "account" },
+            { "Tasks", "task" },
+            { "Note", "annotation" },
+            { "Contacts", "contact" }
+        };
+
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
-            //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-            //Assert.IsTrue(b1);
-
-            string logicalName = tableName;
+            if (!PredefinedTables.TryGetValue(tableName, out string logicalName))
+            {
+                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
+                Assert.IsTrue(b1);
+            }            
 
             DataverseConnection dv = null;
 
@@ -986,7 +1015,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsNotNull(symbols);
 
             var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
+            config.SymbolTable.EnableMutationFunctions(config);
             engine = new RecalcEngine(config);
             runtimeConfig = dv.SymbolValues;
 
@@ -1080,6 +1109,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
         }
     }
 }
