@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
@@ -25,8 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : TableValue
     {
-        private readonly IConnectionValueContext _connection;
-        private ODataParameters _oDataParameters;
+        private readonly IConnectionValueContext _connection;        
         private RecordType _recordType;
         private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
 
@@ -37,13 +35,12 @@ namespace Microsoft.PowerFx.Dataverse
         public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
-        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata, ODataParameters oDataParameters = default)
+        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
             : base(recordType.ToTable())
         {
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-            _oDataParameters = oDataParameters;
+            _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));            
 
             _lazyTaskRows = NewLazyTaskRowsInstance;
         }
@@ -61,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _connection.MaxRows);
+            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows);
 
             if (entities.HasError)
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
