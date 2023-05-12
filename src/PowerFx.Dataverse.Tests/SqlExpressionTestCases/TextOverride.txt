@@ -47,3 +47,8 @@ Error()
 >> Text(1234567.89)
 Error()
 
+>> Text(Blank())
+""
+
+>> Text(If(1<0,2))
+""
