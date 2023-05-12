@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         public class DelegationHooks
         {
             // Return Blank if not found. 
-            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
+            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, FilterExpression filter, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
@@ -40,15 +40,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            // Generate a lookup call for: Lookup(Table, Id=Guid)  
-            internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
-            {
-                var func = new DelegateLookupFunction(this, query._tableType);
-
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argGuid);
-                return node;
-            }
-
             internal CallNode MakeBlankFilterCall(FormulaType tableType)
             {
                 var func = new DelegatedBlankFilter(this, (TableType)tableType);
@@ -56,22 +47,22 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            // Generate a top call for: FirstN(Table, count) => __top(Table, count)
-            internal CallNode MakeTopCall(DelegationIRVisitor.RetVal query, IntermediateNode argCount)
-            {
-                var func = new DelegatedFirstNFunction(this, query._tableType);
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, argCount);
-                return node;
-            }
-
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
-                var func = new DelegatedQueryFunction(this, query._tableType);
-                if(query.topCount != null)
+                DelegateFunction func;
+                CallNode node;
+                if(query._node.IRContext.ResultType is RecordType)
                 {
+                    func = new DelegatedSingleQueryFunction(this, query._tableType);
+                    node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, query.filter);
+                }
+                else
+                {
+                    func = new DelegatedMultipleQueryFunction(this, query._tableType);
+                    node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, query.filter, query.topCount);
 
                 }
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, query.filter, query.topCount);
+                
                 return node;
             }
 
@@ -84,49 +75,49 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal CallNode MakeEqCall(FormulaType tableType, string fieldName, IntermediateNode value)
             {
-                var func = new DelegatedEq(this, (TableType)tableType);
+                var func = new DelegatedEq(this);
                 var node = MakeCallNode(func, tableType, fieldName, value);
                 return node;
             }
 
             internal CallNode MakeGtCall(FormulaType tableType, string fieldName, IntermediateNode value)
             {
-                var func = new DelegatedGt(this, (TableType)tableType);
+                var func = new DelegatedGt(this);
                 var node = MakeCallNode(func, tableType, fieldName, value);
                 return node;
             }
 
             internal CallNode MakeGeqCall(FormulaType tableType, string fieldName, IntermediateNode value)
             {
-                var func = new DelegatedGeq(this, (TableType)tableType);
+                var func = new DelegatedGeq(this);
                 var node = MakeCallNode(func, tableType, fieldName, value);
                 return node;
             }
 
             internal CallNode MakeLtCall(FormulaType tableType, string fieldName, IntermediateNode value)
             {
-                var func = new DelegatedLt(this, (TableType)tableType);
+                var func = new DelegatedLt(this);
                 var node = MakeCallNode(func, tableType, fieldName, value);
                 return node;
             }
 
             internal CallNode MakeLeqCall(FormulaType tableType, string fieldName, IntermediateNode value)
             {
-                var func = new DelegatedLeq(this, (TableType)tableType);
+                var func = new DelegatedLeq(this);
                 var node = MakeCallNode(func, tableType, fieldName, value);
                 return node;
             }
 
             internal CallNode MakeAndCall(FormulaType tableType, IList<IntermediateNode> args)
             {
-                var func = new DelegatedAnd(this, (TableType)tableType);
+                var func = new DelegatedAnd(this);
                 var node = new CallNode(IRContext.NotInSource(tableType), func, args);
                 return node;
             }
 
             internal CallNode MakeOrCall(FormulaType tableType, IList<IntermediateNode> args)
             {
-                var func = new DelegatedOr(this, (TableType)tableType);
+                var func = new DelegatedOr(this);
                 var node = new CallNode(IRContext.NotInSource(tableType), func, args);
                 return node;
             }

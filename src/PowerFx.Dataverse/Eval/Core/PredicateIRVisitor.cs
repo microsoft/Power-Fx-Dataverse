@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.Serialization;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using static Microsoft.PowerFx.Dataverse.Eval.Core.PredicateIRVisitor;
@@ -23,13 +24,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
     {
         private DelegationHooks _hooks;
         private CallNode _caller;
+        private readonly ICollection<ExpressionError> _errors;
 
         private FormulaType _callerReturnType
         {
             get { return _caller.IRContext.ResultType; }
         }
 
-        public PredicateIRVisitor(CallNode caller, DelegationHooks hooks)
+        public PredicateIRVisitor(CallNode caller, DelegationHooks hooks, ICollection<ExpressionError> errors)
         {
             if (caller == null || hooks == null)
             {
@@ -38,6 +40,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
             _hooks = hooks;
             _caller = caller;
+            _errors = errors;
+        }
+
+        private void AddError(ExpressionError error)
+        {
+            _errors.Add(error);
         }
 
         public class QueryExpressionHelper
@@ -138,6 +146,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         public override QueryExpressionHelper Visit(CallNode node, Context context)
         {
             var funcName = node.Function.Name;
+
             var delegableArgs = ConvertArgsToDelegableArgs(node, context);
 
             if(delegableArgs == null)
@@ -152,6 +161,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                 return new QueryExpressionHelper(andNode, true);
             }
             else if (funcName == BuiltinFunctionsCore.Or.Name)
+            {
+                var orNode = _hooks.MakeOrCall(_callerReturnType, delegableArgs);
+                return new QueryExpressionHelper(orNode, true);
+            }
+            else if (funcName == BuiltinFunctionsCore.LookUp.Name)
             {
                 var orNode = _hooks.MakeOrCall(_callerReturnType, delegableArgs);
                 return new QueryExpressionHelper(orNode, true);
@@ -183,12 +197,48 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
             if(!(left.CanGenerateQuery || right.CanGenerateQuery))
             {
+                // $$$ Maybe we can leverage? 
+                //var findThisRecordLeft = ThisRecordIRVisitor.FindThisRecordUsage(_caller, left.node);
+                //var findThisRecordRight = ThisRecordIRVisitor.FindThisRecordUsage(_caller, right.node);
+                //if (findThisRecordLeft == null && findThisRecordRight == null)
+                //{
+                //    var blankFilter = _hooks.MakeBlankFilterCall(_callerReturnType);
+                //    return new QueryExpressionHelper(blankFilter, true);
+                //}
                 return new QueryExpressionHelper(node, false);
             }
 
             // Either left or right is field (not both)
             if (!TryGetFieldName(left.node, right.node, out var fieldName, out var rightNode))
             {
+                return new QueryExpressionHelper(node, false);
+            }
+
+            var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(_caller, rightNode);
+            if (findThisRecord != null)
+            {
+                var reason = new ExpressionError
+                {
+                    MessageKey = "WrnDelagationRefersThisRecord",
+                    MessageArgs = new object[] { _caller.Function.Name },
+                    Span = findThisRecord.Span,
+                    Severity = ErrorSeverity.Warning
+                };
+                AddError(reason);
+                return new QueryExpressionHelper(node, false);
+            }
+
+            var findBehaviorFunc = BehaviorIRVisitor.Find(rightNode);
+            if (findBehaviorFunc != null)
+            {
+                var reason = new ExpressionError
+                {
+                    MessageKey = "WrnDelagationBehaviorFunction",
+                    MessageArgs = new object[] { _caller.Function.Name, findBehaviorFunc.Name },
+                    Span = findBehaviorFunc.Span,
+                    Severity = ErrorSeverity.Warning
+                };
+                AddError(reason);
                 return new QueryExpressionHelper(node, false);
             }
 

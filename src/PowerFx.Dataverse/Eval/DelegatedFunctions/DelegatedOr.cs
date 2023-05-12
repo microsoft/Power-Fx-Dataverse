@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedOr : DelegateFunction
     {
-        public DelegatedOr(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__or", tableType, tableType, FormulaType.Number)
+        public DelegatedOr(DelegationHooks hooks)
+          : base(hooks, "__or", FormulaType.Blank)
         {
         }
 

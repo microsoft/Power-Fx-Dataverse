@@ -8,34 +8,27 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Executes a qury against a table.
+    /// Executes a qury against a table and return a single record.
     /// </summary>
-    internal class DelegatedQueryFunction : DelegateFunction
+    internal class DelegatedSingleQueryFunction : DelegateFunction
     {
-        public DelegatedQueryFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__query", tableType, tableType, FormulaType.Number)
+        public DelegatedSingleQueryFunction(DelegationHooks hooks, TableType tableType)
+          : base(hooks, "__sQuery", tableType, tableType, FormulaType.Number)
         {
         }
 
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
             var table = (TableValue)args[0];
-            int? topCount = null;
             FilterExpression filter = null;
-
-            if (args[2] is NumberValue count)
-            {
-                topCount = (int)(count).Value;
-            }
 
             if (args[1] is DelegationInfoValue delegationInfoValue)
             {
                 filter = (FilterExpression)delegationInfoValue._value;
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken);
-            var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
-            return result;
+            var row = await _hooks.RetrieveAsync(table, filter, cancellationToken);
+            return row.ToFormulaValue();
         }
     }
 }

@@ -19,12 +19,12 @@ namespace Microsoft.PowerFx.Dataverse
         // Provides adapter for Dataverse project to call back into Dataverse.Eval types, like DataverseTableValue.
         private class DelegationHooksImpl :  DelegationHooks
         {
-            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, FilterExpression filter, CancellationToken cancel)
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
 
-                var result = await t2.RetrieveAsync(id, cancel);
+                var result = await t2.RetrieveAsync(filter, cancel);
                 return result;
             }
 

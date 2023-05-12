@@ -49,9 +49,9 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly string tableLogicalName;
             public readonly DelegationHooks _hooks;
 
-            public RetVal(ResolvedObjectNode tableIRNode, TableType tableType,IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
+            public RetVal(IntermediateNode node, ResolvedObjectNode tableIRNode, TableType tableType,IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
             {
-                if(tableIRNode == null || tableDS == null || tableType == null)
+                if(tableIRNode == null || tableDS == null || tableType == null || node == null)
                 {
                     throw new ArgumentNullException(nameof(tableDS));
                 }
@@ -63,6 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _sourceTableIRNode = tableIRNode;
                 _tableType = tableType;
+                _node = node;
                 this.filter = filter;
                 this.tableDS = tableDS;
                 this.topCount = count;
@@ -184,7 +185,7 @@ namespace Microsoft.PowerFx.Dataverse
                         if (ads != null)
                         {
                             var filter = _hooks.MakeBlankFilterCall(aggType);
-                            var ret = new RetVal(node, aggType, ads, filter, count: null);
+                            var ret = new RetVal(node, node, aggType, ads, filter, count: null);
                             return ret;
                         }
                     }
@@ -311,72 +312,17 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (node.Args.Count == 2)
                 {
-                    var arg1 = node.Args[1]; // the predicate to analyze. 
-
-                    ExpressionError reason = new ExpressionError
+                    var predicate = node.Args[1];
+                    var predicateHelper = predicate.Accept(new PredicateIRVisitor(node, _hooks, _errors), null); // TODO: Filter gen
+                    if (predicateHelper.CanGenerateQuery)
                     {
-                        MessageKey = "WrnDelagationOnlyPrimaryKeyField",
-                        MessageArgs = new object[] { func, tableArg._metadata.PrimaryIdAttribute },
-                        Span = arg1.IRContext.SourceContext,
-                        Severity = ErrorSeverity.Warning
-                    };
+                        var filter = predicateHelper.node;
+                        var filters = new List<IntermediateNode>() { tableArg.filter, filter };
 
-                    if (arg1 is LazyEvalNode arg1b && arg1b.Child is BinaryOpNode binOp)
-                    {
-                        var i1 = binOp.Left.IRContext.SourceContext.Min;
-                        var i2 = binOp.Right.IRContext.SourceContext.Lim;
-                        var span = new Span(i1, i2);
-                        reason.Span = span;
-
-                        // Pattern match to see if predicate is delegable.
-                        //  Lookup(Table, Id=Guid) 
-                        if (binOp.Op == BinaryOpKind.EqGuid)
-                        {
-                            // Matches (Id=Guid) or (Guid=Id)
-                            if (TryMatchPrimaryId(binOp.Left, binOp.Right, out var primaryIdField, out var guidValue, tableArg))
-                            {
-                                var retVal2 = guidValue.Accept(this, context);
-                                var right = Materialize(retVal2);
-
-                                var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
-                                if (findThisRecord != null)
-                                {
-                                    reason = new ExpressionError
-                                    {
-                                        MessageKey = "WrnDelagationRefersThisRecord",
-                                        MessageArgs = new object[] { func },
-                                        Span = findThisRecord.Span,
-                                        Severity = ErrorSeverity.Warning
-                                    };
-                                }
-                                else
-                                {
-                                    var findBehaviorFunc = BehaviorIRVisitor.Find(right);
-                                    if (findBehaviorFunc != null)
-                                    {
-                                        reason = new ExpressionError
-                                        {
-                                            MessageKey = "WrnDelagationBehaviorFunction",
-                                            MessageArgs = new object[] { func, findBehaviorFunc.Name },
-                                            Span = findBehaviorFunc.Span,
-                                            Severity = ErrorSeverity.Warning
-                                        };
-                                    }
-                                    else
-                                    {
-                                        // We can successfully delegate this call. 
-                                        // __lookup(table, guid);
-                                        var newNode = _hooks.MakeRetrieveCall(tableArg, right);
-                                        return Ret(newNode);
-                                    }
-                                }
-                            }
-                        }
+                        var filterCombined = _hooks.MakeAndCall(tableArg._tableType, filters);
+                        var ret = new RetVal(node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filterCombined, tableArg.topCount);
+                        return ret;
                     }
-
-                    // Failed to delegate. Add the warning and continue. 
-                    this.AddError(reason);
-                    return this.Ret(node);
                 }
             }
             else if (func == BuiltinFunctionsCore.FirstN.Name)
@@ -385,7 +331,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var filter = tableArg.filter;
                     var topCount = node.Args[1];
-                    var ret = new RetVal(tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filter, topCount);
+                    var ret = new RetVal(node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filter, topCount);
                     return ret;
                 }
             }
@@ -394,14 +340,14 @@ namespace Microsoft.PowerFx.Dataverse
                 if (node.Args.Count == 2)
                 {
                     var predicate = node.Args[1];
-                    var predicateHelper = predicate.Accept(new PredicateIRVisitor(node, _hooks), null); // TODO: Filter gen
+                    var predicateHelper = predicate.Accept(new PredicateIRVisitor(node, _hooks, _errors), null); // TODO: Filter gen
                     if (predicateHelper.CanGenerateQuery)
                     {
                         var filter = predicateHelper.node;
                         var filters = new List<IntermediateNode>() { tableArg.filter, filter };
 
                         var filterCombined = _hooks.MakeAndCall(tableArg._tableType, filters);
-                        var ret = new RetVal(tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filterCombined, tableArg.topCount);
+                        var ret = new RetVal(node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filterCombined, tableArg.topCount);
                         return ret;
                     }
 

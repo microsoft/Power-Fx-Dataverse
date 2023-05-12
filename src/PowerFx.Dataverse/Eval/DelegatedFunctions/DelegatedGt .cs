@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedGt : DelegateFunction
     {
-        public DelegatedGt(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__gt", tableType, FormulaType.String)
+        public DelegatedGt(DelegationHooks hooks)
+          : base(hooks, "__gt", FormulaType.Blank, FormulaType.String)
         {
         }
 

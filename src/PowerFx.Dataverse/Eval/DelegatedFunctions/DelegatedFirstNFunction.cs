@@ -10,8 +10,8 @@ namespace Microsoft.PowerFx.Dataverse
     // Generate a lookup call for: __FirstN(Table, count)  
     internal class DelegatedFirstNFunction : DelegateFunction
     {
-        public DelegatedFirstNFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__top", tableType, tableType, FormulaType.Number)
+        public DelegatedFirstNFunction(DelegationHooks hooks)
+          : base(hooks, "__top", FormulaType.Blank, FormulaType.Number)
         {
         }
 

@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedEq : DelegateFunction
     {
-        public DelegatedEq(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__eq", tableType, FormulaType.String)
+        public DelegatedEq(DelegationHooks hooks)
+          : base(hooks, "__eq", FormulaType.Blank, FormulaType.String)
         {
         }
 

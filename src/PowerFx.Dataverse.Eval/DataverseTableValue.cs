@@ -74,19 +74,21 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DValue<RecordValue>> RetrieveAsync(FilterExpression filter, CancellationToken cancel)
         {
-            var result =await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
-
-            if (result.HasError)
+            var query = new QueryExpression(_entityMetadata.LogicalName)
             {
-                return result.DValueError("Retrieve");
-            }
+                ColumnSet = new ColumnSet(true),
+                Criteria = filter ?? new FilterExpression()
+            };
 
-            Entity entity = result.Response;
-            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+            query.TopCount = 1;
 
-            return DValue<RecordValue>.Of(row);
+            var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
+
+            var result = EntityCollectionToRecordValues(entities);
+
+            return result.First();
         }
 
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count , CancellationToken cancel)

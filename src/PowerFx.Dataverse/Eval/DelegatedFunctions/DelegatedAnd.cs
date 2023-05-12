@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedAnd : DelegateFunction
     {
-        public DelegatedAnd(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__and", tableType, tableType, FormulaType.Number)
+        public DelegatedAnd(DelegationHooks hooks)
+          : base(hooks, "__and", FormulaType.Blank)
         {
         }
 

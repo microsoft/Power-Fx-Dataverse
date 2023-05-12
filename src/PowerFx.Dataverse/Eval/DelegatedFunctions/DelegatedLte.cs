@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedLeq : DelegateFunction
     {
-        public DelegatedLeq(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__lte", tableType, FormulaType.String)
+        public DelegatedLeq(DelegationHooks hooks)
+          : base(hooks, "__lte", FormulaType.Blank, FormulaType.String)
         {
         }
 

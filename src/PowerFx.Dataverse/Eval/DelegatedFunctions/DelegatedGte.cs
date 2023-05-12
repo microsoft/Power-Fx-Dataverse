@@ -13,8 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedGeq : DelegateFunction
     {
-        public DelegatedGeq(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__gte", tableType, FormulaType.String)
+        public DelegatedGeq(DelegationHooks hooks)
+          : base(hooks, "__gte", FormulaType.Blank, FormulaType.String)
         {
         }
 
