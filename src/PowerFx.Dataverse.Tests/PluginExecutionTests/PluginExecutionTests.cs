@@ -1924,21 +1924,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result3 = await engine3.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(1m, result3.ToObject());
 
-            // Simulates a row being deleted by an external force
+            // Simulates a row being deleted by an external user
             await el.DeleteAsync(logicalName, _g1);
 
-            // Evals the same expression by a new engine. Should return a wrong result.
+            // Evals the same expression by a new engine. As there is no cache in DataTableValue, we'll return exact values.
             var engine4 = new RecalcEngine(config);
             var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(100.0, result4.ToObject());
+            Assert.AreEqual(null, result4.ToObject());
 
             var engine5 = new RecalcEngine(config);
             var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result5.ToObject());
+            Assert.AreEqual(0m, result5.ToObject());
 
             var engine6 = new RecalcEngine(config);
             var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result6.ToObject());
+            Assert.AreEqual(0m, result6.ToObject());
 
             // Refresh connection cache.
             dv.RefreshCache();

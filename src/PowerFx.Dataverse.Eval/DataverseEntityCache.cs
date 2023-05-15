@@ -25,13 +25,13 @@ namespace Microsoft.PowerFx.Dataverse
         public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
-        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
+        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new ();
 
         // Stores the list of cached entry Ids in order they are cached
-        private readonly List<Guid> _cacheList = new();
+        private readonly List<Guid> _cacheList = new ();
 
         // Lock used for cache dictionary and list
-        private readonly object _lock = new();
+        private readonly object _lock = new ();
 
         private readonly IDataverseServices _innerService;
 
@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             lock (_lock)
             {
-                DataverseCachedEntity dce = new(entity);
+                DataverseCachedEntity dce = new (entity);
 
                 if (_cache.ContainsKey(id))
                 {
@@ -201,17 +201,23 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.UpdateAsync(entity, cancellationToken);
         }
 
-        public Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             if (MaxEntries != 0)
+            {
                 lock (_lock)
+                {
                     foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
-                        if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
+                        {
                             RemoveCacheEntry(entityKvp.Key);
-
-            return Task.CompletedTask;
+                        }
+                    }
+                }
+            }            
         }
     }
 }

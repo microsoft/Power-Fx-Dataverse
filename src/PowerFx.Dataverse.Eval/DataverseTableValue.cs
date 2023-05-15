@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DataverseTableValue : TableValue, IRefreshable
     {
-        private readonly IConnectionValueContext _connection;        
+        private readonly IConnectionValueContext _connection;
         private RecordType _recordType;
 
         public sealed override IEnumerable<DValue<RecordValue>> Rows => GetRowsAsync().ConfigureAwait(false).GetAwaiter().GetResult();
@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));                        
+            _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         }
 
         public override object ToObject()
@@ -45,13 +45,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public void Refresh()
-        {            
+        {
             _connection.Services.RefreshAsync(_entityMetadata.LogicalName).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows);
 
             if (entities.HasError)
@@ -240,7 +240,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(entityCollection));
             }
 
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
 
             foreach (Entity entity in entityCollection.Response.Entities)
             {
@@ -255,6 +255,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return list;
-        }      
+        }
     }
 }
