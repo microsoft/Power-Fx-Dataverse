@@ -6,6 +6,7 @@
 
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -273,6 +274,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        public void SqlGlobalOptionSetTest()
+        {
+            List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
+            var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global1",
+                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
+            };
+
+            globalOptionSets.Add(optionSet1);
+
+            using (var cx = GetSql())
+            {
+                ExecuteSqlTest("(Global1.One = Global1.Two)", false, cx, null, globalOptionSets: globalOptionSets);
+            }
+        }
+
+        [TestMethod]
         public void SqlBooleanTest()
         {
             var metadata = new EntityMetadataModel
@@ -527,14 +553,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return connection;
         }
 
-        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null)
+        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null)
         {
             if (metadata == null)
             {
                 metadata = new EntityMetadataModel[] { new EntityMetadataModel() };
             }
 
-            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints);
+            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets);
             Assert.AreEqual(success, compileResult.IsSuccess, $"Compilation failed for formula: '{formula}'");
 
             if (compileResult.IsSuccess)
@@ -585,12 +611,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return compileResult;
         }
 
-        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null)
+        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null)
         {
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider));
+                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
 
             var options = new SqlCompileOptions
             {
