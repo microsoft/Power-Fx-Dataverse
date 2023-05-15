@@ -62,8 +62,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static void ValidateTypeCompatibility(RetVal val1, RetVal val2, Span sourceContext)
         {
-            // if the representations of the dates are the same (local in UTC(TZI/DateOnly) vs UTC), they can be used together
-            if (IsDateTimeType(val1.type) && ColumnContainsLocalDateInUTC(val1.type) != ColumnContainsLocalDateInUTC(val2.type))
+            if (IsDateTimeType(val1.type) && val1.type != val2.type)
             {
                 throw BuildDateTimeCompatibilityError(sourceContext);
             }

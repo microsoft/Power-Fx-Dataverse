@@ -992,7 +992,7 @@ END
         [DataRow("DateAdd(dateOnly, 1, TimeUnit.Hours)", true, typeof(DateType), DisplayName = "DateAdd Hours Date Only")]
         [DataRow("DateAdd(tziDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeNoTimeZoneType), DisplayName = "DateAdd TZI Date Only")]
         [DataRow("DateAdd(userLocalDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeType), DisplayName = "DateAdd User Local Date Only")]
-        [DataRow("If(true, tziDateOnly, dateOnly)", true, typeof(DateTimeNoTimeZoneType), DisplayName = "If TZI Date Only vs. Date Only")]
+        [DataRow("If(true, tziDateOnly, dateOnly)", false, null, "Error 22-30: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "If TZI Date Only vs. Date Only")]
         [DataRow("If(true, userLocalDateTime, userLocalDateOnly)", true, typeof(DateTimeType), DisplayName = "If User Local Date Time vs. User Local Date Only")]
         [DataRow("If(true, tziDateOnly, tziDateTime)", true, typeof(DateTimeNoTimeZoneType), DisplayName = "If TZI Date Only vs. TZI Date Time")]
         [DataRow("Switch(1, 1, userLocalDateOnly, userLocalDateTime)", true, typeof(DateTimeType), DisplayName = "Switch UserLocal Date Only vs. User Local Date Time")]
@@ -1002,7 +1002,7 @@ END
         [DataRow("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.", DisplayName = "Text for User Local Date Time")]
         [DataRow("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.", DisplayName = "Text for UTCNow")]
         [DataRow("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "DateDiff User Local Date Time vs TZI Date Only")]
-        [DataRow("DateDiff(dateOnly, tziDateOnly)", true, typeof(SqlDecimalType), DisplayName = "DateDiff Date Only vs TZI Date Only")]
+        [DataRow("DateDiff(dateOnly, tziDateOnly)", false, null, "Error 0-31: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "DateDiff Date Only vs TZI Date Only")]
         [DataRow("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "DateDiff User Local Date Only vs Date Only")]
         [DataRow("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType), DisplayName = "DateDiff User Local Date Only vs User Local Date Time")]
         [DataRow("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType), DisplayName = "> User Local Date Time vs. User Local Date Only")]
@@ -1012,7 +1012,7 @@ END
         // [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
         // [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
 
-        [DataRow("UTCToday() = dateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. Date Only")]
+        [DataRow("UTCToday() = dateOnly", false, null, "Error 11-12: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= UTCToday vs. Date Only")]
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [DataRow("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= TZI Date Time vs. User Local Date Only")]
         [DataRow("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "<= Date Only vs. User Local Date Only")]
