@@ -511,11 +511,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             throw new NotImplementedException();
         }
-
-        public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)
-        {
-            return false;
-        }
         #endregion
     }
 }
