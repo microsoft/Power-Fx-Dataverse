@@ -30,11 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private ServiceClient GetClient()
         {
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
-
-            // BUGBUG -- remove this line
-            //cx = "Url=https://aurorabapenvb94a8.crm10.dynamics.com/; Username=aurorauser07@capintegration01.onmicrosoft.com; Password=7wS7W!@Wr; authtype=OAuth";
-            // BUGBUG -- remove this line
+            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);            
 
             // short-circuit if connection string is not set
             if (cx == null)
@@ -1015,7 +1011,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsNotNull(symbols);
 
             var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions(config);
+            config.SymbolTable.EnableMutationFunctions();
             engine = new RecalcEngine(config);
             runtimeConfig = dv.SymbolValues;
 

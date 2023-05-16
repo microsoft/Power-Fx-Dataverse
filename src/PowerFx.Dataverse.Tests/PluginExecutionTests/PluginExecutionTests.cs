@@ -1927,7 +1927,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Simulates a row being deleted by an external user
             await el.DeleteAsync(logicalName, _g1);
 
-            // Evals the same expression by a new engine. Results should be correct as there is no cache.
+            // Evals the same expression by a new engine. As there is no cache in DataTableValue, we'll return exact values.
             var engine4 = new RecalcEngine(config);
             var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(null, result4.ToObject());
