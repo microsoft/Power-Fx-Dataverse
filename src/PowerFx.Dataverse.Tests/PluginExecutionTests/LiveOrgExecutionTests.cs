@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private ServiceClient GetClient()
         {
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);            
+            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             // short-circuit if connection string is not set
             if (cx == null)
@@ -114,7 +114,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterAsType(string expression, object expected, bool isResultError = false)
         {
             var tableName = new string[] { "JV1S", "JVLookups", "JVLookup2S" };
- 
+
             List<IDisposable> disposableObjects = null;
 
             try
@@ -264,7 +264,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             try
             {
-                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);                
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
             }
             finally
             {
@@ -419,7 +419,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var obj = result.ToObject() as Entity;
 
-                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"] );
+                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
             }
             finally
             {
@@ -943,7 +943,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
                 }
-                
+
             }
 
             Assert.IsNotNull(symbols);
@@ -972,7 +972,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new()
+        static Dictionary<string, string> PredefinedTables = new ()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
@@ -990,7 +990,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
                 Assert.IsTrue(b1);
-            }            
+            }
 
             DataverseConnection dv = null;
 
@@ -1044,7 +1044,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;        
+        private bool disposedValue;
 
         public DataverseAsyncClient(ServiceClient client)
         {
