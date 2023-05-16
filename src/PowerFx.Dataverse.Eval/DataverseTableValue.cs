@@ -190,7 +190,7 @@ namespace Microsoft.PowerFx.Dataverse
             // After mutation, lazely refresh Rows from server.
             Refresh();
 
-            return DValue<BooleanValue>.Of(BooleanValue.new (true));
+            return DValue<BooleanValue>.Of(BooleanValue.New(true));
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
