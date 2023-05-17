@@ -1420,12 +1420,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
-
-        // These are wrong error messages and will fail once the new message keys gets translated.
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: A delegação desta operação na tabela \"local\" não tem suporte."
-            )]
+            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]        
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price", 
+            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
             var logicalName = "local";
