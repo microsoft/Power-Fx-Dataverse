@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public void Refresh()
         {
-            _connection.Services.RefreshAsync(_entityMetadata.LogicalName).ConfigureAwait(false).GetAwaiter().GetResult();
+            _connection.Services.Refresh(_entityMetadata.LogicalName);
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()

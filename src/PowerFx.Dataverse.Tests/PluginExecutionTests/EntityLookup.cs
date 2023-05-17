@@ -278,9 +278,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return newEntity;
         }
 
-        public Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return Task.CompletedTask;
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }

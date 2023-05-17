@@ -6,11 +6,11 @@
 
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.LanguageServerProtocol.Protocol;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -175,11 +175,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             ok = entityMetadata.TryGetAttribute(logicalName.ToUpper(), out amd);
             Assert.IsFalse(ok, "case sensitive lookup");
             Assert.IsNull(amd);
-            
+
             ok = entityMetadata.TryGetAttribute(displayName, out amd);
             Assert.IsNull(amd);
             Assert.IsFalse(ok, "only logical names, Not display names");
-                        
+
             // Relationships.
             // "refg" is the relationship for "otherid" attribute.
             ok = entityMetadata.TryGetAttribute("otherid", out amd);
@@ -282,7 +282,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);            
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
         }
 
         [TestMethod]
@@ -293,14 +293,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName); 
-            
+            dv.AddTable(displayName, logicalName);
+
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
             RecordValue record = dv.Marshal(entityOriginal);
 
             // Test the serializer! 
-            var expr = record.ToExpression();             
+            var expr = record.ToExpression();
 
             // Should be short form - not flattened.  
             Assert.AreEqual("LookUp(t1, localid=GUID(\"" + id + "\"))", expr);
@@ -309,8 +309,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new RecalcEngine();
             engine.EnableDelegation();
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            
-            var entity = (Entity) result.ToObject();
+
+            var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
 
             Assert.AreEqual(entityOriginal.LogicalName, entity.LogicalName);
@@ -391,7 +391,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName); 
+            dv.AddTable(displayName, logicalName);
 
             RecordType type = dv.GetRecordType(logicalName);
             var blank = FormulaValue.NewBlank(type);
@@ -420,8 +420,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var displayName = "t1";
 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            TableValue table = dv.AddTable(displayName, logicalName); 
-                        
+            TableValue table = dv.AddTable(displayName, logicalName);
+
             // Test the serializer!             
             var expr = table.ToExpression();
 
@@ -452,7 +452,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            Func<string, DataverseConnection, FormulaValue> eval = 
+            Func<string, DataverseConnection, FormulaValue> eval =
                 (expr, dv) => engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
 
             // Relationship refers to a type that we didn't AddTable for. 
@@ -467,7 +467,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Reserializing will fetch from the connection and use the updated name. 
             var expr1bSerialized = result.ToExpression();
             Assert.AreEqual("LookUp(t2, remoteid=GUID(\"00000000-0000-0000-0000-000000000002\"))", expr1bSerialized);
-            
+
             // Compare relationship to direct lookup
             var expr3 = "First(t2)";
             var result3 = eval(expr3, dv);
@@ -479,7 +479,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Run with 2 tables registered. 
         [DataTestMethod]
-        [DataRow("First(t1).Other.Data",200.0)]
+        [DataRow("First(t1).Other.Data", 200.0)]
         [DataRow("First(t2).Data", 200.0)]
         [DataRow("First(t1).Other.remoteid = First(t2).remoteid", true)] // same Id
         [DataRow("If(true, First(t1).Other, First(t2)).Data", 200.0)] // Compatible for comparison 
@@ -501,9 +501,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv2, EntityLookup el2) = CreateMemoryForRelationshipModels();
             dv2.AddTable(displayName, logicalName);
             dv2.AddTable(displayName2, logicalName2);
-            
+
             var result = eval(expr, dv2);
-            Assert.AreEqual(expected, result.ToObject());         
+            Assert.AreEqual(expected, result.ToObject());
         }
 
         // Run with 2 tables registered. 
@@ -648,11 +648,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-            
+
             Assert.IsInstanceOfType(result, typeof(StringValue));
             Assert.AreEqual(FormulaType.String, result.Type);
 
-            Assert.AreEqual("teste_url", result.ToObject());            
+            Assert.AreEqual("teste_url", result.ToObject());
         }
 
         // Ensure a custom function shows up in intellisense. 
@@ -672,8 +672,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Intellisense doesn't return anything on pure empty, 
             // needs at least first char of identifier. 
 
-            var check = engine.Check("xx",symbolTable: dv2.Symbols);
-            
+            var check = engine.Check("xx", symbolTable: dv2.Symbols);
+
             var results = engine.Suggest(check, 2);
             var list = results.Suggestions.ToArray();
 
@@ -681,7 +681,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual("xxxt1", list[0].DisplayText.Text);
 
             // Triggers a lazy load
-            var check2 = engine.Check("First(xxxt1)", symbolTable: dv2.Symbols); 
+            var check2 = engine.Check("First(xxxt1)", symbolTable: dv2.Symbols);
             Assert.IsTrue(check2.IsSuccess);
 
             // After lazily load, now the symbol table is populated and we see the symbols. 
@@ -833,7 +833,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void RefreshDataverseConnectionSingleOrgPolicyTest()
         {
             var logicalName = "local";
-            
+
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "Remote");
@@ -862,7 +862,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.AreEqual(100.0, result1.ToObject());
 
-            // Simulates a row being deleted by an external force
+            // Simulates a row being deleted by an external user
             el.DeleteAsync(logicalName, _g1);
 
             // Evals the same expression by a new engine. Should return a wrong result.
@@ -889,7 +889,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.IsInstanceOfType(result3, typeof(BlankValue));
-        }
+        }        
 
         [TestMethod]
         public void RefreshDataverseConnectionMultiOrgPolicyTest()
@@ -944,7 +944,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsInstanceOfType(result3, typeof(BlankValue));
         }
-        
+
         // Dependency finder. 
         [DataTestMethod]
         [DataRow("1+2", "")] // none
@@ -1032,7 +1032,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
-            var logicalName = "local";            
+            var logicalName = "local";
 
             foreach ((DataverseConnection dv, EntityLookup el) in Setups())
             {
@@ -1067,7 +1067,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [DataTestMethod]
         [DataRow("Set(Price, 200); Price", 200.0)]
-        [DataRow("Set(Other, First(Remote));Other.data", 200.0)] 
+        [DataRow("Set(Other, First(Remote));Other.data", 200.0)]
         [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)]
         public void LocalSet(string expr, object expected)
         {
@@ -1121,12 +1121,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
         [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
-        [DataRow("Collect(t1, { Price : 200}).Price", 200.0)] 
+        [DataRow("Collect(t1, { Price : 200}).Price", 200.0)]
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
-        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]        
+        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]
         [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out       
         public void PatchFunction(string expr, double? expected)
-        {            
+        {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
@@ -1173,26 +1173,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             100.0,
-            "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")] 
+            "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
 
-        [DataRow("LookUp(t1, LocalId=_g1).Price", 
+        [DataRow("LookUp(t1, LocalId=_g1).Price",
             100.0,
             "(__lookup(t1, _g1)).new_price")] // variable
 
-        [DataRow("LookUp(t1, _g1 = LocalId).Price", 
+        [DataRow("LookUp(t1, _g1 = LocalId).Price",
             100.0, // reversed order still ok 
             "(__lookup(t1, _g1)).new_price")]
 
-        [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price", 
+        [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price",
             100.0, // explicit ThisRecord is ok. IR will handle. 
             "(__lookup(t1, _g1)).new_price")] // variable
-                    
+
         [DataRow("LookUp(t1 As XYZ, XYZ.LocalId=_g1).Price",
             100.0, // Alias is ok. IR will handle. 
             "(__lookup(t1, _g1)).new_price")] // variable
 
         // Working
-        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", 
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
             "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.")] // lamba uses ThisRecord.Price, can't delegate
@@ -1200,9 +1200,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
             100.0, // non ID field
             "(LookUp(t1, (GtNumbers(new_price,50)))).new_price",
-            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")] 
+            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")]
 
-        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",  
+        [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
             100.0, // successful with complex expression
             "(__lookup(t1, If(True, (_g1), (_gMissing)))).new_price")]
 
@@ -1211,9 +1211,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
             "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
             )]
-                        
-        [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price", 
-            100.0, 
+
+        [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price",
+            100.0,
             "(__lookup(t1, (__lookup(t1, _g1)).localid)).new_price"
             )] // nested delegation, both delegated.
 
@@ -1222,8 +1222,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             100.0,
             "(__lookup(t1, (LookUp(t1, (GtNumbers(new_price,50)))).localid)).new_price",
             "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")] // Inner not delegated, but outer still is. 
-                        
-        [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price", 
+
+        [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
             "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
 
@@ -1245,9 +1245,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             )]
 
         // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings. 
-         [DataRow("IsBlank(t1)",
+        [DataRow("IsBlank(t1)",
             false, // nothing to delegate
-            "IsBlank(t1)"            
+            "IsBlank(t1)"
             )]
 
         [DataRow("IsBlank(Filter(t1, 1=1))",
@@ -1272,7 +1272,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
             true, // delegated, but not found is blank()
             "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
-            
+
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             null, // Bad practice, modifying the collection while we enumerate.
             "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
@@ -1283,7 +1283,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             100.0,
             "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price")] // variable
 
-        [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price", 
+        [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
             100.0,
             "(With({f:_g1}, (__lookup(t1, f)))).new_price")] // variable
 
@@ -1297,7 +1297,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
-                        
+
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             var tableT1 = dv.AddTable(displayName, logicalName);
 
@@ -1328,13 +1328,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.AreEqual(expectedWarnings.Length, errorList.Length);
-            for(int i = 0; i< errorList.Length; i++)
+            for (int i = 0; i < errorList.Length; i++)
             {
                 Assert.AreEqual(expectedWarnings[i], errorList[i]);
             }
 
             // Can still run and verify results. 
-            var run = check.GetEvaluator();            
+            var run = check.GetEvaluator();
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
@@ -1480,7 +1480,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;            
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.AreEqual(expected, result.ToObject());
         }
@@ -1573,7 +1573,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 if (key == "new_price")
                 {
-                    var number = (decimal) value;
+                    var number = (decimal)value;
 
                     if (number > 100)
                     {
@@ -1649,7 +1649,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // verify on entity - this should always be updated 
                 Assert.IsFalse(el.Exists(new EntityReference(logicalName, _g1)));
-            }           
+            }
         }
 
         [TestMethod]
@@ -1692,8 +1692,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Eval it                        
             var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
             var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
-            
-            var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig ).Result;
+
+            var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
             Assert.IsTrue(result is BlankValue);
         }
 
@@ -1730,7 +1730,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Most exceptions from the IOrganizationService will get caught and converted to ErrorValue. 
             // IOrganizationService doesn't actually specify which exceptions it produces on failure. 
             var exceptionMessage = "Inject test failure";
-            el._onLookupRef = (er) => 
+            el._onLookupRef = (er) =>
                 throw new FaultException<OrganizationServiceFault>(
                     new OrganizationServiceFault(),
                     new FaultReason(exceptionMessage));
@@ -1767,7 +1767,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.ThrowsException<InvalidOperationException>(
                 () => dv.AddTable("variableName2", "local"),
                 "Table with logical name 'local' was already added as variableName.");
-            
+
             Assert.ThrowsException<InvalidOperationException>(
                 () => dv.AddTable("variableName", "remote"),
                 "Table with variable name 'variableName' was already added as local.");
@@ -1848,7 +1848,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // OptionSets. 
             var opt = val1.GetField("rating");
 
-            Assert.AreEqual("Warm", opt.ToObject()); 
+            Assert.AreEqual("Warm", opt.ToObject());
             Assert.AreEqual("OptionSetValue (2=Warm)", opt.ToString());
         }
 
@@ -1893,7 +1893,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(check.IsSuccess);
             check.ThrowOnErrors();
         }
-        
+
         [TestMethod]
         public async Task DataverseTableValueOperationWithSameBehaviorTest()
         {
@@ -1904,7 +1904,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var exprFirstN = "CountRows(FirstN(t1,2))";
             var exprFilter = "CountRows(Filter(t1,Price > 10))";
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var entity1 = new Entity("local", _g1);
+            var entity2 = new Entity("remote", _g2);
+
+            entity1.Attributes["new_price"] = 100;
+            entity1.Attributes["otherid"] = entity2.ToEntityReference();
+            entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm            
+            entity2.Attributes["data"] = 200;
+
+            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
+            EntityLookup el = new EntityLookup(xrmMetadataProvider);
+
+            // This is the key difference in this test.
+            TestDataverseEntityCache dec = new TestDataverseEntityCache(el); 
+            el.Add(CancellationToken.None, entity1, entity2);
+
+            var metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+            var dv = new DataverseConnection(dec, metadataCache, maxRows: 999);
+            
             dv.AddTable(displayName, logicalName);
 
             var opts = _parserAllowSideEffects;
@@ -1915,7 +1932,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine1 = new RecalcEngine(config);
             var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result1.ToObject());
-            
+
             var engine2 = new RecalcEngine(config);
             var result2 = await engine2.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(1m, result2.ToObject());
@@ -1930,15 +1947,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Evals the same expression by a new engine. As there is no cache in DataTableValue, we'll return exact values.
             var engine4 = new RecalcEngine(config);
             var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(null, result4.ToObject());
+            Assert.AreEqual(100.0, result4.ToObject());
 
             var engine5 = new RecalcEngine(config);
             var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0m, result5.ToObject());
+            Assert.AreEqual(1m, result5.ToObject());
 
             var engine6 = new RecalcEngine(config);
             var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0m, result6.ToObject());
+            Assert.AreEqual(1m, result6.ToObject());
 
             // Refresh connection cache.
             dv.RefreshCache();
@@ -1956,7 +1973,253 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(0m, result9.ToObject());
         }
-        
+
+        public class TestDataverseEntityCache : IDataverseServices, IDataverseEntityCache
+        {
+            public int MaxEntries { get; } // 0 = no cache
+
+            public TimeSpan LifeTime { get; }
+
+            public TimeSpan DefaultLifeTime => new(0, 5, 0); // 5 minutes
+
+            public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
+
+            // Stores all entities, sorted by Id (key) with their timestamp (value)
+            private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
+
+            // Stores the list of cached entry Ids in order they are cached
+            private readonly List<Guid> _cacheList = new();
+
+            // Lock used for cache dictionary and list
+            private readonly object _lock = new();
+
+            internal readonly IDataverseServices _innerService;
+
+            public TestDataverseEntityCache(IOrganizationService orgService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
+                : this(new DataverseService(orgService), maxEntries, cacheLifeTime)
+            {
+            }
+
+            public TestDataverseEntityCache(IDataverseServices innerService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
+            {
+                MaxEntries = maxEntries < 0 ? 4096 : maxEntries;
+                LifeTime = cacheLifeTime.TotalMilliseconds <= 0 ? DefaultLifeTime : cacheLifeTime;
+                _innerService = innerService;
+            }
+
+            public void AddCacheEntry(Entity entity)
+            {
+                if (entity == null || MaxEntries == 0)
+                {
+                    return;
+                }
+
+                Guid id = entity.Id;
+
+                lock (_lock)
+                {
+                    DataverseCachedEntity dce = new(entity);
+
+                    if (_cache.ContainsKey(id))
+                    {
+                        _cache[id] = dce;
+                        _cacheList.Remove(id);
+                    }
+                    else
+                    {
+                        _cache.Add(id, dce);
+                    }
+
+                    _cacheList.Add(id);
+
+                    if (_cacheList.Count > MaxEntries)
+                    {
+                        Guid idToRemove = _cacheList.First();
+
+                        _cacheList.RemoveAt(0);
+                        _cache.Remove(idToRemove);
+                    }
+                }
+            }
+
+            public void RemoveCacheEntry(Guid id)
+            {
+                lock (_lock)
+                {
+                    _cacheList.Remove(id);
+                    _cache.Remove(id);
+                }
+            }
+
+            public void ClearCache(string logicalTableName = null)
+            {
+                lock (_lock)
+                {
+                    if (string.IsNullOrEmpty(logicalTableName))
+                    {
+                        _cache.Clear();
+                        _cacheList.Clear();
+                        return;
+                    }
+
+                    foreach (var entityKvp in _cache.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)).ToList())
+                    {
+                        RemoveCacheEntry(entityKvp.Key);
+                    }
+                }
+            }
+
+            public Entity GetEntityFromCache(Guid id)
+            {
+                lock (_lock)
+                {
+                    if (!_cache.TryGetValue(id, out DataverseCachedEntity dce))
+                    {
+                        // Unknown Id (not in cache)
+                        return null;
+                    }
+
+                    // Is entry still valid?
+                    if (dce.TimeStamp > DateTime.UtcNow.Add(-LifeTime))
+                    {
+                        return dce.Entity;
+                    }
+
+                    // Entry expired
+                    RemoveCacheEntry(id);
+                    return null;
+                }
+            }
+
+            public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                DataverseResponse<Guid> result = await _innerService.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
+
+                if (!result.HasError)
+                {
+                    // Should never happen, but make sure this Id isn't in the cache
+                    RemoveCacheEntry(result.Response);
+                }
+
+                return result;
+            }
+
+            public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Remove this Id from cache, even if Delete would fail
+                RemoveCacheEntry(id);
+                return _innerService.DeleteAsync(entityName, id, cancellationToken);
+            }
+
+            public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                lock (_lock)
+                {
+                    Entity e = GetEntityFromCache(id);
+
+                    if (e != null)
+                    {
+                        return new DataverseResponse<Entity>(e);
+                    }
+                }
+
+                DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, cancellationToken).ConfigureAwait(false);
+
+                if (!result.HasError)
+                {
+                    AddCacheEntry(result.Response);
+                }
+
+                return result;
+            }
+
+            public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                lock (_lock)
+                {
+                    if (_cacheList.Any())
+                    {
+                        List<Entity> list = new();
+
+                        foreach (KeyValuePair<Guid, DataverseCachedEntity> cacheEntry in _cache)
+                        {
+                            Entity e = cacheEntry.Value.Entity;
+
+                            if (e.LogicalName == (query as QueryExpression).EntityName)
+                            {
+                                list.Add(e);
+                            }
+                        }
+
+                        return new DataverseResponse<EntityCollection>(new EntityCollection(list));
+                    }
+                }
+
+                DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
+
+                if (!result.HasError)
+                {
+                    foreach (Entity e in result.Response.Entities)
+                    {
+                        AddCacheEntry(e);
+                    }
+                }
+
+                return result;
+
+            }
+
+            public Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                RemoveCacheEntry(entity.Id);
+                return _innerService.UpdateAsync(entity, cancellationToken);
+            }
+
+            public async Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (MaxEntries != 0)
+                {
+                    lock (_lock)
+                    {
+                        foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                        {
+                            if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
+                            {
+                                RemoveCacheEntry(entityKvp.Key);
+                            }
+                        }
+                    }
+                }
+            }
+
+            public void Refresh(string logicalTableName)
+            {
+                if (MaxEntries != 0)
+                {
+                    lock (_lock)
+                    {
+                        foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                        {
+                            if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
+                            {
+                                RemoveCacheEntry(entityKvp.Key);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         [DataTestMethod]
         [DataRow("Collect(t1, {Int:Date(2023,2,27)})")]
         [DataRow("Collect(t1, {Int:Date(1889,12,31)})")]
@@ -1979,7 +2242,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             // Coercion in Collect() now allowed. Will coerce number/date. 
-            Assert.IsTrue(check.IsSuccess);            
+            Assert.IsTrue(check.IsSuccess);
         }
 
         [DataTestMethod]
@@ -2020,7 +2283,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Failed lookup is blank
             Assert.IsNotNull(result as BlankValue);
         }
-        
+
         [TestMethod]
         public async Task AllNotSupportedAttributesTest()
         {
@@ -2061,7 +2324,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             catch (Exception ex)
             {
                 Assert.IsTrue(false, ex.Message);
-            }            
+            }
         }
 
         [TestMethod]
@@ -2220,7 +2483,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             if (value is DecimalValue dec)
             {
-                return (double) dec.Value;
+                return (double)dec.Value;
             }
             throw new InvalidOperationException($"Not a number: {value.GetType().FullName}");
         }
@@ -2234,6 +2497,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return (double)dec.Value;
             }
             return value.ToObject();
-        }        
+        }
     }
 }

@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Lock used for cache dictionary and list
         private readonly object _lock = new ();
 
-        private readonly IDataverseServices _innerService;
+        internal readonly IDataverseServices _innerService;
 
         public DataverseEntityCache(IOrganizationService orgService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
             : this(new DataverseService(orgService), maxEntries, cacheLifeTime)
@@ -218,6 +218,23 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
             }            
+        }
+
+        public void Refresh(string logicalTableName)
+        {            
+            if (MaxEntries != 0)
+            {
+                lock (_lock)
+                {
+                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                    {
+                        if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
+                        {
+                            RemoveCacheEntry(entityKvp.Key);
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -58,10 +58,8 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException();
         }
 
-        public Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.CompletedTask;
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }

@@ -1107,10 +1107,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             GC.SuppressFinalize(this);
         }
 
-        public Task RefreshAsync(string logicalTableName, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.CompletedTask;
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }
