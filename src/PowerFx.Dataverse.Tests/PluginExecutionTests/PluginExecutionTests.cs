@@ -1916,6 +1916,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             EntityLookup el = new EntityLookup(xrmMetadataProvider);
 
             // This is the key difference in this test.
+            // TestDataverseEntityCache has a modified RetrieveMultipleAsync which uses the cache once some entries are added to it.
             TestDataverseEntityCache dec = new TestDataverseEntityCache(el); 
             el.Add(CancellationToken.None, entity1, entity2);
 
