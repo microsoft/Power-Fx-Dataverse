@@ -28,6 +28,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, FilterExpression filter, CancellationToken cancel)
+            {
+                // Binder should have enforced that this always succeeds.
+                var t2 = (DataverseTableValue)table;
+
+                var result = await t2.RetrieveAsync(filter, cancel);
+                return result;
+            }
+
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
             {
                 // Binder should have enforced that this always succeeds.

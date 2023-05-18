@@ -2,27 +2,27 @@
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __FirstN(Table, count)  
-    internal class DelegatedFirstNFunction : DelegateFunction
+    /// <summary>
+    /// Generates a delegation filter expression with blank filter to retrieve entire table.
+    /// </summary>
+    internal class DelegatedBlankFilter : DelegateFunction
     {
-        public DelegatedFirstNFunction(DelegationHooks hooks)
-          : base(hooks, "__top", FormulaType.Blank, FormulaType.Number)
+        public DelegatedBlankFilter(DelegationHooks hooks, TableType tableType)
+          : base(hooks, "__noFilter", tableType, tableType, FormulaType.Number)
         {
         }
 
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
-            var topCount = ((NumberValue)args[0]).Value; // $$$
             var filter = new FilterExpression();
-            var result = new DelegationFormulaValue(IRContext.NotInSource(ReturnFormulaType), filter, (int)topCount);
-
-            return result;
+            return new DelegationFormulaValue(IRContext.NotInSource(ReturnFormulaType), filter);
         }
     }
 }

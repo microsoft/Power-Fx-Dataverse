@@ -85,6 +85,23 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
+        public async Task<DValue<RecordValue>> RetrieveAsync(FilterExpression filter, CancellationToken cancel)
+        {
+            var query = new QueryExpression(_entityMetadata.LogicalName)
+            {
+                ColumnSet = new ColumnSet(true),
+                Criteria = filter ?? new FilterExpression()
+            };
+
+            query.TopCount = 1;
+
+            var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
+
+            var result = EntityCollectionToRecordValues(entities);
+
+            return result.First();
+        }
+
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, CancellationToken cancel)
         {
             var query = new QueryExpression(_entityMetadata.LogicalName)
