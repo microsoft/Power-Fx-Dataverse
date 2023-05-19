@@ -789,10 +789,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("12;Price;12", "Read local: new_price;")] // chaining
         [DataRow("ParamLocal1.Price", "Read local: new_price;")] // basic read
         [DataRow("First(t1).Price + First(Remote).'Other Other'.'Data Two'", "Read local: new_price; Read remote: otherotherid; Read doubleremote: data2;")] // 3 entities
-
-        //[DataRow("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
-        //[DataRow("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1. 
-        //[DataRow("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
+        [DataRow("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1. 
+        [DataRow("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
