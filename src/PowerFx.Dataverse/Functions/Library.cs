@@ -79,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Mod, Mod },
             { BuiltinFunctionsCore.Month, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Month) },
             { BuiltinFunctionsCore.Not, Not },
-            { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NotSupported(runner, node, context, BuiltinFunctionsCore.UTCNow.LocaleSpecificName) },
+            { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => Now(runner,node,context) },
             { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
            // { BuiltinFunctionsCore.Power, Power },
             { BuiltinFunctionsCore.Replace, Replace },
