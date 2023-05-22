@@ -266,7 +266,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             var leftVal = left.Accept(this, context);
             var rightVal = right.Accept(this, context);
-            Library.ValidateTypeCompatibility(leftVal, rightVal, sourceContext);
 
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
@@ -292,7 +291,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var leftVal = left.Accept(this, context);
             var rightVal = right.Accept(this, context);
-            Library.ValidateTypeCompatibility(leftVal, rightVal, sourceContext);
             return context.SetIntermediateVariable(type, $"({leftVal} {op} {rightVal})");
         }
 

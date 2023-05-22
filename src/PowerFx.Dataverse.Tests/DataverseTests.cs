@@ -1013,10 +1013,10 @@ END
         // [DataRow("UTCToday() = tziDateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. TZI Date Only")]
         // [DataRow("UTCToday() = UTCNow()", true, typeof(BooleanType), DisplayName = "= UTCToday UTCNow")]
 
-        [DataRow("UTCToday() = dateOnly", false, null, "Error 11-12: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= UTCToday vs. Date Only")]
+        [DataRow("UTCToday() = dateOnly", true, typeof(BooleanType), DisplayName = "= UTCToday vs. Date Only")]
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
-        [DataRow("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= TZI Date Time vs. User Local Date Only")]
-        [DataRow("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "<= Date Only vs. User Local Date Only")]
+        [DataRow("tziDateTime = userLocalDateOnly", true, typeof(BooleanType), DisplayName = "= TZI Date Time vs. User Local Date Only")]
+        [DataRow("dateOnly <= userLocalDateOnly", true, typeof(BooleanType), DisplayName = "<= Date Only vs. User Local Date Only")]
         [DataRow("Day(dateOnly)", true, typeof(SqlDecimalType), DisplayName = "Day of Date Only")]
         [DataRow("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", DisplayName = "Day of User Local Date Only")]
         [DataRow("WeekNum(dateOnly)", true, typeof(SqlDecimalType))]
