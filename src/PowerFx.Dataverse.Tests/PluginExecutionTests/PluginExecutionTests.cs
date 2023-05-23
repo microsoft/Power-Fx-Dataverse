@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -889,7 +890,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.IsInstanceOfType(result3, typeof(BlankValue));
-        }        
+        }
 
         [TestMethod]
         public void RefreshDataverseConnectionMultiOrgPolicyTest()
@@ -1420,8 +1421,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]        
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price", 
+            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
@@ -1901,28 +1902,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var exprFirstN = "CountRows(FirstN(t1,2))";
             var exprFilter = "CountRows(Filter(t1,Price > 10))";
 
-            var entity1 = new Entity("local", _g1);
-            var entity2 = new Entity("remote", _g2);
+            //var entity1 = new Entity("local", _g1);
+            //var entity2 = new Entity("remote", _g2);
 
-            entity1.Attributes["new_price"] = 100;
-            entity1.Attributes["otherid"] = entity2.ToEntityReference();
-            entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm            
-            entity2.Attributes["data"] = 200;
+            //entity1.Attributes["new_price"] = 100;
+            //entity1.Attributes["otherid"] = entity2.ToEntityReference();
+            //entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm            
+            //entity2.Attributes["data"] = 200;
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
-            EntityLookup el = new EntityLookup(xrmMetadataProvider);
+            (DataverseConnection dv, DataverseEntityCache dec) = CreateMemoryForRelationshipModelsWithCache();
 
-            // This is the key difference in this test.
-            // TestDataverseEntityCache has a modified RetrieveMultipleAsync which uses the cache once some entries are added to it.
-            TestDataverseEntityCache dec = new TestDataverseEntityCache(el); 
-            el.Add(CancellationToken.None, entity1, entity2);
+            //MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
+            //EntityLookup el = new EntityLookup(xrmMetadataProvider);
 
-            var metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
-            var dv = new DataverseConnection(dec, metadataCache, maxRows: 999);
-            
+            //DataverseEntityCache el = new DataverseEntityCache(el1); 
+            //el.Add(CancellationToken.None, entity1, entity2);
+
+            //var metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+            //var dv = new DataverseConnection(dec, metadataCache, maxRows: 999);
+
             dv.AddTable(displayName, logicalName);
 
-            var opts = _parserAllowSideEffects;
+            //var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
@@ -1940,9 +1941,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(1m, result3.ToObject());
 
             // Simulates a row being deleted by an external user
-            await el.DeleteAsync(logicalName, _g1);
+            // This will delete the inner entity, without impacting DataverseEntityCache's cache
+            await dec._innerService.DeleteAsync(logicalName, _g1);
 
-            // Evals the same expression by a new engine. As there is no cache in DataTableValue, we'll return exact values.
+            // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
             var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result4.ToObject());
@@ -2363,8 +2365,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 
-        // Create Entity objects to match DataverseTests.RelationshipModels;
+        private (DataverseConnection, DataverseEntityCache) CreateMemoryForRelationshipModelsWithCache(Policy policy = null)
+        {
+            (DataverseConnection dv, IDataverseServices ds) = CreateMemoryForRelationshipModelsInternal(policy, true);
+            return (dv, ((DataverseEntityCache)ds));
+        }
+
         private (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels(Policy policy = null)
+        {
+            (DataverseConnection dv, IDataverseServices ds) = CreateMemoryForRelationshipModelsInternal(policy);
+            return (dv, ((EntityLookup)ds));
+        }
+
+        // Create Entity objects to match DataverseTests.RelationshipModels;
+        private (DataverseConnection, IDataverseServices) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -2383,20 +2397,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2);
+            IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
-            CdsEntityMetadataProvider metadataCache;
-            if (policy is SingleOrgPolicy policy2)
-            {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
-            }
-            else
-            {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
-            }
+            CdsEntityMetadataProvider metadataCache = policy is SingleOrgPolicy policy2
+                ? new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables)
+                : new CdsEntityMetadataProvider(xrmMetadataProvider);
 
-            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache, maxRows: 999);
-
-            return (dvConnection, entityLookup);
+            var dvConnection = new DataverseConnection(policy, ds, metadataCache, maxRows: 999);
+            return (dvConnection, ds);
         }
 
         // Create Entity objects to match DataverseTests.AllAttributeModel;

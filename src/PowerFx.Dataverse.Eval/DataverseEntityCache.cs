@@ -25,13 +25,13 @@ namespace Microsoft.PowerFx.Dataverse
         public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
-        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new ();
+        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
 
         // Stores the list of cached entry Ids in order they are cached
-        private readonly List<Guid> _cacheList = new ();
+        private readonly List<Guid> _cacheList = new();
 
         // Lock used for cache dictionary and list
-        private readonly object _lock = new ();
+        private readonly object _lock = new();
 
         internal readonly IDataverseServices _innerService;
 
@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             lock (_lock)
             {
-                DataverseCachedEntity dce = new (entity);
+                DataverseCachedEntity dce = new(entity);
 
                 if (_cache.ContainsKey(id))
                 {
@@ -182,6 +182,29 @@ namespace Microsoft.PowerFx.Dataverse
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            // Verify if we have any entry in the cache for that table/entity name
+            // If any, we'll use the cached entries
+            lock (_lock)
+            {                
+                List<Entity> list = new();
+
+                foreach (KeyValuePair<Guid, DataverseCachedEntity> cacheEntry in _cache)
+                {
+                    Entity e = cacheEntry.Value.Entity;
+
+                    if (e.LogicalName == (query as QueryExpression).EntityName)
+                    {
+                        list.Add(e);
+                    }
+                }
+
+                if (list.Any())
+                {
+                    return new DataverseResponse<EntityCollection>(new EntityCollection(list));
+                }
+            }
+
             DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
 
             if (!result.HasError)
@@ -217,11 +240,11 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
                 }
-            }            
+            }
         }
 
         public void Refresh(string logicalTableName)
-        {            
+        {
             if (MaxEntries != 0)
             {
                 lock (_lock)

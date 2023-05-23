@@ -208,9 +208,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             Refresh();
 
-            if (_connection.Services is IDataverseEntityCacheCleaner dec)
+            if (_connection.Services is IDataverseEntityCacheCleaner decc)
             {
-                dec.ClearCache(_entityMetadata.LogicalName);
+                decc.ClearCache(_entityMetadata.LogicalName);
             }
         }
 
