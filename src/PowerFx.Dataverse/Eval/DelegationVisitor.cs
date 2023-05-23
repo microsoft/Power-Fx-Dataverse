@@ -34,14 +34,24 @@ namespace Microsoft.PowerFx.Dataverse
         // $$$ lock?
         private readonly Stack<CallNode> _caller;
 
-        private int GetCallerScopeId()
+        private ScopeSymbol GetCallerScope()
         {
             if (_caller.Count == 0)
             {
-                return -1;
+                throw new InvalidOperationException("No caller");
             }
 
-            return _caller.Peek().Scope.Id;
+            return _caller.Peek().Scope;
+        }
+
+        private FormulaType GetCallerReturnType()
+        {
+            if (_caller.Count == 0)
+            {
+                throw new InvalidOperationException("No caller");
+            }
+
+            return _caller.Peek().IRContext.ResultType;
         }
 
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow)
@@ -61,14 +71,31 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly string tableLogicalName;
             public readonly DelegationHooks _hooks;
 
-            public RetVal(IntermediateNode node, IntermediateNode tableIRNode, TableType tableType,IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
+            // Original IR node for non-delegating path.
+            // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation. 
+            public readonly IntermediateNode _node;
+
+            // If set, we're attempting to delegate the current expression specifeid by _node.
+            public bool IsDelegating => _metadata != null;
+                        
+            
+            // IR node that will resolve to the TableValue at runtime. 
+            // From here, we can downcast at get the services. 
+            public readonly IntermediateNode _sourceTableIRNode;
+
+            // Table type  and original metadata for table that we're delegating to. 
+            public readonly TableType _tableType;
+
+            public readonly EntityMetadata _metadata;
+
+            public RetVal(IntermediateNode node, IntermediateNode tableIRNode, TableType tableType, IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
             {
-                if(tableDS == null || tableType == null || node == null)
+                if (tableDS == null || tableType == null || node == null)
                 {
                     throw new ArgumentNullException();
                 }
 
-                count ??= new CallNode(IRContext.NotInSource(tableType), BuiltinFunctionsCore.Blank);
+                count ??= new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 
                 filter ??= _hooks.MakeBlankFilterCall(tableType);
 
@@ -87,7 +114,7 @@ namespace Microsoft.PowerFx.Dataverse
                         this._metadata = metadata;
                     }
                 }
-                
+
             }
 
             // Non-delegating path 
@@ -95,32 +122,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 _node = node;
             }
-
-            // Delegating path 
-            public RetVal(IntermediateNode node, EntityMetadata metadata, ResolvedObjectNode tableIRNode, TableType tableType)
-                : this(node)
-            {
-                _metadata = metadata;
-                _sourceTableIRNode = tableIRNode;
-                _tableType = tableType;
-            }
-
-            // Original IR node for non-delegating path.
-            // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation. 
-            public readonly IntermediateNode _node;
-
-            // If set, we're attempting to delegate the current expression specifeid by _node.
-            public bool IsDelegating => _metadata != null;
-                        
-            
-            // IR node that will resolve to the TableValue at runtime. 
-            // From here, we can downcast at get the services. 
-            public readonly IntermediateNode _sourceTableIRNode;
-
-            // Table type  and original metadata for table that we're delegating to. 
-            public readonly TableType _tableType;
-
-            public readonly EntityMetadata _metadata;
         }
 
         public class Context
@@ -153,7 +154,6 @@ namespace Microsoft.PowerFx.Dataverse
                 if(leftField2 == rightField2)
                 {
                     // Issue warning
-                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                     var min = left.IRContext.SourceContext.Lim;
                     var lim = right.IRContext.SourceContext.Min;
                     var span = new Span(min, lim);
@@ -183,19 +183,55 @@ namespace Microsoft.PowerFx.Dataverse
                 if (scopeAccessNode.Value is ScopeAccessSymbol scopeAccessSymbol)
                 {
 
-                    var callerId = GetCallerScopeId();
-                    if (callerId != -1)
+                    var callerId = GetCallerScope().Id;
+                    if (scopeAccessSymbol.Parent.Id == callerId)
                     {
-                        if (scopeAccessSymbol.Parent.Id == callerId)
-                        {
-                            fieldName = scopeAccessSymbol.Name;
-                            return true;
-                        }
+                        fieldName = scopeAccessSymbol.Name;
+                        return true;
                     }
                 }
             }
 
             fieldName = default;
+            return false;
+        }
+
+        // Does this match:
+        //    primaryKey=value
+        private bool MatchPrimaryId(IntermediateNode primaryIdField, IntermediateNode value, RetVal tableArg)
+        {
+            if (primaryIdField is ScopeAccessNode left1)
+            {
+                if (left1.Value is ScopeAccessSymbol s)
+                {
+                    var fieldName = s.Name;
+                    if (fieldName == tableArg._metadata.PrimaryIdAttribute)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Normalize order? (Id=Guid) vs (Guid=Id)
+        private bool TryMatchPrimaryId(IntermediateNode left, IntermediateNode right, out IntermediateNode primaryIdField, out IntermediateNode guidValue, RetVal tableArg)
+        {
+            if (MatchPrimaryId(left, right, tableArg))
+            {
+                primaryIdField = left;
+                guidValue = right;
+                return true;
+            }
+            else if (MatchPrimaryId(right, left, tableArg))
+            {
+                primaryIdField = right;
+                guidValue = left;
+                return true;
+            }
+
+            primaryIdField = null;
+            guidValue = null;
             return false;
         }
 
@@ -268,8 +304,10 @@ namespace Microsoft.PowerFx.Dataverse
                 return new RetVal(node);
             }
 
-            var callerReturnType = _caller.Peek().IRContext.ResultType;
-            var callerScope = _caller.Peek().Scope;
+            var caller = _caller.Peek();
+
+            var callerReturnType = GetCallerReturnType();
+            var callerScope = GetCallerScope();
             var ads = callerReturnType._type.AssociatedDataSources.FirstOrDefault();
 
             // $$$ check aggregate
@@ -289,13 +327,13 @@ namespace Microsoft.PowerFx.Dataverse
                 return new RetVal(node);
             }
 
-            var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(_caller.Peek(), rightNode);
+            var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(caller, rightNode);
             if (findThisRecord != null)
             {
                 var reason = new ExpressionError
                 {
                     MessageKey = "WrnDelagationRefersThisRecord",
-                    MessageArgs = new object[] { _caller.Peek().Function.Name },
+                    MessageArgs = new object[] { caller.Function.Name },
                     Span = findThisRecord.Span,
                     Severity = ErrorSeverity.Warning
                 };
@@ -306,15 +344,7 @@ namespace Microsoft.PowerFx.Dataverse
             var findBehaviorFunc = BehaviorIRVisitor.Find(rightNode);
             if (findBehaviorFunc != null)
             {
-                var reason = new ExpressionError
-                {
-                    MessageKey = "WrnDelagationBehaviorFunction",
-                    MessageArgs = new object[] { _caller.Peek().Function.Name, findBehaviorFunc.Name },
-                    Span = findBehaviorFunc.Span,
-                    Severity = ErrorSeverity.Warning
-                };
-                AddError(reason);
-                return new RetVal(node);
+                return CreateBehaviorErrorAndReturn(caller, findBehaviorFunc);
             }
 
             rightNode = Materialize(rightNode.Accept(this, context));
@@ -327,7 +357,6 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqDate:
                 case BinaryOpKind.EqTime:
                 case BinaryOpKind.EqDateTime:
-                // $$$ case BinaryOpKind.EqCurrency:
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqDecimals:
                     var eqNode = _hooks.MakeEqCall(tableType, fieldName, rightNode, callerScope);
@@ -370,53 +399,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // Issue warning on typo:
-        //  Filter(table, id=id)
-        //  LookUp(table, id=id)
-        //
-        // It's legal (so must be warning, not error). Likely, correct behavior is:
-        //  LookUp(table, ThisRecord.id=[@id])
-        private void CheckForNopLookup(CallNode node)
-        {
-            var func = node.Function.Name;
-            if (func == "LookUp" || func == "Filter")
-            {
-                if (node.Args.Count == 2)
-                {
-                    if (node.Args[1] is LazyEvalNode arg1b && arg1b.Child is BinaryOpNode predicate)
-                    {
-                        var left = predicate.Left;
-                        var right = predicate.Right;
-
-                        if (left is ScopeAccessNode left1 && right is ScopeAccessNode right1)
-                        {
-                            if (left1.Value is ScopeAccessSymbol left2 && right1.Value is ScopeAccessSymbol right2)                            
-                            {
-                                if (left2.Parent.Id == right2.Parent.Id && 
-                                    left2.Name == right2.Name)
-                                {
-                                    // Issue warning
-                                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
-                                    //var reason = new ExpressionError
-                                    //{
-                                    //    MessageKey = "WrnDelagationPredicate",
-                                    //    Span = predicate.IRContext.SourceContext,
-                                    //    Severity = ErrorSeverity.Warning
-                                    //};
-                                    //this.AddError(reason);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         public override RetVal Visit(CallNode node, Context context)
         {
             var func = node.Function.Name;
-
-            CheckForNopLookup(node);
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning. 
@@ -464,7 +449,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _ when func == BuiltinFunctionsCore.LookUp.Name => ProcessLookUp(node, context, tableArg),
                 _ when func == BuiltinFunctionsCore.Filter.Name => ProcessFilter(node, context, tableArg),
                 _ when func == BuiltinFunctionsCore.FirstN.Name => ProcessFirstN(node, tableArg),
-                _ => CreateErrorAndReturn(node, tableArg)
+                _ => CreateNotSupportedErrorAndReturn(node, tableArg)
             };
 
             // Other delegating functions, continue to compose...
@@ -475,16 +460,17 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-        private RetVal ProcessOr(CallNode node, Context context)
+        private RetVal ProcessAndOr(CallNode node, Context context, Func<IList<IntermediateNode>, IntermediateNode> filterDelegate)
         {
-            // If any arg is not delegating, then the whole expression is not delegating.
             bool isDelegating = true;
             List<IntermediateNode> delegatedChild = new();
+
             foreach (var arg in node.Args)
             {
                 var delegatedArg = arg is LazyEvalNode lazyEvalNode
-                    ? lazyEvalNode.Child.Accept(this, context)
-                    : arg.Accept(this, context);
+                ? lazyEvalNode.Child.Accept(this, context)
+                : arg.Accept(this, context);
+
                 if (delegatedArg.IsDelegating)
                 {
                     delegatedChild.Add(delegatedArg.filter);
@@ -496,21 +482,13 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            var callerReturnType = _caller.Peek().IRContext.ResultType;
+            var callerReturnType = GetCallerReturnType();
             var ads = callerReturnType._type.AssociatedDataSources.FirstOrDefault();
-            TableType tableType;
-            if (callerReturnType is RecordType recordType)
-            {
-                tableType = recordType.ToTable();
-            }
-            else
-            {
-                tableType = (TableType)callerReturnType;
-            }
+            TableType tableType = callerReturnType is RecordType recordType ? recordType.ToTable() : (TableType)callerReturnType;
 
             if (isDelegating)
             {
-                var filter = _hooks.MakeOrCall(_caller.Peek().IRContext.ResultType, delegatedChild, node.Scope);
+                var filter = filterDelegate(delegatedChild);
                 var rVal = new RetVal(node, null, tableType, ads, filter, null);
                 return rVal;
             }
@@ -518,74 +496,93 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
-        private RetVal ProcessAnd(CallNode node, Context context)
+        public RetVal ProcessOr(CallNode node, Context context)
         {
-            // If any arg is not delegating, then the whole expression is not delegating.
-            bool isDelegating = true;
-            List<IntermediateNode> delegatedChild = new();
-            foreach (var arg in node.Args)
-            {
-                var delegatedArg = arg is LazyEvalNode lazyEvalNode
-                    ? lazyEvalNode.Child.Accept(this, context)
-                    : arg.Accept(this, context);
-                if (delegatedArg.IsDelegating)
-                {
-                    delegatedChild.Add(delegatedArg.filter);
-                }
-                else
-                {
-                    isDelegating = false;
-                    break;
-                }
-            }
+            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeOrCall(GetCallerReturnType(), delegatedChildren, node.Scope));
+        }
 
-            var callerReturnType = _caller.Peek().IRContext.ResultType;
-            var ads = callerReturnType._type.AssociatedDataSources.FirstOrDefault();
-            TableType tableType;
-            if (callerReturnType is RecordType recordType)
-            {
-                tableType = recordType.ToTable();
-            }
-            else
-            {
-                tableType = (TableType)callerReturnType;
-            }
-
-            if (isDelegating)
-            {
-                var filter = _hooks.MakeAndCall(_caller.Peek().IRContext.ResultType, delegatedChild, node.Scope);
-                var rVal = new RetVal(node, null, tableType, ads, filter, null);
-                return rVal;
-            }
-            
-            return new RetVal(node);
+        public RetVal ProcessAnd(CallNode node, Context context)
+        {
+            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(GetCallerReturnType(), delegatedChildren, node.Scope));
         }
 
         private RetVal ProcessLookUp(CallNode node, Context context, RetVal tableArg)
         {
+            RetVal result;
             if (node.Args.Count != 2)
             {
-                return CreateErrorAndReturn(node, tableArg);
+                return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
             var predicate = node.Args[1];
+
+            // Pattern match to see if predicate is GUID delegable.
+            if (predicate is LazyEvalNode arg1b && 
+                arg1b.Child is BinaryOpNode binOp &&
+                binOp.Op == BinaryOpKind.EqGuid &&
+                TryMatchPrimaryId(binOp.Left, binOp.Right, out _, out var guidValue, tableArg))
+            {
+                // Pattern match to see if predicate is delegable.
+                //  Lookup(Table, Id=Guid) 
+                var retVal2 = guidValue.Accept(this, context);
+                var right = Materialize(retVal2);
+
+                var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
+                if (findThisRecord == null)
+                {
+                    var findBehaviorFunc = BehaviorIRVisitor.Find(right);
+                    if (findBehaviorFunc != null)
+                    {
+                        CreateBehaviorErrorAndReturn(node, findBehaviorFunc);
+                    }
+                    else
+                    {
+                        // We can successfully delegate this call. 
+                        // __retrieveGUID(table, guid);
+
+                        if (tableArg._node is ResolvedObjectNode)
+                        {
+                            var newNode = _hooks.MakeRetrieveCall(tableArg, right);
+                            return Ret(newNode);
+                        }
+                        else
+                        {
+                            // if tableArg was a other delegation (e.g. Filter()), then we need to Materialize the call and can't delegate lookup.
+                            var tableCallNode = Materialize(tableArg);
+                            var args = new List<IntermediateNode>() { tableCallNode, node.Args[1] };
+                            CallNode newCall;
+                            if (node.Scope != null)
+                            {
+                                newCall = new CallNode(node.IRContext, node.Function, node.Scope, args);
+                            }
+                            else
+                            {
+                                newCall = new CallNode(node.IRContext, node.Function, args);
+                            }
+
+                            return CreateNotSupportedErrorAndReturn(newCall, tableArg);
+                        }
+                    }
+                }
+            }
+
             var pr = predicate is LazyEvalNode lazyEvalNode
-                ? lazyEvalNode.Child.Accept(this, context)
-                : predicate.Accept(this, context);
+            ? lazyEvalNode.Child.Accept(this, context)
+            : predicate.Accept(this, context);
 
             if (!pr.IsDelegating)
             {
-                return CreateErrorAndReturn(node, tableArg);
+                return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            RetVal result;
             // if tableArg was DV Table, delegate the call.
             if (tableArg._node is ResolvedObjectNode)
             {
                 var filters = new List<IntermediateNode>() { tableArg.filter, pr.filter };
                 var filterCombined = _hooks.MakeAndCall(tableArg._tableType, filters, node.Scope);
                 result = new RetVal(node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filterCombined, tableArg.topCount);
-            }else
+            }
+            else
             {
                 // if tableArg was a other delegation (e.g. Filter()), then we need to Materialize the call and can't delegate lookup.
 
@@ -607,7 +604,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessFilter(CallNode node, Context context, RetVal tableArg)
         {
             if (node.Args.Count != 2) {
-                return CreateErrorAndReturn(node, tableArg);
+                return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
             var predicate = node.Args[1];
@@ -617,7 +614,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!pr.IsDelegating)
             {
-                return CreateErrorAndReturn(node, tableArg);
+                return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
             // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
@@ -632,7 +629,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (node.Args.Count != 2)
             {
-                return CreateErrorAndReturn(node, tableArg);
+                return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
             // Since table was delegating it potentially has filter attached to it, so also add that filter to the new node.
@@ -641,7 +638,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.tableDS, filter, topCount);
         }
 
-        private RetVal CreateErrorAndReturn(CallNode node, RetVal tableArg)
+        private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
         {
             var reason = new ExpressionError
             {
@@ -652,6 +649,20 @@ namespace Microsoft.PowerFx.Dataverse
             };
             this.AddError(reason);
 
+            return new RetVal(node);
+        }
+
+        private RetVal CreateBehaviorErrorAndReturn(CallNode node, BehaviorIRVisitor.RetVal findBehaviorFunc)
+        {
+            var reason = new ExpressionError
+            {
+                MessageKey = "WrnDelagationBehaviorFunction",
+                MessageArgs = new object[] { node.Function.Name, findBehaviorFunc.Name },
+                Span = findBehaviorFunc.Span,
+                Severity = ErrorSeverity.Warning
+            };
+
+            AddError(reason);
             return new RetVal(node);
         }
     }

@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            return new DelegationFormulaValue(IRContext.NotInSource(ReturnFormulaType), filter);
+            return new DelegationFormulaValue(filter);
         }
     }
 }

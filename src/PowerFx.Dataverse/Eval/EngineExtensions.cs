@@ -162,6 +162,15 @@ namespace Microsoft.PowerFx.Dataverse
                 var result = MakeCallNode(func, tableType, args, scope);
                 return result;
             }
+
+            // Generate a lookup call for: Lookup(Table, Id=Guid)  
+            internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
+            {
+                var func = new DelegateLookupFunction(this, query._tableType);
+                
+                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argGuid);
+                return node;
+            }
         }
 
         private class DelegationIRTransform : IRTransform

@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
             var filter = new FilterExpression();
-            return new DelegationFormulaValue(IRContext.NotInSource(ReturnFormulaType), filter);
+            return new DelegationFormulaValue(filter);
         }
     }
 }

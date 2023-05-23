@@ -1174,8 +1174,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Basic case 
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, GUID(00000000-0000-0000-0000-000000000001))))).new_price")]
-        
+            "(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
+
         //Basic case with And and Or
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price",
             100.0,
@@ -1188,29 +1188,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // variable
         [DataRow("LookUp(t1, LocalId=_g1).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, _g1)))).new_price")]
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
         // reversed order still ok 
         [DataRow("LookUp(t1, _g1 = LocalId).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, _g1)))).new_price")]
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
         // explicit ThisRecord is ok. IR will handle. 
         [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price",
-            100.0, 
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, _g1)))).new_price")]
+            100.0,
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
         // Alias is ok. IR will handle. 
         [DataRow("LookUp(t1 As XYZ, XYZ.LocalId=_g1).Price",
-            100.0, 
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, _g1)))).new_price")] // variable
-        
+            100.0,
+            "(__retrieveGUID(t1, _g1)).new_price")] // variable
+
         // lambda uses ThisRecord.Price, can't delegate
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
             "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.",
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")] 
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // On non primary field.
         [DataRow("LookUp(t1, Price > 50).Price",
@@ -1219,53 +1219,54 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // successful with complex expression
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
-            100.0, 
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, If(True, (_g1), (_gMissing)))))).new_price")]
+            100.0,
+            "(__retrieveGUID(t1, If(True, (_g1), (_gMissing)))).new_price")]
 
         // nested delegation, both delegated.
         [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, (__retrieveSingle(t1, __and(__noFilter(), __eq(localid, _g1)))).localid)))).new_price" // $$$ ?
+            "(__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price"
             )]
 
         // Can't delegate if Table Arg is delegated.
         [DataRow("LookUp(Filter(t1, Price = 1), localid=_g1).Price",
             100.0,
             "(LookUp(__retrieveMultiple(t1, __and(__noFilter(), __eq(new_price, 1)), Blank()), (EqGuid(localid,_g1)))).new_price",
-            "Warning 14-16: Delegating this operation on table 'local' is not supported."
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
         )]
 
         // Can't delegate if Table Arg is delegated.
         [DataRow("LookUp(FirstN(t1, 1), localid=_g1).Price",
-            100.0, 
-            "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price")]
+            100.0,
+            "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price",
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
 
         // Can Delegate on non primary-key field.
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, (__retrieveSingle(t1, __and(__noFilter(), __gt(new_price, 50)))).localid)))).new_price")]
+            "(__retrieveGUID(t1, (__retrieveSingle(t1, __and(__noFilter(), __gt(new_price, 50)))).localid)).new_price")]
 
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __eq(localid, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)))).new_price")]
+            "(__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
 
         // unsupported function, can't yet delegate
         [DataRow("First(t1).Price",
-            100.0, 
+            100.0,
             "(First(t1)).new_price",
             "Warning 6-8: This operation on table 'local' may not work if it has more than 999 rows."
             )]
 
         // unsupported function, can't yet delegate
         [DataRow("Last(t1).Price",
-            100.0, 
+            100.0,
             "(Last(t1)).new_price",
             "Warning 5-7: This operation on table 'local' may not work if it has more than 999 rows."
             )]
 
         // unsupported function, can't yet delegate
         [DataRow("CountRows(t1)",
-            1.0, 
+            1.0,
             "CountRows(t1)",
             "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows."
             )]
@@ -1290,14 +1291,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
-            100.0, 
+            100.0,
             "With({r:__retrieveMultiple(t1, __noFilter(), Blank())}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))")]
         //  "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // $$$ Confirm is NotFound Error or Blank? 
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
-            false, // delegated, but not found is blank()
-            "IsError(LookUp(t1, (EqGuid(localid,If(False, (_g1), (_gMissing))))))")]
+            true, // delegated, but not found is Error
+            "IsError(__retrieveGUID(t1, If(False, (_g1), (_gMissing))))")]
 
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             null, // Bad practice, modifying the collection while we enumerate.
@@ -1312,7 +1313,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
             100.0,
-            "(With({f:_g1}, (__retrieveSingle(t1, __and(__noFilter(), __eq(localid, f)))))).new_price")] // variable
+            "(With({f:_g1}, (__retrieveGUID(t1, f)))).new_price")] // variable
 
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             100.0,
@@ -1354,7 +1355,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
-            //Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
             for (int i = 0; i < errorList.Length; i++)
             {
                 Assert.AreEqual(expectedWarnings[i], errorList[i]);

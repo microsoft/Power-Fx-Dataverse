@@ -11,8 +11,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         internal FilterExpression _value;
         internal int? _top;
 
-        internal DelegationFormulaValue(IRContext irContext, FilterExpression value, int? top = null)
-            : base(irContext)
+        internal DelegationFormulaValue(FilterExpression value, int? top = null)
+            : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _value = value;
             _top = top;

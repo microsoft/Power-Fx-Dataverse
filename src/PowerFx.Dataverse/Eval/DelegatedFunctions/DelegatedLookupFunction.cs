@@ -5,11 +5,11 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __Lookup(Table, Id=Guid)  
+    // Generate a lookup call for: __retrieveGUID(Table, Id=Guid)  
     internal class DelegateLookupFunction : DelegateFunction
     {
         public DelegateLookupFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__lookup", tableType.ToRecord(), tableType, FormulaType.Guid)
+          : base(hooks, "__retrieveGUID", tableType.ToRecord(), tableType, FormulaType.Guid)
         {
         }
 

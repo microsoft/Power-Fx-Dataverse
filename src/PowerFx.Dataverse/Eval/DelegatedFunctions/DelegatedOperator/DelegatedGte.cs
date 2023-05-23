@@ -11,17 +11,11 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Generates a delegation filter expression for the Greater or Equal operator.
     /// </summary>
-    internal class DelegatedGeq : DelegateFunction
+    internal class DelegatedGeq : DelegatedOperatorFunction
     {
         public DelegatedGeq(DelegationHooks hooks)
-          : base(hooks, "__gte", FormulaType.Blank, FormulaType.String)
+          : base(hooks, "__gte", ConditionOperator.GreaterEqual, FormulaType.Blank, FormulaType.String)
         {
-        }
-
-        public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
-        {
-            var result = DelegationHelper.OperatorFilter(args, ConditionOperator.GreaterEqual, ReturnFormulaType);
-            return result;
         }
     }
 }

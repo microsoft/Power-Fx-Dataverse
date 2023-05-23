@@ -8,7 +8,7 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __FirstN(Table, count)  
+    // Generate a lookup call for: __top(Table, count)  
     internal class DelegatedFirstNFunction : DelegateFunction
     {
         public DelegatedFirstNFunction(DelegationHooks hooks)
@@ -18,9 +18,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
-            var topCount = ((NumberValue)args[0]).Value; // $$$
+            var topCount = ((NumberValue)args[0]).Value; // FirstN alway has NumberType as first arg and not decimal.
             var filter = new FilterExpression();
-            var result = new DelegationFormulaValue(IRContext.NotInSource(ReturnFormulaType), filter, (int)topCount);
+            var result = new DelegationFormulaValue(filter, (int)topCount);
 
             return result;
         }

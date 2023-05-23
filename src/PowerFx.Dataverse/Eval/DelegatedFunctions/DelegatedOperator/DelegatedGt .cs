@@ -11,17 +11,11 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Generates a delegation filter expression for the Greater than operator.
     /// </summary>
-    internal class DelegatedGt : DelegateFunction
+    internal class DelegatedGt : DelegatedOperatorFunction
     {
         public DelegatedGt(DelegationHooks hooks)
-          : base(hooks, "__gt", FormulaType.Blank, FormulaType.String)
+          : base(hooks, "__gt", ConditionOperator.GreaterThan, FormulaType.Blank, FormulaType.String)
         {
-        }
-
-        public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
-        {
-            var result = DelegationHelper.OperatorFilter(args, ConditionOperator.GreaterThan, ReturnFormulaType);
-            return result;
         }
     }
 }

@@ -11,17 +11,11 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Generates a delegation filter expression for the Equal operator
     /// </summary>
-    internal class DelegatedEq : DelegateFunction
+    internal class DelegatedEq : DelegatedOperatorFunction
     {
         public DelegatedEq(DelegationHooks hooks)
-          : base(hooks, "__eq", FormulaType.Blank, FormulaType.String)
+          : base(hooks, "__eq", ConditionOperator.Equal, FormulaType.Blank, FormulaType.String)
         {
-        }
-
-        public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
-        {
-            var result = DelegationHelper.OperatorFilter(args, ConditionOperator.Equal, ReturnFormulaType);
-            return result;
         }
     }
 }
