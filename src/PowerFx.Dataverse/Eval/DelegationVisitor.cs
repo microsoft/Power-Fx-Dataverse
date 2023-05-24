@@ -3,6 +3,7 @@ using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -33,6 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // $$$ lock?
         private readonly Stack<CallNode> _caller;
+        private readonly Stack<IntermediateNode> _callerSourceTable;
 
         private ScopeSymbol GetCallerScope()
         {
@@ -60,6 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
             _caller = new Stack<CallNode>();
+            _callerSourceTable = new Stack<IntermediateNode>();
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -73,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Original IR node for non-delegating path.
             // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation. 
-            public readonly IntermediateNode _node;
+            public readonly IntermediateNode _originalNode;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating => _metadata != null;
@@ -88,9 +91,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly EntityMetadata _metadata;
 
-            public RetVal(IntermediateNode node, IntermediateNode tableIRNode, TableType tableType, IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
+            public RetVal(IntermediateNode originalNode, IntermediateNode tableIRNode, TableType tableType, IExternalTabularDataSource tableDS, IntermediateNode filter, IntermediateNode count)
             {
-                if (tableDS == null || tableType == null || node == null)
+                if (tableDS == null || tableType == null || originalNode == null)
                 {
                     throw new ArgumentNullException();
                 }
@@ -101,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _sourceTableIRNode = tableIRNode;
                 _tableType = tableType;
-                _node = node;
+                _originalNode = originalNode;
                 this.filter = filter;
                 this.tableDS = tableDS;
                 this.topCount = count;
@@ -120,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Non-delegating path 
             public RetVal(IntermediateNode node)
             {
-                _node = node;
+                _originalNode = node;
             }
         }
 
@@ -242,7 +245,7 @@ namespace Microsoft.PowerFx.Dataverse
             // IsBlank(table) // ok
             // IsBlank(Filter(table,true)) // warning
 
-            return new RetVal(ret._node);
+            return new RetVal(ret._originalNode);
         }
 
         public override IntermediateNode Materialize(RetVal ret)
@@ -253,7 +256,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return res;
             }
 
-            return ret._node;            
+            return ret._originalNode;            
         }
 
         protected override RetVal Ret(IntermediateNode node)
@@ -299,13 +302,13 @@ namespace Microsoft.PowerFx.Dataverse
         // BinaryOpNode can be only materialized when called via CallNode.
         public override RetVal Visit(BinaryOpNode node, Context context)
         {
-            if (_caller.Count == 0)
+            if (_caller.Count == 0 || _callerSourceTable.Count == 0)
             {
                 return new RetVal(node);
             }
 
             var caller = _caller.Peek();
-
+            var callerSourceTable = _callerSourceTable.Peek();
             var callerReturnType = GetCallerReturnType();
             var callerScope = GetCallerScope();
             var ads = callerReturnType._type.AssociatedDataSources.FirstOrDefault();
@@ -359,7 +362,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqDateTime:
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqDecimals:
-                    var eqNode = _hooks.MakeEqCall(tableType, fieldName, rightNode, callerScope);
+                    var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, rightNode, callerScope);
                     ret = new RetVal(node, null, tableType, ads, eqNode, count: null);
                     return ret;
                 case BinaryOpKind.LtNumbers:
@@ -367,7 +370,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.LtDateTime:
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtTime:
-                    var ltNode = _hooks.MakeLtCall(tableType, fieldName, rightNode, callerScope);
+                    var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, rightNode, callerScope);
                     ret = new RetVal(node, null, tableType, ads, ltNode, count: null);
                     return ret;
                 case BinaryOpKind.LeqNumbers:
@@ -375,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.LeqDateTime:
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqTime:
-                    var leqNode = _hooks.MakeLeqCall(tableType, fieldName, rightNode, callerScope);
+                    var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, rightNode, callerScope);
                     ret = new RetVal(node, null, tableType, ads, leqNode, count: null);
                     return ret;
                 case BinaryOpKind.GtNumbers:
@@ -383,7 +386,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.GtDateTime:
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtTime:
-                    var gtNode = _hooks.MakeGtCall(tableType, fieldName, rightNode, callerScope);
+                    var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, rightNode, callerScope);
                     ret = new RetVal(node, null, tableType, ads, gtNode, count: null);
                     return ret;
                 case BinaryOpKind.GeqNumbers:
@@ -391,7 +394,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.GeqDateTime:
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqTime:
-                    var geqNode = _hooks.MakeGeqCall(tableType, fieldName, rightNode, callerScope);
+                    var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, rightNode, callerScope);
                     ret = new RetVal(node, null, tableType, ads, geqNode, count: null);
                     return ret;
                 default:
@@ -444,6 +447,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             _caller.Push(node);
+            _callerSourceTable.Push(tableArg._sourceTableIRNode);
             RetVal ret = func switch
             {
                 _ when func == BuiltinFunctionsCore.LookUp.Name => ProcessLookUp(node, context, tableArg),
@@ -457,6 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             // - Filter
             // - Sort   
             _caller.Pop();
+            _callerSourceTable.Pop();
             return ret;
         }
 
@@ -540,7 +545,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // We can successfully delegate this call. 
                         // __retrieveGUID(table, guid);
 
-                        if (tableArg._node is ResolvedObjectNode)
+                        if (tableArg._originalNode is ResolvedObjectNode)
                         {
                             var newNode = _hooks.MakeRetrieveCall(tableArg, right);
                             return Ret(newNode);
@@ -576,7 +581,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if tableArg was DV Table, delegate the call.
-            if (tableArg._node is ResolvedObjectNode)
+            if (tableArg._originalNode is ResolvedObjectNode)
             {
                 var filters = new List<IntermediateNode>() { tableArg.filter, pr.filter };
                 var filterCombined = _hooks.MakeAndCall(tableArg._tableType, filters, node.Scope);

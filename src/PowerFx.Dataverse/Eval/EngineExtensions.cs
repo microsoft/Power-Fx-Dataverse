@@ -6,6 +6,7 @@ using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.DataSource;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -40,6 +41,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
+            public virtual object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            {
+                throw new NotImplementedException();
+            }
+
             // Are symbols from this table delegable?
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
@@ -59,12 +65,12 @@ namespace Microsoft.PowerFx.Dataverse
                 CallNode node;
 
                 // If original node was returning record type, execute retriveSingle. Otherwise, execute retrieveMultiple.
-                if(query._node.IRContext.ResultType is RecordType)
+                if(query._originalNode.IRContext.ResultType is RecordType)
                 {
                     func = new DelegatedRetrieveSingleFunction(this, query._tableType);
                     var args = new List<IntermediateNode> { query._sourceTableIRNode, query.filter };
 
-                    if (query._node is CallNode originalCallNode && originalCallNode.Scope != null)
+                    if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                     {
                         var scopeSymbol = originalCallNode.Scope;
                         node = new CallNode(IRContext.NotInSource(query._tableType), func, scopeSymbol, args);
@@ -78,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, query._tableType);
                     var args = new List<IntermediateNode> { query._sourceTableIRNode, query.filter, query.topCount };
-                    if (query._node is CallNode originalCallNode && originalCallNode.Scope != null)
+                    if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                     {
                         var scopeSymbol= originalCallNode.Scope;
                         node = new CallNode(IRContext.NotInSource(query._tableType), func, scopeSymbol, args);
@@ -106,46 +112,47 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            internal CallNode MakeCallNode(DelegateFunction func, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol scope)
+            internal CallNode MakeCallNode(DelegateFunction func, FormulaType tableType, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
             {
                 var field = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
-                var args = new List<IntermediateNode> { field, value };
+
+                var args = new List<IntermediateNode> { callerSourceTable, field, value };
                 var node = MakeCallNode(func, tableType, args, scope);
                 return node;
             }
 
-            internal CallNode MakeEqCall(FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedEq(this);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerScope);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGtCall(FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGt(this);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerScope);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGeqCall(FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGeq(this);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerScope);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLtCall(FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLt(this);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerScope);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLeqCall(FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLeq(this);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerScope);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
@@ -197,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    return ret._node;
+                    return ret._originalNode;
                 }
             }
         }

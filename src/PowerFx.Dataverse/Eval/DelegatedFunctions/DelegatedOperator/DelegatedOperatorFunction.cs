@@ -30,13 +30,15 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
-            var field = ((StringValue)args[0]).Value;
-            if (args[1].Type._type.IsPrimitive)
+            var table = (TableValue)args[0];
+            var field = ((StringValue)args[1]).Value;
+            var value = args[2];
+            if (value.Type._type.IsPrimitive)
             {
-                var value = args[1].ToObject();
-
+                var dvValue = _hooks.RetrieveAttribute(table, field, value);
+                
                 var filter = new FilterExpression();
-                filter.AddCondition(field, op, value);
+                filter.AddCondition(field, op, dvValue);
 
                 var result = new DelegationFormulaValue(filter);
                 return result;

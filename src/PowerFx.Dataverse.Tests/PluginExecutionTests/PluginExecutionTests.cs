@@ -1179,11 +1179,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         //Basic case with And and Or
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __and(__eq(localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(new_price, 0))))).new_price")]
+            "(__retrieveSingle(t1, __and(__noFilter(), __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0))))).new_price")]
 
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __or(__eq(localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(new_price, 0))))).new_price")]
+            "(__retrieveSingle(t1, __and(__noFilter(), __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0))))).new_price")]
 
         // variable
         [DataRow("LookUp(t1, LocalId=_g1).Price",
@@ -1215,7 +1215,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // On non primary field.
         [DataRow("LookUp(t1, Price > 50).Price",
             100.0,
-            "(__retrieveSingle(t1, __and(__noFilter(), __gt(new_price, 50)))).new_price")]
+            "(__retrieveSingle(t1, __and(__noFilter(), __gt(t1, new_price, 50)))).new_price")]
 
         // successful with complex expression
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
@@ -1231,7 +1231,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Can't delegate if Table Arg is delegated.
         [DataRow("LookUp(Filter(t1, Price = 1), localid=_g1).Price",
             100.0,
-            "(LookUp(__retrieveMultiple(t1, __and(__noFilter(), __eq(new_price, 1)), Blank()), (EqGuid(localid,_g1)))).new_price",
+            "(LookUp(__retrieveMultiple(t1, __and(__noFilter(), __eq(t1, new_price, 1)), Blank()), (EqGuid(localid,_g1)))).new_price",
             "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
         )]
 
@@ -1244,7 +1244,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Can Delegate on non primary-key field.
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
             100.0,
-            "(__retrieveGUID(t1, (__retrieveSingle(t1, __and(__noFilter(), __gt(new_price, 50)))).localid)).new_price")]
+            "(__retrieveGUID(t1, (__retrieveSingle(t1, __and(__noFilter(), __gt(t1, new_price, 50)))).localid)).new_price")]
 
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
@@ -1369,6 +1369,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expected, result.ToObject());
         }
 
+        // Table 't1' has 1 item with Price = 100
         [TestMethod]
 
         //Basic case 
@@ -1385,7 +1386,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Local Table doesn't get delegated
         [DataRow("FirstN(Filter(t1, Price > 90), 1)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __gt(new_price, 90)), 1)")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __gt(t1, new_price, 90)), 1)")]
 
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, FirstN(r, 100))",
@@ -1434,26 +1435,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(result is TableValue);
         }
 
+        // Table 't1' has 1 item with Price = 100
         [TestMethod]
 
-        //Basic case 
+        ////Basic case 
         [DataRow("Filter(t1, Price < 120)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __lt(new_price, 120)), Blank())")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __lt(t1, new_price, 120)), Blank())")]
+
+        [DataRow("Filter(t1, Price < 0)",
+            "__retrieveMultiple(t1, __and(__noFilter(), __lt(t1, new_price, 0)), Blank())")]
 
         // Variable as arg 
         [DataRow("Filter(t1, Price > _count)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __gt(new_price, _count)), Blank())")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __gt(t1, new_price, _count)), Blank())")]
 
         // Function as arg 
         [DataRow("Filter(t1, Price > If(1<0,_count, 1))",
-            "__retrieveMultiple(t1, __and(__noFilter(), __gt(new_price, If(LtNumbers(1,0), (_count), (1)))), Blank())")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __gt(t1, new_price, If(LtNumbers(1,0), (_count), (1)))), Blank())")]
 
         // Filter nested in another function both delegated.
         [DataRow("Filter(FirstN(t1, 100), Price = 100)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __eq(new_price, 100)), 100)")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __eq(t1, new_price, 100)), 100)")]
 
         [DataRow("Filter(Filter(t1, Price = 100), Price > 100)",
-            "__retrieveMultiple(t1, __and(__and(__noFilter(), __eq(new_price, 100)), __gt(new_price, 100)), Blank())")]
+            "__retrieveMultiple(t1, __and(__and(__noFilter(), __eq(t1, new_price, 100)), __gt(t1, new_price, 100)), Blank())")]
 
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, Filter(r, Price < 120))",
@@ -1462,11 +1467,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Basic case with And
         [DataRow("Filter(t1, Price < 120 And Price > 90)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __and(__lt(new_price, 120), __gt(new_price, 90))), Blank())")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90))), Blank())")]
 
         // Basic case with Or
         [DataRow("Filter(t1, Price < 120 Or Price > 90)",
-            "__retrieveMultiple(t1, __and(__noFilter(), __or(__lt(new_price, 120), __gt(new_price, 90))), Blank())")]
+            "__retrieveMultiple(t1, __and(__noFilter(), __or(__lt(t1, new_price, 120), __gt(t1, new_price, 90))), Blank())")]
 
         public void FilterDelegation(string expr, string expectedIr, params string[] expectedWarnings)
         {
