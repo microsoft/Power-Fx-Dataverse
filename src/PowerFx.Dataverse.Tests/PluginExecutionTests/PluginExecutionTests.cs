@@ -10,12 +10,10 @@ using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1899,30 +1897,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var exprSum = "Sum(t1,Price)";
             var exprFirstN = "CountRows(FirstN(t1,2))";
-            var exprFilter = "CountRows(Filter(t1,Price > 10))";
+            var exprFilter = "CountRows(Filter(t1,Price > 10))";            
 
-            //var entity1 = new Entity("local", _g1);
-            //var entity2 = new Entity("remote", _g2);
-
-            //entity1.Attributes["new_price"] = 100;
-            //entity1.Attributes["otherid"] = entity2.ToEntityReference();
-            //entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm            
-            //entity2.Attributes["data"] = 200;
-
-            (DataverseConnection dv, DataverseEntityCache dec) = CreateMemoryForRelationshipModelsWithCache();
-
-            //MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
-            //EntityLookup el = new EntityLookup(xrmMetadataProvider);
-
-            //DataverseEntityCache el = new DataverseEntityCache(el1); 
-            //el.Add(CancellationToken.None, entity1, entity2);
-
-            //var metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
-            //var dv = new DataverseConnection(dec, metadataCache, maxRows: 999);
-
+            (DataverseConnection dv, DataverseEntityCache _, EntityLookup el) = CreateMemoryForRelationshipModelsWithCache();           
             dv.AddTable(displayName, logicalName);
-
-            //var opts = _parserAllowSideEffects;
+            
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
 
@@ -1941,7 +1920,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
-            await dec._innerService.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g1);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
@@ -2118,20 +2097,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 
-        private (DataverseConnection, DataverseEntityCache) CreateMemoryForRelationshipModelsWithCache(Policy policy = null)
+        private (DataverseConnection, DataverseEntityCache, EntityLookup) CreateMemoryForRelationshipModelsWithCache(Policy policy = null)
         {
-            (DataverseConnection dv, IDataverseServices ds) = CreateMemoryForRelationshipModelsInternal(policy, true);
-            return (dv, ((DataverseEntityCache)ds));
+            (DataverseConnection dv, IDataverseServices ds, EntityLookup el) = CreateMemoryForRelationshipModelsInternal(policy, true);
+            return (dv, ((DataverseEntityCache)ds), el);
         }
 
         private (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels(Policy policy = null)
         {
-            (DataverseConnection dv, IDataverseServices ds) = CreateMemoryForRelationshipModelsInternal(policy);
-            return (dv, ((EntityLookup)ds));
+            (DataverseConnection dv, IDataverseServices _, EntityLookup el) = CreateMemoryForRelationshipModelsInternal(policy);
+            return (dv, el);
         }
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
-        private (DataverseConnection, IDataverseServices) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false)
+        private (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -2157,7 +2136,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 : new CdsEntityMetadataProvider(xrmMetadataProvider);
 
             var dvConnection = new DataverseConnection(policy, ds, metadataCache, maxRows: 999);
-            return (dvConnection, ds);
+            return (dvConnection, ds, entityLookup);
         }
 
         // Create Entity objects to match DataverseTests.AllAttributeModel;
