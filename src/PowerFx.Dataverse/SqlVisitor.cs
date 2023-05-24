@@ -1223,7 +1223,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
                     }
-                    else if (result.type is SqlMoneyType)
+                    else if (result.type is SqlMoneyType || result.type is SqlBigType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
