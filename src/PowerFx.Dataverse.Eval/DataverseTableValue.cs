@@ -93,9 +93,15 @@ namespace Microsoft.PowerFx.Dataverse
                 Criteria = filter ?? new FilterExpression()
             };
 
+            // only retrieve 1 record
             query.TopCount = 1;
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
+
+            if (entities.HasError)
+            {
+                return entities.DValueError("Retrieve");
+            }
 
             var result = EntityCollectionToRecordValues(entities);
 
