@@ -105,6 +105,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             var result = EntityCollectionToRecordValues(entities);
 
+            if(result.Count == 0)
+            {
+                return DValue<RecordValue>.Of(FormulaValue.NewBlank());
+            }
+
             return result.First();
         }
 
