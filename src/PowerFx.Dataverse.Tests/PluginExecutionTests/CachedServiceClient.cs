@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             get
             {
-                __svcClient ??= new ServiceClient(_dvConnectionString);
+                __svcClient ??= new ServiceClient(_dvConnectionString ?? throw new InvalidOperationException("No Dataverse connection provided!"));
                 if (_enableAffinityCookie)
                     __svcClient.EnableAffinityCookie = true;
 
@@ -176,7 +176,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private TResponse DeserializeOutput<T, TResponse>(IEnumerable<(string f, T o)> cachedObjects)
         {
             Regex rex = new Regex(@"(?<file>\d{4})_(?<method>[A-Za-z]+)_(?<type>[A-Za-z]+)_Out\.json$");
-            string file = Directory.GetFiles(_cacheFolder, $"{cachedObjects.First().f}_*_Out.json").First();
+            string file = Directory.GetFiles(_cacheFolder, $"{cachedObjects.First().f}_*_Out.json").FirstOrDefault();
+
+            if (file == null)
+                return default;
+
             Match m = rex.Match(file);
 
             if (m.Success)

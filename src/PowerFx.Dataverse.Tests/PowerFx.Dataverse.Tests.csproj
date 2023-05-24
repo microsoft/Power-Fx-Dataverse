@@ -58,6 +58,9 @@
     <None Update="SqlExpressionTestCases\*.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
+		<None Include="PluginExecutionTests\Data\CachedData01.zip">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+  
 </Project>

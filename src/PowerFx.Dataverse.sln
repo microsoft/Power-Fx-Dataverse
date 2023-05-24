@@ -16,8 +16,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		test.runsettings = test.runsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{3E571273-AB38-4DBE-B768-C370FB0E9CE9}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,10 +34,6 @@ Global
 		{E56B859C-C6EA-4F70-8274-3CA9CFBFB866}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E56B859C-C6EA-4F70-8274-3CA9CFBFB866}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E56B859C-C6EA-4F70-8274-3CA9CFBFB866}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E571273-AB38-4DBE-B768-C370FB0E9CE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E571273-AB38-4DBE-B768-C370FB0E9CE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E571273-AB38-4DBE-B768-C370FB0E9CE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E571273-AB38-4DBE-B768-C370FB0E9CE9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
