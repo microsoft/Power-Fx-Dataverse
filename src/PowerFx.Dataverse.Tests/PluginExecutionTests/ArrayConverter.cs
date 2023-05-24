@@ -37,12 +37,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (value.All(v => v.GetType() == typeof(T)))
                 {
                     writer.WriteStartArray();
-                    foreach (T item in value)
-                    {
-                        ((JsonConverter<T>)options.GetConverter(typeof(T))).Write(writer, item, options);
-                        //string str = JsonSerializer.Serialize(item, item.GetType(), ObjectSerializer.GetJsonSerializerOptions(false));
-                        //writer.WriteRawValue(str);
-                    }
+
+                    foreach (T item in value)                                            
+                        writer.WriteRawValue(ObjectConverter.SerializeObject(item, options));
+
                     writer.WriteEndArray();
                 }
                 else
@@ -50,23 +48,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // Heterogeneous Array
                     writer.WriteStartObject();
                     writer.WriteStartArray("$arrayTypes");
-                    foreach (T item in value)
-                    {
+
+                    foreach (T item in value)                    
                         writer.WriteStringValue(item.GetType().AssemblyQualifiedName);
-                    }
+                    
                     writer.WriteEndArray();
                     writer.WriteStartArray("$values");
-                    foreach (T item in value)
-                    {
-                        string str = ObjectConverter.SerializeObject(item, options);
-                        writer.WriteRawValue(str);
-                        //ObjectConverter conv = (ObjectConverter)options.Converters.First(jc => jc is ObjectConverter);                        
-                        //conv.Write(writer, item, options);
-
-                        //JsonConverter<T> conv = (JsonConverter<T>)options.GetConverter(typeof(T));
-                        //string str = JsonSerializer.Serialize(item, item.GetType(), ObjectSerializer.GetJsonSerializerOptions(false));
-                        //writer.WriteRawValue(str);
-                    }
+                    
+                    foreach (T item in value)                                            
+                        writer.WriteRawValue(ObjectConverter.SerializeObject(item, options));                     
+                    
                     writer.WriteEndArray();
                     writer.WriteEndObject();
                 }

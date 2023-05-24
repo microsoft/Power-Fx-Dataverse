@@ -31,11 +31,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public override void Write(Utf8JsonWriter writer, Exception exception, JsonSerializerOptions options)
             {                
-                string exceptionTypeName = ObjectConverter.GetTypeName(exception.GetType());
+                string exceptionTypeDisplayName = ObjectConverter.GetTypeDisplayName(exception.GetType());
 
                 writer.WriteStartObject();
-                writer.WriteString("ExceptionType", exceptionTypeName);
+                writer.WriteString("ExceptionType", exceptionTypeDisplayName);
                 writer.WriteString("Message", exception.Message);
+                writer.WriteString("StackTrace", exception.StackTrace);
                 writer.WriteEndObject();
             }
         }

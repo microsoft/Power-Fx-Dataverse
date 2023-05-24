@@ -8,9 +8,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
         {
             string str = value is Guid || value is int || value is bool || value is double || value is float || value is decimal || value is long || value is short ||
-                         value is byte || value is sbyte || value is uint || value is ulong || value is ushort 
+                         value is byte || value is sbyte || value is uint || value is ulong || value is ushort
                        ? value.ToString()
                        : value is string s
                        ? s
@@ -32,9 +32,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                        ? dt.ToString("o")
                        : value.GetType().IsEnum
                        ? ((int)value).ToString()
-                       //: $"{value.GetType().AssemblyQualifiedName}|{JsonSerializer.Serialize(value, value.GetType(), options)}";
-                       : $"{SerializeObject(value, options)}";            
-
+                       : $"{SerializeObject(value, options)}";
 
             writer.WriteStartObject();
             writer.WriteString("$object", str);
@@ -44,18 +42,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public static string SerializeObject(object value, JsonSerializerOptions options)
         {
-            //((JsonConverter<T>)options.GetConverter(typeof(T))).Write(writer, item, options)
-            //return JsonSerializer.Serialize(value, value.GetType(), options);
+            // Equivalent of ((JsonConverter<T>)options.GetConverter(typeof(T))).Write(writer, item, options)            
             using MemoryStream ms = new();
-            using Utf8JsonWriter writer = new (ms);
+            using Utf8JsonWriter writer = new(ms);
             JsonConverter conv = options.GetConverter(value.GetType());
             MethodInfo mi = conv.GetType().GetMethod("Write");
             mi.Invoke(conv, new object[] { writer, value, options });
             writer.Flush();
-            return Encoding.UTF8.GetString(ms.ToArray());        
+            return Encoding.UTF8.GetString(ms.ToArray());
         }
 
-        public static string GetTypeName(Type type)
+        public static string GetTypeDisplayName(Type type)
         {
             return $"{type.Name.Split('`')[0]}{(type.IsGenericType ? "<" : "")}{string.Join(", ", type.GenericTypeArguments.Select(f => f.Name))}{(type.IsGenericType ? ">" : "")}";
         }

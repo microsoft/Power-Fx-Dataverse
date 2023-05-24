@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,24 +14,97 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     public static class ObjectSerializer
     {
-        private static HashSet<string> AllowedArrays = new HashSet<string>() { "AttributeMetadata", "EntityKeyMetadata", "ManyToManyRelationshipMetadata", "OneToManyRelationshipMetadata", "SecurityPrivilegeMetadata", "EntitySetting", "String" };
-        private static HashSet<string> AllowedCollections = new HashSet<string>() { "LocalizedLabelCollection", "Collection<RelationshipAttribute>", "DataCollection<LinkEntity>", "DataCollection<ConditionExpression>", "DataCollection<FilterExpression>",
-            "DataCollection<OrderExpression>", "DataCollection<String>", "DataCollection<XrmAttributeExpression>", "OptionMetadataCollection", "DataCollection<Entity>" };
-        private static HashSet<string> AllowedDictionaries = new HashSet<string>() { "AttributeCollection", "ParameterCollection", "KeyAttributeCollection", "FormattedValueCollection", "RelatedEntityCollection" };
-        private static HashSet<string> AllowedClasses = new HashSet<string>() { "Label", "LocalizedLabel", "BooleanManagedProperty", "ExtensionDataObject", "AttributeTypeDisplayName", "AttributeRequiredLevelManagedProperty", "AssociatedMenuConfiguration",
-            "CascadeConfiguration", "AttributeCollection", "Object", "PagingInfo", "FilterExpression", "ColumnSet", "EntityMetadata", "OptionSetMetadata", "StringFormatName", "MemoFormatName", "DateTimeBehavior", "BooleanOptionSetMetadata",
-            "OptionMetadata", "EntityReference" };
-        private static HashSet<string> AllowedEnums = new HashSet<string>() { "AttributeTypeCode?", "OwnershipTypes?", "RelationshipType", "SecurityTypes?", "PrivilegeType", "AttributeRequiredLevel", "AssociatedMenuBehavior?", "AssociatedMenuGroup?",
-            "CascadeType?", "EntityFilters", "LogicalOperator", "OptionSetType?", "StringFormat?", "ImeMode?", "IntegerFormat?", "LookupFormat?", "DateTimeFormat?", "EntityKeyIndexStatus", "AttributeTypeCode" };
+        private static HashSet<string> AllowedArrays = new()
+        {
+            "AttributeMetadata",
+            "EntityKeyMetadata",
+            "EntitySetting",
+            "ManyToManyRelationshipMetadata",
+            "OneToManyRelationshipMetadata",
+            "SecurityPrivilegeMetadata",
+            "String"
+        };
+
+        private static HashSet<string> AllowedCollections = new()
+        {
+            "Collection<RelationshipAttribute>",
+            "DataCollection<ConditionExpression>",
+            "DataCollection<Entity>",
+            "DataCollection<FilterExpression>",
+            "DataCollection<LinkEntity>",
+            "DataCollection<OrderExpression>",
+            "DataCollection<String>",
+            "DataCollection<XrmAttributeExpression>",
+            "LocalizedLabelCollection",
+            "OptionMetadataCollection"
+        };
+
+        private static HashSet<string> AllowedDictionaries = new()
+        {
+            "AttributeCollection",
+            "FormattedValueCollection",
+            "KeyAttributeCollection",
+            "ParameterCollection",
+            "RelatedEntityCollection"
+        };
+
+        private static HashSet<string> AllowedClasses = new()
+        {
+            "AssociatedMenuConfiguration",
+            "AttributeCollection",
+            "AttributeRequiredLevelManagedProperty",
+            "AttributeTypeDisplayName",
+            "BooleanManagedProperty",
+            "BooleanOptionSetMetadata",
+            "CascadeConfiguration",
+            "ColumnSet",
+            "DateTimeBehavior",
+            "EntityMetadata",
+            "EntityReference",
+            "ExtensionDataObject",
+            "FilterExpression",
+            "Label",
+            "LocalizedLabel",
+            "MemoFormatName",
+            "Object",
+            "OptionMetadata",
+            "OptionSetMetadata",
+            "PagingInfo",
+            "StringFormatName"
+        };
+
+        private static HashSet<string> AllowedEnums = new()
+        {
+            "AssociatedMenuBehavior?",
+            "AssociatedMenuGroup?",
+            "AttributeRequiredLevel",
+            "AttributeTypeCode",
+            "AttributeTypeCode?",
+            "CascadeType?",
+            "DateTimeFormat?",
+            "EntityFilters",
+            "EntityKeyIndexStatus",
+            "ImeMode?",
+            "IntegerFormat?",
+            "LogicalOperator",
+            "LookupFormat?",
+            "OptionSetType?",
+            "OwnershipTypes?",
+            "PrivilegeType",
+            "RelationshipType",
+            "SecurityTypes?",
+            "StringFormat?",
+        };
 
         public static JsonSerializerOptions GetJsonSerializerOptions(bool writeIndented)
         {
-            JsonSerializerOptions jso = new JsonSerializerOptions() { WriteIndented = writeIndented };
-            jso.Converters.Add(new ObjectConverter());
-            jso.Converters.Add(new ArrayConverter());
-            jso.Converters.Add(new DictionaryConverter());
-            jso.Converters.Add(new ExceptionConverter());
-            return jso;
+            JsonSerializerOptions jsonSerializerOptions = new() { WriteIndented = writeIndented };
+            jsonSerializerOptions.Converters.Add(new ObjectConverter());
+            jsonSerializerOptions.Converters.Add(new ArrayConverter());
+            jsonSerializerOptions.Converters.Add(new DictionaryConverter());
+            jsonSerializerOptions.Converters.Add(new ExceptionConverter());
+            jsonSerializerOptions.Converters.Add(new OrganizationResponseConverter());
+            return jsonSerializerOptions;
         }
 
         public static string Serialize(object obj)
@@ -40,12 +112,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return JsonSerializer.Serialize(obj, obj.GetType(), GetJsonSerializerOptions(true));
         }
 
-        public static object Deserialize(string str, Type type)
+        public static object Deserialize(string jsonString, Type type)
         {
             MethodInfo genericDeserializeMethod = typeof(ObjectSerializer).GetMethod("Deserialize", 1 /* genericParameterCount */, BindingFlags.Static | BindingFlags.Public, null, new Type[] { typeof(string), typeof(bool) }, null);
             MethodInfo deserializeMethod = genericDeserializeMethod.MakeGenericMethod(type);
 
-            return deserializeMethod.Invoke(null, new object[] { str, false });
+            return deserializeMethod.Invoke(null, new object[] { jsonString, false });
         }
 
         public static T Deserialize<T>(string str, bool ignoreObjects = false)
@@ -53,195 +125,261 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return DeserializeJson<T>(JsonDocument.Parse(str).RootElement, ignoreObjects);
         }
 
-        public static T DeserializeJson<T>(JsonElement je, bool ignoreObjects = false)
+        public static T DeserializeJson<T>(JsonElement jsonElement, bool ignoreObjects = false)
         {
-            if (je.ValueKind == JsonValueKind.Null)
+            if (jsonElement.ValueKind == JsonValueKind.Null)
                 return default;
-            if (typeof(T) == typeof(int) || typeof(T).IsEnum)
-                return (T)(object)int.Parse(je.GetString());
-            if (typeof(T) == typeof(bool))
-                return (T)(object)bool.Parse(je.GetString());
-            if (typeof(T) == typeof(string))
-                return (T)(object)je.GetString();
-            if (typeof(T) == typeof(decimal))
-                return (T)(object)decimal.Parse(je.GetString());
-            if (typeof(T) == typeof(Guid))
-                return (T)(object)Guid.Parse(je.GetString());
-            if (typeof(T) == typeof(DateTime))
-                return (T)(object)DateTime.Parse(je.GetString());
 
-            T o;
-            ConstructorInfo ci = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(ci => !ci.GetParameters().Any());
-            if (ci != null)
-                o = (T)ci.Invoke(new object[] { });
+            if (typeof(T) == typeof(int) || typeof(T).IsEnum)
+                return (T)(object)int.Parse(jsonElement.GetString());
+
+            if (typeof(T) == typeof(bool))
+                return (T)(object)bool.Parse(jsonElement.GetString());
+
+            if (typeof(T) == typeof(string))
+                return (T)(object)jsonElement.GetString();
+
+            if (typeof(T) == typeof(decimal))
+                return (T)(object)decimal.Parse(jsonElement.GetString());
+
+            if (typeof(T) == typeof(Guid))
+                return (T)(object)Guid.Parse(jsonElement.GetString());
+
+            if (typeof(T) == typeof(DateTime))
+                return (T)(object)DateTime.Parse(jsonElement.GetString());
+
+            T obj;
+
+            // 0-parameter constructor
+            ConstructorInfo constructorInfo = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(ci => !ci.GetParameters().Any());
+
+            if (constructorInfo != null)
+                obj = (T)constructorInfo.Invoke(new object[] { });
             else
             {
-                ci = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).First();
-                object[] prms = ci.GetParameters().Select((ParameterInfo pi2) =>
+                // get first constructor (with parameters)
+                constructorInfo = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).First();
+
+                // identify constructor parameters based on the properties available in jsonElement (using 'EndsWith' equality logic as some names might not be fully identical)
+                object[] constructorParameters = constructorInfo.GetParameters().Select((ParameterInfo paramInfo) =>
                 {
-                    JsonProperty jp3 = je.EnumerateObject().First((JsonProperty jp2) => jp2.Name.EndsWith(pi2.Name, StringComparison.OrdinalIgnoreCase));
-                    return GetValue(typeof(T).GetProperty(jp3.Name), jp3, ignoreObjects);
+                    JsonProperty jsonProperty = jsonElement.EnumerateObject().First((JsonProperty jsonProp) => jsonProp.Name.EndsWith(paramInfo.Name, StringComparison.OrdinalIgnoreCase));
+                    return GetPropertyValue(typeof(T).GetProperty(jsonProperty.Name), jsonProperty, ignoreObjects);
                 }).ToArray();
-                o = (T)ci.Invoke(prms);
+
+                obj = (T)constructorInfo.Invoke(constructorParameters);
             }
 
-            JsonElement _object = default;
-            if (je.ValueKind == JsonValueKind.String)
+            // ObjectConverter $object content, when not a primitive type
+            if (jsonElement.ValueKind == JsonValueKind.String)
+                return Deserialize<T>(jsonElement.GetString());
+
+            JsonElement _object = default; // ObjectConverter $object content
+            foreach (JsonProperty jsonProperty in jsonElement.EnumerateObject())
             {
-                string[] strParts = je.GetString().Split("|");
-                //return (T)Deserialize(strParts[1], Type.GetType(strParts[0]));
-                return Deserialize<T>(strParts[0]);
-            }
-            foreach (JsonProperty jp in je.EnumerateObject())
-            {
-                if (jp.Name == "$object")
-                    _object = jp.Value;
-                else if (jp.Name == "$type")
+                // ObjectConverter elemments ($object and $type)
+                if (jsonProperty.Name == "$object")
+                    _object = jsonProperty.Value;
+                else if (jsonProperty.Name == "$type")
                 {
-                    Type t = Type.GetType(jp.Value.GetString());
                     var getObject = typeof(ObjectSerializer).GetMethod("DeserializeJson", BindingFlags.Static | BindingFlags.Public);
-                    return (dynamic)getObject.MakeGenericMethod(t).Invoke(null, new object[] { _object, ignoreObjects });
+                    return (T)getObject.MakeGenericMethod(Type.GetType(jsonProperty.Value.GetString())).Invoke(null, new object[] { _object, ignoreObjects });
                 }
                 else
                 {
-                    PropertyInfo pi = o.GetType().GetProperty(jp.Name);
-                    object val = GetValue(pi, jp, ignoreObjects);
-                    //object v0 = val;
-                    RelatedEntityCollection rec = null;
+                    // 'Normal' object properties
+                    PropertyInfo propertyInfo = obj.GetType().GetProperty(jsonProperty.Name);
+                    object propertyValue = GetPropertyValue(propertyInfo, jsonProperty, ignoreObjects);
 
-                    if (val != null && val.GetType() != pi.PropertyType)
+                    // When types do not match, some adjustment is necessary
+                    if (propertyValue != null && propertyValue.GetType() != propertyInfo.PropertyType)
                     {
-                        ci = pi.PropertyType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(ci => ci.GetParameters().Length == 1);
-                        val = ci.Invoke(new object[] { val });
+                        // Get all constructors
+                        ConstructorInfo[] cis = propertyInfo.PropertyType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                        // 1-parameter constructor
+                        constructorInfo = cis.FirstOrDefault(ci => ci.GetParameters().Length == 1);
+
+                        if (constructorInfo != null)
+                            propertyValue = constructorInfo.Invoke(new object[] { propertyValue });
+                        else
+                        {
+                            // Used for example with RelatedEntityCollection, we access inner dictionary private field to set the value
+                            // 0-parameter constructor
+                            constructorInfo = cis.FirstOrDefault(ci => ci.GetParameters().Length == 0);
+                            object innerObject = constructorInfo.Invoke(new object[] { });
+
+                            FieldInfo fieldInfo = propertyInfo.PropertyType.BaseType.GetField("_innerDictionary", BindingFlags.Instance | BindingFlags.NonPublic);
+                            fieldInfo.SetValue(innerObject, propertyValue);
+                            propertyValue = innerObject;
+                        }
                     }
 
-                    if (pi.CanWrite)
+                    // Check is a setter is available, otherwise use private field
+                    if (propertyInfo.CanWrite)
                     {
-                        pi.SetValue(o, val);
+                        propertyInfo.SetValue(obj, propertyValue);
                     }
                     else
                     {
-                        FieldInfo fi = o.GetType().GetField($"_{pi.Name.Substring(0, 1).ToLower() + pi.Name.Substring(1)}", BindingFlags.Instance | BindingFlags.NonPublic);
+                        // Xrm classes use this common pattern when setters aren't available (field startting with _ and first letter of property name in lower case)
+                        FieldInfo fi = obj.GetType().GetField($"_{propertyInfo.Name.Substring(0, 1).ToLower() + propertyInfo.Name.Substring(1)}", BindingFlags.Instance | BindingFlags.NonPublic);
+
                         if (fi != null)
-                        {
-                            fi.SetValue(o, val);
-                        }
+                            fi.SetValue(obj, propertyValue);
                         else
                         {
-                            PropertyInfo pi2 = o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(wi => wi.Name == "Results");
-                            MethodInfo mi2 = pi2.PropertyType.GetMethod("set_Item");
+                            // Used for OrganizationResponse items, use Results indexer instead
+                            PropertyInfo propertyInfo2 = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(wi => wi.Name == "Results");
+                            MethodInfo indexerSetter = propertyInfo2.PropertyType.GetMethod("set_Item");
+                            object innerObject = propertyInfo2.GetValue(obj, null);
 
-                            object o2 = pi2.GetValue(o, null);
-                            mi2.Invoke(o2, new object[] { pi.Name, val });
+                            // Call indexer
+                            indexerSetter.Invoke(innerObject, new object[] { propertyInfo.Name, propertyValue });
                         }
                     }
                 }
             }
 
-            return o;
+            return obj;
         }
 
         public static T[] GetArray<T>(JsonElement ja, bool ignoreObjects)
             where T : class
         {
+            // Homogeneous arrays
             if (ja.ValueKind == JsonValueKind.Array)
                 return ja.EnumerateArray().Select(je => DeserializeJson<T>(je, ignoreObjects)).ToArray();
 
             Type[] at = null;
-            foreach (JsonProperty jp in ja.EnumerateObject())
-            {
-                if (jp.Name == "$arrayTypes")
-                {
-                    at = jp.Value.EnumerateArray().Select(je => Type.GetType(je.ToString())).ToArray();
-                }
-                if (jp.Name == "$values")
-                {
-                    return jp.Value.EnumerateArray().Select((JsonElement je, int i) => Deserialize(je.ToString(), at[i])).Cast<T>().ToArray();
-                }
-            }
 
-            return null;
+            // Heterogeneous arrays
+            foreach (JsonProperty jp in ja.EnumerateObject())
+                if (jp.Name == "$arrayTypes")
+                    at = jp.Value.EnumerateArray().Select(je => Type.GetType(je.ToString())).ToArray();
+                else if (jp.Name == "$values")
+                    return jp.Value.EnumerateArray().Select((JsonElement je, int i) => Deserialize(je.ToString(), at[i])).Cast<T>().ToArray();
+
+            return default;
         }
 
         // Collection C of elements of type T.
         public static C GetCollection<C, T>(JsonElement ja, bool ignoreObjects)
             where C : class, ICollection<T>
         {
-            var col = typeof(C).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { }, null).Invoke(new object[] { }) as C;
-            Array.ForEach(ja.EnumerateArray().ToArray(), (JsonElement je) => col.Add(DeserializeJson<T>(je, ignoreObjects)));
-            return col;
+            // Create collection instance
+            C collection = typeof(C).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { }, null).Invoke(new object[] { }) as C;
+
+            // Add elements to collection
+            Array.ForEach(ja.EnumerateArray().ToArray(), (JsonElement je) => collection.Add(DeserializeJson<T>(je, ignoreObjects)));
+
+            return collection;
         }
 
         public static Dictionary<K, V> GetDictionary<K, V>(JsonElement ja, bool ignoreObjects)
         {
-            var dic = new Dictionary<K, V>();
-            Array.ForEach(ja.EnumerateArray().ToArray(), (JsonElement je) => dic.Add((K)GetValue(typeof(KeyValuePair<K, V>).GetProperty("Key"), je.EnumerateObject().First(jp => jp.Name == "Key"), ignoreObjects),
-                                                                                     (V)GetValue(typeof(KeyValuePair<K, V>).GetProperty("Value"), je.EnumerateObject().First(jp => jp.Name == "Value"), ignoreObjects)));
-            return dic;
+            Dictionary<K, V> dictionary = new();
+            Array.ForEach(ja.EnumerateArray().ToArray(), (JsonElement je) => dictionary.Add((K)GetPropertyValue(typeof(KeyValuePair<K, V>).GetProperty("Key"), je.EnumerateObject().First(jp => jp.Name == "Key"), ignoreObjects),
+                                                                                            (V)GetPropertyValue(typeof(KeyValuePair<K, V>).GetProperty("Value"), je.EnumerateObject().First(jp => jp.Name == "Value"), ignoreObjects)));
+            return dictionary;
         }
 
-        private static object GetValue(PropertyInfo pi, JsonProperty jp, bool ignoreObjects)
+        private static object GetPropertyValue(PropertyInfo propertyInfo, JsonProperty jsonProperty, bool ignoreObjects)
         {
-            bool b = jp.Value.ValueKind == JsonValueKind.Null;
-            Type t = pi.PropertyType;
-            Type ti = null;
-            bool isNullable = (ti = Nullable.GetUnderlyingType(t)) != null;
+            Type propertyType = propertyInfo.PropertyType;
 
-            if (b) return null;
+            if (jsonProperty.Value.ValueKind == JsonValueKind.Null)
+                return null;
 
-            if (t == typeof(int?) || t == typeof(int)) return jp.Value.GetInt32();
-            else if (t == typeof(bool?) || t == typeof(bool)) return jp.Value.GetBoolean();
-            else if (t == typeof(double?) || t == typeof(double)) return jp.Value.GetDouble();
-            else if (t == typeof(short?) || t == typeof(short)) return jp.Value.GetInt16();
-            else if (t == typeof(long?) || t == typeof(long)) return jp.Value.GetInt64();
-            else if (t == typeof(decimal?) || t == typeof(decimal)) return jp.Value.GetDecimal();
-            else if (t == typeof(Guid?) || t == typeof(Guid)) return new Guid(jp.Value.GetString());
-            else if (t == typeof(DateTime?)) return jp.Value.GetDateTime();
-            else if (t == typeof(string)) return jp.Value.GetString();
-            else if (t.IsArray)
+            if (propertyType == typeof(string))
+                return jsonProperty.Value.GetString();
+
+            if (propertyType == typeof(Guid?) || propertyType == typeof(Guid))
+                return new Guid(jsonProperty.Value.GetString());
+
+            if (propertyType == typeof(bool?) || propertyType == typeof(bool))
+                return jsonProperty.Value.GetBoolean();
+
+            if (propertyType == typeof(int?) || propertyType == typeof(int))
+                return jsonProperty.Value.GetInt32();
+
+            if (propertyType == typeof(double?) || propertyType == typeof(double))
+                return jsonProperty.Value.GetDouble();
+
+            if (propertyType == typeof(short?) || propertyType == typeof(short))
+                return jsonProperty.Value.GetInt16();
+
+            if (propertyType == typeof(long?) || propertyType == typeof(long))
+                return jsonProperty.Value.GetInt64();
+
+            if (propertyType == typeof(decimal?) || propertyType == typeof(decimal))
+                return jsonProperty.Value.GetDecimal();
+
+            if (propertyType == typeof(DateTime?))
+                return jsonProperty.Value.GetDateTime();
+
+            if (propertyType.IsArray)
             {
-                Type at = t.GetElementType();
-                if (!AllowedArrays.Contains(at.Name)) throw new Exception($"Invalid Array {at.Name}");
+                Type arrayElementType = propertyType.GetElementType();
+                if (!AllowedArrays.Contains(arrayElementType.Name))
+                    throw new Exception($"Invalid Array {arrayElementType.Name}");
+
                 var getArray = typeof(ObjectSerializer).GetMethod("GetArray", BindingFlags.Static | BindingFlags.Public);
-                return getArray.MakeGenericMethod(at).Invoke(null, new object[] { jp.Value, ignoreObjects });
+                return getArray.MakeGenericMethod(arrayElementType).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
             }
-            else if (t.GetInterfaces().Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>) && t.GetGenericArguments().Length == 1 &&
-                                                t.GetGenericArguments().First().IsGenericType && t.GetGenericArguments().First().GetGenericTypeDefinition() == typeof(KeyValuePair<,>)))
-            {
-                string tName = $"{t.Name}{(t.IsGenericType ? "<" : "")}{string.Join(", ", t.GenericTypeArguments.Select(f => f.Name))}{(t.IsGenericType ? ">" : "")}";
-                if (!ignoreObjects && !AllowedDictionaries.Contains(tName)) throw new Exception($"Invalid Dictionary {tName}");
 
-                Type iEnumerable = t.GetInterfaces().FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-                Type elementType = iEnumerable.GetGenericArguments().First();
-                Type[] innerTypes = elementType.GetGenericArguments();
-                var getDictionary = typeof(ObjectSerializer).GetMethod("GetDictionary", BindingFlags.Static | BindingFlags.Public);
-                return getDictionary.MakeGenericMethod(innerTypes).Invoke(null, new object[] { jp.Value, ignoreObjects });
-            }
-            else if (t.GetInterfaces().Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            // IEnumerable<KeyValuePair<TKey,TValue>> like ParameterCollection : DataCollection<string, object> : IEnumerable<KeyValuePair<string, object>>
+            if (propertyType.GetInterfaces().Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>) && t.GetGenericArguments().Length == 1 &&
+                                                      t.GetGenericArguments().First().IsGenericType && t.GetGenericArguments().First().GetGenericTypeDefinition() == typeof(KeyValuePair<,>)))
             {
-                string tName = ObjectConverter.GetTypeName(t);
-                if (!ignoreObjects && !AllowedCollections.Contains(tName)) throw new Exception($"Invalid Collection {tName}");
+                string typeDisplayName = ObjectConverter.GetTypeDisplayName(propertyType);
+                if (!ignoreObjects && !AllowedDictionaries.Contains(typeDisplayName))
+                    throw new Exception($"Invalid Dictionary {typeDisplayName}");
 
-                Type iCollection = t.GetInterfaces().FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>));
-                Type elementType = iCollection.GetGenericArguments().First();
-                var getCollection = typeof(ObjectSerializer).GetMethod("GetCollection", BindingFlags.Static | BindingFlags.Public);
-                return getCollection.MakeGenericMethod(t, elementType).Invoke(null, new object[] { jp.Value, ignoreObjects });
+                Type iEnumerableType = propertyType.GetInterfaces().FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                Type keyValuePairType = iEnumerableType.GetGenericArguments().First();
+                Type[] keyAndValueTypes = keyValuePairType.GetGenericArguments();
+
+                MethodInfo getDictionary = typeof(ObjectSerializer).GetMethod("GetDictionary", BindingFlags.Static | BindingFlags.Public);
+                return getDictionary.MakeGenericMethod(keyAndValueTypes).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
             }
-            else if (t.IsClass)
+
+            // ICollection<T>
+            if (propertyType.GetInterfaces().Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>)))
             {
-                if (!ignoreObjects && !AllowedClasses.Contains(t.Name)) throw new Exception($"Invalid Class {t.Name}");
+                string typeDisplayName = ObjectConverter.GetTypeDisplayName(propertyType);
+                if (!ignoreObjects && !AllowedCollections.Contains(typeDisplayName))
+                    throw new Exception($"Invalid Collection {typeDisplayName}");
+
+                Type iCollectionType = propertyType.GetInterfaces().FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>));
+                Type elementType = iCollectionType.GetGenericArguments().First();
+
+                MethodInfo getCollection = typeof(ObjectSerializer).GetMethod("GetCollection", BindingFlags.Static | BindingFlags.Public);
+                return getCollection.MakeGenericMethod(propertyType, elementType).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
+            }
+
+            if (propertyType.IsClass)
+            {
+                if (!ignoreObjects && !AllowedClasses.Contains(propertyType.Name))
+                    throw new Exception($"Invalid Class {propertyType.Name}");
 
                 var getObject = typeof(ObjectSerializer).GetMethod("DeserializeJson", BindingFlags.Static | BindingFlags.Public);
-                return getObject.MakeGenericMethod(t).Invoke(null, new object[] { jp.Value, ignoreObjects });
+                return getObject.MakeGenericMethod(propertyType).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
             }
-            else if (t.IsEnum || (isNullable && ti.IsEnum))
-            {
-                string eName = isNullable ? $"{ti.Name}?" : t.Name;
-                if (!ignoreObjects && !AllowedEnums.Contains(eName)) throw new Exception($"Invalid Enum {eName}");
 
-                return Enum.ToObject(isNullable ? ti : t, jp.Value.GetInt32());
+            Type underlyingNullablePropertyType = null;
+            bool isNullable = (underlyingNullablePropertyType = Nullable.GetUnderlyingType(propertyType)) != null;
+
+            if (propertyType.IsEnum || (isNullable && underlyingNullablePropertyType.IsEnum))
+            {
+                string enumDisplayName = isNullable ? $"{underlyingNullablePropertyType.Name}?" : propertyType.Name;
+                if (!ignoreObjects && !AllowedEnums.Contains(enumDisplayName))
+                    throw new Exception($"Invalid Enum {enumDisplayName}");
+
+                return Enum.ToObject(isNullable ? underlyingNullablePropertyType : propertyType, jsonProperty.Value.GetInt32());
             }
-            else throw new Exception($"Unknown type {t.Name}");
+
+            throw new Exception($"Unknown type {propertyType.Name}");
         }
     }
 }

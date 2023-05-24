@@ -20,10 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
-            Type keyType = typeToConvert.GetGenericArguments()[0];
-            Type valueType = typeToConvert.GetGenericArguments()[1];
-            Type converterType = typeof(DictionaryConverterInner<,>).MakeGenericType(new Type[] { keyType, valueType });
-            return (JsonConverter)Activator.CreateInstance(converterType);
+            return (JsonConverter)Activator.CreateInstance(typeof(DictionaryConverterInner<,>).MakeGenericType(new Type[] { typeToConvert.GetGenericArguments()[0], typeToConvert.GetGenericArguments()[1] }));
         }
 
         private class DictionaryConverterInner<K, V> : JsonConverter<Dictionary<K, V>>
@@ -36,13 +33,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             public override void Write(Utf8JsonWriter writer, Dictionary<K, V> value, JsonSerializerOptions options)
             {
                 writer.WriteStartArray();
+
                 foreach (KeyValuePair<K, V> kvp in value)
                 {
                     writer.WriteStartObject();
+
                     writer.WritePropertyName("Key");
+                    //writer.WriteRawValue(ObjectConverter.SerializeObject(kvp.Key, options));
                     ((JsonConverter<K>)options.GetConverter(typeof(K))).Write(writer, kvp.Key, options);
+
                     writer.WritePropertyName("Value");
+                    //writer.WriteRawValue(ObjectConverter.SerializeObject(kvp.Value, options));
                     ((JsonConverter<V>)options.GetConverter(typeof(V))).Write(writer, kvp.Value, options);
+
                     writer.WriteEndObject();
                 }
                 writer.WriteEndArray();
