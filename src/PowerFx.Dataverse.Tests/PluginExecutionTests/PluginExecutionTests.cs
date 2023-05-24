@@ -1894,62 +1894,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var logicalName = "local";
             var displayName = "t1";
-
-            var exprSum = "Sum(t1,Price)";
-            var exprFirstN = "CountRows(FirstN(t1,2))";
-            var exprFilter = "CountRows(Filter(t1,Price > 10))";            
-
+            var loopupExpr = "LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price";
+           
             (DataverseConnection dv, DataverseEntityCache _, EntityLookup el) = CreateMemoryForRelationshipModelsWithCache();           
             dv.AddTable(displayName, logicalName);
             
             var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
+            config.SymbolTable.EnableMutationFunctions();            
 
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
-            var result1 = await engine1.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            engine1.EnableDelegation(dv.MaxRows);
+            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result1.ToObject());
-
-            var engine2 = new RecalcEngine(config);
-            var result2 = await engine2.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result2.ToObject());
-
-            var engine3 = new RecalcEngine(config);
-            var result3 = await engine3.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result3.ToObject());
-
+           
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
             await el.DeleteAsync(logicalName, _g1);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
-            var result4 = await engine4.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            engine4.EnableDelegation(dv.MaxRows);
+            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result4.ToObject());
-
-            var engine5 = new RecalcEngine(config);
-            var result5 = await engine5.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result5.ToObject());
-
-            var engine6 = new RecalcEngine(config);
-            var result6 = await engine6.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(1m, result6.ToObject());
-
+         
             // Refresh connection cache.
             dv.RefreshCache();
 
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine7 = new RecalcEngine(config);
-            var result7 = await engine7.EvalAsync(exprSum, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.IsInstanceOfType(result7, typeof(BlankValue));
-
-            var engine8 = new RecalcEngine(config);
-            var result8 = await engine8.EvalAsync(exprFirstN, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0m, result8.ToObject());
-
-            var engine9 = new RecalcEngine(config);
-            var result9 = await engine9.EvalAsync(exprFilter, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.AreEqual(0m, result9.ToObject());
+            engine7.EnableDelegation(dv.MaxRows);
+            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            Assert.IsInstanceOfType(result7, typeof(ErrorValue));  
+            
+            ErrorValue ev7 = (ErrorValue)result7;
+            Assert.AreEqual("Error attempting Entity lookup. Entity local:00000000-0000-0000-0000-000000000001 not found", ev7.Errors[0].Message);
         }
 
         [DataTestMethod]

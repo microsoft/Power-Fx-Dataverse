@@ -181,29 +181,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Verify if we have any entry in the cache for that table/entity name
-            // If any, we'll use the cached entries
-            lock (_lock)
-            {                
-                List<Entity> list = new();
-
-                foreach (KeyValuePair<Guid, DataverseCachedEntity> cacheEntry in _cache)
-                {
-                    Entity e = cacheEntry.Value.Entity;
-
-                    if (e.LogicalName == (query as QueryExpression).EntityName)
-                    {
-                        list.Add(e);
-                    }
-                }
-
-                if (list.Any())
-                {
-                    return new DataverseResponse<EntityCollection>(new EntityCollection(list));
-                }
-            }
+            cancellationToken.ThrowIfCancellationRequested();           
 
             DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
 
