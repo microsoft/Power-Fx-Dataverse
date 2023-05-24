@@ -5,7 +5,9 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -26,6 +28,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            {
+                // Binder should have enforced that this always succeeds.
+                var t2 = (DataverseTableValue)table;
+
+                var result = await t2.RetrieveMultipleAsync(filter, count, cancel);
+                return result;
+            }
+
             public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
             {
                 bool isRealTable = 
@@ -42,7 +53,17 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="engine"></param>
         public static void EnableDelegation(this Engine engine)
         {
-            engine.EnableDelegationCore(new DelegationHooksImpl());
+            engine.EnableDelegationCore(new DelegationHooksImpl(), 1000);
+        }
+
+        /// <summary>
+        /// Public facing API to enable delegation.
+        /// </summary>
+        /// <param name="engine"></param>
+        /// <param name="maxRows">Max number of rows delegation can handle.</param>
+        public static void EnableDelegation(this Engine engine, int maxRows)
+        {
+            engine.EnableDelegationCore(new DelegationHooksImpl(), maxRows);
         }
     }
 }

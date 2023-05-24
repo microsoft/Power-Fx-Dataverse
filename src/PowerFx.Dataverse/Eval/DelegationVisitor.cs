@@ -1,6 +1,7 @@
 ﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -22,14 +23,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
         private readonly DelegationHooks _hooks;
+        private readonly int _maxRows;
 
         // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
-        public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors)
+        public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRows)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-            _errors = errors ?? throw new ArgumentNullException(nameof(errors));   
+            _errors = errors ?? throw new ArgumentNullException(nameof(errors));
+            _maxRows = maxRows;
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -101,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var reason = new ExpressionError
                 {
                     MessageKey = "WrnDelagationTableNotSupported",
-                    MessageArgs = new object[] { ret._metadata.LogicalName },
+                    MessageArgs = new object[] { ret._metadata.LogicalName, _maxRows },
                     Span = ret._sourceTableIRNode.IRContext.SourceContext,
                     Severity = ErrorSeverity.Warning
                 };
@@ -224,8 +227,6 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (left2.Parent.Id == right2.Parent.Id && 
                                     left2.Name == right2.Name)
                                 {
-                                    // Issue warning
-                                    // Localize, $$$ https://github.com/microsoft/Power-Fx-Dataverse/issues/153
                                     var reason = new ExpressionError
                                     {
                                         MessageKey = "WrnDelagationPredicate",
@@ -267,9 +268,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal tableArg = node.Args[0].Accept(this, context);
 
+            if (!tableArg.IsDelegating)
+            {
+                return base.Visit(node, context, tableArg);
+            }
+
             if (func == "LookUp")
-            {            
-                if (tableArg.IsDelegating && node.Args.Count == 2)
+            {
+                if (node.Args.Count == 2)
                 {
                     var arg1 = node.Args[1]; // the predicate to analyze. 
 
@@ -291,7 +297,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // Pattern match to see if predicate is delegable.
                         //  Lookup(Table, Id=Guid) 
                         if (binOp.Op == BinaryOpKind.EqGuid)
-                        {                          
+                        {
                             // Matches (Id=Guid) or (Guid=Id)
                             if (TryMatchPrimaryId(binOp.Left, binOp.Right, out var primaryIdField, out var guidValue, tableArg))
                             {
@@ -330,20 +336,28 @@ namespace Microsoft.PowerFx.Dataverse
                                         return Ret(newNode);
                                     }
                                 }
-                            }                  
+                            }
                         }
                     }
-                                        
+
                     // Failed to delegate. Add the warning and continue. 
                     this.AddError(reason);
                     return this.Ret(node);
-                }            
+                }
             }
-            // Other delegating functions, continue to compose...
-            // - First, FirstN, 
-            // - Filter
-            // - Sort            
+            else if (func == BuiltinFunctionsCore.FirstN.Name)
+            {
+                if (node.Args.Count == 2)
+                {
+                    var newNode = _hooks.MakeTopCall(tableArg, node.Args[1]);
+                    return Ret(newNode);
+                }
+            }
 
+            // Other delegating functions, continue to compose...
+            // - First, 
+            // - Filter
+            // - Sort   
             return base.Visit(node, context, tableArg);
         }
     }

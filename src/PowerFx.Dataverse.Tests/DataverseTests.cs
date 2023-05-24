@@ -5,9 +5,11 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -108,6 +110,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsFalse(result.IsSuccess);
             Assert.AreEqual(1, result.Errors.Count());
             StringAssert.Contains(result.Errors.First().ToString(), "'Exp' is an unknown or unsupported function.");
+        }
+
+        [TestMethod]
+        public void CheckSchemaBinding()
+        {
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                        LogicalName = "new_field",
+                        DisplayName = "field",
+                        AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+
+            var expr = "UTCNow()";
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.IsFalse(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
+
+            expr = "field * 10";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.IsTrue(result.SqlFunction.Contains(SqlStatementFormat.WithSchemaBindingFormat));
         }
 
         // baseline parameters for compilation
@@ -1524,6 +1554,57 @@ END
         };
 
         internal static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
+
+        [TestMethod]
+        public void CheckGlobalOptionSets()
+        {
+            var xrmModel = AllAttributeModel.ToXrm();
+            List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
+            var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global1",
+                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
+            };
+
+            var optionSet2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 3 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 4 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global2",
+                DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0])
+            };
+
+            globalOptionSets.Add(optionSet1);
+            globalOptionSets.Add(optionSet2);
+            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+
+            // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("Global2", new SqlCompileOptions());
+            Assert.IsFalse(result.IsSuccess);
+            StringAssert.Contains(result.Errors.First().ToString(), "Name isn't valid. 'Global2' isn't recognized");
+
+            // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
+            var result2 = engine2.Compile("Global2", new SqlCompileOptions());
+            Assert.IsFalse(result2.IsSuccess);
+            StringAssert.Contains(result2.Errors.First().ToString(), "Not supported in formula columns.");
+
+            result2 = engine2.Compile("(Global2.Three = Global2.Four)", new SqlCompileOptions());
+            Assert.IsTrue(result2.IsSuccess);
+        }
 
         [DataTestMethod]
         [DataRow("new_price * new_quantity", "Price * Quantity", DisplayName = "Logical Names")]

@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            {
+                throw new NotImplementedException();
+            }
+
             // Are symbols from this table delegable?
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
@@ -42,30 +48,40 @@ namespace Microsoft.PowerFx.Dataverse
                 var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argGuid);
                 return node;
             }
+
+            // Generate a top call for: FirstN(Table, count) => __top(Table, count)
+            internal CallNode MakeTopCall(DelegationIRVisitor.RetVal query, IntermediateNode argCount)
+            {
+                var func = new DelegatedFirstNFunction(this, query._tableType);
+                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argCount);
+                return node;
+            }
         }
 
         private class DelegationIRTransform : IRTransform
         {
             private readonly DelegationEngineExtensions.DelegationHooks _hooks;
+            private readonly int _maxRows;
 
-            public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks)
+            public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
                 : base("DelegationIRTransform")
             {
                 _hooks = hooks; 
+                _maxRows = maxRows;
             }
 
             public override IntermediateNode Transform(IntermediateNode node, ICollection<ExpressionError> errors)
             {
                 return node.Accept(
-                    new DelegationIRVisitor(_hooks, errors),
+                    new DelegationIRVisitor(_hooks, errors, _maxRows),
                     new DelegationIRVisitor.Context())._node;
             }
         }
 
         // Called by extensions in Dataverse.Eval, which will pass in retrieveSingle.
-        public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks)
+        public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
         {
-            IRTransform t = new DelegationIRTransform(hooks);
+            IRTransform t = new DelegationIRTransform(hooks, maxRows);
 
             engine.IRTransformList.Add(t);
         }

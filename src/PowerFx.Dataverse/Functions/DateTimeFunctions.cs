@@ -19,12 +19,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal UTCNow(SqlVisitor visitor, CallNode node, Context context)
         {
+            context.expressionHasTimeBoundFunction = true;
             // round to the second, for parity with existing legacy CDS calculated fields
             return context.SetIntermediateVariable(FormulaType.DateTimeNoTimeZone, "DATEADD(ms, (0 - DATEPART(ms, GETUTCDATE())), GETUTCDATE())");
         }
 
         public static RetVal UTCToday(SqlVisitor visitor, CallNode node, Context context)
         {
+            context.expressionHasTimeBoundFunction = true;
             return context.SetIntermediateVariable(FormulaType.DateTimeNoTimeZone, "CONVERT(date, GETUTCDATE())");
         }
 
