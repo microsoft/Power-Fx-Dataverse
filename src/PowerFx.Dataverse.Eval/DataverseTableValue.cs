@@ -28,7 +28,13 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly IConnectionValueContext _connection;
         private RecordType _recordType;
 
-        public sealed override IEnumerable<DValue<RecordValue>> Rows => GetRowsAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
+
+        private Lazy<Task<List<DValue<RecordValue>>>> NewLazyTaskRowsInstance => new Lazy<Task<List<DValue<RecordValue>>>>(() => GetRowsAsync());
+
+        public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
+
+        public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
@@ -37,6 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+            _lazyTaskRows = NewLazyTaskRowsInstance;
         }
 
         public override object ToObject()
@@ -46,6 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public void Refresh()
         {
+            _lazyTaskRows = NewLazyTaskRowsInstance;
             _connection.Services.Refresh(_entityMetadata.LogicalName);
         }
 
