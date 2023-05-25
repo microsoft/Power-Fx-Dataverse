@@ -188,11 +188,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (ctx.GetReferenceFields().Count() > 0)
                 {
-                    int relatedEntityMoneyFieldsCount = ctx.GetReferenceFields().Select((VarDetails varDetail) => 
-                            { return varDetail.Column.DType == AppMagic.Authoring.Importers.ServiceConfig.WadlDType.Currency;}).Count();
+                    int relatedEntityMoneyFieldsCount = ctx.GetReferenceFields()
+                                        .Where((varDetail) => varDetail.VarType is SqlMoneyType && varDetail.Navigation != null)
+                                        .Count();
 
                     // load exchange rate and add it as parameter and add it in referenced field query
-                    if(relatedEntityMoneyFieldsCount > 0)
+                    if (relatedEntityMoneyFieldsCount > 0)
                     {
                         var del = ",";
                         var fieldName = "exchangerate";
@@ -208,6 +209,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (parameter.Item1.LogicalName.Equals("exchangerate"))
                                 {
                                     existingExchangeRateParameterCount++;
+                                    break;
                                 }
                             }
 
@@ -221,7 +223,6 @@ namespace Microsoft.PowerFx.Dataverse
                             else if(existingExchangeRateParameterCount == 1)
                             {
                                 exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
-
                             }
                         }
                         catch (NullReferenceException e)
