@@ -187,7 +187,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         string IDataEntityMetadata.InternalRepresentationJson => throw new NotImplementedException();
 
-        public bool IsRefreshable => throw new NotImplementedException();
+        public bool IsRefreshable => true;
 
         void IDataEntityMetadata.LoadClientSemantics(bool isPrimaryTable)
         {
