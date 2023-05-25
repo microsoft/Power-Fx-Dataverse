@@ -9,10 +9,12 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
+  <Import Project="..\..\Build.props" />  
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="0.2.4-preview" />
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="0.2.4-preview" />
-    <PackageReference Include="Microsoft.PowerFx.Json" Version="0.2.4-preview" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.0.9" />
   </ItemGroup>
 
