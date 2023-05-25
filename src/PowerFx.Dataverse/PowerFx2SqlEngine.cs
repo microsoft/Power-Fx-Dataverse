@@ -420,7 +420,7 @@ namespace Microsoft.PowerFx.Dataverse
             context.PerformRangeChecks(result, null, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (result.type is NumberType)
+            if (result.type is NumberType || result.type is SqlMoneyType)
             {
                 int precision;
                 if (result.type is SqlIntType)
