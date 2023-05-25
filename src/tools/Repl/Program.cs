@@ -92,7 +92,8 @@ namespace Microsoft.PowerFx
             config.AddFunction(new ResetImportFunction());
             config.AddFunction(new ImportFunction1Arg());
             config.AddFunction(new ImportFunction2Arg());
-            config.AddFunction(new DVConnectFunction());
+            config.AddFunction(new DVConnectFunction1Arg());
+            config.AddFunction(new DVConnectFunction2Arg());
             config.AddFunction(new DVAddTableFunction());
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
@@ -729,7 +730,16 @@ namespace Microsoft.PowerFx
             }
         }
 
-        private class DVConnectFunction : ReflectionFunction
+        private class DVConnectFunction1Arg : ReflectionFunction
+        {
+            public BooleanValue Execute(StringValue connectionSV)
+            {
+                var dvc2 = new DVConnectFunction2Arg();
+                return dvc2.Execute(connectionSV, BooleanValue.New(false));
+            }
+        }
+
+        private class DVConnectFunction2Arg : ReflectionFunction
         {
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
