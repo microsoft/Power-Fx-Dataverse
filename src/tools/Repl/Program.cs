@@ -451,6 +451,9 @@ namespace Microsoft.PowerFx
                 else
                 {
                     var separator = string.Empty;
+#if true
+                    resultString = value.ToExpression();
+#else
                     resultString = "{";
                     foreach (var field in record.Fields)
                     {
@@ -460,6 +463,7 @@ namespace Microsoft.PowerFx
                     }
 
                     resultString += "}";
+#endif
                 }
             }
             else if (value is TableValue table)
