@@ -114,7 +114,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterAsType(string expression, object expected, bool isResultError = false)
         {
             var tableName = new string[] { "JV1S", "JVLookups", "JVLookup2S" };
- 
+
             List<IDisposable> disposableObjects = null;
 
             try
@@ -248,6 +248,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
                 var obj = result.ToObject() as Entity;
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        public void ExecuteViaInterpreterCollectAndRefresh()
+        {
+            string tableName = "Accounts";
+            string expr = "Collect(Accounts, {'Account Name': \"Account1\" }); Refresh(Accounts); Accounts";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
             }
             finally
             {
@@ -402,7 +419,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var obj = result.ToObject() as Entity;
 
-                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"] );
+                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
             }
             finally
             {
@@ -926,9 +943,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
                 }
-                
-            }
 
+            }
 
             Assert.IsNotNull(symbols);
 
@@ -956,16 +972,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
+        static Dictionary<string, string> PredefinedTables = new ()
+        {
+            { "Accounts", "account" },
+            { "Tasks", "task" },
+            { "Note", "annotation" },
+            { "Contacts", "contact" }
+        };
+
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
             ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
-            //bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out string logicalName);
-            //Assert.IsTrue(b1);
-
-            string logicalName = tableName;
+            if (!PredefinedTables.TryGetValue(tableName, out string logicalName))
+            {
+                bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
+                Assert.IsTrue(b1);
+            }
 
             DataverseConnection dv = null;
 
@@ -1019,7 +1044,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;        
+        private bool disposedValue;
 
         public DataverseAsyncClient(ServiceClient client)
         {
@@ -1080,6 +1105,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }

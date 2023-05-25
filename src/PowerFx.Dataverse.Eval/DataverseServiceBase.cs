@@ -4,10 +4,8 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class QueryExtensions
     { 
-        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this IDataverseReader reader, string tableName, ODataParameters odataParameters, int maxRows, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (!odataParameters.IsSupported())
-                throw new NotSupportedException($"Unsupported OData query");
-
+        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this IDataverseReader reader, string tableName, int maxRows, CancellationToken cancellationToken = default(CancellationToken))
+        {            
             QueryExpression query = new(tableName);
             query.ColumnSet.AllColumns = true;
 
@@ -32,10 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
                 query.PageInfo.PageNumber = 1;
                 query.PageInfo.PagingCookie = null;
             }
-
-            if (odataParameters.Top > 0)
-                query.TopCount = odataParameters.Top;
-
+           
             cancellationToken.ThrowIfCancellationRequested();
 
             return await reader.RetrieveMultipleAsync(query, cancellationToken);
