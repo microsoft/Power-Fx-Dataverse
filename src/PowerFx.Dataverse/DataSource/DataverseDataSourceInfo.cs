@@ -183,8 +183,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         bool IDataEntityMetadata.IsValid => throw new NotImplementedException();
 
-        public bool IsRefreshable => throw new NotImplementedException();
-
         string IDataEntityMetadata.OriginalDataDescriptionJson => throw new NotImplementedException();
 
         string IDataEntityMetadata.InternalRepresentationJson => throw new NotImplementedException();
