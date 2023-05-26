@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,6 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return DeserializeJson<T>(JsonDocument.Parse(str).RootElement, ignoreObjects);
         }
 
+        // for internal debugging (to remove later)
         public static long _ctr = 0;
 
         public static T DeserializeJson<T>(JsonElement jsonElement, bool ignoreObjects = false)
