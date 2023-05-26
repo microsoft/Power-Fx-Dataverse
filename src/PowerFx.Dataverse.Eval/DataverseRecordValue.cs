@@ -12,8 +12,10 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using SharpYaml.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -231,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
                     list.Add(row);
                 }
-             
+
                 result = FormulaValue.NewTable(recordType, list);
             }
             else
@@ -344,9 +346,73 @@ namespace Microsoft.PowerFx.Dataverse
             var id = _entity.Id.ToString("D");
             var keyName = _metadata.PrimaryIdAttribute;
 
-            // Note that function names are case sensitive. 
-            var expr = $"LookUp({IdentToken.MakeValidIdentifier(tableName)}, {keyName}=GUID(\"{id}\"))";
-            sb.Append(expr);
+            var flag = true;
+
+            sb.Append($"{tableName}@{{");
+
+            // Deterministic. Printing fields in order.
+            var fields = Fields.ToArray();
+            Array.Sort(fields, (a, b) => string.CompareOrdinal(a.Name, b.Name));
+
+            foreach (var field in fields)
+            {
+                var fieldName = IdentToken.MakeValidIdentifier(field.Name);
+
+
+                if (!(field.Value is TableValue) && !(field.Value is BlankValue) &&
+                    field.Value.Type != FormulaType.Hyperlink && field.Value.Type != FormulaType.Blank)
+                {
+                    if (!flag)
+                    {
+                        sb.Append(",");
+                    }
+
+                    flag = false;
+
+#if false
+                    if ((TexlLexer.IsKeyword(fieldName, out _) || TexlLexer.IsReservedKeyword(fieldName)) &&
+                        !fieldName.StartsWith("'", StringComparison.Ordinal) && !fieldName.EndsWith("'", StringComparison.Ordinal))
+                    {
+                        fieldName = $"'{fieldName}'";
+                    }
+#endif
+
+                    sb.Append(fieldName);
+                    sb.Append(':');
+
+                    if (field.Value is DataverseRecordValue drv)
+                    {
+                        drv.ToReference(out var key, out var val);
+                        if (field.Value.Type == RecordType.Polymorphic())
+                        {
+                            sb.Append($"{{entity:{drv.Entity.LogicalName},{key}:GUID(\"{val}\")}}");
+                        }
+                        else
+                        {
+                            sb.Append($"{{{key}:GUID(\"{val}\")}}");
+                        }
+                    }
+                    else if (field.Value is RecordValue)
+                    {
+                        throw new NotImplementedException();
+                    }
+                    else if (field.Value is Types.OptionSetValue osv)
+                    {
+                        sb.Append($"{osv.Option}");
+                    }
+                    else
+                    { 
+                        field.Value.ToExpression(sb, settings);
+                    }
+                }
+            }
+        }
+
+        private void ToReference(out string key, out string id)
+        {
+            var tableName = _connection.GetSerializationName(_entity.LogicalName);
+            id = _entity.Id.ToString("D");
+            key = _metadata.PrimaryIdAttribute;
         }
     }
 }

@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Microsoft.Extensions.Options;
 using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Texl.Builtins;
@@ -46,15 +47,34 @@ namespace Microsoft.PowerFx
 
         private const string OptionPowerFxV1 = "PowerFxV1";
 
+        private static readonly BasicUserInfo _userInfo = new BasicUserInfo
+        {
+            FullName = "Susan Burk",
+            Email = "susan@contoso.com",
+            DataverseUserId = new Guid("aa1d4f65-044f-4928-a95f-30d4c8ebf118"),
+            TeamsMemberId = "29:1DUjC5z4ttsBQa0fX2O7B0IDu30R",
+        };
+
         private static readonly Features _features = Features.PowerFxV1;
 
         private static void ResetEngine()
         {
             _dv = null;
 
-            var config = new PowerFxConfig(_features)
+            var props = new Dictionary<string, object>
             {
+                { "FullName", _userInfo.FullName },
+                { "Email", _userInfo.Email },
+                { "DataverseUserId", _userInfo.DataverseUserId },
+                { "TeamsMemberId", _userInfo.TeamsMemberId }
             };
+
+            var allKeys = props.Keys.ToArray();
+            SymbolTable userSymbolTable = new SymbolTable();
+
+            userSymbolTable.AddUserInfoObject(allKeys);
+
+            var config = new PowerFxConfig(_features) { SymbolTable = userSymbolTable };
 
             if (_largeCallDepth)
             {
@@ -158,12 +178,12 @@ namespace Microsoft.PowerFx
                                 var arg1 = call.Args.ChildNodes[1];
                                 var arg1expr = arg1.GetCompleteSpan().GetFragment(expr);
 
-                                var check = _engine.Check(arg1expr);
+                                var check = _engine.Check(arg1expr, GetParserOptions(), GetSymbolTable());
                                 if (check.IsSuccess)
                                 {
                                     var arg1Type = check.ReturnType;
 
-                                    varValue = check.GetEvaluator().Eval();
+                                    varValue = check.GetEvaluator().Eval(GetRuntimeConfig());
                                     _engine.UpdateVariable(arg0name, varValue);
 
                                     return true;
@@ -177,6 +197,33 @@ namespace Microsoft.PowerFx
             varValue = null;
             arg0name = null;
             return false;
+        }
+
+        private static ParserOptions GetParserOptions()
+        {
+            return new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
+        }
+
+        private static ReadOnlySymbolTable GetSymbolTable()
+        {
+            return ReadOnlySymbolTable.Compose(_dv?.Symbols, _engine.EngineSymbols);
+        }
+
+        // Check may mutate the SymbolValues.  It's important to call this after Check has been run.
+        private static RuntimeConfig GetRuntimeConfig()
+        {
+            var rc = new RuntimeConfig(_dv?.SymbolValues);
+            rc.SetUserInfo(_userInfo);
+            return rc;
+        }
+
+        private static FormulaValue Eval(string expressionText)
+        {
+            CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
+            checkResult.ThrowOnErrors();
+
+            IExpressionEvaluator evaluator = checkResult.GetEvaluator();
+            return evaluator.Eval(GetRuntimeConfig());
         }
 
         public static void REPL(TextReader input, bool echo = false, TextWriter output = null)
@@ -236,7 +283,7 @@ namespace Microsoft.PowerFx
                     else
                     {
                         var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-                        var result = _engine.EvalAsync(expr, CancellationToken.None, options: opts, symbolTable: _dv?.Symbols, runtimeConfig: _dv != null ? new RuntimeConfig(_dv.SymbolValues) : null).Result;
+                        var result = Eval(expr);
 
                         if (output != null)
                         {
