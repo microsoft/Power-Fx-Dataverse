@@ -39,11 +39,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     writer.WriteStartObject();
 
                     writer.WritePropertyName("Key");
-                    //writer.WriteRawValue(ObjectConverter.SerializeObject(kvp.Key, options));
                     ((JsonConverter<K>)options.GetConverter(typeof(K))).Write(writer, kvp.Key, options);
 
                     writer.WritePropertyName("Value");
-                    //writer.WriteRawValue(ObjectConverter.SerializeObject(kvp.Value, options));
                     ((JsonConverter<V>)options.GetConverter(typeof(V))).Write(writer, kvp.Value, options);
 
                     writer.WriteEndObject();

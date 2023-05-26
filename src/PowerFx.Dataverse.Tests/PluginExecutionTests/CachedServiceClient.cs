@@ -23,22 +23,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     {
         private bool _cached;
         private string _cacheFolder;
-        private ServiceClient __svcClient;
+        private ServiceClient _svcClient;
         private bool _disposed;
         private long _index;
         private string _dvConnectionString;
         private bool _enableAffinityCookie;
         private ConcurrentDictionary<string, ConcurrentBag<(string, object)>> _inCache = new();
 
-        private ServiceClient _svcClient
+        private ServiceClient _internalSvcClient
         {
             get
             {
-                __svcClient ??= new ServiceClient(_dvConnectionString ?? throw new InvalidOperationException("No Dataverse connection provided!"));
+                _svcClient ??= new ServiceClient(_dvConnectionString ?? throw new InvalidOperationException("No Dataverse connection provided!"));
                 if (_enableAffinityCookie)
-                    __svcClient.EnableAffinityCookie = true;
+                    _svcClient.EnableAffinityCookie = true;
 
-                return __svcClient;
+                return _svcClient;
             }
         }
 
@@ -49,8 +49,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             set
             {
                 _enableAffinityCookie = value;
-                if (__svcClient != null)
-                    __svcClient.EnableAffinityCookie = value;
+                if (_svcClient != null)
+                    _svcClient.EnableAffinityCookie = value;
             }
         }
 
@@ -422,127 +422,127 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public void Associate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
         {
-            Cache(nameof(Associate), entityName, entityId, relationship, relatedEntities, (en, eid, rs, re) => _svcClient.Associate(en, eid, rs, re));
+            Cache(nameof(Associate), entityName, entityId, relationship, relatedEntities, (en, eid, rs, re) => _internalSvcClient.Associate(en, eid, rs, re));
         }
 
         public Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(AssociateAsync), entityName, entityId, relationship, relatedEntities, cancellationToken, (en, eid, rs, re, ct) => _svcClient.AssociateAsync(en, eid, rs, re, ct));
+            return CacheAsync(nameof(AssociateAsync), entityName, entityId, relationship, relatedEntities, cancellationToken, (en, eid, rs, re, ct) => _internalSvcClient.AssociateAsync(en, eid, rs, re, ct));
         }
 
         public Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
         {
-            return CacheAsync(nameof(AssociateAsync), entityName, entityId, relationship, relatedEntities, (en, eid, rs, re) => _svcClient.AssociateAsync(en, eid, rs, re));
+            return CacheAsync(nameof(AssociateAsync), entityName, entityId, relationship, relatedEntities, (en, eid, rs, re) => _internalSvcClient.AssociateAsync(en, eid, rs, re));
         }
 
         public Guid Create(Entity entity)
         {
-            return Cache(nameof(Create), entity, (e) => _svcClient.Create(e));
+            return Cache(nameof(Create), entity, (e) => _internalSvcClient.Create(e));
         }
 
         public Task<Entity> CreateAndReturnAsync(Entity entity, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(CreateAndReturnAsync), entity, cancellationToken, (e, ct) => _svcClient.CreateAndReturnAsync(e, ct));
+            return CacheAsync(nameof(CreateAndReturnAsync), entity, cancellationToken, (e, ct) => _internalSvcClient.CreateAndReturnAsync(e, ct));
         }
 
         public Task<Guid> CreateAsync(Entity entity, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(CreateAsync), entity, cancellationToken, (e, ct) => _svcClient.CreateAsync(e, ct));
+            return CacheAsync(nameof(CreateAsync), entity, cancellationToken, (e, ct) => _internalSvcClient.CreateAsync(e, ct));
         }
 
         public Task<Guid> CreateAsync(Entity entity)
         {
-            return CacheAsync(nameof(CreateAsync), entity, (e) => _svcClient.CreateAsync(e));
+            return CacheAsync(nameof(CreateAsync), entity, (e) => _internalSvcClient.CreateAsync(e));
         }
 
         public void Delete(string entityName, Guid id)
         {
-            Cache(nameof(Delete), entityName, id, (en, i) => _svcClient.Delete(en, i));
+            Cache(nameof(Delete), entityName, id, (en, i) => _internalSvcClient.Delete(en, i));
         }
 
         public Task DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(DeleteAsync), entityName, id, cancellationToken, (en, i, ct) => _svcClient.DeleteAsync(en, i, ct));
+            return CacheAsync(nameof(DeleteAsync), entityName, id, cancellationToken, (en, i, ct) => _internalSvcClient.DeleteAsync(en, i, ct));
         }
 
         public Task DeleteAsync(string entityName, Guid id)
         {
-            return CacheAsync(nameof(DeleteAsync), entityName, id, (en, i) => _svcClient.DeleteAsync(en, i));
+            return CacheAsync(nameof(DeleteAsync), entityName, id, (en, i) => _internalSvcClient.DeleteAsync(en, i));
         }
 
         public void Disassociate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
         {
-            Cache(nameof(Disassociate), entityName, entityId, relationship, relatedEntities, (en, eid, rls, re) => _svcClient.Disassociate(en, eid, rls, re));
+            Cache(nameof(Disassociate), entityName, entityId, relationship, relatedEntities, (en, eid, rls, re) => _internalSvcClient.Disassociate(en, eid, rls, re));
         }
 
         public Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(DisassociateAsync), entityName, entityId, relationship, relatedEntities, cancellationToken, (en, eid, rls, re, ct) => _svcClient.DisassociateAsync(en, eid, rls, re, ct));
+            return CacheAsync(nameof(DisassociateAsync), entityName, entityId, relationship, relatedEntities, cancellationToken, (en, eid, rls, re, ct) => _internalSvcClient.DisassociateAsync(en, eid, rls, re, ct));
         }
 
         public Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
         {
-            return CacheAsync(nameof(DisassociateAsync), entityName, entityId, relationship, relatedEntities, (en, eid, rls, re) => _svcClient.DisassociateAsync(en, eid, rls, re));
+            return CacheAsync(nameof(DisassociateAsync), entityName, entityId, relationship, relatedEntities, (en, eid, rls, re) => _internalSvcClient.DisassociateAsync(en, eid, rls, re));
         }
 
         public OrganizationResponse Execute(OrganizationRequest request)
         {
-            return Cache(nameof(Execute), request, (req) => _svcClient.Execute(req));
+            return Cache(nameof(Execute), request, (req) => _internalSvcClient.Execute(req));
         }
 
         public Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(ExecuteAsync), request, cancellationToken, (req, ct) => _svcClient.ExecuteAsync(req, ct));
+            return CacheAsync(nameof(ExecuteAsync), request, cancellationToken, (req, ct) => _internalSvcClient.ExecuteAsync(req, ct));
         }
 
         public Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request)
         {
-            return CacheAsync(nameof(ExecuteAsync), request, (req) => _svcClient.ExecuteAsync(req));
+            return CacheAsync(nameof(ExecuteAsync), request, (req) => _internalSvcClient.ExecuteAsync(req));
         }
 
         public Entity Retrieve(string entityName, Guid id, ColumnSet columnSet)
         {
-            return Cache(nameof(Retrieve), entityName, id, columnSet, (en, i, cs) => _svcClient.Retrieve(en, i, cs));
+            return Cache(nameof(Retrieve), entityName, id, columnSet, (en, i, cs) => _internalSvcClient.Retrieve(en, i, cs));
         }
 
         public Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(RetrieveAsync), entityName, id, columnSet, cancellationToken, (en, i, cs, ct) => _svcClient.RetrieveAsync(en, i, cs, ct));
+            return CacheAsync(nameof(RetrieveAsync), entityName, id, columnSet, cancellationToken, (en, i, cs, ct) => _internalSvcClient.RetrieveAsync(en, i, cs, ct));
         }
 
         public Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet)
         {
-            return CacheAsync(nameof(RetrieveAsync), entityName, id, columnSet, (en, i, cs) => _svcClient.RetrieveAsync(en, i, cs));
+            return CacheAsync(nameof(RetrieveAsync), entityName, id, columnSet, (en, i, cs) => _internalSvcClient.RetrieveAsync(en, i, cs));
         }
 
         public EntityCollection RetrieveMultiple(QueryBase query)
         {
-            return Cache(nameof(RetrieveMultiple), query, (q) => _svcClient.RetrieveMultiple(q));
+            return Cache(nameof(RetrieveMultiple), query, (q) => _internalSvcClient.RetrieveMultiple(q));
         }
 
         public Task<EntityCollection> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(RetrieveMultipleAsync), query, cancellationToken, (q, ct) => _svcClient.RetrieveMultipleAsync(q, ct));
+            return CacheAsync(nameof(RetrieveMultipleAsync), query, cancellationToken, (q, ct) => _internalSvcClient.RetrieveMultipleAsync(q, ct));
         }
 
         public Task<EntityCollection> RetrieveMultipleAsync(QueryBase query)
         {
-            return CacheAsync(nameof(RetrieveMultipleAsync), query, (q) => _svcClient.RetrieveMultipleAsync(q));
+            return CacheAsync(nameof(RetrieveMultipleAsync), query, (q) => _internalSvcClient.RetrieveMultipleAsync(q));
         }
 
         public void Update(Entity entity)
         {
-            Cache(nameof(Update), entity, (e) => _svcClient.Update(e));
+            Cache(nameof(Update), entity, (e) => _internalSvcClient.Update(e));
         }
 
         public Task UpdateAsync(Entity entity, CancellationToken cancellationToken)
         {
-            return CacheAsync(nameof(UpdateAsync), entity, cancellationToken, (e, ct) => _svcClient.UpdateAsync(e, ct));
+            return CacheAsync(nameof(UpdateAsync), entity, cancellationToken, (e, ct) => _internalSvcClient.UpdateAsync(e, ct));
         }
 
         public Task UpdateAsync(Entity entity)
         {
-            return CacheAsync(nameof(UpdateAsync), entity, (e) => _svcClient.UpdateAsync(e));
+            return CacheAsync(nameof(UpdateAsync), entity, (e) => _internalSvcClient.UpdateAsync(e));
         }
 
         protected virtual void Dispose(bool disposing)
@@ -550,7 +550,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             if (!_disposed)
             {
                 if (disposing)
-                    __svcClient?.Dispose();                
+                    _svcClient?.Dispose();                
 
                 _disposed = true;
             }

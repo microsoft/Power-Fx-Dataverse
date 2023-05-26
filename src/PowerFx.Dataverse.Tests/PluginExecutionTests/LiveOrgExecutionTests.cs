@@ -41,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private CachedServiceClient GetClient(bool cached, string folder = null, bool noConnection = false)
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
-           
+
             // short-circuit if connection string is not set
             if (cx == null && !noConnection)
             {
@@ -125,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterAsType(string expression, object expected, bool isResultError = false)
         {
             var tableName = new string[] { "JV1S", "JVLookups", "JVLookup2S" };
- 
+
             List<IDisposable> disposableObjects = null;
 
             try
@@ -380,8 +380,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             List<IDisposable> disposableObjects = null;
 
             try
-            {                
-                string folder = GetCachedData("CachedData01.zip");                
+            {
+                string folder = GetCachedData("CachedData01.zip");
                 FormulaValue formulaValue = RunDataverseTest(tableName, expr, out disposableObjects, async: true, cached: true, folder: folder, noConnection: true);
 
                 object result = formulaValue.ToObject();
@@ -393,11 +393,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+
+            Console.WriteLine(ObjectSerializer._constructor0Cache.Count);
+            Console.WriteLine(ObjectSerializer._constructor1Cache.Count);
         }
 
-        private string GetCachedData(string zippedFileName)
+        public static string GetCachedData(string zippedFileName, string path = null)
         {
-            string cachedData = Path.Combine(_testContext.TestDeploymentDir, @$"PluginExecutionTests\Data\{zippedFileName}");
+            string cachedData = Path.Combine(path ?? _testContext.TestDeploymentDir, @$"PluginExecutionTests\Data\{zippedFileName}");
             string folder = Directory.GetParent(cachedData).FullName;
 
             ZipFile.ExtractToDirectory(cachedData, folder, overwriteFiles: true);
@@ -446,7 +449,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var obj = result.ToObject() as Entity;
 
-                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"] );
+                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
             }
             finally
             {
@@ -928,7 +931,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        public FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, 
+        public FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true,
             bool async = false, bool cached = false, string folder = null)
         {
             CachedServiceClient svcClient = GetClient(cached, folder);
@@ -970,7 +973,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 else
                 {
                     symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
-                }                
+                }
             }
 
             Assert.IsNotNull(symbols);
@@ -999,7 +1002,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new ()
+        static Dictionary<string, string> PredefinedTables = new()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
@@ -1007,15 +1010,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             { "Contacts", "contact" }
         };
 
-        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, 
+        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig,
             bool async = false, bool cached = false, string folder = null, bool noConnection = false)
         {
             CachedServiceClient svcClient = GetClient(cached, folder, noConnection);
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
-            
+
             if (!PredefinedTables.TryGetValue(tableName, out string logicalName))
-            {                
+            {
                 bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
                 Assert.IsTrue(b1);
             }
