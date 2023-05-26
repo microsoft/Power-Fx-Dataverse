@@ -394,8 +394,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 DisposeObjects(disposableObjects);
             }
 
-            Console.WriteLine(ObjectSerializer._constructor0Cache.Count);
-            Console.WriteLine(ObjectSerializer._constructor1Cache.Count);
+            Console.WriteLine(ObjectSerializer._ctr);            
         }
 
         public static string GetCachedData(string zippedFileName, string path = null)

@@ -25,7 +25,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static Dictionary<Type, MethodInfo> _dictionaryCache = new Dictionary<Type, MethodInfo>();        
         internal static Dictionary<Type, ConstructorInfo> _constructor0Cache = new Dictionary<Type, ConstructorInfo>();        
         internal static Dictionary<Type, ConstructorInfo> _constructor1Cache = new Dictionary<Type, ConstructorInfo>();
-        internal static Dictionary<string, MethodInfo> _deserializeJsonCache = new Dictionary<string, MethodInfo>();
+        internal static Dictionary<Type, MethodInfo> _deserializeJsonCache = new Dictionary<Type, MethodInfo>();
+        internal static Dictionary<Type, ConstructorInfo> _collectionConstructorCache = new Dictionary<Type, ConstructorInfo>();
+        internal static Dictionary<Type, MethodInfo> _deserializeCache = new Dictionary<Type, MethodInfo>();
 
         public static JsonSerializerOptions GetJsonSerializerOptions(bool writeIndented)
         {
@@ -51,7 +53,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public static object Deserialize(string jsonString, Type type)
         {
-            MethodInfo deserializeMethod = _deserializeGeneric.MakeGenericMethod(type);
+            if (!_deserializeCache.TryGetValue(type, out MethodInfo deserializeMethod))
+            {
+                deserializeMethod = _deserializeGeneric.MakeGenericMethod(type);
+                _deserializeCache[type] = deserializeMethod;                
+            }
+            
             return deserializeMethod.Invoke(null, new object[] { jsonString, _release });
         }
 
@@ -106,7 +113,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 // 0-parameter constructor
                 constructorInfo = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(ci => !ci.GetParameters().Any());
-                _constructor0Cache[typeof(T)] = constructorInfo; // Could be null
+                _constructor0Cache[typeof(T)] = constructorInfo; // Count be null
             }
 
             if (constructorInfo != null)
@@ -127,7 +134,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // identify constructor parameters based on the properties available in jsonElement (using 'EndsWith' equality logic as some names might not be fully identical)
                 object[] constructorParameters = constructorInfo.GetParameters().Select((ParameterInfo paramInfo) =>
                 {
-                    JsonProperty jsonProperty = jElements.First((JsonProperty jsonProp) => jsonProp.Name.EndsWith(paramInfo.Name, StringComparison.OrdinalIgnoreCase));
+                    string paramName = paramInfo.Name;
+                    JsonProperty jsonProperty = jElements.First((JsonProperty jsonProp) => jsonProp.Name.EndsWith(paramName, StringComparison.OrdinalIgnoreCase));
                     return GetPropertyValue(typeof(T).GetProperty(jsonProperty.Name), jsonProperty, ignoreObjects);
                 }).ToArray();
 
@@ -153,11 +161,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {                    
                     // here, we can reuse _object as it always comes first
                     string type = jsonProperty.Value.GetString();
+                    Type ttype = Type.GetType(type);
 
-                    if (!_deserializeJsonCache.TryGetValue(type, out MethodInfo deserializeJson))
+                    if (!_deserializeJsonCache.TryGetValue(ttype, out MethodInfo deserializeJson))
                     {
-                        deserializeJson = _deserializeJsonGeneric.MakeGenericMethod(Type.GetType(type));
-                        _deserializeJsonCache[type] = deserializeJson;
+                        deserializeJson = _deserializeJsonGeneric.MakeGenericMethod(ttype);
+                        _deserializeJsonCache[ttype] = deserializeJson;
                     }
 
                     return (T)deserializeJson.Invoke(null, new object[] { _object, ignoreObjects });
@@ -165,14 +174,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 else
                 {
                     // 'Normal' object properties
-                    PropertyInfo propertyInfo = obj.GetType().GetProperty(jsonProperty.Name);
+                    PropertyInfo propertyInfo = typeof(T).GetProperty(jsonProperty.Name);
                     object propertyValue = GetPropertyValue(propertyInfo, jsonProperty, ignoreObjects);
                     Type propType = propertyInfo.PropertyType;
 
                     // When types do not match, some adjustment is necessary
                     if (propertyValue != null && propertyValue.GetType() != propType)
                     {
-
                         ConstructorInfo[] cis = null;
 
                         if (!_constructor1Cache.TryGetValue(propType, out constructorInfo))
@@ -201,7 +209,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             }
 
                             object innerObject = constructorInfo.Invoke(new object[] { });
-
+                            
                             FieldInfo fieldInfo = propType.BaseType.GetField("_innerDictionary", BindingFlags.Instance | BindingFlags.NonPublic);
                             fieldInfo.SetValue(innerObject, propertyValue);
                             propertyValue = innerObject;
@@ -230,7 +238,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         else
                         {
                             // Used for OrganizationResponse items, use Results indexer instead
-                            PropertyInfo propertyInfo2 = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(wi => wi.Name == "Results");
+                            PropertyInfo propertyInfo2 = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(wi => wi.Name == "Results");
                             MethodInfo indexerSetter = propertyInfo2.PropertyType.GetMethod("set_Item");
                             object innerObject = propertyInfo2.GetValue(obj, null);
 
@@ -253,18 +261,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return ja.EnumerateArray().Select(je => DeserializeJson<T>(je, ignoreObjects)).ToArray();
             }
 
-            Type[] at = null;
+            Type[] arrayTypes = null;
 
             // Heterogeneous arrays
             foreach (JsonProperty jp in ja.EnumerateObject())
             {
                 if (jp.Name == "$arrayTypes")
                 {
-                    at = jp.Value.EnumerateArray().Select(je => Type.GetType(je.ToString())).ToArray();
+                    arrayTypes = jp.Value.EnumerateArray().Select(je => Type.GetType(je.ToString())).ToArray();
                 }
                 else if (jp.Name == "$values")
                 {
-                    return jp.Value.EnumerateArray().Select((JsonElement je, int i) => Deserialize(je.ToString(), at[i])).Cast<T>().ToArray();
+                    return jp.Value.EnumerateArray().Select((JsonElement je, int i) => Deserialize(je.ToString(), arrayTypes[i])).Cast<T>().ToArray();
                 }
             }
 
@@ -275,8 +283,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public static C GetCollection<C, T>(JsonElement ja, bool ignoreObjects)
             where C : class, ICollection<T>
         {
+            if (!_collectionConstructorCache.TryGetValue(typeof(C), out ConstructorInfo constructorInfo))
+            {
+                constructorInfo = typeof(C).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { }, null);
+                _collectionConstructorCache[typeof(C)] = constructorInfo;                
+            }           
+
             // Create collection instance
-            C collection = typeof(C).GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { }, null).Invoke(new object[] { }) as C;
+            C collection = constructorInfo.Invoke(new object[] { }) as C;
 
             // Add elements to collection            
             foreach (JsonElement je in ja.EnumerateArray())
@@ -297,7 +311,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (JsonElement je in ja.EnumerateArray())
             {
                 JsonElement.ObjectEnumerator t = je.EnumerateObject();
-
+                
                 K key = (K)GetPropertyValue(kpi, t.First(jp => jp.Name == "Key"), ignoreObjects);
                 V val = (V)GetPropertyValue(vpi, t.First(jp => jp.Name == "Value"), ignoreObjects);
 
@@ -385,14 +399,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (!AllowedArrays.Contains(arrayElementType.Name))
                     throw new Exception($"Invalid Array {arrayElementType.Name}");
 #endif
-
+                
                 return _getArrayGeneric.MakeGenericMethod(arrayElementType).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
             }
 
+            Type[] propInterfaces = null;
+
             // ICollection<T>
             if (!_collectionCache.TryGetValue(propertyType, out MethodInfo getCollection))
-            {               
-                Type iCollectionType = propertyType.GetInterfaces().FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>));
+            {
+                propInterfaces ??= propertyType.GetInterfaces();
+                Type iCollectionType = propInterfaces.FirstOrDefault(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>));
 
                 if (iCollectionType != null)
                 {
@@ -418,12 +435,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // IEnumerable<KeyValuePair<TKey,TValue>> like ParameterCollection : DataCollection<string, object> : IEnumerable<KeyValuePair<string, object>>
             if (!_dictionaryCache.TryGetValue(propertyType, out MethodInfo getDictionary))
-            {                
-                Type iEnumerableType = propertyType.GetInterfaces().FirstOrDefault(t =>
+            {
+                propInterfaces ??= propertyType.GetInterfaces();
+                Type iEnumerableType = propInterfaces.FirstOrDefault(t =>
                 {
                     if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                     {
-                        Type[] gArgs = t.GetGenericArguments();
+                        Type[] gArgs = t.GetGenericArguments();                        
 
                         if (gArgs.Length == 1)
                         {
@@ -464,7 +482,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     throw new Exception($"Invalid Class {propertyType.Name}");
 #endif
 
-                return _deserializeJsonGeneric.MakeGenericMethod(propertyType).Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
+                if (!_deserializeJsonCache.TryGetValue(propertyType, out MethodInfo deserializeJson))
+                {
+                    deserializeJson = _deserializeJsonGeneric.MakeGenericMethod(propertyType);
+                    _deserializeJsonCache[propertyType] = deserializeJson;
+                }
+
+                return deserializeJson.Invoke(null, new object[] { jsonProperty.Value, ignoreObjects });
             }
 
             throw new Exception($"Unknown type {propertyType.Name}");
