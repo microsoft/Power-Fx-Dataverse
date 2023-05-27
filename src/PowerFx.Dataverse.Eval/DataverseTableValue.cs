@@ -4,7 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
@@ -23,11 +23,11 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Wrap a live Dataverse Table. 
     /// </summary>
-    internal class DataverseTableValue : TableValue
+    internal class DataverseTableValue : TableValue, IRefreshable
     {
         private readonly IConnectionValueContext _connection;
-        private ODataParameters _oDataParameters;
         private RecordType _recordType;
+
         private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
 
         private Lazy<Task<List<DValue<RecordValue>>>> NewLazyTaskRowsInstance => new Lazy<Task<List<DValue<RecordValue>>>>(() => GetRowsAsync());
@@ -37,14 +37,12 @@ namespace Microsoft.PowerFx.Dataverse
         public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
-        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata, ODataParameters oDataParameters = default)
+        internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
             : base(recordType.ToTable())
         {
             _recordType = recordType;
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-            _oDataParameters = oDataParameters;
-
             _lazyTaskRows = NewLazyTaskRowsInstance;
         }
 
@@ -53,15 +51,16 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException("DataverseTableValue.ToObject() isn't implemented yet.");
         }
 
-        protected void Refresh()
+        public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
+            _connection.Services.Refresh(_entityMetadata.LogicalName);
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _oDataParameters, _connection.MaxRows);
+            List<DValue<RecordValue>> list = new ();
+            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows);
 
             if (entities.HasError)
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
@@ -217,9 +216,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             Refresh();
 
-            if (_connection.Services is IDataverseEntityCacheCleaner dec)
+            if (_connection.Services is IDataverseEntityCacheCleaner decc)
             {
-                dec.ClearCache(_entityMetadata.LogicalName);
+                decc.ClearCache(_entityMetadata.LogicalName);
             }
         }
 
@@ -249,7 +248,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(entityCollection));
             }
 
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
 
             foreach (Entity entity in entityCollection.Response.Entities)
             {

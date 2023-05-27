@@ -25,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
         Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));
+        void Refresh(string logicalTableName);
     }
 
     public interface IDataverseUpdater

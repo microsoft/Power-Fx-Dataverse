@@ -57,5 +57,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             throw new NotImplementedException();
         }
+
+        public void Refresh(string logicalTableName)
+        {            
+        }
     }
 }

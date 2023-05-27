@@ -4,15 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using SharpYaml.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -233,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
                     list.Add(row);
                 }
-
+             
                 result = FormulaValue.NewTable(recordType, list);
             }
             else

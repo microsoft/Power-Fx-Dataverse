@@ -277,5 +277,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             return newEntity;
         }
+
+        public void Refresh(string logicalTableName)
+        {            
+        }
     }
 }
