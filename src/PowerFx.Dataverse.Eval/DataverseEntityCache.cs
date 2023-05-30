@@ -25,13 +25,13 @@ namespace Microsoft.PowerFx.Dataverse
         public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
-        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new ();
+        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
 
         // Stores the list of cached entry Ids in order they are cached
-        private readonly List<Guid> _cacheList = new ();
+        private readonly List<Guid> _cacheList = new();
 
         // Lock used for cache dictionary and list
-        private readonly object _lock = new ();
+        private readonly object _lock = new();
 
         private readonly IDataverseServices _innerService;
 
@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        public DataverseEntityCache(IDataverseServices innerService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)            
+        public DataverseEntityCache(IDataverseServices innerService, int maxEntries = 4096, TimeSpan cacheLifeTime = default)
         {
             MaxEntries = maxEntries < 0 ? 4096 : maxEntries;
             LifeTime = cacheLifeTime.TotalMilliseconds <= 0 ? DefaultLifeTime : cacheLifeTime;
@@ -55,10 +55,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             Guid id = entity.Id;
-            
+
             lock (_lock)
             {
-                DataverseCachedEntity dce = new (entity);
+                DataverseCachedEntity dce = new(entity);
 
                 if (_cache.ContainsKey(id))
                 {
@@ -66,8 +66,8 @@ namespace Microsoft.PowerFx.Dataverse
                     _cacheList.Remove(id);
                 }
                 else
-                { 
-                    _cache.Add(id, dce);                    
+                {
+                    _cache.Add(id, dce);
                 }
 
                 _cacheList.Add(id);
@@ -113,7 +113,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             lock (_lock)
             {
-                if (!_cache.TryGetValue(id, out DataverseCachedEntity dce))                
+                if (!_cache.TryGetValue(id, out DataverseCachedEntity dce))
                 {
                     // Unknown Id (not in cache)
                     return null;
@@ -133,6 +133,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             DataverseResponse<Guid> result = await _innerService.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
@@ -146,6 +148,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Remove this Id from cache, even if Delete would fail
             RemoveCacheEntry(id);
             return _innerService.DeleteAsync(entityName, id, cancellationToken);
@@ -153,6 +157,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             lock (_lock)
             {
                 Entity e = GetEntityFromCache(id);
@@ -172,9 +178,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             return result;
         }
-        
+
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
+            cancellationToken.ThrowIfCancellationRequested();           
+
             DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
 
             if (!result.HasError)
@@ -192,6 +200,23 @@ namespace Microsoft.PowerFx.Dataverse
         {
             RemoveCacheEntry(entity.Id);
             return _innerService.UpdateAsync(entity, cancellationToken);
+        }
+
+        public void Refresh(string logicalTableName)
+        {
+            if (MaxEntries != 0)
+            {
+                lock (_lock)
+                {
+                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                    {
+                        if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
+                        {
+                            RemoveCacheEntry(entityKvp.Key);
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -174,7 +174,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-
         // Get logical names of tables that this specific expression depends on. 
         // This will be a subset of all known tables. 
         public HashSet<string> GetDependencies(CheckResult check)
@@ -187,7 +186,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             return tf._tableNames;
         }
-
 
         // Given an expression with Table References, get a list of all the tables that are actually used. 
         internal class TableFinder : IdentityTexlVisitor

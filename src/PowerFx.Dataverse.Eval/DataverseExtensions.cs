@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -82,7 +81,6 @@ namespace Microsoft.PowerFx.Dataverse
             return leanEntity;
         }
 
-
         private static string DisplayName(this Type t)
         {
             if (!t.IsGenericType)
@@ -94,23 +92,6 @@ namespace Microsoft.PowerFx.Dataverse
             string genericArgs = string.Join(",", t.GetGenericArguments().Select(ta => DisplayName(ta)).ToArray());
 
             return genericTypeName + "<" + genericArgs + ">";
-        }
-
-        public static bool IsSupported(this ODataParameters odataParameters)
-        {
-            if (odataParameters.IsDefault())
-                return true;
-
-            if (odataParameters.Count || !string.IsNullOrEmpty(odataParameters.OrderBy) || !string.IsNullOrEmpty(odataParameters.Filter))
-                return false;
-
-            // For now, only Top is supported
-            return odataParameters.Top > 0;
-        }
-
-        public static bool IsDefault(this ODataParameters odataParameters)
-        {
-            return !odataParameters.Count && string.IsNullOrEmpty(odataParameters.Filter) && string.IsNullOrEmpty(odataParameters.OrderBy) && odataParameters.Top == 0;
         }
 
         public static DValue<T> DataverseError<T>(string message, string method)

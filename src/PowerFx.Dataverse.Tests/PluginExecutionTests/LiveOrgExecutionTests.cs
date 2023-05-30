@@ -267,6 +267,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
+        public void ExecuteViaInterpreterCollectAndRefresh()
+        {
+            string tableName = "Accounts";
+            string expr = "Collect(Accounts, {'Account Name': \"Account1\" }); Refresh(Accounts); Accounts";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
         public async Task SlowRepeatingLookup()
         {
             var token = "";
@@ -1069,6 +1086,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     obj.Dispose();
                 }
             }
+        }
+
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }
