@@ -308,6 +308,14 @@ namespace Microsoft.PowerFx.Dataverse
 
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
 
+                if (retType is OptionSetValueType)
+                {
+                    _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
+                    if (optionSet != null) {
+                        sqlResult.OptionSetId = optionSet.OptionSetId;
+                    }
+                }
+
                 sqlResult.ReturnType = retType;
                 sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null, _cultureInfo);
                 sqlResult.SanitizedFormula = sanitizedFormula;

@@ -46,6 +46,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         public string SanitizedFormula { get; set; }
 
+        public string OptionSetId { get; set; }
+
         // Test harness can use to inspect exceptions.
         internal List<string> _unsupportedWarnings;
 

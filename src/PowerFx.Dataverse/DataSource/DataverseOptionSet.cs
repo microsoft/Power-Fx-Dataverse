@@ -25,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
         public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)
         {
             Name = optionSetName;
+            OptionSetId = optionSetId;
             IsBooleanValued = isBooleanValued;
             _relatedEntityName = entityName;
             RelatedColumnInvariantName = columnName;
@@ -47,6 +48,8 @@ namespace Microsoft.PowerFx.Dataverse
         public string EntityDisplayCollectionName { get; set; }
 
         public string Name { get; }
+
+        public string OptionSetId { get; }
 
         public bool IsBooleanValued { get; }
 

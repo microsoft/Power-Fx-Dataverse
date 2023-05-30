@@ -180,6 +180,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is SqlDecimalType ||
                 type is BooleanType ||
                 type is StringType ||
+                type is OptionSetValueType ||
                 Library.IsDateTimeType(type);
         }
 

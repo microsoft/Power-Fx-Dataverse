@@ -419,10 +419,6 @@ END
         [DataRow("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.", DisplayName = "Image")]
         [DataRow("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.", DisplayName = "Image in IsBlank")]
         [DataRow("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.", DisplayName = "File not added to entity")]
-        [DataRow("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Picklist")]
-        [DataRow("MultiSelect", "Error 0-11: The result type OptionSetValue is not supported in formula columns.", DisplayName = "Multi Select Picklist")]
-        [DataRow("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", DisplayName = "Built picklist")]
-        [DataRow("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.", DisplayName = "Built hybrid picklist")]
         public void CompileInvalidTypes(string expr, string error)
         {
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
@@ -596,16 +592,11 @@ END
                 { "image", "Columns of type Virtual are not supported in formula columns."}
             };
 
-            const string errCantProduceOptionSets = "The result type OptionSetValue is not supported in formula columns.";
             var unsupportedProducer = new Dictionary<string, string>
             {
                 { "guid", "The result type Guid is not supported in formula columns." },
                 { "allid", "The result type Guid is not supported in formula columns." },
-                { "ownerid", "The result type Record is not supported in formula columns." },
-                { "statecode", errCantProduceOptionSets },
-                { "statuscode", errCantProduceOptionSets },
-                { "picklist", errCantProduceOptionSets },
-                { "multiSelect", errCantProduceOptionSets }
+                { "ownerid", "The result type Record is not supported in formula columns." }
             };
 
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
@@ -1602,8 +1593,9 @@ END
             Assert.IsFalse(result2.IsSuccess);
             StringAssert.Contains(result2.Errors.First().ToString(), "Not supported in formula columns.");
 
-            result2 = engine2.Compile("(Global2.Three = Global2.Four)", new SqlCompileOptions());
+            result2 = engine2.Compile("If(1 > 2, Global2.Three, Global2.Four)", new SqlCompileOptions());
             Assert.IsTrue(result2.IsSuccess);
+            Assert.IsTrue(result2.ReturnType is OptionSetValueType);
         }
 
         [DataTestMethod]
