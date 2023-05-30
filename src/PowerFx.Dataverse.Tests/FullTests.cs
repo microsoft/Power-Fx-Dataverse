@@ -270,7 +270,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 ExecuteSqlTest("Rating = 'Rating (Thises)'.Hot", false, cx, new EntityMetadataModel[] { metadata });
                 ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, new EntityMetadataModel[] { metadata });
-                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2M, cx, new EntityMetadataModel[] { metadata });
+                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, new EntityMetadataModel[] { metadata });
             }
         }
 
