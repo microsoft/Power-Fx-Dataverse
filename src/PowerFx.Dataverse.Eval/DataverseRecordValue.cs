@@ -355,7 +355,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var fieldName = IdentToken.MakeValidIdentifier(field.Name);
 
-
                 if (!(field.Value is TableValue) && !(field.Value is BlankValue) &&
                     field.Value.Type != FormulaType.Hyperlink && field.Value.Type != FormulaType.Blank)
                 {

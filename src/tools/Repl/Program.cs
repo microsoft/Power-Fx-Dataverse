@@ -43,6 +43,9 @@ namespace Microsoft.PowerFx
         private const string OptionStackTrace = "StackTrace";
         private static bool _stackTrace = false;
 
+        private const string OptionFormatTableColumns = "FormatTableColumns";
+        private static HashSet<string> _formatTableColumns;
+
         private const string OptionFeaturesNone = "FeaturesNone";
 
         private const string OptionPowerFxV1 = "PowerFxV1";
@@ -88,7 +91,8 @@ namespace Microsoft.PowerFx
                 { OptionLargeCallDepth, OptionLargeCallDepth },
                 { OptionFeaturesNone, OptionFeaturesNone },
                 { OptionPowerFxV1, OptionPowerFxV1 },
-                { OptionStackTrace, OptionStackTrace }
+                { OptionStackTrace, OptionStackTrace },
+                { OptionFormatTableColumns, OptionFormatTableColumns }
             };
 
             foreach (var featureProperty in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
@@ -108,7 +112,8 @@ namespace Microsoft.PowerFx
             config.AddFunction(new HelpFunction());
             config.AddFunction(new ResetFunction());
             config.AddFunction(new ExitFunction());
-            config.AddFunction(new OptionFunction());
+            config.AddFunction(new OptionFunctionBool());
+            config.AddFunction(new OptionFunctionString());
             config.AddFunction(new ResetImportFunction());
             config.AddFunction(new ImportFunction1Arg());
             config.AddFunction(new ImportFunction2Arg());
@@ -578,8 +583,11 @@ namespace Microsoft.PowerFx
                                 column = 0;
                                 foreach (var field in row.Value.Fields)
                                 {
-                                    columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
-                                    resultString += " " + field.Name.PadLeft(columnWidth[column]) + "  ";
+                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
+                                    {
+                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
+                                        resultString += " " + field.Name.PadLeft(columnWidth[column]) + "  ";
+                                    }
                                     column++;
                                 }
 
@@ -589,9 +597,22 @@ namespace Microsoft.PowerFx
 
                         resultString += "\n ";
 
-                        foreach (var width in columnWidth)
+                        foreach (var row in table.Rows)
                         {
-                            resultString += new string('=', width + 2) + " ";
+                            if (row.Value != null)
+                            {
+                                column = 0;
+                                foreach (var field in row.Value.Fields)
+                                {
+                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
+                                    {
+                                        resultString += new string('=', columnWidth[column] + 2) + " ";
+                                    }
+                                    column++;
+                                }
+
+                                break;
+                            }
                         }
 
                         foreach (var row in table.Rows)
@@ -602,7 +623,10 @@ namespace Microsoft.PowerFx
                             {
                                 foreach (var field in row.Value.Fields)
                                 {
-                                    resultString += " " + PrintResult(field.Value, true).PadLeft(columnWidth[column]) + "  ";
+                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
+                                    {
+                                        resultString += " " + PrintResult(field.Value, true).PadLeft(columnWidth[column]) + "  ";
+                                    }
                                     column++;
                                 }
                             }
@@ -661,10 +685,39 @@ namespace Microsoft.PowerFx
             }
         }
 
-        private class OptionFunction : ReflectionFunction
+        private class OptionFunctionString : ReflectionFunction
         {
             // explicit constructor needed so that the return type from Execute can be FormulaValue and acoomodate both booleans and errors
-            public OptionFunction()
+            public OptionFunctionString()
+                : base("Option", FormulaType.String, new[] { FormulaType.String, FormulaType.String })
+            {
+            }
+
+            public FormulaValue Execute(StringValue option, StringValue value)
+            {
+                if (string.Equals(option.Value, OptionFormatTableColumns, StringComparison.OrdinalIgnoreCase))
+                {
+                    _formatTableColumns = new HashSet<string>();
+                    foreach (Match match in Regex.Matches(value.Value, "\\w+", RegexOptions.None, TimeSpan.FromSeconds(5)))
+                    {
+                        _formatTableColumns.Add(match.Value);
+                    }
+                    return StringValue.New(string.Join(",", _formatTableColumns));
+                }
+
+                return FormulaValue.NewError(new ExpressionError()
+                {
+                    Kind = ErrorKind.InvalidArgument,
+                    Severity = ErrorSeverity.Critical,
+                    Message = $"Invalid option name: {option.Value}."
+                });
+            }
+        }
+
+        private class OptionFunctionBool : ReflectionFunction
+        {
+            // explicit constructor needed so that the return type from Execute can be FormulaValue and acoomodate both booleans and errors
+            public OptionFunctionBool()
                 : base("Option", FormulaType.Boolean, new[] { FormulaType.String, FormulaType.Boolean })
             {
             }
