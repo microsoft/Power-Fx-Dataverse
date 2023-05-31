@@ -1465,7 +1465,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Decimal is not allowed as a value in DataRow, cast to Decimal during test
         [DataTestMethod]
         [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
-        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
+        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 200.0)]
         [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
         [DataRow("Collect(t1, { Price : 200}).Price", 200.0)]
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
