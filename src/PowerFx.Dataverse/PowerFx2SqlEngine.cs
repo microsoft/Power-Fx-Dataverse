@@ -228,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                         catch (NullReferenceException e)
                         {
                             // if exchange rate not found on primary entity and related entity uses currency field in formula then throw error
-                            errors = new SqlCompileException(irNode.IRContext.SourceContext).GetErrors(irNode.IRContext.SourceContext);
+                            errors = new SqlCompileException(SqlCompileException.ColumnNotPresent, irNode.IRContext.SourceContext, new object[] { "exchangerate"}).GetErrors(irNode.IRContext.SourceContext);
                             var errorResult = new SqlCompileResult(errors);
                             errorResult.SanitizedFormula = sanitizedFormula;
                             return errorResult;
@@ -325,7 +325,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // Initialize the reference field values from the primary field
                         var selects = String.Join(",", pair.Value.Select((VarDetails field) => { 
                                     
-                            if(field.Column.DType == AppMagic.Authoring.Importers.ServiceConfig.WadlDType.Currency)
+                            if(field.VarType is SqlMoneyType && field.Navigation != null)
                             {
                                 return $"{field.VarName} = [{field.Column.SchemaName}] / [exchangerate] * {exchangeRateParameter}";
                             }
@@ -429,7 +429,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? 2 : DefaultPrecision);
+                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? options.TypeHints.Precision : DefaultPrecision);
                 }
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }

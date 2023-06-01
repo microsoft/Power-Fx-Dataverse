@@ -134,6 +134,11 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey SingleColumnTableNotSupported = new ErrorResourceKey("FormulaColumns_SingleColumnTableNotSupported");
 
+        // <summary>
+        /// The error resource key for a formula if column is not present
+        /// </summary>
+        internal readonly static ErrorResourceKey ColumnNotPresent = new ErrorResourceKey("ErrInvalidName");
+
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
             _error = new SqlError(key, context, DocumentErrorSeverity.Critical, args);
