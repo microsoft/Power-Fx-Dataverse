@@ -712,13 +712,13 @@ namespace Microsoft.PowerFx
                     return value;
                 }
 
-                if (option.Value.ToLower(CultureInfo.InvariantCulture) == OptionNumberIsFloat.ToLower(CultureInfo.InvariantCulture))
+                if (string.Equals(option.Value, OptionNumberIsFloat, StringComparison.OrdinalIgnoreCase))
                 {
                     _numberIsFloat = value.Value;
                     return value;
                 }
 
-                if (option.Value.ToLower(CultureInfo.InvariantCulture) == OptionLargeCallDepth.ToLower(CultureInfo.InvariantCulture))
+                if (string.Equals(option.Value, OptionLargeCallDepth, StringComparison.OrdinalIgnoreCase))
                 {
                     _largeCallDepth = value.Value;
                     ResetEngine();
@@ -731,7 +731,7 @@ namespace Microsoft.PowerFx
                     return value;
                 }
 
-                if (option.Value.ToLower(CultureInfo.InvariantCulture) == OptionPowerFxV1.ToLower(CultureInfo.InvariantCulture))
+                if (string.Equals(option.Value, OptionPowerFxV1, StringComparison.OrdinalIgnoreCase))
                 {
                     foreach (var prop in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                     {
