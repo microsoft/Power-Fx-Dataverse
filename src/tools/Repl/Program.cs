@@ -288,7 +288,7 @@ namespace Microsoft.PowerFx
                     else
                     {
                         var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-                        var result = Eval(expr);
+                        var result = _engine.EvalAsync(expr, CancellationToken.None, GetParserOptions(), GetSymbolTable(), GetRuntimeConfig()).Result;
 
                         if (output != null)
                         {
@@ -503,19 +503,17 @@ namespace Microsoft.PowerFx
                 else
                 {
                     var separator = string.Empty;
-#if true
-                    resultString = value.ToExpression();
-#else
+
+                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
                     resultString = "{";
-                    foreach (var field in record.Fields)
+                    foreach (var fieldName in fieldNames)
                     {
-                        resultString += separator + $"{field.Name}:";
-                        resultString += PrintResult(field.Value);
+                        resultString += separator + $"{fieldName}:";
+                        resultString += PrintResult(record.GetField(fieldName));
                         separator = ", ";
                     }
 
                     resultString += "}";
-#endif
                 }
             }
             else if (value is TableValue table)
@@ -526,15 +524,8 @@ namespace Microsoft.PowerFx
                 }
                 else
                 {
-                    var columnCount = 0;
-                    foreach (var row in table.Rows)
-                    {
-                        if (row.Value != null)
-                        {
-                            columnCount = Math.Max(columnCount, row.Value.Fields.Count());
-                            break;
-                        }
-                    }
+                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
+                    var columnCount = fieldNames.Count();
 
                     if (columnCount == 0)
                     {
@@ -548,9 +539,9 @@ namespace Microsoft.PowerFx
                         if (row.Value != null)
                         {
                             var column = 0;
-                            foreach (var field in row.Value.Fields)
+                            foreach (var fieldName in fieldNames)
                             {
-                                columnWidth[column] = Math.Max(columnWidth[column], PrintResult(field.Value, true).Length);
+                                columnWidth[column] = Math.Max(columnWidth[column], PrintResult(row.Value.GetField(fieldName), true).Length);
                                 column++;
                             }
                         }
@@ -581,13 +572,10 @@ namespace Microsoft.PowerFx
                             if (row.Value != null)
                             {
                                 column = 0;
-                                foreach (var field in row.Value.Fields)
+                                foreach (var fieldName in fieldNames)
                                 {
-                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
-                                    {
-                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
-                                        resultString += " " + field.Name.PadLeft(columnWidth[column]) + "  ";
-                                    }
+                                    columnWidth[column] = Math.Max(columnWidth[column], fieldName.Length);
+                                    resultString += " " + fieldName.PadLeft(columnWidth[column]) + "  ";
                                     column++;
                                 }
 
@@ -602,12 +590,9 @@ namespace Microsoft.PowerFx
                             if (row.Value != null)
                             {
                                 column = 0;
-                                foreach (var field in row.Value.Fields)
+                                foreach (var fieldName in fieldNames)
                                 {
-                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
-                                    {
-                                        resultString += new string('=', columnWidth[column] + 2) + " ";
-                                    }
+                                    resultString += new string('=', columnWidth[column] + 2) + " ";
                                     column++;
                                 }
 
@@ -621,12 +606,9 @@ namespace Microsoft.PowerFx
                             resultString += "\n ";
                             if (row.Value != null)
                             {
-                                foreach (var field in row.Value.Fields)
+                                foreach (var fieldName in fieldNames)
                                 {
-                                    if (_formatTableColumns == null || _formatTableColumns.Contains(field.Name))
-                                    {
-                                        resultString += " " + PrintResult(field.Value, true).PadLeft(columnWidth[column]) + "  ";
-                                    }
+                                    resultString += " " + PrintResult(row.Value.GetField(fieldName), true).PadLeft(columnWidth[column]) + "  ";
                                     column++;
                                 }
                             }
