@@ -135,7 +135,7 @@ namespace Microsoft.PowerFx
             ResetEngine();
 
             var version = typeof(RecalcEngine).Assembly.GetName().Version.ToString();
-            Console.WriteLine($"Microsoft Power Fx Console Formula REPL, Version {version}");
+            Console.WriteLine($"Microsoft Power Fx Console Formula REPL for Dataverse, Version {version}");
 
             foreach (var propertyInfo in typeof(Features).GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
             {
