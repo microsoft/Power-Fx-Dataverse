@@ -2038,6 +2038,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [DataTestMethod]        
+        [DataRow("First(t1)", "t1@{localid:GUID(\"00000000-0000-0000-0000-000000000001\"),new_price:Float(100),rating:2,refg:{remoteid:GUID(\"00000000-0000-0000-0000-000000000002\")}")]
+        public void RetrieveAsyncErrorTst(string expr, string expected)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable("t1", "local");
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = (DataverseRecordValue) run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            var serialized = result.ToExpression();
+
+            Assert.Equals(expected, serialized);
+        }
+
         [TestMethod]
         public void RetrieveAsyncErrorTst()
         {
@@ -2095,6 +2119,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity2 = new Entity("remote", _g2);
 
             entity1.Attributes["new_price"] = 100;
+            entity1.Attributes["Parent"] = 999;
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

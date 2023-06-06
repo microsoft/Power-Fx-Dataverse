@@ -1234,7 +1234,10 @@ END
                     new OptionMetadataModel { Label = "Medium", Value = 2 },
                     new OptionMetadataModel { Label = "Low", Value = 3 }
                 },
-                isGlobal: true)
+                isGlobal: true),
+
+                // Parent is a keyword
+                AttributeMetadataModel.NewDecimal("Parent", "Parent"),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
