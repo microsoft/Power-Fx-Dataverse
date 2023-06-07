@@ -976,7 +976,7 @@ END
         [DataRow("UTCNow()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCNow")]
         [DataRow("UTCToday()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCToday")]
         [DataRow("IsUTCToday(UTCNow())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCNow")]
-        [DataRow("Now()", false, null, "Error 0-5: Now is not supported in formula columns, use UTCNow instead.", DisplayName = "Now not supported")]
+        [DataRow("Now()", true, typeof(DateTimeType), DisplayName = "Now")]
         [DataRow("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.", DisplayName = "Today not supported")]
         [DataRow("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.", DisplayName = "IsToday not supported")]
         [DataRow("IsUTCToday(UTCToday())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCToday")]

@@ -353,6 +353,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Hour(tziDateTime)", 18M, cx, metadata);
                 ExecuteSqlTest("DateDiff(tziDateOnly, tziDateTime)", -34M, cx, metadata);
                 ExecuteSqlTest("Hour(UTCNow())", (decimal)DateTime.UtcNow.Hour, cx, metadata);
+                ExecuteSqlTest("Hour(Now())", (decimal)DateTime.Now.Hour, cx, metadata);
                 ExecuteSqlTest("Year(UTCToday())", (decimal)DateTime.UtcNow.Year, cx, metadata);
                 ExecuteSqlTest("Month(If(true,tziDateOnly,tziDateTime))", 8M, cx, metadata);
                 ExecuteSqlTest("Day(IfError(tziDateOnly,tziDateTime))", 26M, cx, metadata);
