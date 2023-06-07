@@ -1169,6 +1169,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Table 't1' has 1 item with Price = 100
         [DataTestMethod]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            null, // Bad practice, modifying the collection while we enumerate.
+            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
+
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             100.0,
             "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
@@ -1257,7 +1262,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("Collect(t1, { Price : 200}).Price",
             200.0, // Collect shouldn't give warnings. 
-            "(Collect(t1, {new_price:200})).new_price"
+            "(Collect((t1), {new_price:200})).new_price"
             )]
 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
@@ -1270,11 +1275,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
             true, // delegated, but not found is blank()
             "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
-
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
@@ -1309,9 +1309,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Add a variable with same table type.
             // But it's not in the same symbol table, so we can't delegate this. 
-            engine1.UpdateVariable("fakeT1", tableT1);
+            // This used to use UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
+            var fakeSymbolTable = new SymbolTable();
+            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1.Type);
+            var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
             Assert.IsTrue(check.IsSuccess);
 
             // comapre IR to verify the delegations are happening exactly where we expect 
@@ -1334,7 +1337,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Can still run and verify results. 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            // Place a reference to tableT1 in the fakeT1 symbol values and compose in
+            var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
+            fakeSymbolValues.Set(fakeSlot, tableT1);
+            var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+
+            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+            var s = result.ToObject().ToString();
 
             Assert.AreEqual(expected, result.ToObject());
         }
