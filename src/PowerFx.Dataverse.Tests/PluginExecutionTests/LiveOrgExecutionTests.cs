@@ -24,37 +24,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     // Run Dataverse execution against a live org. 
     [TestClass]
     public class LiveOrgExecutionTests
-    {
-        const string CACHE_ROOT = @"C:\temp\";
-
+    {        
         // Env var we look for to get a dataverse connection string. 
         const string ConnectionStringVariable = "FxTestDataverseCx";
 
-        private static TestContext _testContext;
-
-        [ClassInitialize]
-        public static void ClassInit(TestContext context)
-        {
-            _testContext = context;
-        }
-
-        private CachedServiceClient GetClient(bool cached, string folder = null, bool noConnection = false)
+        private ServiceClient GetClient()
         {
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             // short-circuit if connection string is not set
-            if (cx == null && !noConnection)
+            if (cx == null)
             {
                 Assert.Inconclusive($"Skipping Live Dataverse tests. Set {cx} env var.");
                 throw new NotImplementedException();
             }
 
             // https://docs.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
-            // For example:            
+            // For example:
             // $"Url=https://aurorabapenv67c10.crm10.dynamics.com/; Username={username}; Password={password}; authtype=OAuth";
 
-            string cacheFolder = folder ?? @$"{CACHE_ROOT}{DateTime.UtcNow.ToString("yyyy_MM_dd_HH_mm_ss_fff")}";
-            CachedServiceClient svcClient = new CachedServiceClient(cx, cached, cacheFolder);
+            var svcClient = new ServiceClient(cx);
             svcClient.EnableAffinityCookie = true;
 
             return svcClient;
@@ -152,7 +141,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // If Tasks field was empty, returns empty table.
         [DataRow("Index(Accounts, 2).Tasks", 2)]
-
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
             var tableName = new string[] { "account", "task", "contact" };
@@ -387,41 +375,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
-        }
-
-        [TestMethod]
-        public void TestWithCache()
-        {
-            string tableName = "Accounts";
-            string expr = "First(Accounts)";
-            List<IDisposable> disposableObjects = null;
-
-            try
-            {
-                string folder = GetCachedData("CachedData01.zip");
-                FormulaValue formulaValue = RunDataverseTest(tableName, expr, out disposableObjects, async: true, cached: true, folder: folder, noConnection: true);
-
-                object result = formulaValue.ToObject();
-                var entity = result as Entity;
-
-                Assert.IsNotNull(entity, result is ErrorValue ev ? string.Join("\r\n", ev.Errors.Select(er => er.Message)) : "Unknown Error");
-            }
-            finally
-            {
-                DisposeObjects(disposableObjects);
-            }
-
-            Console.WriteLine(ObjectSerializer._ctr);            
-        }
-
-        public static string GetCachedData(string zippedFileName, string path = null)
-        {
-            string cachedData = Path.Combine(path ?? _testContext.TestDeploymentDir, @$"PluginExecutionTests\Data\{zippedFileName}");
-            string folder = Directory.GetParent(cachedData).FullName;
-
-            ZipFile.ExtractToDirectory(cachedData, folder, overwriteFiles: true);
-
-            return folder;
         }
 
         [TestMethod]
@@ -832,24 +785,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false, bool cached = false, string folder = null, bool noConnection = false)
+        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async, cached, folder, noConnection);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
         }
 
-        public FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false, bool cached = false, string folder = null)
+        public FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async, cached, folder);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async);
         }
 
-        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false, bool cached = false, string folder = null)
+        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async, cached, folder);
+            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
         }
 
-        public void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false, bool cached = false, string folder = null)
+        public void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
-            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async, cached, folder);
+            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
         }
 
         [DataTestMethod]
@@ -947,10 +900,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        public FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true,
-            bool async = false, bool cached = false, string folder = null)
+        public FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
-            CachedServiceClient svcClient = GetClient(cached, folder);
+            ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
@@ -1018,7 +970,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new()
+        public static Dictionary<string, string> PredefinedTables = new()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
@@ -1026,10 +978,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             { "Contacts", "contact" }
         };
 
-        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig,
-            bool async = false, bool cached = false, string folder = null, bool noConnection = false)
+        public FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
-            CachedServiceClient svcClient = GetClient(cached, folder, noConnection);
+            ServiceClient svcClient = GetClient();
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 

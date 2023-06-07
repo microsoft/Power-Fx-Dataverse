@@ -74,6 +74,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }        
+
+        public void Refresh(string logicalTableName)
+        {            
         }
     }
 }

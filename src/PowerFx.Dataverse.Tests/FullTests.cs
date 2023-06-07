@@ -537,7 +537,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        public const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private static SqlConnection GetSql()
         {
