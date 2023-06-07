@@ -7,13 +7,18 @@
     <RootNamespace>Microsoft.PowerFx.Dataverse.Tests</RootNamespace>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <DelaySign>true</DelaySign>
-    <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1701;1702;1998</NoWarn>
-    <LangVersion>9.0</LangVersion>
+  <PropertyGroup>    
+    <NoWarn>1701;1702;1998</NoWarn>    
     <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>full</DebugType>
   </PropertyGroup>
 
   <Import Project="..\Build.props" />
@@ -49,6 +54,6 @@
     <None Update="SqlExpressionTestCases\*.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
+	</ItemGroup>
+  
 </Project>
