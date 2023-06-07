@@ -227,14 +227,6 @@ namespace Microsoft.PowerFx
             CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
             checkResult.ThrowOnErrors();
 
-            var errors = checkResult.ApplyErrors();
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            for (int i = 0; i < errorList.Length; i++)
-            {
-                Console.WriteLine(errorList[i]);    
-            }
-
             IExpressionEvaluator evaluator = checkResult.GetEvaluator();
             return evaluator.Eval(GetRuntimeConfig());
         }
@@ -296,8 +288,9 @@ namespace Microsoft.PowerFx
                     else
                     {
                         var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
+#if true
                         var result = Eval(expr);
-#if false
+#else
                         var result = _engine.EvalAsync(expr, CancellationToken.None, GetParserOptions(), GetSymbolTable(), GetRuntimeConfig()).Result;
 #endif
 

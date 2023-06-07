@@ -1309,7 +1309,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Add a variable with same table type.
             // But it's not in the same symbol table, so we can't delegate this. 
-            // This used to use UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
+            // Previously this was UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
             var fakeSymbolTable = new SymbolTable();
             var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1.Type);
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
