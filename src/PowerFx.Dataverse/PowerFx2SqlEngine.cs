@@ -29,6 +29,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         // default decimal precision
         internal const int DefaultPrecision = 10;
+        internal const string ExchangeRateScalePrecision = "decimal(28,12)";
+
 
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
@@ -170,10 +172,11 @@ namespace Microsoft.PowerFx.Dataverse
                     var fieldName = parameters[i].Item1.LogicalName;
                     var varName = ctx.GetVarName(fieldName, ctx.RootScope, null);
                     
+                    // For exchange rate, DV uses scale 28 and precision 12 so maintaing parity with DV
                     String typeName = null;
                     if(fieldName.Equals("exchangerate"))
                     {
-                        typeName = "decimal(28,12)";
+                        typeName = ExchangeRateScalePrecision;
                     }
                     else
                     {
@@ -197,7 +200,6 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var del = ",";
                         var fieldName = "exchangerate";
-                        var typeName = "decimal(28,12)";
                         int existingExchangeRateParameterCount = 0;
 
                         try
@@ -218,7 +220,7 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 exchangeRateParameter = ctx.GetVarName(fieldName, ctx.RootScope, null);
                                 parameters = ctx.GetParameters().ToList();
-                                tw.WriteLine($"    {del} {exchangeRateParameter} {typeName} -- {fieldName}");
+                                tw.WriteLine($"    {del} {exchangeRateParameter} {ExchangeRateScalePrecision} -- {fieldName}");
                             }
                             else if(existingExchangeRateParameterCount == 1)
                             {

@@ -140,15 +140,18 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var returnType = new SqlBigType();
+
+                        // In decimal cases, we need to use decimal(23,10) but in case of currency, we need to use SQLBigType decimal(38,10)
+                        // in case of exchange rate, coercing to number type is not needed as it is already using decimal(28,12)
                         SqlNumberBase leftDecimalType = new SqlDecimalType();
                         SqlNumberBase rightDecimalType = new SqlDecimalType();
 
-                        if (left.type is SqlBigType || left.type is SqlMoneyType)
+                        if (left != null && (left.type is SqlBigType || left.type is SqlMoneyType))
                         {
                             leftDecimalType = new SqlBigType(); 
                         }
 
-                        if (right.type is SqlBigType || right.type is SqlMoneyType)
+                        if (right != null && (right.type is SqlBigType || right.type is SqlMoneyType))
                         {
                             rightDecimalType = new SqlBigType();
                         }
@@ -158,8 +161,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                         if(left != null)
                         {
-                            CdsColumnDefinition leftColumn = context.GetVarDetails(left.varName).Column;
-                            if(leftColumn != null && leftColumn.LogicalName.Equals("exchangerate"))
+                            if(IsExchangeRateColumn(left, context))
                             {
                                 leftOperand = Library.CoerceNullToInt(left);
                             }
@@ -167,8 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                         if (right != null)
                         {
-                            CdsColumnDefinition rightColumn = context.GetVarDetails(right.varName).Column;
-                            if (rightColumn != null && rightColumn.LogicalName.Equals("exchangerate"))
+                            if (IsExchangeRateColumn(right, context))
                             {
                                 rightOperand = Library.CoerceNullToInt(right);
                             }
@@ -285,6 +286,17 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     throw new SqlCompileException(SqlCompileException.OperationNotSupported, node.IRContext.SourceContext, context.GetReturnType(node.Left)._type.GetKindString());
             }
+        }
+
+        private bool IsExchangeRateColumn(RetVal field, Context context)
+        {
+            CdsColumnDefinition column = context.GetVarDetails(field.varName).Column;
+            if (column != null && column.LogicalName.Equals("exchangerate"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private RetVal EqualityCheck(IntermediateNode left, IntermediateNode right, BinaryOpKind op, FormulaType type, Context context, Span sourceContext = default, bool equals = true)
