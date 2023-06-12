@@ -353,7 +353,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Hour(tziDateTime)", 18M, cx, metadata);
                 ExecuteSqlTest("DateDiff(tziDateOnly, tziDateTime)", -34M, cx, metadata);
                 ExecuteSqlTest("Hour(UTCNow())", (decimal)DateTime.UtcNow.Hour, cx, metadata);
-                ExecuteSqlTest("Hour(Now())", (decimal)DateTime.Now.Hour, cx, metadata);
                 ExecuteSqlTest("Year(UTCToday())", (decimal)DateTime.UtcNow.Year, cx, metadata);
                 ExecuteSqlTest("Month(If(true,tziDateOnly,tziDateTime))", 8M, cx, metadata);
                 ExecuteSqlTest("Day(IfError(tziDateOnly,tziDateTime))", 26M, cx, metadata);
@@ -361,6 +360,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
                 ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
+
+                var result = ExecuteSqlTest("Hour(Now())", null, cx, metadata, false, false, null, null, false);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(false, result.IsSuccess);
+                Assert.IsNotNull(result.Errors);
+                var errors = result.Errors.ToArray();
+                Assert.AreEqual(1, errors.Length);
+                Assert.AreEqual("Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", errors[0].Message);
             }
         }
 
