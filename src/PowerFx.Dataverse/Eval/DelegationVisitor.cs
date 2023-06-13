@@ -242,6 +242,16 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        public override RetVal Visit(LazyEvalNode node, Context context)
+        {
+            if (node.Child is ResolvedObjectNode resolvedObjectNode)
+            {
+                return MaterializeTableOnly(Ret(new LazyEvalNode(node.IRContext, resolvedObjectNode)));
+            }
+
+            return base.Visit(node, context);
+        }
+
         public override RetVal Visit(CallNode node, Context context)
         {
             var func = node.Function.Name;
