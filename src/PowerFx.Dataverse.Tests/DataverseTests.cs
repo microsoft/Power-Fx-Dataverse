@@ -1031,6 +1031,7 @@ END
         [DataRow("DateDiff(UTCNow(), Now())", false, null, "Error 0-25: This operation cannot be performed on values which are of different Date Time Behaviors.")]
         [DataRow("Now() < UTCNow()", false, null, "Error 6-7: This operation cannot be performed on values which are of different Date Time Behaviors.")]
         [DataRow("DateAdd(Now(), 1, TimeUnit.Days)", true, typeof(DateTimeType), DisplayName = "DateAdd Days User Local")]
+        [DataRow("IsUTCToday(Now())", true, typeof(BooleanType), DisplayName = "IsUTCToday of Now function")]
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
