@@ -244,19 +244,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(LazyEvalNode node, Context context)
         {
-            if (node.Child is ResolvedObjectNode resolvedObjectNode)
+            if (node.Child is ResolvedObjectNode)
             {
-                return MaterializeTableOnly(Ret(new LazyEvalNode(node.IRContext, resolvedObjectNode)));
-            }
-
-            return base.Visit(node, context);
-        }
-
-        public override RetVal Visit(LazyEvalNode node, Context context)
-        {
-            if (node.Child is ResolvedObjectNode resolvedObjectNode)
-            {
-                return MaterializeTableOnly(Ret(new LazyEvalNode(node.IRContext, resolvedObjectNode)));
+                return Ret(node);
             }
 
             return base.Visit(node, context);
@@ -275,7 +265,8 @@ namespace Microsoft.PowerFx.Dataverse
                 RetVal arg0c = node.Args[0].Accept(this, context);
 
                 arg0c = MaterializeTableOnly(arg0c);
-                                
+                
+                // This is what actually adds a warning message
                 return base.Visit(node, context, arg0c);
             }
 
