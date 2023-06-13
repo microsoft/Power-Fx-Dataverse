@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Microsoft.PowerFx.Dataverse.EngineExtensions;
 using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -342,9 +341,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _policy.RefreshCache();
 
-            if (_dvServices is IDataverseEntityCacheCleaner dec)
+            if (_dvServices is IDataverseEntityCacheCleaner decc)
             {
-                dec.ClearCache();
+                decc.ClearCache();
             }
         }
     }

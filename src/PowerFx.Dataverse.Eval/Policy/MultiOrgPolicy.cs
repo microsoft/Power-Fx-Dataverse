@@ -32,7 +32,6 @@ namespace Microsoft.PowerFx.Dataverse
             return _symbols;
         }
 
-
         public override bool TryGetVariableName(string logicalName, out string variableName)
         {
             return _logical2Variable.TryGetValue(logicalName, out variableName);
@@ -63,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
             RecordType recordType = _parent.GetRecordType(entityMetadata);
             DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
 
-            var slot = _symbols.AddVariable(variableName, tableValue.Type);
+            var slot = _symbols.AddVariable(variableName, tableValue.Type, mutable: true);
 
             _tablesDisplay2Value[variableName] = tableValue;
             _parent.SymbolValues.Set(slot, tableValue);
