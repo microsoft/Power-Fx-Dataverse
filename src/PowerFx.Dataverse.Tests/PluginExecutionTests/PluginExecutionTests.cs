@@ -1343,7 +1343,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
 
             var result = run.EvalAsync(CancellationToken.None, allValues).Result;
-            var s = result.ToObject().ToString();
+
+            if (expected is null)
+            {
+                Assert.IsInstanceOfType(result, typeof(BlankValue));
+            }
 
             Assert.AreEqual(expected, result.ToObject());
         }
