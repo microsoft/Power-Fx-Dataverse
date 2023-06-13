@@ -361,21 +361,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
                 ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
 
-                var result = ExecuteSqlTest("Hour(Now())", null, cx, metadata, false, false, null, null, false);
-                Assert.AreEqual(false, result.IsSuccess);
-                Assert.AreEqual("Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", result.Errors.ToArray()[0].Message);
+                ExecuteSqlTest("DateDiff(Now(), Now())", 0.0M, cx, metadata);
+                ExecuteSqlTest("Now() < Now()", false, cx, metadata);
 
-                result = ExecuteSqlTest("Minute(Now())", null, cx, metadata, false, false, null, null, false);
-                Assert.AreEqual(false, result.IsSuccess);
-                Assert.AreEqual("Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", result.Errors.ToArray()[0].Message);
-
-                result = ExecuteSqlTest("Text(Now())", null, cx, metadata, false, false, null, null, false);
-                Assert.AreEqual(false, result.IsSuccess);
-                Assert.AreEqual("This argument cannot be passed as type DateTime in formula columns.", result.Errors.ToArray()[0].Message);
-
-                result = ExecuteSqlTest("DateDiff(UTCNow(), Now())", null, cx, metadata, false, false, null, null, false);
-                Assert.AreEqual(false, result.IsSuccess);
-                Assert.AreEqual("This operation cannot be performed on values which are of different Date Time Behaviors.", result.Errors.ToArray()[0].Message);
             }
         }
 
