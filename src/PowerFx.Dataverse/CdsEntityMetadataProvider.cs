@@ -254,11 +254,6 @@ namespace Microsoft.PowerFx.Dataverse
             var optionSets = new Dictionary<string, IExternalOptionSet>();
             foreach (var attribute in entity.Attributes)
             {
-                if (attribute.SourceType == 3)
-                {
-                    continue;
-                }
-
                 string columnName = string.Empty;
                 bool parsed = false;
                 IExternalOptionSet optionSet = null;
@@ -278,7 +273,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed) 
                 {
-                    var dataverseOptionSet = RegisterDataverseOptionSet(entity, optionSet);
+                    var dataverseOptionSet = attribute.SourceType == 3 ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
             }
