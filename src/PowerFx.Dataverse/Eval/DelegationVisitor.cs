@@ -244,6 +244,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(LazyEvalNode node, Context context)
         {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+            
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             if (node.Child is ResolvedObjectNode)
             {
                 return Ret(node);
