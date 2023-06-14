@@ -106,7 +106,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Failed, but wrong error message: Errors: Warning 16-45: Incorrect format specifier for 'Text'.
                 // Error 0-55: The function 'Text' has some invalid arguments.
 
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Mod_Float.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 34));
                 runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 3));
                 runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 6));
                 runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 10));

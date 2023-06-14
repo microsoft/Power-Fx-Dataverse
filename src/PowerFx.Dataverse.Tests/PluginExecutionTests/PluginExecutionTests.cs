@@ -1169,6 +1169,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Table 't1' has 1 item with Price = 100
         [DataTestMethod]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            null, // Bad practice, modifying the collection while we enumerate.
+            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
+
         [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
             100.0,
             "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
@@ -1257,8 +1262,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("Collect(t1, { Price : 200}).Price",
             200.0, // Collect shouldn't give warnings. 
-            "(Collect((t1), {new_price:200})).new_price",
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+            "(Collect((t1), {new_price:200})).new_price"
             )]
 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
@@ -1272,11 +1276,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true, // delegated, but not found is blank()
             "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
 
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",            
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.",
-            "Warning 27-29: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
+        [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
+            100.0,
+            "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price")] // variable
 
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
             100.0,
@@ -1304,7 +1307,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            // Add a variable with same table type.
+            // But it's not in the same symbol table, so we can't delegate this. 
+            // Previously this was UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
+            var fakeSymbolTable = new SymbolTable();
+            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1.Type);
+            var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
+
+            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
             Assert.IsTrue(check.IsSuccess);
 
             // comapre IR to verify the delegations are happening exactly where we expect 
@@ -1327,7 +1337,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Can still run and verify results. 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            // Place a reference to tableT1 in the fakeT1 symbol values and compose in
+            var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
+            fakeSymbolValues.Set(fakeSlot, tableT1);
+            var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+
+            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+
+            if (expected is null)
+            {
+                Assert.IsInstanceOfType(result, typeof(BlankValue));
+            }
 
             Assert.AreEqual(expected, result.ToObject());
         }
@@ -1406,7 +1426,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataTestMethod]
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", "Warning 22-27: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price", "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".", "Warning 27-29: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price", "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price", "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?", "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price", "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
