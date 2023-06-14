@@ -15,6 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
@@ -1716,6 +1718,27 @@ END
             Array.Sort(array);
             return string.Join(',', array);
         }
+
+        [TestMethod]
+        public async Task UpdateFieldWithError()
+        {
+            string columnName = "column1";
+            FormulaType columnType = new StringType();
+            string entityName = "some Entity";
+            string errorMessage = "Oups!";
+
+            RecordType recordType = RecordType.Empty().Add(new NamedFormulaType(columnName, columnType));            
+            DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
+            RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
+
+            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None).ConfigureAwait(false);
+
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.Value);
+            Assert.IsNotNull(result.Error);
+
+            Assert.AreEqual($"Field {columnName} is of type ErrorValue: {errorMessage}", result.Error.Errors[0].Message);
+        }
     }
 
     // Helpers to leverage the EditorContextScope
@@ -1733,6 +1756,33 @@ END
             IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
             var results = scope.Suggest(expression, cursorPosition);
             return results;
+        }
+    }
+
+    public class FakeConnectionValueContext : IConnectionValueContext
+    {
+        public IDataverseServices Services => throw new NotImplementedException();
+
+        public int MaxRows => throw new NotImplementedException();
+
+        public EntityMetadata GetMetadataOrThrow(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordType GetRecordType(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetSerializationName(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordValue Marshal(Entity entity)
+        {
+            throw new NotImplementedException();
         }
     }
 }
