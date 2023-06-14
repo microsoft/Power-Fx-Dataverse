@@ -297,6 +297,25 @@ namespace Microsoft.PowerFx.Dataverse
 
                 var dependentFields = ctx.GetDependentFields();
 
+                if (retType is OptionSetValueType)
+                {
+                    _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
+                    if (optionSet != null)
+                    {
+                        sqlResult.OptionSetId = optionSet.OptionSetId;
+                        if (!optionSet.IsGlobal)
+                        {
+                            var key = optionSet.RelatedEntityName;
+                            if (!dependentFields.ContainsKey(key))
+                            {
+                                dependentFields[key] = new HashSet<string>();
+                            }
+
+                            dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
+                        }
+                    }
+                }
+
                 // The top-level identifiers are the logical names of fields on the main entity
                 sqlResult.ApplyDependencyAnalysis();
                 var topLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();
@@ -307,14 +326,6 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.RelatedIdentifiers = dependentFields.Where(pair => pair.Key != _currentEntityName).ToDictionary(pair => pair.Key, pair => pair.Value);
 
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
-
-                if (retType is OptionSetValueType)
-                {
-                    _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
-                    if (optionSet != null) {
-                        sqlResult.OptionSetId = optionSet.OptionSetId;
-                    }
-                }
 
                 sqlResult.ReturnType = retType;
                 sqlResult.LogicalFormula = this.GetInvariantExpression(expression, null, _cultureInfo);

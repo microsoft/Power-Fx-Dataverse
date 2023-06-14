@@ -254,6 +254,11 @@ namespace Microsoft.PowerFx.Dataverse
             var optionSets = new Dictionary<string, IExternalOptionSet>();
             foreach (var attribute in entity.Attributes)
             {
+                if (attribute.SourceType == 3)
+                {
+                    continue;
+                }
+
                 string columnName = string.Empty;
                 bool parsed = false;
                 IExternalOptionSet optionSet = null;
