@@ -64,8 +64,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
                     // Skip these tests for now as they generate errors.
-                    // 
-                                        
+                    // https://github.com/microsoft/Power-Fx-Dataverse/issues/219
+
                     // FAIL: SqlRunner, Mod_Float.txt:34
                     // FAIL: Mod(1E+400, 3)
                     // Failed, but wrong error message: Errors: Error 4-10: Numeric value is too large.
@@ -96,7 +96,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // FAIL: Text(1234.5678, "[$-en-US#,##0.00", "en-US")
                     // Failed, but wrong error message: Errors: Warning 16-34: Incorrect format specifier for 'Text'.
                     // Error 0-44: The function 'Text' has some invalid arguments.
- 
+
                     // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:21
                     // FAIL: Text(1234.5678, "[$-]fr-FR # ##0,00", "vi-VI")
                     // Failed, but wrong error message: Errors: Warning 16-36: Incorrect format specifier for 'Text'.
@@ -106,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // FAIL: Text(1234.5678, "[$-fr-FR][$-en-US] # ##0,00", "vi-VI")
                     // Failed, but wrong error message: Errors: Warning 16-45: Incorrect format specifier for 'Text'.
                     // Error 0-55: The function 'Text' has some invalid arguments.
-                    
+
                     if (path.Contains("Mod_Float.txt") || path.Contains("Text_Format_PowerFxV1Compat.txt"))
                     {
                         continue;
