@@ -4,16 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.AppMagic;
-using Microsoft.AppMagic.Authoring;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
