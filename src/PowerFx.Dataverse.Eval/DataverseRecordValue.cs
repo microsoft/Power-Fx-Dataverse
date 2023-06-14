@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
-            var leanEntity = ConvertRecordToEntity(record, out var error);
+            var leanEntity = ConvertRecordToEntity(record, out DValue<RecordValue> error);
 
             if (error != null)
             {
@@ -296,10 +296,16 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(this);
         }
 
-        // Record should already be logical names. 
+        // Record should already be using logical names. 
         private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             var leanEntity = record.ConvertRecordToEntity(_metadata, out error);
+
+            if (error != null)
+            { 
+                return null; 
+            }
+
             leanEntity.Id = _entity.Id;
             return leanEntity;
         }

@@ -110,11 +110,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(record));
 
             cancellationToken.ThrowIfCancellationRequested();
+            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
 
-            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out var error1);
-            if (error1 != null)
+            if (error != null)
             {
-                return error1;
+                return error;
             }
 
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
