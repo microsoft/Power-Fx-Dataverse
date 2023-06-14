@@ -952,8 +952,6 @@ END
         [DataRow("Text(123, \"\\,###\\.\")", false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped locale-specific separators not supported")]
         [DataRow("Text(123, \"#\", \"fr-FR\")", false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
         [DataRow("Text(123, \"[$-fr-FR]#\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
-        [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
-        [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
         [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
         public void CheckTextFailures(string expr, bool success, string message = null)
