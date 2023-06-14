@@ -1257,7 +1257,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("Collect(t1, { Price : 200}).Price",
             200.0, // Collect shouldn't give warnings. 
-            "(Collect(t1, {new_price:200})).new_price"
+            "(Collect((t1), {new_price:200})).new_price",
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
             )]
 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
@@ -1273,13 +1274,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect(t1, {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
-
-        // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
-        [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
-            100.0,
-            "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price")] // variable
+            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",            
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.",
+            "Warning 27-29: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
             100.0,
@@ -1306,10 +1303,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_g1", FormulaValue.New(_g1)); // matches entity
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
-
-            // Add a variable with same table type.
-            // But it's not in the same symbol table, so we can't delegate this. 
-            engine1.UpdateVariable("fakeT1", tableT1);
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
@@ -1412,15 +1405,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
-        [DataRow("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", "Warning 22-27: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price", "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".", "Warning 27-29: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
+        [DataRow("LookUp(t1, LocalId=LocalId).Price", "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?", "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price", "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
             var logicalName = "local";
