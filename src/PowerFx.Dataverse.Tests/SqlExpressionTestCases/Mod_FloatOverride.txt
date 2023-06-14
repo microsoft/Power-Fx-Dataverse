@@ -1,0 +1,4 @@
+﻿#override: Mod_Float.txt
+
+>> Mod(1E+400, 3)
+Errors: Error 4-10: Numeric value is too large.|Error 4-10: Invalid argument type (Error). Expecting a Number value instead.|Error 0-14: The function 'Mod' has some invalid arguments.
