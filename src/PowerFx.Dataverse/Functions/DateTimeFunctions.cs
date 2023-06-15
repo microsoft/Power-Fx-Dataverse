@@ -20,6 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal NowUTCNow(SqlVisitor visitor, CallNode node, Context context, FormulaType formulaType)
         {
             context.expressionHasTimeBoundFunction = true;
+            // round to the second, for parity with existing legacy CDS calculated fields
             return context.SetIntermediateVariable(formulaType, "DATEADD(ms, (0 - DATEPART(ms, GETUTCDATE())), GETUTCDATE())");
         }
 
