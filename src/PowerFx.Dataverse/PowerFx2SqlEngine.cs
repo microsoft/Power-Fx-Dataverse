@@ -306,6 +306,15 @@ namespace Microsoft.PowerFx.Dataverse
                         if (!optionSet.IsGlobal)
                         {
                             var key = optionSet.RelatedEntityName;
+
+                            if (key != _currentEntityName)
+                            {
+                                errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, irNode.IRContext.SourceContext, retType._type.GetKindString()).GetErrors(irNode.IRContext.SourceContext);
+                                var errorResult = new SqlCompileResult(errors);
+                                errorResult.SanitizedFormula = sanitizedFormula;
+                                return errorResult;
+                            }
+
                             if (!dependentFields.ContainsKey(key))
                             {
                                 dependentFields[key] = new HashSet<string>();
