@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseEntityCache : IDataverseServices, IDataverseEntityCache
+    public class DataverseEntityCache : IDataverseServices, IDataverseEntityCache, IDataverseRefresh
     {
         public int MaxEntries { get; } // 0 = no cache
 
