@@ -185,7 +185,7 @@ namespace Microsoft.PowerFx.Dataverse
                                         .Where((varDetail) => varDetail.VarType is SqlMoneyType && varDetail.Navigation != null)
                                         .Count();
 
-                    if (relatedEntityMoneyFieldsCount > 0 && returnType.Equals(new SqlDecimalType().ToSqlType()))
+                    if (relatedEntityMoneyFieldsCount > 0)
                     {
                         errors = new SqlCompileException(irNode.IRContext.SourceContext).GetErrors(irNode.IRContext.SourceContext);
                         var errorResult = new SqlCompileResult(errors);
