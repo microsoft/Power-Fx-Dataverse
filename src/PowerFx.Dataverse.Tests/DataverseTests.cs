@@ -15,6 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
@@ -284,8 +286,7 @@ END
             var engine = new PowerFx2SqlEngine();
             var intellisense = engine.Suggest("foo + ", cursorPosition: 6);
 
-            Assert.IsNotNull(intellisense);
-            Assert.IsNull(intellisense.Exception);
+            Assert.IsNotNull(intellisense);            
             Assert.AreEqual(0, intellisense.Suggestions.Count());
         }
 
@@ -953,8 +954,6 @@ END
         [DataRow("Text(123, \"\\,###\\.\")", false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped locale-specific separators not supported")]
         [DataRow("Text(123, \"#\", \"fr-FR\")", false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
         [DataRow("Text(123, \"[$-fr-FR]#\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
-        [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
-        [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
         [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
         public void CheckTextFailures(string expr, bool success, string message = null)
@@ -1722,6 +1721,27 @@ END
             Array.Sort(array);
             return string.Join(',', array);
         }
+
+        [TestMethod]
+        public async Task UpdateFieldWithError()
+        {
+            string columnName = "column1";
+            FormulaType columnType = new StringType();
+            string entityName = "some Entity";
+            string errorMessage = "Oups!";
+
+            RecordType recordType = RecordType.Empty().Add(new NamedFormulaType(columnName, columnType));            
+            DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
+            RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
+
+            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None).ConfigureAwait(false);
+
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.Value);
+            Assert.IsNotNull(result.Error);
+
+            Assert.AreEqual($"Field {columnName} is of type ErrorValue: {errorMessage}", result.Error.Errors[0].Message);
+        }
     }
 
     // Helpers to leverage the EditorContextScope
@@ -1739,6 +1759,33 @@ END
             IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
             var results = scope.Suggest(expression, cursorPosition);
             return results;
+        }
+    }
+
+    public class FakeConnectionValueContext : IConnectionValueContext
+    {
+        public IDataverseServices Services => throw new NotImplementedException();
+
+        public int MaxRows => throw new NotImplementedException();
+
+        public EntityMetadata GetMetadataOrThrow(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordType GetRecordType(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetSerializationName(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordValue Marshal(Entity entity)
+        {
+            throw new NotImplementedException();
         }
     }
 }

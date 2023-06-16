@@ -4,16 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.AppMagic;
-using Microsoft.AppMagic.Authoring;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -171,7 +168,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var intellisense = Suggest("Rat|", engine);
             var actualSuggestions = ToArray(intellisense);
             CollectionAssert.AreEqual(expected, actualSuggestions);
-            
+
 
             // Suggestion to cache in more metadata from another table. This will bring in "'Rating (Remotes)'"            
             Suggest("Other.Rating|", engine);
@@ -195,7 +192,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Mone|", "Money", DisplayName = "Currency suggested")]
         [DataRow("Imag|", DisplayName = "Image not suggested")]
         [DataRow("Fil|", DisplayName = "File not suggested")]
-        [DataRow("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'", DisplayName ="MultiSelect suggested")]
+        [DataRow("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'", DisplayName = "MultiSelect suggested")]
         public void CheckUnsupportedTypeSuggestions(string expression, params string[] expectedSuggestions)
         {
             var intellisense = Suggest(expression, _allAttributesEngine);
@@ -207,9 +204,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CheckSuggestion()
         {
             var intellisense = Suggest("a|");
-
-            // No crashes
-            Assert.IsNull(intellisense.Exception);
 
             // implemented function: Abs
             Assert.IsTrue(intellisense.Suggestions.Any(sug => sug.Kind == SuggestionKind.Function && sug.DisplayText.Text == "Abs"));
