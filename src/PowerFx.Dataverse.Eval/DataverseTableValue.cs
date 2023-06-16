@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
             var services = _connection.Services;
-            if (services is IDataverserRefresh serviceRefresh)
+            if (services is IDataverseRefresh serviceRefresh)
             {
                 serviceRefresh.Refresh(_entityMetadata.LogicalName);
             }

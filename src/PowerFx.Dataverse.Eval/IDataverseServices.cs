@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
     }
 
     // Optional interface to enable clearing any caches.
-    public interface IDataverserRefresh
+    public interface IDataverseRefresh
     {
         void Refresh(string logicalTableName);
     }

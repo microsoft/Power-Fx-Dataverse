@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.IDataverseReader",
                 "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
                 "Microsoft.PowerFx.Dataverse.IDataverseDeleter",
-                "Microsoft.PowerFx.Dataverse.IDataverserRefresh"
+                "Microsoft.PowerFx.Dataverse.IDataverseRefresh"
             };
 
             Verify(allowed, asm);
