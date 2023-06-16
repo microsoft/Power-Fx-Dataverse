@@ -54,7 +54,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
-            _connection.Services.Refresh(_entityMetadata.LogicalName);
+            var services = _connection.Services;
+            if (services is IDataverserRefresh serviceRefresh)
+            {
+                serviceRefresh.Refresh(_entityMetadata.LogicalName);
+            }
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
