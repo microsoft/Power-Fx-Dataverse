@@ -38,18 +38,24 @@ namespace Microsoft.PowerFx.Dataverse
         public static Entity ConvertRecordToEntity(this RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             // Contains only the modified fields.
-            var leanEntity = new Entity(metadata.LogicalName);
+            Entity leanEntity = new Entity(metadata.LogicalName);
 
             error = null;
 
-            foreach (var field in record.Fields)
+            foreach (NamedValue field in record.Fields)
             {
+                if (field.Value is ErrorValue ev)
+                {
+                    error = DataverseExtensions.DataverseError<RecordValue>($"Field {field.Name} is of type ErrorValue: {string.Join("\r\n", ev.Errors.Select(er => er.Message))}", methodName);
+                    return null;
+                }
+
                 if (!metadata.TryGetAttribute(field.Name, out var amd))
                 {
                     if (metadata.TryGetRelationship(field.Name, out var realAttributeName))
                     {
                         // Get primary key, set as guid. 
-                        var dvr = field.Value as DataverseRecordValue;
+                        DataverseRecordValue dvr = field.Value as DataverseRecordValue;
                         if (dvr == null)
                         {
                             // Binder should have stopped this. 
