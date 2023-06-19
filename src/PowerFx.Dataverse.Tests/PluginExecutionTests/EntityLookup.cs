@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // Simulate dataverse entities. 
     // Handles both metadata and the instances of Entity objects for testing. 
-    internal class EntityLookup : IDataverseServices
+    internal class EntityLookup : IDataverseServices, IDataverseRefresh
     {
         internal readonly List<Entity> _list = new List<Entity>();
 

@@ -54,7 +54,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
-            _connection.Services.Refresh(_entityMetadata.LogicalName);
+            var services = _connection.Services;
+            if (services is IDataverseRefresh serviceRefresh)
+            {
+                serviceRefresh.Refresh(_entityMetadata.LogicalName);
+            }
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
@@ -110,11 +114,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(record));
 
             cancellationToken.ThrowIfCancellationRequested();
+            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
 
-            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out var error1);
-            if (error1 != null)
+            if (error != null)
             {
-                return error1;
+                return error;
             }
 
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);

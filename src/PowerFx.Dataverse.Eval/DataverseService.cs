@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseService : IDataverseServices
+    public class DataverseService : IDataverseServices, IDataverseRefresh
     {        
         private IOrganizationService _organizationService { get; }
 

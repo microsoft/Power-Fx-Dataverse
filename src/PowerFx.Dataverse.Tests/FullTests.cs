@@ -360,6 +360,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 ExecuteSqlTest("WeekNum(tziDateOnly)", 35M, cx, metadata);
                 ExecuteSqlTest("WeekNum(dateOnly)", 29M, cx, metadata);
+
+                ExecuteSqlTest("DateDiff(Now(), Now())", 0.0M, cx, metadata);
+                ExecuteSqlTest("Now() < Now()", false, cx, metadata);
+                ExecuteSqlTest("If(DateDiff(userLocalDateTime,Now()),1,2)", 1.0M, cx, metadata);
+                ExecuteSqlTest("userLocalDateTime > Now()", false, cx, metadata);
+
             }
         }
 

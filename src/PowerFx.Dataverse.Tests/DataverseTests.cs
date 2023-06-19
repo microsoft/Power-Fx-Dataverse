@@ -15,6 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
@@ -284,7 +286,6 @@ END
             var engine = new PowerFx2SqlEngine();
             var intellisense = engine.Suggest("foo + ", cursorPosition: 6);
 
-            Assert.IsNotNull(intellisense);
             Assert.AreEqual(0, intellisense.Suggestions.Count());
         }
 
@@ -987,7 +988,7 @@ END
         [DataRow("UTCNow()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCNow")]
         [DataRow("UTCToday()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCToday")]
         [DataRow("IsUTCToday(UTCNow())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCNow")]
-        [DataRow("Now()", false, null, "Error 0-5: Now is not supported in formula columns, use UTCNow instead.", DisplayName = "Now not supported")]
+        [DataRow("Now()", true, typeof(DateTimeType), DisplayName = "Now")]
         [DataRow("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.", DisplayName = "Today not supported")]
         [DataRow("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.", DisplayName = "IsToday not supported")]
         [DataRow("IsUTCToday(UTCToday())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCToday")]
@@ -1036,6 +1037,13 @@ END
         [DataRow("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(dateOnly, 2)", false, typeof(SqlDecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [DataRow("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
+        [DataRow("DateDiff(UTCNow(), Now())", false, null, "Error 0-25: This operation cannot be performed on values which are of different Date Time Behaviors.")]
+        [DataRow("Now() < UTCNow()", false, null, "Error 6-7: This operation cannot be performed on values which are of different Date Time Behaviors.")]
+        [DataRow("DateAdd(Now(), 1, TimeUnit.Days)", true, typeof(DateTimeType), DisplayName = "DateAdd Days User Local")]
+        [DataRow("IsUTCToday(Now())", true, typeof(BooleanType), DisplayName = "IsUTCToday of Now function")]
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
@@ -1730,6 +1738,27 @@ END
             Array.Sort(array);
             return string.Join(',', array);
         }
+
+        [TestMethod]
+        public async Task UpdateFieldWithError()
+        {
+            string columnName = "column1";
+            FormulaType columnType = new StringType();
+            string entityName = "some Entity";
+            string errorMessage = "Oups!";
+
+            RecordType recordType = RecordType.Empty().Add(new NamedFormulaType(columnName, columnType));            
+            DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
+            RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
+
+            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None).ConfigureAwait(false);
+
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.Value);
+            Assert.IsNotNull(result.Error);
+
+            Assert.AreEqual($"Field {columnName} is of type ErrorValue: {errorMessage}", result.Error.Errors[0].Message);
+        }
     }
 
     // Helpers to leverage the EditorContextScope
@@ -1747,6 +1776,33 @@ END
             IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
             var results = scope.Suggest(expression, cursorPosition);
             return results;
+        }
+    }
+
+    public class FakeConnectionValueContext : IConnectionValueContext
+    {
+        public IDataverseServices Services => throw new NotImplementedException();
+
+        public int MaxRows => throw new NotImplementedException();
+
+        public EntityMetadata GetMetadataOrThrow(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordType GetRecordType(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetSerializationName(string tableLogicalName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public RecordValue Marshal(Entity entity)
+        {
+            throw new NotImplementedException();
         }
     }
 }
