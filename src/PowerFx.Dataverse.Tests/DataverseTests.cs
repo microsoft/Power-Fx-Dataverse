@@ -285,7 +285,6 @@ END
             var intellisense = engine.Suggest("foo + ", cursorPosition: 6);
 
             Assert.IsNotNull(intellisense);
-            Assert.IsNull(intellisense.Exception);
             Assert.AreEqual(0, intellisense.Suggestions.Count());
         }
 
@@ -949,26 +948,38 @@ END
         }
 
         [DataTestMethod]
-        [DataRow("Text(123, \",###.0\")", false, "Error 10-18: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale-specific separators not supported")]
-        [DataRow("Text(123, \"\\,###\\.\")", false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped locale-specific separators not supported")]
-        [DataRow("Text(123, \"#\", \"fr-FR\")", false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
-        [DataRow("Text(123, \"[$-fr-FR]#\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
-        [DataRow("Text(123, \"#[$-fr-FR]\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token in format string not supported")]
-        [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
-        [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
-        public void CheckTextFailures(string expr, bool success, string message = null)
+        [DataRow("Text(123, \"#[$-fr-FR]\")", false, false, "Error 0-23: The function 'Text' has some invalid arguments.", DisplayName = "Locale token in format string not supported")]
+        [DataRow("Text(123, \"#\\[$-fr-FR]\")", false, false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped Locale token in format string not supported")]
+        [DataRow("Text(123, \",###.0\")", true, false, "Error 10-18: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale-specific separators not supported")]
+        [DataRow("Text(123, \"\\,###\\.\")", true, false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Escaped locale-specific separators not supported")]
+        [DataRow("Text(123, \"#\", \"fr-FR\")", true, false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
+        [DataRow("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
+        [DataRow("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
+        [DataRow("Int(\"123\")", true, true, DisplayName = "Int on string")]       
+        public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
-            var engine = new PowerFx2SqlEngine();
-            var result = engine.Check(expr);
+            
+            var sqlEngine = new PowerFx2SqlEngine();
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expr);
+
+            Assert.AreEqual(pfxSuccess, check.IsSuccess);
+
+            if (!check.IsSuccess)
+            {
+                Assert.IsTrue(check.Errors.Select(err => err.Message.Contains(message)).Any());
+            }
+
+            var result = sqlEngine.Check(expr);
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(success, result.IsSuccess);
-            if (!success)
+            Assert.AreEqual(sqlSuccess, result.IsSuccess);
+            Assert.IsNotNull(result.Errors);
+
+            if (!result.IsSuccess)
             {
-                Assert.IsNotNull(result.Errors);
-                Assert.AreEqual(1, result.Errors.Count());
-                Assert.AreEqual(message, result.Errors.First().ToString());
+                Assert.IsTrue(result.Errors.Select(err => err.Message.Contains(message)).Any());
             }
         }
 

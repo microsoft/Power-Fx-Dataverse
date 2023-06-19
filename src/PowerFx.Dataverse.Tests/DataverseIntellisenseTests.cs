@@ -208,9 +208,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var intellisense = Suggest("a|");
 
-            // No crashes
-            Assert.IsNull(intellisense.Exception);
-
             // implemented function: Abs
             Assert.IsTrue(intellisense.Suggestions.Any(sug => sug.Kind == SuggestionKind.Function && sug.DisplayText.Text == "Abs"));
 

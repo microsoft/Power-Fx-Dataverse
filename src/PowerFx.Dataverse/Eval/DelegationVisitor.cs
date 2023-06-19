@@ -92,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(ret._node);
         }
 
-        protected override IntermediateNode Materialize(RetVal ret)
+        public override IntermediateNode Materialize(RetVal ret)
         {
             if (ret.IsDelegating)
             {
