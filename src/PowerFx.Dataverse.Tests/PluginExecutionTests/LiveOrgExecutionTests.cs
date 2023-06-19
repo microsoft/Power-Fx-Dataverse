@@ -1041,7 +1041,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
     }
 
-    internal class DataverseAsyncClient : IDataverseServices, IDisposable
+    internal class DataverseAsyncClient : IDataverseServices, IDisposable, IDataverseRefresh
     {
         private readonly ServiceClient _svcClient;
         private bool disposedValue;

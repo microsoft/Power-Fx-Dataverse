@@ -62,7 +62,10 @@ namespace Microsoft.PowerFx.Dataverse
             RecordType recordType = _parent.GetRecordType(entityMetadata);
             DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
 
-            var slot = _symbols.AddVariable(variableName, tableValue.Type, mutable: true);
+            var slot = _symbols.AddVariable(variableName, tableValue.Type, new SymbolProperties {
+                 CanSet = false,
+                 CanMutate = true
+            });
 
             _tablesDisplay2Value[variableName] = tableValue;
             _parent.SymbolValues.Set(slot, tableValue);

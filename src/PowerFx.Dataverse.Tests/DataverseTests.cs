@@ -976,7 +976,7 @@ END
         [DataRow("UTCNow()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCNow")]
         [DataRow("UTCToday()", true, typeof(DateTimeNoTimeZoneType), DisplayName = "UTCToday")]
         [DataRow("IsUTCToday(UTCNow())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCNow")]
-        [DataRow("Now()", false, null, "Error 0-5: Now is not supported in formula columns, use UTCNow instead.", DisplayName = "Now not supported")]
+        [DataRow("Now()", true, typeof(DateTimeType), DisplayName = "Now")]
         [DataRow("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.", DisplayName = "Today not supported")]
         [DataRow("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.", DisplayName = "IsToday not supported")]
         [DataRow("IsUTCToday(UTCToday())", true, typeof(BooleanType), DisplayName = "IsUTCToday of UTCToday")]
@@ -1025,6 +1025,13 @@ END
         [DataRow("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(dateOnly, 2)", false, typeof(SqlDecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [DataRow("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
+        [DataRow("DateDiff(UTCNow(), Now())", false, null, "Error 0-25: This operation cannot be performed on values which are of different Date Time Behaviors.")]
+        [DataRow("Now() < UTCNow()", false, null, "Error 6-7: This operation cannot be performed on values which are of different Date Time Behaviors.")]
+        [DataRow("DateAdd(Now(), 1, TimeUnit.Days)", true, typeof(DateTimeType), DisplayName = "DateAdd Days User Local")]
+        [DataRow("IsUTCToday(Now())", true, typeof(BooleanType), DisplayName = "IsUTCToday of Now function")]
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
