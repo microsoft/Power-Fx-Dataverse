@@ -1612,7 +1612,6 @@ END
         [DataRow("new_price + refg.data", "Price + Other.Data", DisplayName = "Lookup")]
         [DataRow("refg.data + refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", "Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", DisplayName = "Multiple Lookups")]
         [DataRow("refg.data + self.new_price", "Other.Data + 'Self Reference'.Price", DisplayName = "Self Reference")]
-        [DataRow("If(true, \"random string\", Text(new_price))", "If(true, \"random string\", Text(Price))", DisplayName = "Function")]
         [DataRow("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)", DisplayName = "CDS Enum literal")]
         [DataRow("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)", DisplayName = "CDS Global Enum literal")]
         [DataRow("DateAdd(UTCToday(), new_quantity, TimeUnit.Months)", "DateAdd(UTCToday(), Quantity, TimeUnit.Months)", DisplayName = "Enum literal")]

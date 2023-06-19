@@ -490,8 +490,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "int", "20"}
                 });
 
-                ExecuteSqlTest("Text(Integer)", "20", cx, metadata);
-                ExecuteSqlTest("Text(WholeDecimal)", "30", cx, metadata);
+                ExecuteSqlTest("IsError(Text(Integer))", true, cx, metadata);
+                ExecuteSqlTest("IsError(Text(WholeDecimal))", true, cx, metadata);
                 ExecuteSqlTest("IsError(Text(FractionalDecimal))", true, cx, metadata);
                 ExecuteSqlTest("Int(\"30\")", 30M, cx, metadata);
                 ExecuteSqlTest("IsError(Int(\"30.5\"))", true, cx, metadata);
