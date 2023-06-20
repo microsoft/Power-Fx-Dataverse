@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static readonly EntityMetadataModel Accounts = new EntityMetadataModel
         {
             LogicalName = "Accounts",
-            DisplayCollectionName = "Accounts",
+            DisplayCollectionName = "Table containing accounts",
             PrimaryIdAttribute = "accountid",
             Attributes = new AttributeMetadataModel[]
             {
@@ -65,6 +65,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _ = Evaluate("Refresh(Accounts)", dv, engine);
             Assert.AreEqual(2, ds.RefreshCount); // Refresh called
             Assert.AreEqual(0, ds.CacheSize);    // Cache cleared
+
+            _ = Evaluate("Patch(Accounts, First(Filter(Accounts, 'Account Name' = \"Account0\")), {'Account Name': \"Account2\" })", dv, engine);
+            Assert.AreEqual(2, ds.RefreshCount); // No change here
+            Assert.AreEqual(2, ds.CacheSize);    // Still no cache
+
+            _ = Evaluate("First(Accounts)", dv, engine);
+            Assert.AreEqual(2, ds.RefreshCount); // No change
+            Assert.AreEqual(2, ds.CacheSize);    // We still have 2 rows
         }
 
         private FormulaValue Evaluate(string formula, DataverseConnection dv, RecalcEngine engine)
