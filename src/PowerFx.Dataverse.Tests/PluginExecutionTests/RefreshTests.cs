@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             _ = Evaluate("Patch(Accounts, First(Filter(Accounts, 'Account Name' = \"Account0\")), {'Account Name': \"Account2\" })", dv, engine);
             Assert.AreEqual(2, ds.RefreshCount); // No change here
-            Assert.AreEqual(2, ds.CacheSize);    // Still no cache
+            Assert.AreEqual(2, ds.CacheSize);    // Cache has been populated again (Account1 and Account2)
 
             _ = Evaluate("First(Accounts)", dv, engine);
             Assert.AreEqual(2, ds.RefreshCount); // No change
