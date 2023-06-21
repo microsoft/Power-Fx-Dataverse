@@ -32,9 +32,20 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-
                 var result = await t2.RetrieveMultipleAsync(filter, count, cancel);
                 return result;
+            }
+
+            public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            {
+                // Binder should have enforced that this always succeeds.
+                var t2 = (DataverseTableValue)table;
+                if(t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
+                {
+                    return amd.ToAttributeObject(value);
+                }
+
+                throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
             }
 
             public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
