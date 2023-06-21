@@ -202,7 +202,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.UpdateAsync(entity, cancellationToken);
         }
 
-        public void Refresh(string logicalTableName)
+        public virtual void Refresh(string logicalTableName)
         {
             if (MaxEntries != 0)
             {

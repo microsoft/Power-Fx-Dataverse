@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // Fails for EntityReference due to ReferencingEntityNavigationPropertyName. 
                     if (!(attr.Value is EntityReference))
                     {
-                        metadata.Attributes.First(x => x.LogicalName == attr.Key); // throw if missing. 
+                        metadata.Attributes.First(x => x.LogicalName == attr.Key || x.DisplayName.UserLocalizedLabel.Label == attr.Key); // throw if missing. 
                     }
                 }
 
@@ -278,7 +278,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return newEntity;
         }
 
-        public void Refresh(string logicalTableName)
+        public virtual void Refresh(string logicalTableName)
         {            
         }
     }
