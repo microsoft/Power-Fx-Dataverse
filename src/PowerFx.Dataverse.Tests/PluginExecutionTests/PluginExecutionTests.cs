@@ -1796,13 +1796,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataTestMethod]
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
         [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
             "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".",
             "Warning 7-9: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão da ID faz referência a ThisRecord.")]
+            "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
             "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
             )]
