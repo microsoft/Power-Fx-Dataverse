@@ -1730,6 +1730,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             1,
             "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)")]
 
+        [DataRow("Filter(t1, Price > Blank())",
+            2,
+            "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)")]
+
         [DataRow("Filter(t1, Price = Blank())",
             0,
             "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)")]
