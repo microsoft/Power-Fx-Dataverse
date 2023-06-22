@@ -50,7 +50,7 @@ namespace Microsoft.PowerFx
 
         private const string OptionPowerFxV1 = "PowerFxV1";
 
-        private const string ConnFilePath = "C:\\dvconnect.txt";
+        private const string BatchFileName = "ReplDV.txt";
 
         private static readonly BasicUserInfo _userInfo = new BasicUserInfo
         {
@@ -154,27 +154,19 @@ namespace Microsoft.PowerFx
 
             Console.WriteLine($"Experimental features enabled:{enabled}");
 
-            try
-            {
-                var connLines = File.ReadLines(ConnFilePath).ToArray();
-                var connString = FormulaValue.New(connLines[0]);
-                var connOrg = FormulaValue.New(bool.Parse(connLines[1]));
-
-                new DVConnectFunction2Arg().Execute(connString, connOrg);
-
-                Console.WriteLine($"Auto-connected: {connLines[0].Substring(0, 50)}...");
-            }
-            catch (Exception ex)
-            {
-                // Couldn't connect automatically
-                Console.WriteLine($"Could not auto-connect: {ex.Message}");
-            }
-
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
             Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
 
-            REPL(Console.In, false);
+            var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
+            if (File.Exists(batchPath))
+            {
+                var batchFile = File.OpenText(batchPath);
+                REPL(batchFile, echo: true);
+                batchFile.Close();
+            }
+
+            REPL(Console.In, echo: false);
         }
 
         // Pattern match for Set(x,y) so that we can define the variable
@@ -477,16 +469,19 @@ namespace Microsoft.PowerFx
 
                 if (echo)
                 {
-                    // skip >> for comments and setup
+                    if (!Regex.IsMatch(exprPartial, "^\\s*$"))
+                    {
+                        Console.Write("\n>> " + exprPartial);
+                    }
+
+                    // skip >> for comments and setup on output
                     if (Regex.IsMatch(exprPartial, "^\\s*//") || Regex.IsMatch(exprPartial, "^#SETUP"))
                     {
-                        Console.Write(exprPartial);
                         output?.Write(exprPartial + "\n");
                         usefulCount = 0;
                     }
                     else if (!Regex.IsMatch(exprPartial, "^\\s*$"))
                     {
-                        Console.Write("\n>> " + exprPartial);
                         output?.Write(">> " + exprPartial);
                     }
                 }
@@ -864,13 +859,6 @@ namespace Microsoft.PowerFx
                 {
                     _dv = SingleOrgPolicy.New(_svcClient);
                 }
-
-                var connFile = File.CreateText(ConnFilePath);
-
-                connFile.WriteLine(connectionString);
-                connFile.WriteLine(multiOrg.Value.ToString());
-                connFile.Flush();
-
 
                 return BooleanValue.New(true);
             }
