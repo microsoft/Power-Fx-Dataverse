@@ -286,7 +286,6 @@ END
             var engine = new PowerFx2SqlEngine();
             var intellisense = engine.Suggest("foo + ", cursorPosition: 6);
 
-            Assert.IsNotNull(intellisense);            
             Assert.AreEqual(0, intellisense.Suggestions.Count());
         }
 

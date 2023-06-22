@@ -244,16 +244,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(LazyEvalNode node, Context context)
         {
-            if (node == null)
-            {
-                throw new ArgumentNullException(nameof(node));
-            }
-            
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             if (node.Child is ResolvedObjectNode)
             {
                 return Ret(node);
@@ -275,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
                 RetVal arg0c = node.Args[0].Accept(this, context);
 
                 arg0c = MaterializeTableOnly(arg0c);
-
+                
                 // This is what actually adds a warning message
                 return base.Visit(node, context, arg0c);
             }
