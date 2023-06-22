@@ -96,7 +96,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
                 else if (node.Args.Count == 1)
                 {
-                    throw BuildUnsupportedArgumentException(node.Function, 0, node.Args[0].IRContext.SourceContext);
+                    throw new SqlCompileException(SqlCompileException.FunctionNotSupported, node.IRContext.SourceContext, "Text(Number)", "Text(Number,format_text)");
                 }
 
                 var result = context.GetTempVar(context.GetReturnType(node));
