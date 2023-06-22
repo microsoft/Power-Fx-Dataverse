@@ -154,21 +154,22 @@ namespace Microsoft.PowerFx
 
             Console.WriteLine($"Experimental features enabled:{enabled}");
 
-            try
-            {
-                var connLines = File.ReadLines(ConnFilePath).ToArray();
-                var connString = FormulaValue.New(connLines[0]);
-                var connOrg = FormulaValue.New(bool.Parse(connLines[1]));
+            if (File.Exists(ConnFilePath))
+                try
+                {
+                    var connLines = File.ReadLines(ConnFilePath).ToArray();
+                    var connString = FormulaValue.New(connLines[0]);
+                    var connOrg = FormulaValue.New(bool.Parse(connLines[1]));
 
-                new DVConnectFunction2Arg().Execute(connString, connOrg);
+                    new DVConnectFunction2Arg().Execute(connString, connOrg);
 
-                Console.WriteLine($"Auto-connected: {connLines[0].Substring(0, 50)}...");
-            }
-            catch (Exception ex)
-            {
-                // Couldn't connect automatically
-                Console.WriteLine($"Could not auto-connect: {ex.Message}");
-            }
+                    Console.WriteLine($"Auto-connected: {connLines[0].Substring(0, 50)}...");
+                }
+                catch (Exception ex)
+                {
+                    // Couldn't connect automatically
+                    Console.WriteLine($"Could not auto-connect: {ex.Message}");
+                }
 
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
             Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
@@ -865,12 +866,14 @@ namespace Microsoft.PowerFx
                     _dv = SingleOrgPolicy.New(_svcClient);
                 }
 
-                var connFile = File.CreateText(ConnFilePath);
+                if (!File.Exists(ConnFilePath))
+                {
+                    var connFile = File.CreateText(ConnFilePath);
 
-                connFile.WriteLine(connectionString);
-                connFile.WriteLine(multiOrg.Value.ToString());
-                connFile.Flush();
-
+                    connFile.WriteLine(connectionString);
+                    connFile.WriteLine(multiOrg.Value.ToString());
+                    connFile.Flush();
+                }
 
                 return BooleanValue.New(true);
             }
