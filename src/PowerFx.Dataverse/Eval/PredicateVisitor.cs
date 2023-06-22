@@ -248,15 +248,27 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqDecimals:
                 case BinaryOpKind.EqCurrency:
-                    var eqNode = _hooks.MakeEqCall(_callerSourceTable, tableType, fieldName, rightNode, _callerScope);
+                    var eqNode = _hooks.MakeEqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
                     ret = new RetVal(node, eqNode, count: null);
+                    return ret;
+                case BinaryOpKind.NeqNumbers:
+                case BinaryOpKind.NeqBoolean:
+                case BinaryOpKind.NeqText:
+                case BinaryOpKind.NeqDate:
+                case BinaryOpKind.NeqTime:
+                case BinaryOpKind.NeqDateTime:
+                case BinaryOpKind.NeqGuid:
+                case BinaryOpKind.NeqDecimals:
+                case BinaryOpKind.NeqCurrency:
+                    var neqNode = _hooks.MakeNeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
+                    ret = new RetVal(node, neqNode, count: null);
                     return ret;
                 case BinaryOpKind.LtNumbers:
                 case BinaryOpKind.LtDecimals:
                 case BinaryOpKind.LtDateTime:
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtTime:
-                    var ltNode = _hooks.MakeLtCall(_callerSourceTable, tableType, fieldName, rightNode, _callerScope);
+                    var ltNode = _hooks.MakeLtCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
                     ret = new RetVal(node, ltNode, count: null);
                     return ret;
                 case BinaryOpKind.LeqNumbers:
@@ -264,7 +276,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.LeqDateTime:
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqTime:
-                    var leqNode = _hooks.MakeLeqCall(_callerSourceTable, tableType, fieldName, rightNode, _callerScope);
+                    var leqNode = _hooks.MakeLeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
                     ret = new RetVal(node, leqNode, count: null);
                     return ret;
                 case BinaryOpKind.GtNumbers:
@@ -272,7 +284,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.GtDateTime:
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtTime:
-                    var gtNode = _hooks.MakeGtCall(_callerSourceTable, tableType, fieldName, rightNode, _callerScope);
+                    var gtNode = _hooks.MakeGtCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
                     ret = new RetVal(node, gtNode, count: null);
                     return ret;
                 case BinaryOpKind.GeqNumbers:
@@ -280,7 +292,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.GeqDateTime:
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqTime:
-                    var geqNode = _hooks.MakeGeqCall(_callerSourceTable, tableType, fieldName, rightNode, _callerScope);
+                    var geqNode = _hooks.MakeGeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
                     ret = new RetVal(node, geqNode, count: null);
                     return ret;
                 default:

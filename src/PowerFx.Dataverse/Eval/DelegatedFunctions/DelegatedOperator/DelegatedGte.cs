@@ -1,5 +1,5 @@
 ﻿using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Query;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -9,8 +9,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedGeq : DelegatedOperatorFunction
     {
-        public DelegatedGeq(DelegationHooks hooks)
-          : base(hooks, "__gte", ConditionOperator.GreaterEqual, FormulaType.String)
+        public DelegatedGeq(DelegationHooks hooks, BinaryOpKind operation)
+          : base(hooks, "__gte", operation)
         {
         }
     }

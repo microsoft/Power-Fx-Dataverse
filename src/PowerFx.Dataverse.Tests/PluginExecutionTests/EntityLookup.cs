@@ -318,6 +318,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         return true;
                     }
                     break;
+                case ConditionOperator.Null:
+                    if (value == null)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.NotNull:
+                    if (value != null)
+                    {
+                        return true;
+                    }
+                    break;
                 case ConditionOperator.GreaterThan:
                     if (comparer.Compare(condition.Values[0], value) < 0)
                     {

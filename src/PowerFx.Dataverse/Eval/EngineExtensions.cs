@@ -17,6 +17,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Nested class to decrease visibility. 
         public class DelegationHooks
         {
+            public virtual int DefaultMaxRows => throw new NotImplementedException();
+
             public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
             {
                 throw new NotImplementedException();
@@ -77,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
                 else
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, query._tableType);
-                    var args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCount };
+                    var args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
                     if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                     {
                         var scopeSymbol= originalCallNode.Scope;
@@ -121,37 +123,44 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
-                var func = new DelegatedEq(this);
+                var func = new DelegatedEq(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal IntermediateNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
-                var func = new DelegatedGt(this);
+                var func = new DelegatedNeq(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
-                var func = new DelegatedGeq(this);
+                var func = new DelegatedGt(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
-                var func = new DelegatedLt(this);
+                var func = new DelegatedGeq(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
-                var func = new DelegatedLeq(this);
+                var func = new DelegatedLt(this, operation);
+                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                return node;
+            }
+
+            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            {
+                var func = new DelegatedLeq(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }

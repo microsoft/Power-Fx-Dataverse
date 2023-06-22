@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        public override async Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        protected override async Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
             var filter = new FilterExpression();
             return new DelegationFormulaValue(filter);

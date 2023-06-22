@@ -3,6 +3,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
@@ -11,6 +12,7 @@ using System.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
+using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -25,6 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
         // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
         private readonly DelegationHooks _hooks;
+        
         private readonly int _maxRows;
 
         // For reporting delegation Warnings. 
@@ -49,9 +52,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly IntermediateNode _topCount;
 
+            private readonly NumberLiteralNode _maxRows;
+
             public bool hasTopCount => _topCount != null;
 
-            public IntermediateNode TopCount => _topCount ?? new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
+            public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
             public readonly DelegationHooks _hooks;
 
@@ -72,19 +77,17 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly EntityMetadata _metadata;
 
-            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, ResolvedObjectNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count)
+            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, ResolvedObjectNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows)
             {
-                if (tableType == null || originalNode == null || hooks == null)
-                {
-                    throw new ArgumentNullException();
-                }
+                this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
+                this._sourceTableIRNode = sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode));
+                this._tableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
+                this._originalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
+                this._hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
 
+                // topCount and filter are optional.
                 this._topCount = count;
                 this._filter = filter;
-                this._sourceTableIRNode = sourceTableIRNode;
-                this._tableType = tableType;
-                this._originalNode = originalNode;
-                this._hooks = hooks;
 
                 var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
                 if (tableDS != null)
@@ -254,7 +257,7 @@ namespace Microsoft.PowerFx.Dataverse
                     bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
                     if (isRealTable)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows);
                         return ret;
                     }
                 }
@@ -405,7 +408,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (tableArg._originalNode is ResolvedObjectNode)
             {
                 var filterCombined = tableArg.AddFilter(pr.filter, node.Scope);
-                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null);
+                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
             }
             else
             {
@@ -442,7 +445,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
             }
 
             return result;
@@ -452,13 +455,18 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
             var filter = tableArg.Filter;
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne, _maxRows);
             return res;
         }
 
         private RetVal ProcessFirstN(CallNode node, RetVal tableArg)
         {
-            if (node.Args.Count != 2)
+            // Add default count of 1 if not specified.
+            if(node.Args.Count == 1)
+            {
+                node.Args.Add(new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1));
+            }
+            else if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
@@ -466,7 +474,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Since table was delegating it potentially has filter attached to it, so also add that filter to the new node.
             var filter = tableArg.Filter;
             var topCount = node.Args[1];
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount, _maxRows);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)
@@ -482,7 +490,7 @@ namespace Microsoft.PowerFx.Dataverse
             var reason = new ExpressionError
             {
                 MessageKey = "WrnDelagationTableNotSupported",
-                MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows},
+                MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows },
                 Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1,2),
                 Severity = ErrorSeverity.Warning
             };
