@@ -956,12 +956,10 @@ END
         [DataRow("Text(123, \"#\", \"fr-FR\")", true, false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
         [DataRow("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Int(\"123\")", true, true, DisplayName = "Int on string")]       
+        [DataRow("Int(\"123\")", true, true, DisplayName = "Int on string")]
         public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
-            
             var sqlEngine = new PowerFx2SqlEngine();
-
             var engine = new RecalcEngine();
             var check = engine.Check(expr);
 
