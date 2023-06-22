@@ -161,9 +161,14 @@ namespace Microsoft.PowerFx
             var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
             if (File.Exists(batchPath))
             {
+                Console.WriteLine($"\n>> // Processing {batchPath}");
                 var batchFile = File.OpenText(batchPath);
                 REPL(batchFile, echo: true);
                 batchFile.Close();
+            }
+            else
+            {
+                Console.WriteLine($"\n>> // Place autoexec formulas in {batchPath}");
             }
 
             REPL(Console.In, echo: false);
