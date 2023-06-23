@@ -709,6 +709,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        // Ensure lazy loaded symbols are available on first use. 
+        [TestMethod]
+        public void SingleOrgPolicyLazyEval()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var engine = new RecalcEngine();
+                        
+            // Ensure first call gets correct answer. 
+            var result = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            Assert.AreEqual(3.0, result.ToDouble());
+
+            // 2nd call better be correct. 
+            var result2 = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            Assert.AreEqual(3.0, result2.ToDouble());
+        }
+
         // When using WholeOrg policy, we're using display names,
         // which are converted to invariant.
         [DataTestMethod]
