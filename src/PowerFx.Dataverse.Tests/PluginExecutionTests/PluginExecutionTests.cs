@@ -862,6 +862,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Simulates a row being deleted by an external user
             el.DeleteAsync(logicalName, _g1);
+            el.DeleteAsync(logicalName, _g3);
+            el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -916,6 +918,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Simulates a row being deleted by an external force
             el.DeleteAsync(logicalName, _g1);
+            el.DeleteAsync(logicalName, _g3);
+            el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -1167,82 +1171,123 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        // Table 't1' has 1 item with Price = 100
+        // Table 't1' has
+        // 1st item with
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // 2nd item with
+        // Price = 10
+        // 3rd item with
+        // Price = -10
+
         [DataTestMethod]
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.")]
 
-        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",  // Basic case 
+        //Basic case
+        [DataRow("LookUp(t1, Price = 255).Price",
+            null,
+            "(__retrieveSingle(t1, __eq(t1, new_price, 255))).new_price")]
+
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",
             100.0,
-            "(__lookup(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
+            "(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price")]
 
+        //Basic case with And and Or
+        [DataRow("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price",
+            100.0,
+            "(__retrieveSingle(t1, __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price")]
+
+        [DataRow("LookUp(t1, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price",
+            100.0,
+            "(__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price")]
+
+        // variable
         [DataRow("LookUp(t1, LocalId=_g1).Price",
             100.0,
-            "(__lookup(t1, _g1)).new_price")] // variable
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
+        // Date
+        [DataRow("LookUp(t1, Date = Date(2023, 6, 1)).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, new_date, Date(2023, 6, 1)))).new_price")]
+
+        // DateTime with coercion
+        [DataRow("LookUp(t1, DateTime = Date(2023, 6, 1)).Price",
+             null,
+            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))))).new_price")]
+
+        [DataRow("LookUp(t1, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price",
+             100.0,
+            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)))).new_price")]
+
+
+        // reversed order still ok 
         [DataRow("LookUp(t1, _g1 = LocalId).Price",
-            100.0, // reversed order still ok 
-            "(__lookup(t1, _g1)).new_price")]
+            100.0,
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
+        // explicit ThisRecord is ok. IR will handle. 
         [DataRow("LookUp(t1, ThisRecord.LocalId=_g1).Price",
-            100.0, // explicit ThisRecord is ok. IR will handle. 
-            "(__lookup(t1, _g1)).new_price")] // variable
+            100.0,
+            "(__retrieveGUID(t1, _g1)).new_price")]
 
+        // Alias is ok. IR will handle. 
         [DataRow("LookUp(t1 As XYZ, XYZ.LocalId=_g1).Price",
-            100.0, // Alias is ok. IR will handle. 
-            "(__lookup(t1, _g1)).new_price")] // variable
+            100.0,
+            "(__retrieveGUID(t1, _g1)).new_price")] // variable
 
-        // Working
+        // lambda uses ThisRecord.Price, can't delegate
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
-            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")] // lamba uses ThisRecord.Price, can't delegate
+            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
 
-        [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
-            100.0, // non ID field
-            "(LookUp(t1, (GtNumbers(new_price,50)))).new_price",
-            "Warning 11-21: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")]
+        // On non primary field.
+        [DataRow("LookUp(t1, Price > 50).Price",
+            100.0,
+            "(__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price")]
 
+        // successful with complex expression
         [DataRow("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
-            100.0, // successful with complex expression
-            "(__lookup(t1, If(True, (_g1), (_gMissing)))).new_price")]
+            100.0,
+            "(__retrieveGUID(t1, If(True, (_g1), (_gMissing)))).new_price")]
 
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            100.0, // wrapper in Filter, can't delegate
-            "(LookUp(Filter(t1, (EqNumbers(1,1))), (EqGuid(localid,_g1)))).new_price",
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
-            )]
-
+        // nested delegation, both delegated.
         [DataRow("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price",
             100.0,
-            "(__lookup(t1, (__lookup(t1, _g1)).localid)).new_price"
-            )] // nested delegation, both delegated.
+            "(__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price"
+            )]
 
+        // Can't delegate if Table Arg is delegated.
+        [DataRow("LookUp(Filter(t1, Price = 100), localid=_g1).Price",
+            100.0,
+            "(LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price",
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
 
+        // Can't delegate if Table Arg is delegated.
+        [DataRow("LookUp(FirstN(t1, 1), localid=_g1).Price",
+            100.0,
+            "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price",
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
+
+        // Can Delegate on non primary-key field.
         [DataRow("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
             100.0,
-            "(__lookup(t1, (LookUp(t1, (GtNumbers(new_price,50)))).localid)).new_price",
-            "Warning 40-49: Can't delegate LookUp: only support delegation for lookup on primary key field 'localid'.")] // Inner not delegated, but outer still is. 
+            "(__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price")]
 
         [DataRow("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
-            "(__lookup(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
+            "(__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price")]
 
-        [DataRow("First(t1).Price",
-            100.0, // unsupported function, can't yet delegate
-            "(First(t1)).new_price",
-            "Warning 6-8: This operation on table 'local' may not work if it has more than 999 rows."
-            )]
-
+        // unsupported function, can't yet delegate
         [DataRow("Last(t1).Price",
-            100.0, // unsupported function, can't yet delegate
+            -10.0,
             "(Last(t1)).new_price",
             "Warning 5-7: This operation on table 'local' may not work if it has more than 999 rows."
             )]
+
+        // unsupported function, can't yet delegate
         [DataRow("CountRows(t1)",
-            1.0, // unsupported function, can't yet delegate
+            3.0,
             "CountRows(t1)",
             "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows."
             )]
@@ -1265,16 +1310,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(Collect((t1), {new_price:200})).new_price"
             )]
 
+        // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
-            100.0, // Aliasing prevents delegation. 
+            100.0,
             "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
-            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows."
-            )]
+            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // $$$ Confirm is NotFound Error or Blank? 
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
-            true, // delegated, but not found is blank()
-            "IsError(__lookup(t1, If(False, (_g1), (_gMissing))))")]
+            true, // delegated, but not found is Error
+            "IsError(__retrieveGUID(t1, If(False, (_g1), (_gMissing))))")]
+
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            null, // Bad practice, modifying the collection while we enumerate.
+            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
+            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
@@ -1283,19 +1334,37 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [DataRow("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
             100.0,
-            "(With({f:_g1}, (__lookup(t1, f)))).new_price")] // variable
+            "(With({f:_g1}, (__retrieveGUID(t1, f)))).new_price")] // variable
 
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,localid)))).new_price",
             "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
             "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")] // variable
+
+        // Error Handling
+        [DataRow("LookUp(t1, Price = If(1/0, 255)).Price",
+            typeof(ErrorValue),
+            "(__retrieveSingle(t1, __eq(t1, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))))).new_price")]
+
+        // Blank Handling
+        [DataRow("LookUp(t1, Price = Blank()).Price",
+            null,
+            "(__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price")]
+
+        [DataRow("LookUp(t1, Price <> Blank()).Price",
+            100.0,
+            "(__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price")]
+
+        [DataRow("LookUp(t1, Price < Blank()).Price",
+            -10.0,
+            "(__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price")]
         public void LookUpDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
-
+                        
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             var tableT1 = dv.AddTable(displayName, logicalName);
 
@@ -1349,39 +1418,69 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsInstanceOfType(result, typeof(BlankValue));
             }
 
-            Assert.AreEqual(expected, result.ToObject());
+            if( expected is Type expectedType)
+            {
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            }
+            else
+            {
+                Assert.AreEqual(expected, result.ToObject());
+            }
         }
 
+        // Table 't1' has
+        // 1st item with
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // 2nd item with
+        // Price = 10
+        // 3rd item with
+        // Price = -10
+        
         [TestMethod]
 
-        // Basic case 
+        // Basic case.
         [DataRow("FirstN(t1, 2)",
-            "__top(t1, 2)")]
+            2,
+            "__retrieveMultiple(t1, __noFilter(), 2)")]
 
         // Variable as arg 
         [DataRow("FirstN(t1, _count)",
-            "__top(t1, _count)")]
+            3,
+            "__retrieveMultiple(t1, __noFilter(), _count)")]
 
         // Function as arg 
         [DataRow("FirstN(t1, If(1<0,_count, 1))",
-            "__top(t1, If(LtNumbers(1,0), (_count), (1)))")]
+            1,
+            "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (_count), (1)))")]
 
-        // Local Table doesn't get delegated
-        [DataRow("FirstN(Filter(t1, 1=1), 1)",
-            "FirstN(Filter(t1, (EqNumbers(1,1))), 1)",
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
-            )]
-
-        // FirstN wrapped in another function
-        [DataRow("Filter(FirstN(t1, _count), Price > 90)",
-            "Filter(__top(t1, _count), (GtNumbers(new_price,90)))")]
+        // Filter inside FirstN, both can be cominded (vice versa isn't true)
+        [DataRow("FirstN(Filter(t1, Price > 90), 10)",
+            1,
+            "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)")]
 
         // Aliasing prevents delegation. 
         [DataRow("With({r : t1}, FirstN(r, 100))",
+            3,
             "With({r:t1}, (FirstN(r, 100)))",
-            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows."
-            )]
-        public void FirstNDelegation(string expr, string expectedIr, params string[] expectedWarnings)
+            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Error handling
+
+        // Error propagates
+        [DataRow("FirstN(t1, 1/0)",
+            -1,
+            "__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))")]
+
+        // Blank is treated as 0.
+        [DataRow("FirstN(t1, If(1<0, 1))",
+            0,
+            "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))")]
+
+        //Inserts default second arg.
+       [DataRow("FirstN(t1)",
+            1,
+            "__retrieveMultiple(t1, __noFilter(), 1)")]
+        public void FirstNDelegation(string expr, int expectedRows, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
@@ -1393,6 +1492,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var opts = _parserAllowSideEffects;
             var config = new PowerFxConfig(); // Pass in per engine
             config.SymbolTable.EnableMutationFunctions();
+            config.Features.FirstLastNRequiresSecondArguments = false;
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100));
@@ -1400,7 +1500,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
 
-            // comapre IR to verify the delegations are happening exactly where we expect 
+            // compare IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
             var actualIr = check.GetCompactIRString();
             Assert.AreEqual(expectedIr, actualIr);
@@ -1421,14 +1521,291 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            Assert.IsTrue(result is TableValue);
+            // To check error cases.
+            if(expectedRows < 0)
+            {
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            }
+            else
+            {
+                Assert.IsInstanceOfType(result, typeof(TableValue));
+                Assert.AreEqual(expectedRows, ((TableValue)result).Rows.Count());
+            }
+        }
+
+        // Table 't1' has
+        // 1st item with
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // 2nd item with
+        // Price = 10
+        // 3rd item with
+        // Price = -10
+
+        [TestMethod]
+
+        //Basic case 
+        [DataRow("First(t1).Price",
+            100.0,
+            "(__retrieveSingle(t1, __noFilter())).new_price")]
+
+        // Filter inside FirstN, both can be combined *(vice versa isn't true)*
+        [DataRow("First(Filter(t1, Price < 100)).Price",
+            10.0,
+            "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price")]
+
+        [DataRow("First(FirstN(t1, 2)).Price",
+            100.0,
+            "(__retrieveSingle(t1, __noFilter())).new_price")]
+
+        // Aliasing prevents delegation. 
+        [DataRow("With({r : t1}, First(r).Price)",
+            100.0,
+            "With({r:t1}, ((First(r)).new_price))",
+            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+        public void FirstDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.AreEqual(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.AreEqual(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.AreEqual(expected, result.ToObject());
+        }
+
+        // Table 't1' has
+        // 1st item with
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // 2nd item with
+        // Price = 10
+        // 3rd item with
+        // Price = -10
+
+        [TestMethod]
+
+        //Basic case 
+        [DataRow("Filter(t1, Price < 100)",
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)")]
+
+        [DataRow("Filter(t1, Price <= 100)",
+            3,
+            "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)")]
+
+        [DataRow("Filter(t1, Price = 100)",
+            1,
+            "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)")]
+
+        [DataRow("Filter(t1, Price > 100)",
+            0,
+            "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)")]
+
+        [DataRow("Filter(t1, Price >= 100)",
+            1,
+            "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)")]
+
+        [DataRow("Filter(t1, Price < Float(120))",
+            3,
+            "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)")]
+
+        [DataRow("Filter(t1, Price < Decimal(20))",
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)")]
+
+        [DataRow("Filter(t1, Price < Abs(-120))",
+            3,
+            "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)")]
+
+        // Date
+        [DataRow("Filter(t1, Date = Date(2023, 6, 1))",
+            1,
+            "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)")]
+
+        // DateTime with coercion
+        [DataRow("Filter(t1, DateTime = Date(2023, 6, 1))",
+            0,
+            "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)")]
+
+        //Order doesn't matter
+        [DataRow("Filter(t1, 0 > Price)",
+            1,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)")]
+
+        // Variable as arg 
+        [DataRow("Filter(t1, Price > _count)",
+            0,
+            "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)")]
+
+        // Function as arg 
+        [DataRow("Filter(t1, Price > If(1<0,_count, 1))",
+            2,
+            "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (1))), 999)")]
+
+        // Filter nested in another function both delegated.
+        [DataRow("Filter(Filter(t1, Price > 0), Price < 100)",
+            1,
+            "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)")]
+
+        // Basic case with And
+        [DataRow("Filter(t1, Price < 120 And 90 < Price)",
+            1,
+            "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)")]
+
+        // Basic case with Or
+        [DataRow("Filter(t1, Price < 0 Or Price > 90)",
+            2,
+            "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)")]
+
+        // Delegation Not Allowed 
+
+        // predicate that uses function that is not delegable.
+        [DataRow("Filter(t1, IsBlank(Price))",
+            0,
+            "Filter(t1, (IsBlank(new_price)))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // predicate that uses function that is not delegable.
+        [DataRow("Filter(t1, Price < 120 And IsBlank(_count))",
+            0,
+            "Filter(t1, (And(LtNumbers(new_price,120), (IsBlank(_count)))))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Filter nested in FirstN function. Only FirstN is delegated.
+        [DataRow("Filter(FirstN(t1, 100), Price = 100)",
+            1,
+            "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(new_price,100)))",
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Aliasing prevents delegation. 
+        [DataRow("With({r : t1}, Filter(r, Price < 120))",
+            3,
+            "With({r:t1}, (Filter(r, (LtNumbers(new_price,120)))))",
+            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Comparing fields can't be delegated.
+        [DataRow("Filter(t1, Price < Old_Price)",
+            2,
+            "Filter(t1, (LtNumbers(new_price,old_price)))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Error handling
+        [DataRow("Filter(t1, Price < 1/0)",
+            -1,
+            "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)")]
+
+        // Blank handling
+        [DataRow("Filter(t1, Price < Blank())",
+            1,
+            "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)")]
+
+        [DataRow("Filter(t1, Price > Blank())",
+            2,
+            "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)")]
+
+        [DataRow("Filter(t1, Price = Blank())",
+            0,
+            "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)")]
+
+        [DataRow("Filter(t1, Price <> Blank())",
+            3,
+            "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)")]
+        public void FilterDelegation(string expr, int expectedRows, string expectedIr, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = _parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.AreEqual(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.AreEqual(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.AreEqual(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            // To check error cases.
+            if (expectedRows < 0)
+            {
+                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+            }
+            else
+            {
+                Assert.IsInstanceOfType(result, typeof(TableValue));
+                Assert.AreEqual(expectedRows, ((TableValue)result).Rows.Count());
+            }
         }
 
         [DataTestMethod]
-        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price", "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".")]
-        [DataRow("LookUp(t1, LocalId=LocalId).Price", "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?", "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
-        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price", "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
+        [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
+            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
+        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
+            "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".",
+            "Warning 7-9: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
+        [DataRow("LookUp(t1, LocalId=LocalId).Price",
+            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
+        [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
+            )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
             var logicalName = "local";
@@ -1462,9 +1839,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
         // DV works by making a copy of the entity when retrieving it. In-memory works by reference.
         [DataRow("With({oldCount:CountRows(t1)},Collect(t1,{Price:200});CountRows(t1)-oldCount)", 1.0)]
-        [DataRow("Collect(t1,{Price:110});CountRows(t1)", 2.0)]
-        [DataRow("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 2.0)]
-        [DataRow("With({x:Collect(t1,{Price:77}), y:Collect(t1,{Price:88})}, Remove(t1,x);Remove(t1,y);CountRows(t1))", 1.0)]
+        [DataRow("Collect(t1,{Price:110});CountRows(t1)", 4.0)]
+        [DataRow("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 4.0)]
+        [DataRow("With({x:Collect(t1,{Price:77}), y:Collect(t1,{Price:88})}, Remove(t1,x);Remove(t1,y);CountRows(t1))", 3.0)]
         public void CacheBug(string expr, double expected)
         {
             var logicalName = "local";
@@ -1903,19 +2280,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logicalName = "local";
             var displayName = "t1";
             var loopupExpr = "LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price";
-           
-            (DataverseConnection dv, DataverseEntityCache _, EntityLookup el) = CreateMemoryForRelationshipModelsWithCache();           
+
+            (DataverseConnection dv, DataverseEntityCache _, EntityLookup el) = CreateMemoryForRelationshipModelsWithCache();
             dv.AddTable(displayName, logicalName);
-            
+
             var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();            
+            config.SymbolTable.EnableMutationFunctions();
 
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
             var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result1.ToObject());
-           
+
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
             await el.DeleteAsync(logicalName, _g1);
@@ -1925,7 +2302,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine4.EnableDelegation(dv.MaxRows);
             var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.AreEqual(100.0, result4.ToObject());
-         
+
             // Refresh connection cache.
             dv.RefreshCache();
 
@@ -1933,8 +2310,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
             var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.IsInstanceOfType(result7, typeof(ErrorValue));  
-            
+            Assert.IsInstanceOfType(result7, typeof(ErrorValue));
+
             ErrorValue ev7 = (ErrorValue)result7;
             Assert.AreEqual("Error attempting Entity lookup. Entity local:00000000-0000-0000-0000-000000000001 not found", ev7.Errors[0].Message);
         }
@@ -2078,6 +2455,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
+        static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
+        static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
@@ -2102,7 +2481,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
 
-            entity1.Attributes["new_price"] = 100;
+
+            var entity3 = new Entity("local", _g3);
+            entity3.Attributes["new_price"] = Convert.ToDecimal(10);
+
+            var entity4 = new Entity("local", _g4);
+            entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
+
+            entity1.Attributes["new_price"] = Convert.ToDecimal(100);
+            entity1.Attributes["old_price"] = Convert.ToDecimal(200);
+            entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
+            entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
@@ -2111,11 +2500,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // entity1.new_quantity is intentionally blank. 
 
-            entity2.Attributes["data"] = 200;
+            entity2.Attributes["data"] = Convert.ToDecimal(200);
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
-            entityLookup.Add(CancellationToken.None, entity1, entity2);
+            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
             CdsEntityMetadataProvider metadataCache = policy is SingleOrgPolicy policy2
