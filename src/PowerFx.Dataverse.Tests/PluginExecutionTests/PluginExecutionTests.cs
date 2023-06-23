@@ -1438,48 +1438,48 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         
         [TestMethod]
 
-        //// Basic case.
-        //[DataRow("FirstN(t1, 2)",
-        //    2,
-        //    "__retrieveMultiple(t1, __noFilter(), 2)")]
+        // Basic case.
+        [DataRow("FirstN(t1, 2)",
+            2,
+            "__retrieveMultiple(t1, __noFilter(), 2)")]
 
-        //// Variable as arg 
-        //[DataRow("FirstN(t1, _count)",
-        //    3,
-        //    "__retrieveMultiple(t1, __noFilter(), _count)")]
+        // Variable as arg 
+        [DataRow("FirstN(t1, _count)",
+            3,
+            "__retrieveMultiple(t1, __noFilter(), _count)")]
 
-        //// Function as arg 
-        //[DataRow("FirstN(t1, If(1<0,_count, 1))",
-        //    1,
-        //    "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (_count), (1)))")]
+        // Function as arg 
+        [DataRow("FirstN(t1, If(1<0,_count, 1))",
+            1,
+            "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (_count), (1)))")]
 
-        //// Filter inside FirstN, both can be cominded (vice versa isn't true)
-        //[DataRow("FirstN(Filter(t1, Price > 90), 10)",
-        //    1,
-        //    "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)")]
+        // Filter inside FirstN, both can be cominded (vice versa isn't true)
+        [DataRow("FirstN(Filter(t1, Price > 90), 10)",
+            1,
+            "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)")]
 
-        //// Aliasing prevents delegation. 
-        //[DataRow("With({r : t1}, FirstN(r, 100))",
-        //    3,
-        //    "With({r:t1}, (FirstN(r, 100)))",
-        //    "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // Aliasing prevents delegation. 
+        [DataRow("With({r : t1}, FirstN(r, 100))",
+            3,
+            "With({r:t1}, (FirstN(r, 100)))",
+            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //// Error handling
+        // Error handling
 
-        //// Error propagates
-        //[DataRow("FirstN(t1, 1/0)",
-        //    -1,
-        //    "__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))")]
+        // Error propagates
+        [DataRow("FirstN(t1, 1/0)",
+            -1,
+            "__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))")]
 
         // Blank is treated as 0.
         [DataRow("FirstN(t1, If(1<0, 1))",
             0,
             "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))")]
 
-        // Inserts default second arg.
-        //[DataRow("FirstN(t1)",
-        //    1,
-        //    "__retrieveMultiple(t1, __noFilter(), 1)")]
+        //Inserts default second arg.
+       [DataRow("FirstN(t1)",
+            1,
+            "__retrieveMultiple(t1, __noFilter(), 1)")]
         public void FirstNDelegation(string expr, int expectedRows, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"

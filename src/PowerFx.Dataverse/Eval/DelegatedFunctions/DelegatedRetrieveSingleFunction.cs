@@ -22,10 +22,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override async Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken)
         {
-            // propagate args[0] if it's not a table (e.g. Blank/Error)
             if (args[0] is not TableValue table)
             {
-                return args[0];
+                throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
             }
 
             FilterExpression filter;
