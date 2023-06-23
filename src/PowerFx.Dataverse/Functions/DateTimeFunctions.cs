@@ -17,6 +17,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 {
     internal static partial class Library
     {
+
+        internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
+
         public static RetVal NowUTCNow(SqlVisitor visitor, CallNode node, Context context, FormulaType formulaType)
         {
             context.expressionHasTimeBoundFunction = true;

@@ -286,7 +286,6 @@ END
             var engine = new PowerFx2SqlEngine();
             var intellisense = engine.Suggest("foo + ", cursorPosition: 6);
 
-            Assert.IsNotNull(intellisense);            
             Assert.AreEqual(0, intellisense.Suggestions.Count());
         }
 
@@ -1233,6 +1232,9 @@ END
                 AttributeMetadataModel.NewDecimal("conflict1", "Conflict"),
                 AttributeMetadataModel.NewDecimal("conflict2", "Conflict"),
                 AttributeMetadataModel.NewDecimal("new_price", "Price"),
+                AttributeMetadataModel.NewDecimal("old_price", "Old_Price"),
+                AttributeMetadataModel.NewDateTime("new_date", "Date", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewDateTime("new_datetime", "DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
                 AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),

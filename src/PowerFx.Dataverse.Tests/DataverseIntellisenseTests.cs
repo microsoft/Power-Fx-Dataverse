@@ -126,7 +126,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Sel|", "'Self Reference'", DisplayName = "Lookup (Many To One) is shown")]
         [DataRow("Err|", "IfError", "IsError", DisplayName = "IfError and IsError are shown, but Error is excluded")]
         [DataRow("Tod|", "IsUTCToday", "UTCToday", DisplayName = "Today and IsToday are not suggested")]
-        [DataRow("Pric|", "Price", DisplayName = "Display Name of field is suggested, but logical name is not")]
+        [DataRow("Pric|", "Old_Price", "Price", DisplayName = "Display Name of field is suggested, but logical name is not")]
         [DataRow("Floa|", DisplayName = "Floating point fields are not suggested at all")]
         [DataRow("Other.Actual|", DisplayName = "Floating point fields on relationships are not suggested")]
         [DataRow("Other.Floa|", "Float", DisplayName = "Name collisions with floating point fields are handled")]
