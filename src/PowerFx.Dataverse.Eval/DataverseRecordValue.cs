@@ -46,6 +46,12 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        public override bool TryShallowCopy(out FormulaValue copy)
+        {
+            copy = this;
+            return true;
+        }
+
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
