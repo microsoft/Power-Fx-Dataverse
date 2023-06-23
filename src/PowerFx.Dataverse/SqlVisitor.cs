@@ -348,29 +348,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return context.SetIntermediateVariable(node, $"{Library.CoerceNullToInt(arg)}<>0");
 
                 case UnaryOpKind.NumberToText:
-                    arg = node.Child.Accept(this, context);
-                    {
-                        // Can only convert whole numbers.
-                        // If it's a literal, provide a compile-time error (rather than runtime).
-
-                        var node2 = node.Child;
-                        if (node2 is UnaryOpNode unary && unary.Op == UnaryOpKind.Negate)
-                        {
-                            // -X is Unary(negate,X). 
-                            node2 = unary.Child;
-                        }
-
-                        if (node2 is NumberLiteralNode number)
-                        {
-                            // Non integer 
-                            if (number.LiteralValue != (int)number.LiteralValue)
-                            {
-                                context._unsupportedWarnings.Add("Can't convert non-integer to text");
-                            }
-                        }                        
-                    }                    
-                    var str = CoerceNumberToString(arg, context);
-                    return context.SetIntermediateVariable(node, fromRetVal: str);
+                    throw new SqlCompileException(SqlCompileException.FunctionNotSupported, node.IRContext.SourceContext, "Implicit Conversion of Numbers", "Text(Number,format_text)");
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
