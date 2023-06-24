@@ -957,12 +957,15 @@ END
         [DataRow("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
         [DataRow("Int(\"123\")", true, true, DisplayName = "Int on string")]
-        [DataRow("Text(123)", false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
-        [DataRow("Text(123.4)", false, "Error 0-11: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
-        [DataRow("Text(1/2)", false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
-        [DataRow("Text(-123.4)", false, "Error 0-12: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
-        [DataRow("Text(1234567.89)", false, "Error 0-16: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
-        [DataRow("Text(If(1<0,2))", false, "Error 0-15: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Non-literal arg string")]
+        [DataRow("Text(123)", true, false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(123.4)", true, false, "Error 0-11: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1/2)", true, false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(-123.4)", true, false, "Error 0-12: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1234567.89)", true, false, "Error 0-16: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(If(1<0,2))", true, false, "Error 0-15: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("123 & 456", true, false, "Error 4-5: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("123.45 & 456", true, false, "Error 7-8: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("Concatenate(123, 456)", true, false, "Error 0-21: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
             var sqlEngine = new PowerFx2SqlEngine();
@@ -977,7 +980,7 @@ END
             }
 
             var result = sqlEngine.Check(expr);
-          
+
             Assert.IsNotNull(result);
             Assert.AreEqual(sqlSuccess, result.IsSuccess);
             Assert.IsNotNull(result.Errors);
