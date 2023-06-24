@@ -165,9 +165,34 @@ namespace Microsoft.PowerFx.Dataverse
             // If arg0 is a write-only arg, then skip it for reading. 
             bool firstArgIsWrite = false;
 
+
+            // Special casing Delegation runtime helper added during IR Rewriting.
+            if (node.Function is DelegatedOperatorFunction)
+            {
+                string tableLogicalName = null;
+                if (node.Args[0].IRContext.ResultType is AggregateType aggType)
+                {
+                    tableLogicalName = aggType.TableSymbolName;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have first argument an aggregate type");
+                }
+
+                if (node.Args[1] is TextLiteralNode field)
+                {
+                    AddFieldRead(tableLogicalName, field.LiteralValue);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a text literal");
+                }
+            }
+
             // Patch, Collect
             // Set
             var func = node.Function.Name;
+
             if (func == "Set")
             {
                 firstArgIsWrite = true;

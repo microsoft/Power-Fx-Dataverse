@@ -103,6 +103,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
 
+            if (entities.HasError)
+            {
+                return new List<DValue<RecordValue>>() { entities.DValueError("RetrieveMultiple") };
+            }
+
             var result = EntityCollectionToRecordValues(entities);
 
             return result;

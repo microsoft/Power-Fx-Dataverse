@@ -19,11 +19,13 @@ namespace Microsoft.PowerFx.Dataverse
         // Provides adapter for Dataverse project to call back into Dataverse.Eval types, like DataverseTableValue.
         private class DelegationHooksImpl :  DelegationHooks
         {
+            public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
+
             public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-
+                
                 var result = await t2.RetrieveAsync(id, cancel);
                 return result;
             }
@@ -32,9 +34,20 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-
                 var result = await t2.RetrieveMultipleAsync(filter, count, cancel);
                 return result;
+            }
+
+            public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            {
+                // Binder should have enforced that this always succeeds.
+                var t2 = (DataverseTableValue)table;
+                if(t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
+                {
+                    return amd.ToAttributeObject(value);
+                }
+
+                throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
             }
 
             public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
