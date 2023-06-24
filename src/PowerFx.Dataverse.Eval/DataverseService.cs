@@ -20,6 +20,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DataverseService(IOrganizationService service)
         {
+            // Long term, NumberIsFloat will be false. 
+            // If NumberIsFloat == false, then: 
+
+
+            // Assert(((ServiceClient)service).UseWebApi, false);
+
             _organizationService = service ?? throw new ArgumentNullException(nameof(service));
         }
 
