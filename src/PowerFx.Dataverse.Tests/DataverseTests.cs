@@ -425,8 +425,9 @@ END
         [DataRow("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.", DisplayName = "Built hybrid picklist")]
         public void CompileInvalidTypes(string expr, string error)
         {
+            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
             var checkResult = engine.Check(expr);
             Assert.AreEqual(false, checkResult.IsSuccess);
@@ -455,9 +456,10 @@ END
         [DataRow("true", typeof(BooleanType), DisplayName = "Boolean literal returns Boolean")]
         [DataRow("Mod(int, int)", typeof(SqlDecimalType), DisplayName = "Int from function returns decimal")]
         public void CompileValidReturnType(string expr, Type returnType)
-        {
+        {            
+            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -608,8 +610,9 @@ END
                 { "multiSelect", errCantProduceOptionSets }
             };
 
+            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
             foreach (var attr in AllAttributeModel.Attributes)
             {
@@ -870,8 +873,9 @@ END
         [DataRow("7 + 2", "", DisplayName = "Literals")]
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
+            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1175,8 +1179,9 @@ END
         [DataRow("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.", DisplayName = "Remote float")]
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
+            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1200,16 +1205,18 @@ END
         [DataRow("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.", DisplayName = "Virtual lookup field access")]
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
+            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
         [TestMethod]
         public void CompileLogicalLookup()
         {
+            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1640,8 +1647,9 @@ END
         [DataRow("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'", DisplayName = "Preserves whitespace and comments")]
         public void Translate(string expr, string translation)
         {
+            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.AreEqual(translation, actualTranslation);
 

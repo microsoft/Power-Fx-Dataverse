@@ -41,13 +41,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // HElper to create a DV connection over the given service client. 
-        public static DataverseConnection New(IOrganizationService client)
+        public static DataverseConnection New(IOrganizationService client, bool numberIsFloat = false)
         {
             var displayNameMap = client.GetTableDisplayNames();
 
             var services = new DataverseService(client);
             var rawProvider = new XrmMetadataProvider(client);
-            var metadataProvider = new CdsEntityMetadataProvider(rawProvider, displayNameMap);
+            var metadataProvider = new CdsEntityMetadataProvider(rawProvider, displayNameMap) { NumberIsFloat = numberIsFloat };
 
             var policy = new SingleOrgPolicy(displayNameMap);
 

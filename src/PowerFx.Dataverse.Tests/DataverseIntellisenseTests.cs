@@ -25,10 +25,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         internal static PowerFx2SqlEngine _allAttributesEngine => GetAllAttributesEngine(null);
 
+        // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
         internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
             new PowerFx2SqlEngine(
                 DataverseTests.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)),
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = true },
                 locale);
 
         /// <summary>

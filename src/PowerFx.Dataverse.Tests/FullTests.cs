@@ -619,10 +619,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null)
         {
+            // This NumberIsFloat should be removed once the SQL compiler natively supports Decimal
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
+                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = true });
 
             var options = new SqlCompileOptions
             {
