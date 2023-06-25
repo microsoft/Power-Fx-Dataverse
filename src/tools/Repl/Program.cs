@@ -854,7 +854,7 @@ namespace Microsoft.PowerFx
                 IOrganizationService _svcClient;
 
                 var connectionString = connectionSV.Value;
-                _svcClient = new ServiceClient(connectionString);
+                _svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
