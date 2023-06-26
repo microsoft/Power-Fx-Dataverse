@@ -92,13 +92,13 @@ namespace Microsoft.PowerFx.Dataverse
         /// DataverseConnection constructor.
         /// </summary>
         /// <param name="service"></param>
-        public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows)
-            : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows)
+        public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows, bool numberIsFloat = false)
+            : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows, numberIsFloat)
         {
         }
 
-        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows)
-            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider), maxRows)
+        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows, bool numberIsFloat = false)
+            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider) { NumberIsFloat = numberIsFloat }, maxRows)
         {
         }
 
