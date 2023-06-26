@@ -148,14 +148,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (value is OneToManyRelationshipMetadata relationshipMetadata)
             {
-                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken);
+                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
             if (value is EntityReference reference)
             {
                 // Blank was already handled, value would have been null. 
-                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken);
+                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
@@ -223,7 +223,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             };
 
-            var filteredEntityCollection = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken);
+            var filteredEntityCollection = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (!filteredEntityCollection.HasError)
             {
@@ -247,7 +247,7 @@ namespace Microsoft.PowerFx.Dataverse
         private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, CancellationToken cancellationToken)
         {
             FormulaValue result;
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -279,7 +279,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
+            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -287,7 +287,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
