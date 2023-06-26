@@ -1393,6 +1393,7 @@ END
             {
                 AttributeMetadataModel.NewDecimal("data3", "Data Three"),
                 AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
+                AttributeMetadataModel.NewMoney("currencyField", "Currency Field")
             }
         };
 
@@ -1633,6 +1634,17 @@ END
 
             result2 = engine2.Compile("(Global2.Three = Global2.Four)", new SqlCompileOptions());
             Assert.IsTrue(result2.IsSuccess);
+        }
+
+        [TestMethod]
+        public void CheckRelatedEntityCurrencyUsedInFormula()
+        {
+            var xrmModel = AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
+            Assert.IsFalse(result.IsSuccess);
+            StringAssert.Equals(result.Errors.First().ToString(), "Error 29-43: Not supported in formula columns.");
         }
 
         [DataTestMethod]

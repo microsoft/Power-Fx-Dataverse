@@ -176,25 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                string returnType = SqlVisitor.ToSqlType(retType);
-
-                // if related entity currency field is used in the decimal type formula field then block this operation
-                if (ctx.GetReferenceFields().Count() > 0)
-                {
-                    int relatedEntityMoneyFieldsCount = ctx.GetReferenceFields()
-                                        .Where((varDetail) => varDetail.VarType is SqlMoneyType && varDetail.Navigation != null)
-                                        .Count();
-
-                    if (relatedEntityMoneyFieldsCount > 0)
-                    {
-                        errors = new SqlCompileException(irNode.IRContext.SourceContext).GetErrors(irNode.IRContext.SourceContext);
-                        var errorResult = new SqlCompileResult(errors);
-                        errorResult.SanitizedFormula = sanitizedFormula;
-                        return errorResult;
-                    }
-                }
-
-                tw.WriteLine($") RETURNS {returnType}");
+                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
                 if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)

@@ -863,9 +863,16 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
-                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = GetFormulaType(column, sourceContext), Navigation = navigation, Table = table, Scope = scope, Path = path };
+                    var varType = GetFormulaType(column, sourceContext);
+                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
+
+                    // if related entity currency field is used in the decimal type formula field then block this operation
+                    if (varType is SqlMoneyType && navigation != null)
+                    {
+                        throw new SqlCompileException(sourceContext);
+                    }
 
                     if (column.RequiresReference())
                     {
