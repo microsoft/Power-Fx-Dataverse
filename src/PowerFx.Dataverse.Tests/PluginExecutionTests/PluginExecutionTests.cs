@@ -536,6 +536,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow(true, "Number")]
+        [DataRow(false, "Decimal")]
+        public void TestMoney(bool numberIsFloat, string retTypeStr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            // numberIsFloat controls how metadata parser handles currency. 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel(metadataNumberIsFloat: numberIsFloat);
+            dv.AddTable(displayName, logicalName);
+
+            var expr = "First(t1).money"; // field of Currency type 
+
+            var check = engine.Check(expr, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+            var retType = check.ReturnType.ToString();
+            Assert.AreEqual(retTypeStr, retType);
+        }
+
+        [DataTestMethod]
         [DataRow("Patch(t1, First(t1), {Memo:\"LOREM\nIPSUM\nDOLOR\nSIT\nAMET\"})")]
         [DataRow("First(t1).Memo")]
         public void SupportAllColumnTypesTest(string expr)
@@ -2538,7 +2562,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create Entity objects to match DataverseTests.AllAttributeModel;
-        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null)
+        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
         {
             var entity1 = new Entity("allattributes", _g1);
 
@@ -2560,11 +2584,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             CdsEntityMetadataProvider metadataCache;
             if (policy is SingleOrgPolicy policy2)
             {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
             }
             else
             {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
             }
 
             var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);

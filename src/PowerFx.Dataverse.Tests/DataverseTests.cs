@@ -225,6 +225,31 @@ END
         }
 
         [TestMethod]
+        public void CheckMoney()
+        {
+            var expr = "Money"; // resolve to Money filed
+
+            var metadata = AllAttributeModel.ToXrm();
+
+            var metadataProvider = new CdsEntityMetadataProvider(null)
+            {                
+                NumberIsFloat = false  // Causes money to be imported as Decimal instead of Number
+            };
+
+            var engine = new PowerFx2SqlEngine(metadata, metadataProvider);
+            var result = engine.Check(expr);
+                        
+            Assert.IsNotNull(result);
+
+            // But formula columns don't support returning Decimal. 
+            Assert.AreEqual(false, result.IsSuccess);
+            var errors = result.Errors.ToArray();
+            Assert.AreEqual(errors[0].ToString(), "Error 0-5: The result type Decimal is not supported in formula columns.");
+
+            Assert.AreEqual("money", result.ApplyGetInvariant());
+        }
+
+        [TestMethod]
         public void CheckFailureLookupNoProvider()
         {
             var expr = "field * Lookup.other";
