@@ -9,7 +9,6 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
             // or have set it to true we catch it here.  We don't need to check this for NumberIsFloat operation, however,
             // we should start enforcing it there too for the day that those hosts enable Decimal.
             // https://www.nuget.org/packages/Microsoft.PowerPlatform.Dataverse.Client#release-body-tab
-            if ( (bool?)service?.GetType().GetProperty("UseWebApi")?.GetValue(service, null) == true )
+            if ((bool?)service.GetType().GetProperty("UseWebApi")?.GetValue(service, null) == true)
             {
                 throw new ArgumentException("Use of ServiceClient with UseWebApi=true is not supported. Upgrade to a newer version of ServiceClient or set UseWebApi to false.");
             }

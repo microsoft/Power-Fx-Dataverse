@@ -661,6 +661,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow(true, "Number")]
+        [DataRow(false, "Decimal")]
+        public void TestMoney(bool numberIsFloat, string retTypeStr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            // numberIsFloat controls how metadata parser handles currency. 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel(metadataNumberIsFloat: numberIsFloat);
+            dv.AddTable(displayName, logicalName);
+
+            var expr = "First(t1).money"; // field of Currency type 
+
+            var check = engine.Check(expr, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+            var retType = check.ReturnType.ToString();
+            Assert.AreEqual(retTypeStr, retType);
+        }
+
+        [DataTestMethod]
         [DataRow("Patch(t1, First(t1), {Memo:\"LOREM\nIPSUM\nDOLOR\nSIT\nAMET\"})")]
         [DataRow("First(t1).Memo")]
         public void SupportAllColumnTypesTest(string expr)
@@ -832,6 +856,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsTrue(ok);
                 Assert.IsNotNull(s1);
             }
+        }
+
+        // Ensure lazy loaded symbols are available on first use. 
+        [TestMethod]
+        public void SingleOrgPolicyLazyEval()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "Remote");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var engine = new RecalcEngine();
+                        
+            // Ensure first call gets correct answer. 
+            var result = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            Assert.AreEqual(3.0, result.ToDouble());
+
+            // 2nd call better be correct. 
+            var result2 = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            Assert.AreEqual(3.0, result2.ToDouble());
         }
 
         // When using WholeOrg policy, we're using display names,
@@ -3712,7 +3758,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create Entity objects to match DataverseTests.AllAttributeModel;
-        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null)
+        private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
         {
             var entity1 = new Entity("allattributes", _g1);
 
@@ -3734,11 +3780,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             CdsEntityMetadataProvider metadataCache;
             if (policy is SingleOrgPolicy policy2)
             {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables);
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
             }
             else
             {
-                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider);
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
             }
 
             var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);

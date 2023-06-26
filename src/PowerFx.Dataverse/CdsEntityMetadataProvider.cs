@@ -62,15 +62,15 @@ namespace Microsoft.PowerFx.Dataverse
         // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
         // Map logical name to display name
         private readonly Func<string,string> _displayNameLookup;
-
-        public bool NumberIsFloat { get; init; } = false;
-
+                
         private CdsEntityMetadataProvider()
         {
             // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
             // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
         }
+
+        public bool NumberIsFloat { get; init; } = true;
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
             : this()
@@ -99,10 +99,6 @@ namespace Microsoft.PowerFx.Dataverse
         private CdsEntityMetadataProvider(IXrmMetadataProvider provider, CdsEntityMetadataProvider original, Func<string, string> displayNameLookup = null)
             : this()
         {
-            // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
-            // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
-            Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
-
             this._innerProvider = provider;
             this._document = new DataverseDocument(this);
 
