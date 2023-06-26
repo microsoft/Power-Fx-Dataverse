@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Wrap a <see cref="Entity"/> as a <see cref="RecordValue"/> to pass to Power Fx.
     /// </summary>
-    internal class DataverseRecordValue : RecordValue
+    internal class DataverseRecordValue : RecordValue, IHasPrimaryKeyName
     {
         // The underlying entity (= table row)
         private readonly Entity _entity;
@@ -100,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
             FormulaValue result;
 
             // If primary key is missing from Attributes, still get it from the entity. 
-            if (fieldName == _metadata.PrimaryIdAttribute)
+            if (fieldName == GetPrimaryKeyName())
             {
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
@@ -351,11 +351,16 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
-            var keyName = _metadata.PrimaryIdAttribute;
+            var keyName = GetPrimaryKeyName();
 
             // Note that function names are case sensitive. 
             var expr = $"LookUp({IdentToken.MakeValidIdentifier(tableName)}, {keyName}=GUID(\"{id}\"))";
             sb.Append(expr);
+        }
+
+        public string GetPrimaryKeyName()
+        {
+            return _metadata.PrimaryIdAttribute;
         }
     }
 }
