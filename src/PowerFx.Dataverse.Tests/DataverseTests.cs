@@ -451,6 +451,7 @@ END
         public void CompileInvalidTypes(string expr, string error)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
             var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
@@ -481,8 +482,9 @@ END
         [DataRow("true", typeof(BooleanType), DisplayName = "Boolean literal returns Boolean")]
         [DataRow("Mod(int, int)", typeof(SqlDecimalType), DisplayName = "Int from function returns decimal")]
         public void CompileValidReturnType(string expr, Type returnType)
-        {            
+        {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
             var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
@@ -636,6 +638,7 @@ END
             };
 
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
             var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
 
@@ -899,6 +902,7 @@ END
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
             var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions();
@@ -1205,6 +1209,7 @@ END
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
             var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions();
@@ -1231,6 +1236,7 @@ END
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
             var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
@@ -1240,6 +1246,7 @@ END
         public void CompileLogicalLookup()
         {
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
             var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
@@ -1673,6 +1680,7 @@ END
         public void Translate(string expr, string translation)
         {
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
+            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
             var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var actualTranslation = engine.ConvertToDisplay(expr);
