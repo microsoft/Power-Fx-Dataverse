@@ -267,11 +267,11 @@ namespace Microsoft.PowerFx
                     // IR pretty printer: IR( <expr> )
                     else if ((match = Regex.Match(expr, @"^\s*IR\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
                     {
-                        var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-                        var cr = _engine.Check(match.Groups["expr"].Value, options: opts);
+                        var cr = _engine.Check(match.Groups["expr"].Value, GetParserOptions(), GetSymbolTable());
                         var ir = cr.PrintIR();
                         Console.WriteLine(ir);
                         output?.WriteLine(ir);
+                        cr.ThrowOnErrors();
                     }
 
                     // named formula definition: <ident> = <formula>
@@ -858,11 +858,11 @@ namespace Microsoft.PowerFx
 
                 if (multiOrg.Value)
                 {
-                    _dv = MultiOrgPolicy.New(_svcClient);
+                    _dv = MultiOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
                 }
                 else
                 {
-                    _dv = SingleOrgPolicy.New(_svcClient);
+                    _dv = SingleOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
                 }
 
                 return BooleanValue.New(true);

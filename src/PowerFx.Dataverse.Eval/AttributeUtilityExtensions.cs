@@ -54,7 +54,14 @@ namespace Microsoft.PowerFx.Dataverse
                     return (DateTime)fxValue.ToObject();
 
                 case AttributeTypeCode.Decimal:
-                    return (Decimal)((NumberValue)fxValue).Value;
+                    if (fxValue is DecimalValue dvd)
+                    {
+                        return dvd.Value;
+                    }
+                    else
+                    {
+                        return (Decimal)((NumberValue)fxValue).Value;
+                    }
 
                 case AttributeTypeCode.Double:
                     return ((NumberValue)fxValue).Value;
@@ -74,7 +81,14 @@ namespace Microsoft.PowerFx.Dataverse
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
 
                 case AttributeTypeCode.Money:
-                    return new Money((decimal)((NumberValue)fxValue).Value);
+                    if (fxValue is DecimalValue dvm)
+                    {
+                        return new Money(dvm.Value);
+                    }
+                    else
+                    {
+                        return new Money((decimal)((NumberValue)fxValue).Value);
+                    }
 
                 case AttributeTypeCode.Lookup: // EntityReference
                     if (fxValue is DataverseRecordValue dv)

@@ -32,11 +32,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static readonly Features DefaultFeatures = Features.PowerFxV1;
 
+        // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
+        // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: true)
         {
         }
 
