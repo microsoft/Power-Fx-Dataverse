@@ -1599,19 +1599,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             100.0,
             "(__retrieveGUID(t1, _g1)).new_price")]
 
+        // These three tests have Coalesce for numeric literals where the NumberIsFloat version does not.
+        // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
         // Date
         [DataRow("LookUp(t1, Date = Date(2023, 6, 1)).Price",
             100.0,
-            "(__retrieveSingle(t1, __eq(t1, new_date, Date(2023, 6, 1)))).new_price")]
+            "(__retrieveSingle(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))))).new_price")]
 
         // DateTime with coercion
         [DataRow("LookUp(t1, DateTime = Date(2023, 6, 1)).Price",
              null,
-            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))))).new_price")]
+            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))))).new_price")]
 
         [DataRow("LookUp(t1, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price",
              100.0,
-            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)))).new_price")]
+            "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))))).new_price")]
 
 
         // reversed order still ok 
@@ -2465,9 +2467,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             1,
             "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)")]
 
+        // Delegation should be supported here, as it is for floating point.  
+        // Being tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/235
         [DataRow("Filter(t1, Price < Float(120))",
             3,
-            "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(Float(120))), 999)")]
+            "Filter(t1, (LtNumbers(Float(new_price),Float(120))))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [DataRow("Filter(t1, Price < Decimal(20))",
             2,
@@ -2477,15 +2482,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             3,
             "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)")]
 
+        // These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
+        // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
         // Date
         [DataRow("Filter(t1, Date = Date(2023, 6, 1))",
             1,
-            "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)")]
+            "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)")]
 
         // DateTime with coercion
         [DataRow("Filter(t1, DateTime = Date(2023, 6, 1))",
             0,
-            "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)")]
+            "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)")]
 
         //Order doesn't matter
         [DataRow("Filter(t1, 0 > Price)",
@@ -2585,7 +2592,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             config.SymbolTable.EnableMutationFunctions();
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
-            engine1.UpdateVariable("_count", FormulaValue.New(100));
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.IsTrue(check.IsSuccess);
