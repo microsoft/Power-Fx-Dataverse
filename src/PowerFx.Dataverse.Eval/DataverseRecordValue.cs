@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Wrap a <see cref="Entity"/> as a <see cref="RecordValue"/> to pass to Power Fx.
     /// </summary>
-    internal class DataverseRecordValue : RecordValue, IHasPrimaryKeyName
+    internal class DataverseRecordValue : RecordValue
     {
         // The underlying entity (= table row)
         private readonly Entity _entity;
@@ -358,7 +358,7 @@ namespace Microsoft.PowerFx.Dataverse
             sb.Append(expr);
         }
 
-        public string GetPrimaryKeyName()
+        public override string GetPrimaryKeyName()
         {
             return _metadata.PrimaryIdAttribute;
         }
