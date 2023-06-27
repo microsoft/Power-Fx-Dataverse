@@ -52,6 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
+        public override bool CanShallowCopy => true;
+
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
 
