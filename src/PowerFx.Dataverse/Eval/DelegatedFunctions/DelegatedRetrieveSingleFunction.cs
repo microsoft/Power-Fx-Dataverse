@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg should alway be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, cancellationToken);
+            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, cancellationToken).ConfigureAwait(false);
 
             var result = row.FirstOrDefault();
             if (result == null)

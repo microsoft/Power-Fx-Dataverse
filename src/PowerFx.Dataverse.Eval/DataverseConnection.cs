@@ -225,7 +225,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken);
+            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             return response.HasError
@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
                 query.PageInfo.PagingCookie = null;
             }
 
-            DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken);
+            DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             if (response.HasError)

@@ -340,7 +340,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             // Test the serializer! 
             var serialized = result.ToExpression();
@@ -348,7 +348,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
         }
 
         [DataTestMethod]
@@ -368,7 +368,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             // Test the serializer! 
             var serialized = result.ToExpression();
@@ -376,7 +376,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
         }
 
         [TestMethod]
@@ -402,7 +402,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -424,7 +424,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id)) as RecordValue;
+            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id)).ConfigureAwait(false) as RecordValue;
 
             // Test the serializer! 
             var expr = record.ToExpression();
@@ -435,7 +435,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -457,7 +457,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }))[0] as RecordValue;
+            RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }).ConfigureAwait(false))[0] as RecordValue;
 
             // Test the serializer! 
             var expr = record.ToExpression();
@@ -468,7 +468,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNotNull(entity); // such as if Lookup() failed and we got blank
@@ -499,7 +499,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             var entity = (Entity)result.ToObject();
             Assert.IsNull(entity); // 
@@ -525,7 +525,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
 
             Assert.IsInstanceOfType(result, typeof(DataverseTableValue));
         }
@@ -3339,8 +3339,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 
-            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
-
+            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12).ConfigureAwait(false);
             Assert.AreEqual(100 * 1000 + 200m, result.ToObject());
         }
 
@@ -3362,7 +3361,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 
-            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
+            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12).ConfigureAwait(false);
 
             Assert.AreEqual(100 * 1000 + 200.0, result.ToObject());
         }
@@ -3497,17 +3496,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
-            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.AreEqual(100m, result1.ToObject());
 
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
-            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g1).ConfigureAwait(false);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
             engine4.EnableDelegation(dv.MaxRows);
-            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.AreEqual(100m, result4.ToObject());
 
             // Refresh connection cache.
@@ -3516,7 +3515,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
-            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.IsInstanceOfType(result7, typeof(ErrorValue));
 
             ErrorValue ev7 = (ErrorValue)result7;
@@ -3539,17 +3538,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
-            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.AreEqual(100.0, result1.ToObject());
 
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
-            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g1).ConfigureAwait(false);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
             engine4.EnableDelegation(dv.MaxRows);
-            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.AreEqual(100.0, result4.ToObject());
 
             // Refresh connection cache.
@@ -3558,7 +3557,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
-            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
+            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
             Assert.IsInstanceOfType(result7, typeof(ErrorValue));
 
             ErrorValue ev7 = (ErrorValue)result7;
@@ -3623,7 +3622,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
-            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
 
             // Failed lookup is blank
             Assert.IsNotNull(result as BlankValue);
