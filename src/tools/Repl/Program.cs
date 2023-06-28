@@ -2,6 +2,11 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,18 +15,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using Microsoft.Extensions.Options;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx
 {
@@ -267,11 +260,11 @@ namespace Microsoft.PowerFx
                     // IR pretty printer: IR( <expr> )
                     else if ((match = Regex.Match(expr, @"^\s*IR\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
                     {
-                        var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-                        var cr = _engine.Check(match.Groups["expr"].Value, options: opts);
+                        var cr = _engine.Check(match.Groups["expr"].Value, GetParserOptions(), GetSymbolTable());
                         var ir = cr.PrintIR();
                         Console.WriteLine(ir);
                         output?.WriteLine(ir);
+                        cr.ThrowOnErrors();
                     }
 
                     // named formula definition: <ident> = <formula>
@@ -854,15 +847,15 @@ namespace Microsoft.PowerFx
                 IOrganizationService _svcClient;
 
                 var connectionString = connectionSV.Value;
-                _svcClient = new ServiceClient(connectionString);
+                _svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
-                    _dv = MultiOrgPolicy.New(_svcClient);
+                    _dv = MultiOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
                 }
                 else
                 {
-                    _dv = SingleOrgPolicy.New(_svcClient);
+                    _dv = SingleOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
                 }
 
                 return BooleanValue.New(true);

@@ -294,14 +294,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var recalcEngine = new RecalcEngine();
 
             var repeatingTable = (TableValue)await recalcEngine.Check("Contacts", symbolTable: dvc.Symbols)
-                .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+                .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues).ConfigureAwait(false);
 
             foreach (var record in repeatingTable.Rows)
             {
                 recalcEngine.UpdateVariable("ThisItem", record.ToFormulaValue());
 
                 await recalcEngine.Check("ThisItem.'Full Name' & \" - First Account: \" & First(Filter(Accounts, ThisRecord.'Primary Contact'.Contact = ThisItem.Contact)).'Account Name'", symbolTable: dvc.Symbols)
-                    .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues);
+                    .GetEvaluator().EvalAsync(CancellationToken.None, symbolValues: dvc.SymbolValues).ConfigureAwait(false);
             }
 
             Console.WriteLine(dec.CacheSize);

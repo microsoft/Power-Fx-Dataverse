@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var guid = ((GuidValue)args[1]).Value;
 
-            var result = await _hooks.RetrieveAsync(table, guid, cancellationToken);
+            var result = await _hooks.RetrieveAsync(table, guid, cancellationToken).ConfigureAwait(false);
                         
             var fv = result.ToFormulaValue();
 

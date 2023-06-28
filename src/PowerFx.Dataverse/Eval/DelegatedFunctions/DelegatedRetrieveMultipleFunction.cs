@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args1 should alway be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken);
+            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken).ConfigureAwait(false);
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
             return result;
         }

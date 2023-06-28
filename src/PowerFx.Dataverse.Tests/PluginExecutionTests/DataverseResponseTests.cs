@@ -22,7 +22,7 @@ using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     [TestClass]
     public class DataverseResponseTests
     {
@@ -76,22 +76,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Non-async callback. 
         [TestMethod]
-        public async Task  RunHardError1()
+        public async Task RunHardError1()
         {
-            await Assert.ThrowsExceptionAsync<MyException>(
-                async () =>
-                    await DataverseResponse<FakeMessage>.RunAsync(
-                        ()=> throw new MyException("unknown ex"), "op"));            
+            await Assert.ThrowsExceptionAsync<MyException>(async () => await DataverseResponse<FakeMessage>.RunAsync(() => throw new MyException("unknown ex"), "op").ConfigureAwait(false)).ConfigureAwait(false);
         }
-        
+
         // Async callback
         [TestMethod]
         public async Task RunHardError2()
         {
-            await Assert.ThrowsExceptionAsync<MyException>(
-                async () =>
-                    await DataverseResponse<FakeMessage>.RunAsync(
-                        async () => throw new MyException("unknown ex"), "op"));
+            await Assert.ThrowsExceptionAsync<MyException>(async () =>await DataverseResponse<FakeMessage>.RunAsync(async () => throw new MyException("unknown ex"), "op").ConfigureAwait(false)).ConfigureAwait(false);
         }
 
         // Not a dataverse exception

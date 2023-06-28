@@ -51,13 +51,14 @@ namespace Microsoft.PowerFx.Dataverse
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
-          CultureInfo culture = null)
+          CultureInfo culture = null,
+          bool numberIsFloat = false)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
 
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
-            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null);
+            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = numberIsFloat };
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 
