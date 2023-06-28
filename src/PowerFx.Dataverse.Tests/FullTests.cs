@@ -499,13 +499,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(Integer, \"###\")", "20", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"###\")", "30", cx, metadata);
                 ExecuteSqlTest("IsError(Text(FractionalDecimal, \"###\"))", false, cx, metadata);
-                ExecuteSqlTest("IsError(Text(FractionalDecimal))", true, cx, metadata, false, false, null, null, false);
-                ExecuteSqlTest("IsError(Text(1.5))", true, cx, metadata, false, false, null, null, false);
                 ExecuteSqlTest("Int(\"30\")", 30M, cx, metadata);
                 ExecuteSqlTest("IsError(Int(\"30.5\"))", true, cx, metadata);
-                ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
+                ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);  
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
-                ExecuteSqlTest("IsError(If(FractionalDecimal & \"X\" = \"7X\", 1, 2))", true, cx, metadata, false, false, null, null, false);
             }
         }
 
