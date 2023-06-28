@@ -348,7 +348,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return context.SetIntermediateVariable(node, $"{Library.CoerceNullToInt(arg)}<>0");
 
                 case UnaryOpKind.NumberToText:
-                    throw new SqlCompileException(SqlCompileException.FunctionNotSupported, node.IRContext.SourceContext, "Implicit Conversion of Numbers", "Text(Number,format_text)");
+                    throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.IRContext.SourceContext);
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
@@ -868,10 +868,10 @@ namespace Microsoft.PowerFx.Dataverse
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    // if related entity currency field is used in the decimal type formula field then block this operation
+                    // if related entity currency field is used in the formula field then block this operation
                     if (varType is SqlMoneyType && navigation != null)
                     {
-                        throw new SqlCompileException(sourceContext);
+                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
                     }
 
                     if (column.RequiresReference())

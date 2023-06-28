@@ -990,15 +990,15 @@ END
         [DataRow("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
         [DataRow("Int(\"123\")", true, true, DisplayName = "Int on string")]
-        [DataRow("Text(123)", true, false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("Text(123.4)", true, false, "Error 0-11: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("Text(1/2)", true, false, "Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("Text(-123.4)", true, false, "Error 0-12: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("Text(1234567.89)", true, false, "Error 0-16: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("Text(If(1<0,2))", true, false, "Error 0-15: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Text() function with single numeric arg is not supported")]
-        [DataRow("123 & 456", true, false, "Error 4-5: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
-        [DataRow("123.45 & 456", true, false, "Error 7-8: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
-        [DataRow("Concatenate(123, 456)", true, false, "Error 0-21: Implicit Conversion of Numbers is not supported in formula columns, use Text(Number,format_text) instead.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("Text(123)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(123.4)", true, false, "Error 0-11: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1/2)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(-123.4)", true, false, "Error 0-12: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1234567.89)", true, false, "Error 0-16: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(If(1<0,2))", true, false, "Error 0-15: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("123 & 456", true, false, "Error 4-5: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("123.45 & 456", true, false, "Error 7-8: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("Concatenate(123, 456)", true, false, "Error 0-21: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
             var sqlEngine = new PowerFx2SqlEngine();
@@ -1680,10 +1680,10 @@ END
         {
             var xrmModel = AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
             var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
             Assert.IsFalse(result.IsSuccess);
-            StringAssert.Equals(result.Errors.First().ToString(), "Error 29-43: Not supported in formula columns.");
+            Assert.AreEqual(result.Errors.First().ToString(), "Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.");
         }
 
         [DataTestMethod]
