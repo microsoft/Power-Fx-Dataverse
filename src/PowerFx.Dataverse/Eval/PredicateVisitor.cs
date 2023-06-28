@@ -4,8 +4,10 @@ using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -30,13 +32,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly CallNode _caller;
 
-        private readonly IntermediateNode _callerSourceTable;
+        private readonly ResolvedObjectNode _callerSourceTable;
 
         private readonly ScopeSymbol _callerScope;
 
         private readonly FormulaType _callerReturnType;
 
-        public PredicateVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow, CallNode caller, IntermediateNode callerTable)
+        public PredicateVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow, CallNode caller, ResolvedObjectNode callerTable)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
@@ -237,6 +239,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             RetVal ret;
+
+            // Money can't be delegated, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
+            if(TryDisableMoneyComaprison(node, fieldName, out var result))
+            {
+                return result;
+            }
+
             switch (operation)
             {
                 case BinaryOpKind.EqNumbers:
@@ -298,6 +307,47 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     return new RetVal(node);
             }
+        }
+
+        // Used to stop Money delegation, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
+        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, out RetVal result)
+        {
+            var callerTableType = (TableType)_callerSourceTable.IRContext.ResultType;
+            var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
+            EntityMetadata metadata = null;
+            if (tableDS != null)
+            {
+                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
+                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                {
+                    if (!m2.TryGetXrmEntityMetadata(tableLogicalName, out metadata))
+                    {
+                        throw new InvalidOperationException($"Meta-data not found for table: {tableLogicalName}");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Meta-data provider should be CDS");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Table type should have data source");
+            }
+
+            if (!metadata.TryGetAttribute(fieldName, out var attributeMetadata))
+            {
+                throw new InvalidOperationException($"Meta-data not found for field: {fieldName}");
+            }
+
+            if (attributeMetadata.AttributeType == AttributeTypeCode.Money)
+            {
+                result = new RetVal(node);
+                return true;
+            }
+
+            result = default;
+            return false;
         }
 
         public override RetVal Visit(CallNode node, Context context)

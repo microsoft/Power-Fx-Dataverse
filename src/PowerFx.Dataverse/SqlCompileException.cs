@@ -134,6 +134,21 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey SingleColumnTableNotSupported = new ErrorResourceKey("FormulaColumns_SingleColumnTableNotSupported");
 
+        // <summary>
+        /// The error resource key for a formula with Text of a number without a format string.
+        /// </summary>
+        internal readonly static ErrorResourceKey TextNumberMissingFormat = new ErrorResourceKey("FormulaColumns_TextNumberMissingFormat");
+
+        // <summary>
+        /// The error resource key for a formula with implicit conversion of number to text.
+        /// </summary>
+        internal readonly static ErrorResourceKey ImplicitNumberToText = new ErrorResourceKey("FormulaColumns_ImplicitNumberToText");
+
+        // <summary>
+        /// The error resource key for a formula that references a related entity's currency field
+        /// </summary>
+        internal readonly static ErrorResourceKey RelatedCurrency = new ErrorResourceKey("FormulaColumns_RelatedCurrency");
+
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
             _error = new SqlError(key, context, DocumentErrorSeverity.Critical, args);
