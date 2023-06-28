@@ -94,6 +94,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
                     }
                 }
+                else if (node.Args.Count == 1)
+                {
+                    throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
+                }
 
                 var result = context.GetTempVar(context.GetReturnType(node));
                 if (format == null)
