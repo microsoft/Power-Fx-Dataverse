@@ -348,7 +348,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return context.SetIntermediateVariable(node, $"{Library.CoerceNullToInt(arg)}<>0");
 
                 case UnaryOpKind.NumberToText:
-                    throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.IRContext.SourceContext);
+                    throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
