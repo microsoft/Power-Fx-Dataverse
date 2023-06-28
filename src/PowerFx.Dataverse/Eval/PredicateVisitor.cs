@@ -241,39 +241,10 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal ret;
 
             // Money can't be delegated, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-            var callerTableType = (TableType)_callerSourceTable.IRContext.ResultType;
-            var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
-            EntityMetadata metadata = null;
-            if (tableDS != null)
+            if(TryDisableMoneyComaprison(node, fieldName, out var result))
             {
-                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
-                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
-                {
-                    if (!m2.TryGetXrmEntityMetadata(tableLogicalName, out metadata))
-                    {
-                        throw new InvalidOperationException($"Meta-data not found for table: {tableLogicalName}");
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Meta-data provider should be CDS");
-                }
+                return result;
             }
-            else
-            {
-                throw new InvalidOperationException($"Table type should have data source");
-            }
-
-            if(!metadata.TryGetAttribute(fieldName, out var attributeMetadata))
-            {
-                throw new InvalidOperationException($"Meta-data not found for field: {fieldName}");
-            }
-
-            if(attributeMetadata.AttributeType == AttributeTypeCode.Money)
-            {
-                return new RetVal(node);
-            }
-            // End of money can't be delegated
 
             switch (operation)
             {
@@ -336,6 +307,46 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     return new RetVal(node);
             }
+        }
+
+        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, out RetVal result)
+        {
+            var callerTableType = (TableType)_callerSourceTable.IRContext.ResultType;
+            var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
+            EntityMetadata metadata = null;
+            if (tableDS != null)
+            {
+                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
+                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                {
+                    if (!m2.TryGetXrmEntityMetadata(tableLogicalName, out metadata))
+                    {
+                        throw new InvalidOperationException($"Meta-data not found for table: {tableLogicalName}");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Meta-data provider should be CDS");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Table type should have data source");
+            }
+
+            if (!metadata.TryGetAttribute(fieldName, out var attributeMetadata))
+            {
+                throw new InvalidOperationException($"Meta-data not found for field: {fieldName}");
+            }
+
+            if (attributeMetadata.AttributeType == AttributeTypeCode.Money)
+            {
+                result = new RetVal(node);
+                return true;
+            }
+
+            result = default;
+            return false;
         }
 
         public override RetVal Visit(CallNode node, Context context)
