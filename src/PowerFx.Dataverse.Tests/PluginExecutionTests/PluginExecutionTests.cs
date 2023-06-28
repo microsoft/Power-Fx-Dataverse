@@ -1756,6 +1756,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, Price < Blank()).Price",
             -10.0,
             "(__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price")]
+
+        [DataRow("LookUp(t1, Currency > 0).Price",
+            100.0,
+            "(LookUp(t1, (GtDecimals(new_currency,0)))).new_price",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void LookUpDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -2013,6 +2018,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, Price < Blank()).Price",
             -10.0,
             "(__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price")]
+
+        [DataRow("LookUp(t1, Currency > 0).Price",
+            100.0,
+            "(LookUp(t1, (GtNumbers(new_currency,0)))).new_price",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void LookUpDelegationFloat(string expr, object expected, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -2438,7 +2448,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Table 't1' has
         // 1st item with
-        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0), Currency = 100
         // 2nd item with
         // Price = 10
         // 3rd item with
@@ -2577,6 +2587,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Filter(t1, Price <> Blank())",
             3,
             "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)")]
+
+        [DataRow("Filter(t1, Currency > 0)",
+            1,
+            "Filter(t1, (GtDecimals(new_currency,0)))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -2766,6 +2781,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Filter(t1, Price <> Blank())",
             3,
             "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)")]
+
+        [DataRow("Filter(t1, Currency > 0)",
+            1,
+            "Filter(t1, (GtNumbers(new_currency,0)))",
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void FilterDelegationFloat(string expr, int expectedRows, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
@@ -3740,6 +3760,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
+            entity1.Attributes["new_currency"] = new Money(100);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
