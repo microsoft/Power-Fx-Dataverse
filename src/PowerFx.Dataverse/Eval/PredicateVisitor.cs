@@ -309,6 +309,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        // Used to stop Money delegation, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
         private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, out RetVal result)
         {
             var callerTableType = (TableType)_callerSourceTable.IRContext.ResultType;
