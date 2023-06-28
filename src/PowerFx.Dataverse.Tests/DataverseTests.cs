@@ -999,7 +999,7 @@ END
         [DataRow("123 & 456", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         [DataRow("123.45 & 456", true, false, "Error 0-6: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         [DataRow("Concatenate(123, 456)", true, false, "Error 12-15: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
-        [DataRow("123 & \"a\"", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")
+        [DataRow("123 & \"a\"", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
             var sqlEngine = new PowerFx2SqlEngine();
