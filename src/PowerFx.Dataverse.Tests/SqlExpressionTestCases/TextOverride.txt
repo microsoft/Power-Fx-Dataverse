@@ -36,19 +36,19 @@ Errors: Error 5-22: 'Date' is an unknown or unsupported function.
 
 // Sql Text only supports whole numbers. 
 >> Text(123.4)
-Errors: Error 0-11: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.
+Errors: Error 0-11: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.
 
 >> Text(1/2)
-Errors: Error 0-9: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.
+Errors: Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.
 
 >> Text(-123.4)
-Errors: Error 0-12: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.
+Errors: Error 0-12: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.
 
 >> Text(1234567.89)
-Errors: Error 0-16: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.
+Errors: Error 0-16: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.
 
 >> Text(Blank())
 ""
 
 >> Text(If(1<0,2))
-Errors: Error 0-15: Text(Number) is not supported in formula columns, use Text(Number,format_text) instead.
+Errors: Error 0-15: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.
