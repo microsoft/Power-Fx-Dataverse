@@ -2,6 +2,11 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,18 +15,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using Microsoft.Extensions.Options;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx
 {

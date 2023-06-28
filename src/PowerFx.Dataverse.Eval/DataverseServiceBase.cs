@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
            
             cancellationToken.ThrowIfCancellationRequested();
 
-            return await reader.RetrieveMultipleAsync(query, cancellationToken);
+            return await reader.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
         }
     }
 }
