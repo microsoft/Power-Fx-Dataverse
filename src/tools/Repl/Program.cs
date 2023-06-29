@@ -518,16 +518,20 @@ namespace Microsoft.PowerFx
                 else
                 {
                     var separator = string.Empty;
+                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
 
                     resultString = new StringBuilder("{");
 
                     foreach (NamedValue field in record.Fields)
                     {
-                        resultString.Append(separator);
-                        resultString.Append(field.Name);
-                        resultString.Append(':');
-                        resultString.Append(field.GetPrintField());
-                        separator = ", ";
+                        if (fieldNames.Contains(field.Name))
+                        {
+                            resultString.Append(separator);
+                            resultString.Append(field.Name);
+                            resultString.Append(':');
+                            resultString.Append(field.GetPrintField());
+                            separator = ", ";
+                        }
                     }
 
                     resultString.Append('}');
@@ -559,9 +563,12 @@ namespace Microsoft.PowerFx
 
                             foreach (NamedValue field in row.Value.Fields)
                             {
-                                columnWidth[column] = Math.Max(columnWidth[column], field.GetPrintField(true).Length);
-                                column++;
-                            }                           
+                                if (fieldNames.Contains(field.Name))
+                                {
+                                    columnWidth[column] = Math.Max(columnWidth[column], field.GetPrintField(true).Length);
+                                    column++;
+                                }
+                            }
                         }
                     }
 
@@ -591,14 +598,17 @@ namespace Microsoft.PowerFx
                             if (row.Value != null)
                             {
                                 column = 0;
-                                
-                                foreach (var fieldName in fieldNames)
+
+                                foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    columnWidth[column] = Math.Max(columnWidth[column], fieldName.Length);
-                                    resultString.Append(' ');
-                                    resultString.Append(fieldName.PadLeft(columnWidth[column]));
-                                    resultString.Append(' ');
-                                    column++;
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
+                                        resultString.Append(' ');
+                                        resultString.Append(field.Name.PadLeft(columnWidth[column]));
+                                        resultString.Append("  ");
+                                        column++;
+                                    }
                                 }
 
                                 break;
@@ -612,11 +622,15 @@ namespace Microsoft.PowerFx
                             if (row.Value != null)
                             {
                                 column = 0;
-                                foreach (var fieldName in fieldNames)
+
+                                foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    resultString.Append(new string('=', columnWidth[column] + 2));
-                                    resultString.Append(' ');
-                                    column++;
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        resultString.Append(new string('=', columnWidth[column] + 2));
+                                        resultString.Append(' ');
+                                        column++;
+                                    }
                                 }
 
                                 break;
@@ -631,10 +645,13 @@ namespace Microsoft.PowerFx
                             {
                                 foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    resultString.Append(' ');
-                                    resultString.Append(field.GetPrintField(true).PadLeft(columnWidth[column]));
-                                    resultString.Append(' ');
-                                    column++;
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        resultString.Append(' ');
+                                        resultString.Append(field.GetPrintField(true).PadLeft(columnWidth[column]));
+                                        resultString.Append("  ");
+                                        column++;
+                                    }
                                 }                               
                             }
                             else
