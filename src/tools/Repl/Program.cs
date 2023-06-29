@@ -120,6 +120,8 @@ namespace Microsoft.PowerFx
 
             config.AddOptionSet(optionsSet);
 
+            config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
+
             _engine = new RecalcEngine(config);
         }
 
@@ -515,6 +517,13 @@ namespace Microsoft.PowerFx
                 {
                     resultString = new StringBuilder("<record>");
                 }
+                else  if (record.Fields.Count() == 1 && record.Fields.First().Name == "Value")
+                {
+                    resultString = new StringBuilder("{");
+                    resultString.Append("Value:");
+                    resultString.Append(record.Fields.First().GetPrintField());
+                    resultString.Append("}");
+                }
                 else
                 {
                     var separator = string.Empty;
@@ -543,8 +552,26 @@ namespace Microsoft.PowerFx
                 {
                     resultString = new StringBuilder("<table>");
                 }
+
+                // special treatment for single column table named Value
+                else if (table.Rows.First().Value.Fields.Count() == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
+                {
+                    var separator = string.Empty;
+                    resultString = new StringBuilder("[");
+                    foreach (var row in table.Rows)
+                    {
+                        resultString.Append(separator);
+                        resultString.Append(row.Value.Fields.First().GetPrintField());
+                        separator = ", ";
+                    }
+
+                    resultString.Append("]");
+                }
+
                 else
                 {
+                    // otherwise a full table treatment is needed
+
                     var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
                     var columnCount = fieldNames.Count();
 
@@ -572,23 +599,7 @@ namespace Microsoft.PowerFx
                         }
                     }
 
-                    // special treatment for single column table named Value
-                    if (columnWidth.Length == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
-                    {
-                        var separator = string.Empty;
-                        resultString = new StringBuilder("[");
-                        foreach (var row in table.Rows)
-                        {
-                            resultString.Append(separator);
-                            resultString.Append(row.Value.Fields.First().GetPrintField());
-                            separator = ", ";
-                        }
-
-                        resultString.Append("]");
-                    }
-
-                    // otherwise a full table treatment is needed
-                    else if (_formatTable)
+                    if (_formatTable)
                     {
                         resultString = new StringBuilder("\n ");
                         var column = 0;
@@ -722,7 +733,15 @@ namespace Microsoft.PowerFx
                     {
                         _formatTableColumns.Add(match.Value);
                     }
-                    return StringValue.New(string.Join(",", _formatTableColumns));
+                    if (_formatTableColumns.Count() == 0)
+                    {
+                        _formatTableColumns = null;
+                        return StringValue.New("ALL");
+                    }
+                    else
+                    {
+                        return StringValue.New(string.Join(",", _formatTableColumns));
+                    }
                 }
 
                 return FormulaValue.NewError(new ExpressionError()
