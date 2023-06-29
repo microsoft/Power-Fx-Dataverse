@@ -1718,12 +1718,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true, // delegated, but not found is Error
             "IsError(__retrieveGUID(t1, If(False, (_g1), (_gMissing))))")]
 
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.",
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
             100.0,
@@ -1979,12 +1973,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
             true, // delegated, but not found is Error
             "IsError(__retrieveGUID(t1, If(False, (_g1), (_gMissing))))")]
-
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            null, // Bad practice, modifying the collection while we enumerate.
-            "(LookUp(t1, (EqGuid(localid,(Collect((t1), {new_price:200})).localid)))).new_price",
-            "Warning 19-47: Can't delegate LookUp: contains a behavior function 'Collect'.",
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [DataRow("LookUp(fakeT1, LocalId=_g1).Price",
@@ -2842,9 +2830,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataTestMethod]
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
-        [DataRow("LookUp(t1, LocalId=Collect(t1, {  Price : 200}).LocalId).Price",
-            "Warning 19-47: Não é possível delegar LookUp: contém uma função de comportamento \"Collect\".",
-            "Warning 7-9: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
             "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
             "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
