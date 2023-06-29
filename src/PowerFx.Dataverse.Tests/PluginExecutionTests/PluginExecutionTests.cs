@@ -3706,6 +3706,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
         }
 
+        [DataTestMethod]
+        [DataRow("Set(x, First(t1))")]
+        [DataRow("With({local:First(t1)}, Set(y, local))")]
+        [DataRow("Set(x, First(t1));Other.data")]
+        public void SetExpandableTypeNotAllowedTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+            var errorMessage = "Can't assign variable from expandable types. For instance, a record from a datasource containing relationships.";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+            engine.UpdateVariable("x", RecordValue.Empty());
+            engine.UpdateVariable("y", RecordValue.Empty());
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.IsFalse(check.IsSuccess);
+
+            Assert.IsTrue(check.Errors.First().Message.Contains(errorMessage));
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
