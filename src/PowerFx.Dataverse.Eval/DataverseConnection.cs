@@ -136,21 +136,42 @@ namespace Microsoft.PowerFx.Dataverse
         // Logical Name --> Row Scope symbols for that table 
         Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbols = new Dictionary<string, ReadOnlySymbolTable>();
 
+        // cache for row scope symbols without implicit this record
+        Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbolsNoITR = new Dictionary<string, ReadOnlySymbolTable>();
+
         public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName)
         {
-            lock (_rowScopeSymbols)
+            return GetRowScopeSymbols(tableLogicalName, allowImplicitThisRecord: true);
+        }
+
+        public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName, bool allowImplicitThisRecord = false)
+        {
+            var recordType = this.GetRecordType(tableLogicalName);
+            ReadOnlySymbolTable symTable;
+            if (allowImplicitThisRecord)
             {
-                if (!_rowScopeSymbols.TryGetValue(tableLogicalName, out var symTable))
+                lock (_rowScopeSymbols)
                 {
-                    var recordType = this.GetRecordType(tableLogicalName);
-
-                    symTable = ReadOnlySymbolTable.NewFromRecord(recordType, allowThisRecord: true, allowMutable: true, debugName: $"RowScope:{tableLogicalName}");
-                                        
-                    _rowScopeSymbols[tableLogicalName] = symTable;
+                    if (!_rowScopeSymbols.TryGetValue(tableLogicalName, out symTable))
+                    {
+                        symTable = ReadOnlySymbolTable.NewFromRecord(recordType, allowThisRecord: true, allowMutable: true, debugName: $"RowScope:{tableLogicalName}");
+                        _rowScopeSymbols[tableLogicalName] = symTable;
+                    }
                 }
-
-                return symTable;
             }
+            else
+            {
+                lock (_rowScopeSymbolsNoITR)
+                {
+                    if(!_rowScopeSymbolsNoITR.TryGetValue(tableLogicalName, out symTable))
+                    {
+                        symTable = ReadOnlySymbolTable.NewFromRecordWithoutImplicitThisRecord(recordType, allowMutable: true, debugName: $"RowScopeNoITR:{tableLogicalName}");
+                        _rowScopeSymbolsNoITR[tableLogicalName] = symTable;
+                    }
+                }
+            }
+
+            return symTable;
         }
 
         /// <summary>
