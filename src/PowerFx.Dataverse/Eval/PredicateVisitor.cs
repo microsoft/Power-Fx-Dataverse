@@ -1,6 +1,7 @@
 ﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
@@ -11,6 +12,7 @@ using System.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
+using PowerFxStringResources = Microsoft.PowerFx.Core.Localization.StringResources;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -118,10 +120,9 @@ namespace Microsoft.PowerFx.Dataverse
                     var span = new Span(min, lim);
                     var reason = new ExpressionError
                     {
-                        MessageKey = "WrnDelagationPredicate",
                         Span = span,
                         Severity = ErrorSeverity.Warning
-                    };
+                    }.SetMessageKey(new ErrorResourceKey("WrnDelagationPredicate", PowerFxStringResources.LocalStringResources)); ;
                     this.AddError(reason);
 
                     opKind = op;
@@ -428,12 +429,11 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal CreateBehaviorErrorAndReturn(CallNode node, BehaviorIRVisitor.RetVal findBehaviorFunc)
         {
             var reason = new ExpressionError
-            {
-                MessageKey = "WrnDelagationBehaviorFunction",
+            {                
                 MessageArgs = new object[] { node.Function.Name, findBehaviorFunc.Name },
                 Span = findBehaviorFunc.Span,
                 Severity = ErrorSeverity.Warning
-            };
+            }.SetMessageKey(new ErrorResourceKey("WrnDelagationBehaviorFunction", PowerFxStringResources.LocalStringResources));
 
             AddError(reason);
             return new RetVal(node);
@@ -442,12 +442,12 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal CreateThisRecordErrorAndReturn(CallNode node, ThisRecordIRVisitor.RetVal findThisRecord)
         {
             var reason = new ExpressionError
-            {
-                MessageKey = "WrnDelagationRefersThisRecord",
+            {                
                 MessageArgs = new object[] { _caller.Function.Name },
                 Span = findThisRecord.Span,
                 Severity = ErrorSeverity.Warning
-            };
+            }.SetMessageKey(new ErrorResourceKey("WrnDelagationRefersThisRecord", PowerFxStringResources.LocalStringResources));
+
             AddError(reason);
             return new RetVal(node);
         }

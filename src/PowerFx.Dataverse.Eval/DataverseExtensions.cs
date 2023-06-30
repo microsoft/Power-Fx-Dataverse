@@ -13,7 +13,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.ServiceModel;
 using System.ServiceModel.Security;
-using static Microsoft.PowerFx.Dataverse.DataverseHelpers;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -103,7 +102,7 @@ namespace Microsoft.PowerFx.Dataverse
         public static DValue<T> DataverseError<T>(string message, string method)
             where T : ValidFormulaValue
         {
-            return DValue<T>.Of(FormulaValue.NewError(GetExpressionError(message, messageKey: method)));
+            return DValue<T>.Of(FormulaValue.NewError(DataverseHelpers.GetExpressionError(message, messageKey: method)));
         }
 
         // Call IOrganizationService and translate responses. 
