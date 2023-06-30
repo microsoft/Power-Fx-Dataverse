@@ -1360,8 +1360,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [DataTestMethod]
         [DataRow("Set(Price, 200); Price", 200.0)]
-        [DataRow("Set(Other, First(Remote));Other.data", 200.0)]
-        [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)]
         public void LocalSet(string expr, object expected)
         {
             // create table "local"
@@ -1412,8 +1410,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [DataTestMethod]
         [DataRow("Set(Price, 200); Price", 200.0)]
-        [DataRow("Set(Other, First(Remote));Other.data", 200.0)]
-        [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)]
         public void LocalSetFloat(string expr, object expected)
         {
             // create table "local"
@@ -3704,6 +3700,51 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
+        }
+
+        [DataTestMethod]
+        [DataRow("Set(x, First(t1))")]
+        [DataRow("Set(t, Filter(t1,true))", true)]
+        [DataRow("With({local:First(t1)}, Set(y, local))")]
+        [DataRow("Set(x, First(Remote));Other.data")]
+        [DataRow("Set(x, Collect(Remote, { Data : 99})); Other.Data")]
+        [DataRow("With({r:First(t1)}, Set(x, { Price : r.Price, OtherData : r.Other.Data}))", false, true)]
+        public void SetExpandableTypeNotAllowedTest(string expr, bool isTable = false, bool successful = false)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+            var errorMessageKey = string.Empty;
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("Remote", "remote");
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+            engine.UpdateVariable("x", RecordValue.Empty());
+            engine.UpdateVariable("y", RecordValue.Empty());
+            engine.UpdateVariable("t", TableValue.NewTable(RecordType.Empty()));
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.AreEqual(successful, check.IsSuccess);
+
+            if (!successful)
+            {
+                if (isTable)
+                {
+                    errorMessageKey = "ErrSetVariableWithRelationshipNotAllowTable";
+                }
+                else
+                {
+                    errorMessageKey = "ErrSetVariableWithRelationshipNotAllowRecord";
+                }
+
+                Assert.IsTrue(check.Errors.Any(err => err.MessageKey == errorMessageKey));
+            }
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
