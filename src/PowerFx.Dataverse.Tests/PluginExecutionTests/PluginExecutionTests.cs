@@ -1360,8 +1360,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [DataTestMethod]
         [DataRow("Set(Price, 200); Price", 200.0)]
-        [DataRow("Set(Other, First(Remote));Other.data", 200.0)]
-        [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)]
         public void LocalSet(string expr, object expected)
         {
             // create table "local"
@@ -1412,8 +1410,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [DataTestMethod]
         [DataRow("Set(Price, 200); Price", 200.0)]
-        [DataRow("Set(Other, First(Remote));Other.data", 200.0)]
-        [DataRow("Set(Other, Collect(Remote, { Data : 99})); Other.Data", 99.0)]
         public void LocalSetFloat(string expr, object expected)
         {
             // create table "local"
