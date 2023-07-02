@@ -74,6 +74,15 @@ namespace Microsoft.PowerFx.Dataverse
                     return ((StringValue)fxValue).Value;
 
                 case AttributeTypeCode.BigInt:
+                    if (fxValue is DecimalValue dvb)
+                    {
+                        return (long)dvb.Value;
+                    }
+                    else
+                    {
+                        return (long)((NumberValue)fxValue).Value;
+                    }
+                    
                 case AttributeTypeCode.Uniqueidentifier:
                     return fxValue.ToObject();
 
