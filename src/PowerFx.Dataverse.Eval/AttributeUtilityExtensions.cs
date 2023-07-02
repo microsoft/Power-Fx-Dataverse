@@ -60,14 +60,21 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        return (Decimal)((NumberValue)fxValue).Value;
+                        return (decimal)((NumberValue)fxValue).Value;
                     }
 
                 case AttributeTypeCode.Double:
                     return ((NumberValue)fxValue).Value;
 
                 case AttributeTypeCode.Integer:
-                    return (int)((NumberValue)fxValue).Value;
+                    if (fxValue is DecimalValue dvi)
+                    {
+                        return (int)dvi.Value;
+                    }
+                    else
+                    {
+                        return (int)((NumberValue)fxValue).Value;
+                    }
 
                 case AttributeTypeCode.Memo:
                 case AttributeTypeCode.String:
