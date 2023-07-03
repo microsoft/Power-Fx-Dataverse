@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
                 
-                var result = await t2.RetrieveAsync(id, cancel);
+                var result = await t2.RetrieveAsync(id, cancel).ConfigureAwait(false);
                 return result;
             }
 
@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-                var result = await t2.RetrieveMultipleAsync(filter, count, cancel);
+                var result = await t2.RetrieveMultipleAsync(filter, count, cancel).ConfigureAwait(false);
                 return result;
             }
 

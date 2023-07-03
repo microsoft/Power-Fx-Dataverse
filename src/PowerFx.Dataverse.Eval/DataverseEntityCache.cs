@@ -183,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();           
 
-            DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
+            DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {

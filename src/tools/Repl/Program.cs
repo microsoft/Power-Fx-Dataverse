@@ -2,6 +2,11 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,18 +15,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using Microsoft.Extensions.Options;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx
 {
@@ -126,6 +119,8 @@ namespace Microsoft.PowerFx
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
             config.AddOptionSet(optionsSet);
+
+            config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
 
             _engine = new RecalcEngine(config);
         }
@@ -496,56 +491,87 @@ namespace Microsoft.PowerFx
             return exprPartial;
         }
 
-        private static string PrintResult(FormulaValue value, bool minimal = false)
+        internal static string PrintResult(FormulaValue value, bool minimal = false)
         {
-            string resultString;
+            StringBuilder resultString;
 
             if (value is BlankValue)
             {
-                resultString = minimal ? string.Empty : "Blank()";
+                resultString = new StringBuilder(minimal ? string.Empty : "Blank()");
             }
             else if (value is ErrorValue errorValue)
             {
-                resultString = minimal ? "<error>" : "<Error: " + errorValue.Errors[0].Message + ">";
+                resultString = new StringBuilder(minimal ? "<error>" : $"<Error: {errorValue.Errors[0].Message}>");
             }
             else if (value is UntypedObjectValue)
             {
-                resultString = minimal ? "<untyped>" : "<Untyped: Use Value, Text, Boolean, or other functions to establish the type>";
+                resultString = new StringBuilder(minimal ? "<untyped>" : "<Untyped: Use Value, Text, Boolean, or other functions to establish the type>");
             }
             else if (value is StringValue str)
             {
-                resultString = minimal ? str.Value : str.ToExpression();
+                resultString = new StringBuilder(minimal ? str.Value : str.ToExpression());
             }
             else if (value is RecordValue record)
             {
                 if (minimal)
                 {
-                    resultString = "<record>";
+                    resultString = new StringBuilder("<record>");
+                }
+                else  if (record.Fields.Count() == 1 && record.Fields.First().Name == "Value")
+                {
+                    resultString = new StringBuilder("{");
+                    resultString.Append("Value:");
+                    resultString.Append(record.Fields.First().GetPrintField());
+                    resultString.Append("}");
                 }
                 else
                 {
                     var separator = string.Empty;
-
                     var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
-                    resultString = "{";
-                    foreach (var fieldName in fieldNames)
+
+                    resultString = new StringBuilder("{");
+
+                    foreach (NamedValue field in record.Fields)
                     {
-                        resultString += separator + $"{fieldName}:";
-                        resultString += PrintResult(record.GetField(fieldName));
-                        separator = ", ";
+                        if (fieldNames.Contains(field.Name))
+                        {
+                            resultString.Append(separator);
+                            resultString.Append(field.Name);
+                            resultString.Append(':');
+                            resultString.Append(field.GetPrintField());
+                            separator = ", ";
+                        }
                     }
 
-                    resultString += "}";
+                    resultString.Append('}');
                 }
             }
             else if (value is TableValue table)
             {
                 if (minimal)
                 {
-                    resultString = "<table>";
+                    resultString = new StringBuilder("<table>");
                 }
+
+                // special treatment for single column table named Value
+                else if (table.Rows.First().Value.Fields.Count() == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
+                {
+                    var separator = string.Empty;
+                    resultString = new StringBuilder("[");
+                    foreach (var row in table.Rows)
+                    {
+                        resultString.Append(separator);
+                        resultString.Append(row.Value.Fields.First().GetPrintField());
+                        separator = ", ";
+                    }
+
+                    resultString.Append("]");
+                }
+
                 else
                 {
+                    // otherwise a full table treatment is needed
+
                     var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
                     var columnCount = fieldNames.Count();
 
@@ -561,32 +587,21 @@ namespace Microsoft.PowerFx
                         if (row.Value != null)
                         {
                             var column = 0;
-                            foreach (var fieldName in fieldNames)
+
+                            foreach (NamedValue field in row.Value.Fields)
                             {
-                                columnWidth[column] = Math.Max(columnWidth[column], PrintResult(row.Value.GetField(fieldName), true).Length);
-                                column++;
+                                if (fieldNames.Contains(field.Name))
+                                {
+                                    columnWidth[column] = Math.Max(columnWidth[column], field.GetPrintField(true).Length);
+                                    column++;
+                                }
                             }
                         }
                     }
 
-                    // special treatment for single column table named Value
-                    if (columnWidth.Length == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
+                    if (_formatTable)
                     {
-                        var separator = string.Empty;
-                        resultString = "[";
-                        foreach (var row in table.Rows)
-                        {
-                            resultString += separator + PrintResult(row.Value.Fields.First().Value);
-                            separator = ", ";
-                        }
-
-                        resultString += "]";
-                    }
-
-                    // otherwise a full table treatment is needed
-                    else if (_formatTable)
-                    {
-                        resultString = "\n ";
+                        resultString = new StringBuilder("\n ");
                         var column = 0;
 
                         foreach (var row in table.Rows)
@@ -594,28 +609,39 @@ namespace Microsoft.PowerFx
                             if (row.Value != null)
                             {
                                 column = 0;
-                                foreach (var fieldName in fieldNames)
+
+                                foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    columnWidth[column] = Math.Max(columnWidth[column], fieldName.Length);
-                                    resultString += " " + fieldName.PadLeft(columnWidth[column]) + "  ";
-                                    column++;
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
+                                        resultString.Append(' ');
+                                        resultString.Append(field.Name.PadLeft(columnWidth[column]));
+                                        resultString.Append("  ");
+                                        column++;
+                                    }
                                 }
 
                                 break;
                             }
                         }
 
-                        resultString += "\n ";
+                        resultString.Append("\n ");
 
                         foreach (var row in table.Rows)
                         {
                             if (row.Value != null)
                             {
                                 column = 0;
-                                foreach (var fieldName in fieldNames)
+
+                                foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    resultString += new string('=', columnWidth[column] + 2) + " ";
-                                    column++;
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        resultString.Append(new string('=', columnWidth[column] + 2));
+                                        resultString.Append(' ');
+                                        column++;
+                                    }
                                 }
 
                                 break;
@@ -625,18 +651,23 @@ namespace Microsoft.PowerFx
                         foreach (var row in table.Rows)
                         {
                             column = 0;
-                            resultString += "\n ";
+                            resultString.Append("\n ");
                             if (row.Value != null)
                             {
-                                foreach (var fieldName in fieldNames)
+                                foreach (NamedValue field in row.Value.Fields)
                                 {
-                                    resultString += " " + PrintResult(row.Value.GetField(fieldName), true).PadLeft(columnWidth[column]) + "  ";
-                                    column++;
-                                }
+                                    if (fieldNames.Contains(field.Name))
+                                    {
+                                        resultString.Append(' ');
+                                        resultString.Append(field.GetPrintField(true).PadLeft(columnWidth[column]));
+                                        resultString.Append("  ");
+                                        column++;
+                                    }
+                                }                               
                             }
                             else
                             {
-                                resultString += row.IsError ? row.Error?.Errors?[0].Message : "Blank()";
+                                resultString.Append(row.IsError ? row.Error?.Errors?[0].Message : "Blank()");
                             }
                         }
                     }
@@ -644,31 +675,27 @@ namespace Microsoft.PowerFx
                     {
                         // table without formatting 
 
-                        resultString = "[";
+                        resultString = new StringBuilder("[");
                         var separator = string.Empty;
                         foreach (var row in table.Rows)
                         {
-                            resultString += separator + PrintResult(row.Value);
+                            resultString.Append(separator);
+                            resultString.Append(PrintResult(row.Value));
                             separator = ", ";
                         }
 
-                        resultString += "]";
+                        resultString.Append(']');
                     }
                 }
             }
             else
             {
-                var sb = new StringBuilder();
-                var settings = new FormulaValueSerializerSettings()
-                {
-                    UseCompactRepresentation = true,
-                };
-                value.ToExpression(sb, settings);
-
-                resultString = sb.ToString();
+                resultString = new StringBuilder();
+                var settings = new FormulaValueSerializerSettings() { UseCompactRepresentation = true };
+                value.ToExpression(resultString, settings);                
             }
 
-            return resultString;
+            return resultString.ToString();
         }
 
         private class ResetFunction : ReflectionFunction
@@ -706,7 +733,15 @@ namespace Microsoft.PowerFx
                     {
                         _formatTableColumns.Add(match.Value);
                     }
-                    return StringValue.New(string.Join(",", _formatTableColumns));
+                    if (_formatTableColumns.Count() == 0)
+                    {
+                        _formatTableColumns = null;
+                        return StringValue.New("ALL");
+                    }
+                    else
+                    {
+                        return StringValue.New(string.Join(",", _formatTableColumns));
+                    }
                 }
 
                 return FormulaValue.NewError(new ExpressionError()
@@ -959,5 +994,13 @@ Use the Reset() function to clear all formulas and variables.
                 return FormulaValue.New(true);
             }
         }
+    }
+}
+
+internal static class Exts
+{
+    public static string GetPrintField(this NamedValue field, bool minimal = false)
+    {
+        return field.IsExpandEntity ? "<EE>" : Microsoft.PowerFx.ConsoleRepl.PrintResult(field.Value, minimal);
     }
 }
