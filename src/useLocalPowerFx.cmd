@@ -1,7 +1,7 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=0.2.6-preview.20230628-1003
+set pfxVer=0.2.6-preview.20230629-1008
 set pfxRoot=C:\Data\Power-Fx
 set pfxConfig=Debug
 
@@ -27,20 +27,20 @@ set source7=%pfxSource%\Microsoft.PowerFx.Transport.Attributes\bin\%pfxConfig%\n
 set options=/e /s /np /nfl /ndl 
 
 echo "%source1% --> %nugetDest1%"
-echo a
-robocopy "%source1%" "%nugetDest1%" %options% 
+robocopy "%source1%" "%nugetDest1%" %options% > NUL
 echo "%source2% --> %nugetDest2%"
-robocopy "%source2%" "%nugetDest2%" %options% 
+robocopy "%source2%" "%nugetDest2%" %options% > NUL
 echo "%source3% --> %nugetDest3%"
-robocopy "%source3%" "%nugetDest3%" %options% 
+robocopy "%source3%" "%nugetDest3%" %options% > NUL
 echo "%source4% --> %nugetDest4%"
-robocopy "%source4%" "%nugetDest4%" %options% 
+robocopy "%source4%" "%nugetDest4%" %options% > NUL
 echo "%source5% --> %nugetDest5%"
-robocopy "%source5%" "%nugetDest5%" %options% 
+robocopy "%source5%" "%nugetDest5%" %options% > NUL
 echo "%source6% --> %nugetDest6%"
-robocopy "%source6%" "%nugetDest6%" %options% 
+robocopy "%source6%" "%nugetDest6%" %options% > NUL
 echo "%source7% --> %nugetDest7%"
-robocopy "%source7%" "%nugetDest7%" %options% 
+robocopy "%source7%" "%nugetDest7%" %options% > NUL
 
 echo.
 echo *** DO NOT FORGET TO REBUILD ALL YOUR PROJECTS ***
+echo on
