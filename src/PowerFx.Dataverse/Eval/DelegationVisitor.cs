@@ -200,11 +200,12 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (left2.Parent.Id == right2.Parent.Id &&
                                     left2.Name == right2.Name)
                                 {
-                                    var reason = new ExpressionError
-                                    {                                        
+                                    var reason = new ExpressionError()
+                                    {
                                         Span = predicate.IRContext.SourceContext,
-                                        Severity = ErrorSeverity.Warning
-                                    }.SetMessageKey(new ErrorResourceKey("WrnDelagationPredicate", PowerFxStringResources.LocalStringResources));
+                                        Severity = ErrorSeverity.Warning,
+                                        ResourceKey = TexlStrings.WrnDelagationPredicate
+                                    };
                                     this.AddError(reason);
                                 }
                             }
@@ -488,12 +489,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
         {
-            var reason = new ExpressionError
-            {                
+            var reason = new ExpressionError()
+            {
                 MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows },
-                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1,2),
-                Severity = ErrorSeverity.Warning
-            }.SetMessageKey(new ErrorResourceKey("WrnDelagationTableNotSupported", PowerFxStringResources.LocalStringResources));
+                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelagationTableNotSupported
+            };
             this.AddError(reason);
 
             return new RetVal(node);
@@ -501,12 +503,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateBehaviorErrorAndReturn(CallNode node, BehaviorIRVisitor.RetVal findBehaviorFunc)
         {
-            var reason = new ExpressionError
-            {                
+            var reason = new ExpressionError()
+            {
                 MessageArgs = new object[] { node.Function.Name, findBehaviorFunc.Name },
                 Span = findBehaviorFunc.Span,
-                Severity = ErrorSeverity.Warning
-            }.SetMessageKey(new ErrorResourceKey("WrnDelagationBehaviorFunction", PowerFxStringResources.LocalStringResources));
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelagationBehaviorFunction
+            };
 
             AddError(reason);
             return new RetVal(node);
@@ -514,12 +517,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateThisRecordErrorAndReturn(CallNode node, ThisRecordIRVisitor.RetVal findThisRecord)
         {
-            var reason = new ExpressionError
+            var reason = new ExpressionError()
             {
                 MessageArgs = new object[] { node.Function.Name },
                 Span = findThisRecord.Span,
-                Severity = ErrorSeverity.Warning
-            }.SetMessageKey(new ErrorResourceKey("WrnDelagationRefersThisRecord", PowerFxStringResources.LocalStringResources));
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelagationRefersThisRecord
+            };
             AddError(reason);
             return new RetVal(node);
         }

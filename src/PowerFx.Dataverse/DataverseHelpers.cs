@@ -7,12 +7,22 @@ namespace Microsoft.PowerFx.Dataverse
     {
         public static ExpressionError GetExpressionError(string message, ErrorSeverity severity = ErrorSeverity.Critical, string messageKey = null)
         {
-            return new ExpressionError() { Kind = ErrorKind.Unknown, Severity = severity, Message = message }.SetMessageKey(new ErrorResourceKey(messageKey, DataverseStringResources.LocalStringResources));
+            return new ExpressionError() 
+            { 
+                Kind = ErrorKind.Unknown, 
+                Severity = severity, 
+                Message = message,
+                ResourceKey = new ErrorResourceKey(messageKey, DataverseStringResources.LocalStringResources)
+            };
         }
 
         public static ExpressionError GetInvalidCastError(object[] messageArgs)
         {
-            return new ExpressionError() { MessageArgs = messageArgs }.SetMessageKey(TexlStrings.InvalidCast); 
+            return new ExpressionError()
+            {
+                MessageArgs = messageArgs,
+                ResourceKey = TexlStrings.InvalidCast
+            };
         }
     }
 }

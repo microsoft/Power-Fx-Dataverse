@@ -153,7 +153,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void SqlCompileExceptionIsError()
         {
-            Assert.IsTrue(SqlCompileException.IsError("DV_FormulaColumns_ColumnTypeNotSupported"));
+            Assert.IsTrue(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
             Assert.IsFalse(SqlCompileException.IsError("OtherError"));
         }
 

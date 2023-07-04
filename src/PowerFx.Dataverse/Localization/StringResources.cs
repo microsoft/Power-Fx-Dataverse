@@ -13,6 +13,6 @@ namespace Microsoft.PowerFx.Dataverse.Localization
 {
     internal static class DataverseStringResources
     {
-        internal static readonly IResourceStringManager LocalStringResources = new PowerFxStringResources("Microsoft.PowerFx.Dataverse.strings.DataverseResources", typeof(DataverseStringResources).Assembly);
+        internal static readonly IExternalStringResources LocalStringResources = new PowerFxStringResources("Microsoft.PowerFx.Dataverse.strings.DataverseResources", typeof(DataverseStringResources).Assembly);
     }    
 }

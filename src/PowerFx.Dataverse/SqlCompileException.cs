@@ -40,112 +40,112 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// The error resource key for a generic not supported error
         /// </summary>
-        internal readonly static ErrorResourceKey NotSupported = new ErrorResourceKey("DV_FormulaColumns_NotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey NotSupported = new ErrorResourceKey("FormulaColumns_NotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an argument not supported error
         /// </summary>
-        internal readonly static ErrorResourceKey ArgumentNotSupported = new ErrorResourceKey("DV_FormulaColumns_ArgNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ArgumentNotSupported = new ErrorResourceKey("FormulaColumns_ArgNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an argument type not supported error
         /// </summary>
-        internal readonly static ErrorResourceKey ArgumentTypeNotSupported = new ErrorResourceKey("DV_FormulaColumns_ArgumentTypeNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ArgumentTypeNotSupported = new ErrorResourceKey("FormulaColumns_ArgumentTypeNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an argument requiring a literal value
         /// </summary>
-        internal readonly static ErrorResourceKey LiteralArgRequired = new ErrorResourceKey("DV_FormulaColumns_LiteralArgRequired", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey LiteralArgRequired = new ErrorResourceKey("FormulaColumns_LiteralArgRequired", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an operation requiring time zone conversion
         /// </summary>
-        internal readonly static ErrorResourceKey TimeZoneConversion = new ErrorResourceKey("DV_FormulaColumns_TimeZoneConversion", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey TimeZoneConversion = new ErrorResourceKey("FormulaColumns_TimeZoneConversion", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an operation with incompatible date time
         /// </summary>
-        internal readonly static ErrorResourceKey IncompatibleDateTimes = new ErrorResourceKey("DV_FormulaColumns_IncompatibleDateTimes", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey IncompatibleDateTimes = new ErrorResourceKey("FormulaColumns_IncompatibleDateTimes", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an operation with an incorrect unit of time supplied to DateAdd/DateDiff functions
         /// </summary>
-        internal readonly static ErrorResourceKey InvalidTimeUnit = new ErrorResourceKey("DV_FormulaColumns_InvalidTimeUnit", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey InvalidTimeUnit = new ErrorResourceKey("FormulaColumns_InvalidTimeUnit", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an incorrect number of arguments for Math functions
         /// </summary>
-        internal readonly static ErrorResourceKey MathFunctionBadArity = new ErrorResourceKey("DV_FormulaColumns_MathFunctionBadArity", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey MathFunctionBadArity = new ErrorResourceKey("FormulaColumns_MathFunctionBadArity", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for the Text function with invalid numeric format
         /// </summary>
-        internal readonly static ErrorResourceKey NumericFormatNotSupported = new ErrorResourceKey("DV_FormulaColumns_NumericFormatNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey NumericFormatNotSupported = new ErrorResourceKey("FormulaColumns_NumericFormatNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for use of a function that is not supported, with a suggested alternate
         /// </summary>
-        internal readonly static ErrorResourceKey FunctionNotSupported = new ErrorResourceKey("DV_FormulaColumns_FunctionNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey FunctionNotSupported = new ErrorResourceKey("FormulaColumns_FunctionNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for use of an unsupported operation
         /// </summary>
-        internal readonly static ErrorResourceKey OperationNotSupported = new ErrorResourceKey("DV_FormulaColumns_OperationNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey OperationNotSupported = new ErrorResourceKey("FormulaColumns_OperationNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an unsupported result type
         /// </summary>
-        internal readonly static ErrorResourceKey ResultTypeNotSupported = new ErrorResourceKey("DV_FormulaColumns_ResultTypeNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ResultTypeNotSupported = new ErrorResourceKey("FormulaColumns_ResultTypeNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an entire record reference
         /// </summary>
-        internal readonly static ErrorResourceKey RecordAccessNotSupported = new ErrorResourceKey("DV_FormulaColumns_RecordAccessNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey RecordAccessNotSupported = new ErrorResourceKey("FormulaColumns_RecordAccessNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for an result type that does not match the requested type
         /// </summary>
-        internal readonly static ErrorResourceKey ResultTypeMustMatch = new ErrorResourceKey("DV_FormulaColumns_ResultTypeMustMatch", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ResultTypeMustMatch = new ErrorResourceKey("FormulaColumns_ResultTypeMustMatch", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for a Dataverse column type that is not supported
         /// </summary>
-        internal readonly static ErrorResourceKey ColumnTypeNotSupported = new ErrorResourceKey("DV_FormulaColumns_ColumnTypeNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ColumnTypeNotSupported = new ErrorResourceKey("FormulaColumns_ColumnTypeNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for a Dataverse column format that is not supported
         /// </summary>
-        internal readonly static ErrorResourceKey ColumnFormatNotSupported = new ErrorResourceKey("DV_FormulaColumns_ColumnFormatNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ColumnFormatNotSupported = new ErrorResourceKey("FormulaColumns_ColumnFormatNotSupported", DataverseStringResources.LocalStringResources);
 
         /// <summary>
         /// The error resource key for a Dataverse column format that is not supported
         /// </summary>
-        internal readonly static ErrorResourceKey AggregateCoercionNotSupported = new ErrorResourceKey("DV_FormulaColumns_AggregateCoercionNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey AggregateCoercionNotSupported = new ErrorResourceKey("FormulaColumns_AggregateCoercionNotSupported", DataverseStringResources.LocalStringResources);
 
         // <summary>
         /// The error resource key for a formula that references a virtual table
         /// </summary>
-        internal readonly static ErrorResourceKey VirtualTableNotSupported = new ErrorResourceKey("DV_FormulaColumns_VirtualTableNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey VirtualTableNotSupported = new ErrorResourceKey("FormulaColumns_VirtualTableNotSupported", DataverseStringResources.LocalStringResources);
 
         // <summary>
         /// The error resource key for a formula that references a single-column table
         /// </summary>
-        internal readonly static ErrorResourceKey SingleColumnTableNotSupported = new ErrorResourceKey("DV_FormulaColumns_SingleColumnTableNotSupported", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey SingleColumnTableNotSupported = new ErrorResourceKey("FormulaColumns_SingleColumnTableNotSupported", DataverseStringResources.LocalStringResources);
 
         // <summary>
         /// The error resource key for a formula with Text of a number without a format string.
         /// </summary>
-        internal readonly static ErrorResourceKey TextNumberMissingFormat = new ErrorResourceKey("DV_FormulaColumns_TextNumberMissingFormat", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey TextNumberMissingFormat = new ErrorResourceKey("FormulaColumns_TextNumberMissingFormat", DataverseStringResources.LocalStringResources);
 
         // <summary>
         /// The error resource key for a formula with implicit conversion of number to text.
         /// </summary>
-        internal readonly static ErrorResourceKey ImplicitNumberToText = new ErrorResourceKey("DV_FormulaColumns_ImplicitNumberToText", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey ImplicitNumberToText = new ErrorResourceKey("FormulaColumns_ImplicitNumberToText", DataverseStringResources.LocalStringResources);
 
         // <summary>
         /// The error resource key for a formula that references a related entity's currency field
         /// </summary>
-        internal readonly static ErrorResourceKey RelatedCurrency = new ErrorResourceKey("DV_FormulaColumns_RelatedCurrency", DataverseStringResources.LocalStringResources);
+        internal readonly static ErrorResourceKey RelatedCurrency = new ErrorResourceKey("FormulaColumns_RelatedCurrency", DataverseStringResources.LocalStringResources);
 
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
