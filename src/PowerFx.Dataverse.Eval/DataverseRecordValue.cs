@@ -268,7 +268,8 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        // Called by DataverseRecordValue, which wont internal entity attributes.
+        public async Task<DValue<RecordValue>> UpdateEntityAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -296,12 +297,25 @@ namespace Microsoft.PowerFx.Dataverse
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
             }
 
-            foreach (var attr in newEntity.Response.Attributes)
+            var refreshed = new DataverseRecordValue(newEntity.Response, _metadata, this.Type, _connection);
+
+            return DValue<RecordValue>.Of(refreshed);
+        }
+
+        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var refreshedRecord = await UpdateEntityAsync(record, cancellationToken);
+
+            if (refreshedRecord.IsValue)
             {
-                _entity.Attributes[attr.Key] = attr.Value;
+                var dataverseRecord = (DataverseRecordValue)refreshedRecord.Value;
+                foreach (var attr in dataverseRecord.Entity.Attributes)
+                {
+                    _entity.Attributes[attr.Key] = attr.Value;
+                }
             }
 
-            return DValue<RecordValue>.Of(this);
+            return refreshedRecord;
         }
 
         // Record should already be using logical names. 
