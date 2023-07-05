@@ -2,9 +2,6 @@
 // String interpolation is not enabled in SQL
 #DISABLE: StringInterpolate.txt
 
-// SQL has very limited text formatting support
-#DISABLE: Text_Format.txt
-
 // DV runs with PowerFxV1CompatibilityRules=true. So disable some files that have PowerFxV1CompatibilityRules=false.
 #DISABLE:  OpMatrix_Eq_DifferentTypes.txt
 
