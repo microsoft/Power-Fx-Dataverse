@@ -2461,12 +2461,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             1,
             "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)")]
 
-        // Delegation should be supported here, as it is for floating point.  
-        // Being tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/235
         [DataRow("Filter(t1, Price < Float(120))",
             3,
-            "Filter(t1, (LtNumbers(Float(new_price),Float(120))))",
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)")]
 
         [DataRow("Filter(t1, Price < Decimal(20))",
             2,

@@ -168,7 +168,19 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(IntermediateNode node, out string fieldName)
         {
-            if (node is ScopeAccessNode scopeAccessNode)
+            IntermediateNode maybeScopeAccessNode;
+
+            // If the node had injected float coercion, then we need to pull scope access node from it.
+            if(node is CallNode maybeFloat && maybeFloat.Function == BuiltinFunctionsCore.Float)
+            {
+                maybeScopeAccessNode = maybeFloat.Args[0];
+            }
+            else
+            {
+                maybeScopeAccessNode = node;
+            }
+
+            if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
                 if (scopeAccessNode.Value is ScopeAccessSymbol scopeAccessSymbol)
                 {
