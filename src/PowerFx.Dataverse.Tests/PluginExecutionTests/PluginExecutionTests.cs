@@ -3811,6 +3811,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
+            
+            // Dataverse BigInt is a C# long type
             entity1.Attributes["new_bigint"] = Convert.ToInt64(8766871687916871784);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
@@ -3846,7 +3848,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
-            entity1.Attributes["bigint"] = 934157136952;
+            entity1.Attributes["bigint"] = 934157136952; // int64
             entity1.Attributes["double"] = 1d / 3d;
             entity1.Attributes["new_field"] = 1m / 3m;
 
