@@ -685,6 +685,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
+        [DataRow(true, "Number")]
+        [DataRow(false, "Decimal")]
+        public void TestBigInt(bool numberIsFloat, string retTypeStr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            // numberIsFloat controls how metadata parser handles currency. 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel(metadataNumberIsFloat: numberIsFloat);
+            dv.AddTable(displayName, logicalName);
+
+            var expr = "First(t1).BigInt"; // field of BigInt type 
+
+            var check = engine.Check(expr, symbolTable: dv.Symbols);
+            Assert.IsTrue(check.IsSuccess);
+            var retType = check.ReturnType.ToString();
+            Assert.AreEqual(retTypeStr, retType);
+
+            FormulaValue fv = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            Assert.AreEqual(934157136952, fv.ToDouble());
+        }
+
+        [DataTestMethod]
         [DataRow("Patch(t1, First(t1), {Memo:\"LOREM\nIPSUM\nDOLOR\nSIT\nAMET\"})")]
         [DataRow("First(t1).Memo")]
         public void SupportAllColumnTypesTest(string expr)
@@ -3784,6 +3811,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
+            entity1.Attributes["new_bigint"] = Convert.ToInt64(8766871687916871784);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

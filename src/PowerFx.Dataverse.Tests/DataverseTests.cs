@@ -1285,6 +1285,7 @@ END
                 AttributeMetadataModel.NewDateTime("new_date", "Date", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
                 AttributeMetadataModel.NewDateTime("new_datetime", "DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewMoney("new_currency", "Currency"),
+                AttributeMetadataModel.NewBigInt("new_bigint", "BigInt"),
                 AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
                 AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),

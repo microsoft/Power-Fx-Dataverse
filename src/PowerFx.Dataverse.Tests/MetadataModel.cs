@@ -146,6 +146,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             };
         }
 
+        public static AttributeMetadataModel NewBigInt(string logicalName, string displayName)
+        {
+            return new AttributeMetadataModel
+            {
+                LogicalName = logicalName,
+                DisplayName = displayName,
+                AttributeType = AttributeTypeCode.BigInt
+            };
+        }
+
         public static AttributeMetadataModel NewString(string logicalName, string displayName, StringFormat format = StringFormat.Text)
         {
             return new AttributeMetadataModel
