@@ -27,7 +27,7 @@
   </PropertyGroup>
 
   <Import Project="..\Build.props" />
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.3" /> <!-- CVE-2023-29331 -->
@@ -41,10 +41,10 @@
     </PackageReference>
   </ItemGroup>
 
-	<ItemGroup>
-		<EmbeddedResource Include="..\strings\DataverseResources.*.resx">
-			<Link>strings\%(Filename)%(Extension)</Link>
-		</EmbeddedResource>
-	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\strings\DataverseResources.*.resx">
+      <Link>strings\%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+  </ItemGroup>
 
 </Project>

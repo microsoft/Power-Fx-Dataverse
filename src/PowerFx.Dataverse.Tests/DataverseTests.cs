@@ -232,13 +232,13 @@ END
             var metadata = AllAttributeModel.ToXrm();
 
             var metadataProvider = new CdsEntityMetadataProvider(null)
-            {                
+            {
                 NumberIsFloat = false  // Causes money to be imported as Decimal instead of Number
             };
 
             var engine = new PowerFx2SqlEngine(metadata, metadataProvider);
             var result = engine.Check(expr);
-                        
+
             Assert.IsNotNull(result);
 
             // But formula columns don't support returning Decimal. 
@@ -302,7 +302,7 @@ END
         public void CheckNullRef()
         {
             var engine = new PowerFx2SqlEngine();
-            Assert.ThrowsException<ArgumentNullException>(() => engine.Check((string) null));
+            Assert.ThrowsException<ArgumentNullException>(() => engine.Check((string)null));
         }
 
         [TestMethod]
@@ -332,7 +332,7 @@ END
 
             Assert.IsFalse(result.IsSuccess);
             var errors = result.Errors.ToArray();
-            Assert.IsTrue(errors.Length> 1);
+            Assert.IsTrue(errors.Length > 1);
             Assert.IsTrue(errors[0].ToString().StartsWith(
                 "Error 4-4: Expected an operand"));
             Assert.AreEqual(TexlStrings.ErrOperandExpected.Key, errors[0].MessageKey);
@@ -363,7 +363,7 @@ END
             var result = engine.Check(expr); // foo is undefined 
 
             Assert.IsFalse(result.IsSuccess);
-            var errors = result.Errors.ToArray();            
+            var errors = result.Errors.ToArray();
             Assert.IsTrue(errors[0].ToString().Contains(message));
             Assert.AreEqual(key, errors[0].MessageKey);
         }
@@ -581,7 +581,7 @@ END
             return expressions.ToArray();
         }
 
-        static void AssertResult(CheckResult checkResult, Dictionary<string, string> expectedErrors, string fieldName, string expr)
+        private static void AssertResult(CheckResult checkResult, Dictionary<string, string> expectedErrors, string fieldName, string expr)
         {
             if (checkResult.IsSuccess)
             {
@@ -615,7 +615,7 @@ END
                 { "ticker", "Columns of type String with format TickerSymbol are not supported in formula columns." },
                 { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },
                 { "bigint", "Columns of type BigInt are not supported in formula columns." },
-                { "EntityName", "Name isn't valid. 'EntityName' isn't recognized." }, // AttributeTypeCode.EntityName are not imported 				
+                { "EntityName", "Name isn't valid. 'EntityName' isn't recognized." }, // AttributeTypeCode.EntityName are not imported                 
                 { "file", "Name isn't valid. 'file' isn't recognized."},
                 { "customerid", "Name isn't valid. 'customerid' isn't recognized." },
 
@@ -689,7 +689,7 @@ END
         }
 
         // Model where names conflict on case. 
-        EntityMetadataModel ModelWithCasing = new EntityMetadataModel
+        private readonly EntityMetadataModel ModelWithCasing = new EntityMetadataModel
         {
             Attributes = new AttributeMetadataModel[]
               {
@@ -714,7 +714,7 @@ END
         }
 
         // Verify the expression has the given return type (specified as a FormulaType). 
-        static void AssertReturnType(PowerFx2SqlEngine engine, string expr, Type returnType)
+        private static void AssertReturnType(PowerFx2SqlEngine engine, string expr, Type returnType)
         {
             Assert.IsTrue(typeof(FormulaType).IsAssignableFrom(returnType));
 
@@ -727,7 +727,7 @@ END
             Assert.AreEqual(returnType, compileResult.ReturnType.GetType());
         }
 
-        static void AssertReturnTypeOrError(PowerFx2SqlEngine engine, string expr, bool success, Type returnType, params string[] errors)
+        private static void AssertReturnTypeOrError(PowerFx2SqlEngine engine, string expr, bool success, Type returnType, params string[] errors)
         {
             if (success)
             {
@@ -767,7 +767,7 @@ END
         }
 
         // Has conflicting _display_ names
-        EntityMetadataModel ModelWithConflict = new EntityMetadataModel
+        private readonly EntityMetadataModel ModelWithConflict = new EntityMetadataModel
         {
             Attributes = new AttributeMetadataModel[]
               {
@@ -813,7 +813,7 @@ END
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
-            Assert.AreEqual(0, result.Errors.Count());            
+            Assert.AreEqual(0, result.Errors.Count());
             Assert.AreEqual("conflict1 + conflict2", result.LogicalFormula);
         }
 
@@ -861,8 +861,7 @@ END
             var expr = new string('a', 1001);
             var error = "Error 0-1001: Expression can't be more than 1000 characters. The expression is 1001 characters.";
 
-            var engine = new PowerFx2SqlEngine();
-            var options = new SqlCompileOptions();
+            var engine = new PowerFx2SqlEngine();            
 
             var checkResult = engine.Check(expr);
             Assert.AreEqual(false, checkResult.IsSuccess);
@@ -1759,16 +1758,11 @@ END
         [DataRow("If(true; 1,1; 2)", "fr-FR", "If(true, 1.1, 2)", true, DisplayName = "French If with semicolon separators and comma (decimal)")]
         public void CompileLocalizedScripts(string expr, string localeName, string logicalFormula, bool success)
         {
-            CultureInfo culture;
-            switch (localeName)
+            CultureInfo culture = localeName switch
             {
-                case null:
-                    culture = CultureInfo.InvariantCulture;
-                    break;
-                default:
-                    culture = CultureInfo.CreateSpecificCulture(localeName);
-                    break;
-            };
+                null => CultureInfo.InvariantCulture,
+                _ => CultureInfo.CreateSpecificCulture(localeName),
+            };            
 
             var engine = new PowerFx2SqlEngine(culture: culture);
 
@@ -1811,7 +1805,7 @@ END
             string entityName = "some Entity";
             string errorMessage = "Oups!";
 
-            RecordType recordType = RecordType.Empty().Add(new NamedFormulaType(columnName, columnType));            
+            RecordType recordType = RecordType.Empty().Add(new NamedFormulaType(columnName, columnType));
             DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
             RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
 
