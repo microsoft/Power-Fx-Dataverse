@@ -79,6 +79,10 @@ namespace Microsoft.PowerFx.Dataverse
                     type = Types.FormulaType.DateTime;
                     return true;
 
+                case XrmAttributeTypeCode.BigInt:
+                    type = new SqlBigType();
+                    return true;
+
                 default:
                     type = default;
                     return false;

@@ -433,7 +433,6 @@ END
         [DataRow("Guid", "Error 0-4: The result type Guid is not supported in formula columns.", DisplayName = "Guid")]
         [DataRow("Owner", "Error 0-5: The result type Record is not supported in formula columns.", DisplayName = "Owner")]
         [DataRow("Customer", "Error 0-8: The result type Record is not supported in formula columns.", DisplayName = "Customer")]
-        [DataRow("BigInt", "Error 0-6: Columns of type BigInt are not supported in formula columns.", DisplayName = "BigInt")]
         [DataRow("Email", "Error 0-5: Columns of type String with format Email are not supported in formula columns.", DisplayName = "Email")]
         [DataRow("Ticker", "Error 0-6: Columns of type String with format TickerSymbol are not supported in formula columns.", DisplayName = "Ticker")]
         [DataRow("Hyperlink", "Error 0-9: Columns of type String with format Url are not supported in formula columns.", DisplayName = "Hyperlink")]
@@ -613,8 +612,7 @@ END
                 { "hyperlink", "Columns of type String with format Url are not supported in formula columns." },
                 { "email", "Columns of type String with format Email are not supported in formula columns." },
                 { "ticker", "Columns of type String with format TickerSymbol are not supported in formula columns." },
-                { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },
-                { "bigint", "Columns of type BigInt are not supported in formula columns." },
+                { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },                
                 { "EntityName", "Name isn't valid. 'EntityName' isn't recognized." }, // AttributeTypeCode.EntityName are not imported                 
                 { "file", "Name isn't valid. 'file' isn't recognized."},
                 { "customerid", "Name isn't valid. 'customerid' isn't recognized." },
