@@ -708,7 +708,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.AreEqual(retTypeStr, retType);
 
             FormulaValue fv = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-            Assert.AreEqual(934157136952, fv.ToDouble());
+            Assert.AreEqual(long.MaxValue, fv.ToDouble());
         }
 
         [DataTestMethod]
@@ -3813,7 +3813,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_currency"] = new Money(100);
             
             // Dataverse BigInt is a C# long type
-            entity1.Attributes["new_bigint"] = Convert.ToInt64(8766871687916871784);
+            entity1.Attributes["new_bigint"] = Convert.ToInt64(long.MaxValue);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
@@ -3848,7 +3848,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["Memo"] = "lorem\nipsum";
             entity1.Attributes["boolean"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["image"] = "/Image/download.aspx?Entity=cr100_pfxcolumn&Attribute=cr100_aaimage2&Id=a2538543-c1cc-ed11-b594-0022482a3eb0&Timestamp=638169207737754720";
-            entity1.Attributes["bigint"] = 934157136952; // int64
+            entity1.Attributes["bigint"] = long.MaxValue; // 9223372036854775807
             entity1.Attributes["double"] = 1d / 3d;
             entity1.Attributes["new_field"] = 1m / 3m;
 
