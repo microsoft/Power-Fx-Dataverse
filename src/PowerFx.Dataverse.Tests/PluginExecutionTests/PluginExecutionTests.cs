@@ -1381,7 +1381,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var allSymbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
             var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
-            Assert.IsTrue(check.IsSuccess);
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             var run = check.GetEvaluator();
 
@@ -2032,7 +2032,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
             var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
-            Assert.IsTrue(check.IsSuccess);
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             // comapre IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
@@ -2846,7 +2846,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check.IsSuccess);
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             var errors_pt_br = check.GetErrorsInLocale(culture: CultureInfo.CreateSpecificCulture("pt-BR"));
 

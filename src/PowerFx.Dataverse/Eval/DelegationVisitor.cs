@@ -1,9 +1,10 @@
 ﻿using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Syntax;
+using Microsoft.PowerFx.Dataverse.Localization;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
@@ -12,6 +13,7 @@ using System.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
+using PowerFxStringResources = Microsoft.PowerFx.Core.Localization.StringResources;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
@@ -198,11 +200,11 @@ namespace Microsoft.PowerFx.Dataverse
                                 if (left2.Parent.Id == right2.Parent.Id &&
                                     left2.Name == right2.Name)
                                 {
-                                    var reason = new ExpressionError
+                                    var reason = new ExpressionError()
                                     {
-                                        MessageKey = "WrnDelagationPredicate",
                                         Span = predicate.IRContext.SourceContext,
-                                        Severity = ErrorSeverity.Warning
+                                        Severity = ErrorSeverity.Warning,
+                                        ResourceKey = TexlStrings.WrnDelegationPredicate
                                     };
                                     this.AddError(reason);
                                 }
@@ -487,12 +489,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
         {
-            var reason = new ExpressionError
+            var reason = new ExpressionError()
             {
-                MessageKey = "WrnDelagationTableNotSupported",
                 MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows },
-                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1,2),
-                Severity = ErrorSeverity.Warning
+                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelegationTableNotSupported
             };
             this.AddError(reason);
 
@@ -501,12 +503,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateBehaviorErrorAndReturn(CallNode node, BehaviorIRVisitor.RetVal findBehaviorFunc)
         {
-            var reason = new ExpressionError
+            var reason = new ExpressionError()
             {
-                MessageKey = "WrnDelagationBehaviorFunction",
                 MessageArgs = new object[] { node.Function.Name, findBehaviorFunc.Name },
                 Span = findBehaviorFunc.Span,
-                Severity = ErrorSeverity.Warning
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelegationBehaviorFunction
             };
 
             AddError(reason);
@@ -515,12 +517,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateThisRecordErrorAndReturn(CallNode node, ThisRecordIRVisitor.RetVal findThisRecord)
         {
-            var reason = new ExpressionError
+            var reason = new ExpressionError()
             {
-                MessageKey = "WrnDelagationRefersThisRecord",
                 MessageArgs = new object[] { node.Function.Name },
                 Span = findThisRecord.Span,
-                Severity = ErrorSeverity.Warning
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelegationRefersThisRecord
             };
             AddError(reason);
             return new RetVal(node);

@@ -241,7 +241,7 @@ namespace Microsoft.PowerFx.Dataverse
             var dvRecord = (DataverseRecordValue)record;
             if (dvRecord.Entity.LogicalName != _entityMetadata.LogicalName)
             {
-                var error = new ExpressionError() { MessageKey = "InvalidCast", MessageArgs = new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName } };
+                ExpressionError error = DataverseHelpers.GetInvalidCastError(new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName });
                 throw new CustomFunctionErrorException(error);
             }
 

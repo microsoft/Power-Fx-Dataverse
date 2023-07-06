@@ -41,4 +41,10 @@
     </PackageReference>
   </ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="..\strings\DataverseResources.*.resx">
+			<Link>strings\%(Filename)%(Extension)</Link>
+		</EmbeddedResource>
+	</ItemGroup>
+
 </Project>
