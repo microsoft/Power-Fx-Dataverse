@@ -329,7 +329,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
     public class MockXrmMetadataProvider : IXrmMetadataProvider
     {
-        private Dictionary<string, EntityMetadata> _entitiesByName;
+        private readonly Dictionary<string, EntityMetadata> _entitiesByName;
 
         public MockXrmMetadataProvider(params EntityMetadataModel[] entityModels)
         {

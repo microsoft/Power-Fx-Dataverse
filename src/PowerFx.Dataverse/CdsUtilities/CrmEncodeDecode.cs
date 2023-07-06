@@ -21,10 +21,10 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// </summary>
         /// <param name="input">The string to encode</param>
         /// <returns>
-        /// 		An encoded string surrounded by single quotes
-        /// 		Ex:
-        /// 			SomeText          -> 'SomeText'
-        /// 			More 'Cool' Text  -> 'More ''Cool'' Text'
+        ///         An encoded string surrounded by single quotes
+        ///         Ex:
+        ///             SomeText          -> 'SomeText'
+        ///             More 'Cool' Text  -> 'More ''Cool'' Text'
         /// </returns>
         /// <remarks>See http://msdn.microsoft.com/en-us/library/ms998271.aspx</remarks>
         public static string SqlLiteralEncode(string input)
