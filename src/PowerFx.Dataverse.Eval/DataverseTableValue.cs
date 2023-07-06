@@ -162,10 +162,21 @@ namespace Microsoft.PowerFx.Dataverse
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
 
-            if (fv is not GuidValue)
+            if (fv is not GuidValue id)
+            {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+            }
 
-            var dataverseRecordValue = (DataverseRecordValue)baseRecord;
+            var dataverseRecordValue = baseRecord as DataverseRecordValue;
+
+            if (baseRecord is not DataverseRecordValue)
+            {
+                var entity = baseRecord.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
+                entity.Id = id.Value;
+
+                dataverseRecordValue = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+            }
+
             var ret = await dataverseRecordValue.UpdateEntityAsync(record, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
