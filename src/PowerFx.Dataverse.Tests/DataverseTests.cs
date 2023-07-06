@@ -955,7 +955,17 @@ END
         [DataRow("Text(123, \"#\", \"fr-FR\")", false, "Error 15-22: The language argument is not supported for the Text function in formula columns.", DisplayName = "Localization parameter")]
         [DataRow("Text(123, \"[$-fr-FR]#\")", false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.", DisplayName = "Locale token at start of format string not supported")]
         [DataRow("Text(123, \"#\" & \".0\")", false, "Error 14-15: Only a literal value is supported for this argument.", DisplayName = "Non-literal format string")]
-        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]       
+        [DataRow("Int(\"123\")", true, DisplayName = "Int on string")]
+        [DataRow("Text(123)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(123.4)", true, false, "Error 0-11: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1/2)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(-123.4)", true, false, "Error 0-12: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(1234567.89)", true, false, "Error 0-16: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("Text(If(1<0,2))", true, false, "Error 0-15: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.", DisplayName = "Text() function with single numeric arg is not supported")]
+        [DataRow("123 & 456", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("123.45 & 456", true, false, "Error 0-6: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("Concatenate(123, 456)", true, false, "Error 12-15: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
+        [DataRow("123 & \"a\"", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.", DisplayName = "Implicit Conversion of Numbers is not supported")]
         public void CheckTextFailures(string expr, bool success, string message = null)
         {
             var engine = new PowerFx2SqlEngine();
@@ -1370,6 +1380,7 @@ END
             {
                 AttributeMetadataModel.NewDecimal("data3", "Data Three"),
                 AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
+                AttributeMetadataModel.NewMoney("currencyField", "Currency Field")
             }
         };
 
@@ -1612,6 +1623,17 @@ END
             Assert.IsTrue(result2.IsSuccess);
         }
 
+        [TestMethod]
+        public void CheckRelatedEntityCurrencyUsedInFormula()
+        {
+            var xrmModel = AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
+            Assert.IsFalse(result.IsSuccess);
+            Assert.AreEqual(result.Errors.First().ToString(), "Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.");
+        }
+
         [DataTestMethod]
         [DataRow("new_price * new_quantity", "Price * Quantity", DisplayName = "Logical Names")]
         [DataRow("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity", DisplayName = "ThisRecord")]
@@ -1619,7 +1641,6 @@ END
         [DataRow("new_price + refg.data", "Price + Other.Data", DisplayName = "Lookup")]
         [DataRow("refg.data + refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", "Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", DisplayName = "Multiple Lookups")]
         [DataRow("refg.data + self.new_price", "Other.Data + 'Self Reference'.Price", DisplayName = "Self Reference")]
-        [DataRow("If(true, \"random string\", Text(new_price))", "If(true, \"random string\", Text(Price))", DisplayName = "Function")]
         [DataRow("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)", DisplayName = "CDS Enum literal")]
         [DataRow("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)", DisplayName = "CDS Global Enum literal")]
         [DataRow("DateAdd(UTCToday(), new_quantity, TimeUnit.Months)", "DateAdd(UTCToday(), Quantity, TimeUnit.Months)", DisplayName = "Enum literal")]
