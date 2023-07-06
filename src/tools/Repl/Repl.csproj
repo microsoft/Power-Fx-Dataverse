@@ -7,10 +7,10 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Configurations>Debug;Release</Configurations>
     <OutputType>Exe</OutputType>
-		<LangVersion>9.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
-  <Import Project="..\..\Build.props" />  
+  <Import Project="..\..\Build.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
