@@ -1198,7 +1198,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price",
-            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.")] // lamba uses ThisRecord.Price, can't delegate
+            "Warning 22-27: Can't delegate LookUp: Id expression refers to ThisRecord.",
+            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")] // lamba uses ThisRecord.Price, can't delegate
 
         [DataRow("LookUp(t1, Price > 50).Price",   // Non primary field
             100.0, // non ID field
@@ -1289,7 +1290,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             100.0,
             "(LookUp(t1, (EqGuid(localid,localid)))).new_price",
             "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
-            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord.")] // variable
+            "Warning 19-26: Can't delegate LookUp: Id expression refers to ThisRecord.",
+            "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")] // variable
         public void LookUpDelegation(string expr, object expected, string expectedIr, params string[] expectedWarnings)
         {
             // create table "local"
