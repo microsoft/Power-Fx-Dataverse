@@ -204,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse
                                     {
                                         Span = predicate.IRContext.SourceContext,
                                         Severity = ErrorSeverity.Warning,
-                                        ResourceKey = TexlStrings.WrnDelagationPredicate
+                                        ResourceKey = TexlStrings.WrnDelegationPredicate
                                     };
                                     this.AddError(reason);
                                 }
@@ -494,7 +494,7 @@ namespace Microsoft.PowerFx.Dataverse
                 MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows },
                 Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
                 Severity = ErrorSeverity.Warning,
-                ResourceKey = TexlStrings.WrnDelagationTableNotSupported
+                ResourceKey = TexlStrings.WrnDelegationTableNotSupported
             };
             this.AddError(reason);
 
@@ -508,7 +508,7 @@ namespace Microsoft.PowerFx.Dataverse
                 MessageArgs = new object[] { node.Function.Name, findBehaviorFunc.Name },
                 Span = findBehaviorFunc.Span,
                 Severity = ErrorSeverity.Warning,
-                ResourceKey = TexlStrings.WrnDelagationBehaviorFunction
+                ResourceKey = TexlStrings.WrnDelegationBehaviorFunction
             };
 
             AddError(reason);
@@ -522,7 +522,7 @@ namespace Microsoft.PowerFx.Dataverse
                 MessageArgs = new object[] { node.Function.Name },
                 Span = findThisRecord.Span,
                 Severity = ErrorSeverity.Warning,
-                ResourceKey = TexlStrings.WrnDelagationRefersThisRecord
+                ResourceKey = TexlStrings.WrnDelegationRefersThisRecord
             };
             AddError(reason);
             return new RetVal(node);

@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
-        public static ExpressionError GetInvalidCastError(object[] messageArgs)
+        public static ExpressionError GetInvalidCastError(string[] messageArgs)
         {
             return new ExpressionError()
             {
