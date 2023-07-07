@@ -3731,7 +3731,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
-        private (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false)
+        internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -3748,7 +3748,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
-
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
