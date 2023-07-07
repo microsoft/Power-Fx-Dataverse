@@ -8,8 +8,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Linq;
-using System.Xml;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -34,6 +32,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return null;
             }
+            else if (fxValue is ErrorValue)
+            {
+                throw new InvalidOperationException($"ErrorValue can not be serialized for : {amd.DisplayName} with Type: {amd.AttributeTypeName}");
+            }
+
 
             switch (amd.AttributeType.Value)
             {
@@ -91,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     
                 case AttributeTypeCode.Uniqueidentifier:
-                    return fxValue.ToObject();
+                    return ((GuidValue)fxValue).Value;
 
                 case AttributeTypeCode.Picklist:
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
