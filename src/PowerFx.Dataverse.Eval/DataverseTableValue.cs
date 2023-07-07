@@ -167,7 +167,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
             }
 
-            var ret = await DataverseRecordValue.UpdateEntityAsync(id, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
+            var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
             Refresh();
