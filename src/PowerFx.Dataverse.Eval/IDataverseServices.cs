@@ -16,6 +16,12 @@ namespace Microsoft.PowerFx.Dataverse
     {
     }
 
+    // Channel for IOrganizationService.Execute()  
+    public interface IDataverseExecute
+    {
+        Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default);
+    }
+
     public interface IDataverseCreator
     {
         Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));

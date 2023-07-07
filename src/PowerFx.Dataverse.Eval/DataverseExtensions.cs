@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -32,7 +33,45 @@ namespace Microsoft.PowerFx.Dataverse
             result = transform(resp.Response);
             return true;
         }
-       
+
+        public static void ValidateNameOrThrowEvalEx(this OrganizationResponse response, string name)
+        {
+            if (response.ResponseName != name)
+            {
+                throw new CustomFunctionErrorException($"Expected response: {name}. Got {response.ResponseName}");
+            }
+        }
+
+        /// <summary>
+        /// Get result as given type, or throw a <see cref="CustomFunctionErrorException"/>.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parameters"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        /// <exception cref="CustomFunctionErrorException"></exception>
+        public static T GetOrThrowEvalEx<T>(this ParameterCollection parameters, string name)
+        {
+            if (parameters.TryGetValue(name, out var value))
+            {
+                if (value is T str)
+                {
+                    return str;
+                }
+                else
+                {
+                    throw new CustomFunctionErrorException($"Response should be {typeof(T).FullName}. Actual: {value.GetType().FullName}");
+                }
+            }
+            else
+            {
+                var keys = string.Join(",", parameters.Keys.ToArray());
+                throw new CustomFunctionErrorException(
+                    $"Response missing {name}. Keys: {keys}");
+            }
+        }
+
+
         // Record should already be logical names. 
         public static Entity ConvertRecordToEntity(this RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
