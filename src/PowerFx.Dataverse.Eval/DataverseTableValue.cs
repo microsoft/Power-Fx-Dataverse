@@ -153,31 +153,21 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(record));
 
             // Retrieve the primary key of the entity (should always be present and a Guid)
-            FormulaValue fv = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
+            FormulaValue fieldFormulaValue = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (fv.Type == FormulaType.Blank)
+            if (fieldFormulaValue.Type == FormulaType.Blank)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
 
-            if (fv is not GuidValue id)
+            if (fieldFormulaValue is not GuidValue id)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
             }
 
-            var dataverseRecordValue = baseRecord as DataverseRecordValue;
-
-            if (baseRecord is not DataverseRecordValue)
-            {
-                var entity = baseRecord.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
-                entity.Id = id.Value;
-
-                dataverseRecordValue = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
-            }
-
-            var ret = await dataverseRecordValue.UpdateEntityAsync(record, cancellationToken).ConfigureAwait(false);
+            var ret = await DataverseRecordValue.UpdateEntityAsync(id, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
             Refresh();

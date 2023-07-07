@@ -269,12 +269,12 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Called by DataverseRecordValue, which wont internal entity attributes.
-        public async Task<DValue<RecordValue>> UpdateEntityAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<DValue<RecordValue>> UpdateEntityAsync(GuidValue id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
-            var leanEntity = ConvertRecordToEntity(record, out DValue<RecordValue> error);
+            var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue <RecordValue> error);
 
             if (error != null)
             {
@@ -282,7 +282,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
+            DataverseResponse result = await connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -290,21 +290,21 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
             }
 
-            var refreshed = new DataverseRecordValue(newEntity.Response, _metadata, this.Type, _connection);
+            var refreshed = new DataverseRecordValue(newEntity.Response, metadata, type, connection);
 
             return DValue<RecordValue>.Of(refreshed);
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var refreshedRecord = await UpdateEntityAsync(record, cancellationToken);
+            var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(FormulaValue.New(_entity.Id), record, Metadata, Type, _connection, cancellationToken);
 
             if (refreshedRecord.IsValue)
             {
@@ -319,16 +319,16 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Record should already be using logical names. 
-        private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        public static Entity ConvertRecordToEntity(GuidValue id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
-            var leanEntity = record.ConvertRecordToEntity(_metadata, out error);
+            var leanEntity = record.ConvertRecordToEntity(metadata, out error);
 
             if (error != null)
             { 
                 return null; 
             }
 
-            leanEntity.Id = _entity.Id;
+            leanEntity.Id = id.Value;
             return leanEntity;
         }
 
