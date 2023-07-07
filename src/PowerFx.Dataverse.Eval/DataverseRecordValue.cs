@@ -207,12 +207,7 @@ namespace Microsoft.PowerFx.Dataverse
             var refernecingTable = relationshipMetadata.ReferencingEntity;
             string referencingAttribute = relationshipMetadata.ReferencingAttribute;
             FormulaValue result;
-            var recordType = ((TableType)fieldType).ToRecord();
-            if (recordType == null)
-            {
-                throw new InvalidOperationException("Field Type should be a table value");
-            }
-
+            var recordType = ((TableType)fieldType).ToRecord() ?? throw new InvalidOperationException("Field Type should be a table value");
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
@@ -269,7 +264,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Called by DataverseRecordValue, which wont internal entity attributes.
-        public static async Task<DValue<RecordValue>> UpdateEntityAsync(GuidValue id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -304,7 +299,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(FormulaValue.New(_entity.Id), record, Metadata, Type, _connection, cancellationToken);
+            var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
 
             if (refreshedRecord.IsValue)
             {
@@ -319,7 +314,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Record should already be using logical names. 
-        public static Entity ConvertRecordToEntity(GuidValue id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             var leanEntity = record.ConvertRecordToEntity(metadata, out error);
 
@@ -328,7 +323,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return null; 
             }
 
-            leanEntity.Id = id.Value;
+            leanEntity.Id = id;
             return leanEntity;
         }
 
