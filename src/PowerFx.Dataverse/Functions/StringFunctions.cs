@@ -121,7 +121,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         HasNumericFmt = false
                     };
 
-                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.|\[\$-[\w-]+\])") 
+                    // Do not allow , . or locale tag or datetime format
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
                         || textFormatArgs.HasDateTimeFmt || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
