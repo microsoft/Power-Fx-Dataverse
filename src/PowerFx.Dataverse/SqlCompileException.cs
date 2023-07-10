@@ -1,10 +1,10 @@
-﻿using Microsoft.PowerFx.Core.Errors;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using Microsoft.PowerFx.Core.Errors;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.Localization;
 using Microsoft.PowerFx.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
 
 namespace Microsoft.PowerFx.Dataverse
 {

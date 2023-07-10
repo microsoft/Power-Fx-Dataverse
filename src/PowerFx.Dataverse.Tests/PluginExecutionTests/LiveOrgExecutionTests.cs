@@ -4,11 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,6 +11,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 

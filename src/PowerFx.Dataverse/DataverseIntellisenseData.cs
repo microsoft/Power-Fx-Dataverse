@@ -1,9 +1,11 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Texl;
@@ -14,8 +16,6 @@ using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Intellisense.IntellisenseData;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.Xrm.Sdk.Metadata;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {

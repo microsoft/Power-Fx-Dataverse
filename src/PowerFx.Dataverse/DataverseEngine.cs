@@ -4,13 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Errors;
-using Microsoft.PowerFx.Core.Glue;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Intellisense;
@@ -18,10 +17,6 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 
 
 namespace Microsoft.PowerFx.Dataverse

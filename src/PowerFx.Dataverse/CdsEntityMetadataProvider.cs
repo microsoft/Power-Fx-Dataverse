@@ -4,6 +4,11 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.CdsService;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
@@ -18,11 +23,6 @@ using Microsoft.PowerFx.Dataverse.Parser.Importers.DataDescription;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -70,6 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
         }
 
+        // Current default is to treat all numbers as floats.
         public bool NumberIsFloat { get; init; } = true;
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)

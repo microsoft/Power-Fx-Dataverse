@@ -4,16 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.AppMagic.Common;
-using Microsoft.PowerFx.Core.IR;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Types;
 using System.Text.RegularExpressions;
-using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Types;
+using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {

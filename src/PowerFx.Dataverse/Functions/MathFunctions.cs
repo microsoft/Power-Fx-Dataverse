@@ -4,10 +4,10 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
-using System.Collections.Generic;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 
 namespace Microsoft.PowerFx.Dataverse.Functions

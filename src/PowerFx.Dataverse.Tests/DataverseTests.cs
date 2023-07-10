@@ -4,6 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Intellisense;
@@ -11,12 +17,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests

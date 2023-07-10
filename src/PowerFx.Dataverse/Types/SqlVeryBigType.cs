@@ -11,7 +11,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// A type to represent a numeric value as a "very big" value -- decimal(38,0)
-    /// Used for intermediate calculations to avoid overflow
+    /// Used for intermediate calculations to avoid overflows when manipulating "big" values
     /// </summary>
     [DebuggerDisplay("{_type}:G")]
     internal class SqlVeryBigType : SqlNumberBase
