@@ -45,6 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var svcClient = new ServiceClient(cx);
             svcClient.EnableAffinityCookie = true;
+            svcClient.UseWebApi = false;
 
             return svcClient;
         }
@@ -265,6 +266,44 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        [DataRow("Collect(Contacts, {'Accounts (cr28b_account_someRef_contact)': Table(First(Accounts))})")]
+        public void ExecuteViaInterpreterCollectOneToManyNotSupported(string expression)
+        {
+            var tableName = new string[] { "account", "contact" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is ErrorValue);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        [DataRow("Collect(Accounts, { 'Primary Contact': First(Contacts)})")]
+        public void ExecuteViaInterpreterCollectManyToOne(string expression)
+        {
+            var tableName = new string[] { "account", "contact" };
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expression, out disposableObjects);
+                Assert.IsTrue(result is RecordValue);
             }
             finally
             {

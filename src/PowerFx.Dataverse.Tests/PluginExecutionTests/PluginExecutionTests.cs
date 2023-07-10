@@ -1466,98 +1466,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Collect(t1, { Price : 200}).Price", 200.0)]
         [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
         [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]
-        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out       
-        public void PatchFunction(string expr, double? expected)
-        {
-            // create table "local"
-            var logicalName = "local";
-            var displayName = "t1";
+        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out
+        [DataRow("Patch(t1, {localid:GUID(\"00000000-0000-0000-0000-000000000001\")}, { Price : 200}).Price", 200.0)]
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();  // numberIsFloat: false
-            dv.AddTable(displayName, logicalName);
-
-            var opts = _parserAllowSideEffects;
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation();
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check.IsSuccess);
-
-            var run = check.GetEvaluator();
-
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            // Verify on expression - this may be old or no
-            Assert.AreEqual(expected is not null ? new Decimal((double)expected) : expected, result.ToObject());
-
-            // verify on entity - this should always be updated 
-            if (expr.Contains("Patch("))
-            {
-                var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
-                var entity = (Entity)r2.ToObject();
-                var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-                var actualValue = e2.Attributes["new_price"];
-                if (expected.HasValue)
-                {
-                    Assert.AreEqual(new Decimal(200.0), actualValue);
-                }
-                else
-                {
-                    Assert.IsNull(actualValue);
-                }
-            }
-        }
-
-        // Patch() function against entity fields in RowScope
-        [DataTestMethod]
-        [DataRow("Patch(t1, First(t1), { Price : 200}); First(t1).Price", 200.0)]
-        [DataRow("With( { x : First(t1)}, Patch(t1, x, { Price : 200}); x.Price)", 100.0)] // Expected, x.Price is still old value!
-        [DataRow("Patch(t1, First(t1), { Price : 200}).Price", 200.0)]
-        [DataRow("Collect(t1, { Price : 200}).Price", 200.0)]
-        [DataRow("With( {oldCount : CountRows(t1)}, Collect(t1, { Price : 200});CountRows(t1)-oldCount)", 1.0)]
-        [DataRow("Collect(t1, { Price : 255}); LookUp(t1,Price=255).Price", 255.0)]
-        [DataRow("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out       
         public void PatchFunctionFloat(string expr, double? expected)
         {
             // create table "local"
             var logicalName = "local";
             var displayName = "t1";
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(numberIsFloat: true);
-            dv.AddTable(displayName, logicalName);
-
-            var opts = _parserAllowSideEffects_NumberIsFloat;
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation();
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.IsTrue(check.IsSuccess);
-
-            var run = check.GetEvaluator();
-
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            // Verify on expression - this may be old or no
-            Assert.AreEqual(expected, result.ToObject());
-
-            // verify on entity - this should always be updated 
-            if (expr.Contains("Patch("))
+            foreach (var numberIsFloat in new bool[] {false, true})
             {
-                var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
-                var entity = (Entity)r2.ToObject();
-                var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-                var actualValue = e2.Attributes["new_price"];
-                if (expected.HasValue)
+                (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(numberIsFloat: numberIsFloat);
+                dv.AddTable(displayName, logicalName);
+
+                var opts = new ParserOptions
                 {
-                    Assert.AreEqual(new Decimal(200.0), actualValue);
+                    AllowsSideEffects = true,
+                    NumberIsFloat = numberIsFloat
+                };
+
+                var config = new PowerFxConfig(); // Pass in per engine
+                config.SymbolTable.EnableMutationFunctions();
+                var engine1 = new RecalcEngine(config);
+                engine1.EnableDelegation();
+
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.IsTrue(check.IsSuccess);
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                if (numberIsFloat)
+                {
+                    Assert.AreEqual(expected, result.ToObject());
                 }
                 else
                 {
-                    Assert.IsNull(actualValue);
+                    Assert.AreEqual(expected is not null ? new Decimal((double)expected) : expected, result.ToObject());
+                }               
+
+                // verify on entity - this should always be updated 
+                if (expr.Contains("Patch("))
+                {
+                    var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+                    var entity = (Entity)r2.ToObject();
+                    var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
+                    var actualValue = e2.Attributes["new_price"];
+                    if (expected.HasValue)
+                    {
+                        Assert.AreEqual(new Decimal(200.0), actualValue);
+                    }
+                    else
+                    {
+                        Assert.IsNull(actualValue);
+                    }
                 }
             }
         }
@@ -3767,7 +3731,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
-        private (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false)
+        internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -3784,7 +3748,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
-
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();

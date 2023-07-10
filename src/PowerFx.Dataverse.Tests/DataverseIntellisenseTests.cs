@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -110,6 +110,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("DateTimeFo|", DisplayName = "DateTimeFormat is excluded")]
         [DataRow("Ye|", "TimeUnit.Years", "Year", DisplayName = "Only Namespaced Enums")]
         [DataRow("DateAdd(x, 1,|",
+            "'Boolean (Locals)'",
             "'Global Picklist'",
             "'Rating (Locals)'",
             "TimeUnit.Days",
@@ -122,9 +123,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "TimeUnit.Years",
             DisplayName = "TimeUnit inside DateAdd")]
         [DataRow("Text(UTCToday(),|",
+            "'Boolean (Locals)'",
             "'Global Picklist'",
-            "'Rating (Locals)'", DisplayName = "DateTimeFormat in Text on Date")]
-        [DataRow("Locals|", "'Rating (Locals)'", DisplayName = "One To Many not shown")]
+            "'Rating (Locals)'",
+            DisplayName = "DateTimeFormat in Text on Date")]
+        [DataRow("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'", DisplayName = "One To Many not shown")]
         [DataRow("Sel|", "'Self Reference'", DisplayName = "Lookup (Many To One) is shown")]
         [DataRow("Err|", "IfError", "IsError", DisplayName = "IfError and IsError are shown, but Error is excluded")]
         [DataRow("Tod|", "IsUTCToday", "UTCToday", DisplayName = "Today and IsToday are not suggested")]
@@ -138,7 +141,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var intellisense = Suggest(expression);
             var actualSuggestions = ToArray(intellisense);
-            CollectionAssert.AreEqual(expectedSuggestions, actualSuggestions);
+            CollectionAssert.AreEqual(
+                expectedSuggestions, 
+                actualSuggestions,
+                $"<Expected>: {string.Join(",", expectedSuggestions)} " +
+                $"<Actual>: {string.Join(",", actualSuggestions)}");
         }
 
         [DataTestMethod]

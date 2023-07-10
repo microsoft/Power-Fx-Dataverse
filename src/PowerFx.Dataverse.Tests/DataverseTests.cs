@@ -1291,6 +1291,10 @@ END
                 AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
                 AttributeMetadataModel.NewGuid("localid", "LocalId"),
                 AttributeMetadataModel.NewDouble("float", "Float"),
+                AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
+                AttributeMetadataModel.NewInteger("new_int", "Integer"),
+                AttributeMetadataModel.NewString("new_string", "String"),
+                AttributeMetadataModel.NewGuid("some_id", "SomeId"),
                 AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
                 {
                     new OptionMetadataModel { Label = "Hot", Value = 1 },

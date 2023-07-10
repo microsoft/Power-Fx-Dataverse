@@ -105,6 +105,16 @@ namespace Microsoft.PowerFx.Dataverse
                         leanEntity.Attributes.Add(realAttributeName, entityRef);
                         continue;
                     }
+                    else if(metadata.TryGetOneToManyRelationship(field.Name, out var relationship))
+                    {
+                        error = DataverseExtensions.DataverseError<RecordValue>($"One to Many Relations is not supported yet: {field.Name}  {metadata.LogicalName}", methodName);
+                        return null;
+                    }
+                    else
+                    {
+                        error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} not found in {metadata.LogicalName}", methodName);
+                        return null;
+                    }
                 }
 
                 try
