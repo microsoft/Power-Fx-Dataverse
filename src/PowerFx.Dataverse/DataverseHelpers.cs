@@ -7,6 +7,17 @@ namespace Microsoft.PowerFx.Dataverse
     {
         public static ExpressionError GetExpressionError(string message, ErrorSeverity severity = ErrorSeverity.Critical, string messageKey = null)
         {
+            if (messageKey == null)
+            {
+                // ErrorResourceKey has assert that messageKey can't be null.
+                return new ExpressionError()
+                {
+                    Kind = ErrorKind.Unknown,
+                    Severity = severity,
+                    Message = message
+                };
+            }
+
             return new ExpressionError() 
             { 
                 Kind = ErrorKind.Unknown, 
