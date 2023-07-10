@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                return context.SetIntermediateVariable(node , $"N{CrmEncodeDecode.SqlLiteralEncode(value)}");
+                return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(value)}");
             }
         }
 
@@ -125,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
                 return ret;
-            }            
+            }
 
             throw new SqlCompileException(node.IRContext.SourceContext);
         }
@@ -143,8 +143,8 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var op = node.Op switch
                         {
-                            BinaryOpKind.AddNumbers => "+",                            
-                            BinaryOpKind.DivNumbers => "/",                            
+                            BinaryOpKind.AddNumbers => "+",
+                            BinaryOpKind.DivNumbers => "/",
                             BinaryOpKind.MulNumbers => "*",
                             BinaryOpKind.AddDecimals => "+",
                             BinaryOpKind.DivDecimals => "/",
@@ -166,7 +166,7 @@ namespace Microsoft.PowerFx.Dataverse
                         bool useDecimals = node.Op == BinaryOpKind.AddDecimals || node.Op == BinaryOpKind.DivDecimals || node.Op == BinaryOpKind.MulDecimals;
                         SqlNumberBase returnType = useDecimals ? new SqlVeryBigType() : new SqlBigType();
                         SqlNumberBase decimalType = useDecimals ? new SqlVeryBigType() : new SqlDecimalType();
-                        
+
                         var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
 
                         context.PerformRangeChecks(result, node);
@@ -240,7 +240,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtDateTime:
-                //case BinaryOpKind.GtTime:
+                    //case BinaryOpKind.GtTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GtNumbers:
@@ -248,7 +248,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqDateTime:
-                //case BinaryOpKind.GeqTime:
+                    //case BinaryOpKind.GeqTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GeqNumbers:
@@ -256,7 +256,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtDateTime:
-                //case BinaryOpKind.LtTime:
+                    //case BinaryOpKind.LtTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LtNumbers:
@@ -264,7 +264,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqDateTime:
-                //case BinaryOpKind.LeqTime:
+                    //case BinaryOpKind.LeqTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LeqNumbers:
@@ -975,7 +975,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return FormulaType.Date;
 
                     // These column types aren't support  in SQL compilation.                    
-                    case DKind.Image: 
+                    case DKind.Image:
                         throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
 
                     default:
@@ -1111,7 +1111,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_checkOnly) return;
 
-                var condition = 
+                var condition =
                     coerce
                     ? string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCoerceCondition, retVal)
                     : string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCondition, retVal);
@@ -1229,7 +1229,7 @@ namespace Microsoft.PowerFx.Dataverse
                 else if (type is SqlMoneyType && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
                 {
                     return true;
-                }                
+                }
                 else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
@@ -1305,7 +1305,7 @@ namespace Microsoft.PowerFx.Dataverse
                     AppendContentLine("RETURN NULL");
                 }
 
-                return false;                
+                return false;
             }
 
             private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
@@ -1542,7 +1542,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal class IfConditionContext : ContextStateContainer
             {
-                internal IfConditionContext(Context context) : base(context, ContextState.IfCondition) {}
+                internal IfConditionContext(Context context) : base(context, ContextState.IfCondition) { }
             }
 
             #endregion
