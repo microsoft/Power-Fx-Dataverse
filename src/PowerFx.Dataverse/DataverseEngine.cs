@@ -43,23 +43,20 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected readonly CultureInfo _cultureInfo;
 
+        protected readonly bool _numberIsFloat;
+
         // the max supported expression length
         internal const int MaxExpressionLength = 1000;
 
         // $$$ - remove culture parameter and just get it from the config. 
-        public DataverseEngine(
-          EntityMetadata currentEntityMetadata,
-          CdsEntityMetadataProvider metadataProvider,
-          PowerFxConfig config,
-          CultureInfo culture = null,
-          bool numberIsFloat = false)
+        public DataverseEngine(EntityMetadata currentEntityMetadata, CdsEntityMetadataProvider metadataProvider, PowerFxConfig config, CultureInfo culture = null, bool numberIsFloat = false)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
 
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = numberIsFloat };
-
+            _numberIsFloat = numberIsFloat;
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
@@ -78,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                  Culture = _cultureInfo,
                  MaxExpressionLength =  MaxExpressionLength,
-                 NumberIsFloat = NumberIsFloat
+                 NumberIsFloat = _numberIsFloat
             };
         }
 
@@ -146,7 +143,7 @@ namespace Microsoft.PowerFx.Dataverse
             errors = null;
             returnType = BuildReturnType(nodeType);
 
-            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
+            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && string.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
@@ -181,6 +178,8 @@ namespace Microsoft.PowerFx.Dataverse
                 type is SqlDecimalType ||
                 type is BooleanType ||
                 type is StringType ||
+                type is SqlBigType ||
+                type is SqlVeryBigType ||
                 Library.IsDateTimeType(type);
         }
 
@@ -219,6 +218,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // if the type is TZI pass it along
             if (type == FormulaType.DateTimeNoTimeZone)
+            {
+                return type;
+            }
+
+            if (type is SqlVeryBigType)
             {
                 return type;
             }

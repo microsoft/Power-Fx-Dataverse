@@ -70,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
         }
 
-        public bool NumberIsFloat { get; init; } = false;
+        public bool NumberIsFloat { get; init; } = true;
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
             : this()
@@ -290,14 +290,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 string columnName = string.Empty;
                 bool parsed = false;
-                IExternalOptionSet optionSet = null;
                 var attribute = new PicklistAttributeMetadata(string.Empty)
                 {
                     OptionSet = globalOptionSet,
                     LogicalName = string.Empty,
                     MetadataId = Guid.Empty,
                 };
-                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
+                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, attribute, entity.LogicalName, dataSetName, out columnName, out IExternalOptionSet optionSet);
 
                 if (parsed)
                 {

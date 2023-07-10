@@ -171,6 +171,23 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                             return true;
                         }
                     }
+                    else if (node.Args[1] is DecimalLiteralNode dec && dec.LiteralValue == 0)
+                    {
+                        var arg0 = node.Args[0].IRContext.ResultType;
+                        if (arg0 == FormulaType.Decimal || arg0 == FormulaType.Blank)
+                        {
+                            Library.ValidateNumericArgument(node.Args[0]);
+                            var arg = node.Args[0].Accept(runner, context);
+
+                            var argString = Library.CoerceNullToInt(arg);
+
+                            var result = context.GetTempVar(new SqlVeryBigType());
+                            context.SetIntermediateVariable(result, argString);
+
+                            ret = result;
+                            return true;
+                        }
+                    }
                 }
             }
 

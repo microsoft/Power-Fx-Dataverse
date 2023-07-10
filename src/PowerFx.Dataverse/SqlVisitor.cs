@@ -60,7 +60,24 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(DecimalLiteralNode node, Context context)
         {
-            throw new NotImplementedException();
+            var type = context.GetReturnType(node);
+            if (context.ValidateDecimalLiteral(node.LiteralValue, type))
+            {
+                var val = RetVal.FromSQL(node.LiteralValue.ToString(), type);
+
+                if (context.InInlineLiteralContext)
+                {
+                    return val;
+                }
+                else
+                {
+                    return context.SetIntermediateVariable(node, fromRetVal: val);
+                }
+            }
+            else
+            {
+                return RetVal.FromSQL("NULL", type);
+            }
         }
 
         public override RetVal Visit(BooleanLiteralNode node, Context context)
@@ -120,12 +137,18 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.AddNumbers:
                 case BinaryOpKind.DivNumbers:
                 case BinaryOpKind.MulNumbers:
+                case BinaryOpKind.AddDecimals:
+                case BinaryOpKind.DivDecimals:
+                case BinaryOpKind.MulDecimals:
                     {
                         var op = node.Op switch
                         {
-                            BinaryOpKind.AddNumbers => "+",
-                            BinaryOpKind.DivNumbers => "/",
+                            BinaryOpKind.AddNumbers => "+",                            
+                            BinaryOpKind.DivNumbers => "/",                            
                             BinaryOpKind.MulNumbers => "*",
+                            BinaryOpKind.AddDecimals => "+",
+                            BinaryOpKind.DivDecimals => "/",
+                            BinaryOpKind.MulDecimals => "*",
                             _ => throw new NotImplementedException($"Unsupported BinaryOpKind {node.Op}")
                         };
 
@@ -135,18 +158,18 @@ namespace Microsoft.PowerFx.Dataverse
                         var right = node.Right.Accept(this, context);
 
                         // protect from divide by zero
-                        if (node.Op == BinaryOpKind.DivNumbers)
+                        if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivDecimals)
                         {
                             context.DivideByZeroCheck(right);
                         }
 
-                        var returnType = new SqlBigType();
-                        var decimalType = new SqlDecimalType();
-                        // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
-                        // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
+                        bool useDecimals = node.Op == BinaryOpKind.AddDecimals || node.Op == BinaryOpKind.DivDecimals || node.Op == BinaryOpKind.MulDecimals;
+                        SqlNumberBase returnType = useDecimals ? new SqlVeryBigType() : new SqlBigType();
+                        SqlNumberBase decimalType = useDecimals ? new SqlVeryBigType() : new SqlDecimalType();
+                        
                         var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
-                        context.PerformRangeChecks(result, node);
 
+                        context.PerformRangeChecks(result, node);
                         return result;
                     }
 
@@ -190,6 +213,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqOptionSetValue:
                 case BinaryOpKind.EqText:
                 //case BinaryOpKind.EqTime:
+                case BinaryOpKind.EqDecimals:
                     return EqualityCheck(node.Left, node.Right, node.Op, context.GetReturnType(node), context, node.IRContext.SourceContext);
 
                 //case BinaryOpKind.NeqBlob:
@@ -206,6 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.NeqOptionSetValue:
                 case BinaryOpKind.NeqText:
                 //case BinaryOpKind.NeqTime:
+                case BinaryOpKind.NeqDecimals:
                     return EqualityCheck(node.Left, node.Right, node.Op, context.GetReturnType(node), context, node.IRContext.SourceContext, equals: false);
 
                 case BinaryOpKind.EqNull:
@@ -320,11 +345,13 @@ namespace Microsoft.PowerFx.Dataverse
             switch (node.Op)
             {
                 case UnaryOpKind.Negate:
+                case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(new SqlBigType(), $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
+                case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100.0)");
                     context.PerformRangeChecks(result, node);
@@ -334,6 +361,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.BooleanToText:
                 case UnaryOpKind.BooleanToNumber:
+                case UnaryOpKind.BooleanToDecimal:
                     arg = node.Child.Accept(this, context);
                     var boolResult = CoerceBooleanToOp(node, arg, context);
 
@@ -344,10 +372,14 @@ namespace Microsoft.PowerFx.Dataverse
                     };
 
                 case UnaryOpKind.NumberToBoolean:
+                case UnaryOpKind.DecimalToBoolean:
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(node, $"{Library.CoerceNullToInt(arg)}<>0");
 
                 case UnaryOpKind.NumberToText:
+                    throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
+
+                case UnaryOpKind.DecimalToText:
                     throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.TextToBoolean:
@@ -369,16 +401,22 @@ namespace Microsoft.PowerFx.Dataverse
                     return node.Child.Accept(this, context);
 
                 case UnaryOpKind.DateTimeToNumber:
+                case UnaryOpKind.DateTimeToDecimal:
                 case UnaryOpKind.DateTimeToTime:
                 case UnaryOpKind.DateTimeToDate:
                 case UnaryOpKind.DateToNumber:
+                case UnaryOpKind.DateToDecimal:
                 case UnaryOpKind.DateToTime:
                 case UnaryOpKind.NumberToDate:
+                case UnaryOpKind.DecimalToDate:
                 case UnaryOpKind.NumberToDateTime:
+                case UnaryOpKind.DecimalToDateTime:
                 case UnaryOpKind.NumberToTime:
+                case UnaryOpKind.DecimalToTime:
                 case UnaryOpKind.TimeToDate:
                 case UnaryOpKind.TimeToDateTime:
                 case UnaryOpKind.TimeToNumber:
+                case UnaryOpKind.TimeToDecimal:
                     throw Library.BuildUnsupportedArgumentTypeException(node.IRContext.ResultType._type.GetKindString(), node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.OptionSetToText:
@@ -570,7 +608,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return sqlNumber.ToSqlType();
             }
-            else if (t is NumberType)
+            else if (t is NumberType || t is DecimalType)
             {
                 // use big as the numeric type if not already resolved (e.g. local variables)
                 return new SqlBigType().ToSqlType();
@@ -1049,7 +1087,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return retVal;
             }
 
-
             internal RetVal SetIntermediateVariable(IntermediateNode node, string value = null, RetVal fromRetVal = null)
             {
                 return SetIntermediateVariable(fromRetVal?.type ?? GetReturnType(node), value, fromRetVal);
@@ -1171,6 +1208,10 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
+                    else if (result.type is SqlVeryBigType)
+                    {
+                        PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
+                    }
                     else if (result.type is NumberType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
@@ -1185,10 +1226,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if ((type is SqlBigType || type is SqlMoneyType) && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
+                else if (type is SqlMoneyType && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
                 {
                     return true;
-                }
+                }                
                 else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
@@ -1219,6 +1260,52 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 return false;
+            }
+
+            internal bool ValidateDecimalLiteral(decimal literal, FormulaType type)
+            {
+                if (type is SqlBigType && literal > SqlStatementFormat.BigIntTypeMinValue && literal < SqlStatementFormat.BigIntTypeMaxValue)
+                {
+                    return true;
+                }
+                else if (type is SqlIntType && literal > (decimal)SqlStatementFormat.IntTypeMinValue && literal < (decimal)SqlStatementFormat.IntTypeMaxValue)
+                {
+                    return true;
+                }
+                else if (type is SqlMoneyType && literal > (decimal)SqlStatementFormat.MoneyTypeMinValue && literal < (decimal)SqlStatementFormat.MoneyTypeMaxValue)
+                {
+                    return true;
+                }
+                else if ((type is NumberType || type is DecimalType) && literal > (decimal)SqlStatementFormat.DecimalTypeMinValue && literal < (decimal)SqlStatementFormat.DecimalTypeMaxValue)
+                {
+                    // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
+                    var epsilon = Math.Abs(literal);
+                    if (epsilon < 1e-90M && epsilon > 0)
+                    {
+                        // Fall through to below, unsupported. 
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                else if (!(type is NumberType))
+                {
+                    throw new NotSupportedException($"Unsupported type for numeric literal check: {type}");
+                }
+
+                // there was an overflow
+                if (InErrorContext)
+                {
+                    SetIntermediateVariable(CurrentErrorContext.Code, ValidationErrorCode);
+                }
+                else
+                {
+                    _unsupportedWarnings.Add("Overflow numeric literal");
+                    AppendContentLine("RETURN NULL");
+                }
+
+                return false;                
             }
 
             private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)

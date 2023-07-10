@@ -475,6 +475,7 @@ END
         [DataRow("1.1", typeof(SqlDecimalType), DisplayName = "Numeric literal returns Decimal")]
         [DataRow("Money", typeof(SqlDecimalType), DisplayName = "Money returns Decimal")]
         [DataRow("Int", typeof(SqlDecimalType), DisplayName = "Int returns Decimal")]
+        [DataRow("BigInt", typeof(SqlDecimalType), DisplayName = "BigInt returns Decimal")]
         [DataRow("String", typeof(StringType), DisplayName = "String")]
         [DataRow("\"foo\"", typeof(StringType), DisplayName = "String literal returns String")]
         [DataRow("Boolean", typeof(BooleanType), DisplayName = "Boolean")]
@@ -1476,12 +1477,7 @@ END
                 AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
-                new AttributeMetadataModel
-                {
-                    LogicalName= "bigint",
-                    DisplayName = "BigInt",
-                    AttributeType = AttributeTypeCode.BigInt
-                },
+                AttributeMetadataModel.NewBigInt("bigint", "BigInt"),                
                 AttributeMetadataModel.NewBoolean("boolean", "Boolean", "Yes", "No"),
                 AttributeMetadataModel.NewLookup("customerid", "Customer", new [] { "tripleremote" }, AttributeTypeCode.Customer),
                 new AttributeMetadataModel

@@ -40,7 +40,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
                 var result = context.GetTempVar(context.GetReturnType(node));
-                var numberType = ToSqlType(result.type);
 
                 // only allow whole numbers to be parsed
                 context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
@@ -48,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
           
                 return result;
             }
-            else if (arg.type is NumberType)
+            else if (arg.type is NumberType || arg.type is DecimalType)
             {
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
@@ -185,7 +184,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            return context.SetIntermediateVariable(node, $"CONCAT({String.Join(",", args)})");
+            return context.SetIntermediateVariable(node, $"CONCAT({string.Join(",", args)})");
         }
 
         public static RetVal Blank(SqlVisitor visitor, CallNode node, Context context)

@@ -4,15 +4,15 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
@@ -120,7 +120,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        public void ExecuteScript(SqlConnection connection, String script)
+        public void ExecuteScript(SqlConnection connection, string script)
         {
             using (var tx = connection.BeginTransaction())
             {
@@ -365,7 +365,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Now() < Now()", false, cx, metadata);
                 ExecuteSqlTest("If(DateDiff(userLocalDateTime,Now()),1,2)", 1.0M, cx, metadata);
                 ExecuteSqlTest("userLocalDateTime > Now()", false, cx, metadata);
-
             }
         }
 
@@ -407,7 +406,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             Value = 2,
                         }
                     }),
-                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw")
+                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw"),
+                    AttributeMetadataModel.NewBigInt("bigint", "BigInt"),
+                    AttributeMetadataModel.NewBigInt("null_big", "NullBig")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -416,26 +417,39 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "1" },
-                    { "string", "N'foo'"}
+                    { "string", "N'foo'"},
+                    { "bigint", "49" }
                 });
 
                 // coerce null to 0 or empty string for logical operators that aren't equality
                 ExecuteSqlTest("-5 < NullDec", true, cx, metadata);
                 ExecuteSqlTest("5 < NullDec", false, cx, metadata);
+                ExecuteSqlTest("-5 < NullBig", true, cx, metadata);
+                ExecuteSqlTest("5 < NullBig", false, cx, metadata);
                 ExecuteSqlTest("NullDec < 5", true, cx, metadata);
                 ExecuteSqlTest("NullDec < -5", false, cx, metadata);
+                ExecuteSqlTest("NullBig < 5", true, cx, metadata);
+                ExecuteSqlTest("NullBig < -5", false, cx, metadata);
                 ExecuteSqlTest("NullDec %", 0M, cx, metadata);
+                ExecuteSqlTest("NullBig %", 0M, cx, metadata);
                 ExecuteSqlTest("\"o\" in NullStr", false, cx, metadata);
                 ExecuteSqlTest("\"o\" in String", true, cx, metadata);
                 // don't coerce null for equality checks
                 ExecuteSqlTest("NullDec = 0", false, cx, metadata);
                 ExecuteSqlTest("NullDec <> 0", true, cx, metadata);
+                ExecuteSqlTest("NullBig = 0", false, cx, metadata);
+                ExecuteSqlTest("NullBig <> 0", true, cx, metadata);
                 ExecuteSqlTest("0 <> NullDec", true, cx, metadata);
+                ExecuteSqlTest("0 <> NullBig", true, cx, metadata);
                 ExecuteSqlTest("Decimal = NullDec", false, cx, metadata);
                 ExecuteSqlTest("NullDec <> Decimal", true, cx, metadata);
                 ExecuteSqlTest("NullDec <> Blank()", false, cx, metadata);
+                ExecuteSqlTest("NullBig <> BigInt", true, cx, metadata);
+                ExecuteSqlTest("NullBig <> Blank()", false, cx, metadata);
                 ExecuteSqlTest("Blank() = NullDec", true, cx, metadata);
+                ExecuteSqlTest("Blank() = NullBig", true, cx, metadata);
                 ExecuteSqlTest("NullDec = Blank()", true, cx, metadata);
+                ExecuteSqlTest("NullBig = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Blank() = NullStr", true, cx, metadata); 
                 ExecuteSqlTest("Blank() <> NullStr", false, cx, metadata);
                 ExecuteSqlTest("Blank() = \"\"", false, cx, metadata);
@@ -444,16 +458,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Blank() <> String", true, cx, metadata);
                 // coerce null to 0 in math functions
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
+                ExecuteSqlTest("IsError(Mod(NullBig, NullBig))", true, cx, metadata);
                 // coerce null to 0 in math operations
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
+                ExecuteSqlTest("IsError(Mod(NullBig, NullBig))", true, cx, metadata);
                 ExecuteSqlTest("5 * NullDec", 0M, cx, metadata);
+                ExecuteSqlTest("5 * NullBig", 0M, cx, metadata);
                 ExecuteSqlTest("IsError(1/NullDec)", true, cx, metadata);
+                ExecuteSqlTest("IsError(1/NullBig)", true, cx, metadata);
                 // coerce null to empty string in string functions
                 ExecuteSqlTest("Upper(NullStr)", "", cx, metadata);
                 // don't coerce in IsBlank
                 ExecuteSqlTest("IsBlank(NullDec)", true, cx, metadata);
+                ExecuteSqlTest("IsBlank(NullBig)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullStr)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(Decimal)", false, cx, metadata);
+                ExecuteSqlTest("IsBlank(BigInt)", false, cx, metadata);
                 ExecuteSqlTest("IsBlank(String)", false, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
@@ -484,6 +504,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("whole", "WholeDecimal"),
                     AttributeMetadataModel.NewDecimal("fractional", "FractionalDecimal"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewBigInt("bigint1", "BigNumber1"),
+                    AttributeMetadataModel.NewBigInt("bigint2", "BigNumber2")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -493,7 +515,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     { "whole", "30" },
                     { "fractional", "100.5" },
-                    { "int", "20"}
+                    { "int", "20" },
+                    { "bigint1", "9223372036854775807" }, // max value
+                    { "bigint2", "-9223372036854775808" } // min value
                 });
 
                 ExecuteSqlTest("Text(Integer, \"###\")", "20", cx, metadata);
@@ -503,6 +527,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Int(\"30.5\"))", true, cx, metadata);
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
+                ExecuteSqlTest("Text(BigNumber1, \"###\")", "9223372036854775807", cx, metadata);
+                ExecuteSqlTest("Text(BigNumber2, \"###\")", "-9223372036854775808", cx, metadata);
             }
         }
 
@@ -517,7 +543,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("decimal", "Decimal"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
-                    AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
+                    AttributeMetadataModel.NewInteger("big_long", "BigLong"),
+                    AttributeMetadataModel.NewBigInt("bigint1", "BigNumber1"),
+                    AttributeMetadataModel.NewBigInt("bigint2", "BigNumber2")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -528,13 +556,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal", "20" },
                     { "int", "20"},
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
-                    { "big_int", SqlStatementFormat.IntTypeMax }
+                    { "big_long", SqlStatementFormat.IntTypeMax },
+                    { "bigint1", "9223372036854775807" }, // max value
+                    { "bigint2", "-9223372036854775808" } // min value
                 });
 
                 // Arithmatic
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
-                ExecuteSqlTest("BigInteger * BigDecimal", null, cx, metadata);
-                ExecuteSqlTest("BigInteger * BigInteger", null, cx, metadata);
+                ExecuteSqlTest("BigLong * BigDecimal", null, cx, metadata);
+                ExecuteSqlTest("BigLong * BigLong", null, cx, metadata);
+                ExecuteSqlTest("BigNumber1 * BigNumber1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 * BigNumber2", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 + BigNumber1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 + BigNumber2", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 - BigNumber2", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 + 1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 - 1", null, cx, metadata, numberIsFloat: false);
+
+                // No overflow
+                ExecuteSqlTest("BigNumber1 * 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 / 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 * 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 / 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 + BigNumber2", -1M, cx, metadata, numberIsFloat: false);
             }
         }
 
@@ -556,21 +600,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return connection;
         }
 
-        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null)
+        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null, bool numberIsFloat = true)
         {
             if (metadata == null)
             {
                 metadata = new EntityMetadataModel[] { new EntityMetadataModel() };
             }
 
-            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets);
+            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets, numberIsFloat);
             Assert.AreEqual(success, compileResult.IsSuccess, $"Compilation failed for formula: '{formula}'");
 
             if (compileResult.IsSuccess)
             {
                 using (var tx = connection.BeginTransaction())
                 {
-                    if (!String.IsNullOrWhiteSpace(udfName))
+                    if (!string.IsNullOrWhiteSpace(udfName))
                     {
                         var dropCmd = connection.CreateCommand();
                         dropCmd.Transaction = tx;
@@ -614,14 +658,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return compileResult;
         }
 
-        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null)
+        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null, bool numberIsFloat = true)
         {
             // This NumberIsFloat should be removed once the SQL compiler natively supports Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(metadata);
-            var engine = new PowerFx2SqlEngine(
-                metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(metadata[0].ToXrm(), new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = numberIsFloat });
 
             var options = new SqlCompileOptions
             {
@@ -632,7 +674,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = engine.Compile(formula, options);
 
-            if (result.Errors != null)
+            if (result.Errors != null && result.Errors.Any())
             {
                 Debug.WriteLine($"Compile errors:");
                 foreach (var error in result.Errors)
@@ -750,7 +792,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var insertCmd = cx.CreateCommand();
             insertCmd.Transaction = tx;
-            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
+            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({string.Join(",", initializations.Keys)}) VALUES ({string.Join(",", initializations.Values)})";
             insertCmd.ExecuteNonQuery();
         }
 

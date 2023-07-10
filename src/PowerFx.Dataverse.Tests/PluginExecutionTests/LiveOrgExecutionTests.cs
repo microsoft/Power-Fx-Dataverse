@@ -26,11 +26,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class LiveOrgExecutionTests
     {
         // Env var we look for to get a dataverse connection string. 
-        const string ConnectionStringVariable = "FxTestDataverseCx";
+        private const string ConnectionStringVariable = "FxTestDataverseCx";
 
         private ServiceClient GetClient()
         {
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+           var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             // short-circuit if connection string is not set
             if (cx == null)
@@ -45,6 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var svcClient = new ServiceClient(cx);
             svcClient.EnableAffinityCookie = true;
+            svcClient.UseWebApi = false;
 
             return svcClient;
         }
@@ -611,13 +612,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void ExecuteViaInterpreterPatchWithNumbers()
         {
-            string tableName = "Table2";
+            string tableName = "table2s";
             int wn = new Random().Next(1000000);
             decimal dc = wn / 100m;
             float ft = ((int)((wn / 117) * 100d)) / 100;
             double cy = ft;
+            decimal big = long.MaxValue;
 
-            var expr = $"Patch(Table2, {{ Table2: GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")}}, {{ WholeNumber: {wn}, Decimal: {dc}, Float: {ft}, 'Currency (crcef2_currency)': {cy} }})";
+            var expr = $"Patch(table2s, First(table2s), {{ WholeNumber: {wn}, Decimal: {dc}, Float: {ft}, crcb2_currency: {cy}, BigInt: {big} }})";
 
             List<IDisposable> disposableObjects = null;
 
@@ -626,22 +628,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
 
                 Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity), result is ErrorValue ev ? string.Join(", ", ev.Errors.Select(er => er.Message)) : "Unknown error");
 
-                var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
-                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
+                var expr2 = $"First(table2s)";
+                var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
                 Assert.IsNotNull(result2);
 
                 Entity e = (Entity)result2.ToObject();
-                int wn2 = e.GetAttributeValue<int>("crcef2_wholenumber");
-                decimal dc2 = e.GetAttributeValue<decimal>("crcef2_decimal");
-                float ft2 = (float)e.GetAttributeValue<double>("crcef2_float");
-                double cy2 = (double)e.GetAttributeValue<Money>("crcef2_currency").Value;
+                int wn2 = e.GetAttributeValue<int>("crcb2_wholenumber");
+                decimal dc2 = e.GetAttributeValue<decimal>("crcb2_decimal");
+                float ft2 = (float)e.GetAttributeValue<double>("crcb2_float");
+                double cy2 = (double)e.GetAttributeValue<Money>("crcb2_currency").Value;
+                long big2 = e.GetAttributeValue<long>("crcb2_bigint");
 
                 Assert.AreEqual(wn, wn2);
                 Assert.AreEqual(dc, dc2);
                 Assert.AreEqual(ft, ft2);
                 Assert.AreEqual(cy, cy2);
+                Assert.AreEqual(big, big2);
+
+                FormulaValue fv = engine.EvalAsync("First(table2s).BigInt", CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
+                Assert.IsNotNull(fv);
+                DecimalValue nv = (DecimalValue)fv;
+                Assert.AreEqual(big, nv.Value);
             }
             finally
             {

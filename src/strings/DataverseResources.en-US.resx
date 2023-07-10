@@ -208,6 +208,10 @@
     <value>Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.</value>
     <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
+  <data name="FormulaColumns_ImplicitDecimalToText" xml:space="preserve">
+    <value>Use the Text function to convert decimals to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.</value>
+    <comment>Error Message. Used in formula columns for implicit conversion of decimals to text.</comment>
+  </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Calculations with currency columns in related tables are not currently supported in formula columns.</value>
     <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>

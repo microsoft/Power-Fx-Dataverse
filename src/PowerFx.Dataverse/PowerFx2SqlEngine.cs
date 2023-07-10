@@ -1,22 +1,21 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using Microsoft.PowerFx.Core.Errors;
-using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Logging;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor.Context;
 
 
@@ -38,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: true)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: metadataProvider?.NumberIsFloat ?? true)
         {
         }
 
@@ -125,10 +124,10 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult._unsupportedWarnings = new List<string>();
                 foreach (var error in sqlResult.Errors)
                 {
-                    if (error.MessageKey == "ErrUnknownFunction" || 
-                        error.MessageKey == "ErrUnimplementedFunction" ||
-                        error.MessageKey == "ErrNumberExpected" || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
-                        (error.MessageKey == "ErrBadType_ExpectedType_ProvidedType" && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
+                    if (error.MessageKey == TexlStrings.ErrUnknownFunction.Key || 
+                        error.MessageKey == TexlStrings.ErrUnimplementedFunction.Key ||
+                        error.MessageKey == TexlStrings.ErrNumberExpected.Key || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
+                       (error.MessageKey == TexlStrings.ErrBadType_ExpectedType_ProvidedType.Key && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);
                     }
@@ -230,7 +229,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = tableSchemaName + "Base";
+                                tableSchemaName += "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
@@ -261,7 +260,7 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
+                        var selects = string.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }

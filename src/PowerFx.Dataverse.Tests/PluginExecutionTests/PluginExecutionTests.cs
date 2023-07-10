@@ -4,12 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,6 +11,12 @@ using System.Linq;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.PowerFx.Types;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ConvertMetadata()
         {
             var rawProvider = new MockXrmMetadataProvider(_trivialModel);
-            var provider = new CdsEntityMetadataProvider(rawProvider);  // NumberIsFloat = false
+            var provider = new CdsEntityMetadataProvider(rawProvider) { NumberIsFloat = false }; 
 
             var recordType = provider.GetRecordType(_trivialModel.LogicalName);
 
@@ -115,10 +115,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ConvertMetadataLazy()
         {
             var localName = DataverseTests.LocalModel.LogicalName;
-
-            var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
-            );
+            var rawProvider = new TrackingXrmMetadataProvider(new MockXrmMetadataProvider(DataverseTests.RelationshipModels));
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
             var disp = new Dictionary<string, string>
@@ -127,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 { "remote", "Remotes"  }
             };
 
-            var provider = new CdsEntityMetadataProvider(rawProvider, disp);  // NumberIsFloat = false
+            var provider = new CdsEntityMetadataProvider(rawProvider, disp) { NumberIsFloat = false };
 
             // Shouldn't access any other metadata (via relationships). 
             var reqs = rawProvider._requests;
@@ -685,30 +682,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        [DataRow(true, "Number")]
-        [DataRow(false, "Decimal")]
-        public void TestBigInt(bool numberIsFloat, string retTypeStr)
-        {
-            // create table "local"
+        public void TestBigInt()
+        {            
             var logicalName = "allattributes";
             var displayName = "t1";
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
+            engine.Config.SymbolTable.EnableMutationFunctions();
+            
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel(metadataNumberIsFloat: false);
+            dv.AddTable(displayName, logicalName);            
 
-            // numberIsFloat controls how metadata parser handles currency. 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel(metadataNumberIsFloat: numberIsFloat);
-            dv.AddTable(displayName, logicalName);
+            var expr = "First(t1).BigInt";
+            long lngRef = long.MaxValue;
 
-            var expr = "First(t1).BigInt"; // field of BigInt type 
+            foreach (long lng in new[] { long.MinValue, -278175, 0, 17, long.MaxValue })
+            {
+                var check = engine.Check(expr, new ParserOptions() { AllowsSideEffects = true }, symbolTable: dv.Symbols);
+                Assert.IsTrue(check.IsSuccess);
+                var retType = check.ReturnType.ToString();
+                Assert.AreEqual("Decimal", retType);
 
-            var check = engine.Check(expr, symbolTable: dv.Symbols);
-            Assert.IsTrue(check.IsSuccess);
-            var retType = check.ReturnType.ToString();
-            Assert.AreEqual(retTypeStr, retType);
+                FormulaValue fv = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                Assert.AreEqual(lngRef, fv.ToDecimal());
 
-            FormulaValue fv = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-            Assert.AreEqual(long.MaxValue, fv.ToDouble());
+                var expr2 = $"Patch(t1, First(t1), {{ BigInt: {lng} }}).BigInt";
+                var check2 = engine.Check(expr2, new ParserOptions() { AllowsSideEffects = true }, symbolTable: dv.Symbols);
+                Assert.IsTrue(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => er.Message)));
+
+                FormulaValue fv2 = check2.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                Assert.AreEqual(lng, fv2.ToDecimal());
+
+                lngRef = lng;
+            }
         }
 
         [DataTestMethod]
@@ -3928,6 +3935,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return (double)dec.Value;
             }
             throw new InvalidOperationException($"Not a number: {value.GetType().FullName}");
+        }
+
+        public static decimal ToDecimal(this FormulaValue value)
+        {
+            if (value is NumberValue num)
+            {
+                return (decimal)num.Value;
+            }
+            if (value is DecimalValue dec)
+            {
+                return dec.Value;
+            }
+            throw new InvalidOperationException($"Not a decimal: {value.GetType().FullName}");
         }
 
         // .Net won't allow us to encode Decimal in a Theory/InlineData attribute.  So we use double.

@@ -4,16 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -405,10 +405,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         return ((DateTime)x).CompareTo((DateTime)y);
 
                     case AttributeTypeCode.Decimal:
-                        return ((Decimal)x).CompareTo((Decimal)y);
+                    case AttributeTypeCode.BigInt:
+                    case AttributeTypeCode.Money:
+                        return ((decimal)x).CompareTo((decimal)y);
 
                     case AttributeTypeCode.Double:
-                        return ((Double)x).CompareTo((Double)y);
+                        return ((double)x).CompareTo((double)y);
 
                     case AttributeTypeCode.Integer:
                         return ((int)x).CompareTo((int)y);
@@ -420,10 +422,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Uniqueidentifier:
                         return ((Guid)x).CompareTo((Guid)y);
 
-                    case AttributeTypeCode.Lookup:
-                    case AttributeTypeCode.Money:
-                    case AttributeTypeCode.Picklist:
-                    case AttributeTypeCode.BigInt:
+                    case AttributeTypeCode.Lookup:                    
+                    case AttributeTypeCode.Picklist:                    
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:
                     case AttributeTypeCode.EntityName:
