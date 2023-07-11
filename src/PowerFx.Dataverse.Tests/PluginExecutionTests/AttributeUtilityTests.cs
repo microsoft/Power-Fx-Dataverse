@@ -113,17 +113,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             value();
                         }
-                        catch (NotImplementedException nie)
+                        catch (NotImplementedException)
                         {
-
                         }
-                        catch (InvalidOperationException ioe)
+                        catch (InvalidOperationException)
                         {
-
                         }
-                        catch (InvalidCastException ice)
+                        catch (InvalidCastException)
                         {
-
                         }
                     }
                 }
