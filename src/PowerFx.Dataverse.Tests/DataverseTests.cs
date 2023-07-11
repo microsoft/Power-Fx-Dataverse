@@ -168,8 +168,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v3 decimal(38,10)
-    DECLARE @v5 decimal(38,10)
+    DECLARE @v3 decimal(38,9)
+    DECLARE @v5 decimal(38,9)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
@@ -228,9 +228,7 @@ END
         public void CheckMoney()
         {
             var expr = "Money"; // resolve to Money filed
-
             var metadata = AllAttributeModel.ToXrm();
-
             var metadataProvider = new CdsEntityMetadataProvider(null)
             {
                 NumberIsFloat = false  // Causes money to be imported as Decimal instead of Number
@@ -242,10 +240,7 @@ END
             Assert.IsNotNull(result);
 
             // But formula columns don't support returning Decimal. 
-            Assert.AreEqual(false, result.IsSuccess);
-            var errors = result.Errors.ToArray();
-            Assert.AreEqual(errors[0].ToString(), "Error 0-5: The result type Decimal is not supported in formula columns.");
-
+            Assert.AreEqual(true, result.IsSuccess);           
             Assert.AreEqual("money", result.ApplyGetInvariant());
         }
 

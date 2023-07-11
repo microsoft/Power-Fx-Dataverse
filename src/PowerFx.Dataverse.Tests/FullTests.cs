@@ -832,8 +832,8 @@ CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v3 decimal(38,10)
-    DECLARE @v5 decimal(38,10)
+    DECLARE @v3 decimal(38,9)
+    DECLARE @v5 decimal(38,9)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase1] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account1] WHERE[AccountId] = @v2
 
