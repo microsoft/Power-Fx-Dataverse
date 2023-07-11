@@ -173,6 +173,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is SqlDecimalType ||
                 type is BooleanType ||
                 type is StringType ||
+                type is DecimalType ||
                 type is SqlBigType ||
                 type is SqlGiantType ||
                 Library.IsDateTimeType(type);

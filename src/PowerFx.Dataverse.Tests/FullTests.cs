@@ -574,11 +574,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("BigNumber2 - 1", null, cx, metadata, numberIsFloat: false);
 
                 // No overflow
+                ExecuteSqlTest("BigNumber1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber1 * 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber1 / 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 * 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 / 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber1 + BigNumber2", -1M, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 + BigNumber2", -1M, cx, metadata, numberIsFloat: false);                
             }
         }
 
@@ -619,13 +621,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         var dropCmd = connection.CreateCommand();
                         dropCmd.Transaction = tx;
                         dropCmd.CommandText = $"DROP FUNCTION IF EXISTS [dbo].[{udfName}]";
-                        dropCmd.ExecuteNonQuery();
+                        _ = dropCmd.ExecuteNonQuery();
                     }
 
                     var createCmd = connection.CreateCommand();
                     createCmd.Transaction = tx;
                     createCmd.CommandText = compileResult.SqlFunction;
-                    var rows = createCmd.ExecuteNonQuery();
+                    _ = createCmd.ExecuteNonQuery();
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;

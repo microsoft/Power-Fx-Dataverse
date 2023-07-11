@@ -164,7 +164,7 @@ ELSE
         /// </summary>
         public const string DeclareIntermediateVariableFormat = "DECLARE {0} {1}";
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
-        public const string BigType = "decimal(38,10)";
+        public const string BigType = "decimal(38,9)";
         public const string BigMoneyType = "decimal(38,8)";
         public const string ExchangeRateType = "decimal(28,12)";
 

@@ -11,7 +11,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
 
     /// <summary>
-    /// A type to represent a numeric value as a "big" value in CDS code, e.g. decimal(38,10)
+    /// A type to represent a numeric value as a "big" value in CDS code, e.g. decimal(38,9)
     /// </summary>
     [DebuggerDisplay("{_type}:i")]
     public class SqlIntType : SqlNumberBase
