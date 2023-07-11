@@ -217,7 +217,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return type;
             }
 
-            // if the type is a giant for intermediate calculations with bigint, let's keep it
+            // if the type is giant for intermediate calculations with bigint, let's keep it
             if (type is SqlGiantType)
             {
                 return type;
