@@ -30,6 +30,7 @@ namespace Microsoft.PowerFx.Tests
             {
                 "Microsoft.PowerFx.Dataverse.EngineExtensions",
                 "Microsoft.PowerFx.Dataverse.AttributeUtilityExtensions",
+                "Microsoft.PowerFx.Dataverse.ConfigExtensions",
 
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
@@ -52,7 +53,13 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.IDataverseReader",
                 "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
                 "Microsoft.PowerFx.Dataverse.IDataverseDeleter",
-                "Microsoft.PowerFx.Dataverse.IDataverseRefresh"
+                "Microsoft.PowerFx.Dataverse.IDataverseRefresh",
+                "Microsoft.PowerFx.Dataverse.IDataverseExecute",
+
+                // Functions
+                "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
+
+
             };
 
             Verify(allowed, asm);
