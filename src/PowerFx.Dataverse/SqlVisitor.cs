@@ -164,8 +164,8 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         bool useDecimals = node.Op == BinaryOpKind.AddDecimals || node.Op == BinaryOpKind.DivDecimals || node.Op == BinaryOpKind.MulDecimals;
-                        SqlNumberBase returnType = useDecimals ? new SqlVeryBigType() : new SqlBigType();
-                        SqlNumberBase decimalType = useDecimals ? new SqlVeryBigType() : new SqlDecimalType();
+                        SqlNumberBase returnType = useDecimals ? new SqlGiantType() : new SqlBigType();
+                        SqlNumberBase decimalType = useDecimals ? new SqlGiantType() : new SqlDecimalType();
 
                         var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
 
@@ -1208,7 +1208,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
-                    else if (result.type is SqlVeryBigType)
+                    else if (result.type is SqlGiantType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
                     }

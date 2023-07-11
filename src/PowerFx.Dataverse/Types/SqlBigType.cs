@@ -10,7 +10,8 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// A type to represent a numeric value as a "big" value in CDS code, e.g. decimal(38,10)
+    /// A type to represent a numeric value as a "big" value in CDS code, e.g. decimal(38,10)   
+    /// CDS bigint type range is [-9223372036854775808 ... +9223372036854775807]
     /// </summary>
     [DebuggerDisplay("{_type}:B")]
     public class SqlBigType : SqlNumberBase

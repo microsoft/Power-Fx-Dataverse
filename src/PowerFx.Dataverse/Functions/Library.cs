@@ -154,40 +154,27 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 if (node.Args.Count == 2)
                 {
-                    if (node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0)
+                    bool isNum = node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0;
+                    bool isDec = node.Args[1] is DecimalLiteralNode dec && dec.LiteralValue == 0;
+                    
+                    if (isNum || isDec)
                     {
-                        var arg0 = node.Args[0].IRContext.ResultType;
-                        if (arg0 == FormulaType.Number || arg0 == FormulaType.Blank)
+                        IntermediateNode arg0 = node.Args[0];
+                        FormulaType arg0type = arg0.IRContext.ResultType;
+
+                        if ((isNum && arg0type == FormulaType.Number) || (isDec && arg0type == FormulaType.Decimal) || arg0type == FormulaType.Blank)
                         {
-                            Library.ValidateNumericArgument(node.Args[0]);
-                            var arg = node.Args[0].Accept(runner, context);
+                            ValidateNumericArgument(arg0);
+                            RetVal arg = arg0.Accept(runner, context);
+                            string argString = CoerceNullToInt(arg);
 
-                            var argString = Library.CoerceNullToInt(arg);
-
-                            var result = context.GetTempVar(new SqlBigType());
+                            RetVal result = context.GetTempVar(isNum ? new SqlBigType() : new SqlGiantType());
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;
                             return true;
                         }
-                    }
-                    else if (node.Args[1] is DecimalLiteralNode dec && dec.LiteralValue == 0)
-                    {
-                        var arg0 = node.Args[0].IRContext.ResultType;
-                        if (arg0 == FormulaType.Decimal || arg0 == FormulaType.Blank)
-                        {
-                            Library.ValidateNumericArgument(node.Args[0]);
-                            var arg = node.Args[0].Accept(runner, context);
-
-                            var argString = Library.CoerceNullToInt(arg);
-
-                            var result = context.GetTempVar(new SqlVeryBigType());
-                            context.SetIntermediateVariable(result, argString);
-
-                            ret = result;
-                            return true;
-                        }
-                    }
+                    }                   
                 }
             }
 

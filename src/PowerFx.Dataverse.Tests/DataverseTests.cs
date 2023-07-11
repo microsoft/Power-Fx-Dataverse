@@ -613,7 +613,7 @@ END
                 { "hyperlink", "Columns of type String with format Url are not supported in formula columns." },
                 { "email", "Columns of type String with format Email are not supported in formula columns." },
                 { "ticker", "Columns of type String with format TickerSymbol are not supported in formula columns." },
-                { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },                
+                { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },
                 { "EntityName", "Name isn't valid. 'EntityName' isn't recognized." }, // AttributeTypeCode.EntityName are not imported                 
                 { "file", "Name isn't valid. 'file' isn't recognized."},
                 { "customerid", "Name isn't valid. 'customerid' isn't recognized." },
@@ -860,7 +860,7 @@ END
             var expr = new string('a', 1001);
             var error = "Error 0-1001: Expression can't be more than 1000 characters. The expression is 1001 characters.";
 
-            var engine = new PowerFx2SqlEngine();            
+            var engine = new PowerFx2SqlEngine();
 
             var checkResult = engine.Check(expr);
             Assert.AreEqual(false, checkResult.IsSuccess);
@@ -1477,7 +1477,7 @@ END
                 AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewBigInt("bigint", "BigInt"),                
+                AttributeMetadataModel.NewBigInt("bigint", "BigInt"),
                 AttributeMetadataModel.NewBoolean("boolean", "Boolean", "Yes", "No"),
                 AttributeMetadataModel.NewLookup("customerid", "Customer", new [] { "tripleremote" }, AttributeTypeCode.Customer),
                 new AttributeMetadataModel
@@ -1757,7 +1757,7 @@ END
             {
                 null => CultureInfo.InvariantCulture,
                 _ => CultureInfo.CreateSpecificCulture(localeName),
-            };            
+            };
 
             var engine = new PowerFx2SqlEngine(culture: culture);
 

@@ -80,6 +80,8 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
 
                 case XrmAttributeTypeCode.BigInt:
+                    // This is CDS bigint type, 64-bit integer
+                    // [-9223372036854775808 ... +9223372036854775807]
                     type = new SqlBigType();
                     return true;
 
