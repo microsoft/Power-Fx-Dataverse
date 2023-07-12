@@ -62,14 +62,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var runner = new TestRunner(sql);
                 runner.AddDir(_testSettings);
 
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 3));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 6));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 10));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 14));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 18));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 21));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 24));
-
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {                                     
                     runner.AddFile(_testSettings, path);
