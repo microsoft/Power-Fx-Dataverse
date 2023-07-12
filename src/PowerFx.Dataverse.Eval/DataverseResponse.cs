@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
 using System;
 using System.Threading.Tasks;
@@ -58,7 +59,20 @@ namespace Microsoft.PowerFx.Dataverse
             return FormulaValue.NewError(DataverseHelpers.GetExpressionError(Error), type);
         }
 
-        static public DataverseResponse NewError(string error)
+        /// <summary>
+        /// Throw a  <see cref="=CustomFunctionErrorException"/> on error. 
+        /// This exception type is specifically useful in interpreter.
+        /// </summary>
+        /// <exception cref="CustomFunctionErrorException"></exception>
+        public void ThrowEvalExOnError()
+        {
+            if (this.HasError)
+            {
+                throw new CustomFunctionErrorException(this.Error);
+            }
+        }
+
+        public static DataverseResponse NewError(string error)
         {
             return new DataverseResponse()
             {

@@ -7,12 +7,14 @@ namespace Microsoft.PowerFx.Dataverse
     {
         public static ExpressionError GetExpressionError(string message, ErrorSeverity severity = ErrorSeverity.Critical, string messageKey = null)
         {
+            var resourceKey = (messageKey == null) ? default : new ErrorResourceKey(messageKey, DataverseStringResources.LocalStringResources);
+
             return new ExpressionError() 
             { 
-                Kind = ErrorKind.Unknown, 
-                Severity = severity, 
+                Kind = ErrorKind.Unknown,
+                Severity = severity,
                 Message = message,
-                ResourceKey = new ErrorResourceKey(messageKey, DataverseStringResources.LocalStringResources)
+                ResourceKey = resourceKey
             };
         }
 

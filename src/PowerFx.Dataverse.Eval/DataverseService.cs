@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseService : IDataverseServices, IDataverseRefresh
+    public class DataverseService : IDataverseServices, IDataverseRefresh, IDataverseExecute
     {        
         private IOrganizationService _organizationService { get; }
 
@@ -70,6 +70,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public void Refresh(string logicalTableName)
         {            
+        }
+
+        public virtual async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            return DataverseExtensions.DataverseCall(
+                () => _organizationService.Execute(request),
+                $"Execute '{request.RequestName}'");
         }
     }
 }
