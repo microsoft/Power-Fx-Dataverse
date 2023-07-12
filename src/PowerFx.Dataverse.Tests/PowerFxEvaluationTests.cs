@@ -4,15 +4,15 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Types;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -20,15 +20,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
     public class ExpressionEvaluationTests
     {
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         /// <summary>
         /// The connection string for the database to execute generated SQL
         /// </summary>
-        static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        private static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
         // .txt tests will be filtered to match these seetings. 
-        static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
+        private static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
         {
             { "PowerFxV1CompatibilityRules", true },
             { "NumberIsFloat", DataverseEngine.NumberIsFloat },
@@ -49,6 +49,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void RunSqlTestCases()
         {
             ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+
             // short-circuit if connection string is not set
             if (ConnectionString == null)
             {
@@ -115,18 +116,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 24));
 
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
-                {                                     
+                {
                     runner.AddFile(_testSettings, path);
                 }
+                
+                Parallel.ForEach(runner.Tests.Where(t => t.SourceFile.Contains("BypassOverrideLogic")), t => t.OverrideFrom = "BypassOverrideLogic");
 
-                var result = runner.RunTests();
+                TestRunFullResults result = runner.RunTests();
+                Console.WriteLine(result.Output);
 
                 // Any failures introduced by new tests or unsupported features should be overridden
-                Assert.AreEqual(0, result.Fail, result.Output);
+                Assert.AreEqual(0, result.Fail);
 
                 // Verify that we're actually running tests. 
-                Assert.IsTrue(result.Total > 4000);
-                Assert.IsTrue(result.Pass > 1000);
+                Assert.IsTrue(result.Total > 7000);
+                Assert.IsTrue(result.Pass > 2000);
             }
         }
 
@@ -166,15 +170,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;
+            private SqlConnection _connection;            
 
-            public SqlRunner(string connectionString)
-            {
-                if (connectionString == null)
-                {
-                    throw new InvalidOperationException($"ConnectionString not set");
-                }
-                _connection = new SqlConnection(connectionString);
+            public SqlRunner(string connectionString, bool numberIsFloat = true)
+                : base()
+            {                
+                base.NumberIsFloat = numberIsFloat;
+
+                _connection = new SqlConnection(connectionString ?? throw new InvalidOperationException($"ConnectionString not set"));
                 _connection.Open();
             }
 
@@ -211,8 +214,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
 
-                if (iSetup.HandlerName != null ||
-                    iSetup.TimeZoneInfo != null)
+                if (iSetup.HandlerName != null ||  iSetup.TimeZoneInfo != null)
                 {
                     throw new SetupHandlerNotFoundException();
                 }
@@ -268,12 +270,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     [placeholderid] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     [dummy] INT NULL,
     [calc]  AS ([dbo].{compileResult.SqlCreateRow}))";
-                        createCmd.ExecuteNonQuery();
+                        _ = createCmd.ExecuteNonQuery();
 
                         var insertCmd = cx.CreateCommand();
                         insertCmd.Transaction = tx;
                         insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
-                        insertCmd.ExecuteNonQuery();
+                        _ = insertCmd.ExecuteNonQuery();
 
                         var selectCmd = cx.CreateCommand();
                         selectCmd.Transaction = tx;
@@ -298,12 +300,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             var result = new RunResult(fv);
 
                             // Evaluation ran, but failed due to unsupported features.
-                            if (compileResult._unsupportedWarnings != null)
+                            if (compileResult._unsupportedWarnings != null && compileResult._unsupportedWarnings.Any())
                             {
-                                if (compileResult._unsupportedWarnings.Count > 0)
-                                {
-                                    result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                                }
+                                Console.WriteLine($"Warnings for {expr}: {string.Join(", ", compileResult._unsupportedWarnings)}");
+                                result.UnsupportedReason = compileResult._unsupportedWarnings[0];
                             }
 
                             return result;

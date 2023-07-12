@@ -4,12 +4,10 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.IR;
-using System;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Span = Microsoft.PowerFx.Syntax.Span;
 using Microsoft.PowerFx.Core.Utils;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -40,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                             var condition = node.Args[i].Accept(visitor, context);
 
                             // SQL doesn't support boolean literals or variables in IF clauses, so add comparision to 1 (e.g. IF(@t1=1)
-                            conditionClause = visitor.CoerceBooleanToOp(node.Args[i], condition, context).ToString();
+                            conditionClause = visitor.CoerceBooleanToOp(node.Args[i], condition).ToString();
                         }
 
                         // emit an if condition and result that can handle internal error checks or error contexts

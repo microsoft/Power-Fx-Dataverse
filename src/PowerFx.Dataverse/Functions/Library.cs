@@ -24,11 +24,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static IEnumerable<TexlFunction> FunctionList => _funcsByName.Keys;
 
         // Some TexlFunctions are overloaded
-        private static Dictionary<TexlFunction, FunctionPtr> _funcsByName = new Dictionary<TexlFunction, FunctionPtr>
+        private static readonly Dictionary<TexlFunction, FunctionPtr> _funcsByName = new Dictionary<TexlFunction, FunctionPtr>
         {
             { BuiltinFunctionsCore.Abs, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ABS", 1) },
             //{ BuiltinFunctionsCore.AddColumns, AddColumns },
-            { BuiltinFunctionsCore.And, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "AND", false) },
+            { BuiltinFunctionsCore.And, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, false) },
             { BuiltinFunctionsCore.Average, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "AVG", errorOnNulls:true) },
             //{ BuiltinFunctionsCore.AverageT, AverageTable },
             { BuiltinFunctionsCore.Blank, Blank },
@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Month, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Month) },
             { BuiltinFunctionsCore.Not, Not },
             { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTime) },
-            { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
+            { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, true) },
            // { BuiltinFunctionsCore.Power, Power },
             { BuiltinFunctionsCore.Replace, Replace },
             { BuiltinFunctionsCore.Right, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context,"RIGHT") },

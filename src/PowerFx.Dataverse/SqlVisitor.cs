@@ -275,6 +275,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.SubtractNumberAndTime:
                     throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Right.IRContext.SourceContext, context.GetReturnType(node.Right)._type.GetKindString());
 
+                case BinaryOpKind.InRecordTable:
                 default:
                     throw new SqlCompileException(SqlCompileException.OperationNotSupported, node.IRContext.SourceContext, context.GetReturnType(node.Left)._type.GetKindString());
             }
@@ -363,7 +364,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.BooleanToNumber:
                 case UnaryOpKind.BooleanToDecimal:
                     arg = node.Child.Accept(this, context);
-                    var boolResult = CoerceBooleanToOp(node, arg, context);
+                    var boolResult = CoerceBooleanToOp(node, arg);
 
                     return node.Op switch
                     {
@@ -574,7 +575,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        internal RetVal CoerceBooleanToOp(IntermediateNode node, RetVal result, Context context)
+        internal RetVal CoerceBooleanToOp(IntermediateNode node, RetVal result)
         {
             // SQL does not allow boolean literals or boolean variables as a logical operation
             if (node is BooleanLiteralNode || (node as LazyEvalNode)?.Child is BooleanLiteralNode)
@@ -719,10 +720,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Mapping of field names to details
-            private Dictionary<string, VarDetails> _fields = new Dictionary<string, VarDetails>();
+            private readonly Dictionary<string, VarDetails> _fields = new Dictionary<string, VarDetails>();
 
             // Mapping of var names to details
-            private Dictionary<string, VarDetails> _vars = new Dictionary<string, VarDetails>();
+            private readonly Dictionary<string, VarDetails> _vars = new Dictionary<string, VarDetails>();
 
             internal class Scope : DataverseType
             {
@@ -744,7 +745,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// <summary>
             /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function
             /// </summary>
-            private bool _checkOnly;
+            private readonly bool _checkOnly;
 
             public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false)
             {
@@ -1036,12 +1037,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
-            int _indentLevel = 1;
+            private int _indentLevel = 1;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 // if there is a pending else on the error context from a post-set validation, emit it before adding any other context
                 if (InErrorContext && CurrentErrorContext?.PostValidationElse == true)
@@ -1109,7 +1110,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void DivideByZeroCheck(RetVal retVal, bool coerce = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition =
                     coerce
@@ -1121,7 +1122,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NegativeNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NegativeNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1129,7 +1130,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NonPositiveNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NonPositiveNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1137,7 +1138,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void LessThanOneNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.LessThanOneNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1145,7 +1146,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NullCheck(RetVal retVal, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NullCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1153,7 +1154,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 // compute approximate power to determine if there will be an overflow
                 var power = SetIntermediateVariable(new SqlBigType(), $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)");
@@ -1169,7 +1170,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void ErrorCheck(string condition, string errorCode, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 if (InErrorContext)
                 {
@@ -1195,7 +1196,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
@@ -1222,15 +1223,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool ValidateNumericLiteral(double literal, FormulaType type)
             {
-                if (type is SqlIntType && literal > SqlStatementFormat.IntTypeMinValue && literal < SqlStatementFormat.IntTypeMaxValue)
+                if (type is SqlIntType && literal >= SqlStatementFormat.IntTypeMinValue && literal <= SqlStatementFormat.IntTypeMaxValue)
                 {
                     return true;
                 }
-                else if (type is SqlMoneyType && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
+                else if (type is SqlMoneyType && literal >= SqlStatementFormat.MoneyTypeMinValue && literal <= SqlStatementFormat.MoneyTypeMaxValue)
                 {
                     return true;
                 }
-                else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                else if (type is NumberType && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1264,19 +1265,19 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool ValidateDecimalLiteral(decimal literal, FormulaType type)
             {
-                if (type is SqlBigType && literal > SqlStatementFormat.BigIntTypeMinValue && literal < SqlStatementFormat.BigIntTypeMaxValue)
+                if (type is SqlBigType && literal >= SqlStatementFormat.BigIntTypeMinValue && literal <= SqlStatementFormat.BigIntTypeMaxValue)
                 {
                     return true;
                 }
-                else if (type is SqlIntType && literal > (decimal)SqlStatementFormat.IntTypeMinValue && literal < (decimal)SqlStatementFormat.IntTypeMaxValue)
+                else if (type is SqlIntType && literal >= (decimal)SqlStatementFormat.IntTypeMinValue && literal <= (decimal)SqlStatementFormat.IntTypeMaxValue)
                 {
                     return true;
                 }
-                else if (type is SqlMoneyType && literal > (decimal)SqlStatementFormat.MoneyTypeMinValue && literal < (decimal)SqlStatementFormat.MoneyTypeMaxValue)
+                else if (type is SqlMoneyType && literal >= (decimal)SqlStatementFormat.MoneyTypeMinValue && literal <= (decimal)SqlStatementFormat.MoneyTypeMaxValue)
                 {
                     return true;
                 }
-                else if ((type is NumberType || type is DecimalType) && literal > (decimal)SqlStatementFormat.DecimalTypeMinValue && literal < (decimal)SqlStatementFormat.DecimalTypeMaxValue)
+                else if ((type is NumberType || type is DecimalType) && literal >= (decimal)SqlStatementFormat.DecimalTypeMinValue && literal <= (decimal)SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1289,7 +1290,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return true;
                     }
                 }
-                else if (!(type is NumberType))
+                else if (!(type is NumberType || type is DecimalType))
                 {
                     throw new NotSupportedException($"Unsupported type for numeric literal check: {type}");
                 }
@@ -1310,7 +1311,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.OverflowCondition, result, min, max);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1318,14 +1319,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             private void PerformErrorCheck(string condition)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, condition));
             }
 
-            internal void DateOverflowCheck(RetVal year, RetVal month, RetVal day, bool postValidation = false)
+            internal void DateOverflowCheck(RetVal year, RetVal month, RetVal day)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DateOverflowCondition, year, month, day);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1333,7 +1334,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void DateAdditionOverflowCheck(RetVal offset, string part, RetVal date)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 // do overflow checks at the minimum resolution of an hour
                 if (part == SqlStatementFormat.Minute)
@@ -1352,7 +1353,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void DateDiffOverflowCheck(RetVal date1, RetVal date2, string part)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
 
                 switch (part)
                 {
@@ -1368,7 +1369,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void FloatingPointErrorCheck(RetVal number)
             {
-                if (_checkOnly) return;
+                if (_checkOnly) { return; }
                 var condition = $"FLOOR({number}) <> {number}";
                 ErrorCheck(condition, ValidationErrorCode);
             }
@@ -1378,7 +1379,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             internal class IfIndenter : IDisposable
             {
-                private Context _context;
+                private readonly Context _context;
                 private int _indentations = 0;
                 private int _ifsEmitted = 0;
 
@@ -1497,7 +1498,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // TODO: will we need to maintain more detailed information about the context
-            readonly Stack<ContextState> _stack = new Stack<ContextState>();
+            private readonly Stack<ContextState> _stack = new Stack<ContextState>();
 
             private bool checkCondition(ContextState state)
             {
@@ -1556,7 +1557,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal class IfResultContext : ContextStateContainer
             {
-                private IfIndenter _nestedIndenter;
+                private readonly IfIndenter _nestedIndenter;
                 internal IfResultContext(Context context, bool isMakerDefinedCondition) : base(context, ContextState.IfResult)
                 {
                     context._indentLevel++;
@@ -1569,10 +1570,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 public override void Dispose()
                 {
-                    if (_nestedIndenter != null)
-                    {
-                        _nestedIndenter.Dispose();
-                    }
+                    _nestedIndenter?.Dispose();
                     _context._indentLevel--;
                     base.Dispose();
                 }
@@ -1580,13 +1578,7 @@ namespace Microsoft.PowerFx.Dataverse
             #endregion
 
             #region Inline Literal Context
-            public bool InInlineLiteralContext
-            {
-                get
-                {
-                    return checkCondition(ContextState.InlineLiteral);
-                }
-            }
+            public bool InInlineLiteralContext => checkCondition(ContextState.InlineLiteral);
 
             public InlineLiteralContext NewInlineLiteralContext()
             {
@@ -1602,14 +1594,8 @@ namespace Microsoft.PowerFx.Dataverse
             #region Error Context
             public bool InErrorContext
             {
-                get
-                {
-                    return checkCondition(ContextState.Error);
-                }
-                internal set
-                {
-                    setCondition(ContextState.Error, value);
-                }
+                get => checkCondition(ContextState.Error);
+                internal set => setCondition(ContextState.Error, value);
             }
 
             public ErrorContext NewErrorContext()
@@ -1627,8 +1613,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 internal static Stack<ErrorContext> ErrorStack = new Stack<ErrorContext>();
 
-                private Context _context;
-                private List<IfResultContext> _resultContexts = new List<IfResultContext>();
+                private readonly Context _context;
+                private readonly List<IfResultContext> _resultContexts = new List<IfResultContext>();
 
                 public RetVal Code { get; }
 

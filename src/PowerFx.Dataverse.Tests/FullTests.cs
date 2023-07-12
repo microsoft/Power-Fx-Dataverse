@@ -586,7 +586,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private static SqlConnection GetSql()
         {
@@ -604,10 +604,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null, bool numberIsFloat = true)
         {
-            if (metadata == null)
-            {
-                metadata = new EntityMetadataModel[] { new EntityMetadataModel() };
-            }
+            metadata ??= new EntityMetadataModel[] { new EntityMetadataModel() };
 
             var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets, numberIsFloat);
             Assert.AreEqual(success, compileResult.IsSuccess, $"Compilation failed for formula: '{formula}'");
@@ -732,12 +729,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // use the schema name for the primary id attribute, or the primary id logical name if not found
 
             var primaryId = GetPrimaryIdSchemaName(model);
-            var baseTable = $@"{op} TABLE {model.SchemaName}Base (
-[{primaryId}] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY";
+            var baseTable = $@"{op} TABLE {model.SchemaName}Base ([{primaryId}] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY";
+
             foreach (var attr in model.Attributes)
             {
                 if (attr.LogicalName == model.PrimaryIdAttribute)
+                {
                     continue;
+                }
+
                 string type;
                 string calc = null;
                 var found = calculations?.TryGetValue(attr.LogicalName, out calc);

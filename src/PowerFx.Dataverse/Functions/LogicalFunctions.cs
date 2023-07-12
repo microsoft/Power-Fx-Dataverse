@@ -4,7 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.IR;
 using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -18,11 +17,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var returnType = context.GetReturnType(node);
             var arg = node.Args[0].Accept(visitor, context);
-            var op = visitor.CoerceBooleanToOp(node.Args[0], arg, context);
+            var op = visitor.CoerceBooleanToOp(node.Args[0], arg);
             return context.SetIntermediateVariable(returnType, $"(NOT {op})");
         }
 
-        public static RetVal LogicalSetFunction(SqlVisitor visitor, CallNode node, Context context, string function, bool shortCircuitTest)
+        [Obsolete]
+        public static RetVal LogicalSetFunction(SqlVisitor visitor, CallNode node, Context context, string _ /* (unused) function */, bool shortCircuitTest)
+        {
+            return LogicalSetFunction(visitor, node, context, shortCircuitTest);
+        }
+
+        public static RetVal LogicalSetFunction(SqlVisitor visitor, CallNode node, Context context, bool shortCircuitTest)
         {
             using (var indenter = context.NewIfIndenter())
             {
@@ -38,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     }
 
                     var arg = node.Args[i].Accept(visitor, context);
-                    var coercedArg = visitor.CoerceBooleanToOp(node.Args[i], arg, context);
+                    var coercedArg = visitor.CoerceBooleanToOp(node.Args[i], arg);
 
                     // if there is a single parameter, this is a pass thru
                     if (i == 0 && node.Args.Count == 1)

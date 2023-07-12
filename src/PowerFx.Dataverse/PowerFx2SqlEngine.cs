@@ -33,10 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
         // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-        public PowerFx2SqlEngine(
-            EntityMetadata currentEntityMetadata = null,
-            CdsEntityMetadataProvider metadataProvider = null,
-            CultureInfo culture = null)
+        public PowerFx2SqlEngine(EntityMetadata currentEntityMetadata = null, CdsEntityMetadataProvider metadataProvider = null, CultureInfo culture = null)
             : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: metadataProvider?.NumberIsFloat ?? true)
         {
         }
@@ -50,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private IEnumerable<IDocumentError> PostCheck2(CheckResult result)
-        { 
+        {
             var expression = result.Parse.Text;
             var binding = result.ApplyBindingInternal();
 
@@ -124,7 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult._unsupportedWarnings = new List<string>();
                 foreach (var error in sqlResult.Errors)
                 {
-                    if (error.MessageKey == TexlStrings.ErrUnknownFunction.Key || 
+                    if (error.MessageKey == TexlStrings.ErrUnknownFunction.Key ||
                         error.MessageKey == TexlStrings.ErrUnimplementedFunction.Key ||
                         error.MessageKey == TexlStrings.ErrNumberExpected.Key || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
                        (error.MessageKey == TexlStrings.ErrBadType_ExpectedType_ProvidedType.Key && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
@@ -151,9 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
                 {
-                    var errorResult = new SqlCompileResult(errors);
-                    errorResult.SanitizedFormula = sanitizedFormula;
-                    return errorResult;
+                    return new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
                 }
 
                 StringWriter tw = new StringWriter();
@@ -260,7 +255,7 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = string.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
+                        var selects = string.Join(",", pair.Value.Select((VarDetails field) => $"{field.VarName} = [{field.Column.SchemaName}]"));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
@@ -275,7 +270,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 EmitReturn(tw, indent, ctx, result, retType, options);
                 tw.WriteLine($"END");
-                                
+
                 sqlResult.SqlFunction = tw.ToString();
 
                 // Write actual function definition 
@@ -318,21 +313,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (NotImplementedException)
             {
-                var errorResult = new SqlCompileResult(
-                    new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan())
-                );
-                errorResult.SanitizedFormula = sanitizedFormula;
-                return errorResult;
+                return new SqlCompileResult(new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan()))
+                {
+                    SanitizedFormula = sanitizedFormula
+                };
             }
             catch (Exception ex)
             {
-                var errorResult = new SqlCompileResult(
-                    new[] {
-                        new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
-                    }
-                );
-                errorResult.SanitizedFormula = sanitizedFormula;
-                return errorResult;
+                return new SqlCompileResult(new[] { new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message) })
+                {
+                    SanitizedFormula = sanitizedFormula
+                };
             }
         }
 
@@ -377,7 +368,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var v = new SqlVisitor();
             var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
-            
+
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
 

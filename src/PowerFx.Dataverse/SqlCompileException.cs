@@ -35,7 +35,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private SqlError _error;
+        private readonly SqlError _error;
 
         /// <summary>
         /// The error resource key for a generic not supported error
