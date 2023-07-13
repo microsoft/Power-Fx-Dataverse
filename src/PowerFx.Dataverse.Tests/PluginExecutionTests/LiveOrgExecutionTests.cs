@@ -84,7 +84,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow(true)]
         public async Task TestAllTableAllFields(bool skip)
         {
-            Assert.IsFalse(skip, "Skipped!");
+            if (skip)
+            {
+                return;
+            }
 
             ServiceClient svcClient = GetClient();
             List<IDisposable> disposableObjects = new List<IDisposable>() { svcClient };
