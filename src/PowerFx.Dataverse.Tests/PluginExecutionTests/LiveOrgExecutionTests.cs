@@ -4,18 +4,22 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -67,6 +71,79 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 DateTime dt = (DateTime)obj.Attributes["crcef_creationdate"];
                 Assert.AreEqual(new DateTime(2022, 12, 27, 23, 0, 0), dt); // UTC time
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        [TestMethod]
+        // Skipp this test case?
+        // Changing this to FALSE will trigger this test, which might take 2-3 hours.
+        [DataRow(true)]
+        public async Task TestAllTableAllFields(bool skip)
+        {
+            Assert.IsFalse(skip, "Skipped!");
+
+            ServiceClient svcClient = GetClient();
+            List<IDisposable> disposableObjects = new List<IDisposable>() { svcClient };
+
+            try
+            {
+                var displayNameProvider = svcClient.GetTableDisplayNames();
+                var allmetadata = svcClient.GetAllEntityMetadata();
+
+                var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + "exceptions.txt";
+                var writer = File.CreateText(batchPath);
+
+                foreach (EntityMetadata metadata in allmetadata.Where(md => md.IsPrivate == false))
+                {
+                    if (!displayNameProvider.TryGetLogicalOrDisplayName(new DName(metadata.LogicalName), out var logicalname, out var displayName))
+                    {
+                        continue;
+                    }
+
+                    var exprFirst = $"First('{displayName.Value}')";
+
+                    var dv = new DataverseConnection(svcClient);
+
+                    var result = BuildAndRunDataverseTest(displayName.Value, logicalname.Value, exprFirst, dv, out RecalcEngine recalcEngine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig);
+
+                    if (result is RecordValue record)
+                    {
+                        var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalname.Value);
+                        var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
+
+                        //foreach (var attr in attributes.Where(attr => attr.AttributeType != Xrm.Sdk.Metadata.AttributeTypeCode.Virtual))
+                        foreach (var field in record.Fields)
+                        {
+                            var fieldname = field.Name;
+                            var exprField = $"'{fieldname}'";
+
+                            try
+                            {
+                                var formulaValue = await recalcEngine.EvalAsync(exprField, cancellationToken: CancellationToken.None, runtimeConfig: rowScopeValues);
+
+                                if (formulaValue is ErrorValue errorValue)
+                                {
+                                    Assert.Fail($"'{displayName}'.{fieldname} ({formulaValue.Type}) failed. " + string.Join("\r\n", errorValue.Errors.Select(ee => ee.Message)));
+                                }
+                            }
+
+                            // Catching any exceptions to a separate file to not stop the process.
+                            catch (Exception ex)
+                            {
+                                writer.WriteLine($"Error: {displayName.Value}.{fieldname}");
+                                writer.WriteLine(ex.Message);
+                                writer.WriteLine(ex.StackTrace);
+                                writer.WriteLine();
+                                writer.WriteLine();
+                                writer.WriteLine();
+                            }
+                        }
+                    }
+                }
             }
             finally
             {
@@ -1011,13 +1088,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new ()
+        static Dictionary<string, string> PredefinedTables = new()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
             { "Note", "annotation" },
             { "Contacts", "contact" }
         };
+
+        private FormulaValue BuildAndRunDataverseTest(string displayname, string logicalname, string expr, DataverseConnection dv, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            TableValue tableValue = dv.AddTable(variableName: displayname, tableLogicalName: logicalname);
+            //symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalname), dv.Symbols);
+            symbols = dv.Symbols;
+
+            Assert.IsNotNull(tableValue);
+            Assert.IsNotNull(symbols);
+
+            var config = new PowerFxConfig();
+            config.SymbolTable.EnableMutationFunctions();
+            engine = new RecalcEngine(config);
+            runtimeConfig = dv.SymbolValues;
+
+            if (string.IsNullOrEmpty(expr))
+            {
+                return null;
+            }
+
+            CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
+            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            IExpressionEvaluator run = check.GetEvaluator();
+            FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+
+            return result;
+        }
 
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {
@@ -1147,7 +1252,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         public void Refresh(string logicalTableName)
-        {            
+        {
         }
     }
 }
