@@ -5,3 +5,5 @@
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
 
 
+#DISABLE: Exp.txt
+#DISABLE: Power.txt
