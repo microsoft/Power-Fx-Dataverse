@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter
+    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter, IDataverseLookup
     {
     }
 
@@ -42,5 +42,16 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseDeleter
     {
         Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public interface IDataverseLookup
+    {
+        /// <summary>
+        /// Resolve an entity reference to an Entity instance. 
+        /// This returns a new copy of the entity. 
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns></returns>
+        Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default);
     }
 }

@@ -218,5 +218,11 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
         }
+
+        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default)
+        {
+            var result = await RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken);
+            return result;
+        }
     }
 }

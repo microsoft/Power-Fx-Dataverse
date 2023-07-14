@@ -71,5 +71,11 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh(string logicalTableName)
         {            
         }
+
+        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default)
+        {
+            var entity = await RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken);\
+            return entity;
+        }
     }
 }
