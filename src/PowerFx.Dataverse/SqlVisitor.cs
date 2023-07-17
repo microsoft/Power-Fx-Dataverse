@@ -15,6 +15,7 @@ using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlVisitor.Context;
 using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
@@ -154,8 +155,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                         Library.ValidateNumericArgument(node.Left);
                         Library.ValidateNumericArgument(node.Right);
-                        var left = node.Left.Accept(this, context);
-                        var right = node.Right.Accept(this, context);
+                        RetVal left = node.Left.Accept(this, context);
+                        RetVal right = node.Right.Accept(this, context);
 
                         // protect from divide by zero
                         if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivDecimals)
@@ -163,11 +164,22 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        bool useDecimals = node.Op == BinaryOpKind.AddDecimals || node.Op == BinaryOpKind.DivDecimals || node.Op == BinaryOpKind.MulDecimals;
-                        SqlNumberBase returnType = useDecimals ? new SqlGiantType() : new SqlBigType();
-                        SqlNumberBase decimalType = useDecimals ? new SqlGiantType() : new SqlDecimalType();
+                        // Calculated columns are only supported for SQL decimal type for now [decimal(23, 10)]
+                        // Result will have to be in that range
+                        // Anyhow, as we cannot have try/catch in SQL UDFs, we need a larger ranger intermediate type
+                        // Intermediate type will be SqlBigType for all calculations, including when BigInt is used [SqlWnbsType - decimal(19,0)] with a decimal/long/int
+                        // But, when 2 bigint numbers are used, we could overflow and need to use a specific intermediate type: SqlWnbsBigType [decimal(38,0)]
+                        // Min/Max bigint is +/- 9.22e18
+                        // Min/Max decimal is +/- 1e11, with 10 digit precision
+                        // Max bigint² is 8.51e37 (SqlWnbsBigType required, no digit precision needed, they are whole numbers)
+                        // Max decimal² is 1e22 (10 digit precision)
+                        // Max bigint * decimal = +/- 9.22e29 (10 digit precision)
+                        // After calculation, the result will be "reduced" to support DV range: +/- 1e11, with 10 digit precision
+                        SqlNumberBase intermediateType = left.typeCode == AttributeTypeCode.BigInt && right.typeCode == AttributeTypeCode.BigInt
+                                                            ? new SqlWnbsBigType()
+                                                            : new SqlBigType();
 
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
+                        RetVal result = context.SetIntermediateVariable(intermediateType, $"({Library.CoerceNullToNumberType(left, intermediateType)} {op} {Library.CoerceNullToNumberType(right, intermediateType)})");
 
                         context.PerformRangeChecks(result, node);
                         return result;
@@ -438,8 +450,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (node.Value is ScopeAccessSymbol scopeAccess)
             {
-                var varDetails = context.GetVarDetails(scopeAccess, node.IRContext.SourceContext);
-                return RetVal.FromVar(varDetails.VarName, context.GetReturnType(node, varDetails.VarType));
+                VarDetails varDetails = context.GetVarDetails(scopeAccess, node.IRContext.SourceContext);
+                return RetVal.FromVar(varDetails.VarName, context.GetReturnType(node, varDetails.VarType), varDetails.Column.TypeCode);
             }
             // TODO: handle direct scope access, like entities for roll-ups
             throw new SqlCompileException(SqlCompileException.RecordAccessNotSupported, node.IRContext.SourceContext);
@@ -647,25 +659,29 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal class RetVal
         {
+            internal const AttributeTypeCode UnknownAttributeTypeCode = (AttributeTypeCode)0xFF;
+
             public string varName;
             public string inlineSQL;
             public FormulaType type;
+            public AttributeTypeCode typeCode = UnknownAttributeTypeCode;
 
-            private RetVal(string varName, string inlineSQL, FormulaType type)
+            private RetVal(string varName, string inlineSQL, FormulaType type, AttributeTypeCode typeCode)
             {
                 this.varName = varName;
                 this.inlineSQL = inlineSQL;
                 this.type = type;
+                this.typeCode = typeCode;
             }
 
-            public static RetVal FromVar(string varName, FormulaType type)
+            public static RetVal FromVar(string varName, FormulaType type, AttributeTypeCode? typeCode = null)
             {
-                return new RetVal(varName, null, type);
+                return new RetVal(varName, null, type, typeCode ?? UnknownAttributeTypeCode);
             }
 
             public static RetVal FromSQL(string SQL, FormulaType type)
             {
-                return new RetVal(null, SQL, type);
+                return new RetVal(null, SQL, type, UnknownAttributeTypeCode);
             }
 
             public override string ToString()
@@ -1077,11 +1093,13 @@ namespace Microsoft.PowerFx.Dataverse
                 if (!_checkOnly)
                 {
                     // otherwise, if assigning a boolean from inline SQL, but not assigning from a bit literal, convert from expression to boolean value
-                    var inlineSql = value ?? fromRetVal.inlineSQL;
-                    if (retVal.type is BooleanType && inlineSql != null && value != "1" && inlineSql != "0" && inlineSql != "NULL")
+                    string val = value ?? fromRetVal.inlineSQL;
+                    string inlineSql = val == null || val == "NULL" ? val : $"IIF(@isNotNull = 0, NULL, {val})";                    
+
+                    if (retVal.type is BooleanType && val != null && value != "1" && val != "0" && val != "NULL")
                     {
-                        inlineSql = WrapInlineBoolean(inlineSql);
-                    }
+                        inlineSql = WrapInlineBoolean(val);
+                    }                    
 
                     AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueFormat, retVal.varName, inlineSql ?? fromRetVal.varName));
                 }
@@ -1198,26 +1216,27 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_checkOnly) { return; }
 
+                FormulaType type = result.type;
+
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    if (result.type is SqlIntType)
+                    if (type is SqlIntType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
                     }
-                    else if (result.type is SqlMoneyType)
+                    else if (type is SqlMoneyType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
-                    else if (result.type is SqlGiantType)
+                    else if (type is SqlWnbsType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
                     }
-                    else if (result.type is NumberType)
+                    else if (type is NumberType || type is DecimalType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-                    }
-                    // TODO: other range checks?
+                    }                    
                 }
             }
 

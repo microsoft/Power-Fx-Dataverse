@@ -43,11 +43,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // For example:
             // $"Url=https://aurorabapenv67c10.crm10.dynamics.com/; Username={username}; Password={password}; authtype=OAuth";
 
-            var svcClient = new ServiceClient(cx);
-            svcClient.EnableAffinityCookie = true;
-            svcClient.UseWebApi = false;
-
-            return svcClient;
+            return new ServiceClient(cx)
+            {
+                EnableAffinityCookie = true,
+                UseWebApi = false
+            };            
         }
 
         [TestMethod]
@@ -625,10 +625,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterRead()
         {
             string tableName = "Table2";
-            int wn = new Random().Next(1000000);
-            decimal dc = wn / 100m;
-            float ft = wn / 117f;
-            double cy = ft;
+            int wn = new Random().Next(1000000);            
+            float ft = wn / 117f;            
 
             var expr = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
 
@@ -1019,7 +1017,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new ()
+        private static readonly Dictionary<string, string> PredefinedTables = new ()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },

@@ -245,6 +245,8 @@ namespace Microsoft.PowerFx.Dataverse
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {SqlVisitor.ToSqlType(temp.Item2)}");
                 }
 
+                tw.WriteLine($"{indent}DECLARE @isNotNull bit = 1");
+
                 if (ctx.DoesDateDiffOverflowCheck)
                 {
                     tw.WriteLine($"{indent}{SqlStatementFormat.VariableDeclarationForDateTimeOverflowChecks}");
@@ -336,7 +338,7 @@ namespace Microsoft.PowerFx.Dataverse
             context.PerformRangeChecks(result, null, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (result.type is NumberType)
+            if (returnType is NumberType || returnType is DecimalType)
             {
                 int precision;
                 if (result.type is SqlIntType)

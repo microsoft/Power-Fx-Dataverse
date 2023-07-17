@@ -25,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <summary>
         /// The connection string for the database to execute generated SQL
         /// </summary>
+        /// "Data Source=tcp:SQLSERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
         private static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
         // .txt tests will be filtered to match these seetings. 
@@ -48,6 +49,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [TestMethod]
         public void RunSqlTestCases()
         {
+            // "Data Source=tcp:SQLSERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             // short-circuit if connection string is not set

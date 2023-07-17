@@ -168,7 +168,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                             RetVal arg = arg0.Accept(runner, context);
                             string argString = CoerceNullToInt(arg);
 
-                            RetVal result = context.GetTempVar(isNum ? new SqlBigType() : new SqlGiantType());
+                            RetVal result = context.GetTempVar(new SqlBigType());
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;

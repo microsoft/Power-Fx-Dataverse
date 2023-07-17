@@ -557,13 +557,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "int", "20"},
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_long", SqlStatementFormat.IntTypeMax },
-                    { "bigint1", "9223372036854775807" }, // max value
-                    { "bigint2", "-9223372036854775808" } // min value
+                    { "bigint1", SqlStatementFormat.BigIntTypeMax }, // max value
+                    { "bigint2", SqlStatementFormat.BigIntTypeMin } // min value
                 });
 
                 // Arithmatic
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
                 ExecuteSqlTest("BigLong * BigDecimal", null, cx, metadata);
+                ExecuteSqlTest("BigLong * BigDecimal * BigDecimal", null, cx, metadata);
+                ExecuteSqlTest("BigLong * BigDecimal * BigDecimal * BigDecimal", null, cx, metadata);
+                ExecuteSqlTest("BigLong * BigDecimal * BigDecimal * BigDecimal * BigDecimal", null, cx, metadata);
                 ExecuteSqlTest("BigLong * BigLong", null, cx, metadata);
                 ExecuteSqlTest("BigNumber1 * BigNumber1", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 * BigNumber2", null, cx, metadata, numberIsFloat: false);
@@ -572,14 +575,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("BigNumber1 - BigNumber2", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber1 + 1", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 - 1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 * 1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 / 1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 * 1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber2 / 1", null, cx, metadata, numberIsFloat: false);
 
-                // No overflow
-                ExecuteSqlTest("BigNumber1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber2", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber1 * 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber1 / 1", SqlStatementFormat.BigIntTypeMaxValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber2 * 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
-                ExecuteSqlTest("BigNumber2 / 1", SqlStatementFormat.BigIntTypeMinValue, cx, metadata, numberIsFloat: false);
+                // Valid result now
                 ExecuteSqlTest("BigNumber1 + BigNumber2", -1M, cx, metadata, numberIsFloat: false);                
             }
         }
@@ -590,6 +593,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlConnection GetSql()
         {
+            // "Data Source=tcp:SQLSERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             if (string.IsNullOrEmpty(cx))
@@ -832,8 +836,8 @@ CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v3 decimal(38,9)
-    DECLARE @v5 decimal(38,9)
+    DECLARE @v3 decimal(38,10)
+    DECLARE @v5 decimal(38,10)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase1] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account1] WHERE[AccountId] = @v2
 
@@ -847,8 +851,5 @@ AS BEGIN
     RETURN ROUND(@v5, 10)
 END
 ";
-
-    }
-
-    
+    }    
 }

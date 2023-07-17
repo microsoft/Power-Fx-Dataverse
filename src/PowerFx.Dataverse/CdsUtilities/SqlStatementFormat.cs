@@ -45,7 +45,7 @@
         /// <summary>
         /// Error check
         /// </summary>
-        public const string ErrorCheck = "IF({0}) BEGIN RETURN NULL END";
+        public const string ErrorCheck = "IF({0}) BEGIN SET @isNotNull = 0;RETURN NULL END";
 
         /// <summary>
         /// Divide By Zero condition
@@ -164,7 +164,7 @@ ELSE
         /// </summary>
         public const string DeclareIntermediateVariableFormat = "DECLARE {0} {1}";
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
-        public const string BigType = "decimal(38,9)";
+        public const string BigType = "decimal(38,10)";
         public const string BigMoneyType = "decimal(38,8)";
         public const string ExchangeRateType = "decimal(28,12)";
 

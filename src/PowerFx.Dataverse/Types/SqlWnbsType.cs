@@ -9,17 +9,15 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-
     /// <summary>
-    /// A type to represent a numeric value as a "big" value in CDS code, e.g. decimal(38,10)
+    /// A type to represent a numeric value as a bigint value -- decimal(19,0) -- +/- 9.22e18
     /// </summary>
-    [DebuggerDisplay("{_type}:i")]
-    public class SqlIntType : SqlNumberBase
+    [DebuggerDisplay("{_type}:W")]
+    internal class SqlWnbsType : SqlNumberBase
     {
-        public SqlIntType() : base()
+        public SqlWnbsType() : base()
         {
         }
-
         public override void Visit(ITypeVisitor vistor)
         {
             vistor.Visit(this);
@@ -27,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override string ToSqlType()
         {
-            return "int";
+            return "decimal(19,0)";
         }
     }
 }

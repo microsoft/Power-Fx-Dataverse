@@ -10,14 +10,13 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// A type to represent a numeric value as a "very big" value -- decimal(38,0)
-    /// Used for intermediate calculations to avoid overflows when manipulating "big" values
-    /// decimal(38,0) range is [-99999999999999999999999999999999999999 ... +99999999999999999999999999999999999999], vaguely +/- 10^38
+    /// A type to represent intermediate calculations with bigint type
+    /// Only used to avoid overflows
     /// </summary>
-    [DebuggerDisplay("{_type}:G")]
-    internal class SqlGiantType : SqlNumberBase
+    [DebuggerDisplay("{_type}:WB")]
+    internal class SqlWnbsBigType : SqlNumberBase
     {
-        public SqlGiantType() : base()
+        public SqlWnbsBigType() : base()
         {
         }
         public override void Visit(ITypeVisitor vistor)

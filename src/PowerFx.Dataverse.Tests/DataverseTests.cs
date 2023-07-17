@@ -168,18 +168,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v3 decimal(38,9)
-    DECLARE @v5 decimal(38,9)
+    DECLARE @v3 decimal(38,10)
+    DECLARE @v5 decimal(38,10)
+    DECLARE @isNotNull bit = 1
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
-    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
+    SET @v3 = IIF(@isNotNull = 0, NULL, (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10))))
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN SET @isNotNull = 0;RETURN NULL END
+    SET @v5 = IIF(@isNotNull = 0, NULL, (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(38,10))))
     -- end expression body
 
-    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN SET @isNotNull = 0;RETURN NULL END
     RETURN ROUND(@v5, 10)
 END
 ";
@@ -470,7 +471,7 @@ END
         [DataRow("1.1", typeof(SqlDecimalType), DisplayName = "Numeric literal returns Decimal")]
         [DataRow("Money", typeof(SqlDecimalType), DisplayName = "Money returns Decimal")]
         [DataRow("Int", typeof(SqlDecimalType), DisplayName = "Int returns Decimal")]
-        [DataRow("BigInt", typeof(SqlDecimalType), DisplayName = "BigInt returns Decimal")]
+        [DataRow("BigInt", typeof(SqlWnbsType), DisplayName = "BigInt returns SqlWnbsType")]
         [DataRow("String", typeof(StringType), DisplayName = "String")]
         [DataRow("\"foo\"", typeof(StringType), DisplayName = "String literal returns String")]
         [DataRow("Boolean", typeof(BooleanType), DisplayName = "Boolean")]

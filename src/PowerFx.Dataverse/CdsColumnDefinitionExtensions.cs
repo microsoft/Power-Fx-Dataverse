@@ -80,9 +80,9 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
 
                 case XrmAttributeTypeCode.BigInt:
-                    // This is CDS bigint type, 64-bit integer
+                    // This is CDS "Whole Number Big Size" type, 64-bit integer
                     // [-9223372036854775808 ... +9223372036854775807]
-                    type = new SqlBigType();
+                    type = new SqlWnbsType();
                     return true;
 
                 default:
@@ -131,11 +131,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static CdsColumnDefinition CdsColumnDefinition(this CdsTableDefinition table, string name)
         {
             var column = table.CdsColumnDefinitionOrDefault(name);
-            if (column == null)
-            {
-                throw new Exception($"{name} not found on {table.Name}");
-            }
-            return column;
+            return column ?? throw new Exception($"{name} not found on {table.Name}");
         }
     }
 }
