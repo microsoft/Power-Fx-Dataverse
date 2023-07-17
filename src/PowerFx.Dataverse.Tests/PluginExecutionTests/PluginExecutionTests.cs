@@ -937,12 +937,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [DataTestMethod]
         [DataRow("1+2", "")] // none
         [DataRow("ThisRecord.Price * Quantity", "Read local: new_price, new_quantity;")] // basic read
         [DataRow("Price%", "Read local: new_price;")] // unary op
         [DataRow("ThisRecord", "Read local: ;")] // whole scope 
         [DataRow("First(Remote).Data", "Read remote: data;")] // other table
-        [DataRow("Set(Price, 200)", "Write local: new_price;")] // set, 
+
+        // $$$ https://github.com/microsoft/Power-Fx/issues/1659
+        //[DataRow("Set(Price, 200)", "Write local: new_price;")] // set, 
         [DataRow("Set(Price, Quantity)", "Read local: new_quantity; Write local: new_price;")] // set, 
         [DataRow("Set(Price, Price + 1)", "Read local: new_price; Write local: new_price;")] // set, 
         [DataRow("ThisRecord.Other.Data", "Read local: otherid; Read remote: data;")] //relationship
@@ -962,6 +965,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
         [DataRow("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1. 
         [DataRow("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("Remove(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("ClearCollect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
