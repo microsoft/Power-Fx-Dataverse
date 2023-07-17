@@ -1,6 +1,9 @@
 ﻿
 // DV runs with PowerFxV1CompatibilityRules=true. So disable some files that have PowerFxV1CompatibilityRules=false.
 
+#DISABLE: StringInterpolate.txt
+#DISABLE: UntypedBlankAsTable.txt
+
 // Enable decimal: 
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
 #DISABLE: DecimalBoot.txt 
