@@ -65,58 +65,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var runner = new TestRunner(sql);
                 runner.AddDir(_testSettings);
 
-                // Skip these tests for now as they generate errors.
-                // https://github.com/microsoft/Power-Fx-Dataverse/issues/219
-
-                // FAIL: SqlRunner, Mod_Float.txt:34
-                // FAIL: Mod(1E+400, 3)
-                // Failed, but wrong error message: Errors: Error 4-10: Numeric value is too large.
-                // Error 4-10: Invalid argument type (Error). Expecting a Number value instead.
-                // Error 0-14: The function 'Mod' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:3
-                // FAIL: Text(123.466, "[$-en-US]$#0.0M")
-                // Failed, but wrong error message: Errors: Warning 14-31: Incorrect format specifier for 'Text'.
-                // Error 0-32: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:6
-                // FAIL: Text(1, "M#")
-                // Failed, but wrong error message: Errors: Warning 8-12: Incorrect format specifier for 'Text'.
-                // Error 0-13: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:10
-                // FAIL: Text(1234.5678,"[$-]")
-                // Failed, but wrong error message: Errors: Warning 15-21: Incorrect format specifier for 'Text'.
-                // Error 0-22: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:14
-                // FAIL: Text(1234.5678,"[$-a")
-                // Failed, but wrong error message: Errors: Warning 15-21: Incorrect format specifier for 'Text'.
-                // Error 0-22: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:18
-                // FAIL: Text(1234.5678, "[$-en-US#,##0.00", "en-US")
-                // Failed, but wrong error message: Errors: Warning 16-34: Incorrect format specifier for 'Text'.
-                // Error 0-44: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:21
-                // FAIL: Text(1234.5678, "[$-]fr-FR # ##0,00", "vi-VI")
-                // Failed, but wrong error message: Errors: Warning 16-36: Incorrect format specifier for 'Text'.
-                // Error 0-46: The function 'Text' has some invalid arguments.
-
-                // FAIL: SqlRunner, Text_Format_PowerFxV1Compat.txt:24
-                // FAIL: Text(1234.5678, "[$-fr-FR][$-en-US] # ##0,00", "vi-VI")
-                // Failed, but wrong error message: Errors: Warning 16-45: Incorrect format specifier for 'Text'.
-                // Error 0-55: The function 'Text' has some invalid arguments.
-
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 3));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 6));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 10));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 14));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 18));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 21));
-                runner.Tests.Remove(runner.Tests.First(tc => tc.SourceFile.EndsWith("Text_Format_PowerFxV1Compat.txt", StringComparison.OrdinalIgnoreCase) && tc.SourceLine == 24));
-
                 foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
                 {
                     runner.AddFile(_testSettings, path);

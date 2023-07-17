@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Microsoft.PowerFx.Core.Utils;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -104,13 +105,23 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     // The numeric formating placeholders for Text: https://docs.microsoft.com/en-us/powerapps/maker/canvas-apps/functions/function-text#number-placeholders
                     // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
+                    var textFormatArgs = new TextFormatArgs
+                    {
+                        FormatCultureName = null,
+                        FormatArg = null,
+                        HasDateTimeFmt = false,
+                        HasNumericFmt = false
+                    };
 
-                    // Do not allow , . or locale tag
-                    if (Regex.IsMatch(format, @"(,|\.|\[\$-[\w-]+\])"))
+                    // Do not allow , . or locale tag or datetime format
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
+                        || textFormatArgs.HasDateTimeFmt || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
                         throw new SqlCompileException(SqlCompileException.NumericFormatNotSupported, node.Args[1].IRContext.SourceContext);
                     }
+
+                    format = textFormatArgs.FormatArg;
 
                     // except that % ‰ e : ' need to be escaped
                     format = format.Replace("%", "\\%");

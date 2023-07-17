@@ -960,6 +960,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [DataTestMethod]
         [DataRow("1+2", "")] // none
         [DataRow("ThisRecord.Price * Quantity", "Read local: new_price, new_quantity;")] // basic read
         [DataRow("Price%", "Read local: new_price;")] // unary op
@@ -985,6 +986,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
         [DataRow("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1. 
         [DataRow("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("Remove(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [DataRow("ClearCollect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -2809,10 +2812,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
             "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
         [DataRow("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
             "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
         [DataRow("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
             )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
