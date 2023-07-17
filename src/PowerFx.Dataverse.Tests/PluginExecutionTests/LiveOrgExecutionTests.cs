@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
