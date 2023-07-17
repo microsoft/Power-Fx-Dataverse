@@ -151,7 +151,7 @@ namespace Microsoft.PowerFx.Dataverse
             return node.Child.Accept(this, context);
         }
 
-        Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
+        private readonly Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
 
         public override RetVal Visit(CallNode node, Context context)
         {
@@ -239,6 +239,18 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new NotSupportedException($"Can't analyze Collect overload: {node}");
                 }
             }
+            else if (func == "ClearCollect")
+            {
+                // ClearCollect(table, fields);
+                firstArgIsWrite = true;
+                argRecordWrite = 1;
+            }
+            else if (func == "Remove")
+            {
+                // Remove(table, fields);
+                firstArgIsWrite = true;
+                argRecordWrite = 1;
+            }
 
             if (argRecordWrite > 0)
             {
@@ -250,7 +262,18 @@ namespace Microsoft.PowerFx.Dataverse
 
                     // Every field in the record is a field write. 
                     var argWrites = node.Args[argRecordWrite];
-                    if (argWrites is RecordNode writes)
+
+                    IntermediateNode maybeRecordNode;
+                    if(argWrites is AggregateCoercionNode aggregateCoercionNode)
+                    {
+                        maybeRecordNode = aggregateCoercionNode.Child;
+                    }
+                    else
+                    {
+                        maybeRecordNode = argWrites;
+                    }
+
+                    if (maybeRecordNode is RecordNode writes)
                     {
                         foreach (var kv in writes.Fields)
                         {
