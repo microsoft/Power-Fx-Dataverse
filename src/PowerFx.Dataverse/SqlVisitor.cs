@@ -140,11 +140,16 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        var returnType = new SqlBigType();
-                        var decimalType = FormulaType.Decimal;
+                        FormulaType returnType = new SqlBigType();
+
+                        if (node == context.RootNode)
+                        {
+                            returnType = FormulaType.Decimal;
+                        }
+  
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, decimalType)} {op} {Library.CoerceNullToNumberType(right, decimalType)})");
+                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, FormulaType.Decimal)} {op} {Library.CoerceNullToNumberType(right, FormulaType.Decimal)})");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -574,6 +579,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // use big as the numeric type if not already resolved (e.g. local variables)
                 return new SqlBigType().ToSqlType();
+            }
+            else if (t is DecimalType)
+            {
+                return SqlStatementFormat.SqlDecimalType;
             }
             else if (t is SqlMoneyType)
             {

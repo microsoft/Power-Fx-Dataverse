@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
           
                 return result;
             }
-            else if (arg.type is NumberType)
+            else if (arg.type is NumberType || arg.type is DecimalType)
             {
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
