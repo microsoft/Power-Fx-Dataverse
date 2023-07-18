@@ -1,6 +1,5 @@
 #override: RoundUp.txt
 
-// This overflows the SQL decimal
+// This overflows the SQL decimal, it gives null due to overflow
 >> RoundUp(14.123456,1111111111)
 Error
-//Blank()
