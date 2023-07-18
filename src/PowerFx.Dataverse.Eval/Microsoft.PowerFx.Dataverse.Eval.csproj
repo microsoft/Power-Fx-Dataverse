@@ -28,12 +28,10 @@
   <Import Project="..\Build.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.3" /> <!-- CVE-2023-29331 -->
+    <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" /> <!-- CVE-2023-29331 -->
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
