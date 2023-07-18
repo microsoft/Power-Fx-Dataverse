@@ -178,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static bool SupportedReturnType(FormulaType type)
         {
             return
-                type is SqlDecimalType ||
+                type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type);
@@ -186,15 +186,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static FormulaType BuildReturnType(DType type)
         {
-            if (type.Kind == DKind.Number)
-            {
-                // The default numeric type is decimal
-                return new SqlDecimalType();
-            }
-            else if (type.Kind == DKind.Currency)
+            if (type.Kind == DKind.Currency)
             {
                 // Currency isn't supported yet, for now, return decimal
-                return new SqlDecimalType();
+                return FormulaType.Decimal;
             }
             else
             {

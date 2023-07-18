@@ -472,15 +472,15 @@ END
         }
 
         [DataTestMethod]
-        [DataRow("field", typeof(SqlDecimalType), DisplayName = "Decimal")]
-        [DataRow("1.1", typeof(SqlDecimalType), DisplayName = "Numeric literal returns Decimal")]
-        [DataRow("Money", typeof(SqlDecimalType), DisplayName = "Money returns Decimal")]
-        [DataRow("Int", typeof(SqlDecimalType), DisplayName = "Int returns Decimal")]
+        [DataRow("field", typeof(DecimalType), DisplayName = "Decimal")]
+        [DataRow("1.1", typeof(DecimalType), DisplayName = "Numeric literal returns Decimal")]
+        [DataRow("Money", typeof(DecimalType), DisplayName = "Money returns Decimal")]
+        [DataRow("Int", typeof(DecimalType), DisplayName = "Int returns Decimal")]
         [DataRow("String", typeof(StringType), DisplayName = "String")]
         [DataRow("\"foo\"", typeof(StringType), DisplayName = "String literal returns String")]
         [DataRow("Boolean", typeof(BooleanType), DisplayName = "Boolean")]
         [DataRow("true", typeof(BooleanType), DisplayName = "Boolean literal returns Boolean")]
-        [DataRow("Mod(int, int)", typeof(SqlDecimalType), DisplayName = "Int from function returns decimal")]
+        [DataRow("Mod(int, int)", typeof(DecimalType), DisplayName = "Int from function returns decimal")]
         public void CompileValidReturnType(string expr, Type returnType)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
@@ -701,8 +701,8 @@ END
         // Test that we can handle casing overloads on fields. 
         // Dataverse fields are case *sensitive*. 
         [DataTestMethod]
-        [DataRow("'FIELD DISPLAY'", typeof(SqlDecimalType))]
-        [DataRow("field1", typeof(SqlDecimalType))]
+        [DataRow("'FIELD DISPLAY'", typeof(DecimalType))]
+        [DataRow("field1", typeof(DecimalType))]
         [DataRow("'field display'", typeof(StringType))]
         [DataRow("Field1", typeof(StringType))]
         public void CheckCasing(string expr, Type returnType)
@@ -1055,9 +1055,9 @@ END
         [DataRow("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.", DisplayName = "Text for User Local Date Time")]
         [DataRow("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.", DisplayName = "Text for UTCNow")]
         [DataRow("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "DateDiff User Local Date Time vs TZI Date Only")]
-        [DataRow("DateDiff(dateOnly, tziDateOnly)", true, typeof(SqlDecimalType), DisplayName = "DateDiff Date Only vs TZI Date Only")]
+        [DataRow("DateDiff(dateOnly, tziDateOnly)", true, typeof(DecimalType), DisplayName = "DateDiff Date Only vs TZI Date Only")]
         [DataRow("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "DateDiff User Local Date Only vs Date Only")]
-        [DataRow("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType), DisplayName = "DateDiff User Local Date Only vs User Local Date Time")]
+        [DataRow("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(DecimalType), DisplayName = "DateDiff User Local Date Only vs User Local Date Time")]
         [DataRow("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType), DisplayName = "> User Local Date Time vs. User Local Date Only")]
         [DataRow("tziDateTime <> tziDateOnly", true, typeof(BooleanType), DisplayName = "<> TZI Date Time vs. TZI Date Only")]
 
@@ -1069,14 +1069,14 @@ END
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [DataRow("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "= TZI Date Time vs. User Local Date Only")]
         [DataRow("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.", DisplayName = "<= Date Only vs. User Local Date Only")]
-        [DataRow("Day(dateOnly)", true, typeof(SqlDecimalType), DisplayName = "Day of Date Only")]
+        [DataRow("Day(dateOnly)", true, typeof(DecimalType), DisplayName = "Day of Date Only")]
         [DataRow("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.", DisplayName = "Day of User Local Date Only")]
-        [DataRow("WeekNum(dateOnly)", true, typeof(SqlDecimalType))]
-        [DataRow("WeekNum(tziDateTime)", true, typeof(SqlDecimalType))]
-        [DataRow("WeekNum(tziDateOnly)", true, typeof(SqlDecimalType))]
-        [DataRow("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [DataRow("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [DataRow("WeekNum(dateOnly, 2)", false, typeof(SqlDecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [DataRow("WeekNum(dateOnly)", true, typeof(DecimalType))]
+        [DataRow("WeekNum(tziDateTime)", true, typeof(DecimalType))]
+        [DataRow("WeekNum(tziDateOnly)", true, typeof(DecimalType))]
+        [DataRow("WeekNum(userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("WeekNum(userLocalDateTime)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [DataRow("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
         [DataRow("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
