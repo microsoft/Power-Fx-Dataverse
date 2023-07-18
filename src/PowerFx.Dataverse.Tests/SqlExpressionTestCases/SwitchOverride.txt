@@ -3,16 +3,13 @@
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/115
 
 >> Switch(Blank(),0,3,Blank(),5,2,7,11)
-#Skip
-//11.00
+11
 
 >> Switch(Blank(),"zero","3",Blank(),"5","two","7","11")
-#Skip
-//11
+11
 
 >> Switch(Blank(),0,"3",Blank(),"5",2,"7","11")
-#Skip
-//11
+11
 
 >> Abs(Switch(1, 1, -2, {x:4}))
 #Skip
