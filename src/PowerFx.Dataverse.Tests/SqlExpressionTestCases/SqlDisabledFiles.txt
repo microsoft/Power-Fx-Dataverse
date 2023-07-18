@@ -10,7 +10,6 @@
 #DISABLE: DecimalBoot.txt
 #DISABLE: DecimalMathFuncs.txt
 #DISABLE: DecimalNonMathFuncs.txt
-#DISABLE: DecimalOps.txt
 #DISABLE: DecimalOverflow.txt
 #DISABLE: OpMatrix_Div_Decimal.txt
 #DISABLE: OpMatrix_Eq_Decimal.txt
@@ -28,4 +27,3 @@
 #DISABLE: UntypedBlankAsTable.txt
 #DISABLE: ReservedKeywordNegative.txt
 #DISABLE: DecimalIntReturn.txt
-

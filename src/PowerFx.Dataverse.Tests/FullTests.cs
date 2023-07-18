@@ -569,6 +569,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("BigLong * BigDecimal * BigDecimal * BigDecimal * BigDecimal", null, cx, metadata);
                 ExecuteSqlTest("BigLong * BigLong", null, cx, metadata);
                 ExecuteSqlTest("BigNumber1 * BigNumber1", null, cx, metadata, numberIsFloat: false);
+                ExecuteSqlTest("BigNumber1 * BigNumber1 * BigNumber1 * BigNumber1 * BigNumber1", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 * BigNumber2", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber1 + BigNumber1", null, cx, metadata, numberIsFloat: false);
                 ExecuteSqlTest("BigNumber2 + BigNumber2", null, cx, metadata, numberIsFloat: false);
