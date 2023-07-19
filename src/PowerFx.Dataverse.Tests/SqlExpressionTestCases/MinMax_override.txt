@@ -1,5 +1,8 @@
 ﻿#override: MinMax_PowerFxV1CompatibilityRules.txt 
 
+// https://github.com/microsoft/Power-Fx/pull/1666 
+// Above PR will fix these TCs
+
 >> Max(Blank())
 #Skip
 //0.00
