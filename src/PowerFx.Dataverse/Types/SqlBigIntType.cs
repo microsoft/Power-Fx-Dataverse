@@ -10,12 +10,12 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// A type to represent a numeric value as a bigint value -- decimal(19,0) -- +/- 9.22e18
+    /// A type to represent a numeric value as a bigint value +/- 9.22e18
     /// </summary>
     [DebuggerDisplay("{_type}:W")]
-    internal class SqlWnbsType : SqlNumberBase
+    internal class SqlBigIntType : SqlNumberBase
     {
-        public SqlWnbsType() : base()
+        public SqlBigIntType() : base()
         {
         }
         public override void Visit(ITypeVisitor vistor)
@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override string ToSqlType()
         {
-            return "decimal(19,0)";
+            return "bigint";
         }
     }
 }

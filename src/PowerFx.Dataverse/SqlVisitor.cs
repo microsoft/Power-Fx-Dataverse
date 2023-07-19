@@ -167,16 +167,16 @@ namespace Microsoft.PowerFx.Dataverse
                         // Calculated columns are only supported for SQL decimal type for now [decimal(23, 10)]
                         // Result will have to be in that range
                         // Anyhow, as we cannot have try/catch in SQL UDFs, we need a larger ranger intermediate type
-                        // Intermediate type will be SqlBigType for all calculations, including when BigInt is used [SqlWnbsType - decimal(19,0)] with a decimal/long/int
-                        // But, when 2 bigint numbers are used, we could overflow and need to use a specific intermediate type: SqlWnbsBigType [decimal(38,0)]
+                        // Intermediate type will be SqlBigType for all calculations, including when BigInt is used [SqlBigIntType - bigint] with a decimal/long/int
+                        // But, when 2 bigint numbers are used, we could overflow and need to use a specific intermediate type: SqlBigIntIntermediateType [decimal(38,0)]
                         // Min/Max bigint is +/- 9.22e18
                         // Min/Max decimal is +/- 1e11, with 10 digit precision
-                        // Max bigint² is 8.51e37 (SqlWnbsBigType required, no digit precision needed, they are whole numbers)
+                        // Max bigint² is 8.51e37 (SqlBigIntIntermediateType required, no digit precision needed, they are whole numbers)
                         // Max decimal² is 1e22 (10 digit precision)
                         // Max bigint * decimal = +/- 9.22e29 (10 digit precision)
                         // After calculation, the result will be "reduced" to support DV range: +/- 1e11, with 10 digit precision
                         SqlNumberBase intermediateType = left.typeCode == AttributeTypeCode.BigInt && right.typeCode == AttributeTypeCode.BigInt
-                                                            ? new SqlWnbsBigType()
+                                                            ? new SqlBigIntIntermediateType()
                                                             : new SqlBigType();
 
                         RetVal result = context.SetIntermediateVariable(intermediateType, $"({Library.CoerceNullToNumberType(left, intermediateType)} {op} {Library.CoerceNullToNumberType(right, intermediateType)})");
@@ -1229,7 +1229,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
-                    else if (type is SqlWnbsType)
+                    else if (type is SqlBigIntType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
                     }

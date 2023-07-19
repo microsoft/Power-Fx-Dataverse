@@ -174,7 +174,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is BooleanType ||
                 type is StringType ||
                 type is DecimalType ||                                
-                type is SqlWnbsType ||                
+                type is SqlBigIntType ||                
                 Library.IsDateTimeType(type);
         }
 
@@ -218,7 +218,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if the type is giant for intermediate calculations with bigint, let's keep it
-            if (type is SqlWnbsType)
+            if (type is SqlBigIntType)
             {
                 return type;
             }

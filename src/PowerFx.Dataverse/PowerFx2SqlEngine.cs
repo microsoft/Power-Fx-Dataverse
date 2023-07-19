@@ -245,6 +245,7 @@ namespace Microsoft.PowerFx.Dataverse
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {SqlVisitor.ToSqlType(temp.Item2)}");
                 }
 
+                // This flag is set to 0 when a calculation will result in an overflow and the range check returns null.                
                 tw.WriteLine($"{indent}DECLARE @isNotNull bit = 1");
 
                 if (ctx.DoesDateDiffOverflowCheck)

@@ -73,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             var entity = GetFirstEntity(logicalName, dataverseConnection, cancellationToken);
-            return dataverseConnection.Marshal(entity);            
+            return dataverseConnection.Marshal(entity);
         }
 
         // Entities should conform to the metadata passed to the ctor. 
@@ -119,7 +119,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return Clone(LookupRefCore(entityRef), cancellationToken);
         }
-                
+
         // Gets direct access to the entire storage.
         // Modifying this entity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
@@ -170,8 +170,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             cancellationToken.ThrowIfCancellationRequested();
 
             // gets the raw storage and mutate it. 
-            var existing = LookupRefCore(entity.ToEntityReference()); 
-            
+            var existing = LookupRefCore(entity.ToEntityReference());
+
             foreach (var attr in entity.Attributes)
             {
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
@@ -186,12 +186,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     if (errorMessage != null)
                     {
                         return Task.FromResult(DataverseResponse.NewError(errorMessage));
-                    }                    
+                    }
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;
             }
-            
+
             return Task.FromResult(new DataverseResponse());
         }
 
@@ -236,7 +236,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (entity.LogicalName == qe.EntityName &&
                     IsCriteriaMatching(entity, qe.Criteria, metadata))
                 {
-                    
+
                     entityList.Add(Clone(entity, cancellationToken));
                     take--;
                     if (take == 0)
@@ -261,7 +261,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         }
                     }
 
-                    foreach(var condition in criteria.Conditions)
+                    foreach (var condition in criteria.Conditions)
                     {
                         if (isSatisfyingCondition(condition, entity, metadata))
                         {
@@ -372,11 +372,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static bool TryGetAttributeOrPrimaryId(Entity entity, EntityMetadata metadata, string attributeName, out object value)
         {
-            if(entity.Attributes.TryGetValue(attributeName, out value))
+            if (entity.Attributes.TryGetValue(attributeName, out value))
             {
                 return true;
             }
-            if(attributeName == metadata.PrimaryIdAttribute)
+            if (attributeName == metadata.PrimaryIdAttribute)
             {
                 value = entity.Id;
                 return true;
@@ -394,7 +394,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 _amd = amd;
             }
 
-            public int Compare(object x,object y)
+            public int Compare(object x, object y)
             {
                 switch (_amd.AttributeType.Value)
                 {
@@ -422,8 +422,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Uniqueidentifier:
                         return ((Guid)x).CompareTo((Guid)y);
 
-                    case AttributeTypeCode.Lookup:                    
-                    case AttributeTypeCode.Picklist:                    
+                    case AttributeTypeCode.Lookup:
+                    case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:
                     case AttributeTypeCode.EntityName:
@@ -455,7 +455,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var entity in _list)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (entity.LogicalName == entityName&& entity.Id == id)
+                if (entity.LogicalName == entityName && entity.Id == id)
                 {
                     _list.Remove(entity);
                     break;
@@ -479,7 +479,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         public virtual void Refresh(string logicalTableName)
-        {            
+        {
         }
     }
 }

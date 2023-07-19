@@ -14,9 +14,9 @@ namespace Microsoft.PowerFx.Dataverse
     /// Only used to avoid overflows
     /// </summary>
     [DebuggerDisplay("{_type}:WB")]
-    internal class SqlWnbsBigType : SqlNumberBase
+    internal class SqlBigIntIntermediateType : SqlNumberBase
     {
-        public SqlWnbsBigType() : base()
+        public SqlBigIntIntermediateType() : base()
         {
         }
         public override void Visit(ITypeVisitor vistor)

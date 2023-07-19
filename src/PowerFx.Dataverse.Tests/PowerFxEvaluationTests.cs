@@ -69,8 +69,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     runner.AddFile(_testSettings, path);
                 }
-                
-                Parallel.ForEach(runner.Tests.Where(t => t.SourceFile.Contains("BypassOverrideLogic")), t => t.OverrideFrom = "BypassOverrideLogic");
 
                 TestRunFullResults result = runner.RunTests();
                 Console.WriteLine(result.Output);
@@ -120,11 +118,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;            
+            private SqlConnection _connection;
 
             public SqlRunner(string connectionString)
                 : base()
-            {                
+            {
                 base.NumberIsFloat = DataverseEngine.NumberIsFloat;
 
                 _connection = new SqlConnection(connectionString ?? throw new InvalidOperationException($"ConnectionString not set"));
@@ -164,7 +162,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
 
-                if (iSetup.HandlerName != null ||  iSetup.TimeZoneInfo != null)
+                if (iSetup.HandlerName != null || iSetup.TimeZoneInfo != null)
                 {
                     throw new SetupHandlerNotFoundException();
                 }
@@ -201,7 +199,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         if (compileResult._unsupportedWarnings.Count > 0)
                         {
                             result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                        } 
+                        }
                     }
                     return result;
                 }
@@ -252,7 +250,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             // Evaluation ran, but failed due to unsupported features.
                             if (compileResult._unsupportedWarnings != null && compileResult._unsupportedWarnings.Any())
                             {
-                                Console.WriteLine($"Warnings for {expr}: {string.Join(", ", compileResult._unsupportedWarnings)}");
                                 result.UnsupportedReason = compileResult._unsupportedWarnings[0];
                             }
 

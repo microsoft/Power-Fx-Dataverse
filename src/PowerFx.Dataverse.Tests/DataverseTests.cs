@@ -471,7 +471,7 @@ END
         [DataRow("1.1", typeof(SqlDecimalType), DisplayName = "Numeric literal returns Decimal")]
         [DataRow("Money", typeof(SqlDecimalType), DisplayName = "Money returns Decimal")]
         [DataRow("Int", typeof(SqlDecimalType), DisplayName = "Int returns Decimal")]
-        [DataRow("BigInt", typeof(SqlWnbsType), DisplayName = "BigInt returns SqlWnbsType")]
+        [DataRow("BigInt", typeof(SqlBigIntType), DisplayName = "BigInt returns SqlWnbsType")]
         [DataRow("String", typeof(StringType), DisplayName = "String")]
         [DataRow("\"foo\"", typeof(StringType), DisplayName = "String literal returns String")]
         [DataRow("Boolean", typeof(BooleanType), DisplayName = "Boolean")]
