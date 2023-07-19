@@ -241,7 +241,7 @@ END
             Assert.IsNotNull(result);
 
             // But formula columns don't support returning Decimal. 
-            Assert.AreEqual(true, result.IsSuccess);           
+            Assert.AreEqual(true, result.IsSuccess);
             Assert.AreEqual("money", result.ApplyGetInvariant());
         }
 
