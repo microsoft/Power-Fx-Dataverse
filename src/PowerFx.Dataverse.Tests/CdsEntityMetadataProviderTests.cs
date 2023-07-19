@@ -98,7 +98,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [TestMethod]
-        public void CloneSharesCache()
+        public void CloneSharesXRMCache()
         {
             var provider1 = new SwitchMetadataProvider();
             var metadataCache = new CdsEntityMetadataProvider(provider1);
@@ -121,6 +121,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsTrue(ok);
             Assert.IsNotNull(entityMetadata1);
+        }
+
+        /// <summary>
+        /// Clone should not hold on to CDS Cache, because that would mean caching the DType as well and 
+        /// that could lead to Problems in multi threaded env.
+        /// </summary>
+        [TestMethod]
+        public void CloneDoesNotSharesCDSCache()
+        {
+            var provider = new MockXrmMetadataProvider(_trivial);
+            var CDSMetadata = new CdsEntityMetadataProvider(provider);
+
+            // This would add DS to cache
+            var ok = CDSMetadata.TryGetDataSource("local", out var dvSource);
+            Assert.IsTrue(ok);
+            var DType = dvSource.Schema;
+
+            var p = new SwitchMetadataProvider();
+            var clone = CDSMetadata.Clone(p);
+
+            var cloneOk = clone.TryGetDataSource("local", out var clonedDvSource);
+            Assert.IsTrue(cloneOk);
+            var clonedDType = clonedDvSource.Schema;
+
+            Assert.AreNotSame(DType, clonedDType);
         }
     }
 }
