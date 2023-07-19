@@ -135,16 +135,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var ok = CDSMetadata.TryGetDataSource("local", out var dvSource);
             Assert.IsTrue(ok);
-            var DType = dvSource.Schema;
+            var schema = dvSource.Schema;
 
-            var p = new SwitchMetadataProvider();
-            var clone = CDSMetadata.Clone(p);
+            var anotherProvider = new SwitchMetadataProvider();
+            var clone = CDSMetadata.Clone(anotherProvider);
 
             var cloneOk = clone.TryGetDataSource("local", out var clonedDvSource);
             Assert.IsTrue(cloneOk);
-            var clonedDType = clonedDvSource.Schema;
+            var clonedSchema = clonedDvSource.Schema;
 
-            Assert.AreNotSame(DType, clonedDType);
+            Assert.AreNotSame(schema, clonedSchema);
         }
     }
 }
