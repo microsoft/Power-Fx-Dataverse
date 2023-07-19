@@ -105,7 +105,6 @@ namespace Microsoft.PowerFx.Dataverse
             // Share all caches
             this._optionSets = original._optionSets;
             this._xrmCache = original._xrmCache;
-            this._cdsCache = original._cdsCache;
             this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;            
         }
 
