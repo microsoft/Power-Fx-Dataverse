@@ -133,7 +133,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var provider = new MockXrmMetadataProvider(_trivial);
             var CDSMetadata = new CdsEntityMetadataProvider(provider);
 
-            // This would add DS to cache
             var ok = CDSMetadata.TryGetDataSource("local", out var dvSource);
             Assert.IsTrue(ok);
             var DType = dvSource.Schema;
