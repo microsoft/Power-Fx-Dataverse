@@ -6,6 +6,6 @@
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
 #DISABLE: DecimalBoot.txt 
 
+// Exp and Power functions are not supported
 #DISABLE: Exp.txt
 #DISABLE: Power.txt
-// Exp and Power functions are not supported
