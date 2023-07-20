@@ -154,7 +154,7 @@ ELSE
         public const string SqlNvarcharType = "nvarchar(4000)";
         public const string SqlIntegerType = "int";
         public const string SqlBitType = "bit";
-        public const string SqlDecimalType = "decimal(23,10)";
+        public const string SqlDecimalType = "decimal(29,10)";
         public const string SqlMoneyType = "money";
         public const string SqlDateTimeType = "datetime";
         public const string SqlUniqueIdentifierType = "uniqueidentifier";

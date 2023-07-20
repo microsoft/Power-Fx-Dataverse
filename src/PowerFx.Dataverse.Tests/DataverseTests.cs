@@ -162,12 +162,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }.SetSchemaName("Account");
 
         public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(23,10), -- new_CurrencyPrice
+    @v0 decimal(29,10), -- new_CurrencyPrice
     @v2 uniqueidentifier -- accountid
-) RETURNS decimal(23,10)
+) RETURNS decimal(29,10)
 AS BEGIN
-    DECLARE @v1 decimal(23,10)
-    DECLARE @v4 decimal(23,10)
+    DECLARE @v1 decimal(29,10)
+    DECLARE @v4 decimal(29,10)
     DECLARE @v3 decimal(38,10)
     DECLARE @v5 decimal(38,10)
     DECLARE @isNotNull bit = 1
@@ -471,7 +471,7 @@ END
         [DataRow("1.1", typeof(SqlDecimalType), DisplayName = "Numeric literal returns Decimal")]
         [DataRow("Money", typeof(SqlDecimalType), DisplayName = "Money returns Decimal")]
         [DataRow("Int", typeof(SqlDecimalType), DisplayName = "Int returns Decimal")]
-        [DataRow("BigInt", typeof(SqlBigIntType), DisplayName = "BigInt returns SqlWnbsType")]
+        [DataRow("BigInt", typeof(SqlDecimalType), DisplayName = "BigInt returns SqlDecimalType")]
         [DataRow("String", typeof(StringType), DisplayName = "String")]
         [DataRow("\"foo\"", typeof(StringType), DisplayName = "String literal returns String")]
         [DataRow("Boolean", typeof(BooleanType), DisplayName = "Boolean")]

@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -10,7 +10,7 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// A type to represent a numeric value represented as a decimal value, e.g. decimal(23,10)
+    /// A type to represent a numeric value represented as a decimal value, e.g. decimal(29,10)
     /// </summary>
     [DebuggerDisplay("{_type}:d")]
     public class SqlDecimalType : SqlNumberBase
@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
         internal override string ToSqlType()
         {
-            return "decimal(23,10)";
+            return "decimal(29,10)";
         }
     }
 }

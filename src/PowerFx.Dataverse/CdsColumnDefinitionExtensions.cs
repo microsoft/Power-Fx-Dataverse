@@ -82,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case XrmAttributeTypeCode.BigInt:
                     // This is CDS "Whole Number Big Size" type, 64-bit integer
                     // [-9223372036854775808 ... +9223372036854775807]
-                    type = new SqlBigIntType();
+                    type = new SqlDecimalType(); // SqlBigIntType();
                     return true;
 
                 default:

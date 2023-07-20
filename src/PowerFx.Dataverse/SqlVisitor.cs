@@ -1241,10 +1241,10 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
-                    else if (type is SqlBigIntType)
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
-                    }
+                    //else if (type is SqlBigIntType)
+                    //{
+                    //    PerformOverflowCheck(result, SqlStatementFormat.BigIntTypeMin, SqlStatementFormat.BigIntTypeMax, postCheck);
+                    //}
                     else if (type is NumberType || type is DecimalType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);

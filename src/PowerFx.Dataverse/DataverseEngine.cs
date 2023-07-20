@@ -174,7 +174,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is BooleanType ||
                 type is StringType ||
                 type is DecimalType ||                                
-                type is SqlBigIntType ||                
+                // type is SqlBigIntType ||                
                 Library.IsDateTimeType(type);
         }
 
@@ -218,10 +218,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if the type is giant for intermediate calculations with bigint, let's keep it
-            if (type is SqlBigIntType)
-            {
-                return type;
-            }
+            //if (type is SqlBigIntType)
+            //{
+            //    return type;
+            //}
 
             // otherwise, use the internal DType to produce the final return type
             return BuildReturnType(type._type);
