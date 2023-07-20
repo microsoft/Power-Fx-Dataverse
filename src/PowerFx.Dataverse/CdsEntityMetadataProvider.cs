@@ -69,9 +69,8 @@ namespace Microsoft.PowerFx.Dataverse
             // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
         }
-
-        // Current default is to treat all numbers as floats.
-        public bool NumberIsFloat { get; init; } = true;
+        
+        public bool NumberIsFloat { get; init; } = false;
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
             : this()
