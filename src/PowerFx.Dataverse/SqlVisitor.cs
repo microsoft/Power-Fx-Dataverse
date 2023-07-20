@@ -270,7 +270,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
-            {   
+            {
                 return context.SetIntermediateVariable(type, EqualityCheckCondition(leftVal, rightVal));
             }
             else
