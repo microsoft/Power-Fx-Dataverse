@@ -1,4 +1,0 @@
-#override: Switch.txt
-
-// >> Abs(Switch(1, 1, -2, {x:4}))
-// #Skip
