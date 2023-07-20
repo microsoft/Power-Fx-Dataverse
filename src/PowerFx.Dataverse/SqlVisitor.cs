@@ -164,20 +164,17 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        // Calculated columns are only supported for SQL decimal type for now [decimal(23, 10)]
-                        // Result will have to be in that range
-                        // Anyhow, as we cannot have try/catch in SQL UDFs, we need a larger ranger intermediate type
-                        // Intermediate type will be SqlBigType for all calculations, including when BigInt is used [SqlBigIntType - bigint] with a decimal/long/int
-                        // But, when 2 bigint numbers are used, we could overflow and need to use a specific intermediate type: SqlBigIntIntermediateType [decimal(38,0)]
-                        // Min/Max bigint is +/- 9.22e18
-                        // Min/Max decimal is +/- 1e11, with 10 digit precision
-                        // Max bigint² is 8.51e37 (SqlBigIntIntermediateType required, no digit precision needed, they are whole numbers)
-                        // Max decimal² is 1e22 (10 digit precision)
-                        // Max bigint * decimal = +/- 9.22e29 (10 digit precision)
-                        // After calculation, the result will be "reduced" to support DV range: +/- 1e11, with 10 digit precision
-                        SqlNumberBase intermediateType = left.typeCode == AttributeTypeCode.BigInt && right.typeCode == AttributeTypeCode.BigInt
-                                                            ? new SqlBigIntIntermediateType()
-                                                            : new SqlBigType();
+                        var intermediateType = new SqlBigType(); // decimal(38,10)
+
+                        // Add validation to avoid overflows                        
+                        if (node.Op == BinaryOpKind.MulNumbers || node.Op == BinaryOpKind.MulDecimals)
+                        {
+                            context.AddOverflowCheck(intermediateType, left, "+", right);
+                        }
+                        else if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivNumbers)
+                        {
+                            context.AddOverflowCheck(intermediateType, left, "-", right);
+                        }
 
                         RetVal result = context.SetIntermediateVariable(intermediateType, $"({Library.CoerceNullToNumberType(left, intermediateType)} {op} {Library.CoerceNullToNumberType(right, intermediateType)})");
 
@@ -1116,6 +1113,17 @@ namespace Microsoft.PowerFx.Dataverse
                 return SetIntermediateVariable(GetTempVar(type), value, fromRetVal);
             }
 
+            internal void AddOverflowCheck(FormulaType type, RetVal left, string sign, RetVal right)
+            {
+                Contracts.AssertNonEmptyOrNull(left.varName);
+                Contracts.AssertNonEmptyOrNull(right.varName);
+
+                if (!_checkOnly)
+                {
+                    AppendContentLine($"IF (LOG(ABS(CAST(ISNULL({left.varName},1) AS {ToSqlType(type)})), 10) {sign} LOG(ABS(CAST(ISNULL({right.varName},1) AS {ToSqlType(type)})), 10) > 12) BEGIN SET @isNotNull = 0; RETURN NULL END");
+                }
+            }
+
             internal RetVal SelectIntermediateVariable(RetVal retVal, string value)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);
@@ -1130,8 +1138,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_checkOnly) { return; }
 
-                var condition =
-                    coerce
+                var condition = coerce
                     ? string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCoerceCondition, retVal)
                     : string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCondition, retVal);
 
