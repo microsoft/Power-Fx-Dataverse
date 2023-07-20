@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         }
 
                         // emit an if condition that can handle internal error logic
-                        using (indenter.EmitIfCondition($"({condition}={val})", isMakerDefinedCondition: true))
+                        using (indenter.EmitIfCondition(EqualityCheckCondition(condition, val), isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i + 1].Accept(visitor, context);
                             SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1].IRContext.SourceContext, context);

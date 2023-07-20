@@ -40,7 +40,6 @@ namespace Microsoft.PowerFx.Dataverse
         private static readonly TexlFunction[] _excludedFunctions = new[]
         {
             BuiltinFunctionsCore.Error,
-            BuiltinFunctionsCore.Now,
             BuiltinFunctionsCore.Today,
             BuiltinFunctionsCore.IsToday
         };

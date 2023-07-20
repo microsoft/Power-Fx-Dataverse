@@ -306,7 +306,7 @@ namespace Microsoft.PowerFx.Dataverse
             // SQL does not allow simple equality checks for null (equals and not equals with a null both return false)
             if (equals)
             {
-                return context.SetIntermediateVariable(type, $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = {rightVal}))");
+                return context.SetIntermediateVariable(type, EqualityCheckCondition(leftVal, rightVal));
             }
             else
             {
@@ -652,6 +652,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return "nvarchar"; // TODO: what type should be used to a null variable?
             }
             throw new SqlCompileException(default);
+        }
+
+        public static string EqualityCheckCondition(RetVal leftVal, RetVal rightVal)
+        {
+            return $"(({leftVal} IS NULL AND {rightVal} IS NULL) OR ({leftVal} = {rightVal}))";
         }
 
         internal class RetVal

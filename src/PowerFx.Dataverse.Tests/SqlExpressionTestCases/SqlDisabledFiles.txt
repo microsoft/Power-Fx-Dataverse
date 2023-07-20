@@ -1,29 +1,11 @@
-﻿
-// String interpolation is not enabled in SQL
+﻿// String interpolation is not enabled in SQL
 #DISABLE: StringInterpolate.txt
-
-// DV runs with PowerFxV1CompatibilityRules=true. So disable some files that have PowerFxV1CompatibilityRules=false.
-#DISABLE:  OpMatrix_Eq_DifferentTypes.txt
+#DISABLE: UntypedBlankAsTable.txt
 
 // Enable decimal: 
 // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-#DISABLE: DecimalBoot.txt
-#DISABLE: DecimalMathFuncs.txt
-#DISABLE: DecimalNonMathFuncs.txt
-#DISABLE: DecimalOverflow.txt
-#DISABLE: OpMatrix_Div_Decimal.txt
-#DISABLE: OpMatrix_Eq_Decimal.txt
-#DISABLE: OpMatrix_Geq_Decimal.txt
-#DISABLE: OpMatrix_Gt_Decimal.txt
-#DISABLE: OpMatrix_Leq_Decimal.txt
-#DISABLE: OpMatrix_Lt_Decimal.txt
-#DISABLE: OpMatrix_Minus_Decimal.txt
-#DISABLE: OpMatrix_Mul_Decimal.txt
-#DISABLE: OpMatrix_Neq_Decimal.txt
-#DISABLE: OpMatrix_Plus_Decimal.txt
-#DISABLE: OpMatrix_Unary_Decimal.txt
+#DISABLE: DecimalBoot.txt 
+
+// Exp and Power functions are not supported
 #DISABLE: Exp.txt
 #DISABLE: Power.txt
-#DISABLE: UntypedBlankAsTable.txt
-#DISABLE: ReservedKeywordNegative.txt
-#DISABLE: DecimalIntReturn.txt
