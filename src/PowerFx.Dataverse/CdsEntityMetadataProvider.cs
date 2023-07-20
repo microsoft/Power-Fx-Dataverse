@@ -102,10 +102,9 @@ namespace Microsoft.PowerFx.Dataverse
             this._innerProvider = provider;
             this._document = new DataverseDocument(this);
 
-            // Share all caches
+            // Share all caches except CDS cache, since DataverseDataSourceInfo hold onto the metadata provider.
             this._optionSets = original._optionSets;
             this._xrmCache = original._xrmCache;
-            this._cdsCache = original._cdsCache;
             this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;            
         }
 
