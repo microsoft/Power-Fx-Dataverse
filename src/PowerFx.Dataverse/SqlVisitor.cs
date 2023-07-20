@@ -1125,7 +1125,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!_checkOnly)
                 {
-                    AppendContentLine($"IF (LOG(ABS(CAST(ISNULL({left.varName},1) AS {ToSqlType(type)})), 10) {sign} LOG(ABS(CAST(ISNULL({right.varName},1) AS {ToSqlType(type)})), 10) > 12) BEGIN SET @isNotNull = 0; RETURN NULL END");
+                    AppendContentLine($"IF (LOG(ABS(CAST(ISNULL({left},1) AS {ToSqlType(type)}))+1E-10, 10) {sign} LOG(ABS(CAST(ISNULL({right},1) AS {ToSqlType(type)}))+1E-10, 10) > 12) BEGIN SET @isNotNull = 0; RETURN NULL END");
                 }
             }
 
