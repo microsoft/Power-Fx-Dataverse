@@ -34,6 +34,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private ServiceClient GetClient()
         {
+            // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             // short-circuit if connection string is not set
