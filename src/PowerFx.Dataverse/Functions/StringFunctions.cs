@@ -199,7 +199,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            return context.SetIntermediateVariable(node, $"CONCAT({String.Join(",", args)})");
+            return context.SetIntermediateVariable(node, args.Any() ? $"CONCAT({String.Join(",", args)})" : "''");
         }
 
         public static RetVal Blank(SqlVisitor visitor, CallNode node, Context context)

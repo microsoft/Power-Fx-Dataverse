@@ -544,6 +544,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlConnection GetSql()
         {
+            // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             if (string.IsNullOrEmpty(cx))
