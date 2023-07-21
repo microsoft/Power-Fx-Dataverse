@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
             new PowerFx2SqlEngine(
                 DataverseTests.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = true },
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = false },
                 locale);
 
         /// <summary>
