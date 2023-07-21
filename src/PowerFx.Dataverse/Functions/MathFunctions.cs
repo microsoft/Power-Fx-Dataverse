@@ -251,7 +251,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             // The language allows dates to be treated as numbers (e.g. ticks in JavaScript)
             // Fail if this is a coercion we don't support
-            if (!(node.IRContext.ResultType is NumberType || node.IRContext.ResultType is BlankType))
+            if (!(node.IRContext.ResultType is NumberType || node.IRContext.ResultType is BlankType || node.IRContext.ResultType is DecimalType))
             {
                 throw BuildUnsupportedArgumentTypeException(node.IRContext.ResultType._type.GetKindString(), node.IRContext.SourceContext);
             }

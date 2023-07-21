@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual(0, result.Errors.Count());
 
-            Assert.IsTrue(result.ReturnType is NumberType);
+            Assert.IsTrue(result.ReturnType is DecimalType);
             Assert.AreEqual(1, result.TopLevelIdentifiers.Count);
             Assert.AreEqual("new_field", result.TopLevelIdentifiers.First());
             Assert.AreEqual("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);

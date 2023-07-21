@@ -137,12 +137,18 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.AddNumbers:
                 case BinaryOpKind.DivNumbers:
                 case BinaryOpKind.MulNumbers:
+                case BinaryOpKind.AddDecimals:
+                case BinaryOpKind.DivDecimals:
+                case BinaryOpKind.MulDecimals:
                     {
                         var op = node.Op switch
                         {
                             BinaryOpKind.AddNumbers => "+",
                             BinaryOpKind.DivNumbers => "/",
                             BinaryOpKind.MulNumbers => "*",
+                            BinaryOpKind.AddDecimals => "+",
+                            BinaryOpKind.DivDecimals => "/",
+                            BinaryOpKind.MulDecimals => "*",
                             _ => throw new NotImplementedException($"Unsupported BinaryOpKind {node.Op}")
                         };
 
@@ -152,7 +158,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var right = node.Right.Accept(this, context);
 
                         // protect from divide by zero
-                        if (node.Op == BinaryOpKind.DivNumbers)
+                        if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivDecimals)
                         {
                             context.DivideByZeroCheck(right);
                         }
