@@ -64,13 +64,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
+
         }
 
         #region Critical Virtuals
 
         // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
         // 
-        public const bool NumberIsFloat = true;
+        public const bool NumberIsFloat = false;
 
         public override ParserOptions GetDefaultParserOptionsCopy()
         {

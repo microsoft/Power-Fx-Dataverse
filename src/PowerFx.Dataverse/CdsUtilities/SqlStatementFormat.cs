@@ -186,6 +186,8 @@ ELSE
         public const string DecimalTypeMax = "100000000000";
         public const double DecimalTypeMinValue = -100000000000;
         public const double DecimalTypeMaxValue = 100000000000;
+        public const decimal DDecimalTypeMinValue = -100000000000;
+        public const decimal DDecimalTypeMaxValue = 100000000000;
 
         public const string MoneyTypeMin = "-922337203685477.5808";
         public const string MoneyTypeMax = "922337203685477.5807";

@@ -60,7 +60,24 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(DecimalLiteralNode node, Context context)
         {
-            throw new NotImplementedException();
+            var type = context.GetReturnType(node);
+            if (context.ValidateNumericLiteral(node.LiteralValue, type))
+            {
+                var val = RetVal.FromSQL(node.LiteralValue.ToString(), type);
+
+                if (context.InInlineLiteralContext)
+                {
+                    return val;
+                }
+                else
+                {
+                    return context.SetIntermediateVariable(node, fromRetVal: val);
+                }
+            }
+            else
+            {
+                return RetVal.FromSQL("NULL", type);
+            }
         }
 
         public override RetVal Visit(BooleanLiteralNode node, Context context)
@@ -1233,6 +1250,27 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 return false;
+            }
+
+            internal bool ValidateNumericLiteral(decimal literal, FormulaType type)
+            {
+                if (type is DecimalType)
+                {
+                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        _unsupportedWarnings.Add("Overflow decimal literal");
+                        AppendContentLine("RETURN NULL");
+                        return false;
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException($"Unsupported type for decimal literal check: {type}");
+                }
             }
 
             private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
