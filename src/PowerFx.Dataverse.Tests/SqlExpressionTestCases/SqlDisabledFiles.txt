@@ -1,5 +1,4 @@
 ﻿// String interpolation is not enabled in SQL
-#DISABLE: StringInterpolate.txt
 #DISABLE: UntypedBlankAsTable.txt
 
 // Enable decimal: 
