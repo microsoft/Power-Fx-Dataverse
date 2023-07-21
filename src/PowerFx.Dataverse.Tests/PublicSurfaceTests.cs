@@ -93,7 +93,6 @@ namespace Microsoft.PowerFx.Tests
 
                 // FormulaTypes that should exist in Fx Core
                 "Microsoft.PowerFx.Dataverse.SqlBigType",
-                "Microsoft.PowerFx.Dataverse.SqlDecimalType",
                 "Microsoft.PowerFx.Dataverse.SqlFloatType",
                 "Microsoft.PowerFx.Dataverse.SqlIntType",
                 "Microsoft.PowerFx.Dataverse.SqlMoneyType",

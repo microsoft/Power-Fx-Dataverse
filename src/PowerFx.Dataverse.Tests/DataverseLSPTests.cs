@@ -97,7 +97,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [DataTestMethod]
-        [DataRow("1 + 2", "Number", DisplayName = "Number")]
+        [DataRow("1 + 2", "Decimal", DisplayName = "Decimal")]
         [DataRow("\"foo\"", "String", DisplayName = "String literal")]
         [DataRow("'UserLocal DateTime'", "DateTime", DisplayName = "DateTime")]
         [DataRow("DateOnly", "Date", DisplayName = "Date")]
@@ -105,12 +105,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [DataRow("UTCNow()", "DateTimeNoTimeZone", DisplayName = "UTCNow function")]
         [DataRow("Now()", "DateTime", DisplayName = "Now function")]
         [DataRow("Boolean", "Boolean")]
-        [DataRow("field", "Number", DisplayName = "Decimal")]
-        [DataRow("Money", "Number", DisplayName = "Money")]
-        [DataRow("Int", "Number", DisplayName = "Int")]
+        [DataRow("field", "Decimal", DisplayName = "Decimal")]
+        [DataRow("Money", "Decimal", DisplayName = "Money")]
+        [DataRow("Int", "Decimal", DisplayName = "Int")]
         [DataRow("String", "String", DisplayName = "String")]
         [DataRow("true", "Boolean", DisplayName = "Boolean literal")]
-        [DataRow("Mod(int, int)", "Number", DisplayName = "Mod function")]
+        [DataRow("Mod(int, int)", "Decimal", DisplayName = "Mod function")]
         public void CheckLspCheck(string expression, string type)
         {
             var _sendToClientData = new List<string>();
