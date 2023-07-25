@@ -152,7 +152,9 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
+                FormulaType nodeType = result.type == new SqlBigType() ? FormulaType.Decimal : result.type;
+
+                if (!ValidateReturnType(options, nodeType, irNode.IRContext.SourceContext, out var retType, out var errors))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
