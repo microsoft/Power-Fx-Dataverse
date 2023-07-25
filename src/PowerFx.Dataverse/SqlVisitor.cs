@@ -210,6 +210,7 @@ namespace Microsoft.PowerFx.Dataverse
                 //case BinaryOpKind.EqImage:
                 //case BinaryOpKind.EqMedia:
                 case BinaryOpKind.EqNumbers:
+                case BinaryOpKind.EqDecimals:
                 case BinaryOpKind.EqOptionSetValue:
                 case BinaryOpKind.EqText:
                 //case BinaryOpKind.EqTime:
@@ -226,6 +227,7 @@ namespace Microsoft.PowerFx.Dataverse
                 //case BinaryOpKind.NeqImage:
                 //case BinaryOpKind.NeqMedia:
                 case BinaryOpKind.NeqNumbers:
+                case BinaryOpKind.NeqDecimals:
                 case BinaryOpKind.NeqOptionSetValue:
                 case BinaryOpKind.NeqText:
                 //case BinaryOpKind.NeqTime:
@@ -242,6 +244,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GtNumbers:
+                case BinaryOpKind.GtDecimals:
                     return BinaryNumericOperation(node.Left, node.Right, context.GetReturnType(node), ">", context);
 
                 case BinaryOpKind.GeqDate:
@@ -250,6 +253,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GeqNumbers:
+                case BinaryOpKind.GeqDecimals:
                     return BinaryNumericOperation(node.Left, node.Right, context.GetReturnType(node), ">=", context);
 
                 case BinaryOpKind.LtDate:
@@ -258,6 +262,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LtNumbers:
+                case BinaryOpKind.LtDecimals:
                     return BinaryNumericOperation(node.Left, node.Right, context.GetReturnType(node), "<", context);
 
                 case BinaryOpKind.LeqDate:
@@ -266,6 +271,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LeqNumbers:
+                case BinaryOpKind.LeqDecimals:
                     return BinaryNumericOperation(node.Left, node.Right, context.GetReturnType(node), "<=", context);
 
                 case BinaryOpKind.SubtractNumberAndDate:
