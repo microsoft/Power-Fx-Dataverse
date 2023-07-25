@@ -3495,6 +3495,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [DataTestMethod]
+        [DataRow("Set(x, First(t1))", "Set(#$firstname$#, First(#$PowerFxResolvedObject$#))")]
+        [DataRow("Set(t, Filter(t1,true))", "Set(#$firstname$#, Filter(#$PowerFxResolvedObject$#, #$boolean$#))")]
+        [DataRow("With({local:First(t1)}, Set(y, local))", "With({ #$fieldname$#:First(#$PowerFxResolvedObject$#) }, Set(#$firstname$#, #$LambdaField$#))")]
+        [DataRow("Set(x, First(Remote));Other.data", "Set(#$firstname$#, First(#$PowerFxResolvedObject$#)) ; #$firstname$#.#$righthandid$#")]
+        [DataRow("Set(x, Collect(Remote, { Data : 99})); Other.Data", "Set(#$firstname$#, Collect(#$PowerFxResolvedObject$#, { #$fieldname$#:#$decimal$# })) ; #$firstname$#.#$righthandid$#")]
+        [DataRow("With({r:First(t1)}, Set(x, { Price : r.Price, OtherData : r.Other.Data}))", "With({ #$fieldname$#:First(#$PowerFxResolvedObject$#) }, Set(#$firstname$#, { #$fieldname$#:#$LambdaField$#.#$righthandid$#, #$fieldname$#:#$LambdaField$#.#$righthandid$#.#$righthandid$# }))")]
+        public void LoggingExpandableSymbolsTest(string expr, string expected)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("Remote", "remote");
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+
+            Assert.AreEqual(expected, check.ApplyGetLogging());
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
