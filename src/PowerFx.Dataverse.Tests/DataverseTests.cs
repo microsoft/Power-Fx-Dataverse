@@ -241,11 +241,7 @@ END
 
             Assert.IsNotNull(result);
 
-            // But formula columns don't support returning Decimal. 
-            Assert.AreEqual(false, result.IsSuccess);
-            var errors = result.Errors.ToArray();
-            Assert.AreEqual(errors[0].ToString(), "Error 0-5: The result type Decimal is not supported in formula columns.");
-
+            Assert.AreEqual(true, result.IsSuccess);
             Assert.AreEqual("money", result.ApplyGetInvariant());
         }
 
@@ -321,7 +317,7 @@ END
             var result = engine.Check("3*2");
 
             Assert.IsTrue(result.IsSuccess);
-            Assert.IsTrue(result.ReturnType is NumberType);
+            Assert.IsTrue(result.ReturnType is DecimalType);
         }
 
         [TestMethod]
