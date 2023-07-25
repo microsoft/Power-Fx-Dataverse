@@ -343,11 +343,13 @@ namespace Microsoft.PowerFx.Dataverse
             switch (node.Op)
             {
                 case UnaryOpKind.Negate:
+                case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(new SqlBigType(), $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
+                case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100.0)");
                     context.PerformRangeChecks(result, node);
@@ -367,10 +369,12 @@ namespace Microsoft.PowerFx.Dataverse
                     };
 
                 case UnaryOpKind.NumberToBoolean:
+                case UnaryOpKind.DecimalToBoolean:
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(node, $"{Library.CoerceNullToInt(arg)}<>0");
 
                 case UnaryOpKind.NumberToText:
+                case UnaryOpKind.DecimalToText:
                     throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.TextToBoolean:
