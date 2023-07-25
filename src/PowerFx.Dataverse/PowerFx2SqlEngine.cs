@@ -65,8 +65,10 @@ namespace Microsoft.PowerFx.Dataverse
                     var sqlInfo = result.ApplySqlCompiler();
                     var res = sqlInfo._retVal;
 
+                    FormulaType nodeType = res.type == new SqlBigType() ? FormulaType.Decimal :  res.type;
+
                     var errors = new List<IDocumentError>();
-                    if (!ValidateReturnType(new SqlCompileOptions(), res.type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
+                    if (!ValidateReturnType(new SqlCompileOptions(), nodeType, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
                     {
                         errors.AddRange(typeErrors);
                     }
