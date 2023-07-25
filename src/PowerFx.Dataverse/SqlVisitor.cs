@@ -163,13 +163,11 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        FormulaType returnType = new SqlBigType();
+                        // Earlier, we were returning SqlBigType from here even for root nodes which is of NumberType
+                        // and DataverseEngine::BuildReturnType() method was converting it into SqlDecimalType but now
+                        // that DecimalType is there so we don't need to convert in BuildReturnType() and we can use it as a tis for root node
+                        FormulaType returnType = node == context.RootNode ? FormulaType.Decimal : new SqlBigType();
 
-                        if (node == context.RootNode)
-                        {
-                            returnType = FormulaType.Decimal;
-                        }
-  
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
                         var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, FormulaType.Decimal)} {op} {Library.CoerceNullToNumberType(right, FormulaType.Decimal)})");
