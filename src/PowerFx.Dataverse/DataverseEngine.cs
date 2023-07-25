@@ -155,7 +155,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
-                if (returnType is NumberType)
+                if (returnType is NumberType || returnType is DecimalType)
                 {
                     // TODO: better type validation
                     if (hintType is NumberType)

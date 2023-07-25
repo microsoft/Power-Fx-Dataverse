@@ -418,7 +418,7 @@ END
 
             var errors = result.Errors.ToArray();
             Assert.AreEqual(1, errors.Length);
-            Assert.AreEqual("The result type for this formula is expected to be String, but the actual result type is Number. The result type of a formula column cannot be changed.", errors[0].Message);
+            Assert.AreEqual("The result type for this formula is expected to be String, but the actual result type is Decimal. The result type of a formula column cannot be changed.", errors[0].Message);
             Assert.AreEqual(SqlCompileException.ResultTypeMustMatch.Key, errors[0].MessageKey);
         }
 
