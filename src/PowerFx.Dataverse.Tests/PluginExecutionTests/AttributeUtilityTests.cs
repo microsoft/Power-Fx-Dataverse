@@ -4,19 +4,18 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Immutable;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
+
     public class AttributeUtilityTests
     {
-
         internal readonly IImmutableList<FormulaValue> exampleValues = ImmutableList.Create<FormulaValue>(
             FormulaValue.New(1),
             FormulaValue.New(1m),
@@ -30,30 +29,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             FormulaValue.NewVoid()
          );
 
-        [DataTestMethod]
-        [DataRow("_ownerid_value", "ownerid")]
-        [DataRow("__ownerid__value", "_ownerid_")]
-        [DataRow("_ownerid_Value", null)]
-        [DataRow("__value", null)]
-        [DataRow("_value", null)]
-        [DataRow("", null)]
+        [Theory]
+        [InlineData("_ownerid_value", "ownerid")]
+        [InlineData("__ownerid__value", "_ownerid_")]
+        [InlineData("_ownerid_Value", null)]
+        [InlineData("__value", null)]
+        [InlineData("_value", null)]
+        [InlineData("", null)]
         public void OdataNameTest(string fieldName, string expected)
         {
             bool result = AttributeUtility.TryGetLogicalNameFromOdataName(fieldName, out var actual);
 
             if (expected == null)
             {
-                Assert.IsFalse(result);
-                Assert.IsNull(actual);
+                Assert.False(result);
+                Assert.Null(actual);
             }
             else
             {
-                Assert.IsTrue(result);
-                Assert.AreEqual(expected, actual);
+                Assert.True(result);
+                Assert.Equal(expected, actual);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void AttributeSerializeTest()
         {
             (DataverseConnection dv, IDataverseServices ds, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModelsInternal();
@@ -63,49 +62,49 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 foreach (var fv in exampleValues)
                 {
                     var fieldName = attribute.LogicalName;
-                    Assert.IsTrue(entityMetadata.TryGetAttribute(fieldName, out var attributeMetadata));
+                    Assert.True(entityMetadata.TryGetAttribute(fieldName, out var attributeMetadata));
                     var attrType = attributeMetadata.AttributeType.Value;
                     Func<object> value = () => attributeMetadata.ToAttributeObject(fv);
 
                     if (attrType == AttributeTypeCode.Boolean && fv.Type == FormulaType.Boolean)
                     {
-                        Assert.IsTrue(value() is bool);
+                        Assert.True(value() is bool);
                     }
                     else if (attrType == AttributeTypeCode.DateTime && (fv.Type == FormulaType.DateTime || fv.Type == FormulaType.Date))
                     {
-                        Assert.IsTrue(value() is DateTime);
+                        Assert.True(value() is DateTime);
                     }
                     else if (attrType == AttributeTypeCode.Decimal && (fv.Type == FormulaType.Number || fv.Type == FormulaType.Decimal))
                     {
-                        Assert.IsTrue(value() is decimal);
+                        Assert.True(value() is decimal);
                     }
                     else if (attrType == AttributeTypeCode.Double && fv.Type == FormulaType.Number)
                     {
-                        Assert.IsTrue(value() is double);
+                        Assert.True(value() is double);
                     }
                     else if (attrType == AttributeTypeCode.Integer && (fv.Type == FormulaType.Number || fv.Type == FormulaType.Decimal))
                     {
-                        Assert.IsTrue(value() is int);
+                        Assert.True(value() is int);
                     }
                     else if (attrType == AttributeTypeCode.String && fv.Type == FormulaType.String)
                     {
-                        Assert.IsTrue(value() is string);
+                        Assert.True(value() is string);
                     }
                     else if (attrType == AttributeTypeCode.BigInt && (fv.Type == FormulaType.Number || fv.Type == FormulaType.Decimal))
                     {
-                        Assert.IsTrue(value() is long);
+                        Assert.True(value() is long);
                     }
                     else if (attrType == AttributeTypeCode.Uniqueidentifier && fv.Type == FormulaType.Guid)
                     {
-                        Assert.IsTrue(value() is Guid);
+                        Assert.True(value() is Guid);
                     }
                     else if (attrType == AttributeTypeCode.Money && (fv.Type == FormulaType.Number || fv.Type == FormulaType.Decimal))
                     {
-                        Assert.IsTrue(value() is Money);
+                        Assert.True(value() is Money);
                     }
                     else if (attrType == AttributeTypeCode.Lookup && fv.Type is RecordType)
                     {
-                        Assert.IsTrue(value() is EntityReference);
+                        Assert.True(value() is EntityReference);
                     }
                     else
                     {
@@ -113,15 +112,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             value();
                         }
-                        catch (NotImplementedException nie)
+                        catch (NotImplementedException)
                         {
 
                         }
-                        catch (InvalidOperationException ioe)
+                        catch (InvalidOperationException)
                         {
 
                         }
-                        catch (InvalidCastException ice)
+                        catch (InvalidCastException)
                         {
 
                         }
