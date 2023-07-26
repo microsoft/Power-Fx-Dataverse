@@ -6,7 +6,7 @@
 
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
+    
 
     public class ExpressionEvaluationTests
     {
@@ -48,13 +48,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             };
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void RunSqlTestCases()
         {            
             // short-circuit if connection string is not set
             if (ConnectionString == null)
             {
-                Assert.Inconclusive("Skipping SQL tests - no connection string set");
+                Skip.If(true, "Skipping SQL tests - no connection string set");
                 return;
             }
 
@@ -72,16 +72,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result = runner.RunTests();
 
                 // Any failures introduced by new tests or unsupported features should be overridden
-                Assert.AreEqual(0, result.Fail, result.Output);
+                Assert.Equal(0, result.Fail); // result.Output
 
                 // Verify that we're actually running tests. 
-                Assert.IsTrue(result.Total > 4000);
-                Assert.IsTrue(result.Pass > 1000);
+                Assert.True(result.Total > 4000);
+                Assert.True(result.Pass > 1000);
             }
         }
 
         // Use this for local testing of a single testcase (uncomment "TestMethod")
-        //[TestMethod]
+        [Fact(Skip = "Not enabled")]
         public void RunSingleTestCase()
         {
             using (var sql = NewSqlRunner())
@@ -96,15 +96,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var result = runner.RunTests();
 
-                Assert.AreEqual(0, result.Fail, result.Output);
+                Assert.Equal(0, result.Fail); // result.Output
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void SqlCompileExceptionIsError()
         {
-            Assert.IsTrue(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
-            Assert.IsFalse(SqlCompileException.IsError("OtherError"));
+            Assert.True(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
+            Assert.False(SqlCompileException.IsError("OtherError"));
         }
 
         public static string GetSqlDefaultTestDir()
@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Console.WriteLine($"Failed SQL for {expr}");
                     Console.WriteLine(compileResult.SqlFunction);
                     Console.WriteLine(e.Message);
-                    Assert.Fail($"Failed SQL for {expr}");
+                    Assert.True(false, $"Failed SQL for {expr}");
                     throw;
                 }
             }

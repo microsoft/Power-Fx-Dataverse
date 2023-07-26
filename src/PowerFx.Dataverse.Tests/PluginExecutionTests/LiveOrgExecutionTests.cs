@@ -16,21 +16,20 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using Xunit;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    // Run Dataverse execution against a live org. 
-    [TestClass]
+    // Run Dataverse execution against a live org.    
     public class LiveOrgExecutionTests
     {
         // Env var we look for to get a dataverse connection string. 
-        const string ConnectionStringVariable = "FxTestDataverseCx";
+        private const string ConnectionStringVariable = "FxTestDataverseCx";
 
         private ServiceClient GetClient()
         {
@@ -40,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // short-circuit if connection string is not set
             if (cx == null)
             {
-                Assert.Inconclusive($"Skipping Live Dataverse tests. Set {cx} env var.");
+                Skip.If(true, $"Skipping Live Dataverse tests. Set {cx} env var.");
                 throw new NotImplementedException();
             }
 
@@ -55,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return svcClient;
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterFirst()
         {
             string tableName = "TableTest1S";
@@ -66,12 +65,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result = RunDataverseTest(tableName, "First(TableTest1S)", out disposableObjects);
                 var obj = result.ToObject() as Entity;
 
-                Assert.AreEqual("Name1", obj.Attributes["crcef_name"].ToString());
-                Assert.AreEqual(1, (obj.Attributes["crcef_properties"] as XrmOptionSetValue).Value); // Choice1
-                Assert.AreEqual(17, obj.Attributes["crcef_score"]);
+                Assert.Equal("Name1", obj.Attributes["crcef_name"].ToString());
+                Assert.Equal(1, (obj.Attributes["crcef_properties"] as XrmOptionSetValue).Value); // Choice1
+                Assert.Equal(17, obj.Attributes["crcef_score"]);
 
                 DateTime dt = (DateTime)obj.Attributes["crcef_creationdate"];
-                Assert.AreEqual(new DateTime(2022, 12, 27, 23, 0, 0), dt); // UTC time
+                Assert.Equal(new DateTime(2022, 12, 27, 23, 0, 0), dt); // UTC time
             }
             finally
             {
@@ -79,10 +78,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [Theory]
         // Skipp this test case?
         // Changing this to FALSE will trigger this test, which might take 2-3 hours.
-        [DataRow(true)]
+        [InlineData(true)]
         public async Task TestAllTableAllFields(bool skip)
         {
             if (skip)
@@ -131,7 +130,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                                 if (formulaValue is ErrorValue errorValue)
                                 {
-                                    Assert.Fail($"'{displayName}'.{fieldname} ({formulaValue.Type}) failed. " + string.Join("\r\n", errorValue.Errors.Select(ee => ee.Message)));
+                                    Assert.True(false, $"'{displayName}'.{fieldname} ({formulaValue.Type}) failed. " + string.Join("\r\n", errorValue.Errors.Select(ee => ee.Message)));
                                 }
                             }
 
@@ -155,15 +154,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("LookUp(JV1S, reg = LookUp(JVLookups, Name <> \"test1\"))", "Result is Blank", true)]
-        [DataRow("LookUp(JV1S, reg = LookUp(JVLookups, Name = \"test1\"))", "Name1", false)]
-        [DataRow("LookUp(JV1S, reg <> LookUp(JVLookups, Name <> \"test1\"))", "Name2", false)]
-        [DataRow("LookUp(JV1S, reg <> LookUp(JVLookups, Name = \"test1\"))", "Name2", false)]
-        [DataRow("LookUp(JV1S, reg = {test:1})", "Result is Blank", true)]
-        [DataRow("LookUp(JV1S, {test:1} = reg)", "Result is Blank", true)]
-        [DataRow("LookUp(JV1S, reg <> {test:1})", "Name2", false)]
-        [DataRow("LookUp(JV1S, {test:1} <> reg)", "Name2", false)]
+        [SkippableTheory]
+        [InlineData("LookUp(JV1S, reg = LookUp(JVLookups, Name <> \"test1\"))", "Result is Blank", true)]
+        [InlineData("LookUp(JV1S, reg = LookUp(JVLookups, Name = \"test1\"))", "Name1", false)]
+        [InlineData("LookUp(JV1S, reg <> LookUp(JVLookups, Name <> \"test1\"))", "Name2", false)]
+        [InlineData("LookUp(JV1S, reg <> LookUp(JVLookups, Name = \"test1\"))", "Name2", false)]
+        [InlineData("LookUp(JV1S, reg = {test:1})", "Result is Blank", true)]
+        [InlineData("LookUp(JV1S, {test:1} = reg)", "Result is Blank", true)]
+        [InlineData("LookUp(JV1S, reg <> {test:1})", "Name2", false)]
+        [InlineData("LookUp(JV1S, {test:1} <> reg)", "Name2", false)]
         public void ExecuteViaInterpreterPolymorphicComparison(string expression, string expected, bool isResultEmpty = false)
         {
             var tableName = new string[] { "JV1S", "JVLookups" };
@@ -176,11 +175,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (!isResultEmpty)
                 {
                     var obj = result.ToObject() as Entity;
-                    Assert.AreEqual(expected, obj.Attributes["crcbc_name"].ToString());
+                    Assert.Equal(expected, obj.Attributes["crcbc_name"].ToString());
                 }
                 else
                 {
-                    Assert.AreEqual(null, result.ToObject());
+                    Assert.Null(result.ToObject());
                 }
             }
             finally
@@ -189,10 +188,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("AsType(Index(JV1S, 2).poly_field, JVLookups).Name", "test1", false)]
-        [DataRow("AsType(Index(JV1S, 1).poly_field, JVLookups)", "Result is Error", true)] // polymorphic field is of jvlookups2 type.
-        [DataRow("AsType(Index(JV1S, 1).poly_field, JVLookup2S).Name", "jvlookup2 Name1", false)] // polymorphic field is of jvlookups2 type.
+        [SkippableTheory]
+        [InlineData("AsType(Index(JV1S, 2).poly_field, JVLookups).Name", "test1", false)]
+        [InlineData("AsType(Index(JV1S, 1).poly_field, JVLookups)", "Result is Error", true)] // polymorphic field is of jvlookups2 type.
+        [InlineData("AsType(Index(JV1S, 1).poly_field, JVLookup2S).Name", "jvlookup2 Name1", false)] // polymorphic field is of jvlookups2 type.
         public void ExecuteViaInterpreterAsType(string expression, object expected, bool isResultError = false)
         {
             var tableName = new string[] { "JV1S", "JVLookups", "JVLookup2S" };
@@ -204,11 +203,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result = RunDataverseTest(tableName, expression, out disposableObjects);
                 if (!isResultError)
                 {
-                    Assert.AreEqual(expected, result.ToObject());
+                    Assert.Equal(expected, result.ToObject());
                 }
                 else
                 {
-                    Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                    Assert.IsType<ErrorValue>(result);
                 }
             }
             finally
@@ -217,12 +216,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("Index(Accounts, 1).Tasks", 0)]
-        [DataRow("LookUp(Contacts, 'Full Name' = \"Mike\").Accounts", 2)]
+        [SkippableTheory]
+        [InlineData("Index(Accounts, 1).Tasks", 0)]
+        [InlineData("LookUp(Contacts, 'Full Name' = \"Mike\").Accounts", 2)]
 
         // If Tasks field was empty, returns empty table.
-        [DataRow("Index(Accounts, 2).Tasks", 2)]
+        [InlineData("Index(Accounts, 2).Tasks", 2)]
 
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
@@ -233,8 +232,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 var result = RunDataverseTest(tableName, expression, out disposableObjects);
-                Assert.IsTrue(result is TableValue);
-                Assert.AreEqual(expected, ((TableValue)result).Count());
+                Assert.True(result is TableValue);
+                Assert.Equal(expected, ((TableValue)result).Count());
             }
             finally
             {
@@ -242,11 +241,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("AsType(Blank(), JVLookups)")]
-        [DataRow("AsType({test:1}, JVLookups)")]
-        [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
-        [DataRow("AsType(Index(JV1S, 1).reg, [1,2])")]
+        [SkippableTheory]
+        [InlineData("AsType(Blank(), JVLookups)")]
+        [InlineData("AsType({test:1}, JVLookups)")]
+        [InlineData("AsType(Index(JV1S, 1).reg, [1,2])")]        
         public void ExecuteViaInterpreterAsType_Negative(string expression)
         {
             var tableName = new string[] { "JVLookups" };
@@ -263,7 +261,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterFirstWithDisplayName()
         {
             string tableName = "TableTest1S";
@@ -274,12 +272,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result1 = RunDataverseTest(tableName, "First(TableTest1S).Name", out disposableObjects, out var engine, out var symbols, out var runtimeConfig);
 
                 var check2 = engine.Check("First(TableTest1S).Name", symbolTable: symbols);
-                Assert.IsTrue(check2.IsSuccess);
+                Assert.True(check2.IsSuccess);
 
                 var run2 = check2.GetEvaluator();
                 var result2 = run2.EvalAsync(CancellationToken.None, runtimeConfig).Result;
 
-                Assert.AreEqual(result1.ToObject(), result2.ToObject());
+                Assert.Equal(result1.ToObject(), result2.ToObject());
             }
             finally
             {
@@ -287,7 +285,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterFirstN()
         {
             string tableName = "TableTest1S";
@@ -301,7 +299,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var r1 = dv1.Rows.ToList();
 
                 var check2 = engine.Check("FirstN(TableTest1S, 1)", symbolTable: symbols);
-                Assert.IsTrue(check2.IsSuccess);
+                Assert.True(check2.IsSuccess);
 
                 var run2 = check2.GetEvaluator();
                 var result2 = run2.EvalAsync(CancellationToken.None, runtimeConfig).Result;
@@ -309,8 +307,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var dv2 = result2 as DataverseTableValue;
                 var r2 = dv2.Rows.ToList();
 
-                Assert.AreEqual(5, r1.Count);
-                Assert.AreEqual(1, r2.Count);
+                Assert.Equal(5, r1.Count);
+                Assert.Single(r2);
             }
             finally
             {
@@ -318,7 +316,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterCollectNoKey()
         {
             string tableName = "account";
@@ -337,7 +335,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterCollectAndRefresh()
         {
             string tableName = "Accounts";
@@ -354,8 +352,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("Collect(Contacts, {'Accounts (cr28b_account_someRef_contact)': Table(First(Accounts))})")]
+        [SkippableTheory]
+        [InlineData("Collect(Contacts, {'Accounts (cr28b_account_someRef_contact)': Table(First(Accounts))})")]
         public void ExecuteViaInterpreterCollectOneToManyNotSupported(string expression)
         {
             var tableName = new string[] { "account", "contact" };
@@ -365,7 +363,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 var result = RunDataverseTest(tableName, expression, out disposableObjects);
-                Assert.IsTrue(result is ErrorValue);
+                Assert.True(result is ErrorValue);
             }
             finally
             {
@@ -373,8 +371,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("Collect(Accounts, { 'Primary Contact': First(Contacts)})")]
+        [SkippableTheory]
+        [InlineData("Collect(Accounts, { 'Primary Contact': First(Contacts)})")]
         public void ExecuteViaInterpreterCollectManyToOne(string expression)
         {
             var tableName = new string[] { "account", "contact" };
@@ -384,7 +382,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 var result = RunDataverseTest(tableName, expression, out disposableObjects);
-                Assert.IsTrue(result is RecordValue);
+                Assert.True(result is RecordValue);
             }
             finally
             {
@@ -392,14 +390,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public async Task SlowRepeatingLookup()
         {
             var token = "";
 
             if (string.IsNullOrEmpty(token))
             {
-                Assert.Inconclusive("No token specified");
+                Skip.If(true, "No token specified");
             }
 
             var engine = new RecalcEngine();
@@ -427,7 +425,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Console.WriteLine(dec.CacheSize);
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterInsertRowsAsyncWithConflict()
         {
             string tableName = "Table2";
@@ -442,20 +440,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     object obj = InsertRow(symbols, runtimeConfig, prefix, engine, i);
 
-                    Assert.IsNotNull(obj);
-                    Assert.IsInstanceOfType(obj, typeof(Entity));
+                    Assert.NotNull(obj);
+                    Assert.IsType<Entity>(obj);
                 });
 
                 // Insert last row a second time, in a DV table that has a Key constraint
                 var obj5 = InsertRow(symbols, runtimeConfig, prefix, engine, 4);
 
-                Assert.IsNotNull(obj5);
-                Assert.IsInstanceOfType(obj5, typeof(ErrorValue));
+                Assert.NotNull(obj5);
+                Assert.IsType<ErrorValue>(obj5);
 
                 var ev5 = obj5 as ErrorValue;
 
-                Assert.AreEqual(1, ev5.Errors.Count);
-                Assert.AreEqual("Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
+                Assert.Equal(1, ev5.Errors.Count);
+                Assert.Equal("Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
                                 "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
                                 "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'", ev5.Errors.First().Message);
             }
@@ -471,7 +469,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Console.WriteLine("Running: {0}", expr);
 
             var check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
-            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
@@ -479,7 +477,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return obj;
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterFilter()
         {
             string tableName = "TableTest1S";
@@ -498,7 +496,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatch()
         {
             string tableName = "TableTest1S";
@@ -520,7 +518,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void FormulaColumnTest()
         {
             string tableName = "PFxTestTables";
@@ -539,7 +537,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var obj = result.ToObject() as Entity;
 
-                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
+                Assert.Equal(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
             }
             finally
             {
@@ -547,7 +545,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void PatchingFormulaColumnTest()
         {
             string tableName = "PFxTestTables";
@@ -566,7 +564,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var obj = result.ToObject() as Entity;
 
                 // Formula column has not changed.
-                Assert.AreEqual(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
+                Assert.Equal(formulaColumnValue, obj.Attributes["cr959_formulacolumn"]);
             }
             finally
             {
@@ -574,7 +572,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void PatchingWithInvalidValueTest()
         {
             string tableName = "PFxTestTables";
@@ -588,8 +586,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                Assert.IsInstanceOfType(result, typeof(ErrorValue));
-                Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains("A validation error occurred"));
+                Assert.IsType<ErrorValue>(result);
+                Assert.Contains("A validation error occurred", ((ErrorValue)result).Errors.First().Message);
             }
             finally
             {
@@ -597,7 +595,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithConflict()
         {
             string tableName = "Table2";
@@ -609,17 +607,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.NotNull(result);
+                Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.AreEqual(1, err.Errors.Count);
+                Assert.Equal(1, err.Errors.Count);
 
                 string errMsg = "Error in UpdateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
                                 "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
                                 "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'";
 
-                Assert.AreEqual(errMsg, err.Errors.First().Message);
+                Assert.Equal(errMsg, err.Errors.First().Message);
             }
             finally
             {
@@ -627,7 +625,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithId()
         {
             string tableName = "Table2";
@@ -638,8 +636,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.NotNull(result);
+                Assert.IsType<Entity>(result.ToObject());
             }
             finally
             {
@@ -647,7 +645,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithIdBlank()
         {
             string tableName = "Table2";
@@ -658,8 +656,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.NotNull(result);
+                Assert.IsType<Entity>(result.ToObject());
             }
             finally
             {
@@ -667,7 +665,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithDateTime()
         {
             string tableName = "Table2";
@@ -684,16 +682,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.NotNull(result);
+                Assert.IsType<Entity>(result.ToObject());
 
                 var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\"))).MyDate";
                 var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
-                Assert.IsNotNull(result2);
+                Assert.NotNull(result2);
 
 #pragma warning disable CS0618 // Type or member is obsolete
                 DateTime dt2 = (result2 as DateTimeValue).Value;
-                Assert.AreEqual(dt, dt2);
+                Assert.Equal(dt, dt2);
 #pragma warning restore CS0618 // Type or member is obsolete
             }
             finally
@@ -702,7 +700,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterRead()
         {
             string tableName = "Table2";
@@ -719,8 +717,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.NotNull(result);
+                Assert.IsType<Entity>(result.ToObject());
             }
             finally
             {
@@ -728,7 +726,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithNumbers()
         {
             string tableName = "Table2";
@@ -745,12 +743,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var runtimeConfig);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result.ToObject(), typeof(Entity));
+                Assert.NotNull(result);
+                Assert.IsType<Entity>(result.ToObject());
 
                 var expr2 = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
                 var result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
-                Assert.IsNotNull(result2);
+                Assert.NotNull(result2);
 
                 Entity e = (Entity)result2.ToObject();
                 int wn2 = e.GetAttributeValue<int>("crcef2_wholenumber");
@@ -758,10 +756,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 float ft2 = (float)e.GetAttributeValue<double>("crcef2_float");
                 double cy2 = (double)e.GetAttributeValue<Money>("crcef2_currency").Value;
 
-                Assert.AreEqual(wn, wn2);
-                Assert.AreEqual(dc, dc2);
-                Assert.AreEqual(ft, ft2);
-                Assert.AreEqual(cy, cy2);
+                Assert.Equal(wn, wn2);
+                Assert.Equal(dc, dc2);
+                Assert.Equal(ft, ft2);
+                Assert.Equal(cy, cy2);
             }
             finally
             {
@@ -769,7 +767,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithOptionSet()
         {
             string tableName = "TableTest1S";
@@ -780,7 +778,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, out var engine, out var symbols, out var runtimeConfig);
-                Assert.IsNotNull(result);
+                Assert.NotNull(result);
 
                 os = result as FxOptionSetValue;
 
@@ -789,8 +787,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 string expr2 = $"Patch(TableTest1S, {{ TableTest1 : GUID(\"4ed3cf85-651d-ed11-9db1-0022482aea8f\")}}, {{ Properties2: {newValue} }})";
 
                 FormulaValue result2 = engine.EvalAsync(expr2, CancellationToken.None, new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat }, symbolTable: symbols, runtimeConfig: new RuntimeConfig(runtimeConfig)).Result;
-                Assert.IsNotNull(result2);
-                Assert.IsInstanceOfType(result2.ToObject(), typeof(Entity));
+                Assert.NotNull(result2);
+                Assert.IsType<Entity>(result2.ToObject());
             }
             finally
             {
@@ -800,10 +798,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 FormulaValue result3 = RunDataverseTest(tableName, expr, out disposableObjects);
-                Assert.IsNotNull(result3);
+                Assert.NotNull(result3);
 
                 FxOptionSetValue os3 = result3 as FxOptionSetValue;
-                Assert.AreNotEqual(os.Option, os3.Option);
+                Assert.NotEqual(os.Option, os3.Option);
             }
             finally
             {
@@ -811,7 +809,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithInvalidId()
         {
             string tableName = "Table2";
@@ -822,14 +820,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.NotNull(result);
+                Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.AreEqual(1, err.Errors.Count);
+                Assert.Equal(1, err.Errors.Count);
 
                 string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
-                Assert.AreEqual(errMsg, err.Errors.First().Message);
+                Assert.Equal(errMsg, err.Errors.First().Message);
             }
             finally
             {
@@ -837,7 +835,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterPatchWithInvalidIdAsync()
         {
             string tableName = "Table2";
@@ -849,14 +847,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true);
 
-                Assert.IsNotNull(result);
-                Assert.IsInstanceOfType(result, typeof(ErrorValue));
+                Assert.NotNull(result);
+                Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.AreEqual(1, err.Errors.Count);
+                Assert.Equal(1, err.Errors.Count);
 
                 string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
-                Assert.AreEqual(errMsg, err.Errors.First().Message);
+                Assert.Equal(errMsg, err.Errors.First().Message);
             }
             finally
             {
@@ -864,7 +862,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterRemoveWithId()
         {
             string tableName = "Table2";
@@ -877,7 +875,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
                 bool bv = (bool)result.ToObject();
 
-                Assert.IsTrue(bv);
+                Assert.True(bv);
             }
             finally
             {
@@ -885,7 +883,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void ExecuteViaInterpreterRemoveByName()
         {
             string tableName = "Table2";
@@ -898,7 +896,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 FormulaValue result = RunDataverseTest(tableName, expr, out disposableObjects);
                 ErrorValue ev = (ErrorValue)result.ToObject();
 
-                Assert.AreEqual("Dataverse record doesn't contain primary Id, of Guid type", string.Join("|", ev.Errors.Select(ee => ee.Message)));
+                Assert.Equal("Dataverse record doesn't contain primary Id, of Guid type", string.Join("|", ev.Errors.Select(ee => ee.Message)));
             }
             finally
             {
@@ -926,14 +924,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
         }
 
-        [DataTestMethod]
-        [DataRow("If(First(PFxTables).Choice, \"YES\", \"NO\")", "NO")]
-        [DataRow("If(First(PFxTables).Choice = 'Choice (PFxTables)'.Positive, \"YES\", \"NO\")", "NO")]
-        [DataRow("Text(First(PFxTables).Choice)", "Negative")]
-        [DataRow("Text(First(PFxTables).Choice) & 'Choice (PFxTables)'.Positive", "NegativePositive")]
-        [DataRow("Patch(PFxTables, First(PFxTables), {'Choice':'Choice (PFxTables)'.Negative,'Name':\"PATCH1\"});First(PFxTables).Name", "PATCH1")]
-        [DataRow("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"COLLECT1\"});LookUp(PFxTables, Name = \"COLLECT1\").Name", "COLLECT1")]
-        [DataRow("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"POSITIVE1\"});If(LookUp(PFxTables, Name = \"COLLECT1\").Choice, \"Affirmitive\", \"Nope\")", "Affirmitive")]
+        [SkippableTheory]
+        [InlineData("If(First(PFxTables).Choice, \"YES\", \"NO\")", "NO")]
+        [InlineData("If(First(PFxTables).Choice = 'Choice (PFxTables)'.Positive, \"YES\", \"NO\")", "NO")]
+        [InlineData("Text(First(PFxTables).Choice)", "Negative")]
+        [InlineData("Text(First(PFxTables).Choice) & 'Choice (PFxTables)'.Positive", "NegativePositive")]
+        [InlineData("Patch(PFxTables, First(PFxTables), {'Choice':'Choice (PFxTables)'.Negative,'Name':\"PATCH1\"});First(PFxTables).Name", "PATCH1")]
+        [InlineData("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"COLLECT1\"});LookUp(PFxTables, Name = \"COLLECT1\").Name", "COLLECT1")]
+        [InlineData("Collect(PFxTables, {'Choice':'Choice (PFxTables)'.Positive,'Name':\"POSITIVE1\"});If(LookUp(PFxTables, Name = \"COLLECT1\").Choice, \"Affirmitive\", \"Nope\")", "Affirmitive")]
         public void BooleanOptionSetCoercionTest(string expr, string expected)
         {
             string tableName = "PFxTables";
@@ -944,8 +942,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 StringValue result = RunDataverseTest(tableName, expr, out disposableObjects, async: true) as StringValue;
 
-                Assert.IsNotNull(result);
-                Assert.AreEqual(expected, result.Value);
+                Assert.NotNull(result);
+                Assert.Equal(expected, result.Value);
             }
             finally
             {
@@ -953,9 +951,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
-        [DataRow("First(Tasks).Owner")]
-        [DataRow("With( {r : First(Tasks).Owner}, r)")]
+        [SkippableTheory]
+        [InlineData("First(Tasks).Owner")]
+        [InlineData("With( {r : First(Tasks).Owner}, r)")]
         public void ExecuteViaInterpreterWithAndPolymorphic(string expression)
         {
             var tableName = new string[] { "account", "task" };
@@ -965,7 +963,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             try
             {
                 var result = RunDataverseTest(tableName, expression, out disposableObjects);
-                Assert.IsTrue(result is RecordValue);
+                Assert.True(result is RecordValue);
             }
             finally
             {
@@ -973,7 +971,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void AllNotSupportedAttributesTest()
         {
             string tableName = "PFxColumns";
@@ -1002,11 +1000,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                         if (result is ErrorValue errorValue)
                         {
-                            Assert.IsTrue(expectedErrors.Contains(errorValue.Errors.First().Message));
+                            Assert.Contains(errorValue.Errors.First().Message, expectedErrors);
                         }
                         else
                         {
-                            Assert.IsInstanceOfType(result, typeof(FormulaValue));
+                            Assert.IsAssignableFrom<FormulaValue>(result);
                         }
                     }
                     catch
@@ -1054,9 +1052,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (!dv.TryGetVariableName(tableName, out _))
                 {
                     bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
-                    Assert.IsTrue(b1);
+                    Assert.True(b1);
                     tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
-                    Assert.IsNotNull(tableValue);
+                    Assert.NotNull(tableValue);
                     symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: logicalName));
                 }
                 else
@@ -1066,7 +1064,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             }
 
-            Assert.IsNotNull(symbols);
+            Assert.NotNull(symbols);
 
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
@@ -1079,7 +1077,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
-            Assert.AreEqual(isCheckSucess, check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.Equal(isCheckSucess, check.IsSuccess); // string.Join("\r\n", check.Errors.Select(ee => ee.Message))
 
             if (!isCheckSucess)
             {
@@ -1106,8 +1104,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             //symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalname), dv.Symbols);
             symbols = dv.Symbols;
 
-            Assert.IsNotNull(tableValue);
-            Assert.IsNotNull(symbols);
+            Assert.NotNull(tableValue);
+            Assert.NotNull(symbols);
 
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
@@ -1120,7 +1118,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
-            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             IExpressionEvaluator run = check.GetEvaluator();
             FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
@@ -1137,7 +1135,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             if (!PredefinedTables.TryGetValue(tableName, out string logicalName))
             {
                 bool b1 = xrmMetadataProvider.TryGetLogicalName(tableName, out logicalName);
-                Assert.IsTrue(b1);
+                Assert.True(b1);
             }
 
             DataverseConnection dv = null;
@@ -1155,8 +1153,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
             symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
-            Assert.IsNotNull(tableValue);
-            Assert.IsNotNull(symbols);
+            Assert.NotNull(tableValue);
+            Assert.NotNull(symbols);
 
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
@@ -1169,7 +1167,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
-            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             IExpressionEvaluator run = check.GetEvaluator();
             FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;

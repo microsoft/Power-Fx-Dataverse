@@ -4,24 +4,22 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.LanguageServerProtocol;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Web;
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.PowerFx.LanguageServerProtocol;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // end2end test with full LSP (Language Service Provider) to mimic Dataverse test usage.
-    // LSP is network layer on top of intellisense support. 
-    [TestClass]
+    // LSP is network layer on top of intellisense support.     
     public class DataverseLSPTests
     {
         private static readonly string _entityLogicalName = DataverseTests.AllAttributeModel.LogicalName;
@@ -42,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var culture = (localeName == null) ? null : CultureInfo.CreateSpecificCulture(localeName);
 
                 // Dataverse would use the entity name to look up proper metadata. 
-                Assert.AreEqual(_entityLogicalName, entityLogicalName);
+                Assert.Equal(_entityLogicalName, entityLogicalName);
 
                 Engine powerFx2SqlEngine = DataverseIntellisenseTests.GetAllAttributesEngine(culture);
                 EditorContextScope scope = powerFx2SqlEngine.CreateEditorScope();
@@ -50,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void CheckLspSuggestion()
         {
             var _sendToClientData = new List<string>();
@@ -82,35 +80,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }));
 
-            Assert.AreEqual(_sendToClientData.Count, 1);
+            Assert.Single(_sendToClientData);
             var resultJson = _sendToClientData[0];
 
             var response = JsonSerializer.Deserialize<JsonRpcCompletionResponse>(resultJson);
 
-            Assert.AreEqual(response.jsonrpc, "2.0");
-            Assert.AreEqual(response.id, "123456");
+            Assert.Equal("2.0", response.jsonrpc);
+            Assert.Equal("123456", response.id);
 
-            Assert.IsNull(response.error); // exceptions converted into error
+            Assert.Null(response.error); // exceptions converted into error
 
-            Assert.IsFalse(response.result.isincomplete);
-            Assert.AreEqual(response.result.items.Where(item => item.label == "Abs").Count(), 1);
+            Assert.False(response.result.isincomplete);
+            Assert.Single(response.result.items.Where(item => item.label == "Abs"));
         }
 
-        [DataTestMethod]
-        [DataRow("1 + 2", "Number", DisplayName = "Number")]
-        [DataRow("\"foo\"", "String", DisplayName = "String literal")]
-        [DataRow("'UserLocal DateTime'", "DateTime", DisplayName = "DateTime")]
-        [DataRow("DateOnly", "Date", DisplayName = "Date")]
-        [DataRow("UTCToday()", "DateTimeNoTimeZone", DisplayName = "UTCToday function")]
-        [DataRow("UTCNow()", "DateTimeNoTimeZone", DisplayName = "UTCNow function")]
-        [DataRow("Now()", "DateTime", DisplayName = "Now function")]
-        [DataRow("Boolean", "Boolean")]
-        [DataRow("field", "Number", DisplayName = "Decimal")]
-        [DataRow("Money", "Number", DisplayName = "Money")]
-        [DataRow("Int", "Number", DisplayName = "Int")]
-        [DataRow("String", "String", DisplayName = "String")]
-        [DataRow("true", "Boolean", DisplayName = "Boolean literal")]
-        [DataRow("Mod(int, int)", "Number", DisplayName = "Mod function")]
+        [Theory]
+        [InlineData("1 + 2", "Number")] //  "Number"
+        [InlineData("\"foo\"", "String")] //  "String literal"
+        [InlineData("'UserLocal DateTime'", "DateTime")] //  "DateTime"
+        [InlineData("DateOnly", "Date")] //  "Date"
+        [InlineData("UTCToday()", "DateTimeNoTimeZone")] //  "UTCToday function"
+        [InlineData("UTCNow()", "DateTimeNoTimeZone")] //  "UTCNow function"
+        [InlineData("Now()", "DateTime")] //  "Now function"
+        [InlineData("Boolean", "Boolean")]
+        [InlineData("field", "Number")] //  "Decimal"
+        [InlineData("Money", "Number")] //  "Money"
+        [InlineData("Int", "Number")] //  "Int"
+        [InlineData("String", "String")] //  "String"
+        [InlineData("true", "Boolean")] //  "Boolean literal"
+        [InlineData("Mod(int, int)", "Number")] //  "Mod function"
         public void CheckLspCheck(string expression, string type)
         {
             var _sendToClientData = new List<string>();
@@ -137,16 +135,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }));
 
-            Assert.AreEqual(_sendToClientData.Count, 2);
-            var resultJson = _sendToClientData[1];
+            Assert.Equal(2, _sendToClientData.Count);
 
+            var resultJson = _sendToClientData[1];
             var response = JsonSerializer.Deserialize<JsonRpcExpressionTypeResponse>(resultJson);
 
-            Assert.AreEqual(response.jsonrpc, "2.0");
-
-            Assert.IsNotNull(response.@params.type);
-
-            Assert.AreEqual(type, response.@params.type.Type);
+            Assert.Equal("2.0", response.jsonrpc);
+            Assert.NotNull(response.@params.type);
+            Assert.Equal(type, response.@params.type.Type);
         }
 
         // Helper to send an $/initialFixup message.
@@ -174,19 +170,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Helper to verify the results of an $/initialFixup message. 
         private void AssertFixupResult(List<string> sendToClientData, string expected)
         {
-            Assert.AreEqual(sendToClientData.Count, 1);
+            Assert.Single(sendToClientData);
             var resultJson = sendToClientData[0];
 
             var response = JsonSerializer.Deserialize<JsonRpcFixupResponse>(resultJson);
 
-            Assert.AreEqual(response.jsonrpc, "2.0");
-            Assert.AreEqual(expected, response.result.text);
+            Assert.Equal("2.0", response.jsonrpc);
+            Assert.Equal(expected, response.result.text);
         }
 
 
         // Fixup message is sent when FormulaBar first initializes to convert from 
         // invariant locale to current locale. 
-        [TestMethod]
+        [Fact]
         public void CheckLspFixup()
         {
             var _sendToClientData = new List<string>();
@@ -208,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Fixup still works with error expressions. 
-        [TestMethod]
+        [Fact]
         public void CheckLspFixupError()
         {
             var _sendToClientData = new List<string>();
@@ -227,14 +223,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Get errors  in other locales. 
-        [DataTestMethod]
-        [DataRow("1.2", "en-US")] // success case 
-        [DataRow("1,2", "fr-FR")] // success case 
-        [DataRow("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;Utilisation non valide de « . »")] // error - no dups, all French
-        [DataRow("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
-        [DataRow("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding         
-        [DataRow("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
-        [DataRow("1 + ", "fr-FR", "Opérande attendu. La formule ou l’expression atten...;Type d’argument non valide. L’une des valeurs suiv...")] // Parse error
+        [Theory]
+        [InlineData("1.2", "en-US")] // success case 
+        [InlineData("1,2", "fr-FR")] // success case 
+        [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;Utilisation non valide de « . »")] // error - no dups, all French
+        [InlineData("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
+        [InlineData("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding         
+        [InlineData("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
+        [InlineData("1 + ", "fr-FR", "Opérande attendu. La formule ou l’expression atten...;Type d’argument non valide. L’une des valeurs suiv...")] // Parse error
         public void ErrorIsLocalized(string expression, string localeName, string expectedError = null)
         {
             var expectedErrors = (expectedError == null) ?
@@ -247,7 +243,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private void AssertErrors(string[] expectedErrors, List<string> sendToClientData)
         {
-            Assert.AreEqual(1, sendToClientData.Count);
+            Assert.Single(sendToClientData);
             var sentToClientData = sendToClientData[0];
             var json = JsonSerializer.Deserialize<JsonRpcPublishDiagnosticsNotification>(sentToClientData);
 
@@ -267,12 +263,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var msgs = json.@params.diagnostics.ToArray();
             msgs.OrderBy(m => m.ToString()).ToArray(); // make deterministic for tests. 
-            Assert.AreEqual(expectedErrors.Length, msgs.Length);
+            Assert.Equal(expectedErrors.Length, msgs.Length);
             for (int i = 0; i < expectedErrors.Length; i++)
             {
                 // Some error message sare are too long, just truncate first part for comparison. 
                 var truncatedMessage = Truncate(msgs[i].message, 50);
-                Assert.AreEqual(expectedErrors[i], truncatedMessage);
+                Assert.Equal(expectedErrors[i], truncatedMessage);
             }
         }
 
@@ -304,7 +300,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Verify errors with didChange
-        public void ErrorIsLocalized_DidChange(string expression, string localeName, string[] expectedErrors)
+        internal void ErrorIsLocalized_DidChange(string expression, string localeName, string[] expectedErrors)
         {
             var _sendToClientData = new List<string>();
             var _scopeFactory = new PowerFxScopeFactory();
