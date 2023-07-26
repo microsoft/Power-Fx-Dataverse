@@ -338,8 +338,8 @@ END
         }
 
         [Theory]
-        [InlineData("3+foo+2", "Error 2-5: Name isn't valid. 'foo' isn't recognized.", "ErrInvalidName")] //  "Invalid field"
-        [InlineData("3+foo(2)", "Error 2-8: 'foo' is an unknown or unsupported function.", "ErrUnknownFunction")] //  "Invalid function"
+        [InlineData("3+foo+2", "Error 2-5: Name isn't valid. 'foo' isn't recognized.", "ErrInvalidName")] // "Invalid field"
+        [InlineData("3+foo(2)", "Error 2-8: 'foo' is an unknown or unsupported function.", "ErrUnknownFunction")] // "Invalid function"
         public void CheckBindError(string expr, string message, string key)
         {
             var engine = new PowerFx2SqlEngine();
@@ -354,7 +354,7 @@ END
 
         // Verify error messages in other locales
         [Theory]
-        [InlineData("3+", "Opérande attendu. La formule ou l’expression attend un opérande valide", "ErrOperandExpected")] //  "Parse error"
+        [InlineData("3+", "Opérande attendu. La formule ou l’expression attend un opérande valide", "ErrOperandExpected")] // "Parse error"
         public void CheckLocaleErrorMssage(string expr, string message, string key)
         {
             var culture = new CultureInfo("fr-FR");
@@ -426,27 +426,27 @@ END
         }
 
         [Theory]
-        [InlineData("Lookup", "Error 0-6: The result type Record is not supported in formula columns.")] //  "Lookup"
-        [InlineData("If(true, 'Self Reference', Lookup)", "Error 0-34: The result type Record is not supported in formula columns.")] //  "Polymorphic Lookup"
-        [InlineData("Blank()", "Error 0-7: The result type ObjNull is not supported in formula columns.")] //  "Blank"
-        [InlineData("Guid", "Error 0-4: The result type Guid is not supported in formula columns.")] //  "Guid"
-        [InlineData("Owner", "Error 0-5: The result type Record is not supported in formula columns.")] //  "Owner"
-        [InlineData("Customer", "Error 0-8: The result type Record is not supported in formula columns.")] //  "Customer"
-        [InlineData("BigInt", "Error 0-6: Columns of type BigInt are not supported in formula columns.")] //  "BigInt"
-        [InlineData("Email", "Error 0-5: Columns of type String with format Email are not supported in formula columns.")] //  "Email"
-        [InlineData("Ticker", "Error 0-6: Columns of type String with format TickerSymbol are not supported in formula columns.")] //  "Ticker"
-        [InlineData("Hyperlink", "Error 0-9: Columns of type String with format Url are not supported in formula columns.")] //  "Hyperlink"
-        [InlineData("If(true, Hyperlink)", "Error 9-18: Columns of type String with format Url are not supported in formula columns.")] //  "Hyperlink in If"
-        [InlineData("Left(Hyperlink, 2)", "Error 5-14: Columns of type String with format Url are not supported in formula columns.")] //  "Hyperlink in Left"
-        [InlineData("Duration", "Error 0-8: Columns of type Integer with format Duration are not supported in formula columns.")] //  "Duration"
-        [InlineData("TimeZone", "Error 0-8: Columns of type Integer with format TimeZone are not supported in formula columns.")] //  "TimeZone"
-        [InlineData("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.")] //  "Image"
-        [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] //  "Image in IsBlank"
-        [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] //  "File not added to entity"
-        [InlineData("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.")] //  "Picklist"
-        [InlineData("MultiSelect", "Error 0-11: The result type OptionSetValue is not supported in formula columns.")] //  "Multi Select Picklist"
-        [InlineData("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.")] //  "Built picklist"
-        [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] //  "Built hybrid picklist"
+        [InlineData("Lookup", "Error 0-6: The result type Record is not supported in formula columns.")] // "Lookup"
+        [InlineData("If(true, 'Self Reference', Lookup)", "Error 0-34: The result type Record is not supported in formula columns.")] // "Polymorphic Lookup"
+        [InlineData("Blank()", "Error 0-7: The result type ObjNull is not supported in formula columns.")] // "Blank"
+        [InlineData("Guid", "Error 0-4: The result type Guid is not supported in formula columns.")] // "Guid"
+        [InlineData("Owner", "Error 0-5: The result type Record is not supported in formula columns.")] // "Owner"
+        [InlineData("Customer", "Error 0-8: The result type Record is not supported in formula columns.")] // "Customer"
+        [InlineData("BigInt", "Error 0-6: Columns of type BigInt are not supported in formula columns.")] // "BigInt"
+        [InlineData("Email", "Error 0-5: Columns of type String with format Email are not supported in formula columns.")] // "Email"
+        [InlineData("Ticker", "Error 0-6: Columns of type String with format TickerSymbol are not supported in formula columns.")] // "Ticker"
+        [InlineData("Hyperlink", "Error 0-9: Columns of type String with format Url are not supported in formula columns.")] // "Hyperlink"
+        [InlineData("If(true, Hyperlink)", "Error 9-18: Columns of type String with format Url are not supported in formula columns.")] // "Hyperlink in If"
+        [InlineData("Left(Hyperlink, 2)", "Error 5-14: Columns of type String with format Url are not supported in formula columns.")] // "Hyperlink in Left"
+        [InlineData("Duration", "Error 0-8: Columns of type Integer with format Duration are not supported in formula columns.")] // "Duration"
+        [InlineData("TimeZone", "Error 0-8: Columns of type Integer with format TimeZone are not supported in formula columns.")] // "TimeZone"
+        [InlineData("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.")] // "Image"
+        [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] // "Image in IsBlank"
+        [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] // "File not added to entity"
+        [InlineData("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.")] // "Picklist"
+        [InlineData("MultiSelect", "Error 0-11: The result type OptionSetValue is not supported in formula columns.")] // "Multi Select Picklist"
+        [InlineData("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.")] // "Built picklist"
+        [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
@@ -471,15 +471,15 @@ END
         }
 
         [Theory]
-        [InlineData("field", typeof(SqlDecimalType))] //  "Decimal"
-        [InlineData("1.1", typeof(SqlDecimalType))] //  "Numeric literal returns Decimal"
-        [InlineData("Money", typeof(SqlDecimalType))] //  "Money returns Decimal"
-        [InlineData("Int", typeof(SqlDecimalType))] //  "Int returns Decimal"
-        [InlineData("String", typeof(StringType))] //  "String"
-        [InlineData("\"foo\"", typeof(StringType))] //  "String literal returns String"
-        [InlineData("Boolean", typeof(BooleanType))] //  "Boolean"
-        [InlineData("true", typeof(BooleanType))] //  "Boolean literal returns Boolean"
-        [InlineData("Mod(int, int)", typeof(SqlDecimalType))] //  "Int from function returns decimal"
+        [InlineData("field", typeof(SqlDecimalType))] // "Decimal"
+        [InlineData("1.1", typeof(SqlDecimalType))] // "Numeric literal returns Decimal"
+        [InlineData("Money", typeof(SqlDecimalType))] // "Money returns Decimal"
+        [InlineData("Int", typeof(SqlDecimalType))] // "Int returns Decimal"
+        [InlineData("String", typeof(StringType))] // "String"
+        [InlineData("\"foo\"", typeof(StringType))] // "String literal returns String"
+        [InlineData("Boolean", typeof(BooleanType))] // "Boolean"
+        [InlineData("true", typeof(BooleanType))] // "Boolean literal returns Boolean"
+        [InlineData("Mod(int, int)", typeof(SqlDecimalType))] // "Int from function returns decimal"
         public void CompileValidReturnType(string expr, Type returnType)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
@@ -491,9 +491,9 @@ END
         }
 
         [Theory]
-        [InlineData("")] //  "Empty"
-        [InlineData("    ")] //  "Spaces"
-        [InlineData("\n\t  \r\n  \t\n\r\n")] //  "Whitespace"
+        [InlineData("")] // "Empty"
+        [InlineData("    ")] // "Spaces"
+        [InlineData("\n\t  \r\n  \t\n\r\n")] // "Whitespace"
         public void CheckEmptyFormula(string expr)
         {
             var engine = new PowerFx2SqlEngine();
@@ -801,8 +801,8 @@ END
         }
 
         [Theory]
-        [InlineData("conflict1 + conflict2")] //  "LogicalNames"
-        [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'")] //  "Disambiguation"
+        [InlineData("conflict1 + conflict2")] // "LogicalNames"
+        [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'")] // "Disambiguation"
         public void CompileFieldConflictResolved(string expr)
         {
             var metadata = ModelWithConflict.ToXrm();
@@ -878,9 +878,9 @@ END
         }
 
         [Theory]
-        [InlineData("Price * Quantity", "new_price,new_quantity")] //  "Main Entity"
-        [InlineData("ThisRecord.Price + Quantity", "new_price,new_quantity")] //  "Main Entity ThisRecord"
-        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")] //  "Lookup"
+        [InlineData("Price * Quantity", "new_price,new_quantity")] // "Main Entity"
+        [InlineData("ThisRecord.Price + Quantity", "new_price,new_quantity")] // "Main Entity ThisRecord"
+        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")] // "Lookup"
         [InlineData("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'",
             "otherid",
             "remote=>otherotherid|doubleremote=>data2,otherotherotherid|tripleremote=>data3",
@@ -892,8 +892,8 @@ END
         [InlineData("'Logical Lookup'.Data",
             "logicalid",
             "remote=>data",
-            "local=>logical")] //  "Logical Lookup"
-        [InlineData("7 + 2", "")] //  "Literals"
+            "local=>logical")] // "Logical Lookup"
+        [InlineData("7 + 2", "")] // "Literals"
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
@@ -924,8 +924,8 @@ END
         }
 
         [Theory]
-        [InlineData("a in b", "Error 0-1: Only a literal value is supported for this argument.")] //  "in"
-        [InlineData("a exactin b", "Error 0-1: Only a literal value is supported for this argument.")] //  "exactin"
+        [InlineData("a in b", "Error 0-1: Only a literal value is supported for this argument.")] // "in"
+        [InlineData("a exactin b", "Error 0-1: Only a literal value is supported for this argument.")] // "exactin"
         public void CheckInNonLiteral(string expr, string error)
         {
             var a = AttributeMetadataModel.NewString("a", "A");
@@ -947,19 +947,19 @@ END
         }
 
         [Theory]
-        [InlineData("1 - UTCToday()", false, "Error 4-14: This argument cannot be passed as type Date in formula columns.")] //  "Negation of date (coerce date to number then back to date)"
-        [InlineData("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in division operation (with coerced string)"
-        [InlineData("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in left arg of logical operation"
-        [InlineData("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in right arg of logical operation"
-        [InlineData("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in right arg of equals"
-        [InlineData("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number right arg of not equals"
-        [InlineData("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in Abs function"
-        [InlineData("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in Max function"
-        [InlineData("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in Trunc function"
-        [InlineData("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in Left function"
-        [InlineData("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in first numeric arg in Replace function"
-        [InlineData("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in second numeric arg in Replace function"
-        [InlineData("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Number in formula columns.")] //  "Coerce date to number in Substitute function"
+        [InlineData("1 - UTCToday()", false, "Error 4-14: This argument cannot be passed as type Date in formula columns.")] // "Negation of date (coerce date to number then back to date)"
+        [InlineData("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in division operation (with coerced string)"
+        [InlineData("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in left arg of logical operation"
+        [InlineData("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in right arg of logical operation"
+        [InlineData("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in right arg of equals"
+        [InlineData("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number right arg of not equals"
+        [InlineData("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Abs function"
+        [InlineData("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Max function"
+        [InlineData("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Trunc function"
+        [InlineData("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Left function"
+        [InlineData("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in first numeric arg in Replace function"
+        [InlineData("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in second numeric arg in Replace function"
+        [InlineData("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Substitute function"
         public void CheckCoercionFailures(string expr, bool success, string message = null)
         {
             var engine = new PowerFx2SqlEngine();
@@ -977,24 +977,24 @@ END
         }
 
         [Theory]
-        [InlineData("Text(123, \"#[$-fr-FR]\")", false, false, "Error 0-23: The function 'Text' has some invalid arguments.")] //  "Locale token in format string not supported"
-        [InlineData("Text(123, \"#\\[$-fr-FR]\")", false, false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] //  "Escaped Locale token in format string not supported"
-        [InlineData("Text(123, \",###.0\")", true, false, "Error 10-18: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] //  "Locale-specific separators not supported"
-        [InlineData("Text(123, \"\\,###\\.\")", true, false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] //  "Escaped locale-specific separators not supported"
-        [InlineData("Text(123, \"#\", \"fr-FR\")", true, false, "Error 15-22: The language argument is not supported for the Text function in formula columns.")] //  "Localization parameter"
-        [InlineData("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] //  "Locale token at start of format string not supported"
-        [InlineData("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.")] //  "Non-literal format string"
-        [InlineData("Int(\"123\")", true, true)] //  "Int on string"
-        [InlineData("Text(123)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("Text(123.4)", true, false, "Error 0-11: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("Text(1/2)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("Text(-123.4)", true, false, "Error 0-12: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("Text(1234567.89)", true, false, "Error 0-16: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("Text(If(1<0,2))", true, false, "Error 0-15: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] //  "Text() function with single numeric arg is not supported"
-        [InlineData("123 & 456", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] //  "Implicit Conversion of Numbers is not supported"
-        [InlineData("123.45 & 456", true, false, "Error 0-6: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] //  "Implicit Conversion of Numbers is not supported"
-        [InlineData("Concatenate(123, 456)", true, false, "Error 12-15: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] //  "Implicit Conversion of Numbers is not supported"
-        [InlineData("123 & \"a\"", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] //  "Implicit Conversion of Numbers is not supported"
+        [InlineData("Text(123, \"#[$-fr-FR]\")", false, false, "Error 0-23: The function 'Text' has some invalid arguments.")] // "Locale token in format string not supported"
+        [InlineData("Text(123, \"#\\[$-fr-FR]\")", false, false, "Error 10-23: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Escaped Locale token in format string not supported"
+        [InlineData("Text(123, \",###.0\")", true, false, "Error 10-18: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Locale-specific separators not supported"
+        [InlineData("Text(123, \"\\,###\\.\")", true, false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Escaped locale-specific separators not supported"
+        [InlineData("Text(123, \"#\", \"fr-FR\")", true, false, "Error 15-22: The language argument is not supported for the Text function in formula columns.")] // "Localization parameter"
+        [InlineData("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Locale token at start of format string not supported"
+        [InlineData("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.")] // "Non-literal format string"
+        [InlineData("Int(\"123\")", true, true)] // "Int on string"
+        [InlineData("Text(123)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("Text(123.4)", true, false, "Error 0-11: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("Text(1/2)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("Text(-123.4)", true, false, "Error 0-12: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("Text(1234567.89)", true, false, "Error 0-16: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("Text(If(1<0,2))", true, false, "Error 0-15: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
+        [InlineData("123 & 456", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] // "Implicit Conversion of Numbers is not supported"
+        [InlineData("123.45 & 456", true, false, "Error 0-6: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] // "Implicit Conversion of Numbers is not supported"
+        [InlineData("Concatenate(123, 456)", true, false, "Error 12-15: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] // "Implicit Conversion of Numbers is not supported"
+        [InlineData("123 & \"a\"", true, false, "Error 0-3: Use the Text function to convert numbers to text. Include a format in the second argument, which cannot include a thousands or decimal separator in formula columns.")] // "Implicit Conversion of Numbers is not supported"
         public void CheckTextFailures(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
         {
             var sqlEngine = new PowerFx2SqlEngine();
@@ -1021,52 +1021,52 @@ END
         }
 
         [Theory]
-        [InlineData("UTCNow()", true, typeof(DateTimeNoTimeZoneType))] //  "UTCNow"
-        [InlineData("UTCToday()", true, typeof(DateTimeNoTimeZoneType))] //  "UTCToday"
-        [InlineData("IsUTCToday(UTCNow())", true, typeof(BooleanType))] //  "IsUTCToday of UTCNow"
-        [InlineData("Now()", true, typeof(DateTimeType))] //  "Now"
-        [InlineData("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.")] //  "Today not supported"
-        [InlineData("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.")] //  "IsToday not supported"
-        [InlineData("IsUTCToday(UTCToday())", true, typeof(BooleanType))] //  "IsUTCToday of UTCToday"
-        [InlineData("IsUTCToday(tziDateOnly)", true, typeof(BooleanType))] //  "IsUTCToday of TZI Date Only"
-        [InlineData("IsUTCToday(dateOnly)", true, typeof(BooleanType))] //  "IsUTCToday of Date Only"
-        [InlineData("IsUTCToday(userLocalDateTime)", true, typeof(BooleanType))] //  "IsUTCToday of User Local Date Time"
-        [InlineData("userLocalDateTime", true, typeof(DateTimeType))] //  "User Local Date Time"
-        [InlineData("userLocalDateOnly", true, typeof(DateTimeType))] //  "User Local Date Only"
-        [InlineData("dateOnly", true, typeof(DateType))] //  "Date Only"
-        [InlineData("tziDateTime", true, typeof(DateTimeNoTimeZoneType))] //  "TZI Date Time"
-        [InlineData("tziDateOnly", true, typeof(DateTimeNoTimeZoneType))] //  "TZI Date Only"
-        [InlineData("dateOnly + 0.25", true, typeof(DateType))] //  "DateOnly add fractional day"
-        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Days)", true, typeof(DateType))] //  "DateAdd Days Date Only"
-        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Hours)", true, typeof(DateType))] //  "DateAdd Hours Date Only"
-        [InlineData("DateAdd(tziDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeNoTimeZoneType))] //  "DateAdd TZI Date Only"
-        [InlineData("DateAdd(userLocalDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeType))] //  "DateAdd User Local Date Only"
-        [InlineData("If(true, tziDateOnly, dateOnly)", true, typeof(DateTimeNoTimeZoneType))] //  "If TZI Date Only vs. Date Only"
-        [InlineData("If(true, userLocalDateTime, userLocalDateOnly)", true, typeof(DateTimeType))] //  "If User Local Date Time vs. User Local Date Only"
-        [InlineData("If(true, tziDateOnly, tziDateTime)", true, typeof(DateTimeNoTimeZoneType))] //  "If TZI Date Only vs. TZI Date Time"
-        [InlineData("Switch(1, 1, userLocalDateOnly, userLocalDateTime)", true, typeof(DateTimeType))] //  "Switch UserLocal Date Only vs. User Local Date Time"
-        [InlineData("Switch(1, 2, tziDateOnly, userLocalDateOnly)", false, null, "Error 26-43: This operation cannot be performed on values which are of different Date Time Behaviors.")] //  "Switch TZI Date Only vs. User Local Date Only"
-        [InlineData("Switch(1, 2, dateOnly, dateOnly)", true, typeof(DateType))] //  "Switch Date Only vs. Date Only"
-        [InlineData("Text(tziDateOnly)", false, null, "Error 5-16: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] //  "Text for TZI Date Only"
-        [InlineData("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.")] //  "Text for User Local Date Time"
-        [InlineData("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] //  "Text for UTCNow"
-        [InlineData("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.")] //  "DateDiff User Local Date Time vs TZI Date Only"
-        [InlineData("DateDiff(dateOnly, tziDateOnly)", true, typeof(SqlDecimalType))] //  "DateDiff Date Only vs TZI Date Only"
-        [InlineData("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.")] //  "DateDiff User Local Date Only vs Date Only"
-        [InlineData("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType))] //  "DateDiff User Local Date Only vs User Local Date Time"
-        [InlineData("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType))] //  "> User Local Date Time vs. User Local Date Only"
-        [InlineData("tziDateTime <> tziDateOnly", true, typeof(BooleanType))] //  "<> TZI Date Time vs. TZI Date Only"
+        [InlineData("UTCNow()", true, typeof(DateTimeNoTimeZoneType))] // "UTCNow"
+        [InlineData("UTCToday()", true, typeof(DateTimeNoTimeZoneType))] // "UTCToday"
+        [InlineData("IsUTCToday(UTCNow())", true, typeof(BooleanType))] // "IsUTCToday of UTCNow"
+        [InlineData("Now()", true, typeof(DateTimeType))] // "Now"
+        [InlineData("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.")] // "Today not supported"
+        [InlineData("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.")] // "IsToday not supported"
+        [InlineData("IsUTCToday(UTCToday())", true, typeof(BooleanType))] // "IsUTCToday of UTCToday"
+        [InlineData("IsUTCToday(tziDateOnly)", true, typeof(BooleanType))] // "IsUTCToday of TZI Date Only"
+        [InlineData("IsUTCToday(dateOnly)", true, typeof(BooleanType))] // "IsUTCToday of Date Only"
+        [InlineData("IsUTCToday(userLocalDateTime)", true, typeof(BooleanType))] // "IsUTCToday of User Local Date Time"
+        [InlineData("userLocalDateTime", true, typeof(DateTimeType))] // "User Local Date Time"
+        [InlineData("userLocalDateOnly", true, typeof(DateTimeType))] // "User Local Date Only"
+        [InlineData("dateOnly", true, typeof(DateType))] // "Date Only"
+        [InlineData("tziDateTime", true, typeof(DateTimeNoTimeZoneType))] // "TZI Date Time"
+        [InlineData("tziDateOnly", true, typeof(DateTimeNoTimeZoneType))] // "TZI Date Only"
+        [InlineData("dateOnly + 0.25", true, typeof(DateType))] // "DateOnly add fractional day"
+        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Days)", true, typeof(DateType))] // "DateAdd Days Date Only"
+        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Hours)", true, typeof(DateType))] // "DateAdd Hours Date Only"
+        [InlineData("DateAdd(tziDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeNoTimeZoneType))] // "DateAdd TZI Date Only"
+        [InlineData("DateAdd(userLocalDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeType))] // "DateAdd User Local Date Only"
+        [InlineData("If(true, tziDateOnly, dateOnly)", true, typeof(DateTimeNoTimeZoneType))] // "If TZI Date Only vs. Date Only"
+        [InlineData("If(true, userLocalDateTime, userLocalDateOnly)", true, typeof(DateTimeType))] // "If User Local Date Time vs. User Local Date Only"
+        [InlineData("If(true, tziDateOnly, tziDateTime)", true, typeof(DateTimeNoTimeZoneType))] // "If TZI Date Only vs. TZI Date Time"
+        [InlineData("Switch(1, 1, userLocalDateOnly, userLocalDateTime)", true, typeof(DateTimeType))] // "Switch UserLocal Date Only vs. User Local Date Time"
+        [InlineData("Switch(1, 2, tziDateOnly, userLocalDateOnly)", false, null, "Error 26-43: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "Switch TZI Date Only vs. User Local Date Only"
+        [InlineData("Switch(1, 2, dateOnly, dateOnly)", true, typeof(DateType))] // "Switch Date Only vs. Date Only"
+        [InlineData("Text(tziDateOnly)", false, null, "Error 5-16: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for TZI Date Only"
+        [InlineData("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.")] // "Text for User Local Date Time"
+        [InlineData("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for UTCNow"
+        [InlineData("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Time vs TZI Date Only"
+        [InlineData("DateDiff(dateOnly, tziDateOnly)", true, typeof(SqlDecimalType))] // "DateDiff Date Only vs TZI Date Only"
+        [InlineData("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Only vs Date Only"
+        [InlineData("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType))] // "DateDiff User Local Date Only vs User Local Date Time"
+        [InlineData("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType))] // "> User Local Date Time vs. User Local Date Only"
+        [InlineData("tziDateTime <> tziDateOnly", true, typeof(BooleanType))] // "<> TZI Date Time vs. TZI Date Only"
 
         // Regressed with https://github.com/microsoft/Power-Fx/issues/1379 
-        // [InlineData("UTCToday() = tziDateOnly", true, typeof(BooleanType))] //  "= UTCToday vs. TZI Date Only"
-        // [InlineData("UTCToday() = UTCNow()", true, typeof(BooleanType))] //  "= UTCToday UTCNow"
+        // [InlineData("UTCToday() = tziDateOnly", true, typeof(BooleanType))] // "= UTCToday vs. TZI Date Only"
+        // [InlineData("UTCToday() = UTCNow()", true, typeof(BooleanType))] // "= UTCToday UTCNow"
 
-        [InlineData("UTCToday() = dateOnly", true, typeof(BooleanType))] //  "= UTCToday vs. Date Only"
+        [InlineData("UTCToday() = dateOnly", true, typeof(BooleanType))] // "= UTCToday vs. Date Only"
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
-        [InlineData("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.")] //  "= TZI Date Time vs. User Local Date Only"
-        [InlineData("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.")] //  "<= Date Only vs. User Local Date Only"
-        [InlineData("Day(dateOnly)", true, typeof(SqlDecimalType))] //  "Day of Date Only"
-        [InlineData("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")] //  "Day of User Local Date Only"
+        [InlineData("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "= TZI Date Time vs. User Local Date Only"
+        [InlineData("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "<= Date Only vs. User Local Date Only"
+        [InlineData("Day(dateOnly)", true, typeof(SqlDecimalType))] // "Day of Date Only"
+        [InlineData("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")] // "Day of User Local Date Only"
         [InlineData("WeekNum(dateOnly)", true, typeof(SqlDecimalType))]
         [InlineData("WeekNum(tziDateTime)", true, typeof(SqlDecimalType))]
         [InlineData("WeekNum(tziDateOnly)", true, typeof(SqlDecimalType))]
@@ -1078,8 +1078,8 @@ END
         [InlineData("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
         [InlineData("DateDiff(UTCNow(), Now())", false, null, "Error 0-25: This operation cannot be performed on values which are of different Date Time Behaviors.")]
         [InlineData("Now() < UTCNow()", false, null, "Error 6-7: This operation cannot be performed on values which are of different Date Time Behaviors.")]
-        [InlineData("DateAdd(Now(), 1, TimeUnit.Days)", true, typeof(DateTimeType))] //  "DateAdd Days User Local"
-        [InlineData("IsUTCToday(Now())", true, typeof(BooleanType))] //  "IsUTCToday of Now function"
+        [InlineData("DateAdd(Now(), 1, TimeUnit.Days)", true, typeof(DateTimeType))] // "DateAdd Days User Local"
+        [InlineData("IsUTCToday(Now())", true, typeof(BooleanType))] // "IsUTCToday of Now function"
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
             var model = new EntityMetadataModel
@@ -1208,9 +1208,9 @@ END
         }
 
         [Theory]
-        [InlineData("Float", false, "Error 0-5: Columns of type Double are not supported in formula columns.")] //  "Local Float"
-        [InlineData("Other.Float", true)] //  "Remote non-float with name collision"
-        [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] //  "Remote float"
+        [InlineData("Float", false, "Error 0-5: Columns of type Double are not supported in formula columns.")] // "Local Float"
+        [InlineData("Other.Float", true)] // "Remote non-float with name collision"
+        [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
@@ -1236,8 +1236,8 @@ END
         }
 
         [Theory]
-        [InlineData("'Virtual Lookup'", "Error 0-16: The result type Record is not supported in formula columns.")] //  "Direct virtual lookup access"
-        [InlineData("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.")] //  "Virtual lookup field access"
+        [InlineData("'Virtual Lookup'", "Error 0-16: The result type Record is not supported in formula columns.")] // "Direct virtual lookup access"
+        [InlineData("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.")] // "Virtual lookup field access"
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
@@ -1688,16 +1688,16 @@ END
         }
 
         [Theory]
-        [InlineData("new_price * new_quantity", "Price * Quantity")] //  "Logical Names"
-        [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] //  "ThisRecord"
-        [InlineData("conflict1 + conflict2", "'Conflict (conflict1)' + 'Conflict (conflict2)'")] //  "Conflict"
-        [InlineData("new_price + refg.data", "Price + Other.Data")] //  "Lookup"
-        [InlineData("refg.data + refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", "Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'")] //  "Multiple Lookups"
-        [InlineData("refg.data + self.new_price", "Other.Data + 'Self Reference'.Price")] //  "Self Reference"
-        [InlineData("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)")] //  "CDS Enum literal"
-        [InlineData("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)")] //  "CDS Global Enum literal"
-        [InlineData("DateAdd(UTCToday(), new_quantity, TimeUnit.Months)", "DateAdd(UTCToday(), Quantity, TimeUnit.Months)")] //  "Enum literal"
-        [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] //  "Preserves whitespace and comments"
+        [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
+        [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] // "ThisRecord"
+        [InlineData("conflict1 + conflict2", "'Conflict (conflict1)' + 'Conflict (conflict2)'")] // "Conflict"
+        [InlineData("new_price + refg.data", "Price + Other.Data")] // "Lookup"
+        [InlineData("refg.data + refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", "Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'")] // "Multiple Lookups"
+        [InlineData("refg.data + self.new_price", "Other.Data + 'Self Reference'.Price")] // "Self Reference"
+        [InlineData("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)")] // "CDS Enum literal"
+        [InlineData("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)")] // "CDS Global Enum literal"
+        [InlineData("DateAdd(UTCToday(), new_quantity, TimeUnit.Months)", "DateAdd(UTCToday(), Quantity, TimeUnit.Months)")] // "Enum literal"
+        [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] // "Preserves whitespace and comments"
         public void Translate(string expr, string translation)
         {
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
@@ -1713,22 +1713,22 @@ END
         }
 
         [Theory]
-        [InlineData("Price * Quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] //  "Display Names"
-        [InlineData("new_price * new_quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] //  "Logical Names"
-        [InlineData("\"John Smith\"", "#$string$#")] //  "String literal"
-        [InlineData("123456", "#$number$#")] //  "Numeric literal"
-        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$number$#)")] //  "Function with boolean literal"
-        [InlineData("Text(123, \"0000\")", "Text(#$number$#, #$string$#)")] //  "Text with format string"
-        [InlineData("If(123,\"Foo\"", "If(#$number$#, #$string$#)")] //  "Invalid formula - cleaned up"
-        [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'", "#$FieldDecimal$# + #$FieldDecimal$#")] //  "Conflict"
-        [InlineData("Price + Other.Data", "#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] //  "Lookup"
-        [InlineData("Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$#")] //  "Multiple Lookups"
-        [InlineData("Other.Data + 'Self Reference'.Price", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] //  "Self Reference"
-        [InlineData("If(true, \"random string\", Text(Price))", "If(#$boolean$#, #$string$#, Text(#$FieldDecimal$#))")] //  "Function"
-        [InlineData("If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)", "If(#$FieldPicklist$# = #$OptionSet$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] //  "CDS Enum literal"
-        [InlineData("If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)", "If(#$FieldPicklist$# = #$FieldPicklist$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] //  "CDS Global Enum literal"
-        [InlineData("DateAdd(UTCToday(), Quantity, TimeUnit.Months)", "DateAdd(UTCToday(), #$FieldDecimal$#, #$Enum$#.#$righthandid$#)")] //  "Enum literal"
-        [InlineData("/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'", "#$FieldDecimal$# + -#$FieldDecimal$#")] //  "Preserves whitespace and comments"
+        [InlineData("Price * Quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Display Names"
+        [InlineData("new_price * new_quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Logical Names"
+        [InlineData("\"John Smith\"", "#$string$#")] // "String literal"
+        [InlineData("123456", "#$number$#")] // "Numeric literal"
+        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$number$#)")] // "Function with boolean literal"
+        [InlineData("Text(123, \"0000\")", "Text(#$number$#, #$string$#)")] // "Text with format string"
+        [InlineData("If(123,\"Foo\"", "If(#$number$#, #$string$#)")] // "Invalid formula - cleaned up"
+        [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'", "#$FieldDecimal$# + #$FieldDecimal$#")] // "Conflict"
+        [InlineData("Price + Other.Data", "#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] // "Lookup"
+        [InlineData("Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$#")] // "Multiple Lookups"
+        [InlineData("Other.Data + 'Self Reference'.Price", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] // "Self Reference"
+        [InlineData("If(true, \"random string\", Text(Price))", "If(#$boolean$#, #$string$#, Text(#$FieldDecimal$#))")] // "Function"
+        [InlineData("If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)", "If(#$FieldPicklist$# = #$OptionSet$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] // "CDS Enum literal"
+        [InlineData("If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)", "If(#$FieldPicklist$# = #$FieldPicklist$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] // "CDS Global Enum literal"
+        [InlineData("DateAdd(UTCToday(), Quantity, TimeUnit.Months)", "DateAdd(UTCToday(), #$FieldDecimal$#, #$Enum$#.#$righthandid$#)")] // "Enum literal"
+        [InlineData("/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'", "#$FieldDecimal$# + -#$FieldDecimal$#")] // "Preserves whitespace and comments"
 
         public void Sanitize(string expr, string sanitized)
         {
@@ -1742,20 +1742,20 @@ END
         }
 
         [Theory]
-        [InlineData("01,200", null, null, false)] //  "Default numeric literal with comma"
-        [InlineData("01,200", "en-US", null, false)] //  "English numeric literal with comma"
-        [InlineData("01,200", "fr-FR", "01.200", true)] //  "French numeric literal with comma (decimal)"
-        [InlineData("01,000", "fr-FR", "01.000", true)] //  "French numeric literal with comma (decimal) with all decimal zeros"
-        [InlineData("01.200", null, "01.200", true)] //  "Default numeric literal with period"
-        [InlineData("01.200", "en-US", "01.200", true)] //  "English numeric literal with period"
-        [InlineData("01.200", "fr-FR", "01.200", false)] //  "French numeric literal with period"
-        [InlineData("123", null, "123", true)] //  "Default whole number literal"
-        [InlineData("123", "en-US", "123", true)] //  "English whole number literal"
-        [InlineData("123", "fr-FR", "123", true)] //  "French whole number literal"
-        [InlineData("If(true, 1.1, 2)", null, "If(true, 1.1, 2)", true)] //  "Default If with comma separators"
-        [InlineData("If(true, 1.1, 2)", "en-US", "If(true, 1.1, 2)", true)] //  "English If with comma separators"
-        [InlineData("If(true, 1, 2)", "fr-FR", null, false)] //  "French If with comma separators"
-        [InlineData("If(true; 1,1; 2)", "fr-FR", "If(true, 1.1, 2)", true)] //  "French If with semicolon separators and comma (decimal)"
+        [InlineData("01,200", null, null, false)] // "Default numeric literal with comma"
+        [InlineData("01,200", "en-US", null, false)] // "English numeric literal with comma"
+        [InlineData("01,200", "fr-FR", "01.200", true)] // "French numeric literal with comma (decimal)"
+        [InlineData("01,000", "fr-FR", "01.000", true)] // "French numeric literal with comma (decimal) with all decimal zeros"
+        [InlineData("01.200", null, "01.200", true)] // "Default numeric literal with period"
+        [InlineData("01.200", "en-US", "01.200", true)] // "English numeric literal with period"
+        [InlineData("01.200", "fr-FR", "01.200", false)] // "French numeric literal with period"
+        [InlineData("123", null, "123", true)] // "Default whole number literal"
+        [InlineData("123", "en-US", "123", true)] // "English whole number literal"
+        [InlineData("123", "fr-FR", "123", true)] // "French whole number literal"
+        [InlineData("If(true, 1.1, 2)", null, "If(true, 1.1, 2)", true)] // "Default If with comma separators"
+        [InlineData("If(true, 1.1, 2)", "en-US", "If(true, 1.1, 2)", true)] // "English If with comma separators"
+        [InlineData("If(true, 1, 2)", "fr-FR", null, false)] // "French If with comma separators"
+        [InlineData("If(true; 1,1; 2)", "fr-FR", "If(true, 1.1, 2)", true)] // "French If with semicolon separators and comma (decimal)"
         public void CompileLocalizedScripts(string expr, string localeName, string logicalFormula, bool success)
         {
             CultureInfo culture = localeName switch

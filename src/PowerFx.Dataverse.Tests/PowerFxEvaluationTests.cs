@@ -117,14 +117,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
-            {
-                if (connectionString == null)
-                {
-                    throw new InvalidOperationException($"ConnectionString not set");
-                }
+            {                
                 Console = console;
-                _connection = new SqlConnection(connectionString);
-                _connection.Open();
+
+                if (!string.IsNullOrEmpty(connectionString))
+                {
+                    _connection = new SqlConnection(connectionString);
+                    _connection.Open();
+                }
+                else
+                {
+                    _connection = null;
+                }
             }
 
             public void Dispose()
@@ -173,6 +177,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (setupHandlerName.IndexOf("DisableReservedKeywords", StringComparison.OrdinalIgnoreCase) > -1)
                 {
                     return new RunResult() { UnsupportedReason = "DisableReservedKeywords is not supported." };
+                }
+
+                if (_connection == null)
+                {
+                    return new RunResult() { UnsupportedReason = "No connection string provided." };
                 }
 
                 if (iSetup.HandlerName != null ||

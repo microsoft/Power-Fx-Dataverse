@@ -4,16 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Xunit;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Threading;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class DataverseEntityCacheTests
     {
         [Fact]
@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             Entity[] entities = Enumerable.Range(0, 5).Select((i) => new Entity("entity", Guid.NewGuid())).ToArray();
             DataverseEntityCache cache = new DataverseEntityCache(new TestOrganizationService(), 3, new TimeSpan(0, 0, 0, 0, 80));
-            
+
             cache.AddCacheEntry(entities[0]);
             Assert.Equal(1, cache.CacheSize); // cache: 0
 
@@ -51,7 +51,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Null(cache.GetEntityFromCache(entities[3].Id));
             Assert.Null(cache.GetEntityFromCache(entities[4].Id));
 
-            Assert.Equal(0, cache.CacheSize); 
+            Assert.Equal(0, cache.CacheSize);
 
             cache.AddCacheEntry(entities[0]);
             Assert.Equal(1, cache.CacheSize); // cache: 0

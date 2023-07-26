@@ -4,17 +4,17 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Intellisense;
-using Xunit;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Intellisense;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class DataverseIntellisenseTests
     {
         // For testing, provide a new engine instance each time to ensure their caches are reset between tests. 
@@ -106,9 +106,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "TimeUnit.Quarters",
             "TimeUnit.Seconds",
             "TimeUnit.Years")]
-        [InlineData("ErrorKin|")] //  "ErrorKind is excluded"
-        [InlineData("DateTimeFo|")] //  "DateTimeFormat is excluded"
-        [InlineData("Ye|", "TimeUnit.Years", "Year")] //  "Only Namespaced Enums"
+        [InlineData("ErrorKin|")] // "ErrorKind is excluded"
+        [InlineData("DateTimeFo|")] // "DateTimeFormat is excluded"
+        [InlineData("Ye|", "TimeUnit.Years", "Year")] // "Only Namespaced Enums"
         [InlineData("DateAdd(x, 1,|",
             "'Boolean (Locals)'",
             "'Global Picklist'",
@@ -120,21 +120,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "TimeUnit.Months",
             "TimeUnit.Quarters",
             "TimeUnit.Seconds",
-            "TimeUnit.Years")] // "TimeUnit inside DateAdd"            
+            "TimeUnit.Years")] // "TimeUnit inside DateAdd"
         [InlineData("Text(UTCToday(),|",
             "'Boolean (Locals)'",
             "'Global Picklist'",
             "'Rating (Locals)'")] // "DateTimeFormat in Text on Date"            
-        [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'")] //  "One To Many not shown"
-        [InlineData("Sel|", "'Self Reference'")] //  "Lookup (Many To One) is shown"
-        [InlineData("Err|", "IfError", "IsError")] //  "IfError and IsError are shown, but Error is excluded"
-        [InlineData("Tod|", "IsUTCToday", "UTCToday")] //  "Today and IsToday are not suggested"
-        [InlineData("Pric|", "Old_Price", "Price")] //  "Display Name of field is suggested, but logical name is not"
-        [InlineData("Floa|")] //  "Floating point fields are not suggested at all"
-        [InlineData("Other.Actual|")] //  "Floating point fields on relationships are not suggested"
-        [InlineData("Other.Floa|", "Float")] //  "Name collisions with floating point fields are handled"
-        [InlineData("Virtual|", "'Virtual Lookup'")] //  "Lookups to virtual tables are still suggested"
-        [InlineData("'Virtual Lookup'.|")] //  "Fields on virtual tables are not"
+        [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'")] // "One To Many not shown"
+        [InlineData("Sel|", "'Self Reference'")] // "Lookup (Many To One) is shown"
+        [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
+        [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
+        [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
+        [InlineData("Floa|")] // "Floating point fields are not suggested at all"
+        [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
+        [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"
+        [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"
+        [InlineData("'Virtual Lookup'.|")] // "Fields on virtual tables are not"
         public void CheckSuggestions(string expression, params string[] expectedSuggestions)
         {
             var intellisense = Suggest(expression);
@@ -145,13 +145,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Rat|", "Rating", "'Rating (Locals)'")] //  "Picklist name with no conflict"
-        [InlineData("'Rating (Locals)'.|", "Cold", "Hot", "Warm")] //  "Disambiguated picklist values with no conflict"
-        [InlineData("Other.Rating + Rating|", "Rating", "'Rating (Locals)'", "'Rating (Remotes)'")] //  "Picklist with conflict"
-        [InlineData("Other.Rating + 'Rating (Locals)'.|", "Cold", "Hot", "Warm")] //  "Explicit Picklist one values with conflict"
-        [InlineData("Other.Rating + 'Rating (Remotes)'.|", "Large", "Medium", "Small")] //  "Explicit Picklist two values with conflict"
-        [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] //  "Global picklist"
-        [InlineData("[@'Global Picklist'].|", "High", "Low", "Medium")] //  "Global picklist values"
+        [InlineData("Rat|", "Rating", "'Rating (Locals)'")] // "Picklist name with no conflict"
+        [InlineData("'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Disambiguated picklist values with no conflict"
+        [InlineData("Other.Rating + Rating|", "Rating", "'Rating (Locals)'", "'Rating (Remotes)'")] // "Picklist with conflict"
+        [InlineData("Other.Rating + 'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Explicit Picklist one values with conflict"
+        [InlineData("Other.Rating + 'Rating (Remotes)'.|", "Large", "Medium", "Small")] // "Explicit Picklist two values with conflict"
+        [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] // "Global picklist"
+        [InlineData("[@'Global Picklist'].|", "High", "Low", "Medium")] // "Global picklist values"
         public void CheckOptionSetSuggestions(string expression, params string[] expectedSuggestions)
         {
             var intellisense = Suggest(expression);
@@ -187,16 +187,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Strin|", "String")] //  "String suggested"
-        [InlineData("Hyperlin|")] //  "Hyperlink not suggested"
-        [InlineData("Emai|")] //  "Email not suggested"
-        [InlineData("Ticke|")] //  "Ticker not suggested"        
-        [InlineData("Duratio|")] //  "Duration not suggested"
-        [InlineData("Doubl|")] //  "Double not suggested"
-        [InlineData("Mone|", "Money")] //  "Currency suggested"
-        [InlineData("Imag|")] //  "Image not suggested"
-        [InlineData("Fil|")] //  "File not suggested"
-        [InlineData("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'")] //  "MultiSelect suggested"
+        [InlineData("Strin|", "String")] // "String suggested"
+        [InlineData("Hyperlin|")] // "Hyperlink not suggested"
+        [InlineData("Emai|")] // "Email not suggested"
+        [InlineData("Ticke|")] // "Ticker not suggested"        
+        [InlineData("Duratio|")] // "Duration not suggested"
+        [InlineData("Doubl|")] // "Double not suggested"
+        [InlineData("Mone|", "Money")] // "Currency suggested"
+        [InlineData("Imag|")] // "Image not suggested"
+        [InlineData("Fil|")] // "File not suggested"
+        [InlineData("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'")] // "MultiSelect suggested"
         public void CheckUnsupportedTypeSuggestions(string expression, params string[] expectedSuggestions)
         {
             var intellisense = Suggest(expression, _allAttributesEngine);
