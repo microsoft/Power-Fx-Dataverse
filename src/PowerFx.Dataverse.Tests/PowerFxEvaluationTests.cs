@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -114,10 +115,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private class SqlRunner : BaseRunner, IDisposable
         {
             private SqlConnection _connection;
+            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(10);
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
-            {                
+            {
                 Console = console;
 
                 if (!string.IsNullOrEmpty(connectionString))
@@ -222,65 +224,66 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         if (compileResult._unsupportedWarnings.Count > 0)
                         {
                             result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                        } 
+                        }
                     }
                     return result;
                 }
 
+                _concurrencySemaphore.Wait();
+
                 try
                 {
-                    var cx = _connection;
-                    using (var tx = cx.BeginTransaction())
-                    {
-                        var createCmd = cx.CreateCommand();
-                        createCmd.Transaction = tx;
-                        createCmd.CommandText = compileResult.SqlFunction;
-                        var rows = createCmd.ExecuteNonQuery();
+                    SqlConnection cx = _connection;
+                    using SqlTransaction tx = cx.BeginTransaction();
+                    using SqlCommand createCmd = cx.CreateCommand();
 
-                        createCmd.CommandText = $@"CREATE TABLE placeholder (
+                    createCmd.Transaction = tx;
+                    createCmd.CommandText = compileResult.SqlFunction;
+                    int rows = createCmd.ExecuteNonQuery();
+
+                    createCmd.CommandText = $@"CREATE TABLE placeholder (
     [placeholderid] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     [dummy] INT NULL,
     [calc]  AS ([dbo].{compileResult.SqlCreateRow}))";
-                        createCmd.ExecuteNonQuery();
+                    createCmd.ExecuteNonQuery();
 
-                        var insertCmd = cx.CreateCommand();
-                        insertCmd.Transaction = tx;
-                        insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
-                        insertCmd.ExecuteNonQuery();
+                    var insertCmd = cx.CreateCommand();
+                    insertCmd.Transaction = tx;
+                    insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
+                    insertCmd.ExecuteNonQuery();
 
-                        var selectCmd = cx.CreateCommand();
-                        selectCmd.Transaction = tx;
-                        selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
-                        using (var reader = selectCmd.ExecuteReader())
+                    var selectCmd = cx.CreateCommand();
+                    selectCmd.Transaction = tx;
+                    selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
+                    using (var reader = selectCmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        var dummyValue = reader.GetInt32(0);
+                        if (dummyValue != 7)
                         {
-                            reader.Read();
-                            var dummyValue = reader.GetInt32(0);
-                            if (dummyValue != 7)
-                            {
-                                throw new Exception("Dummy integer did not round-trip");
-                            }
-
-                            var calcValue = reader.GetValue(1);
-
-                            if (calcValue is DBNull)
-                            {
-                                calcValue = null;
-                            }
-
-                            var fv = PrimitiveValueConversions.Marshal(calcValue, compileResult.ReturnType);
-                            var result = new RunResult(fv);
-
-                            // Evaluation ran, but failed due to unsupported features.
-                            if (compileResult._unsupportedWarnings != null)
-                            {
-                                if (compileResult._unsupportedWarnings.Count > 0)
-                                {
-                                    result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                                }
-                            }
-
-                            return result;
+                            throw new Exception("Dummy integer did not round-trip");
                         }
+
+                        var calcValue = reader.GetValue(1);
+
+                        if (calcValue is DBNull)
+                        {
+                            calcValue = null;
+                        }
+
+                        var fv = PrimitiveValueConversions.Marshal(calcValue, compileResult.ReturnType);
+                        var result = new RunResult(fv);
+
+                        // Evaluation ran, but failed due to unsupported features.
+                        if (compileResult._unsupportedWarnings != null)
+                        {
+                            if (compileResult._unsupportedWarnings.Count > 0)
+                            {
+                                result.UnsupportedReason = compileResult._unsupportedWarnings[0];
+                            }
+                        }
+
+                        return result;
                     }
                 }
                 catch (Exception e)
@@ -290,6 +293,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Console.WriteLine(e.Message);
                     Assert.True(false, $"Failed SQL for {expr}");
                     throw;
+                }
+                finally
+                {
+                    _concurrencySemaphore.Release();
                 }
             }
 
