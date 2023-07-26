@@ -990,6 +990,19 @@ namespace Microsoft.PowerFx.Dataverse
 
                         var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType());
 
+                        if (type == FormulaType.Decimal)
+                        {
+                            if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
+                            {
+                                throw new SqlCompileException(SqlCompileException.ColumnFormatNotSupported, sourceContext, column.TypeCode, column.FormatName);
+                            }
+
+                            if (column.TypeCode == AttributeTypeCode.Double)
+                            {
+                                throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
+                            }
+                        }
+
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
                             type == FormulaType.Hyperlink)
