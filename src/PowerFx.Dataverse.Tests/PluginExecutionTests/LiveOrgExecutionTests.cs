@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [Theory]
+        [SkippableTheory]
         // Skipp this test case?
         // Changing this to FALSE will trigger this test, which might take 2-3 hours.
         [InlineData(true)]
