@@ -55,4 +55,11 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- https://xunit.net/docs/configuration-files -->
+    <None Include="..\xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -2,11 +2,6 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,6 +10,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Types;
+using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx
 {
@@ -120,7 +120,9 @@ namespace Microsoft.PowerFx
 
             config.AddOptionSet(optionsSet);
 
+#pragma warning disable CS0618 // Type or member is obsolete
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
+#pragma warning restore CS0618 // Type or member is obsolete
 
             _engine = new RecalcEngine(config);
         }

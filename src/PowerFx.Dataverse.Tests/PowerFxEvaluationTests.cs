@@ -4,23 +4,32 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Types;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
-
     public class ExpressionEvaluationTests
     {
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        public readonly ITestOutputHelper Console;
+        private readonly SqlRunner sqlRunner;
+
+        public ExpressionEvaluationTests(ITestOutputHelper output)
+        {
+            Console = output;
+            sqlRunner = NewSqlRunner();
+        }
+
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         /// <summary>
         /// The connection string for the database to execute generated SQL
@@ -28,10 +37,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <example> 
         /// "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
         /// </example>
-        static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
         // .txt tests will be filtered to match these seetings. 
-        static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
+        private static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
         {
             { "PowerFxV1CompatibilityRules", true },
             { "NumberIsFloat", DataverseEngine.NumberIsFloat },
@@ -41,62 +50,50 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // These need to be consistent with _testSettings.
         private SqlRunner NewSqlRunner()
         {
-            return new SqlRunner(ConnectionString)
+            return new SqlRunner(ConnectionString, Console)
             {
                 NumberIsFloat = DataverseEngine.NumberIsFloat,
                 Features = PowerFx2SqlEngine.DefaultFeatures
             };
         }
 
-        [SkippableFact]
-        public void RunSqlTestCases()
-        {            
-            // short-circuit if connection string is not set
-            if (ConnectionString == null)
+        [SkippableTheory]
+        [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules")]
+        public void RunSqlTestCases(ExpressionTestCase testCase)
+        {
+            (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
+
+            var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";
+            switch (result)
             {
-                Skip.If(true, "Skipping SQL tests - no connection string set");
-                return;
-            }
+                case TestResult.Pass:
+                    break;
 
-            // Build step copied all tests to output dir.
-            using (var sql = NewSqlRunner())
-            {
-                var runner = new TestRunner(sql);
-                runner.AddDir(_testSettings);
+                case TestResult.Fail:
+                    Assert.True(false, prefix + message);
+                    break;
 
-                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
-                {                                     
-                    runner.AddFile(_testSettings, path);
-                }
-
-                var result = runner.RunTests();
-
-                // Any failures introduced by new tests or unsupported features should be overridden
-                Assert.Equal(0, result.Fail); // result.Output
-
-                // Verify that we're actually running tests. 
-                Assert.True(result.Total > 4000);
-                Assert.True(result.Pass > 1000);
+                case TestResult.Skip:
+                    Skip.If(true, prefix + message);
+                    break;
             }
         }
 
-        // Use this for local testing of a single testcase (uncomment "TestMethod")
-        [Fact(Skip = "Not enabled")]
-        public void RunSingleTestCase()
+        [Fact]
+        public void ScanForTxtParseErrors()
         {
-            using (var sql = NewSqlRunner())
+            MethodInfo method = GetType().GetMethod(nameof(RunSqlTestCases));
+            TxtFileDataAttribute attr = (TxtFileDataAttribute)method.GetCustomAttributes(typeof(TxtFileDataAttribute), false)[0];
+
+            // Verify this runs without throwing an exception.
+            IEnumerable<object[]> list = attr.GetData(method);
+            Console.WriteLine($"{list.Count()} test cases found.");
+
+            // And doesn't report back any test failures. 
+            foreach (object[] batch in list)
             {
-                var runner = new TestRunner(sql);
-                runner.AddFile(_testSettings, @"c:\temp\t.txt");
-                /*
-                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
-                {
-                    runner.AddFile(DataverseEngine.NumberIsFloat, path);
-                }*/
-
-                var result = runner.RunTests();
-
-                Assert.Equal(0, result.Fail); // result.Output
+                var item = (ExpressionTestCase)batch[0];
+                Assert.Null(item.FailMessage);
             }
         }
 
@@ -117,13 +114,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private class SqlRunner : BaseRunner, IDisposable
         {
             private SqlConnection _connection;
+            public readonly ITestOutputHelper Console;
 
-            public SqlRunner(string connectionString)
+            public SqlRunner(string connectionString, ITestOutputHelper console)
             {
                 if (connectionString == null)
                 {
                     throw new InvalidOperationException($"ConnectionString not set");
                 }
+                Console = console;
                 _connection = new SqlConnection(connectionString);
                 _connection.Open();
             }
@@ -160,6 +159,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             protected override async Task<RunResult> RunAsyncInternal(string expr, string setupHandlerName = null)
             {
                 var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
+
+                if (iSetup.Flags.HasFlag(Core.Parser.TexlParser.Flags.EnableExpressionChaining))
+                {
+                    return new RunResult() { UnsupportedReason = "Expression chaining is not supported." };
+                }
+
+                if (setupHandlerName.IndexOf("disable:NumberIsFloat", StringComparison.OrdinalIgnoreCase) > -1)
+                {
+                    return new RunResult() { UnsupportedReason = "NumberIsFloat=false is not supported." };
+                }
+
+                if (setupHandlerName.IndexOf("DisableReservedKeywords", StringComparison.OrdinalIgnoreCase) > -1)
+                {
+                    return new RunResult() { UnsupportedReason = "DisableReservedKeywords is not supported." };
+                }
 
                 if (iSetup.HandlerName != null ||
                     iSetup.TimeZoneInfo != null)
@@ -262,7 +276,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Failed SQL for {expr}");
+                    this.Console.WriteLine($"Failed SQL for {expr}");
                     Console.WriteLine(compileResult.SqlFunction);
                     Console.WriteLine(e.Message);
                     Assert.True(false, $"Failed SQL for {expr}");
