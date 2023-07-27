@@ -47,9 +47,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // For example:
             // $"Url=https://aurorabapenv67c10.crm10.dynamics.com/; Username={username}; Password={password}; authtype=OAuth";
 
-            var svcClient = new ServiceClient(cx);
-            svcClient.EnableAffinityCookie = true;
-            svcClient.UseWebApi = false;
+            var svcClient = new ServiceClient(cx)
+            {
+                EnableAffinityCookie = true,
+                UseWebApi = false
+            };
 
             return svcClient;
         }
