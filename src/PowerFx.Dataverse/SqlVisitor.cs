@@ -934,6 +934,7 @@ namespace Microsoft.PowerFx.Dataverse
                 switch (dkind)
                 {
                     case DKind.Number:
+                    case DKind.Decimal:
                         // formatted integer types are not supported
                         if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
                         {
@@ -990,7 +991,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                         var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType());
 
-                        if (type == FormulaType.Decimal)
+                        /*if (type == FormulaType.Decimal)
                         {
                             if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
                             {
@@ -1001,7 +1002,7 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                             }
-                        }
+                        }*/
 
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
