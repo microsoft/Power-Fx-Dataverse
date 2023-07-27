@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             EditorContextScope scope = engine.CreateEditorScope(symbols: null);
             result = scope.Check(expr);
             Assert.IsTrue(result.IsSuccess);
-            Assert.AreEqual(result.ReturnType, FormulaType.Number);
+            Assert.AreEqual(result.ReturnType, FormulaType.Decimal);
 
             IPowerFxScope scope2 = scope;
             display = scope2.ConvertToDisplay(expr);
