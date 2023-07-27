@@ -402,16 +402,22 @@ namespace Microsoft.PowerFx.Dataverse
                     return node.Child.Accept(this, context);
 
                 case UnaryOpKind.DateTimeToNumber:
+                case UnaryOpKind.DateTimeToDecimal:
                 case UnaryOpKind.DateTimeToTime:
                 case UnaryOpKind.DateTimeToDate:
                 case UnaryOpKind.DateToNumber:
+                case UnaryOpKind.DateToDecimal:
                 case UnaryOpKind.DateToTime:
                 case UnaryOpKind.NumberToDate:
+                case UnaryOpKind.DecimalToDate:
                 case UnaryOpKind.NumberToDateTime:
+                case UnaryOpKind.DecimalToDateTime:
                 case UnaryOpKind.NumberToTime:
+                case UnaryOpKind.DecimalToTime:
                 case UnaryOpKind.TimeToDate:
                 case UnaryOpKind.TimeToDateTime:
                 case UnaryOpKind.TimeToNumber:
+                case UnaryOpKind.TimeToDecimal:
                     throw Library.BuildUnsupportedArgumentTypeException(node.IRContext.ResultType._type.GetKindString(), node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.OptionSetToText:

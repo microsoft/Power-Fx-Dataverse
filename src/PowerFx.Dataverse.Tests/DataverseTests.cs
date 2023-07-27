@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CheckCompile1()
         {
             var expr = "\t\t\nfield    *\n2.0\t";
-
+            
             var model = new EntityMetadataModel
             {
                 Attributes = new AttributeMetadataModel[]
@@ -947,19 +947,19 @@ END
         }
 
         [DataTestMethod]
-        [DataRow("1 - UTCToday()", false, "Error 4-14: This argument cannot be passed as type Date in formula columns.", DisplayName = "Negation of date (coerce date to number then back to date)")]
-        [DataRow("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in division operation (with coerced string)")]
-        [DataRow("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in left arg of logical operation")]
-        [DataRow("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in right arg of logical operation")]
-        [DataRow("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in right arg of equals")]
-        [DataRow("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number right arg of not equals")]
-        [DataRow("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Abs function")]
-        [DataRow("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Max function")]
-        [DataRow("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Trunc function")]
-        [DataRow("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Left function")]
-        [DataRow("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in first numeric arg in Replace function")]
-        [DataRow("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in second numeric arg in Replace function")]
-        [DataRow("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Number in formula columns.", DisplayName = "Coerce date to number in Substitute function")]
+        [DataRow("1 - UTCToday()", false, "Error 4-14: This argument cannot be passed as type Date in formula columns.", DisplayName = "Negation of date (coerce date to decimal then back to date)")]
+        [DataRow("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in division operation (with coerced string)")]
+        [DataRow("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in left arg of logical operation")]
+        [DataRow("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in right arg of logical operation")]
+        [DataRow("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in right arg of equals")]
+        [DataRow("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal right arg of not equals")]
+        [DataRow("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in Abs function")]
+        [DataRow("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in Max function")]
+        [DataRow("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in Trunc function")]
+        [DataRow("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in Left function")]
+        [DataRow("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in first numeric arg in Replace function")]
+        [DataRow("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in second numeric arg in Replace function")]
+        [DataRow("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Decimal in formula columns.", DisplayName = "Coerce date to decimal in Substitute function")]
         public void CheckCoercionFailures(string expr, bool success, string message = null)
         {
             var engine = new PowerFx2SqlEngine();
