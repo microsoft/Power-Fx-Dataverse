@@ -5,7 +5,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Linq;
@@ -13,7 +13,7 @@ using System.Threading;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
+    
     public class RefreshTests
     {
         internal static readonly EntityMetadataModel Accounts = new EntityMetadataModel
@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         };
 
-        [TestMethod]
+        [Fact]
         public void RefreshTest()
         {
             string logicalName = "Accounts";
@@ -55,34 +55,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             ReadOnlySymbolValues runtimeConfig = dv.SymbolValues;
 
             _ = Evaluate("Collect(Accounts, {'Account Name': \"Account1\" })", dv, engine);
-            Assert.AreEqual(1, ds.RefreshCount); // Collect calls refresh
-            Assert.AreEqual(0, ds.CacheSize);    // No cache
+            Assert.Equal(1, ds.RefreshCount); // Collect calls refresh
+            Assert.Equal(0, ds.CacheSize);    // No cache
 
             _ = Evaluate("First(Accounts)", dv, engine);
-            Assert.AreEqual(1, ds.RefreshCount); // No change
-            Assert.AreEqual(2, ds.CacheSize);    // We have 2 rows: Account0 and Account1
+            Assert.Equal(1, ds.RefreshCount); // No change
+            Assert.Equal(2, ds.CacheSize);    // We have 2 rows: Account0 and Account1
 
             _ = Evaluate("Refresh(Accounts)", dv, engine);
-            Assert.AreEqual(2, ds.RefreshCount); // Refresh called
-            Assert.AreEqual(0, ds.CacheSize);    // Cache cleared
+            Assert.Equal(2, ds.RefreshCount); // Refresh called
+            Assert.Equal(0, ds.CacheSize);    // Cache cleared
 
             _ = Evaluate("Patch(Accounts, First(Filter(Accounts, 'Account Name' = \"Account0\")), {'Account Name': \"Account2\" })", dv, engine);
-            Assert.AreEqual(2, ds.RefreshCount); // No change here
-            Assert.AreEqual(2, ds.CacheSize);    // Cache has been populated again (Account1 and Account2)
+            Assert.Equal(2, ds.RefreshCount); // No change here
+            Assert.Equal(2, ds.CacheSize);    // Cache has been populated again (Account1 and Account2)
 
             _ = Evaluate("First(Accounts)", dv, engine);
-            Assert.AreEqual(2, ds.RefreshCount); // No change
-            Assert.AreEqual(2, ds.CacheSize);    // We still have 2 rows
+            Assert.Equal(2, ds.RefreshCount); // No change
+            Assert.Equal(2, ds.CacheSize);    // We still have 2 rows
         }
 
         private FormulaValue Evaluate(string formula, DataverseConnection dv, RecalcEngine engine)
         {
             CheckResult check = engine.Check(formula, symbolTable: dv.Symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
-            Assert.IsTrue(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
             FormulaValue result = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result is ErrorValue);
+            Assert.NotNull(result);
+            Assert.False(result is ErrorValue);
 
             return result;
         }
