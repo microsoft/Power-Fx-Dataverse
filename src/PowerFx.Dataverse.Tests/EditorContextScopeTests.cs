@@ -8,7 +8,7 @@ using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.LanguageServerProtocol;
 using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // Unit tests on EditorContextScope.
     // This is used for intellisense. 
-    [TestClass]
+    
     public class EditorContextScopeTests
     {
         private PowerFx2SqlEngine GetSqlEngine()
@@ -35,7 +35,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Check() calls through to engine. 
-        [TestMethod]
+        [Fact]
         public void Test()
         {
             var sqlEngine = GetSqlEngine();
@@ -45,24 +45,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var expr = "ThisRecord.new_price + new_quantity"; // Succeeds! 
 
             var result = engine.Check(expr);
-            Assert.IsTrue(result.IsSuccess);
+            Assert.True(result.IsSuccess);
 
             var display = sqlEngine.ConvertToDisplay(expr);
-            Assert.AreEqual("ThisRecord.Price + Quantity", display);
+            Assert.Equal("ThisRecord.Price + Quantity", display);
 
             // symbols as null, since we're pulling everything from RuleScope
             EditorContextScope scope = engine.CreateEditorScope(symbols: null);
             result = scope.Check(expr);
-            Assert.IsTrue(result.IsSuccess);
-            Assert.AreEqual(result.ReturnType, FormulaType.Decimal);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(result.ReturnType, FormulaType.Decimal);
 
             IPowerFxScope scope2 = scope;
             display = scope2.ConvertToDisplay(expr);
-            Assert.AreEqual("ThisRecord.Price + Quantity", display);
+            Assert.Equal("ThisRecord.Price + Quantity", display);
         }
 
         // Verify EditorContextScope still picks up the SQL restrictions. 
-        [TestMethod]
+        [Fact]
         public void SqlRestriction()
         {
             // An expression that's not valid in SQL compiler. 
@@ -71,17 +71,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Normally valid 
             var engineFull = new Engine(new PowerFxConfig());
             var result = engineFull.Check(expr);
-            Assert.IsTrue(result.IsSuccess);
+            Assert.True(result.IsSuccess);
 
             // But not valid with SQL engine
             Engine engineSql = GetSqlEngine();
             result = engineSql.Check(expr);
-            Assert.IsFalse(result.IsSuccess);
+            Assert.False(result.IsSuccess);
 
 
             EditorContextScope scope = engineSql.CreateEditorScope();
             result = scope.Check(expr);
-            Assert.IsFalse(result.IsSuccess);
+            Assert.False(result.IsSuccess);
         }
     }
 }

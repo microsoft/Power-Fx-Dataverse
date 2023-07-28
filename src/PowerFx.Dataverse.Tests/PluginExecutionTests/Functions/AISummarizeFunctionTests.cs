@@ -10,18 +10,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
+    
     public class AISummarizeFunctionTests
     {
         // FAils if config.EnableAIFunctions() is not called.
-        [DataTestMethod]
-        [DataRow(true)]
-        [DataRow(false)]
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void Missing(bool enable)
         {
             var config = new PowerFxConfig();        
@@ -32,10 +32,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new RecalcEngine(config);
             
             var result = engine.Check("AISummarize(\"very long string\")");
-            Assert.AreEqual(enable, result.IsSuccess);
+            Assert.Equal(enable, result.IsSuccess);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task Success()
         {
             var config = new PowerFxConfig();
@@ -52,9 +52,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             client.Work = (req) =>
             {
                 // Validate parameters
-                Assert.AreEqual("SummarizeText", req.RequestName);
-                Assert.AreEqual("very long string", req.Parameters["InputText"]);
-                Assert.IsNotNull(req.Parameters["source"]);
+                Assert.Equal("SummarizeText", req.RequestName);
+                Assert.Equal("very long string", req.Parameters["InputText"]);
+                Assert.NotNull(req.Parameters["source"]);
 
 
                 var resp = new OrganizationResponse
@@ -67,10 +67,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             
             var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
 
-            Assert.AreEqual("short string", result.ToObject());
+            Assert.Equal("short string", result.ToObject());
         }
 
-        [TestMethod]
+        [Fact]
         public async Task Failure()
         {
             var config = new PowerFxConfig();
@@ -93,10 +93,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
             
             var errors = (ErrorValue)result;
-            Assert.AreEqual(1, errors.Errors.Count);
+            Assert.Equal(1, errors.Errors.Count);
             var error = errors.Errors[0];
-            Assert.IsTrue(error.Message.Contains(msg));
-            Assert.AreEqual(ErrorSeverity.Severe, error.Severity);
+            Assert.Contains(msg, error.Message);
+            Assert.Equal(ErrorSeverity.Severe, error.Severity);
         }
 
         public class MockExecute : IDataverseExecute

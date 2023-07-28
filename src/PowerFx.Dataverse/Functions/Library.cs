@@ -48,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.DateTimeValue, DateTimeValue },
             //{ BuiltinFunctionsCore.DateValue, DateValue },
             { BuiltinFunctionsCore.Day, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Day) },
+            { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
           //  { BuiltinFunctionsCore.Exp, Exp },

@@ -4,23 +4,33 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Types;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
-
     public class ExpressionEvaluationTests
     {
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        public readonly ITestOutputHelper Console;
+        private readonly SqlRunner sqlRunner;
+
+        public ExpressionEvaluationTests(ITestOutputHelper output)
+        {
+            Console = output;
+            sqlRunner = NewSqlRunner();
+        }
+
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         /// <summary>
         /// The connection string for the database to execute generated SQL
@@ -28,10 +38,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <example> 
         /// "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
         /// </example>
-        static string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
         // .txt tests will be filtered to match these seetings. 
-        static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
+        private static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
         {
             { "PowerFxV1CompatibilityRules", true },
             { "NumberIsFloat", DataverseEngine.NumberIsFloat },
@@ -41,70 +51,58 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // These need to be consistent with _testSettings.
         private SqlRunner NewSqlRunner()
         {
-            return new SqlRunner(ConnectionString)
+            return new SqlRunner(ConnectionString, Console)
             {
                 NumberIsFloat = DataverseEngine.NumberIsFloat,
                 Features = PowerFx2SqlEngine.DefaultFeatures
             };
         }
 
-        [TestMethod]
-        public void RunSqlTestCases()
-        {            
-            // short-circuit if connection string is not set
-            if (ConnectionString == null)
-            {
-                Assert.Inconclusive("Skipping SQL tests - no connection string set");
-                return;
-            }
-
-            // Build step copied all tests to output dir.
-            using (var sql = NewSqlRunner())
-            {
-                var runner = new TestRunner(sql);
-                runner.AddDir(_testSettings);
-
-                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "*.txt"))
-                {                                     
-                    runner.AddFile(_testSettings, path);
-                }
-
-                var result = runner.RunTests();
-
-                // Any failures introduced by new tests or unsupported features should be overridden
-                Assert.AreEqual(0, result.Fail, result.Output);
-
-                // Verify that we're actually running tests. 
-                Assert.IsTrue(result.Total > 4000);
-                Assert.IsTrue(result.Pass > 1000);
-            }
-        }
-
-        // Use this for local testing of a single testcase (uncomment "TestMethod")
-        //[TestMethod]
-        public void RunSingleTestCase()
+        [SkippableTheory]
+        [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules")]
+        public void RunSqlTestCases(ExpressionTestCase testCase)
         {
-            using (var sql = NewSqlRunner())
+            (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
+
+            var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";
+            switch (result)
             {
-                var runner = new TestRunner(sql);
-                runner.AddFile(_testSettings, @"c:\temp\t.txt");
-                /*
-                foreach (var path in Directory.EnumerateFiles(GetSqlDefaultTestDir(), "Sql.txt"))
-                {
-                    runner.AddFile(DataverseEngine.NumberIsFloat, path);
-                }*/
+                case TestResult.Pass:
+                    break;
 
-                var result = runner.RunTests();
+                case TestResult.Fail:
+                    Assert.True(false, prefix + message);
+                    break;
 
-                Assert.AreEqual(0, result.Fail, result.Output);
+                case TestResult.Skip:
+                    Skip.If(true, prefix + message);
+                    break;
             }
         }
 
-        [TestMethod]
+        [Fact]
+        public void ScanForTxtParseErrors()
+        {
+            MethodInfo method = GetType().GetMethod(nameof(RunSqlTestCases));
+            TxtFileDataAttribute attr = (TxtFileDataAttribute)method.GetCustomAttributes(typeof(TxtFileDataAttribute), false)[0];
+
+            // Verify this runs without throwing an exception.
+            IEnumerable<object[]> list = attr.GetData(method);
+            Console.WriteLine($"{list.Count()} test cases found.");
+
+            // And doesn't report back any test failures. 
+            foreach (object[] batch in list)
+            {
+                var item = (ExpressionTestCase)batch[0];
+                Assert.Null(item.FailMessage);
+            }
+        }
+
+        [Fact]
         public void SqlCompileExceptionIsError()
         {
-            Assert.IsTrue(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
-            Assert.IsFalse(SqlCompileException.IsError("OtherError"));
+            Assert.True(SqlCompileException.IsError("FormulaColumns_ColumnTypeNotSupported"));
+            Assert.False(SqlCompileException.IsError("OtherError"));
         }
 
         public static string GetSqlDefaultTestDir()
@@ -117,15 +115,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private class SqlRunner : BaseRunner, IDisposable
         {
             private SqlConnection _connection;
+            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(10);
+            public readonly ITestOutputHelper Console;
 
-            public SqlRunner(string connectionString)
+            public SqlRunner(string connectionString, ITestOutputHelper console)
             {
-                if (connectionString == null)
+                Console = console;
+
+                if (!string.IsNullOrEmpty(connectionString))
                 {
-                    throw new InvalidOperationException($"ConnectionString not set");
+                    _connection = new SqlConnection(connectionString);
+                    _connection.Open();
                 }
-                _connection = new SqlConnection(connectionString);
-                _connection.Open();
+                else
+                {
+                    _connection = null;
+                }
             }
 
             public void Dispose()
@@ -160,6 +165,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             protected override async Task<RunResult> RunAsyncInternal(string expr, string setupHandlerName = null)
             {
                 var iSetup = InternalSetup.Parse(setupHandlerName, Features, NumberIsFloat);
+
+                if (iSetup.Flags.HasFlag(Core.Parser.TexlParser.Flags.EnableExpressionChaining))
+                {
+                    return new RunResult() { UnsupportedReason = "Expression chaining is not supported." };
+                }
+
+                if (setupHandlerName.IndexOf("disable:NumberIsFloat", StringComparison.OrdinalIgnoreCase) > -1)
+                {
+                    return new RunResult() { UnsupportedReason = "NumberIsFloat=false is not supported." };
+                }
+
+                if (setupHandlerName.IndexOf("DisableReservedKeywords", StringComparison.OrdinalIgnoreCase) > -1)
+                {
+                    return new RunResult() { UnsupportedReason = "DisableReservedKeywords is not supported." };
+                }
+
+                if (_connection == null)
+                {
+                    return new RunResult() { UnsupportedReason = "No connection string provided." };
+                }
 
                 if (iSetup.HandlerName != null ||
                     iSetup.TimeZoneInfo != null)
@@ -199,74 +224,79 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         if (compileResult._unsupportedWarnings.Count > 0)
                         {
                             result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                        } 
+                        }
                     }
                     return result;
                 }
 
+                _concurrencySemaphore.Wait();
+
                 try
                 {
-                    var cx = _connection;
-                    using (var tx = cx.BeginTransaction())
-                    {
-                        var createCmd = cx.CreateCommand();
-                        createCmd.Transaction = tx;
-                        createCmd.CommandText = compileResult.SqlFunction;
-                        var rows = createCmd.ExecuteNonQuery();
+                    SqlConnection cx = _connection;
+                    using SqlTransaction tx = cx.BeginTransaction();
+                    using SqlCommand createCmd = cx.CreateCommand();
 
-                        createCmd.CommandText = $@"CREATE TABLE placeholder (
+                    createCmd.Transaction = tx;
+                    createCmd.CommandText = compileResult.SqlFunction;
+                    int rows = createCmd.ExecuteNonQuery();
+
+                    createCmd.CommandText = $@"CREATE TABLE placeholder (
     [placeholderid] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     [dummy] INT NULL,
     [calc]  AS ([dbo].{compileResult.SqlCreateRow}))";
-                        createCmd.ExecuteNonQuery();
+                    createCmd.ExecuteNonQuery();
 
-                        var insertCmd = cx.CreateCommand();
-                        insertCmd.Transaction = tx;
-                        insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
-                        insertCmd.ExecuteNonQuery();
+                    var insertCmd = cx.CreateCommand();
+                    insertCmd.Transaction = tx;
+                    insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
+                    insertCmd.ExecuteNonQuery();
 
-                        var selectCmd = cx.CreateCommand();
-                        selectCmd.Transaction = tx;
-                        selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
-                        using (var reader = selectCmd.ExecuteReader())
+                    var selectCmd = cx.CreateCommand();
+                    selectCmd.Transaction = tx;
+                    selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
+                    using (var reader = selectCmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        var dummyValue = reader.GetInt32(0);
+                        if (dummyValue != 7)
                         {
-                            reader.Read();
-                            var dummyValue = reader.GetInt32(0);
-                            if (dummyValue != 7)
-                            {
-                                throw new Exception("Dummy integer did not round-trip");
-                            }
-
-                            var calcValue = reader.GetValue(1);
-
-                            if (calcValue is DBNull)
-                            {
-                                calcValue = null;
-                            }
-
-                            var fv = PrimitiveValueConversions.Marshal(calcValue, compileResult.ReturnType);
-                            var result = new RunResult(fv);
-
-                            // Evaluation ran, but failed due to unsupported features.
-                            if (compileResult._unsupportedWarnings != null)
-                            {
-                                if (compileResult._unsupportedWarnings.Count > 0)
-                                {
-                                    result.UnsupportedReason = compileResult._unsupportedWarnings[0];
-                                }
-                            }
-
-                            return result;
+                            throw new Exception("Dummy integer did not round-trip");
                         }
+
+                        var calcValue = reader.GetValue(1);
+
+                        if (calcValue is DBNull)
+                        {
+                            calcValue = null;
+                        }
+
+                        var fv = PrimitiveValueConversions.Marshal(calcValue, compileResult.ReturnType);
+                        var result = new RunResult(fv);
+
+                        // Evaluation ran, but failed due to unsupported features.
+                        if (compileResult._unsupportedWarnings != null)
+                        {
+                            if (compileResult._unsupportedWarnings.Count > 0)
+                            {
+                                result.UnsupportedReason = compileResult._unsupportedWarnings[0];
+                            }
+                        }
+
+                        return result;
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Failed SQL for {expr}");
+                    this.Console.WriteLine($"Failed SQL for {expr}");
                     Console.WriteLine(compileResult.SqlFunction);
                     Console.WriteLine(e.Message);
-                    Assert.Fail($"Failed SQL for {expr}");
+                    Assert.True(false, $"Failed SQL for {expr}");
                     throw;
+                }
+                finally
+                {
+                    _concurrencySemaphore.Release();
                 }
             }
 
