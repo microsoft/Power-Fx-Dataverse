@@ -47,10 +47,10 @@ Error()
 
 // literal overflow
 >> 1E37
-Error()
+Errors: Error 0-4: Numeric value is too large.
 
 >> IsError(1E37)
-true
+Errors: Error 8-12: Numeric value is too large.
 
 
 // check string literals are sanitized
