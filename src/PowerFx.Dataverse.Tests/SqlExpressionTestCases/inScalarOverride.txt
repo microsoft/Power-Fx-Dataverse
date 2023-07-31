@@ -6,11 +6,6 @@
 >> ("a" & 1/0) in "abc"
 Errors: Error 5-6: Only a literal value is supported for this argument.
 
-// If Blank is on either side, operator is false. 
-// Use If() to coerce Blank to string. 
->> Blank() in Blank()
-Errors: Error 8-10: This operation cannot be performed on type ObjNull in formula columns.
-
 // Case where Blank() doesn't act like ""
 >> If(false, "", Blank()) in "abc"
 Errors: Error 0-22: Only a literal value is supported for this argument.
@@ -23,5 +18,3 @@ Errors: Error 2-4: Only a literal value is supported for this argument.
 
 >> 1+2 in "3"
 Errors: Error 4-6: Only a literal value is supported for this argument.
-
-

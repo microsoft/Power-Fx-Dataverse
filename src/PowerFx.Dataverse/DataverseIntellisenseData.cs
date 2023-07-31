@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -40,7 +40,6 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly static TexlFunction[] _excludedFunctions = new[]
         {
             BuiltinFunctionsCore.Error,
-            BuiltinFunctionsCore.Now,
             BuiltinFunctionsCore.Today,
             BuiltinFunctionsCore.IsToday
         };

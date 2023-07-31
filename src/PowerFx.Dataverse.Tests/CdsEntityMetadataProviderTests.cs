@@ -4,22 +4,14 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Types;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
     public class CdsEntityMetadataProviderTests
     {
-
         private static readonly EntityMetadataModel _trivial = new EntityMetadataModel
         {
             LogicalName = "local",
@@ -35,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         };
 
-        class SwitchMetadataProvider : IXrmMetadataProvider
+        private class SwitchMetadataProvider : IXrmMetadataProvider
         {
             public Func<string, EntityMetadata> _func;
             public IXrmMetadataProvider _inner;
@@ -64,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Create a cloned CdsEntityMetadataProvider against a new provider.
-        [TestMethod]
+        [Fact]
         public void Clone()
         {
             var provider1 = new SwitchMetadataProvider()
@@ -77,13 +69,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Will cache
             var ok = metadataCache.TryGetXrmEntityMetadata("local", out var entityMetadata1);
 
-            Assert.IsTrue(ok);
-            Assert.IsNotNull(entityMetadata1);
+            Assert.True(ok);
+            Assert.NotNull(entityMetadata1);
 
             // Dispose 
             provider1.Dispose();
 
-            Assert.ThrowsException<InvalidOperationException>(() => metadataCache.TryGetXrmEntityMetadata("second", out entityMetadata1));
+            Assert.Throws<InvalidOperationException>(() => metadataCache.TryGetXrmEntityMetadata("second", out entityMetadata1));
 
             // Clone 
             var provider2 = new SwitchMetadataProvider();
@@ -93,12 +85,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // hit the cache again
             ok = metadataCache2.TryGetXrmEntityMetadata("local", out entityMetadata1);
 
-            Assert.IsTrue(ok);
-            Assert.IsNotNull(entityMetadata1);
+            Assert.True(ok);
+            Assert.NotNull(entityMetadata1);
         }
 
-        [TestMethod]
-        public void CloneSharesCache()
+        [Fact]
+        public void CloneSharesXRMCache()
         {
             var provider1 = new SwitchMetadataProvider();
             var metadataCache = new CdsEntityMetadataProvider(provider1);
@@ -113,14 +105,38 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // hit the cache again
             var ok = metadataCache2.TryGetXrmEntityMetadata("local", out var entityMetadata1);
 
-            Assert.IsTrue(ok);
-            Assert.IsNotNull(entityMetadata1);
+            Assert.True(ok);
+            Assert.NotNull(entityMetadata1);
 
             // Shows up in original because they share a cahce
             ok = metadataCache.TryGetXrmEntityMetadata("local", out entityMetadata1);
 
-            Assert.IsTrue(ok);
-            Assert.IsNotNull(entityMetadata1);
+            Assert.True(ok);
+            Assert.NotNull(entityMetadata1);
+        }
+
+        /// <summary>
+        /// Clone should not hold on to CDS Cache, because that would mean caching the DType as well and 
+        /// that could lead to Problems in multi threaded env.
+        /// </summary>
+        [Fact]
+        public void CloneDoesNotSharesCDSCache()
+        {
+            var provider = new MockXrmMetadataProvider(_trivial);
+            var CDSMetadata = new CdsEntityMetadataProvider(provider);
+
+            var ok = CDSMetadata.TryGetDataSource("local", out var dvSource);
+            Assert.True(ok);
+            var schema = dvSource.Schema;
+
+            var anotherProvider = new SwitchMetadataProvider();
+            var clone = CDSMetadata.Clone(anotherProvider);
+
+            var cloneOk = clone.TryGetDataSource("local", out var clonedDvSource);
+            Assert.True(cloneOk);
+            var clonedSchema = clonedDvSource.Schema;
+
+            Assert.NotSame(schema, clonedSchema);
         }
     }
 }
