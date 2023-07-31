@@ -10,8 +10,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -78,6 +82,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+        }
+
+        [SkippableFact]
+        public void ExecuteViaInterpreterSerializer()
+        {
+            string tableName = "Accounts";
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, "First(Accounts)", out disposableObjects);
+                
+                var option = new JsonSerializerOptions();
+                option.Converters.Add(GetFormulaTypeJsonConvertor());
+
+                var serialized = JsonSerializer.Serialize(result, option);
+                var deserialized = JsonSerializer.Deserialize<FormulaType>(serialized, option);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
+        private static JsonConverter<FormulaType> GetFormulaTypeJsonConvertor()
+        {
+            Assembly coreAssembly = typeof(FormulaType).Assembly;
+            Type dtsType = coreAssembly.GetType("Microsoft.PowerFx.Core.DefinedTypeSymbolTable");
+            var dts = Activator.CreateInstance(dtsType, BindingFlags.Public | BindingFlags.Instance, null, null, null);
+
+            Assembly jsonAssembly = typeof(FormulaValueJSON).Assembly;
+            Type jsonType = jsonAssembly.GetType("Microsoft.PowerFx.Core.FormulaTypeJsonConverter");
+            var convertor = (JsonConverter<FormulaType>)Activator.CreateInstance(jsonType, dts);
+            return convertor;
         }
 
         [SkippableTheory]
