@@ -130,6 +130,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (error.MessageKey == "ErrUnknownFunction" || 
                         error.MessageKey == "ErrUnimplementedFunction" ||
                         error.MessageKey == "ErrNumberExpected" || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
+                        error.MessageKey == "ErrNumberTooLarge" || // Numeric value is too large.
                         (error.MessageKey == "ErrBadType_ExpectedType_ProvidedType" && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);

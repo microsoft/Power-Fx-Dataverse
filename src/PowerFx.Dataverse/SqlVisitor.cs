@@ -1289,6 +1289,14 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
                     {
+                        // for skipping testcases which include decimals with precision > 10
+                        var arg = literal.ToString();
+                        var idx = arg.IndexOf('.');
+                        if (idx > -1 && arg.Substring(idx + 1).Length > 10)
+                        {
+                            _unsupportedWarnings.Add("Precision > 10");
+                        }
+
                         return true;
                     }
                     else

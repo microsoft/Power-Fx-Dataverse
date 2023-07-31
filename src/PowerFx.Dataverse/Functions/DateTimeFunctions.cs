@@ -122,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var date = node.Args[0].Accept(visitor, context);
             if (node.Args.Count > 1)
             {
-                throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
+                throw BuildUnsupportedArgumentException(node.Function, 1, (node.Args[1] as CallNode).Args[0].IRContext.SourceContext);
             }
 
             // return the requested date part from the raw value, validating if the time zone needs conversion

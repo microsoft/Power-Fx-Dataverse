@@ -275,7 +275,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check("1 + ThisRecord.field");
 
             Assert.True(check.IsSuccess);
-            Assert.Equal(FormulaType.Number, check.ReturnType);
+            Assert.Equal(FormulaType.Decimal, check.ReturnType);
 
             Assert.NotNull(check.Binding);
         }
