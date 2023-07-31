@@ -115,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private class SqlRunner : BaseRunner, IDisposable
         {
             private SqlConnection _connection;
-            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(10);
+            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(1);
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
