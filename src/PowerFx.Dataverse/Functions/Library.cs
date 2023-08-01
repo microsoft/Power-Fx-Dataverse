@@ -51,6 +51,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
+            { BuiltinFunctionsCore.Float, Value },
           //  { BuiltinFunctionsCore.Exp, Exp },
             //{ BuiltinFunctionsCore.Filter, FilterTable },
             //{ BuiltinFunctionsCore.Find, Find },

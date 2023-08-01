@@ -1072,7 +1072,7 @@ END
         [DataRow("WeekNum(tziDateOnly)", true, typeof(DecimalType))]
         [DataRow("WeekNum(userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("WeekNum(userLocalDateTime)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [DataRow("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [DataRow("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 0-20: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
         [DataRow("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [DataRow("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
