@@ -2094,6 +2094,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsTrue(((ErrorValue)result).Errors.First().Message.Contains(errorMessage));
         }
 
+        [DataTestMethod]
+        [DataRow("Set(x, First(t1))", "Set(#$firstname$#, First(#$fne$#))")]
+        [DataRow("Set(t, Filter(t1,true))", "Set(#$firstname$#, Filter(#$fne$#, #$boolean$#))")]
+        [DataRow("With({local:First(t1)}, Set(y, local))", "With({ #$fieldname$#:First(#$fne$#) }, Set(#$firstname$#, #$fne$#))")]
+        [DataRow("Set(x, First(Remote));Other.data", "Set(#$firstname$#, First(#$fne$#)) ; #$firstname$#.#$righthandid$#")]
+        [DataRow("Set(x, Collect(Remote, { Data : 99})); Other.Data", "Set(#$firstname$#, Collect(#$fne$#, { #$fieldname$#:#$number$# })) ; #$firstname$#.#$righthandid$#")]
+        [DataRow("With({r:First(t1)}, Set(x, { Price : r.Price, OtherData : r.Other.Data}))", "With({ #$fieldname$#:First(#$fne$#) }, Set(#$firstname$#, { #$fieldname$#:#$fne$#.#$righthandid$#, #$fieldname$#:#$fne$#.#$righthandid$#.#$righthandid$# }))")]
+        public void LoggingExpandableSymbolsTest(string expr, string expected)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("Remote", "remote");
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            var logging = check.ApplyGetLogging();
+
+            Assert.AreEqual(expected, logging);
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
 
