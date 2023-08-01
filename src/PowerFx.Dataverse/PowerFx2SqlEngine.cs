@@ -37,9 +37,8 @@ namespace Microsoft.PowerFx.Dataverse
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
-            CultureInfo culture = null,
-            bool numberIsFloat = false)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: numberIsFloat)
+            CultureInfo culture = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: false)
         {
         }
 

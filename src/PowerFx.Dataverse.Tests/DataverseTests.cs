@@ -1701,7 +1701,7 @@ END
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
