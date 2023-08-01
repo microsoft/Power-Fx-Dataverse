@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         ParserOptions _parserAllowSideEffects_NumberIsFloat = new ParserOptions
         {
             AllowsSideEffects = true,
-            NumberIsFloat = true
+            NumberIsFloat = true // testcases using this ParserOptions are run with NumberIsFloat as true
         };
 
         EntityMetadataModel _trivialModel = new EntityMetadataModel
