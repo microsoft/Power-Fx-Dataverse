@@ -38,6 +38,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected string _currentEntityName => _currentEntity.Name;
 
+        protected bool _numberIsFloat = false;
+
         // Callback object for getting metadata for other entities, such as with relationships. 
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
@@ -61,6 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = numberIsFloat };
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
+            _numberIsFloat = _metadataCache.NumberIsFloat;
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
@@ -77,9 +80,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return new ParserOptions
             {
-                 Culture = _cultureInfo,
-                 MaxExpressionLength =  MaxExpressionLength,
-                 NumberIsFloat = NumberIsFloat
+                Culture = _cultureInfo,
+                MaxExpressionLength = MaxExpressionLength,
+                NumberIsFloat = _numberIsFloat
             };
         }
 

@@ -365,6 +365,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case UnaryOpKind.BooleanToText:
                 case UnaryOpKind.BooleanToNumber:
+                case UnaryOpKind.BooleanToDecimal:
                     arg = node.Child.Accept(this, context);
                     var boolResult = CoerceBooleanToOp(node, arg, context);
 
