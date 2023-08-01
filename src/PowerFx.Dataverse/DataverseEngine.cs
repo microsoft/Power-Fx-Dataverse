@@ -77,9 +77,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return new ParserOptions
             {
-                Culture = _cultureInfo,
-                MaxExpressionLength = MaxExpressionLength,
-                NumberIsFloat = NumberIsFloat
+                 Culture = _cultureInfo,
+                 MaxExpressionLength =  MaxExpressionLength,
+                 NumberIsFloat = NumberIsFloat
             };
         }
 
