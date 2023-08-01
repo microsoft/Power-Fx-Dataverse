@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         ParserOptions _parserAllowSideEffects_NumberIsFloat = new ParserOptions
         {
             AllowsSideEffects = true,
-            NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat
+            NumberIsFloat = true // testcases using this ParserOptions are run with NumberIsFloat as true
         };
 
         EntityMetadataModel _trivialModel = new EntityMetadataModel
@@ -275,7 +275,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check("1 + ThisRecord.field");
 
             Assert.True(check.IsSuccess);
-            Assert.Equal(FormulaType.Number, check.ReturnType);
+            Assert.Equal(FormulaType.Decimal, check.ReturnType);
 
             Assert.NotNull(check.Binding);
         }

@@ -75,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
 
             var val = node.Args[0].Accept(visitor, context);
-            if (val.type is NumberType)
+            if (val.type is NumberType || val.type is DecimalType)
             {
                 string format = null;
                 if (node.Args.Count > 1)

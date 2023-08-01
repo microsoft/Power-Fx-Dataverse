@@ -448,7 +448,7 @@ END
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
 
             var checkResult = engine.Check(expr);
             Assert.False(checkResult.IsSuccess);
@@ -481,7 +481,7 @@ END
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -895,7 +895,7 @@ END
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1214,7 +1214,7 @@ END
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1241,7 +1241,7 @@ END
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
@@ -1251,7 +1251,7 @@ END
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1679,7 +1679,7 @@ END
         {
             var xrmModel = AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
             var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
@@ -1701,7 +1701,7 @@ END
             // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
@@ -1714,10 +1714,10 @@ END
         [InlineData("Price * Quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Display Names"
         [InlineData("new_price * new_quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Logical Names"
         [InlineData("\"John Smith\"", "#$string$#")] // "String literal"
-        [InlineData("123456", "#$number$#")] // "Numeric literal"
-        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$number$#)")] // "Function with boolean literal"
-        [InlineData("Text(123, \"0000\")", "Text(#$number$#, #$string$#)")] // "Text with format string"
-        [InlineData("If(123,\"Foo\"", "If(#$number$#, #$string$#)")] // "Invalid formula - cleaned up"
+        [InlineData("123456", "#$decimal$#")] // "Numeric literal"
+        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$decimal$#)")] // "Function with boolean literal"
+        [InlineData("Text(123, \"0000\")", "Text(#$decimal$#, #$string$#)")] // "Text with format string"
+        [InlineData("If(123,\"Foo\"", "If(#$decimal$#, #$string$#)")] // "Invalid formula - cleaned up"
         [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'", "#$FieldDecimal$# + #$FieldDecimal$#")] // "Conflict"
         [InlineData("Price + Other.Data", "#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] // "Lookup"
         [InlineData("Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$#")] // "Multiple Lookups"

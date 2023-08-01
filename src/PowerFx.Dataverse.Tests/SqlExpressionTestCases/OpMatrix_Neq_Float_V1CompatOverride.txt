@@ -1,0 +1,22 @@
+#override: OpMatrix_Neq_Float_V1Compat.txt
+
+>> true <> Value(2)
+Errors: Error 5-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true <> Value(1)
+Errors: Error 5-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true <> Value(0)
+Errors: Error 5-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false <> Value(2)
+Errors: Error 6-8: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false <> Value(1)
+Errors: Error 6-8: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false <> Value(0)
+Errors: Error 6-8: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true <> Value("1e100")
+Errors: Error 5-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.

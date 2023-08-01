@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // This NumberIsFloat should be removed once the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
-            var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             return sqlEngine;
         }
 
@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             EditorContextScope scope = engine.CreateEditorScope(symbols: null);
             result = scope.Check(expr);
             Assert.True(result.IsSuccess);
-            Assert.Equal(result.ReturnType, FormulaType.Number);
+            Assert.Equal(result.ReturnType, FormulaType.Decimal);
 
             IPowerFxScope scope2 = scope;
             display = scope2.ConvertToDisplay(expr);
