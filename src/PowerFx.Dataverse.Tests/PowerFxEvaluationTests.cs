@@ -10,7 +10,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -19,6 +18,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
+    [CollectionDefinition("SQL Tests", DisableParallelization = true)]
     public class ExpressionEvaluationTests
     {
         public readonly ITestOutputHelper Console;
@@ -114,8 +114,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;
-            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(1);
+            private SqlConnection _connection;            
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
@@ -227,9 +226,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         }
                     }
                     return result;
-                }
-
-                _concurrencySemaphore.Wait();
+                }                
 
                 try
                 {
@@ -293,11 +290,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Console.WriteLine(e.Message);
                     Assert.True(false, $"Failed SQL for {expr}");
                     throw;
-                }
-                finally
-                {
-                    _concurrencySemaphore.Release();
-                }
+                }                
             }
 
             public override bool IsError(FormulaValue value)

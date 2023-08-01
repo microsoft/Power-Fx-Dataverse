@@ -1,25 +1,11 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
-using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -427,7 +413,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata))
             {
                 // Normal case. 
-                if (entityMetadata.TryGetAttribute(fieldLogicalName, out var amd))
+                if (entityMetadata.TryGetAttribute(fieldLogicalName, out _))
                 {
                     return fieldLogicalName;
                 }

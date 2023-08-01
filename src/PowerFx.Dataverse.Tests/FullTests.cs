@@ -4,20 +4,20 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Xunit;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class FullTests
     {
         [SkippableFact]
@@ -120,7 +120,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        internal void ExecuteScript(SqlConnection connection, String script)
+        internal void ExecuteScript(SqlConnection connection, string script)
         {
             using (var tx = connection.BeginTransaction())
             {
@@ -540,7 +540,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private static SqlConnection GetSql()
         {
@@ -571,7 +571,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 using (var tx = connection.BeginTransaction())
                 {
-                    if (!String.IsNullOrWhiteSpace(udfName))
+                    if (!string.IsNullOrWhiteSpace(udfName))
                     {
                         var dropCmd = connection.CreateCommand();
                         dropCmd.Transaction = tx;
@@ -582,7 +582,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     var createCmd = connection.CreateCommand();
                     createCmd.Transaction = tx;
                     createCmd.CommandText = compileResult.SqlFunction;
-                    var rows = createCmd.ExecuteNonQuery();
+                    _ = createCmd.ExecuteNonQuery();
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;
@@ -694,7 +694,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var attr in model.Attributes)
             {
                 if (attr.LogicalName == model.PrimaryIdAttribute)
+                {
                     continue;
+                }
+
                 string type;
                 string calc = null;
                 var found = calculations?.TryGetValue(attr.LogicalName, out calc);
@@ -751,7 +754,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var insertCmd = cx.CreateCommand();
             insertCmd.Transaction = tx;
-            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
+            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({string.Join(",", initializations.Keys)}) VALUES ({string.Join(",", initializations.Values)})";
             insertCmd.ExecuteNonQuery();
         }
 
