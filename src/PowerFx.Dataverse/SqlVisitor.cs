@@ -1295,7 +1295,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var idx = arg.IndexOf('.');
                         if (idx > -1 && arg.Substring(idx + 1).Length > 12)
                         {
-                            _unsupportedWarnings.Add("Precision > 10");
+                            _unsupportedWarnings.Add("Precision > 12");
                         }
 
                         return true;

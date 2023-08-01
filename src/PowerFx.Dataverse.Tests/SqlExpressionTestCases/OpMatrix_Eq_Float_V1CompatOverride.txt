@@ -1,0 +1,73 @@
+#override: OpMatrix_Eq_Float_V1Compat.txt
+
+>> Value(16) = "16"
+Errors: Error 10-11: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(16) = "16.000000000000000000002"
+Errors: Error 10-11: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(16) = "14"
+Errors: Error 10-11: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(16) = "18"
+Errors: Error 10-11: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(16) = "1e20"
+Errors: Error 10-11: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(1e20) = "1e20"
+Errors: Error 12-13: Incompatible types for comparison. These types can't be compared: Decimal, Text.
+
+>> Value(1) = true
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> Value(1) = false
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> Value(0) = true
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> Value(0) = false
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> Value(2) = true
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> Value(2) = false
+Errors: Error 9-10: Incompatible types for comparison. These types can't be compared: Decimal, Boolean.
+
+>> "16" = Value(16)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Text, Decimal.
+
+>> "16" = Value(18)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Text, Decimal.
+
+>> "16" = Value(14)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Text, Decimal.
+
+>> "1e100" = Value(2)
+Errors: Error 8-9: Incompatible types for comparison. These types can't be compared: Text, Decimal.
+
+>> "" = Value(0)
+Errors: Error 3-4: Incompatible types for comparison. These types can't be compared: Text, Decimal.
+
+>> true = Value(2)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true = Value(1)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true = Value(0)
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false = Value(2)
+Errors: Error 6-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false = Value(1)
+Errors: Error 6-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> false = Value(0)
+Errors: Error 6-7: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
+
+>> true = Value("1e100")
+Errors: Error 5-6: Incompatible types for comparison. These types can't be compared: Boolean, Decimal.
