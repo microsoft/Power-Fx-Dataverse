@@ -21,13 +21,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     [CollectionDefinition("SQL Tests", DisableParallelization = true)]
     public class ExpressionEvaluationTests
     {
-        public readonly ITestOutputHelper Console;
-        private readonly SqlRunner sqlRunner;
+        public readonly ITestOutputHelper Console;        
 
         public ExpressionEvaluationTests(ITestOutputHelper output)
         {
-            Console = output;
-            sqlRunner = NewSqlRunner();
+            Console = output;            
         }
 
         private const string ConnectionStringVariable = "FxTestSQLDatabase";
@@ -48,20 +46,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             { "Default", false }              // anything not explicitly called out here is not supported
         };
 
-        // These need to be consistent with _testSettings.
-        private SqlRunner NewSqlRunner()
-        {
-            return new SqlRunner(ConnectionString, Console)
-            {
-                NumberIsFloat = DataverseEngine.NumberIsFloat,
-                Features = PowerFx2SqlEngine.DefaultFeatures
-            };
-        }
-
         [SkippableTheory]
         [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules")]
         public void RunSqlTestCases(ExpressionTestCase testCase)
         {
+            using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
             (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
 
             var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";

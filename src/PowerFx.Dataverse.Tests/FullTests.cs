@@ -17,7 +17,6 @@ using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class FullTests
     {
         [SkippableFact]
