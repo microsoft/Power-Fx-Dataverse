@@ -10,7 +10,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -19,15 +18,14 @@ using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
+    [CollectionDefinition("SQL Tests", DisableParallelization = true)]
     public class ExpressionEvaluationTests
     {
-        public readonly ITestOutputHelper Console;
-        private readonly SqlRunner sqlRunner;
+        public readonly ITestOutputHelper Console;        
 
         public ExpressionEvaluationTests(ITestOutputHelper output)
         {
-            Console = output;
-            sqlRunner = NewSqlRunner();
+            Console = output;            
         }
 
         private const string ConnectionStringVariable = "FxTestSQLDatabase";
@@ -48,20 +46,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             { "Default", false }              // anything not explicitly called out here is not supported
         };
 
-        // These need to be consistent with _testSettings.
-        private SqlRunner NewSqlRunner()
-        {
-            return new SqlRunner(ConnectionString, Console)
-            {
-                NumberIsFloat = DataverseEngine.NumberIsFloat,
-                Features = PowerFx2SqlEngine.DefaultFeatures
-            };
-        }
-
         [SkippableTheory]
         [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules")]
         public void RunSqlTestCases(ExpressionTestCase testCase)
         {
+            using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
             (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
 
             var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";
@@ -114,8 +103,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;
-            private readonly SemaphoreSlim _concurrencySemaphore = new SemaphoreSlim(10);
+            private SqlConnection _connection;            
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
@@ -227,9 +215,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         }
                     }
                     return result;
-                }
-
-                _concurrencySemaphore.Wait();
+                }                
 
                 try
                 {
@@ -293,11 +279,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Console.WriteLine(e.Message);
                     Assert.True(false, $"Failed SQL for {expr}");
                     throw;
-                }
-                finally
-                {
-                    _concurrencySemaphore.Release();
-                }
+                }                
             }
 
             public override bool IsError(FormulaValue value)
