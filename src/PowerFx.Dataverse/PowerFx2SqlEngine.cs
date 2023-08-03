@@ -178,8 +178,20 @@ namespace Microsoft.PowerFx.Dataverse
                     var del = (i == parameters.Count - 1) ? "" : ",";
                     var fieldName = parameters[i].Item1.LogicalName;
                     var varName = ctx.GetVarName(fieldName, ctx.RootScope, null);
-                    // Existing CDS SQL generation passes money values as big type
-                    var typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+
+                    // For exchange rate, DV uses scale 28 and precision 12 so maintaing parity with DV
+                    string typeName = null;
+
+                    if (fieldName.Equals("exchangerate"))
+                    {
+                        typeName = SqlStatementFormat.SqlExchangeRateType;
+                    }
+                    else 
+                    {
+                        // Existing CDS SQL generation passes money values as big type
+                        typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                    }
+
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
@@ -202,7 +214,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = field.VarType is SqlMoneyType ? new SqlBigType().ToSqlType() : SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -253,7 +265,8 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {SqlVisitor.ToSqlType(temp.Item2)}");
+                    string tempVariableType = temp.Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(temp.Item2);
+                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 
                 if (ctx.DoesDateDiffOverflowCheck)

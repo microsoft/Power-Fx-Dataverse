@@ -165,9 +165,39 @@ namespace Microsoft.PowerFx.Dataverse
 
                         FormulaType returnType = new SqlBigType();
 
+                        /* 
+                         * In decimal cases, we need to use decimal(23,10) but in case of currency, we need to use SQLBigType decimal(38,10)
+                           in case of exchange rate, coercing to number type is not needed as it is already using decimal(28,12)
+                        */
+                        FormulaType leftType = FormulaType.Decimal;
+                        FormulaType rightType = FormulaType.Decimal;
+
+                        if (left != null && (left.type is SqlBigType || left.type is SqlMoneyType))
+                        {
+                            leftType = new SqlBigType();
+                        }
+
+                        if (right != null && (right.type is SqlBigType || right.type is SqlMoneyType))
+                        {
+                            rightType = new SqlBigType();
+                        }
+
+                        string leftOperand = Library.CoerceNullToNumberType(left, leftType);
+                        string rightOperand = Library.CoerceNullToNumberType(right, rightType);
+
+                        if (left != null && IsExchangeRateColumn(left, context))
+                        {
+                            leftOperand = Library.CoerceNullToInt(left);  
+                        }
+
+                        if (right != null && IsExchangeRateColumn(right, context))
+                        {
+                            rightOperand = Library.CoerceNullToInt(right);
+                        }
+
                         // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
                         // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
-                        var result = context.SetIntermediateVariable(returnType, $"({Library.CoerceNullToNumberType(left, FormulaType.Decimal)} {op} {Library.CoerceNullToNumberType(right, FormulaType.Decimal)})");
+                        var result = context.SetIntermediateVariable(returnType, $"({leftOperand} {op} {rightOperand})");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -282,6 +312,17 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     throw new SqlCompileException(SqlCompileException.OperationNotSupported, node.IRContext.SourceContext, context.GetReturnType(node.Left)._type.GetKindString());
             }
+        }
+
+        private bool IsExchangeRateColumn(RetVal field, Context context)
+        {
+            CdsColumnDefinition column = context.GetVarDetails(field.varName).Column;
+            if (column != null && column.LogicalName.Equals("exchangerate"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private RetVal EqualityCheck(IntermediateNode left, IntermediateNode right, BinaryOpKind op, FormulaType type, Context context, Span sourceContext = default, bool equals = true)

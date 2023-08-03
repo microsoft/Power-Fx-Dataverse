@@ -162,6 +162,7 @@ ELSE
         public const string SqlMoneyType = "money";
         public const string SqlDateTimeType = "datetime";
         public const string SqlUniqueIdentifierType = "uniqueidentifier";
+        public const string SqlExchangeRateType = "decimal(28,12)";
 
         /// <summary>
         /// Declare intermediate variable
