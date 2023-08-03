@@ -185,12 +185,12 @@ namespace Microsoft.PowerFx.Dataverse
                         string leftOperand = Library.CoerceNullToNumberType(left, leftType);
                         string rightOperand = Library.CoerceNullToNumberType(right, rightType);
 
-                        if (left != null && IsExchangeRateColumn(left, context))
+                        if (left != null && !string.IsNullOrEmpty(left.varName) && IsExchangeRateColumn(left, context))
                         {
                             leftOperand = Library.CoerceNullToInt(left);  
                         }
 
-                        if (right != null && IsExchangeRateColumn(right, context))
+                        if (right != null && !string.IsNullOrEmpty(right.varName) && IsExchangeRateColumn(right, context))
                         {
                             rightOperand = Library.CoerceNullToInt(right);
                         }
