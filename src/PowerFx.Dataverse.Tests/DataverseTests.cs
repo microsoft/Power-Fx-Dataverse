@@ -371,7 +371,9 @@ END
 
             var metadata = AllAttributeModel.ToXrm();
 
-            var metadataProvider = new CdsEntityMetadataProvider(null);
+            var metadataProvider = new CdsEntityMetadataProvider(null){
+                NumberIsFloat = DataverseEngine.NumberIsFloat
+            };
 
             var engine = new PowerFx2SqlEngine(metadata, metadataProvider);
             var result = engine.Check(expr);
