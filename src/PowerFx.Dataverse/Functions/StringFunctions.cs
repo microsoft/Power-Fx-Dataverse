@@ -52,8 +52,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
           
                 return result;
             }
-            else if (arg.type is NumberType || arg.type is DecimalType)
-            {
+            else if (context.IsNumericType(arg))
+            {  
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }

@@ -28,7 +28,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CheckCompile1()
         {
             var expr = "\t\t\nfield    *\n2.0\t";
-            
             var model = new EntityMetadataModel
             {
                 Attributes = new AttributeMetadataModel[]
@@ -589,7 +588,7 @@ END
             // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
             // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             var checkResult = engine.Check(expr);
             Assert.False(checkResult.IsSuccess);

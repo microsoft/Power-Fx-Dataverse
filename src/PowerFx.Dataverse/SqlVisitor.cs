@@ -163,14 +163,14 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        FormulaType returnType = new SqlBigType();
+                        var returnType = new SqlBigType();
 
                         /* 
                          * In decimal cases, we need to use decimal(23,10) but in case of currency, we need to use SQLBigType decimal(38,10)
                            in case of exchange rate, coercing to number type is not needed as it is already using decimal(28,12)
                         */
-                        FormulaType leftType = FormulaType.Decimal;
-                        FormulaType rightType = FormulaType.Decimal;
+                        var leftType = FormulaType.Decimal;
+                        var rightType = FormulaType.Decimal;
 
                         if (left != null && (left.type is SqlBigType || left.type is SqlMoneyType))
                         {
@@ -182,8 +182,8 @@ namespace Microsoft.PowerFx.Dataverse
                             rightType = new SqlBigType();
                         }
 
-                        string leftOperand = Library.CoerceNullToNumberType(left, leftType);
-                        string rightOperand = Library.CoerceNullToNumberType(right, rightType);
+                        var leftOperand = Library.CoerceNullToNumberType(left, leftType);
+                        var rightOperand = Library.CoerceNullToNumberType(right, rightType);
 
                         if (left != null && !string.IsNullOrEmpty(left.varName) && IsExchangeRateColumn(left, context))
                         {
@@ -1039,19 +1039,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                         var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType());
 
-                        /*if (type == FormulaType.Decimal)
-                        {
-                            if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
-                            {
-                                throw new SqlCompileException(SqlCompileException.ColumnFormatNotSupported, sourceContext, column.TypeCode, column.FormatName);
-                            }
-
-                            if (column.TypeCode == AttributeTypeCode.Double)
-                            {
-                                throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
-                            }
-                        }*/
-
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
                             type == FormulaType.Hyperlink)
@@ -1130,6 +1117,11 @@ namespace Microsoft.PowerFx.Dataverse
             internal string WrapInlineBoolean(string conditionClause, string trueValue = "1", string falseValue = "0")
             {
                 return $"IIF({conditionClause}, {trueValue}, {falseValue})";
+            }
+
+            internal bool IsNumericType(RetVal arg) 
+            {
+                return arg.type is NumberType || arg.type is DecimalType;
             }
 
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
