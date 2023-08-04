@@ -58,6 +58,147 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
         }
 
+        public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10), -- new_field
+    @v1 decimal(38,10) -- new_field1
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 decimal(38,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(38,10)
+
+    -- expression body
+    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    -- end expression body
+
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
+END
+";
+        [Fact]
+        public void CheckCurrencyCompile()
+        {
+            var expr = "\t\t\nfield*field1*\n2.0\t";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineCurrencyFunction, result.SqlFunction);
+            
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("\t\t\nnew_field*new_field1*\n2.0\t", result.LogicalFormula);
+        }
+
+        public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(28,12), -- exchangerate
+    @v1 decimal(38,10) -- new_field1
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 decimal(38,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(38,10)
+
+    -- expression body
+    SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    -- end expression body
+
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
+END
+";
+
+        [Fact]
+        public void CheckExchangeRateCompile()
+        {
+            var expr = "\t\t\nexchangerate*field1*\n2.0\t";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "exchangerate",
+                         DisplayName = "exchangerate",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineExchangeFunction, result.SqlFunction);
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
+            Assert.Equal("exchangerate", result.TopLevelIdentifiers.First());
+            Assert.Equal("\t\t\nexchangerate*new_field1*\n2.0\t", result.LogicalFormula);
+        }
+
         [Fact]
         public void PowerFunctionBlockedTest()
         {
