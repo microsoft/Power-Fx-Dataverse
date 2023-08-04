@@ -27,8 +27,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     {
         private PowerFx2SqlEngine GetSqlEngine()
         {
-            // This NumberIsFloat should be removed once the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
             var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
             return sqlEngine;

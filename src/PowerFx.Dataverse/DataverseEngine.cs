@@ -69,8 +69,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         #region Critical Virtuals
 
-        // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-        // 
         public const bool NumberIsFloat = false;
 
         public override ParserOptions GetDefaultParserOptionsCopy()
