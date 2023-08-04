@@ -614,7 +614,7 @@ END
         public void CompileValidReturnType(string expr, Type returnType)
         {
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -766,7 +766,7 @@ END
             };
 
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             foreach (var attr in AllAttributeModel.Attributes)
             {
@@ -1024,7 +1024,7 @@ END
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1341,7 +1341,7 @@ END
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1366,7 +1366,7 @@ END
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
@@ -1374,7 +1374,7 @@ END
         public void CompileLogicalLookup()
         {
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1802,7 +1802,7 @@ END
         {
             var xrmModel = AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
@@ -1822,7 +1822,7 @@ END
         public void Translate(string expr, string translation)
         {
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
