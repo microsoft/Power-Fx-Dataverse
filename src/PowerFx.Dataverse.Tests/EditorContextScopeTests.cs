@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private PowerFx2SqlEngine GetSqlEngine()
         {
             var provider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
-            var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             return sqlEngine;
         }
 
