@@ -371,7 +371,8 @@ END
 
             var metadata = AllAttributeModel.ToXrm();
 
-            var metadataProvider = new CdsEntityMetadataProvider(null){
+            var metadataProvider = new CdsEntityMetadataProvider(null)
+            {
                 NumberIsFloat = DataverseEngine.NumberIsFloat
             };
 
