@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -68,6 +69,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     break;
             }
         }
+
+        // Enable to run a single test . 
+#if false
+        [Fact]
+#endif
+        public void RunOneTest()
+        {
+            // You can point to the local path of interest.
+            var path = @"C:\Users\jmstall\.nuget\packages\microsoft.powerfx.core.tests\0.2.7-preview.20230727-1003\content\ExpressionTestCases\Abs.txt";
+            var line = 17;
+
+            using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
+
+            var testRunner = new TestRunner(sqlRunner);
+
+            testRunner.AddFile(_testSettings, path);
+
+            // We can filter to just cases we want 
+            if (line > 0)
+            {
+                testRunner.Tests.RemoveAll(x => x.SourceLine != line);
+            }
+            int totalTests = testRunner.Tests.Count;
+
+            var result = testRunner.RunTests();
+        }
+
 
         [Fact]
         public void ScanForTxtParseErrors()
