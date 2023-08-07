@@ -505,7 +505,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [SkippableFact]
+        [Fact]
         public void SqlOverflows()
         {
             var model = new EntityMetadataModel
@@ -514,7 +514,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewDecimal("decimal", "Decimal"),
+                    AttributeMetadataModel.NewDecimal("decimal2", "Decimal2"),
+                    AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
                     AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
                 }
@@ -525,15 +528,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "20" },
+                    { "decimal2", "0.02188" },
+                    { "decimal3", "10000000000" },
                     { "int", "20"},
+                    { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax }
                 });
 
                 // Arithmatic
+
+                ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
+                ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
+                ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
+
+                // Overflow cases - return null
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
                 ExecuteSqlTest("BigInteger * BigDecimal", null, cx, metadata);
                 ExecuteSqlTest("BigInteger * BigInteger", null, cx, metadata);
+                ExecuteSqlTest("decimal3 * int2", null, cx, metadata);
+                ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
             }
         }
 
