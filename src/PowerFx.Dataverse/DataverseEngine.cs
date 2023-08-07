@@ -197,12 +197,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // Even if NumberIsFloat=false, Number can be returned from IR and we have to support it so mapping Number
             // to Core decimal type so SQL Compiler always returns decimal even if Number is coming from IR
-            /*if (type.Kind == DKind.Number)
+            if (type.Kind == DKind.Number)
             {
                 return FormulaType.Decimal;
             }
-            else*/ 
-            if (type.Kind == DKind.Currency)
+            else if (type.Kind == DKind.Currency)
             {
                 return new SqlBigType();
             }
