@@ -1285,7 +1285,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if (type is NumberType && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                else if ((type is NumberType or DecimalType) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1298,7 +1298,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return true;
                     }
                 }
-                else if (!(type is NumberType))
+                else if (!(type is NumberType or DecimalType))
                 {
                     throw new NotSupportedException($"Unsupported type for numeric literal check: {type}");
                 }
