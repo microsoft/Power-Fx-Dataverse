@@ -159,10 +159,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return new RunResult() { UnsupportedReason = "Expression chaining is not supported." };
                 }
 
-                if (setupHandlerName.IndexOf("disable:NumberIsFloat", StringComparison.OrdinalIgnoreCase) > -1)
+                /* if (setupHandlerName.IndexOf("disable:NumberIsFloat", StringComparison.OrdinalIgnoreCase) > -1)
                 {
                     return new RunResult() { UnsupportedReason = "NumberIsFloat=false is not supported." };
-                }
+                } */
 
                 if (setupHandlerName.IndexOf("DisableReservedKeywords", StringComparison.OrdinalIgnoreCase) > -1)
                 {
