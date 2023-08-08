@@ -4,23 +4,22 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
     public class FullTests
     {
-        [TestMethod]
+        [SkippableFact]
         public void SqlCompileBaselineTest()
         {
             using (var cx = GetSql())
@@ -32,12 +31,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var result = ExecuteSqlTest(exprStr, 3M, cx, new EntityMetadataModel[] { metadata }, false, false, "fn_testUdf1");
                 StringMatchIgnoreNewlines(DataverseTests.BaselineFunction, result.SqlFunction, "Baseline SQL has changed");
-                Assert.AreEqual(DataverseTests.BaselineCreateRow, result.SqlCreateRow, "Baseline create row has changed");
-                Assert.AreEqual(DataverseTests.BaselineLogicalFormula, result.LogicalFormula, "Baseline logical formula has changed");
+                Assert.Equal(DataverseTests.BaselineCreateRow, result.SqlCreateRow); // "Baseline create row has changed"
+                Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlCalculatedDependencyTest()
         {
             var rawField = "raw";
@@ -94,14 +93,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var calc2Value = reader.GetInt32(2);
                 var calc3Value = reader.GetInt32(3);
 
-                Assert.AreEqual(1, rawValue, "Raw Value Mismatch");
-                Assert.AreEqual(2, calc1Value, "Calc1 Value Mismatch");
-                Assert.AreEqual(3, calc2Value, "Calc2 Value Mismatch");
-                Assert.AreEqual(6, calc3Value, "Calc3 Value Mismatch");;
+                Assert.Equal(1, rawValue); // "Raw Value Mismatch"
+                Assert.Equal(2, calc1Value); // "Calc1 Value Mismatch"
+                Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
+                Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void FormulaUDFTest()
         {
             using (var cx = GetSql())
@@ -116,11 +115,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 alterCmd.CommandText = @"SELECT object_id FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[fn_testUdf1]');";
                 var actualResult = alterCmd.ExecuteScalar();
 
-                Assert.IsNotNull(actualResult);
+                Assert.NotNull(actualResult);
             }
         }
 
-        public void ExecuteScript(SqlConnection connection, String script)
+        internal void ExecuteScript(SqlConnection connection, string script)
         {
             using (var tx = connection.BeginTransaction())
             {
@@ -132,7 +131,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlCalculatedReferenceTest()
         {
             using (var cx = GetSql())
@@ -202,16 +201,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
 
                 var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
-                Assert.AreEqual("new_price + refg.calc", calc.LogicalFormula);
+                Assert.Equal("new_price + refg.calc", calc.LogicalFormula);
 
                 calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
-                Assert.AreEqual("new_price + refg.data", calc.LogicalFormula);
+                Assert.Equal("new_price + refg.data", calc.LogicalFormula);
 
                 calc = ExecuteSqlTest("Price + 'Self Reference'.Price", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
-                Assert.AreEqual("new_price + self.new_price", calc.LogicalFormula);
+                Assert.Equal("new_price + self.new_price", calc.LogicalFormula);
 
                 calc = ExecuteSqlTest("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
-                Assert.AreEqual("refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", calc.LogicalFormula);
+                Assert.Equal("refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", calc.LogicalFormula);
             }
         }
         private static string GuidToSql(Guid guid)
@@ -219,7 +218,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return $"'{guid}'";
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlStringParameterTest()
         {
             var metadata = new EntityMetadataModel
@@ -246,7 +245,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlOptionSetTest()
         {
             using (var cx = GetSql())
@@ -273,7 +272,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlGlobalOptionSetTest()
         {
             List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
@@ -298,7 +297,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlBooleanTest()
         {
             var metadata = new EntityMetadataModel
@@ -321,7 +320,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlDateTimeBehaviors()
         {
             var model = new EntityMetadataModel
@@ -369,7 +368,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlNestElseIf()
         {
             using (var cx = GetSql())
@@ -382,7 +381,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlCoercions()
         {
             var model = new EntityMetadataModel
@@ -473,7 +472,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlNumericFormat()
         {
             var model = new EntityMetadataModel
@@ -506,7 +505,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [TestMethod]
+        [SkippableFact]
         public void SqlOverflows()
         {
             var model = new EntityMetadataModel
@@ -540,16 +539,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private static SqlConnection GetSql()
         {
+            // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
             if (string.IsNullOrEmpty(cx))
             {
                 // Throws
-                Assert.Inconclusive($"Test skipped - No SQL database configured. Set the {ConnectionStringVariable} env var to a connection string.");
+                Skip.If(true, $"Test skipped - No SQL database configured. Set the {ConnectionStringVariable} env var to a connection string.");
             }
             var connection = new SqlConnection(cx);
             connection.Open();
@@ -564,13 +564,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets);
-            Assert.AreEqual(success, compileResult.IsSuccess, $"Compilation failed for formula: '{formula}'");
+            Assert.Equal(success, compileResult.IsSuccess); // $"Compilation failed for formula: '{formula}'"
 
             if (compileResult.IsSuccess)
             {
                 using (var tx = connection.BeginTransaction())
                 {
-                    if (!String.IsNullOrWhiteSpace(udfName))
+                    if (!string.IsNullOrWhiteSpace(udfName))
                     {
                         var dropCmd = connection.CreateCommand();
                         dropCmd.Transaction = tx;
@@ -581,7 +581,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     var createCmd = connection.CreateCommand();
                     createCmd.Transaction = tx;
                     createCmd.CommandText = compileResult.SqlFunction;
-                    var rows = createCmd.ExecuteNonQuery();
+                    _ = createCmd.ExecuteNonQuery();
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;
@@ -597,7 +597,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     {
                         actualResult = null;
                     }
-                    Assert.AreEqual(expectedResult, actualResult, $"Incorrect result from '{formula}'");
+                    Assert.Equal(expectedResult, actualResult); // $"Incorrect result from '{formula}'"
 
                     if (verbose)
                     {
@@ -668,12 +668,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        public static void StringMatchIgnoreNewlines(string expected, string actual, string message = null)
+        internal static void StringMatchIgnoreNewlines(string expected, string actual, string message = null)
         {
             // ignore differences in newlines
             var cleanActual = actual.Trim().Replace("\r\n", "\n");
             var cleanExpected = expected.Trim().Replace("\r\n", "\n");
-            Assert.AreEqual(cleanExpected, cleanActual, message);
+            Assert.Equal(cleanExpected, cleanActual); // message
         }
 
         private static string GetPrimaryIdSchemaName(EntityMetadataModel model)
@@ -693,7 +693,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var attr in model.Attributes)
             {
                 if (attr.LogicalName == model.PrimaryIdAttribute)
+                {
                     continue;
+                }
+
                 string type;
                 string calc = null;
                 var found = calculations?.TryGetValue(attr.LogicalName, out calc);
@@ -750,7 +753,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var insertCmd = cx.CreateCommand();
             insertCmd.Transaction = tx;
-            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({String.Join(",", initializations.Keys)}) VALUES ({String.Join(",", initializations.Values)})";
+            insertCmd.CommandText = $"INSERT INTO {metadata.SchemaName}Base ({string.Join(",", initializations.Keys)}) VALUES ({string.Join(",", initializations.Values)})";
             insertCmd.ExecuteNonQuery();
         }
 

@@ -153,25 +153,21 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(record));
 
             // Retrieve the primary key of the entity (should always be present and a Guid)
-            FormulaValue fv = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
+            FormulaValue fieldFormulaValue = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (fv.Type == FormulaType.Blank)
+            if (fieldFormulaValue.Type == FormulaType.Blank)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
 
-            if (fv is not GuidValue id)
+            if (fieldFormulaValue is not GuidValue id)
+            {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+            }
 
-            DataverseResponse<Entity> entityResponse = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
-
-            if (entityResponse.HasError)
-                return entityResponse.DValueError(nameof(IDataverseReader.RetrieveAsync));
-
-            var item = new DataverseRecordValue(entityResponse.Response, _entityMetadata, Type.ToRecord(), _connection);
-            var ret = await item.UpdateFieldsAsync(record, cancellationToken).ConfigureAwait(false);
+            var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
             Refresh();
@@ -241,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
             var dvRecord = (DataverseRecordValue)record;
             if (dvRecord.Entity.LogicalName != _entityMetadata.LogicalName)
             {
-                var error = new ExpressionError() { MessageKey = "InvalidCast", MessageArgs = new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName } };
+                ExpressionError error = DataverseHelpers.GetInvalidCastError(new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName });
                 throw new CustomFunctionErrorException(error);
             }
 

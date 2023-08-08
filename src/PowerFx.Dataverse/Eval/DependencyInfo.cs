@@ -1,25 +1,11 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Texl.Builtins;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Discovery;
-using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Transactions;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
-using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -151,7 +137,7 @@ namespace Microsoft.PowerFx.Dataverse
             return node.Child.Accept(this, context);
         }
 
-        Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
+        private readonly Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
 
         public override RetVal Visit(CallNode node, Context context)
         {
@@ -239,6 +225,18 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new NotSupportedException($"Can't analyze Collect overload: {node}");
                 }
             }
+            else if (func == "ClearCollect")
+            {
+                // ClearCollect(table, fields);
+                firstArgIsWrite = true;
+                argRecordWrite = 1;
+            }
+            else if (func == "Remove")
+            {
+                // Remove(table, fields);
+                firstArgIsWrite = true;
+                argRecordWrite = 1;
+            }
 
             if (argRecordWrite > 0)
             {
@@ -250,7 +248,18 @@ namespace Microsoft.PowerFx.Dataverse
 
                     // Every field in the record is a field write. 
                     var argWrites = node.Args[argRecordWrite];
-                    if (argWrites is RecordNode writes)
+
+                    IntermediateNode maybeRecordNode;
+                    if(argWrites is AggregateCoercionNode aggregateCoercionNode)
+                    {
+                        maybeRecordNode = aggregateCoercionNode.Child;
+                    }
+                    else
+                    {
+                        maybeRecordNode = argWrites;
+                    }
+
+                    if (maybeRecordNode is RecordNode writes)
                     {
                         foreach (var kv in writes.Fields)
                         {
@@ -404,7 +413,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata))
             {
                 // Normal case. 
-                if (entityMetadata.TryGetAttribute(fieldLogicalName, out var amd))
+                if (entityMetadata.TryGetAttribute(fieldLogicalName, out _))
                 {
                     return fieldLogicalName;
                 }

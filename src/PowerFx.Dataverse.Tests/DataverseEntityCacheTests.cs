@@ -4,94 +4,94 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Threading;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    [TestClass]
+
     public class DataverseEntityCacheTests
     {
-        [TestMethod]
+        [Fact]
         public void EntityCache_TestCacheLimits()
         {
             Entity[] entities = Enumerable.Range(0, 5).Select((i) => new Entity("entity", Guid.NewGuid())).ToArray();
             DataverseEntityCache cache = new DataverseEntityCache(new TestOrganizationService(), 3, new TimeSpan(0, 0, 0, 0, 80));
-            
+
             cache.AddCacheEntry(entities[0]);
-            Assert.AreEqual(1, cache.CacheSize); // cache: 0
+            Assert.Equal(1, cache.CacheSize); // cache: 0
 
             cache.AddCacheEntry(entities[1]);
-            Assert.AreEqual(2, cache.CacheSize); // cache: 0, 1
+            Assert.Equal(2, cache.CacheSize); // cache: 0, 1
 
             cache.AddCacheEntry(entities[2]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 0, 1, 2
+            Assert.Equal(3, cache.CacheSize); // cache: 0, 1, 2
 
             cache.AddCacheEntry(entities[3]);
             cache.AddCacheEntry(entities[3]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 1, 2, 3
+            Assert.Equal(3, cache.CacheSize); // cache: 1, 2, 3
 
             cache.AddCacheEntry(entities[4]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 2, 3, 4
+            Assert.Equal(3, cache.CacheSize); // cache: 2, 3, 4
 
-            Assert.IsNull(cache.GetEntityFromCache(entities[0].Id));
-            Assert.IsNull(cache.GetEntityFromCache(entities[1].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[2].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[3].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[4].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[0].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[1].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[2].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[3].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[4].Id));
 
             // cache life time is 80ms, so all entries should be invalid after this point
             Thread.Sleep(100);
 
-            Assert.IsNull(cache.GetEntityFromCache(entities[2].Id));
-            Assert.IsNull(cache.GetEntityFromCache(entities[3].Id));
-            Assert.IsNull(cache.GetEntityFromCache(entities[4].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[2].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[3].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[4].Id));
 
-            Assert.AreEqual(0, cache.CacheSize); 
+            Assert.Equal(0, cache.CacheSize);
 
             cache.AddCacheEntry(entities[0]);
-            Assert.AreEqual(1, cache.CacheSize); // cache: 0
+            Assert.Equal(1, cache.CacheSize); // cache: 0
 
             cache.AddCacheEntry(entities[1]);
-            Assert.AreEqual(2, cache.CacheSize); // cache: 0, 1
+            Assert.Equal(2, cache.CacheSize); // cache: 0, 1
 
             cache.AddCacheEntry(entities[2]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 0, 1, 2
+            Assert.Equal(3, cache.CacheSize); // cache: 0, 1, 2
 
             // Here, we update entity 1
             cache.AddCacheEntry(entities[1]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 0, 2, 1
+            Assert.Equal(3, cache.CacheSize); // cache: 0, 2, 1
 
             cache.AddCacheEntry(entities[4]);
-            Assert.AreEqual(3, cache.CacheSize); // cache: 2, 1, 4
+            Assert.Equal(3, cache.CacheSize); // cache: 2, 1, 4
 
-            Assert.IsNull(cache.GetEntityFromCache(entities[0].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[1].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[2].Id));
-            Assert.IsNull(cache.GetEntityFromCache(entities[3].Id));
-            Assert.IsNotNull(cache.GetEntityFromCache(entities[4].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[0].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[1].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[2].Id));
+            Assert.Null(cache.GetEntityFromCache(entities[3].Id));
+            Assert.NotNull(cache.GetEntityFromCache(entities[4].Id));
 
             cache.ClearCache();
 
-            Assert.AreEqual(0, cache.CacheSize);
+            Assert.Equal(0, cache.CacheSize);
 
             cache.AddCacheEntry(entities[0]);
             cache.AddCacheEntry(new Entity("entity2", Guid.NewGuid()));
 
             cache.ClearCache("entity2");
 
-            Assert.AreEqual(1, cache.CacheSize);
-            Assert.AreEqual(entities[0].Id, cache.GetEntityFromCache(entities[0].Id).Id);
+            Assert.Equal(1, cache.CacheSize);
+            Assert.Equal(entities[0].Id, cache.GetEntityFromCache(entities[0].Id).Id);
 
             cache.RemoveCacheEntry(entities[0].Id);
             cache.RemoveCacheEntry(entities[0].Id);
         }
 
-        [TestMethod]
+        [Fact]
         public void EntityCache_CacheAPIs()
         {
             Entity[] entities = Enumerable.Range(0, 5).Select((i) => new Entity("entity", Guid.NewGuid())).ToArray();
@@ -99,26 +99,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DataverseEntityCache cache = new DataverseEntityCache(orgService);
 
             DataverseResponse<Guid> r1 = cache.CreateAsync(entities[0]).Result;
-            Assert.IsNotNull(r1);
-            Assert.IsFalse(r1.HasError);
+            Assert.NotNull(r1);
+            Assert.False(r1.HasError);
 
-            Assert.AreEqual(0, cache.CacheSize);
+            Assert.Equal(0, cache.CacheSize);
 
             orgService.SetNextRetrieveResult(entities[0]);
             DataverseResponse<Entity> r2 = cache.RetrieveAsync(entities[0].LogicalName, entities[0].Id).Result;
-            Assert.IsNotNull(r2);
-            Assert.IsFalse(r2.HasError);
+            Assert.NotNull(r2);
+            Assert.False(r2.HasError);
 
-            Assert.AreEqual(1, cache.CacheSize);
-            Assert.AreEqual(entities[0].Id, r2.Response.Id);
+            Assert.Equal(1, cache.CacheSize);
+            Assert.Equal(entities[0].Id, r2.Response.Id);
 
             // Do not call SetNextRetrieveResult here
             DataverseResponse<Entity> r3 = cache.RetrieveAsync(entities[0].LogicalName, entities[0].Id).Result;
-            Assert.IsNotNull(r3);
-            Assert.IsFalse(r3.HasError);
+            Assert.NotNull(r3);
+            Assert.False(r3.HasError);
 
-            Assert.AreEqual(1, cache.CacheSize);
-            Assert.AreEqual(entities[0].Id, r3.Response.Id);
+            Assert.Equal(1, cache.CacheSize);
+            Assert.Equal(entities[0].Id, r3.Response.Id);
         }
     }
 

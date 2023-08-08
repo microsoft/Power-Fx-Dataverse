@@ -207,12 +207,7 @@ namespace Microsoft.PowerFx.Dataverse
             var refernecingTable = relationshipMetadata.ReferencingEntity;
             string referencingAttribute = relationshipMetadata.ReferencingAttribute;
             FormulaValue result;
-            var recordType = ((TableType)fieldType).ToRecord();
-            if (recordType == null)
-            {
-                throw new InvalidOperationException("Field Type should be a table value");
-            }
-
+            var recordType = ((TableType)fieldType).ToRecord() ?? throw new InvalidOperationException("Field Type should be a table value");
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
@@ -268,12 +263,13 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        // Called by DataverseRecordValue, which wont internal entity attributes.
+        public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
-            var leanEntity = ConvertRecordToEntity(record, out DValue<RecordValue> error);
+            var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue <RecordValue> error);
 
             if (error != null)
             {
@@ -281,7 +277,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
+            DataverseResponse result = await connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -289,32 +285,45 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
             }
 
-            foreach (var attr in newEntity.Response.Attributes)
+            var refreshed = new DataverseRecordValue(newEntity.Response, metadata, type, connection);
+
+            return DValue<RecordValue>.Of(refreshed);
+        }
+
+        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
+
+            if (refreshedRecord.IsValue)
             {
-                _entity.Attributes[attr.Key] = attr.Value;
+                var dataverseRecord = (DataverseRecordValue)refreshedRecord.Value;
+                foreach (var attr in dataverseRecord.Entity.Attributes)
+                {
+                    _entity.Attributes[attr.Key] = attr.Value;
+                }
             }
 
-            return DValue<RecordValue>.Of(this);
+            return refreshedRecord;
         }
 
         // Record should already be using logical names. 
-        private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
-            var leanEntity = record.ConvertRecordToEntity(_metadata, out error);
+            var leanEntity = record.ConvertRecordToEntity(metadata, out error);
 
             if (error != null)
             { 
                 return null; 
             }
 
-            leanEntity.Id = _entity.Id;
+            leanEntity.Id = id;
             return leanEntity;
         }
 
