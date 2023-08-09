@@ -123,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 return column.FormatName == StringFormat.Text.ToString();
                             case AttributeTypeCode.Virtual:
                                 // multi-select are suggested, but files and images are not
-                                return type.Kind == DKind.OptionSetValue;
+                                return column.IsOptionSet;
                             default:
                                 return true;
                         }

@@ -4,18 +4,18 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Syntax;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Syntax;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -100,6 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
         {
             FormulaValue result;
+            string errorMessage = string.Empty;
 
             // If primary key is missing from Attributes, still get it from the entity. 
             if (fieldName == GetPrimaryKeyName())
@@ -111,7 +112,6 @@ namespace Microsoft.PowerFx.Dataverse
             if (_metadata.TryGetAttribute(fieldName, out var amd))
             {
                 bool unsupportedType = false;
-                string errorMessage = string.Empty;
 
                 if (amd is ImageAttributeMetadata)
                 {
@@ -190,12 +190,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            // Multiple selection column type is not supported for the time being.
+            if (fieldType is TableType && value is OptionSetValueCollection)
+            {
+                errorMessage = "Multiple selection column type not supported.";
+            }
+
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
             {
                 Kind = ErrorKind.Unknown,
                 Severity = ErrorSeverity.Critical,
-                Message = string.Format("{0} column type not supported.", fieldType)
+                Message = errorMessage != string.Empty ? errorMessage : string.Format("{0} column type not supported.", fieldType)
             };
 
             result = NewError(expressionError);

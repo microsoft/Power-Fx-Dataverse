@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
@@ -3395,6 +3396,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 "Hyperlink column type not supported.",
                 "Image column type not supported.",
                 "File column type not supported.",
+                "Multiple selection column type not supported.",
             };
 
             try
@@ -3522,6 +3524,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logging = check.ApplyGetLogging();
 
             Assert.Equal(expected, logging);
+        }
+
+        [Theory]
+        [InlineData("First(t1).M|")]
+        [InlineData("First(t1).|")]
+        [InlineData("ForAll(t1, |")]
+        public void MultiSelectIntellisenseTest(string expression)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var cursorMatches = Regex.Matches(expression, @"\|");
+            Assert.True(cursorMatches.Count == 1, "Invalid cursor.  Exactly one cursor must be specified.");
+            var cursorPosition = cursorMatches.First().Index;
+
+            expression = expression.Replace("|", string.Empty);
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expression, symbolTable: dv.Symbols);
+            var intellisense = engine.Suggest(check, cursorPosition);
+
+            Assert.True(intellisense.Suggestions.Count() > 0);
+            Assert.Contains(intellisense.Suggestions, sgst => sgst.DisplayText.Text == "MultiSelect");
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
