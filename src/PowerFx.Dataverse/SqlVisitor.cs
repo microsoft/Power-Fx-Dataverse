@@ -127,6 +127,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return ret;
             }            
 
+            if (node.Function == BuiltinFunctionsCore.Float)
+            {
+                return Library.Value(this, node, context);
+            }
+
             throw new SqlCompileException(node.IRContext.SourceContext);
         }
 
