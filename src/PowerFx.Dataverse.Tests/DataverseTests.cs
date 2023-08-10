@@ -248,8 +248,13 @@ END
             Assert.False(result.IsSuccess);
             Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString());
 
-            var result2 = engine.Compile("Decimal(5)", new SqlCompileOptions());
-            Assert.True(result2.IsSuccess);
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            var ir = new CheckResult(engine).SetText("RoundUp(1.15,1)").SetBindingInfo().ApplyIR().TopNode.ToString();
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", ir);
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
         }
 
         [Fact]

@@ -537,7 +537,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 });
 
                 // Arithmatic
-                ExecuteSqlTest("Decimal(decimal)", 20M, cx, metadata);
+                ExecuteSqlTest("Decimal(decimal2)", 0.02188M, cx, metadata);
+                ExecuteSqlTest("RoundUp(decimal2,3)", 0.022M, cx, metadata);
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
