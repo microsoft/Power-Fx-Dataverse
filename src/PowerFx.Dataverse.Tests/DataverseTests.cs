@@ -241,23 +241,6 @@ END
         }
 
         [Fact]
-        public void CheckDecimalFloatFunctions()
-        {
-            var engine = new PowerFx2SqlEngine();
-            var result = engine.Compile("Float(5)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString());
-
-            result = engine.Compile("Decimal(5)", new SqlCompileOptions());
-            Assert.True(result.IsSuccess);
-
-            var ir = new CheckResult(engine).SetText("RoundUp(1.15,1)").SetBindingInfo().ApplyIR().TopNode.ToString();
-            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", ir);
-            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
         public void ExpFunctionBlockedTest()
         {
             var expr = "Exp(10)";
@@ -269,6 +252,22 @@ END
             Assert.False(result.IsSuccess);
             Assert.Single(result.Errors);
             Assert.Contains("'Exp' is an unknown or unsupported function.", result.Errors.First().ToString());
+        }
+
+        [Fact]
+        public void CheckDecimalFloatFunctions()
+        {
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile("Float(5)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString());
+
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString());
+            Assert.True(result.IsSuccess);
         }
 
         [Fact]
