@@ -121,11 +121,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return ptr(this, node, context);
             }
 
+            if (node.Function == BuiltinFunctionsCore.Float)
+            {
+                return Library.Value(this, node, context);
+            }
+
             // Match against Coalesce(number, 0) for blank coercion            
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
                 return ret;
-            }            
+            }
 
             throw new SqlCompileException(node.IRContext.SourceContext);
         }
