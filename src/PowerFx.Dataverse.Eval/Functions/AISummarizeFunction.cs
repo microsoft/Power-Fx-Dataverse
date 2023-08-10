@@ -28,15 +28,11 @@ namespace Microsoft.PowerFx.Dataverse
             /// The incoming text. 
             /// </summary>
             public string Text { get; set; }
-            
-            // Json  schema
-            public string source { get; set; } = "{\"partnerSource\" : \"PowerFx\"}";
 
             public OrganizationRequest Get()
             {
                 var req = new OrganizationRequest("AISummarize");
                 req[nameof(SummarizeRequest.Text)] = this.Text;
-                req[nameof(SummarizeRequest.source)] = this.source;
 
                 return req;
             }

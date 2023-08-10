@@ -54,8 +54,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Validate parameters
                 Assert.Equal("AISummarize", req.RequestName);
                 Assert.Equal("very long string", req.Parameters["Text"]);
-                Assert.NotNull(req.Parameters["source"]);
-
 
                 var resp = new OrganizationResponse
                 {
