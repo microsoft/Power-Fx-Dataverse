@@ -254,19 +254,54 @@ END
             Assert.Contains("'Exp' is an unknown or unsupported function.", result.Errors.First().ToString());
         }
 
+        public const string UDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(38,10)
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(38,10)
+    DECLARE @v5 decimal(38,10)
+    DECLARE @v6 decimal(38,10)
+    DECLARE @v7 decimal(38,10)
+
+    -- expression body
+    SET @v1 = 1.15
+    SET @v2 = 1
+    SET @v3 = @v2
+    SET @v4 = ISNULL(@v3,0)
+    SET @v5 = IIF(ISNULL(@v4,0)<0,CEILING(ISNULL(@v4,0)),FLOOR(ISNULL(@v4,0)))
+    SET @v6 = IIF(ISNULL(10,0)<>0,LOG(ABS(10),10)*@v5,0)
+    IF(@v6 > 28) BEGIN RETURN NULL END
+    IF(ROUND(@v5,0) <> @v5 AND 10 < 0) BEGIN RETURN NULL END
+    IF(10 = 0 AND @v5 < 0) BEGIN RETURN NULL END
+    SET @v7 = POWER(CAST(10 as decimal(38,10)),@v5)
+    IF(ISNULL(@v7, 0) = 0) BEGIN RETURN NULL END
+    SET @v0 = IIF(ISNULL(@v1,0)>0,CEILING(ISNULL(@v1,0)*@v7)/@v7,FLOOR(ISNULL(@v1,0)*@v7)/@v7)
+    IF(@v1 <> 0 AND @v0 = 0) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v0<-100000000000 OR @v0>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v0, 10)
+END
+";
+
         [Fact]
         public void CheckDecimalFloatFunctions()
         {
             var engine = new PowerFx2SqlEngine();
             var result = engine.Compile("Float(5)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString()); // Float function can't be used in the formula.
 
-            result = engine.Compile("Decimal(5)", new SqlCompileOptions());
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
             Assert.True(result.IsSuccess);
 
-            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
-            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString());
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are internally supported from IR
+            Assert.Equal(UDF, result.SqlFunction);
             Assert.True(result.IsSuccess);
         }
 
