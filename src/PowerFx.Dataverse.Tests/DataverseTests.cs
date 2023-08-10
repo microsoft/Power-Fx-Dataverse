@@ -241,6 +241,18 @@ END
         }
 
         [Fact]
+        public void CheckDecimalFloatFunctions()
+        {
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile("Float(5)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString());
+
+            var result2 = engine.Compile("Decimal(5)", new SqlCompileOptions());
+            Assert.True(result2.IsSuccess);
+        }
+
+        [Fact]
         public void ExpFunctionBlockedTest()
         {
             var expr = "Exp(10)";
