@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -2596,12 +2598,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
         [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
+            "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
         [InlineData("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
-            "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
+            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
         [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
+            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
             )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
@@ -3522,6 +3524,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logging = check.ApplyGetLogging();
 
             Assert.Equal(expected, logging);
+        }
+
+        [Fact]
+        public void SerializeEntity()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "Local"); // unique display name
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var entityRecordType = dv.GetRecordType("local");
+
+            Func<string, RecordType> logicalToRecord = (logicalName) => dv.GetRecordType(logicalName);
+            var option = new JsonSerializerOptions();
+            var setting = new FormulaTypeSerializerSettings(logicalToRecord);
+            var converter = new FormulaTypeJsonConverter(setting);
+            option.Converters.Add(converter);
+
+            // serialization of DV RecordType
+            var json = JsonSerializer.Serialize<FormulaType>(entityRecordType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType""},""CustomTypeName"":""local""}", json);
+
+            var deSerializedRecordType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityRecordType, deSerializedRecordType);
+
+            // serialization of DV TableType
+            var entityTableType = entityRecordType.ToTable();
+            json = JsonSerializer.Serialize<FormulaType>(entityTableType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType"",""IsTable"":true},""CustomTypeName"":""local""}", json);
+
+            var deSerializedTableType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityTableType, deSerializedTableType);
+
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
