@@ -27,15 +27,15 @@ namespace Microsoft.PowerFx.Dataverse
             /// <summary>
             /// The incoming text. 
             /// </summary>
-            public string InputText { get; set; }
-
+            public string Text { get; set; }
+            
             // Json  schema
             public string source { get; set; } = "{\"partnerSource\" : \"PowerFx\"}";
 
             public OrganizationRequest Get()
             {
-                var req = new OrganizationRequest("SummarizeText");
-                req[nameof(SummarizeRequest.InputText)] = this.InputText;
+                var req = new OrganizationRequest("AISummarize");
+                req[nameof(SummarizeRequest.Text)] = this.Text;
                 req[nameof(SummarizeRequest.source)] = this.source;
 
                 return req;
@@ -49,7 +49,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public static SummarizeResponse Parse(OrganizationResponse res)
             {
-                res.ValidateNameOrThrowEvalEx("SummarizeText");
+                res.ValidateNameOrThrowEvalEx("AISummarize");
 
                 var str = res.Results.GetOrThrowEvalEx<string>(nameof(SummarizeResponse.SummarizedText));
 
@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var req = new SummarizeRequest
             {
-                InputText = myText
+                Text = myText
             }.Get();
 
             var result = await service.ExecuteAsync(req, cancel);

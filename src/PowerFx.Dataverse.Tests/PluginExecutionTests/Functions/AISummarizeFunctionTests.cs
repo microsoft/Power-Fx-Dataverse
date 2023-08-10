@@ -52,14 +52,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             client.Work = (req) =>
             {
                 // Validate parameters
-                Assert.Equal("SummarizeText", req.RequestName);
-                Assert.Equal("very long string", req.Parameters["InputText"]);
+                Assert.Equal("AISummarize", req.RequestName);
+                Assert.Equal("very long string", req.Parameters["Text"]);
                 Assert.NotNull(req.Parameters["source"]);
 
 
                 var resp = new OrganizationResponse
                 {
-                    ResponseName = "SummarizeText"
+                    ResponseName = "AISummarize"
                 };
                 resp["SummarizedText"] = "short string";
                 return resp;
