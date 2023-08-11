@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -9,9 +9,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -3384,19 +3386,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var baseExpr = "First(t1).{0}";
             var engine = new RecalcEngine();
 
-            // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
             var entity = el.RetrieveAsync("allattributes", _g1).Result.Response;
 
-            // Hyperlink is a known type but not supported.
             var expectedErrors = new List<string>()
             {
-                "Hyperlink column type not supported.",
-                "Image column type not supported.",
-                "File column type not supported.",
-                "Multiple selection column type not supported.",
+                "ImageType column type not supported.",
+                "FileType column type not supported.",
+                "MultiSelectPicklistType column type not supported.",
             };
 
             try
@@ -3525,7 +3524,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.Equal(expected, logging);
         }
+      
+        [Fact]
+        public void SerializeEntity()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "Local"); // unique display name
+            var policy = new SingleOrgPolicy(map);
 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var entityRecordType = dv.GetRecordType("local");
+
+            Func<string, RecordType> logicalToRecord = (logicalName) => dv.GetRecordType(logicalName);
+            var option = new JsonSerializerOptions();
+            var setting = new FormulaTypeSerializerSettings(logicalToRecord);
+            var converter = new FormulaTypeJsonConverter(setting);
+            option.Converters.Add(converter);
+
+            // serialization of DV RecordType
+            var json = JsonSerializer.Serialize<FormulaType>(entityRecordType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType""},""CustomTypeName"":""local""}", json);
+
+            var deSerializedRecordType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityRecordType, deSerializedRecordType);
+
+            // serialization of DV TableType
+            var entityTableType = entityRecordType.ToTable();
+            json = JsonSerializer.Serialize<FormulaType>(entityTableType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType"",""IsTable"":true},""CustomTypeName"":""local""}", json);
+
+            var deSerializedTableType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityTableType, deSerializedTableType);
+        }
+      
         [Theory]
         [InlineData("First(t1).M|")]
         [InlineData("First(t1).|")]
@@ -3614,6 +3646,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return (dvConnection, ds, entityLookup);
         }
 
+        private static readonly List<Xrm.Sdk.OptionSetValue> _listOptionSetValue = new List<Xrm.Sdk.OptionSetValue>() {
+                new Xrm.Sdk.OptionSetValue(value: 8),
+                new Xrm.Sdk.OptionSetValue(value: 9)
+            };
+
         // Create Entity objects to match DataverseTests.AllAttributeModel;
         private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
         {
@@ -3628,6 +3665,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["bigint"] = 934157136952;
             entity1.Attributes["double"] = 1d / 3d;
             entity1.Attributes["new_field"] = 1m / 3m;
+            entity1.Attributes["userlocaldatetime"] = DateTime.Now;
+            entity1.Attributes["int"] = 1;
+            entity1.Attributes["picklist"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statecode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statuscode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["string"] = "string value";
+            entity1.Attributes["guid"] = _g1;
+            entity1.Attributes["multiSelect"] = _listOptionSetValue;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);

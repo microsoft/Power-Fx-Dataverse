@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -109,38 +109,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return (true, result);
             }
 
-            if (_metadata.TryGetAttribute(fieldName, out var amd))
-            {
-                bool unsupportedType = false;
-
-                if (amd is ImageAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Image column type not supported.";
-                }
-                else if (amd is FileAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "File column type not supported.";
-                }
-                else if (amd is ManagedPropertyAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Managed property column type not supported.";
-                }
-
-                if (unsupportedType)
-                {
-                    result = NewError(new ExpressionError()
-                    {
-                        Kind = ErrorKind.Unknown,
-                        Severity = ErrorSeverity.Critical,
-                        Message = errorMessage
-                    });
-                    return (true, result);
-                }
-            }
-
             // IR should convert the fieldName from display to Logical Name. 
             if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
             {
@@ -190,18 +158,14 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Multiple selection column type is not supported for the time being.
-            if (fieldType is TableType && value is OptionSetValueCollection)
-            {
-                errorMessage = "Multiple selection column type not supported.";
-            }
+            _metadata.TryGetAttribute(fieldName, out var amd);
 
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
             {
                 Kind = ErrorKind.Unknown,
                 Severity = ErrorSeverity.Critical,
-                Message = errorMessage != string.Empty ? errorMessage : string.Format("{0} column type not supported.", fieldType)
+                Message = string.Format("{0} column type not supported.", amd != null ? amd.AttributeTypeName.Value : fieldType)
             };
 
             result = NewError(expressionError);

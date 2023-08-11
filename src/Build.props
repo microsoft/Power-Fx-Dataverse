@@ -1,9 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
   <PropertyGroup>
-    <!--https://github.com/microsoft/Power-Fx/commit/cfe40a252aa90c8aeb7700c631ae6160e23b1473-->
-    <PowerFxVersion>0.2.7-preview.20230809-1001</PowerFxVersion>
+    <!--https://github.com/microsoft/Power-Fx/commit/10c5258a56a892636242840a502ea6a28909eede-->
+    <PowerFxVersion>0.2.7-preview.20230810-1001</PowerFxVersion>
       
       <!-- https://msazure.visualstudio.com/OneAgile/_artifacts/feed/PowerApps-Studio-Official/NuGet/Microsoft.PowerFx.Dataverse.Parser       -->
     <DataverseParserVersion>0.1.0-ci-20230714-76422488</DataverseParserVersion>
