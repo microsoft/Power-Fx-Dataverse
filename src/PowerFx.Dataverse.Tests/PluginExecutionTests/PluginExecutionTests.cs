@@ -3385,18 +3385,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var baseExpr = "First(t1).{0}";
             var engine = new RecalcEngine();
 
-            // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
             var entity = el.RetrieveAsync("allattributes", _g1).Result.Response;
 
-            // Hyperlink is a known type but not supported.
             var expectedErrors = new List<string>()
             {
-                "Hyperlink column type not supported.",
-                "Image column type not supported.",
-                "File column type not supported.",
+                "ImageType column type not supported.",
+                "FileType column type not supported.",
+                "MultiSelectPicklistType column type not supported.",
             };
 
             try
@@ -3622,6 +3620,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return (dvConnection, ds, entityLookup);
         }
 
+        private static readonly List<Xrm.Sdk.OptionSetValue> _listOptionSetValue = new List<Xrm.Sdk.OptionSetValue>() {
+                new Xrm.Sdk.OptionSetValue(value: 8),
+                new Xrm.Sdk.OptionSetValue(value: 9)
+            };
+
         // Create Entity objects to match DataverseTests.AllAttributeModel;
         private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
         {
@@ -3636,6 +3639,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["bigint"] = 934157136952;
             entity1.Attributes["double"] = 1d / 3d;
             entity1.Attributes["new_field"] = 1m / 3m;
+            entity1.Attributes["userlocaldatetime"] = DateTime.Now;
+            entity1.Attributes["int"] = 1;
+            entity1.Attributes["picklist"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statecode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statuscode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["string"] = "string value";
+            entity1.Attributes["guid"] = _g1;
+            entity1.Attributes["multiSelect"] = _listOptionSetValue;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
