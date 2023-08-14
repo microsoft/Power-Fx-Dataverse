@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -158,6 +159,13 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            // Multi-select column type
+            if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
+            {
+                result = await ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken).ConfigureAwait(false);
+                return (true, result);
+            }
+
             _metadata.TryGetAttribute(fieldName, out var amd);
 
             // Not supported FormulaType types.
@@ -170,6 +178,19 @@ namespace Microsoft.PowerFx.Dataverse
 
             result = NewError(expressionError);
             return (true, result);
+        }
+
+        private async Task<FormulaValue> ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
+        {
+            var records = new List<RecordValue>();            
+
+            foreach (var xrmOptionSetValue in optionSetValueCollection)
+            {
+                var fxOptionSetValue = AttributeUtility.ConvertXrmOptionSetValueToFormulaValue(tableType, xrmOptionSetValue);
+                records.Add(NewRecordFromFields(new NamedValue(tableType.FieldNames.First(), fxOptionSetValue)));
+            }
+
+            return NewTable(tableType.ToRecord(), records);
         }
 
         private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)

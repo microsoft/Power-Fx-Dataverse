@@ -4,10 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -109,6 +111,25 @@ namespace Microsoft.PowerFx.Dataverse
                         return new Money((decimal)((NumberValue)fxValue).Value);
                     }
 
+                case AttributeTypeCode.Virtual:
+                    if (amd is MultiSelectPicklistAttributeMetadata)
+                    {
+                        var tableValue = (TableValue)fxValue;
+                        var optionSetValueCollection = new OptionSetValueCollection();
+
+                        foreach (var row in tableValue.Rows.Distinct(new RecordValueOptionSetComparer()))
+                        {
+                            var fxOptionSetValue = (FxOptionSetValue) row.Value.GetField("Value");
+                            var xrmOptionSetValue = new XrmOptionSetValue(int.Parse(fxOptionSetValue.Option));
+
+                            optionSetValueCollection.Add(xrmOptionSetValue);
+                        }
+                        
+                        return optionSetValueCollection;
+                    }
+                    
+                    throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
+
                 case AttributeTypeCode.Lookup: // EntityReference
                     if (fxValue is DataverseRecordValue dv)
                     {
@@ -119,7 +140,6 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.CalendarRules:
                 case AttributeTypeCode.Customer:
                 case AttributeTypeCode.EntityName:
-                case AttributeTypeCode.Virtual:
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.PartyList:
                 case AttributeTypeCode.State:
@@ -127,6 +147,34 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
             }
+        }
+    }
+
+    /// <summary>
+    /// Used to compare OptionSetValue.Option.
+    /// </summary>
+    internal class RecordValueOptionSetComparer : EqualityComparer<DValue<RecordValue>>
+    {
+        public override bool Equals(DValue<RecordValue> row1, DValue<RecordValue> row2)
+        {
+            if (row1.IsValue && row2.IsValue)
+            {
+                var recordValue1 = row1.Value;
+                var recordValue2 = row2.Value;
+
+                if (recordValue1.GetField("Value") is FxOptionSetValue optionSetValue1 && recordValue2.GetField("Value") is FxOptionSetValue optionSetValue2)
+                {
+                    return optionSetValue1.Option == optionSetValue2.Option;
+                }
+
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode(DValue<RecordValue> row)
+        {
+            return row.ToFormulaValue().ToString().GetHashCode();
         }
     }
 }

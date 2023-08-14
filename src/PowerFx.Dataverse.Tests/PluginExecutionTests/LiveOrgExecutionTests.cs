@@ -1021,6 +1021,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableFact]
+        public void MultiselectFieldTest()
+        {
+            string tableName = "PFxTables";
+            string expr = "Concat(First(PFxTables).AAMultipleChoices, Value)";
+
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var result = RunDataverseTest(tableName, expr, out disposableObjects);
+
+                if (result is ErrorValue errorValue)
+                {
+                    Assert.IsAssignableFrom<FormulaValue>(result);
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
             ServiceClient svcClient = GetClient();
