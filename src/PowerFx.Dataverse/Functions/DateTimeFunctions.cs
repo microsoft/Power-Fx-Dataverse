@@ -122,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var date = node.Args[0].Accept(visitor, context);
             if (node.Args.Count > 1)
             {
-                // if second arg is of numeric type, node will be like '{Float:n(arg:w)}', taking correct context only for second arg 
+                // if second arg is of numeric type, node will be like '{Float:n(arg:w)}', taking correct context only for second arg instead of entire node
                 throw BuildUnsupportedArgumentException(node.Function, 1, (node.Args[1] is CallNode cNode && cNode.Args.Count > 0 ? cNode.Args[0] : node.Args[1]).IRContext.SourceContext);
             }
 
