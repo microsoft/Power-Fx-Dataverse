@@ -52,6 +52,7 @@ Error()
 >> IsError(1E37)
 true
 
+
 // check string literals are sanitized
 >> "Robert '; DROP TABLE Students; --"
 "Robert '; DROP TABLE Students; --"
