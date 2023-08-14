@@ -1126,7 +1126,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool IsNumericType(RetVal arg) 
             {
-                return arg.type is NumberType || arg.type is DecimalType;
+                return IsNumericType(arg.type);
             }
 
             internal static bool IsNumericType(FormulaType type)
