@@ -30,6 +30,8 @@ namespace Microsoft.PowerFx.Dataverse
         public static void EnableAIFunctions(this SymbolTable symbolTable )
         {
             symbolTable.AddFunction(new AISummarizeFunction());
+            symbolTable.AddFunction(new AIReplyFunction());
+            symbolTable.AddFunction(new AISentimentFunction());
         }
 
         public static void AddDataverseExecute(this RuntimeConfig config, IOrganizationService client)
