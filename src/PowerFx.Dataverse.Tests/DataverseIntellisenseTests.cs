@@ -128,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
-        [InlineData("Floa|")] // "Floating point fields are not suggested at all"
+        [InlineData("Floa|")] // "Floating point fields and Float function are not suggested at all"
         [InlineData("Deci|")] // "Decimal function is not suggested by intellisense"
         [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
         [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"

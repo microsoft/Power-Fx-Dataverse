@@ -1129,6 +1129,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return arg.type is NumberType || arg.type is DecimalType;
             }
 
+            internal static bool IsNumericType(FormulaType type)
+            {
+                return type is NumberType or DecimalType;
+            }
+
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);
@@ -1290,7 +1295,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if ((type is NumberType or DecimalType) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                else if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1303,7 +1308,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return true;
                     }
                 }
-                else if (!(type is NumberType or DecimalType))
+                else if (!IsNumericType(type))
                 {
                     throw new NotSupportedException($"Unsupported type for numeric literal check: {type}");
                 }

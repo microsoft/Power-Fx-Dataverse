@@ -1,5 +1,7 @@
 #override: Text_Format.txt
 
+// Numeric args passed in these tests overflow Decimal range
+
 >> Text(423456789013, "0")
 #Skip
 
