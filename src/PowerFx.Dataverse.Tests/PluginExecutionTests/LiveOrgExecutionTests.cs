@@ -1033,10 +1033,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 var result = RunDataverseTest(tableName, expr, out disposableObjects);
 
-                if (result is ErrorValue errorValue)
-                {
-                    Assert.IsAssignableFrom<FormulaValue>(result);
-                }
+                Assert.IsType<StringValue>(result);
             }
             finally
             {

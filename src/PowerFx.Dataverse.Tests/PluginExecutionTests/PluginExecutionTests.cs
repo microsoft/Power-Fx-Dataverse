@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.ServiceModel;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core;
@@ -3566,7 +3566,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logicalName = "allattributes";
             var displayName = "t1";
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            (DataverseConnection dv, EntityLookup _) = CreateMemoryForAllAttributeModel();
             dv.AddTable(displayName, logicalName);
 
             var engine = new RecalcEngine();
@@ -3586,12 +3586,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logicalName = "allattributes";
             var displayName = "t1";
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
             dv.AddTable(displayName, logicalName);
 
             var engine = new RecalcEngine();
             var check = engine.Check(expression, symbolTable: dv.Symbols);
-            var result = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
 
             Assert.IsType<StringValue>(result);
             Assert.Equal(expected, ((StringValue)result).Value);
@@ -3601,9 +3601,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 1)]
         [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine']})}, CountRows(x.MultiSelect))", 2)]
         [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 1)]
+        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', Error({Kind:ErrorKind.Custom})]})}, CountRows(x.MultiSelect))", 1)]
         [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine', 'MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 2)]
         [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:[]})}, CountRows(x.MultiSelect))", 0)]
+        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:[Blank(),Blank()]})}, CountRows(x.MultiSelect))", 0)]
         public async Task MultiSelectMutationTest(string expression, int counter)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var powerFxConfig = new PowerFxConfig();
+
+            powerFxConfig.SymbolTable.EnableMutationFunctions();
+
+            var opt = new ParserOptions() { AllowsSideEffects = true };
+            var engine = new RecalcEngine(powerFxConfig);
+            var check = engine.Check(expression, options: opt, symbolTable: dv.Symbols);
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+
+            Assert.IsType<DecimalValue>(result);
+            Assert.Equal(counter, ((DecimalValue)result).Value);
+        }
+
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {MultiSelect:[1]})", false)]
+        [InlineData("Patch(t1, First(t1), {MultiSelect:[{Value: 'MultiSelect (All Attributes)'.'Eight'}, Error({Kind:ErrorKind.Custom})]})", true)]
+        public async Task MultiSelectWrongArgsTest(string expression, bool checkIsSuccess)
         {
             var logicalName = "allattributes";
             var displayName = "t1";
@@ -3618,9 +3644,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var opt = new ParserOptions() { AllowsSideEffects = true };
             var engine = new RecalcEngine(powerFxConfig);
             var check = engine.Check(expression, options: opt, symbolTable: dv.Symbols);
-            var result = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            Assert.Equal(counter, ((DecimalValue)result).Value);
+            Assert.Equal(checkIsSuccess, check.IsSuccess);
+
+            if (check.IsSuccess)
+            {
+                var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+                Assert.IsType<ErrorValue>(result);
+            }
+            else
+            {
+                Assert.Contains("Invalid argument type. Expecting a Table value, but of a different schema", check.Errors.First().Message);
+            }
         }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");

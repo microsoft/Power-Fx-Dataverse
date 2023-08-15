@@ -116,19 +116,30 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var tableValue = (TableValue)fxValue;
                         var optionSetValueCollection = new OptionSetValueCollection();
+                        var optionSetValueSet = new HashSet<XrmOptionSetValue>();
 
-                        foreach (var row in tableValue.Rows.Distinct(new RecordValueOptionSetComparer()))
+                        foreach (var row in tableValue.Rows)
                         {
-                            var fxOptionSetValue = (FxOptionSetValue) row.Value.GetField("Value");
-                            var xrmOptionSetValue = new XrmOptionSetValue(int.Parse(fxOptionSetValue.Option));
+                            if (row.IsError)
+                            {
+                                throw new InvalidOperationException($"The requested operation for {amd.LogicalName} field is invalid.");
+                            }
 
-                            optionSetValueCollection.Add(xrmOptionSetValue);
+                            var fieldValue = row.Value.GetField("Value");
+
+                            // Errors and blanks are ignored
+                            if (fieldValue is FxOptionSetValue fxOptionSetValue)
+                            {
+                                optionSetValueSet.Add(new XrmOptionSetValue(int.Parse(fxOptionSetValue.Option)));
+                            }
                         }
-                        
+
+                        optionSetValueCollection.AddRange(optionSetValueSet);
+
                         return optionSetValueCollection;
                     }
-                    
-                    throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
+
+                    throw new NotImplementedException($"FieldType {amd.AttributeTypeName.Value} not supported");
 
                 case AttributeTypeCode.Lookup: // EntityReference
                     if (fxValue is DataverseRecordValue dv)
@@ -147,34 +158,6 @@ namespace Microsoft.PowerFx.Dataverse
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
             }
-        }
-    }
-
-    /// <summary>
-    /// Used to compare OptionSetValue.Option.
-    /// </summary>
-    internal class RecordValueOptionSetComparer : EqualityComparer<DValue<RecordValue>>
-    {
-        public override bool Equals(DValue<RecordValue> row1, DValue<RecordValue> row2)
-        {
-            if (row1.IsValue && row2.IsValue)
-            {
-                var recordValue1 = row1.Value;
-                var recordValue2 = row2.Value;
-
-                if (recordValue1.GetField("Value") is FxOptionSetValue optionSetValue1 && recordValue2.GetField("Value") is FxOptionSetValue optionSetValue2)
-                {
-                    return optionSetValue1.Option == optionSetValue2.Option;
-                }
-
-            }
-
-            return false;
-        }
-
-        public override int GetHashCode(DValue<RecordValue> row)
-        {
-            return row.ToFormulaValue().ToString().GetHashCode();
         }
     }
 }

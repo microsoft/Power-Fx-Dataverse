@@ -101,7 +101,6 @@ namespace Microsoft.PowerFx.Dataverse
         protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
         {
             FormulaValue result;
-            string errorMessage = string.Empty;
 
             // If primary key is missing from Attributes, still get it from the entity. 
             if (fieldName == GetPrimaryKeyName())
@@ -162,7 +161,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Multi-select column type
             if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
             {
-                result = await ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken).ConfigureAwait(false);
+                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
                 return (true, result);
             }
 
@@ -180,12 +179,14 @@ namespace Microsoft.PowerFx.Dataverse
             return (true, result);
         }
 
-        private async Task<FormulaValue> ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
+        private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
         {
             var records = new List<RecordValue>();            
 
             foreach (var xrmOptionSetValue in optionSetValueCollection)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var fxOptionSetValue = AttributeUtility.ConvertXrmOptionSetValueToFormulaValue(tableType, xrmOptionSetValue);
                 records.Add(NewRecordFromFields(new NamedValue(tableType.FieldNames.First(), fxOptionSetValue)));
             }
