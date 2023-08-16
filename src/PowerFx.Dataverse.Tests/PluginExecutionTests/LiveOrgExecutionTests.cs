@@ -1112,7 +1112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        static Dictionary<string, string> PredefinedTables = new()
+        private static readonly Dictionary<string, string> PredefinedTables = new()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
