@@ -5,12 +5,13 @@
 //------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -20,13 +21,15 @@ using Xunit.Abstractions;
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     [CollectionDefinition("SQL Tests", DisableParallelization = true)]
-    public class ExpressionEvaluationTests
+    public class ExpressionEvaluationTests : IClassFixture<SkippedTestsReporting>
     {
-        public readonly ITestOutputHelper Console;        
-
-        public ExpressionEvaluationTests(ITestOutputHelper output)
+        public readonly ITestOutputHelper Console;
+        public readonly SkippedTestsReporting SkippedTestsReporting;
+        
+        public ExpressionEvaluationTests(SkippedTestsReporting fixture, ITestOutputHelper output)
         {
-            Console = output;            
+            Console = output;
+            SkippedTestsReporting = fixture;            
         }
 
         private const string ConnectionStringVariable = "FxTestSQLDatabase";
@@ -53,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
             (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
-
+            
             var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";
             switch (result)
             {
@@ -65,6 +68,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     break;
 
                 case TestResult.Skip:
+                    if (!SkippedTestsReporting.Report.TryAdd($"{prefix} {testCase.Input}", message))
+                    {
+                          Assert.True(false, $"CONFLICT when adding test to report: {prefix + message}");
+                    }
                     Skip.If(true, prefix + message);
                     break;
             }
@@ -315,6 +322,47 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // For CDS compatibility, SQL returns blank for runtime errors
                 return value is BlankValue;
             }
+        }
+    }
+
+    public class SkippedTestsReporting : IDisposable
+    {
+        public static ConcurrentDictionary<string, string> Report;
+        private bool disposedValue;
+
+        public SkippedTestsReporting()
+        {
+            Report = new ConcurrentDictionary<string, string>();
+        }
+
+        public void GenerateReport()
+        {
+            // Environment.CurrentDirectory
+            // On build servers: ENV: C:\__w\1\s\pfx\src\tests\Microsoft.PowerFx.Connectors.Tests\bin\Release\netcoreapp3.1
+            // Locally         : ENV: C:\Data\Power-Fx\src\tests\Microsoft.PowerFx.Connectors.Tests\bin\Debug\netcoreapp3.1
+            string outFolder = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, @"..\..\..\..\..\.."));
+
+            var list = Report.OrderBy(kvp => kvp.Key).ToList();
+            File.WriteAllText(Path.Combine(outFolder, "SkippedTests.json"), JsonSerializer.Serialize(list, new JsonSerializerOptions() { WriteIndented = true }));
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    GenerateReport();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
