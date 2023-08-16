@@ -444,7 +444,7 @@ END
         [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] // "Image in IsBlank"
         [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] // "File not added to entity"
         [InlineData("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.")] // "Picklist"
-        [InlineData("MultiSelect", "Error 0-11: The result type OptionSetValue is not supported in formula columns.")] // "Multi Select Picklist"
+        [InlineData("MultiSelect", "Error 0-11: Columns of type Virtual are not supported in formula columns.")] // "Multi Select Picklist"
         [InlineData("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.")] // "Built picklist"
         [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
         public void CompileInvalidTypes(string expr, string error)
@@ -606,6 +606,7 @@ END
             var unsupportedConsumer = new Dictionary<string, string>
             {
                 { "double", "Columns of type Double are not supported in formula columns." },
+                { "multiSelect", "Columns of type Virtual are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
                 { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },
                 { "selfid", "Name isn't valid. 'selfid' isn't recognized." },
@@ -1574,7 +1575,8 @@ END
                             Value = 10
                         }
                     },
-                    typeName: AttributeTypeDisplayName.MultiSelectPicklistType),
+                    typeName: AttributeTypeDisplayName.MultiSelectPicklistType,
+                    attributeType: AttributeTypeCode.Virtual),
                 AttributeMetadataModel.NewImage("image", "Image"),
                 AttributeMetadataModel.NewFile("file", "File")
             },

@@ -4,18 +4,19 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -157,6 +158,13 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            // Multi-select column type
+            if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
+            {
+                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
+                return (true, result);
+            }
+
             _metadata.TryGetAttribute(fieldName, out var amd);
 
             // Not supported FormulaType types.
@@ -169,6 +177,21 @@ namespace Microsoft.PowerFx.Dataverse
 
             result = NewError(expressionError);
             return (true, result);
+        }
+
+        private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
+        {
+            var records = new List<RecordValue>();            
+
+            foreach (var xrmOptionSetValue in optionSetValueCollection)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var fxOptionSetValue = AttributeUtility.ConvertXrmOptionSetValueToFormulaValue(tableType, xrmOptionSetValue);
+                records.Add(NewRecordFromFields(new NamedValue(tableType.FieldNames.First(), fxOptionSetValue)));
+            }
+
+            return NewTable(tableType.ToRecord(), records);
         }
 
         private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)

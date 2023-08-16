@@ -274,6 +274,12 @@ namespace Microsoft.PowerFx.Dataverse
                     case AttributeTypeCode.Boolean:
                         parsed = CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
+                    case AttributeTypeCode.Virtual:
+                        if (attribute is MultiSelectPicklistAttributeMetadata multiSelectPicklistAttributeMetadata)
+                        {
+                            parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, multiSelectPicklistAttributeMetadata, entity.LogicalName, dataSetName, out columnName, out optionSet);
+                        }
+                        break;
                     default:
                         break;
                 }
