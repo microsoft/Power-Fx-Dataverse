@@ -3597,17 +3597,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 1)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine']})}, CountRows(x.MultiSelect))", 2)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 1)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', Error({Kind:ErrorKind.Custom})]})}, CountRows(x.MultiSelect))", 1)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine', 'MultiSelect (All Attributes)'.'Eight']})}, CountRows(x.MultiSelect))", 2)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:[]})}, CountRows(x.MultiSelect))", 0)]
-        [InlineData("With({x:Patch(t1, First(t1), {MultiSelect:[Blank(),Blank()]})}, CountRows(x.MultiSelect))", 0)]
-        public async Task MultiSelectMutationTest(string expression, int counter)
+        [InlineData("['MultiSelect (All Attributes)'.'Eight']", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine']", 2)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Eight']", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', Error({Kind:ErrorKind.Custom})]", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine', 'MultiSelect (All Attributes)'.'Eight']", 2)]
+        [InlineData("[]", 0)]
+        [InlineData("[Blank(),Blank()]", 0)]
+        public async Task MultiSelectMutationTest(string optionValueSetExpression, int counter)
         {
             var logicalName = "allattributes";
             var displayName = "t1";
+
+            // Base expression + options from inlinedata
+            var expression = $"With({{x:Patch(t1, First(t1), {{MultiSelect:{optionValueSetExpression}}})}}, CountRows(x.MultiSelect))";
 
             (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
             dv.AddTable(displayName, logicalName);
