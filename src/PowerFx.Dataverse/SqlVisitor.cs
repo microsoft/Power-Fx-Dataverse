@@ -1098,6 +1098,8 @@ namespace Microsoft.PowerFx.Dataverse
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
+
+            // flag to check the numeric literal values against the range (-9999999999999, 9999999999999) during intermediate arithmetic operations
             internal bool isArithmeticOp = false;
 
             // TODO: make this private so it is only called from other higher level functions
@@ -1299,6 +1301,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
+                // check against range (-9999999999999, 9999999999999) for intermediate arithmetic operations
                 else if (IsNumericType(type) && ((literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue) ||
                     (isArithmeticOp && literal > SqlStatementFormat.DecimalTypeMinForIntermediateOp && literal < SqlStatementFormat.DecimalTypeMaxForIntermediateOp)))
                 {
@@ -1336,8 +1339,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
+                    // check against range (-9999999999999, 9999999999999) for intermediate arithmetic operations
                     if ((literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue) ||
-                        (isArithmeticOp && literal > (decimal)SqlStatementFormat.DecimalTypeMinForIntermediateOp && literal < (decimal)SqlStatementFormat.DecimalTypeMaxForIntermediateOp))
+                        (isArithmeticOp && literal > SqlStatementFormat.DDecimalTypeMinForIntermediateOp && literal < SqlStatementFormat.DDecimalTypeMaxForIntermediateOp))
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();
