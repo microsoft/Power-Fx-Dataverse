@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -129,7 +129,7 @@
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
-    <value>Não é possível transmitir este argumento como este tipo em colunas de fórmula.</value>
+    <value>Não é possível transmitir este argumento com este tipo em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
@@ -173,7 +173,7 @@
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>A referenciação direta de um registo inteiro não é suportada em colunas de fórmula. Referencie um campo de valor no registo.</value>
+    <value>A referenciação direta de um registo inteiro não é suportada em colunas de fórmula. Referencie um campo válido no registo.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Não é possível referenciar a tabela virtual {0} em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Inclua um formato no segundo argumento quando utilizar a função Texto com números. A cadeia de formato não pode incluir separadores decimais ou de milhares em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Utilize a função Texto para converter números em texto. Inclua um formato no segundo argumento que não pode incluir um separador decimal ou de milhares em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Os cálculos com colunas de moeda em tabelas relacionadas não são atualmente suportados em colunas de fórmula.</value>
     
   </data>
 </root>

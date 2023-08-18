@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -193,11 +193,23 @@
     
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
-    <value>Les tables à une seule colonne ne sont pas prise en charge dans les colonnes de formules.</value>
+    <value>Les tables à une seule colonne ne sont pas prises en charge dans les colonnes de formules.</value>
     
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Impossible de référencer la table virtuelle {0} dans les colonnes de formules.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Inclure un format dans le second argument lors de l’utilisation de la fonction Texte avec des nombres. La chaîne de format ne peut pas inclure de séparateur de milliers ou décimal en des colonnes de formule.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Utilisez la fonction Texte pour convertir les nombres en texte. Inclure un format dans le deuxième argument, qui ne peut pas inclure de séparateur des milliers ou décimal dans les colonnes de formule.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Les calculs avec des colonnes de devises dans les tables associées ne sont actuellement pas pris en charge dans les colonnes de formules.</value>
     
   </data>
 </root>

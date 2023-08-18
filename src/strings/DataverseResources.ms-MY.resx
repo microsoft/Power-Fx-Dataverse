@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -121,7 +121,7 @@
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Bilangan argumen untuk {0} fungsi tidak sah: {1} diterima, {2} dijangka</value>
+    <value>Bilangan argumen untuk fungsi {0} tidak sah: {1} diterima, {2} dijangka</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
@@ -149,11 +149,11 @@
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
-    <value>Hanya rentetan format tarikh dan masa pendek disokong dalam lajur formula.</value>
+    <value>Hanya rentetan format tarikh dan masa yang pendek disokong dalam lajur formula.</value>
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
-    <value>Argumen {0} ialah unit masa yang tidak sah/tidak disokong untuk {1} fungsi aritmetik tarikh.</value>
+    <value>Argumen {0} ialah unit masa yang tidak sah/tidak disokong untuk fungsi aritmetik tarikh {1}.</value>
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
@@ -177,7 +177,7 @@
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
-    <value>Jenis hasil untuk formula ini dijangkakan untuk menjadi {0}, tetapi jenis hasil sebenar ialah {1}. Jenis hasil lajur formula tidak boleh diubah.</value>
+    <value>Jenis hasil untuk formula ini dijangkakan sebagai {0}, tetapi jenis hasil sebenar ialah {1}. Jenis hasil lajur formula tidak boleh diubah.</value>
     
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Tidak boleh merujuk jadual maya {0} dalam lajur formula.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Sertakan format dalam argumen kedua apabila menggunakan fungsi Teks dengan nombor. Rentetan format tidak boleh termasuk pemisah ribuan atau perpuluhan dalam lajur formula.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Gunakan fungsi Teks untuk menukar nombor kepada teks. Sertakan format dalam argumen kedua yang tidak boleh termasuk pemisah ribuan atau perpuluhan dalam lajur formula.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Pengiraan dengan lajur mata wang dalam jadual berkaitan tidak disokong pada masa ini dalam lajur formula.</value>
     
   </data>
 </root>

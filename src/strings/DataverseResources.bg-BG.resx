@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -121,19 +121,19 @@
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Невалиден брой аргументи за функцията „{0}“: получени {1}, очаквани {2}</value>
+    <value>Невалиден брой аргументи за функцията {0}: получени {1}, очаквани {2}</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
-    <value>Аргументът {0} не се поддържа за функцията {1} в колоните за формули.</value>
+    <value>Аргументът {0} не се поддържа за функцията {1} в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
-    <value>Този аргумент не може да бъде предаден като този тип в колоните за формули.</value>
+    <value>Този аргумент не може да бъде предаден като този тип в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
-    <value>Този аргумент не може да бъде предаден като тип „{0}“ в колоните с формули.</value>
+    <value>Този аргумент не може да бъде предаден като тип „{0}“ в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
@@ -141,7 +141,7 @@
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
-    <value>{0} не може да се извърши при тези входни данни без преобразуване на часовата зона, което не се поддържа в колоните за формули.</value>
+    <value>{0} не може да се извърши за тези входни данни без преобразуване на часовата зона, което не се поддържа в колоните за формули.</value>
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
@@ -153,31 +153,31 @@
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
-    <value>Аргументът „{0}“ е невалидна/неподдържана единица време за аритметичната функция за дата „{1}“.</value>
+    <value>Аргументът „{0}“ е невалидна/неподдържана единица време за функцията за аритметика с дати {1}.</value>
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>Във формулите за колони не се поддържат маркери за форматиране, специфични за дадена езиково-географска променлива, като „.“ и „,“.</value>
+    <value>В колоните за формули не се поддържат маркери за форматиране, специфични за дадена езиково-географска променлива, като „.“ и „,“.</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>{0} не се поддържа във формули за колони, вместо това използвайте {1}.</value>
+    <value>{0} не се поддържа в колони за формули, вместо това използвайте {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
-    <value>Тази операция не може да се извърши на тип {0} в колони за формули.</value>
+    <value>Тази операция не може да се извърши спрямо тип {0} в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
-    <value>Типът резултат {0} не се поддържа за колони за формули.</value>
+    <value>Типът на резултата {0} не се поддържа в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>Директното препращане към цял запис не се поддържа в колони с формули. Моля, направете препратка към валидно поле в записа.</value>
+    <value>Директното препращане към цял запис не се поддържа в колони за формули. Моля, направете препратка към валидно поле в записа.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
-    <value>Очаква се типът на резултата за тази формула да е {0}, но действителният тип на резултата е {1}. Типът на резултата от формула за колони не може да бъде променен.</value>
+    <value>Очаква се типът на резултата за тази формула да е {0}, но действителният тип на резултата е {1}. Типът на резултата в колона за формули не може да бъде променен.</value>
     
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
@@ -189,7 +189,7 @@
     
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
-    <value>Налагането на записи или таблици не се поддържа в колони с формули.</value>
+    <value>Налагането на записи или таблици не се поддържа в колони за формули.</value>
     
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
@@ -197,7 +197,19 @@
     
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
-    <value>Не може да препраща виртуална таблица „{0}“ в колоните за формули.</value>
+    <value>Не е възможна препратка към виртуалната таблица „{0}“ в колоните за формули.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Включете формат във втория аргумент, когато използвате функцията Text с числа. Низът за форматиране не може да съдържа разделител за хилядите или десетичен разделител в колоните за формули.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Използвайте функцията Text, за да преобразувате числа в текст. Добавете формат към втория аргумент, който не може да включва разделител за хиляди или десетичен знак в колоните за формули.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Изчисленията с колони с валута в свързани таблици в момента не се поддържат в колони за формули.</value>
     
   </data>
 </root>

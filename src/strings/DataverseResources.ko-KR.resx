@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>수식 열에서 가상 테이블 {0}을(를) 참조할 수 없습니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>숫자와 함께 텍스트 함수를 사용할 때는 두 번째 인수에 형식을 포함해야 합니다. 형식 문자열에는 수식 열에 천 단위 또는 소수점 구분 기호를 포함할 수 없습니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>숫자를 텍스트로 변환하려면 텍스트 함수를 사용합니다. 두 번째 인수에 수식 열에 천 단위 또는 소수점 구분 기호를 포함할 수 없는 형식을 포함합니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>관련 테이블의 통화 열이 있는 계산은 현재 수식 열에서 지원되지 않습니다.</value>
     
   </data>
 </root>

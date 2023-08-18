@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -125,7 +125,7 @@
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
-    <value>Argumenti {0} ei toetata valemiveergude funktsioonis {1}.</value>
+    <value>Argumenti {0} ei toetata valemiveergudes funktsioonis {1}.</value>
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
@@ -133,7 +133,7 @@
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
-    <value>Seda argumenti ei saa valemiveergudesse edastada tüübina {0}.</value>
+    <value>Seda argumenti ei saa valemiveergudes edastada tüübina {0}.</value>
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
@@ -149,7 +149,7 @@
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
-    <value>Valemiveergudes toetatakse ainult lühikese vorminguga kuupäeva- ja kellaaja stringe.</value>
+    <value>Valemiveergudes toetatakse ainult lühikese vorminguga kuupäeva ja kellaaja stringe.</value>
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
@@ -157,11 +157,11 @@
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>Lokaadipõhiseid vormingutõendeid (nt "." ja ",") valemiveergudes ei toetata.</value>
+    <value>Lokaadipõhiseid vormingutõendeid (nt „.“ ja „,“) valemiveergudes ei toetata.</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>Üksust {0} ei toetata valemiveergudes, kasutage selle asemel üksust {1}.</value>
+    <value>Funktsiooni {0} ei toetata valemiveergudes, kasutage selle asemel funktsiooni {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
@@ -169,11 +169,11 @@
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
-    <value>Tulemitüüp {0} pole valemiveergudes toetatud.</value>
+    <value>Tulemi tüüp {0} pole valemiveergudes toetatud.</value>
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>Valemiveergudes ei toetata kogu kirje otsest viitamist. Viidake kirjes kehtivale väljale.</value>
+    <value>Valemiveergudes ei toetata kogu kirje otsest viitamist. Viidake kirjes sobivale väljale.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Valemiveergudes ei saa virtuaaltabelile {0} viidata.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Numbritega tekstifunktsiooni kasutamise korral lisage teises argumendis vorming. Vorming ei tohi valemiveergudes sisaldada tuhandeliste ega kümnendkoha eraldajat.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Kasutage numbrite tekstiks teisendamiseks tekstifunktsiooni. Lisage teises argumendis vorming, mis ei tohi valemiveergudes sisaldada tuhandeliste ega kümnendkoha eraldajat.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Valuutaveergudega arvutused seostuvates tabelites pole praegu valemiveergudes toetatud.</value>
     
   </data>
 </root>

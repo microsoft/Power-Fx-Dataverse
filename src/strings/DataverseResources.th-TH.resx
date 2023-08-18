@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>ไม่สามารถอ้างอิงตารางเสมือน {0} ในคอลัมน์สูตร</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>ระบุรูปแบบในอาร์กิวเมนต์ที่สองเมื่อใช้ฟังก์ชัน Text กับตัวเลข สตริงรูปแบบไม่สามารถมีตัวคั่นหลักพันหรือทศนิยมในคอลัมน์สูตรได้</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>ใช้ฟังก์ชัน Text เพื่อแปลงตัวเลขเป็นข้อความ ระบุรูปแบบในอาร์กิวเมนต์ที่สอง ซึ่งไม่สามารถระบุตัวคั่นหลักพันหรือทศนิยมในคอลัมน์สูตรได้</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>การคำนวณด้วยคอลัมน์สกุลเงินในตารางที่เกี่ยวข้องไม่ได้รับการสนับสนุนในคอลัมน์สูตรในขณะนี้</value>
     
   </data>
 </root>
