@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -117,23 +117,23 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
-    <value>Não há suporte nas colunas de fórmula.</value>
+    <value>Não tem suporte nas colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Número inválido de argumentos para a função {0}: foram recebidos {1}, eram esperados {2}</value>
+    <value>Número inválido de argumentos para a função {0}: {1} recebidos, {2} esperados</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
-    <value>Não há suporte para o argumento {0} da função {1} nas colunas de fórmula.</value>
+    <value>Não há suporte para o argumento {0} da função {1} em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
-    <value>Este argumento não pode ser transmitido como este tipo em colunas com fórmula.</value>
+    <value>Este argumento não pode ser passado como este tipo em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
-    <value>Este argumento não pode ser transmitido como o tipo {0} nas colunas com fórmula.</value>
+    <value>Este argumento não pode ser passado como o tipo {0} em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
@@ -141,15 +141,15 @@
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
-    <value>{0} não pode ser executado nesta entrada sem uma conversão de fuso horário, que não tem suporte nas colunas de fórmula.</value>
+    <value>{0} não pode ser executado nesta entrada sem uma conversão de fuso horário, que não tem suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
-    <value>Esta operação não pode ser realizada em valores que sejam de Comportamentos de Data e Hora diferentes.</value>
+    <value>Esta operação não pode ser realizada em valores que sejam de Comportamentos de Data/Hora diferentes.</value>
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
-    <value>Somente as cadeias de caracteres de formato de data e hora têm suporte nas colunas de fórmula.</value>
+    <value>Somente as cadeias de caracteres de formato de data e hora têm suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
@@ -157,15 +157,15 @@
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>Os tokens de formatação específicos da localidade, como "." e "," não têm suporte em colunas de fórmulas.</value>
+    <value>Os tokens de formatação específicos da localidade, como "." e ",", não têm suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>{0} não tem suporte em colunas de fórmulas, use {1}.</value>
+    <value>{0} não tem suporte em colunas de fórmula, use {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
-    <value>Esta operação não pode ser realizada no tipo {0} em colunas com fórmula.</value>
+    <value>Esta operação não pode ser realizada no tipo {0} em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
@@ -173,31 +173,43 @@
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>Não há suporte para a referência direta a um registro inteiro em colunas com fórmula. Referencie um campo válido no registro.</value>
+    <value>Não há suporte para a referência direta a um registro inteiro em colunas de fórmula. Referencie um campo válido no registro.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
-    <value>O tipo de resultado desta fórmula deve ser {0}, mas o tipo de resultado real é {1}. Não é possível alterar o tipo de resultado de uma coluna de fórmula.</value>
+    <value>O tipo de resultado para esta fórmula deve ser {0}, mas o tipo de resultado real é {1}. Não é possível alterar o tipo de resultado de uma coluna de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
-    <value>Colunas do tipo {0} não têm suporte em colunas de fórmula.</value>
+    <value>As colunas do tipo {0} não têm suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
-    <value>Colunas do tipo {0} com o formato {1} não têm suporte em colunas de fórmula.</value>
+    <value>As colunas do tipo {0} com o formato {1} não têm suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
-    <value>Não há suporte para coerção de registros ou tabelas em colunas com fórmula.</value>
+    <value>Não há suporte para coerção de registros ou tabelas em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
-    <value>Tabelas com uma única coluna não têm suporte em colunas com fórmula.</value>
+    <value>As tabelas com uma única coluna não têm suporte em colunas de fórmula.</value>
     
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
-    <value>Não é possível referenciar a tabela virtual {0} em colunas com fórmula.</value>
+    <value>Não é possível referenciar a tabela virtual {0} em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Inclua um formato no segundo argumento ao usar a função Texto com números. A cadeia de caracteres de formato não pode incluir um separador de casas decimais ou decimais em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Use a função Texto para converter números em texto. Inclua um formato no segundo argumento, que não pode incluir um separador de casas decimais ou um separador decimal em colunas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>No momento, não há suporte para cálculos com colunas de moeda nas tabelas relacionadas em colunas de fórmula.</value>
     
   </data>
 </root>

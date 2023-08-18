@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -121,7 +121,7 @@
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Nederīgs argumentu skaits funkcijai {0}: saņemtais {1}, paredzētais {2}</value>
+    <value>Nederīgs argumentu skaits funkcijai {0}: saņemti {1}, paredzēti {2}</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
@@ -133,7 +133,7 @@
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
-    <value>Šo argumentu formulu kolonnās nevar nodot argumentu, kura tips ir kā {0}.</value>
+    <value>Šo argumentu formulu kolonnās nevar nodot kā argumentu, kura tips ir {0}.</value>
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
@@ -145,7 +145,7 @@
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
-    <value>Šo operāciju nevar izpildīt vērtībām, kurām ir atšķirīgs datuma un laika scenārijs.</value>
+    <value>Šo darbību nevar izpildīt vērtībām, kurām ir atšķirīga datuma un laika uzvedība.</value>
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
@@ -157,11 +157,11 @@
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>Lokalizācijas formatējuma marķieri, piemēram, "." un "," netiek atbalstīti formulas kolonnās.</value>
+    <value>Lokalizācijai raksturīgi formatējuma marķieri (piemēram, “.” un “,”) netiek atbalstīti formulu kolonnās.</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>{0} netiek atbalstīts formulas kolonnās, tā vietā izmantojiet {1}.</value>
+    <value>Funkcija {0} netiek atbalstīta formulu kolonnās, tā vietā izmantojiet funkciju {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
@@ -173,11 +173,11 @@
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>Formulas kolonnās netiek atbalstīta tieša atsauce uz visu ierakstu. Lūdzu, norādiet atsauci uz derīgu lauku ierakstā.</value>
+    <value>Formulu kolonnās netiek atbalstīta tieša atsauce uz visu ierakstu. Lūdzu, norādiet atsauci uz derīgu lauku ierakstā.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
-    <value>Ir paredzams, ka šīs formulas rezultāta tips būs {0}, taču faktiskais rezultāta tips ir {1}. Formulas kolonnas rezultāta tipu nevar mainīt.</value>
+    <value>Ir paredzams, ka šīs formulas rezultāta tips būs {0}, taču faktiskais rezultāta tips ir {1}. Formulu kolonnas rezultāta tipu nevar mainīt.</value>
     
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
@@ -189,15 +189,27 @@
     
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
-    <value>Formulas kolonnās netiek atbalstīti piespiedu ieraksti vai tabulas.</value>
+    <value>Formulu kolonnās netiek atbalstīta ierakstu vai tabulu pakļaušana.</value>
     
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
-    <value>Formulas kolonnās netiek atbalstītas vienas kolonnas tabulas.</value>
+    <value>Formulu kolonnās netiek atbalstītas vienas kolonnas tabulas.</value>
     
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Formulu kolonnās nevar atsaukties uz virtuālo tabulu {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Iekļaujiet formātu otrā argumentā, izmantojot teksta funkciju ar skaitļiem. Formāta virknē nevar iekļaut tūkstošu vai decimāldaļskaitļu atdalītāju formulas kolonnās.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Izmantojiet teksta funkciju, lai pārvērstu skaitļus par tekstu. Iekļaujiet formātu otrā argumentā, kurā nevar iekļaut tūkstošu vai decimāldaļskaitļu atdalītāju formulas kolonnās.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Aprēķini ar valūtas kolonnām saistītajās tabulās pašlaik netiek atbalstīti formulas kolonnās.</value>
     
   </data>
 </root>

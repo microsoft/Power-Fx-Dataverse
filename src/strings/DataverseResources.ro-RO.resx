@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -141,7 +141,7 @@
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
-    <value>{0} nu poate opera pe această intrare fără o conversie de fus orar fără de care funcția nu este acceptată în coloanele de formule.</value>
+    <value>{0} nu poate opera pe această intrare fără o conversie de fus orar, ceea ce nu este acceptat în coloanele de formule.</value>
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Nu se poate face referire la tabelul virtual {0} în coloanele de formule.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Includeți un format în cel de-al doilea argument atunci când utilizați funcția Text cu numere. Șirul formatului nu poate include un separator de mii sau de zecimale în coloanele formulei.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Utilizați funcția Text pentru a converti numerele în text. Includeți un format în cel de-al doilea argument, care nu poate include un separator de mii sau de zecimale în coloanele formulei.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Calculele cu coloane monetare din tabelele asociate nu sunt acceptate momentan în coloanele de formule.</value>
     
   </data>
 </root>

@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -117,15 +117,15 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
-    <value>Nieobsługiwane w kolumnach formuły.</value>
+    <value>Nieobsługiwane w kolumnach formuł.</value>
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Nieprawidłowa liczba argumentów dla funkcji „{0}”: odebrano: {1}; oczekiwano: {2}.</value>
+    <value>Nieprawidłowa liczba argumentów dla funkcji „{0}”: odebrano: {1}; oczekiwano: {2}</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
-    <value>Argument {0} nie jest obsługiwany w przypadku funkcji {1} w kolumnach formuły.</value>
+    <value>Argument {0} nie jest obsługiwany w funkcji {1} w kolumnach formuł.</value>
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
@@ -137,19 +137,19 @@
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
-    <value>W przypadku tego argumentu jest obsługiwana tylko wartość literału.</value>
+    <value>W przypadku tego argumentu obsługiwana jest tylko wartość literału.</value>
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
-    <value>Nie można wykonać {0} na tych danych wejściowych bez konwersji strefy czasowej, która nie jest obsługiwana w kolumnach formuły.</value>
+    <value>Nie można wykonać funkcji {0} na tych danych wejściowych bez konwersji strefy czasowej, która nie jest obsługiwana w kolumnach formuł.</value>
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
-    <value>Nie można wykonać tej operacji na wartościach o różnych zachowaniach daty i godziny.</value>
+    <value>Tej operacji nie można wykonać na wartościach mających różne zachowania w zakresie daty i godziny.</value>
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
-    <value>W kolumnach formuły są obsługiwane tylko ciągi krótkiego formatu daty i czasu.</value>
+    <value>W kolumnach formuł są obsługiwane tylko ciągi w formacie krótkiej daty i godziny.</value>
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Nie można odwoływać się do tabeli wirtualnej {0} w kolumnach formuł.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Gdy używasz funkcji Text z liczbami, podaj format w drugim argumencie. Ciąg formatu nie może zawierać separatora tysięcy ani separatora dziesiętnego w kolumnach formuły.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Użyj funkcji Text, aby konwertować liczby na tekst. W drugim argumencie podaj format, który nie może zawierać separatora tysięcy ani separatora dziesiętnego w kolumnach formuły.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Obliczenia w kolumnach walutowych w powiązanych tabelach nie są aktualnie obsługiwane w kolumnach formuły.</value>
     
   </data>
 </root>
