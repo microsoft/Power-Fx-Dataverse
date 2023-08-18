@@ -1352,14 +1352,19 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         return true;
-                    }
+                    } 
+                    else if (InErrorContext)
+                    {
+                        SetIntermediateVariable(CurrentErrorContext.Code, ValidationErrorCode);
+                    } 
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
                         AppendContentLine("RETURN NULL");
-                        return false;
                     }
-                }
+
+                    return false;
+                } 
                 else
                 {
                     throw new NotSupportedException($"Unsupported type for decimal literal check: {type}");

@@ -504,6 +504,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
                 ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any numeric arg value exceeds decimal range
                 ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
+                ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, null);
             }
         }
 
