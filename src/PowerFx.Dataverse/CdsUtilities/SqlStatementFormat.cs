@@ -192,6 +192,10 @@ ELSE
         public const decimal DDecimalTypeMinValue = -100000000000;
         public const decimal DDecimalTypeMaxValue = 100000000000;
 
+        // min, max range for intermediate operations
+        public const double DecimalTypeMinForIntermediateOp = -9999999999999.9999999999;
+        public const double DecimalTypeMaxForIntermediateOp = 9999999999999.9999999999;
+
         public const string MoneyTypeMin = "-922337203685477.5808";
         public const string MoneyTypeMax = "922337203685477.5807";
         public const double MoneyTypeMinValue = -922337203685477.5808;

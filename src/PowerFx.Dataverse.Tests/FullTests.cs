@@ -503,7 +503,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
                 ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any number literal node exceeds decimal range
-                ExecuteSqlTest("Text(423456789013/1000, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
             }
         }
 

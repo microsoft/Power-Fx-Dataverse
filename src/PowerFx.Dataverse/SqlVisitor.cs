@@ -159,8 +159,11 @@ namespace Microsoft.PowerFx.Dataverse
 
                         Library.ValidateNumericArgument(node.Left);
                         Library.ValidateNumericArgument(node.Right);
+
+                        context.isArithmeticOp = true;
                         var left = node.Left.Accept(this, context);
                         var right = node.Right.Accept(this, context);
+                        context.isArithmeticOp = false;
 
                         // protect from divide by zero
                         if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivDecimals)
@@ -1095,6 +1098,7 @@ namespace Microsoft.PowerFx.Dataverse
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
+            internal bool isArithmeticOp = false;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
@@ -1295,7 +1299,8 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                else if (IsNumericType(type) && ((literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue) ||
+                    (isArithmeticOp && literal > SqlStatementFormat.DecimalTypeMinForIntermediateOp && literal < SqlStatementFormat.DecimalTypeMaxForIntermediateOp)))
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1331,7 +1336,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
-                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    if ((literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue) ||
+                        (isArithmeticOp && literal > (decimal)SqlStatementFormat.DecimalTypeMinForIntermediateOp && literal < (decimal)SqlStatementFormat.DecimalTypeMaxForIntermediateOp))
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();
