@@ -15,6 +15,9 @@ using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.PowerFx.Dataverse.Tests;
+using Microsoft.PowerFx.Core.Tests;
+using SharpYaml.Model;
 
 namespace Microsoft.PowerFx
 {
@@ -23,6 +26,8 @@ namespace Microsoft.PowerFx
         private static RecalcEngine _engine;
 
         private static DataverseConnection _dv;
+
+        private static ExpressionEvaluationTests _SQLTests;
 
         private const string OptionFormatTable = "FormatTable";
         private static bool _formatTable = true;
@@ -36,8 +41,13 @@ namespace Microsoft.PowerFx
         private const string OptionStackTrace = "StackTrace";
         private static bool _stackTrace = false;
 
+        private const string OptionSQLEval = "SQLEval";
+        private static bool _SQLEval = false;
+
         private const string OptionFormatTableColumns = "FormatTableColumns";
         private static HashSet<string> _formatTableColumns;
+
+        private static HashSet<string> _replFunctions;
 
         private const string OptionFeaturesNone = "FeaturesNone";
 
@@ -87,8 +97,11 @@ namespace Microsoft.PowerFx
                 { OptionFeaturesNone, OptionFeaturesNone },
                 { OptionPowerFxV1, OptionPowerFxV1 },
                 { OptionStackTrace, OptionStackTrace },
-                { OptionFormatTableColumns, OptionFormatTableColumns }
+                { OptionFormatTableColumns, OptionFormatTableColumns },
+                { OptionSQLEval, OptionSQLEval }
             };
+
+            _replFunctions = new HashSet<string> { };
 
             foreach (var featureProperty in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -105,16 +118,31 @@ namespace Microsoft.PowerFx
             config.EnableParseJSONFunction();
 
             config.AddFunction(new HelpFunction());
+            _replFunctions.Add("Help");
+
             config.AddFunction(new ResetFunction());
+            _replFunctions.Add("Reset");
+
             config.AddFunction(new ExitFunction());
+            _replFunctions.Add("Exit");
+
             config.AddFunction(new OptionFunctionBool());
             config.AddFunction(new OptionFunctionString());
+            _replFunctions.Add("Option");
+
             config.AddFunction(new ResetImportFunction());
+            _replFunctions.Add("ResetImport");
+
             config.AddFunction(new ImportFunction1Arg());
             config.AddFunction(new ImportFunction2Arg());
+            _replFunctions.Add("Import");
+
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
+            _replFunctions.Add("DVConnect");
+
             config.AddFunction(new DVAddTableFunction());
+            _replFunctions.Add("DVAddTable");
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
@@ -125,11 +153,16 @@ namespace Microsoft.PowerFx
 #pragma warning restore CS0618 // Type or member is obsolete
 
             _engine = new RecalcEngine(config);
+
+            _SQLTests = new ExpressionEvaluationTests(null, null);
         }
 
         public static void Main()
         {
             var enabled = new StringBuilder();
+
+            Console.InputEncoding = System.Text.Encoding.Unicode;
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
 
             ResetEngine();
 
@@ -236,11 +269,22 @@ namespace Microsoft.PowerFx
 
         private static FormulaValue Eval(string expressionText)
         {
-            CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
-            checkResult.ThrowOnErrors();
+            Match match;
 
-            IExpressionEvaluator evaluator = checkResult.GetEvaluator();
-            return evaluator.Eval(GetRuntimeConfig());
+            match = Regex.Match(expressionText, @"^\s*(?<func>[a-zA-Z]+)\(", RegexOptions.Singleline);
+
+            if (_SQLEval && !(match.Success && _replFunctions.Contains(match.Groups["func"].Value)) )
+            {
+                return _SQLTests.RunExpr(expressionText);
+            }
+            else
+            {
+                CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
+                checkResult.ThrowOnErrors();
+
+                IExpressionEvaluator evaluator = checkResult.GetEvaluator();
+                return evaluator.Eval(GetRuntimeConfig());
+            }
         }
 
         public static void REPL(TextReader input, bool echo = false, TextWriter output = null)
@@ -269,6 +313,14 @@ namespace Microsoft.PowerFx
                         Console.WriteLine(ir);
                         output?.WriteLine(ir);
                         cr.ThrowOnErrors();
+                    }
+
+                    // SQL pretty printer: SQL( <expr> )
+                    else if ((match = Regex.Match(expr, @"^\s*SQL\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
+                    {
+                        var sql = _SQLTests.SQLExpr(match.Groups["expr"].Value);
+                        Console.Write(sql);
+                        output?.Write(sql);
                     }
 
                     // named formula definition: <ident> = <formula>
@@ -529,7 +581,7 @@ namespace Microsoft.PowerFx
                 else
                 {
                     var separator = string.Empty;
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
+                    var fieldNames = _formatTableColumns ?? record.Type.FieldNames;
 
                     resultString = new StringBuilder("{");
 
@@ -574,7 +626,7 @@ namespace Microsoft.PowerFx
                 {
                     // otherwise a full table treatment is needed
 
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
+                    var fieldNames = _formatTableColumns ?? table.Type.FieldNames;
                     var columnCount = fieldNames.Count();
 
                     if (columnCount == 0)
@@ -784,6 +836,12 @@ namespace Microsoft.PowerFx
                     return value;
                 }
 
+                if (string.Equals(option.Value, OptionSQLEval, StringComparison.OrdinalIgnoreCase))
+                {
+                    _SQLEval = value.Value;
+                    return value;
+                }
+
                 if (option.Value.ToLower(CultureInfo.InvariantCulture) == OptionStackTrace.ToLower(CultureInfo.InvariantCulture))
                 {
                     _stackTrace = value.Value;
@@ -851,12 +909,12 @@ namespace Microsoft.PowerFx
                 var fileName = fileNameSV.Value;
                 if (File.Exists(fileName))
                 {
-                    TextReader fileReader = new StreamReader(fileName);
+                    TextReader fileReader = new StreamReader(fileName, true);
                     TextWriter outputWriter = null;
 
                     if (outputSV != null)
                     {
-                        outputWriter = new StreamWriter(outputSV.Value);
+                        outputWriter = new StreamWriter(outputSV.Value, false, System.Text.Encoding.UTF8);
                     }
 
                     ConsoleRepl.REPL(fileReader, true, outputWriter);

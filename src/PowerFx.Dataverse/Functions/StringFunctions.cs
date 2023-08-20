@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
@@ -131,15 +132,50 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                     format = textFormatArgs.FormatArg;
 
-                    // except that % ‰ e : ' need to be escaped
-                    format = format.Replace("%", "\\%");
-                    format = format.Replace("‰", "\\‰");
-                    format = format.Replace("e", "\\e");
-                    format = format.Replace("E", "\\E");
-                    format = format.Replace(":", "\\:");
-                    format = format.Replace("'", "\\''");
+                    // Single ticks need to be doubled to escape within the format string used in the FORMAT call below.
+                    format = format.Replace("'", "''");
 
-                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                    // Double quoted escaping appears to have a bug in SQL/CLR.
+                    //
+                    // For example:
+                    //    Text( 1234567, "0 ""0"" 0" ) incorrectly returns "123456 0 0"
+                    //    while Text( 1234567, "0 \0 0" ) correctly returns "123456 0 7"
+                    //
+                    // Looking at the SQL, this equivalent of this is what is used (.0 on the end), and fails:
+                    //    select FORMAT(1234567.0, N'0 "0" 0') returns "123456 0 0"
+                    // And if it is just an integer instead of a decimal (no .0 on the end)?  Works great:
+                    //    select FORMAT(1234567, N'0 "0" 0') returns "123456 0 7"
+                    //
+                    // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
+                    //
+                    StringBuilder escaped = new StringBuilder();
+                    int strLength = format.Length;
+                    bool inDblQuotes = false;
+                    for (int i = 0; i < strLength; i++)
+                    {
+                        if(format[i] == '\"')
+                        {
+                            inDblQuotes = !inDblQuotes;
+                        }
+                        else if(format[i] == '\\')
+                        {
+                            escaped.Append('\\');
+                            if (++i < strLength)
+                            {
+                                escaped.Append(format[i]);
+                            }
+                        }
+                        else 
+                        {
+                            if (inDblQuotes)
+                            {
+                                escaped.Append('\\');
+                            }
+                            escaped.Append(format[i]);
+                        }
+                    }
+
+                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{escaped}')");
                 }
                 return result;
             }

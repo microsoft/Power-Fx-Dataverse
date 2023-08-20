@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -103,6 +104,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = testRunner.RunTests();
         }
 
+        public FormulaValue RunExpr(string expr)
+        {
+            using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
+            return sqlRunner.RunExpr(expr);
+        }
+
+        public string SQLExpr(string expr)
+        {
+            using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
+            return sqlRunner.SQLExpr(expr);
+        }
 
         [Fact]
         public void ScanForTxtParseErrors()
@@ -138,7 +150,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;            
+            private SqlConnection _connection;
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
@@ -183,6 +195,61 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return true;
                 }
                 return false;
+            }
+
+            public FormulaValue RunExpr(string expr)
+            {
+                var t = Task.Factory.StartNew(
+                    () =>
+                    {
+                        var t = RunAsyncInternal(expr,"");
+                        t.ConfigureAwait(false);
+
+                        return t.Result;
+                    },
+                    new CancellationToken(),
+                    TaskCreationOptions.None,
+                    TaskScheduler.Default);
+
+                while (true)
+                {
+                    Task.WaitAny(t, Task.Delay(Timeout));
+
+                    if (t.IsCompletedSuccessfully)
+                    {
+                        if (t.Result.Errors != null && t.Result.Errors.Any())
+                        {
+                            throw new Exception("Errors: " + string.Join( "\n", t.Result.Errors.Select( x => x.ToString()) ) );
+                        }
+                        else
+                        {
+                            return t.Result.Value;
+                        }
+                    }
+                }
+            }
+
+            public string SQLExpr(string expr)
+            {
+                var options = new SqlCompileOptions
+                {
+                    CreateMode = SqlCompileOptions.Mode.Create,
+                    UdfName = null // will auto generate with guid.
+                };
+
+                var metadata = PowerFx2SqlEngine.Empty();
+                // run unit tests with time zone conversions on
+                var engine = new PowerFx2SqlEngine(metadata);
+                var compileResult = engine.Compile(expr, options);
+
+                if (!compileResult.IsSuccess)
+                {
+                    throw new Exception("Errors: " + string.Join("\n", compileResult.Errors.Select(x => x.ToString())));
+                }
+                else
+                { 
+                    return compileResult.SqlFunction;
+                }
             }
 
             protected override async Task<RunResult> RunAsyncInternal(string expr, string setupHandlerName = null)

@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj" />
+    <ProjectReference Include="..\..\PowerFx.Dataverse.Tests\PowerFx.Dataverse.Tests.csproj" />
   </ItemGroup>
 
 </Project>
