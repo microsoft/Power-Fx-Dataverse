@@ -519,7 +519,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
                 ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
-                ExecuteSqlTest("423456789013/fractional", 4213500388.19M, cx, metadata);
+                ExecuteSqlTest("423456789013/fractional", 4213500388.1890547264M, cx, metadata);
 
             }
         }
