@@ -160,9 +160,14 @@ namespace Microsoft.PowerFx.Dataverse
                         Library.ValidateNumericArgument(node.Left);
                         Library.ValidateNumericArgument(node.Right);
 
+                        // flag set to true to check if numeric values involved in arithmetic operation are in range of (-9999999999999, 9999999999999)
                         context.isArithmeticOp = true;
+
                         var left = node.Left.Accept(this, context);
                         var right = node.Right.Accept(this, context);
+
+                        // flag is set to false, once both the nodes (numericliteralnodes) involved in arithmetic operation are visited,
+                        // so that other numeric literal values which are not involved in arithmetic operation are checked against supported decimal range (-100000000000, 100000000000)
                         context.isArithmeticOp = false;
 
                         // protect from divide by zero

@@ -483,6 +483,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("whole", "WholeDecimal"),
                     AttributeMetadataModel.NewDecimal("fractional", "FractionalDecimal"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewDecimal("nulldecimal", "NullDecimal")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -502,9 +503,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Int(\"30.5\"))", true, cx, metadata);
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
+
+                ExecuteSqlTest("Text(Blank(), \"0\")", "", cx, metadata);
+                ExecuteSqlTest("IsError(Text(Blank(), \"0\"))", false, cx, metadata);
+                ExecuteSqlTest("Text(nulldecimal, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(nulldecimal, \"0\"))", false, cx, metadata);
                 ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any numeric arg value exceeds decimal range
-                ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
-                ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, null);
+                ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, metadata); // IsError is true because '423456789013' overflows decimal range (-100000000000, 100000000000)
+
+                // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
+                ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata); 
+                
             }
         }
 
@@ -513,6 +522,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             using (var cx = GetSql())
             {
+                // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
+                // final result is checked against supported decimal range (-100000000000, 100000000000)
                 ExecuteSqlTest("400000000001*0.0045", 1800000000.0045M, cx, null);
                 ExecuteSqlTest("400000000001+1", null, cx, null);
                 ExecuteSqlTest("Value(\"400000000001\")*0.0045", 1800000000.0045M, cx, null);
