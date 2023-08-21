@@ -165,7 +165,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (SqlVisitor.Context.IsNumericType(returnType))
                 {
                     // TODO: better type validation
-                    if (hintType is NumberType)
+                    if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
                         return true;

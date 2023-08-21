@@ -159,8 +159,16 @@ namespace Microsoft.PowerFx.Dataverse
 
                         Library.ValidateNumericArgument(node.Left);
                         Library.ValidateNumericArgument(node.Right);
+
+                        // flag set to true to check if numeric values involved in arithmetic operation are in range of (-9999999999999, 9999999999999)
+                        context.isArithmeticOp = true;
+
                         var left = node.Left.Accept(this, context);
                         var right = node.Right.Accept(this, context);
+
+                        // flag is set to false, once both the nodes (numericliteralnodes) involved in arithmetic operation are visited,
+                        // so that other numeric literal values which are not involved in arithmetic operation are checked against supported decimal range (-100000000000, 100000000000)
+                        context.isArithmeticOp = false;
 
                         // protect from divide by zero
                         if (node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.DivDecimals)
@@ -1096,6 +1104,9 @@ namespace Microsoft.PowerFx.Dataverse
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
 
+            // flag to check the numeric literal values against the range (-9999999999999, 9999999999999) during intermediate arithmetic operations
+            internal bool isArithmeticOp = false;
+
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
             {
@@ -1295,7 +1306,9 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                // check against range (-9999999999999, 9999999999999) for intermediate arithmetic operations
+                else if (IsNumericType(type) && ((literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue) ||
+                    (isArithmeticOp && literal > SqlStatementFormat.DecimalTypeMinForIntermediateOp && literal < SqlStatementFormat.DecimalTypeMaxForIntermediateOp)))
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1331,7 +1344,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
-                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    // check against range (-9999999999999, 9999999999999) for intermediate arithmetic operations
+                    if ((literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue) ||
+                        (isArithmeticOp && literal > SqlStatementFormat.DDecimalTypeMinForIntermediateOp && literal < SqlStatementFormat.DDecimalTypeMaxForIntermediateOp))
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();
@@ -1342,14 +1357,19 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         return true;
-                    }
+                    } 
+                    else if (InErrorContext)
+                    {
+                        SetIntermediateVariable(CurrentErrorContext.Code, ValidationErrorCode);
+                    } 
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
                         AppendContentLine("RETURN NULL");
-                        return false;
                     }
-                }
+
+                    return false;
+                } 
                 else
                 {
                     throw new NotSupportedException($"Unsupported type for decimal literal check: {type}");

@@ -1,8 +1,0 @@
-#DISABLE: UntypedBlankAsTable.txt
-
-// All testcases use functions which are not supported in formula fields.
-#DISABLE: DecimalBoot.txt 
-
-// Exp and Power functions are not supported
-#DISABLE: Exp.txt
-#DISABLE: Power.txt

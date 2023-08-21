@@ -77,6 +77,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var val = node.Args[0].Accept(visitor, context);
             if (context.IsNumericType(val))
             {
+                // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
+                // return empty string if numeric arg is NULL (has exceeded Decimal range). 
+                if (val.inlineSQL == "NULL") {
+                    return context.SetIntermediateVariable(node, $"N''");
+                }
+
                 string format = null;
                 if (node.Args.Count > 1)
                 {
