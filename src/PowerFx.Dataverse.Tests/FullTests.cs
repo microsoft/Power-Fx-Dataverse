@@ -515,7 +515,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any numeric arg value exceeds decimal range
                 ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, metadata); // IsError is true because '423456789013' overflows decimal range (-100000000000, 100000000000)
                 ExecuteSqlTest("IsBlank(Text(423456789013, \"0\"))", null, cx, metadata); // Legacy behavior
-                ExecuteSqlTest("IsBlank(423456789013, \"0\"))", null, cx, metadata); // Legacy behavior
+                ExecuteSqlTest("IsBlank(423456789013)", null, cx, metadata); // Legacy behavior
 
                 // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
                 ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
