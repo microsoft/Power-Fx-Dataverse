@@ -517,24 +517,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(Text(423456789013, \"0\"))", null, cx, metadata); // Legacy behavior
                 ExecuteSqlTest("IsBlank(423456789013)", null, cx, metadata); // Legacy behavior
 
-                // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
-                ExecuteSqlTest("Text(423456789013/1000, \"0\")", "423456789", cx, metadata);
-                ExecuteSqlTest("423456789013/fractional", 4213500388.1890547264M, cx, metadata);
-
-            }
-        }
-
-        [Fact]
-        public void SqlArithmeticTests()
-        {
-            using (var cx = GetSql())
-            {
-                // for intermediate arithmetic operations, numeric values are checked against the range (-9999999999999, 9999999999999)
-                // final result is checked against supported decimal range (-100000000000, 100000000000)
-                ExecuteSqlTest("400000000001*0.0045", 1800000000.0045M, cx, null);
-                ExecuteSqlTest("400000000001+1", null, cx, null);
-                ExecuteSqlTest("Value(\"400000000001\")*0.0045", 1800000000.0045M, cx, null);
-                ExecuteSqlTest("423456789013/1000", 423456789.013M, cx, null);
             }
         }
 

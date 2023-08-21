@@ -371,7 +371,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? 2 : DefaultPrecision);
+                    precision = options.TypeHints?.Precision ?? DefaultPrecision;
                 }
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
