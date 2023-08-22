@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -121,7 +121,7 @@
     
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
-    <value>Số lượng đối số không hợp lệ cho hàm {0}: đã nhận {1}, dự kiện {2}</value>
+    <value>Số lượng đối số không hợp lệ cho hàm {0}: đã nhận {1}, dự kiến {2}</value>
     
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
@@ -137,7 +137,7 @@
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
-    <value>Chỉ có một giá trị theo nghĩa đen được hỗ trợ cho đối số này.</value>
+    <value>Chỉ có một giá trị ký tự được hỗ trợ cho đối số này.</value>
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Không thể tham chiếu bảng ảo {0} trong cột công thức.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Bao gồm một định dạng trong đối số thứ hai khi dùng hàm Text với số. Chuỗi định dạng không được bao gồm dấu phân tách hàng nghìn hoặc thập phân trong các cột công thức.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Sử dụng hàm Text để chuyển đổi số thành văn bản. Bao gồm một định dạng trong đối số thứ hai, không thể bao gồm dấu phân cách hàng nghìn hoặc thập phân trong các cột công thức.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Hiện không hỗ trợ các phép tính với cột tiền tệ trong các bảng liên quan trong các cột công thức.</value>
     
   </data>
 </root>

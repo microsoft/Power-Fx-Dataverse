@@ -130,6 +130,11 @@ namespace Microsoft.PowerFx.Dataverse
                     error = DataverseExtensions.DataverseError<RecordValue>($"Key {field.Name} with type {amd.AttributeType.Value}/{field.Value.Type} is not supported yet.", methodName);
                     return null;
                 }
+                catch (InvalidOperationException invalidOperationException)
+                {
+                    error = DataverseExtensions.DataverseError<RecordValue>(invalidOperationException.Message, methodName);
+                    return null;
+                }
             }
 
             return leanEntity;

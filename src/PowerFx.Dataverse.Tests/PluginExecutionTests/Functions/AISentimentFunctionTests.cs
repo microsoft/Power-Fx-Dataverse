@@ -15,8 +15,8 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
-    public class AISummarizeFunctionTests
+
+    public class AISentimentFunctionTests
     {
         // FAils if config.EnableAIFunctions() is not called.
         [Theory]
@@ -24,14 +24,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData(false)]
         public void Missing(bool enable)
         {
-            var config = new PowerFxConfig();        
+            var config = new PowerFxConfig();
             if (enable)
             {
                 config.EnableAIFunctions();
             }
             var engine = new RecalcEngine(config);
-            
-            var result = engine.Check("AISummarize(\"very long string\")");
+
+            var result = engine.Check("AISentiment(\"I am feeling happy\")");
             Assert.Equal(enable, result.IsSuccess);
         }
 
@@ -52,20 +52,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             client.Work = (req) =>
             {
                 // Validate parameters
-                Assert.Equal("AISummarize", req.RequestName);
-                Assert.Equal("very long string", req.Parameters["Text"]);
+                Assert.Equal("AISentiment", req.RequestName);
+                Assert.Equal("I am feeling happy", req.Parameters["Text"]);
 
                 var resp = new OrganizationResponse
                 {
-                    ResponseName = "AISummarize"
+                    ResponseName = "AISentiment"
                 };
-                resp["SummarizedText"] = "short string";
+                resp["AnalyzedSentiment"] = "positive";
                 return resp;
             };
-            
-            var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
 
-            Assert.Equal("short string", result.ToObject());
+            var result = await engine.EvalAsync("AISentiment(\"I am feeling happy\")", default, runtimeConfig: rc);
+
+            Assert.Equal("positive", result.ToObject());
         }
 
         [Fact]
@@ -88,8 +88,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException(msg);
             };
 
-            var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
-            
+            var result = await engine.EvalAsync("AISentiment(\"I am feeling happy\")", default, runtimeConfig: rc);
+
             var errors = (ErrorValue)result;
             Assert.Equal(1, errors.Errors.Count);
             var error = errors.Errors[0];
@@ -104,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             public async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
             {
                 return await DataverseResponse<OrganizationResponse>.RunAsync(
-                    async () => this.Work(request), 
+                    async () => this.Work(request),
                     "method");
             }
         }

@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -141,11 +141,11 @@
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
-    <value>Funkcije {0} ni mogoče izvesti za vnos brez pretvorbe časovnega pasu, kar pa ni podprto v stolpcih s formulo.</value>
+    <value>Funkcije {0} ni mogoče izvesti za ta vnos brez pretvorbe časovnega pasu, kar pa ni podprto v stolpcih s formulo.</value>
     
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
-    <value>Tega postopka ni mogoče izvesti pri vrednostih, ki imajo različna vedenja datuma in ure.</value>
+    <value>Tega postopka ni mogoče izvesti pri vrednostih, ki imajo različno delovanje datuma in ure.</value>
     
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
@@ -153,19 +153,19 @@
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
-    <value>Argument {0} je neveljaven/nepodprta časovna enota za aritmetično funkcijo datuma {1}.</value>
+    <value>Argument {0} je neveljavna/nepodprta časovna enota za aritmetično funkcijo datuma {1}.</value>
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>Žetoni za oblikovanje za določeno območje, kot sta ».« in »,«, niso podprti v stolpcih s formulo.</value>
+    <value>Žetoni za oblikovanje za območne nastavitve, kot sta ».« in »,«, niso podprti v stolpcih s formulo.</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>{0} ni podprto v stolpcih formule, namesto tega uporabite {1}.</value>
+    <value>Funkcija {0} ni podprta v stolpcih s formulo, uporabite raje {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
-    <value>Tega postopka ni mogoče izvesti v stolpcih s formulami za vrsto {0}.</value>
+    <value>Tega postopka ni mogoče izvesti za vrsto {0} v stolpcih s formulami.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
@@ -173,7 +173,7 @@
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
-    <value>Neposreden sklic na celoten zapis ni podprt v stolpcih formule. Uporabite sklic na veljavno polje v zapisu.</value>
+    <value>Neposreden sklic na celoten zapis ni podprt v stolpcih s formulo. Uporabite sklic na veljavno polje v zapisu.</value>
     
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
@@ -189,15 +189,27 @@
     
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
-    <value>Vsiljevanje zapisov ali tabel ni podprto v stolpcih formule.</value>
+    <value>Vsiljevanje zapisov ali tabel ni podprto v stolpcih s formulo.</value>
     
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
-    <value>Tabele z enim stolpcem niso podprte v stolpcih formule.</value>
+    <value>Tabele z enim stolpcem niso podprte v stolpcih s formulo.</value>
     
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Na navidezno tabelo {0} v stolpcih s formulami se ni mogoče sklicevati.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Ko uporabljate funkcijo besedila s številkami, v drugi argument vključite obliko zapisa. V stolpcih s formulo niz z obliko zapisa ne sme vsebovati ločila za tisočice ali decimalna števila.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Uporabite funkcijo besedila in pretvorite številke v besedilo. V drugi argument vključite obliko zapisa, ki v stolpcih s formulo ne sme vsebovati ločila za tisočice ali decimalna števila.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Izračuni s stolpci za valute v povezanih tabelah trenutno niso podprti v stolpcih s formulo.</value>
     
   </data>
 </root>

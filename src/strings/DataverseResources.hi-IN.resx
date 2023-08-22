@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -129,7 +129,7 @@
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
-    <value>इस तर्क को सूत्र स्तंभों में इस प्रकार के रूप में पारित नहीं किया जा सकता है.</value>
+    <value>इस तर्क को सूत्र स्तंभों में इस प्रकार पास नहीं किया जा सकता.</value>
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>सूत्र स्तंभों में वर्चुअल तालिका {0} संदर्भित नहीं कर सकता.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>संख्याओं के साथ टेक्स्ट फ़ंक्शन का उपयोग करते समय दूसरे तर्क में प्रारूप शामिल करें. प्रारूप स्ट्रिंग में सूत्र स्तंभों में हजारों या दशमलव विभाजक शामिल नहीं हो सकते.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>संख्याओं को टेक्स्ट में रूपांतरित करने के लिए टेक्स्ट फ़ंक्शन का उपयोग करें. दूसरे तर्क में एक प्रारूप शामिल करें, जिसमें सूत्र कॉलम में हजारों या दशमलव विभाजक शामिल नहीं हो सकते.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>संबंधित तालिकाओं में मुद्रा स्तंभों के साथ गणना फिलहाल सूत्र स्तंभों में समर्थित नहीं हैं.</value>
     
   </data>
 </root>

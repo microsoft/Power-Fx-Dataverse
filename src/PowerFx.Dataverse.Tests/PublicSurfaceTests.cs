@@ -58,7 +58,8 @@ namespace Microsoft.PowerFx.Tests
 
                 // Functions
                 "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
-
+                "Microsoft.PowerFx.Dataverse.AIReplyFunction",
+                "Microsoft.PowerFx.Dataverse.AISentimentFunction"
 
             };
 

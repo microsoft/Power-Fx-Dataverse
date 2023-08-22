@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -773,8 +775,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Hyperlink types are imported as String
         [Theory]
-        [InlineData("First(t1).hyperlink")] // "Hyperlink column type not supported."
-        [InlineData("With({x:First(t1)}, x.hyperlink)")] // "Hyperlink column type not supported."
+        [InlineData("First(t1).hyperlink")]
+        [InlineData("With({x:First(t1)}, x.hyperlink)")]
         public void HyperlinkIsString(string expr)
         {
             // create table "local"
@@ -2596,12 +2598,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
         [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
+            "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
         [InlineData("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
-            "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")]
+            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
         [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
+            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
             )]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
@@ -3383,18 +3385,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var baseExpr = "First(t1).{0}";
             var engine = new RecalcEngine();
 
-            // Create new org (symbols) with both tables 
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
             var entity = el.RetrieveAsync("allattributes", _g1).Result.Response;
 
-            // Hyperlink is a known type but not supported.
             var expectedErrors = new List<string>()
             {
-                "Hyperlink column type not supported.",
-                "Image column type not supported.",
-                "File column type not supported.",
+                "ImageType column type not supported.",
+                "FileType column type not supported.",
             };
 
             try
@@ -3523,6 +3522,143 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.Equal(expected, logging);
         }
+      
+        [Fact]
+        public void SerializeEntity()
+        {
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "Local"); // unique display name
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels(policy);
+
+            var entityRecordType = dv.GetRecordType("local");
+
+            Func<string, RecordType> logicalToRecord = (logicalName) => dv.GetRecordType(logicalName);
+            var option = new JsonSerializerOptions();
+            var setting = new FormulaTypeSerializerSettings(logicalToRecord);
+            var converter = new FormulaTypeJsonConverter(setting);
+            option.Converters.Add(converter);
+
+            // serialization of DV RecordType
+            var json = JsonSerializer.Serialize<FormulaType>(entityRecordType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType""},""CustomTypeName"":""local""}", json);
+
+            var deSerializedRecordType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityRecordType, deSerializedRecordType);
+
+            // serialization of DV TableType
+            var entityTableType = entityRecordType.ToTable();
+            json = JsonSerializer.Serialize<FormulaType>(entityTableType, option);
+            Assert.Equal(@"{""Type"":{""Name"":""CustomType"",""IsTable"":true},""CustomTypeName"":""local""}", json);
+
+            var deSerializedTableType = JsonSerializer.Deserialize<FormulaType>(json, option);
+            Assert.Equal(entityTableType, deSerializedTableType);
+        }
+
+        [Theory]
+        [InlineData("First(t1).M|", 11)]
+        [InlineData("First(t1).|", 10)]
+        [InlineData("ForAll(t1, |", 11)]
+        public void MultiSelectIntellisenseTest(string expression, int cursorPosition)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup _) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expression, symbolTable: dv.Symbols);
+            var intellisense = engine.Suggest(check, cursorPosition);
+
+            Assert.True(intellisense.Suggestions.Count() > 0);
+            Assert.Contains(intellisense.Suggestions, sgst => sgst.DisplayText.Text == "MultiSelect");
+        }
+
+        [Theory]
+        [InlineData("Concat(First(t1).multiSelect, Value)", "EightNine")]
+        [InlineData("First(First(t1).multiSelect).Value & \" options\"", "Eight options")]
+        [InlineData("If(First(First(t1).multiSelect).Value =  'MultiSelect (All Attributes)'.'Eight', \"Worked\")", "Worked")]
+        public async Task MultiSelectFieldTest(string expression, string expected)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expression, symbolTable: dv.Symbols);
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+
+            Assert.IsType<StringValue>(result);
+            Assert.Equal(expected, ((StringValue)result).Value);
+        }
+
+        [Theory]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight']", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine']", 2)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Eight']", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', Error({Kind:ErrorKind.Custom})]", 1)]
+        [InlineData("['MultiSelect (All Attributes)'.'Eight', 'MultiSelect (All Attributes)'.'Nine', 'MultiSelect (All Attributes)'.'Eight']", 2)]
+        [InlineData("[]", 0)]
+        [InlineData("[Blank(),Blank()]", 0)]
+        public async Task MultiSelectMutationTest(string optionValueSetExpression, int counter)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            // Base expression + options from inlinedata
+            var expression = $"With({{x:Patch(t1, First(t1), {{MultiSelect:{optionValueSetExpression}}})}}, CountRows(x.MultiSelect))";
+
+            (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var powerFxConfig = new PowerFxConfig();
+
+            powerFxConfig.SymbolTable.EnableMutationFunctions();
+
+            var opt = new ParserOptions() { AllowsSideEffects = true };
+            var engine = new RecalcEngine(powerFxConfig);
+            var check = engine.Check(expression, options: opt, symbolTable: dv.Symbols);
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+
+            Assert.IsType<DecimalValue>(result);
+            Assert.Equal(counter, ((DecimalValue)result).Value);
+        }
+
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {MultiSelect:[1]})", false)]
+        [InlineData("Patch(t1, First(t1), {MultiSelect:[{Value: 'MultiSelect (All Attributes)'.'Eight'}, Error({Kind:ErrorKind.Custom})]})", true)]
+        public async Task MultiSelectWrongArgsTest(string expression, bool checkIsSuccess)
+        {
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var powerFxConfig = new PowerFxConfig();
+
+            powerFxConfig.SymbolTable.EnableMutationFunctions();
+
+            var opt = new ParserOptions() { AllowsSideEffects = true };
+            var engine = new RecalcEngine(powerFxConfig);
+            var check = engine.Check(expression, options: opt, symbolTable: dv.Symbols);
+
+            Assert.Equal(checkIsSuccess, check.IsSuccess);
+
+            if (check.IsSuccess)
+            {
+                var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+                Assert.IsType<ErrorValue>(result);
+            }
+            else
+            {
+                Assert.Contains("Invalid argument type. Expecting a Table value, but of a different schema", check.Errors.First().Message);
+            }
+        }
 
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
@@ -3586,6 +3722,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return (dvConnection, ds, entityLookup);
         }
 
+        private static readonly OptionSetValueCollection _listOptionSetValueCollection = new OptionSetValueCollection(            
+            new List<Xrm.Sdk.OptionSetValue>() { new Xrm.Sdk.OptionSetValue(value: 8), new Xrm.Sdk.OptionSetValue(value: 9)});
+
         // Create Entity objects to match DataverseTests.AllAttributeModel;
         private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
         {
@@ -3600,6 +3739,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["bigint"] = 934157136952;
             entity1.Attributes["double"] = 1d / 3d;
             entity1.Attributes["new_field"] = 1m / 3m;
+            entity1.Attributes["userlocaldatetime"] = DateTime.Now;
+            entity1.Attributes["int"] = 1;
+            entity1.Attributes["picklist"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statecode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["statuscode"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["string"] = "string value";
+            entity1.Attributes["guid"] = _g1;
+            entity1.Attributes["multiSelect"] = _listOptionSetValueCollection;
 
             MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);

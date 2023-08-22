@@ -12,17 +12,17 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AISummarize(String) : string 
-    // given a string, call GPT to return a summarized version of the string. 
-    public class AISummarizeFunction : ReflectionFunction
+    // AISentiment(String) : string 
+    // given a string, call GPT to return the analyzed sentiment of the string. 
+    public class AISentimentFunction : ReflectionFunction
     {
-        public AISummarizeFunction()
+        public AISentimentFunction()
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
 
         // POCO for the OrganizationRequest message.
-        private class SummarizeRequest
+        private class SentimentRequest
         {
             /// <summary>
             /// The incoming text. 
@@ -31,27 +31,27 @@ namespace Microsoft.PowerFx.Dataverse
 
             public OrganizationRequest Get()
             {
-                var req = new OrganizationRequest("AISummarize");
-                req[nameof(SummarizeRequest.Text)] = this.Text;
+                var req = new OrganizationRequest("AISentiment");
+                req[nameof(SentimentRequest.Text)] = this.Text;
 
                 return req;
             }
         }
 
         // POCO for the OrganizationResponse message.
-        private class SummarizeResponse
+        private class SentimentResponse
         {
-            public string SummarizedText { get; set; }
+            public string AnalyzedSentiment { get; set; }
 
-            public static SummarizeResponse Parse(OrganizationResponse res)
+            public static SentimentResponse Parse(OrganizationResponse res)
             {
-                res.ValidateNameOrThrowEvalEx("AISummarize");
+                res.ValidateNameOrThrowEvalEx("AISentiment");
 
-                var str = res.Results.GetOrThrowEvalEx<string>(nameof(SummarizeResponse.SummarizedText));
+                var str = res.Results.GetOrThrowEvalEx<string>(nameof(SentimentResponse.AnalyzedSentiment));
 
-                return new SummarizeResponse
+                return new SentimentResponse
                 {
-                    SummarizedText = str
+                    AnalyzedSentiment = str
                 };
             }
         }
@@ -65,14 +65,14 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result = await SummarizedText(value.Value, client, cancel);
+            var result = await AnalyzedSentimentText(value.Value, client, cancel);
 
             return FormulaValue.New(result);
         }
 
-        private async Task<string> SummarizedText(string myText, IDataverseExecute service, CancellationToken cancel)
+        private async Task<string> AnalyzedSentimentText(string myText, IDataverseExecute service, CancellationToken cancel)
         {
-            var req = new SummarizeRequest
+            var req = new SentimentRequest
             {
                 Text = myText
             }.Get();
@@ -80,9 +80,9 @@ namespace Microsoft.PowerFx.Dataverse
             var result = await service.ExecuteAsync(req, cancel);
             result.ThrowEvalExOnError();
 
-            var response = SummarizeResponse.Parse(result.Response);
+            var response = SentimentResponse.Parse(result.Response);
 
-            return response.SummarizedText;
+            return response.AnalyzedSentiment;
         }
     }
 }

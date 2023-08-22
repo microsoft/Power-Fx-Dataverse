@@ -49,8 +49,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             // TODO: modeled from CdsDataSourceInfo.SetClientSemantics - is it worth breaking out?
 
-            // only go 1 level for now
-            Schema = tableDefinition.GetRuntimeType().ComputeDType(1).DType;
+            // Go 2 level for now to also compute multi-select field types (table type).
+            Schema = tableDefinition.GetRuntimeType().ComputeDType(2).DType;
 
             // Update parent of all related entities to this entity.
             // During parsing of navigation metadata, parser creates EntityInfo when creating DType.DataEntity.

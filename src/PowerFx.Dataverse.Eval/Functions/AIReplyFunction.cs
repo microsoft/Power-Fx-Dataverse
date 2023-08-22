@@ -12,46 +12,46 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AISummarize(String) : string 
-    // given a string, call GPT to return a summarized version of the string. 
-    public class AISummarizeFunction : ReflectionFunction
+    // AIReply(String) : string 
+    // given a string, call GPT to return a response to the string. 
+    public class AIReplyFunction : ReflectionFunction
     {
-        public AISummarizeFunction()
+        public AIReplyFunction()
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
 
         // POCO for the OrganizationRequest message.
-        private class SummarizeRequest
+        private class ReplyRequest
         {
             /// <summary>
-            /// The incoming text. 
+            /// The incoming text/question. 
             /// </summary>
             public string Text { get; set; }
 
             public OrganizationRequest Get()
             {
-                var req = new OrganizationRequest("AISummarize");
-                req[nameof(SummarizeRequest.Text)] = this.Text;
+                var req = new OrganizationRequest("AIReply");
+                req[nameof(ReplyRequest.Text)] = this.Text;
 
                 return req;
             }
         }
 
         // POCO for the OrganizationResponse message.
-        private class SummarizeResponse
+        private class ReplyResponse
         {
-            public string SummarizedText { get; set; }
+            public string PreparedResponse { get; set; }
 
-            public static SummarizeResponse Parse(OrganizationResponse res)
+            public static ReplyResponse Parse(OrganizationResponse res)
             {
-                res.ValidateNameOrThrowEvalEx("AISummarize");
+                res.ValidateNameOrThrowEvalEx("AIReply");
 
-                var str = res.Results.GetOrThrowEvalEx<string>(nameof(SummarizeResponse.SummarizedText));
+                var str = res.Results.GetOrThrowEvalEx<string>(nameof(ReplyResponse.PreparedResponse));
 
-                return new SummarizeResponse
+                return new ReplyResponse
                 {
-                    SummarizedText = str
+                    PreparedResponse = str
                 };
             }
         }
@@ -65,14 +65,14 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result = await SummarizedText(value.Value, client, cancel);
+            var result = await RepliedText(value.Value, client, cancel);
 
             return FormulaValue.New(result);
         }
 
-        private async Task<string> SummarizedText(string myText, IDataverseExecute service, CancellationToken cancel)
+        private async Task<string> RepliedText(string myText, IDataverseExecute service, CancellationToken cancel)
         {
-            var req = new SummarizeRequest
+            var req = new ReplyRequest
             {
                 Text = myText
             }.Get();
@@ -80,9 +80,9 @@ namespace Microsoft.PowerFx.Dataverse
             var result = await service.ExecuteAsync(req, cancel);
             result.ThrowEvalExOnError();
 
-            var response = SummarizeResponse.Parse(result.Response);
+            var response = ReplyResponse.Parse(result.Response);
 
-            return response.SummarizedText;
+            return response.PreparedResponse;
         }
     }
 }

@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Δεν είναι δυνατή η αναφορά εικονικού πίνακα {0} σε στήλες τύπων.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Συμπεριλάβετε μια μορφή στο δεύτερο όρισμα κατά τη χρήση της συνάρτησης Text με αριθμούς. Η συμβολοσειρά μορφής δεν μπορεί να περιλαμβάνει διαχωριστικό χιλιάδων ή υποδιαστολή στις στήλες τύπου.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Χρησιμοποιήστε τη συνάρτηση Text για να μετατρέψετε αριθμούς σε κείμενο. Συμπεριλάβετε μια μορφή στο δεύτερο όρισμα, το οποίο δεν μπορεί να περιλαμβάνει διαχωριστικό χιλιάδων ή υποδιαστολή σε στήλες τύπου.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Οι υπολογισμοί με στήλες νομισματικής μονάδας σε σχετικούς πίνακες δεν υποστηρίζονται αυτήν τη στιγμή σε στήλες τύπου.</value>
     
   </data>
 </root>

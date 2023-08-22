@@ -4,18 +4,19 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -108,39 +109,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return (true, result);
             }
 
-            if (_metadata.TryGetAttribute(fieldName, out var amd))
-            {
-                bool unsupportedType = false;
-                string errorMessage = string.Empty;
-
-                if (amd is ImageAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Image column type not supported.";
-                }
-                else if (amd is FileAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "File column type not supported.";
-                }
-                else if (amd is ManagedPropertyAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Managed property column type not supported.";
-                }
-
-                if (unsupportedType)
-                {
-                    result = NewError(new ExpressionError()
-                    {
-                        Kind = ErrorKind.Unknown,
-                        Severity = ErrorSeverity.Critical,
-                        Message = errorMessage
-                    });
-                    return (true, result);
-                }
-            }
-
             // IR should convert the fieldName from display to Logical Name. 
             if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
             {
@@ -190,16 +158,40 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            // Multi-select column type
+            if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
+            {
+                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
+                return (true, result);
+            }
+
+            _metadata.TryGetAttribute(fieldName, out var amd);
+
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
             {
                 Kind = ErrorKind.Unknown,
                 Severity = ErrorSeverity.Critical,
-                Message = string.Format("{0} column type not supported.", fieldType)
+                Message = string.Format("{0} column type not supported.", amd != null ? amd.AttributeTypeName.Value : fieldType)
             };
 
             result = NewError(expressionError);
             return (true, result);
+        }
+
+        private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
+        {
+            var records = new List<RecordValue>();            
+
+            foreach (var xrmOptionSetValue in optionSetValueCollection)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var fxOptionSetValue = AttributeUtility.ConvertXrmOptionSetValueToFormulaValue(tableType, xrmOptionSetValue);
+                records.Add(NewRecordFromFields(new NamedValue(tableType.FieldNames.First(), fxOptionSetValue)));
+            }
+
+            return NewTable(tableType.ToRecord(), records);
         }
 
         private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)

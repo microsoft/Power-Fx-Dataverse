@@ -12,10 +12,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
+    <resheader name="DV_version">2.0</resheader>
+    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -129,7 +129,7 @@
     
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
-    <value>Tätä argumenttia ei voi siirtää annettuna tyyppinä kaavasarakkeissa.</value>
+    <value>Tätä argumenttia ei voi välittää annettuna tyyppinä kaavasarakkeissa.</value>
     
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
@@ -153,7 +153,7 @@
     
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
-    <value>Argumentti {0} on virheellinen ajan yksikkö tai sitä ei tueta {1} päivämäärän aritmetiikkafunktiolle.</value>
+    <value>Argumentti {0} on virheellinen ajan yksikkö tai sitä ei tueta päivämäärän {1} aritmetiikkafunktiolle.</value>
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
@@ -161,7 +161,7 @@
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
-    <value>{0} ei tueta kaavasarakkeissa. Käytä sen sijaan {1}.</value>
+    <value>Kohdetta {0} ei tueta kaavasarakkeissa. Käytä sen sijaan kohdetta {1}.</value>
     
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
@@ -185,7 +185,7 @@
     
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
-    <value>Tyypin {0} sarakkeet, joiden muoto on {1}, ei tueta kaavasarakkeissa.</value>
+    <value>Tyypin {0} sarakkeita, joiden muoto on {1}, ei tueta kaavasarakkeissa.</value>
     
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
@@ -198,6 +198,18 @@
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Virtuaalitaulukkoon {0} ei voi viitata kaavasarakkeissa.</value>
+    
+  </data>
+  <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
+    <value>Sisällytä muoto toiseen argumenttiin, kun tekstitoimintoa käytetään numeroiden kanssa. Muodon merkkijonon kaavasarakkeissa ei voi olla tuhansia tai desimaalierotinta.</value>
+    
+  </data>
+  <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
+    <value>Muunna numerot tekstiksi tekstitoiminnon avulla. Sisällytä muoto toiseen argumenttiin, jonka kaavasarakkeissa ei voi olla tuhansia tai desimaalierotinta.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
+    <value>Kaavasarakkeet eivät tue tällä hetkellä laskelmia, joissa on valuuttasarakkeita liittyvässä taulukossa.</value>
     
   </data>
 </root>
