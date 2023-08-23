@@ -52,8 +52,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
           
                 return result;
             }
-            else if (arg.type is NumberType)
-            {
+            else if (context.IsNumericType(arg))
+            {  
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
@@ -75,8 +75,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
 
             var val = node.Args[0].Accept(visitor, context);
-            if (val.type is NumberType)
+            if (context.IsNumericType(val))
             {
+                // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
+                // return empty string if numeric arg is NULL (has exceeded Decimal range). 
+                if (val.inlineSQL == "NULL") {
+                    return context.SetIntermediateVariable(node, $"N''");
+                }
+
                 string format = null;
                 if (node.Args.Count > 1)
                 {

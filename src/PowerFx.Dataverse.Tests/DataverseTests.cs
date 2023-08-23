@@ -28,7 +28,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CheckCompile1()
         {
             var expr = "\t\t\nfield    *\n2.0\t";
-
             var model = new EntityMetadataModel
             {
                 Attributes = new AttributeMetadataModel[]
@@ -52,10 +51,151 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
 
-            Assert.True(result.ReturnType is NumberType);
+            Assert.True(result.ReturnType is DecimalType);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
+        }
+
+        public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10), -- new_field
+    @v1 decimal(38,10) -- new_field1
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 decimal(38,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(38,10)
+
+    -- expression body
+    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    -- end expression body
+
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
+END
+";
+        [Fact]
+        public void CheckCurrencyCompile()
+        {
+            var expr = "\t\t\nfield*field1*\n2.0\t";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineCurrencyFunction, result.SqlFunction);
+            
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("\t\t\nnew_field*new_field1*\n2.0\t", result.LogicalFormula);
+        }
+
+        public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(28,12), -- exchangerate
+    @v1 decimal(38,10) -- new_field1
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 decimal(38,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(38,10)
+
+    -- expression body
+    SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    -- end expression body
+
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
+END
+";
+
+        [Fact]
+        public void CheckExchangeRateCompile()
+        {
+            var expr = "\t\t\nexchangerate*field1*\n2.0\t";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "exchangerate",
+                         DisplayName = "exchangerate",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineExchangeFunction, result.SqlFunction);
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
+            Assert.Equal("exchangerate", result.TopLevelIdentifiers.First());
+            Assert.Equal("\t\t\nexchangerate*new_field1*\n2.0\t", result.LogicalFormula);
         }
 
         [Fact]
@@ -112,6 +252,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.False(result.IsSuccess);
             Assert.Single(result.Errors);
             Assert.Contains("'Exp' is an unknown or unsupported function.", result.Errors.First().ToString());
+        }
+
+        [Fact]
+        public void CheckDecimalFloatFunctions()
+        {
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile("Float(5)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString()); // Float function can't be used in the formula.
+
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are internally supported from IR
+            Assert.True(result.IsSuccess);
         }
 
         [Fact]
@@ -176,7 +332,7 @@ AS BEGIN
     -- expression body
     SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
@@ -233,7 +389,7 @@ END
 
             var metadataProvider = new CdsEntityMetadataProvider(null)
             {
-                NumberIsFloat = false  // Causes money to be imported as Decimal instead of Number
+                NumberIsFloat = DataverseEngine.NumberIsFloat
             };
 
             var engine = new PowerFx2SqlEngine(metadata, metadataProvider);
@@ -241,11 +397,7 @@ END
 
             Assert.NotNull(result);
 
-            // But formula columns don't support returning Decimal. 
-            Assert.False(result.IsSuccess);
-            var errors = result.Errors.ToArray();
-
-            Assert.Equal("Error 0-5: The result type Decimal is not supported in formula columns.", errors[0].ToString());
+            Assert.True(result.IsSuccess);
             Assert.Equal("money", result.ApplyGetInvariant());
         }
 
@@ -321,7 +473,7 @@ END
             var result = engine.Check("3*2");
 
             Assert.True(result.IsSuccess);
-            Assert.True(result.ReturnType is NumberType);
+            Assert.True(result.ReturnType is DecimalType);
         }
 
         [Fact]
@@ -421,7 +573,7 @@ END
 
             var errors = result.Errors.ToArray();
             Assert.Single(errors);
-            Assert.Equal("The result type for this formula is expected to be String, but the actual result type is Number. The result type of a formula column cannot be changed.", errors[0].Message);
+            Assert.Equal("The result type for this formula is expected to be String, but the actual result type is Decimal. The result type of a formula column cannot be changed.", errors[0].Message);
             Assert.Equal(SqlCompileException.ResultTypeMustMatch.Key, errors[0].MessageKey);
         }
 
@@ -449,10 +601,8 @@ END
         [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
-            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             var checkResult = engine.Check(expr);
             Assert.False(checkResult.IsSuccess);
@@ -471,21 +621,19 @@ END
         }
 
         [Theory]
-        [InlineData("field", typeof(SqlDecimalType))] // "Decimal"
-        [InlineData("1.1", typeof(SqlDecimalType))] // "Numeric literal returns Decimal"
-        [InlineData("Money", typeof(SqlDecimalType))] // "Money returns Decimal"
-        [InlineData("Int", typeof(SqlDecimalType))] // "Int returns Decimal"
+        [InlineData("field", typeof(DecimalType))] // "Decimal"
+        [InlineData("1.1", typeof(DecimalType))] // "Numeric literal returns Decimal"
+        [InlineData("Money", typeof(DecimalType))] // "Money returns Decimal"
+        [InlineData("Int", typeof(DecimalType))] // "Int returns Decimal"
         [InlineData("String", typeof(StringType))] // "String"
         [InlineData("\"foo\"", typeof(StringType))] // "String literal returns String"
         [InlineData("Boolean", typeof(BooleanType))] // "Boolean"
         [InlineData("true", typeof(BooleanType))] // "Boolean literal returns Boolean"
-        [InlineData("Mod(int, int)", typeof(SqlDecimalType))] // "Int from function returns decimal"
+        [InlineData("Mod(int, int)", typeof(DecimalType))] // "Int from function returns decimal"
         public void CompileValidReturnType(string expr, Type returnType)
         {
-            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -637,10 +785,8 @@ END
                 { "multiSelect", errCantProduceOptionSets }
             };
 
-            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             foreach (var attr in AllAttributeModel.Attributes)
             {
@@ -701,8 +847,8 @@ END
         // Test that we can handle casing overloads on fields. 
         // Dataverse fields are case *sensitive*. 
         [Theory]
-        [InlineData("'FIELD DISPLAY'", typeof(SqlDecimalType))]
-        [InlineData("field1", typeof(SqlDecimalType))]
+        [InlineData("'FIELD DISPLAY'", typeof(DecimalType))]
+        [InlineData("field1", typeof(DecimalType))]
         [InlineData("'field display'", typeof(StringType))]
         [InlineData("Field1", typeof(StringType))]
         public void CheckCasing(string expr, Type returnType)
@@ -897,10 +1043,8 @@ END
         [InlineData("7 + 2", "")] // "Literals"
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
-            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -949,14 +1093,15 @@ END
 
         [Theory]
         [InlineData("1 - UTCToday()", false, "Error 4-14: This argument cannot be passed as type Date in formula columns.")] // "Negation of date (coerce date to number then back to date)"
-        [InlineData("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in division operation (with coerced string)"
-        [InlineData("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in left arg of logical operation"
-        [InlineData("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in right arg of logical operation"
-        [InlineData("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in right arg of equals"
-        [InlineData("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number right arg of not equals"
-        [InlineData("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Abs function"
-        [InlineData("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Max function"
-        [InlineData("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Trunc function"
+        [InlineData("UTCNow() / \"2\"", false, "Error 0-8: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in division operation (with coerced string)"
+        [InlineData("2 > UTCNow()", false, "Error 4-12: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in left arg of logical operation"
+        [InlineData("UTCToday() <= 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in right arg of logical operation"
+        [InlineData("UTCToday() = 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in right arg of equals"
+        [InlineData("UTCToday() <> 8.2E9", false, "Error 0-10: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number right arg of not equals"
+        [InlineData("Abs(UTCToday())", false, "Error 4-14: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in Abs function"
+        [InlineData("Max(1, UTCNow())", false, "Error 7-15: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in Max function"
+        [InlineData("Trunc(UTCToday(), UTCNow())", false, "Error 6-16: This argument cannot be passed as type Decimal in formula columns.")] // "Coerce date to number in Trunc function"
+
         [InlineData("Left(\"foo\", UTCNow())", false, "Error 12-20: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Left function"
         [InlineData("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in first numeric arg in Replace function"
         [InlineData("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in second numeric arg in Replace function"
@@ -1052,9 +1197,9 @@ END
         [InlineData("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.")] // "Text for User Local Date Time"
         [InlineData("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for UTCNow"
         [InlineData("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Time vs TZI Date Only"
-        [InlineData("DateDiff(dateOnly, tziDateOnly)", true, typeof(SqlDecimalType))] // "DateDiff Date Only vs TZI Date Only"
+        [InlineData("DateDiff(dateOnly, tziDateOnly)", true, typeof(DecimalType))] // "DateDiff Date Only vs TZI Date Only"
         [InlineData("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Only vs Date Only"
-        [InlineData("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(SqlDecimalType))] // "DateDiff User Local Date Only vs User Local Date Time"
+        [InlineData("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(DecimalType))] // "DateDiff User Local Date Only vs User Local Date Time"
         [InlineData("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType))] // "> User Local Date Time vs. User Local Date Only"
         [InlineData("tziDateTime <> tziDateOnly", true, typeof(BooleanType))] // "<> TZI Date Time vs. TZI Date Only"
 
@@ -1066,14 +1211,14 @@ END
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [InlineData("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "= TZI Date Time vs. User Local Date Only"
         [InlineData("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "<= Date Only vs. User Local Date Only"
-        [InlineData("Day(dateOnly)", true, typeof(SqlDecimalType))] // "Day of Date Only"
+        [InlineData("Day(dateOnly)", true, typeof(DecimalType))] // "Day of Date Only"
         [InlineData("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")] // "Day of User Local Date Only"
-        [InlineData("WeekNum(dateOnly)", true, typeof(SqlDecimalType))]
-        [InlineData("WeekNum(tziDateTime)", true, typeof(SqlDecimalType))]
-        [InlineData("WeekNum(tziDateOnly)", true, typeof(SqlDecimalType))]
-        [InlineData("WeekNum(userLocalDateOnly)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [InlineData("WeekNum(userLocalDateTime)", false, typeof(SqlDecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [InlineData("WeekNum(dateOnly, 2)", false, typeof(SqlDecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [InlineData("WeekNum(dateOnly)", true, typeof(DecimalType))]
+        [InlineData("WeekNum(tziDateTime)", true, typeof(DecimalType))]
+        [InlineData("WeekNum(tziDateOnly)", true, typeof(DecimalType))]
+        [InlineData("WeekNum(userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [InlineData("WeekNum(userLocalDateTime)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [InlineData("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
         [InlineData("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
@@ -1214,10 +1359,8 @@ END
         [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
-            // This use of NumberIsFloat and these tests to be redone when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1241,20 +1384,16 @@ END
         [InlineData("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.")] // "Virtual lookup field access"
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
-            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
         [Fact]
         public void CompileLogicalLookup()
         {
-            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1683,7 +1822,7 @@ END
         {
             var xrmModel = AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
@@ -1702,10 +1841,8 @@ END
         [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] // "Preserves whitespace and comments"
         public void Translate(string expr, string translation)
         {
-            // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = true });
+            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
@@ -1718,10 +1855,10 @@ END
         [InlineData("Price * Quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Display Names"
         [InlineData("new_price * new_quantity", "#$FieldDecimal$# * #$FieldDecimal$#")] // "Logical Names"
         [InlineData("\"John Smith\"", "#$string$#")] // "String literal"
-        [InlineData("123456", "#$number$#")] // "Numeric literal"
-        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$number$#)")] // "Function with boolean literal"
-        [InlineData("Text(123, \"0000\")", "Text(#$number$#, #$string$#)")] // "Text with format string"
-        [InlineData("If(123,\"Foo\"", "If(#$number$#, #$string$#)")] // "Invalid formula - cleaned up"
+        [InlineData("123456", "#$decimal$#")] // "Numeric literal"
+        [InlineData("If(true,\"John Smith\",Price+7)", "If(#$boolean$#, #$string$#, #$FieldDecimal$# + #$decimal$#)")] // "Function with boolean literal"
+        [InlineData("Text(123, \"0000\")", "Text(#$decimal$#, #$string$#)")] // "Text with format string"
+        [InlineData("If(123,\"Foo\"", "If(#$decimal$#, #$string$#)")] // "Invalid formula - cleaned up"
         [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'", "#$FieldDecimal$# + #$FieldDecimal$#")] // "Conflict"
         [InlineData("Price + Other.Data", "#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] // "Lookup"
         [InlineData("Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$#")] // "Multiple Lookups"

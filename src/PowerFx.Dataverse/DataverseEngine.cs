@@ -51,26 +51,24 @@ namespace Microsoft.PowerFx.Dataverse
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
-          CultureInfo culture = null,
-          bool numberIsFloat = false)
+          CultureInfo culture = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
 
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
-            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = numberIsFloat };
+            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = NumberIsFloat };
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
+
         }
 
         #region Critical Virtuals
 
-        // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-        // 
-        public const bool NumberIsFloat = true;
+        public const bool NumberIsFloat = false;
 
         public override ParserOptions GetDefaultParserOptionsCopy()
         {
@@ -144,7 +142,17 @@ namespace Microsoft.PowerFx.Dataverse
         private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null)
         {
             errors = null;
-            returnType = BuildReturnType(nodeType);
+
+            // To make it backward compatible when no currency changes are there and using currency field in formula returns decimal.
+            // return type will only be currency when it is passed in hints, in all other cases, it would be decimal only.
+            if (options.TypeHints == null && nodeType._type.Kind == DKind.Currency)
+            {
+                returnType = BuildReturnType(FormulaType.Decimal);
+            }
+            else 
+            {
+                returnType = BuildReturnType(nodeType);
+            }
 
             if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
@@ -154,10 +162,10 @@ namespace Microsoft.PowerFx.Dataverse
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
-                if (returnType is NumberType)
+                if (SqlVisitor.Context.IsNumericType(returnType))
                 {
                     // TODO: better type validation
-                    if (hintType is NumberType)
+                    if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
                         return true;
@@ -178,7 +186,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static bool SupportedReturnType(FormulaType type)
         {
             return
-                type is SqlDecimalType ||
+                type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type);
@@ -186,15 +194,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static FormulaType BuildReturnType(DType type)
         {
+            // Even if NumberIsFloat=false, Number can be returned from IR and we have to support it so mapping Number
+            // to Core decimal type so SQL Compiler always returns decimal even if Number is coming from IR
             if (type.Kind == DKind.Number)
             {
-                // The default numeric type is decimal
-                return new SqlDecimalType();
+                return FormulaType.Decimal;
             }
             else if (type.Kind == DKind.Currency)
             {
-                // Currency isn't supported yet, for now, return decimal
-                return new SqlDecimalType();
+                // Full currency support is not there but it is needed for formula expressions which is using currency fields 
+                return new SqlBigType();
             }
             else
             {

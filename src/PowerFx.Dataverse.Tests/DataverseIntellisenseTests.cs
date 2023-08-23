@@ -25,12 +25,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         internal static PowerFx2SqlEngine _allAttributesEngine => GetAllAttributesEngine(null);
 
-        // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
-        // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
         internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
             new PowerFx2SqlEngine(
                 DataverseTests.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = true },
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
                 locale);
 
         /// <summary>
@@ -130,7 +128,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
-        [InlineData("Floa|")] // "Floating point fields are not suggested at all"
+        [InlineData("Floa|")] // "Floating point fields are not suggested at all. Float function can't be used in the formula but is internally supported from IR."
+        [InlineData("Deci|")] // "Decimal function is not suggested by intellisense but can be used by manually typing"
         [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
         [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"
         [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"

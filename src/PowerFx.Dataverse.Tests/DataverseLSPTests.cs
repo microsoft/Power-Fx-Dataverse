@@ -95,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("1 + 2", "Number")] // "Number"
+        [InlineData("1 + 2", "Decimal")] // "Decimal"
         [InlineData("\"foo\"", "String")] // "String literal"
         [InlineData("'UserLocal DateTime'", "DateTime")] // "DateTime"
         [InlineData("DateOnly", "Date")] // "Date"
@@ -103,12 +103,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("UTCNow()", "DateTimeNoTimeZone")] // "UTCNow function"
         [InlineData("Now()", "DateTime")] // "Now function"
         [InlineData("Boolean", "Boolean")]
-        [InlineData("field", "Number")] // "Decimal"
-        [InlineData("Money", "Number")] // "Money"
-        [InlineData("Int", "Number")] // "Int"
+        [InlineData("field", "Decimal")] // "Decimal"
+        [InlineData("Money", "Decimal")] // "Money"
+        [InlineData("Int", "Decimal")] // "Int"
         [InlineData("String", "String")] // "String"
         [InlineData("true", "Boolean")] // "Boolean literal"
-        [InlineData("Mod(int, int)", "Number")] // "Mod function"
+        [InlineData("Mod(int, int)", "Decimal")] // "Mod function"
         public void CheckLspCheck(string expression, string type)
         {
             var _sendToClientData = new List<string>();

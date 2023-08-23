@@ -51,7 +51,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         };
 
         [SkippableTheory]
-        [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules")]
+        [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules, disable:NumberIsFloat")]
         public void RunSqlTestCases(ExpressionTestCase testCase)
         {
             using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
@@ -192,11 +192,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 if (iSetup.Flags.HasFlag(Core.Parser.TexlParser.Flags.EnableExpressionChaining))
                 {
                     return new RunResult() { UnsupportedReason = "Expression chaining is not supported." };
-                }
-
-                if (setupHandlerName.IndexOf("disable:NumberIsFloat", StringComparison.OrdinalIgnoreCase) > -1)
-                {
-                    return new RunResult() { UnsupportedReason = "NumberIsFloat=false is not supported." };
                 }
 
                 if (setupHandlerName.IndexOf("DisableReservedKeywords", StringComparison.OrdinalIgnoreCase) > -1)
