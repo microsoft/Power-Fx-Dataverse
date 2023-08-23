@@ -119,16 +119,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     // The numeric formating placeholders for Text: https://docs.microsoft.com/en-us/powerapps/maker/canvas-apps/functions/function-text#number-placeholders
                     // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
-                    var textFormatArgs = new TextFormatArgs
-                    {
-                        FormatCultureName = null,
-                        FormatArg = null,
-                        DateTimeFmt = DateTimeFmtType.NoDateTimeFormat,
-                        HasNumericFmt = false
-                    };
 
                     // Do not allow , . or locale tag or datetime format
-                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out var textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
                         || (textFormatArgs.DateTimeFmt != DateTimeFmtType.NoDateTimeFormat) || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
