@@ -123,13 +123,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     {
                         FormatCultureName = null,
                         FormatArg = null,
-                        HasDateTimeFmt = false,
+                        DateTimeFmt = DateTimeFmtType.NoDateTimeFormat,
                         HasNumericFmt = false
                     };
 
                     // Do not allow , . or locale tag or datetime format
                     if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
-                        || textFormatArgs.HasDateTimeFmt || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
+                        || (textFormatArgs.DateTimeFmt != DateTimeFmtType.NoDateTimeFormat) || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
                         throw new SqlCompileException(SqlCompileException.NumericFormatNotSupported, node.Args[1].IRContext.SourceContext);
