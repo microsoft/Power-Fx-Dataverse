@@ -520,7 +520,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        [Fact]
+        [SkippableFact]
         public void SqlOverflows()
         {
             var model = new EntityMetadataModel
