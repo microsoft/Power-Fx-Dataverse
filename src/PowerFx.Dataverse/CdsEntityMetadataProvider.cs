@@ -184,9 +184,22 @@ namespace Microsoft.PowerFx.Dataverse
             }
             if (_innerProvider != null && _innerProvider.TryGetEntityMetadata(logicalName, out xrmEntity))
             {
+                // PA filters out entities based on the following criterias, plus XrmUtility.BlackListedEntities().
+                var isIntersect = xrmEntity.IsIntersect ?? false;
+                var isLogicalEntity = xrmEntity.IsLogicalEntity ?? false;
+                var objectTypeCode = xrmEntity.ObjectTypeCode ?? 0;
+                var isPrivate = xrmEntity.IsPrivate ?? false;
+
+                if (isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0)
+                {
+                    xrmEntity = null;
+                    return false;
+                }
+
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
                 return true;
             }
+
             return false;
         }
 
@@ -295,14 +308,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 string columnName = string.Empty;
                 bool parsed = false;
-                IExternalOptionSet optionSet = null;
                 var attribute = new PicklistAttributeMetadata(string.Empty)
                 {
                     OptionSet = globalOptionSet,
                     LogicalName = string.Empty,
                     MetadataId = Guid.Empty,
                 };
-                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
+                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out IExternalOptionSet optionSet);
 
                 if (parsed)
                 {
@@ -481,8 +493,7 @@ namespace Microsoft.PowerFx.Dataverse
         #region IExternalDataEntityMetadataProvider implementation
         bool IExternalDataEntityMetadataProvider.TryGetEntityMetadata(string expandInfoIdentity, out IDataEntityMetadata entityMetadata)
         {
-            DataverseDataSourceInfo dsInfo;
-            if (TryGetDataSource(expandInfoIdentity, out dsInfo))
+            if (TryGetDataSource(expandInfoIdentity, out DataverseDataSourceInfo dsInfo))
             {
                 entityMetadata = dsInfo;
                 return true;
@@ -503,8 +514,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         bool IExternalEntityScope.TryGetCdsDataSourceWithLogicalName(string datasetName, string expandInfoIdentity, out IExternalCdsDataSource dataSource)
         {
-            DataverseDataSourceInfo dsInfo;
-            if (TryGetDataSource(expandInfoIdentity, out dsInfo))
+            if (TryGetDataSource(expandInfoIdentity, out DataverseDataSourceInfo dsInfo))
             {
                 dataSource = dsInfo;
                 return true;

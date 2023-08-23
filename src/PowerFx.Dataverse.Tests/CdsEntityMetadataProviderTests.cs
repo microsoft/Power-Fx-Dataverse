@@ -12,6 +12,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     public class CdsEntityMetadataProviderTests
     {
+        #region EntityMetadataModel declarations
         private static readonly EntityMetadataModel _trivial = new EntityMetadataModel
         {
             LogicalName = "local",
@@ -26,6 +27,72 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                      },
             }
         };
+
+        private static readonly EntityMetadataModel _private = new EntityMetadataModel
+        {
+            LogicalName = "wontcache",
+            PrimaryIdAttribute = "wontcached",
+            IsPrivate = true,
+            Attributes = new AttributeMetadataModel[]
+            {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+            }
+        };
+
+        private static readonly EntityMetadataModel _intersect = new EntityMetadataModel
+        {
+            LogicalName = "wontcache",
+            PrimaryIdAttribute = "wontcacheid",
+            IsIntersect = true,
+            Attributes = new AttributeMetadataModel[]
+            {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+            }
+        };
+
+        private static readonly EntityMetadataModel _logicalEntity = new EntityMetadataModel
+        {
+            LogicalName = "wontcache",
+            PrimaryIdAttribute = "wontcacheid",
+            IsLogicalEntity = true,
+            Attributes = new AttributeMetadataModel[]
+            {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+            }
+        };
+
+        private static readonly EntityMetadataModel _objectTypeCode = new EntityMetadataModel
+        {
+            LogicalName = "wontcache",
+            PrimaryIdAttribute = "wontcacheid",
+            ObjectTypeCode = 0,
+            Attributes = new AttributeMetadataModel[]
+            {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+            }
+        };
+        #endregion
+
 
         private class SwitchMetadataProvider : IXrmMetadataProvider
         {
@@ -87,6 +154,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.True(ok);
             Assert.NotNull(entityMetadata1);
+        }
+
+        // PA filter out certain entities base on IsPrivate, IsIntersect, IsLogicalEntity, ObjectTypeCode properties, along with a XrmUtility.BlackListedEntities() list.
+        [Fact]
+        public void WontCache()
+        {
+            var models = new EntityMetadataModel[] { _private, _intersect, _logicalEntity, _objectTypeCode };
+
+            foreach (var model in models)
+            {
+                var provider1 = new SwitchMetadataProvider()
+                {
+                    _inner = new MockXrmMetadataProvider(_private)
+                };
+
+                var metadataCache = new CdsEntityMetadataProvider(provider1);
+
+                // Wont cache
+                var ok = metadataCache.TryGetXrmEntityMetadata("wontcache", out var entityMetadata1);
+
+                Assert.False(ok);
+                Assert.Null(entityMetadata1);
+            }            
         }
 
         [Fact]

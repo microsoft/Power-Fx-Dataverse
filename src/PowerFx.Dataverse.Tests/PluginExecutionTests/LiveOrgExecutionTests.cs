@@ -436,7 +436,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             try
             {
-                RunDataverseTest(tableName, out disposableObjects, out var engine, out var symbols, out var runtimeConfig, async: true);
+                RunDataverseTest(tableName, null, out disposableObjects, out var engine, out var symbols, out var runtimeConfig, async: true);
 
                 Parallel.For(1, 5, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, (i) =>
                 {
@@ -921,11 +921,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
         }
 
-        private void RunDataverseTest(string tableName, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
-        {
-            _ = RunDataverseTest(tableName, null, out disposableObjects, out engine, out symbols, out runtimeConfig, async);
-        }
-
         [SkippableTheory]
         [InlineData("If(First(PFxTables).Choice, \"YES\", \"NO\")", "NO")]
         [InlineData("If(First(PFxTables).Choice = 'Choice (PFxTables)'.Positive, \"YES\", \"NO\")", "NO")]
@@ -1041,6 +1036,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableTheory]
+        [InlineData("First('Appointments').appointment_PostRoles")]
+        [InlineData("With({x:First('Appointments')}, x.appointment_PostRoles)")]
+        [InlineData("ForAll('Appointments', ThisRecord.appointment_PostRoles)")]
+        public void UnsupportedRelationshipEntitiesTest(string expression)
+        {
+            List<IDisposable> disposableObjects = null;
+
+            try
+            {
+                var tableName = new string[] { };
+
+                RunDataverseTest(tableName, null, out disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out _, false);
+
+                CheckResult check = engine.Check(expression, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true });
+                Assert.False(check.IsSuccess);
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
         {
             ServiceClient svcClient = GetClient();
@@ -1064,6 +1082,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dv.AddTable("Tasks", "task");
             dv.AddTable("Note", "annotation");
             dv.AddTable("Contacts", "contact");
+            dv.AddTable("Appointments", "appointment");
 
             symbols = ReadOnlySymbolTable.Compose(dv.Symbols);
 
