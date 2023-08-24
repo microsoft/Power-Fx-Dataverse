@@ -212,12 +212,4 @@
     <value>Calculations with currency columns in related tables are not currently supported in formula columns.</value>
     <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
-  <data name="FormulaColumns_OverflowNumericLiteral" xml:space="preserve">
-    <value>Numeric value is too large.</value>
-    <comment>Error Message. Used in formula columns for scenarios where numeric literal is too large.</comment>
-  </data>
-  <data name="FormulaColumns_OverflowDecimalLiteral" xml:space="preserve">
-    <value>Decimal value is too large.</value>
-    <comment>Error Message. Used in formula columns for scenarios where decimal literal is too large.</comment>
-  </data>
 </root>
