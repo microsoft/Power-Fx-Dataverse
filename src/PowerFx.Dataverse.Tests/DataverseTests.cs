@@ -1128,7 +1128,7 @@ END
         [InlineData("Text(123, \",###.0\")", true, false, "Error 10-18: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Locale-specific separators not supported"
         [InlineData("Text(123, \"\\,###\\.\")", true, false, "Error 10-19: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Escaped locale-specific separators not supported"
         [InlineData("Text(123, \"#\", \"fr-FR\")", true, false, "Error 15-22: The language argument is not supported for the Text function in formula columns.")] // "Localization parameter"
-        [InlineData("Text(123, \"[$-fr-FR]#\")", true, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Locale token at start of format string not supported"
+        [InlineData("Text(123, \"[$-fr-FR]#\")", false, false, "Error 10-22: Locale-specific formatting tokens such as \".\" and \",\" are not supported in formula columns.")] // "Locale token at start of format string not supported"
         [InlineData("Text(123, \"#\" & \".0\")", true, false, "Error 14-15: Only a literal value is supported for this argument.")] // "Non-literal format string"
         [InlineData("Int(\"123\")", true, true)] // "Int on string"
         [InlineData("Text(123)", true, false, "Error 0-9: Include a format in the second argument when using the Text function with numbers. The format string cannot include a thousands or decimal separator in formula columns.")] // "Text() function with single numeric arg is not supported"
