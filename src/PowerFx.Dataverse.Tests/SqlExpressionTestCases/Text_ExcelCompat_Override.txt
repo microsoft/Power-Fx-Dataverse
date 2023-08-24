@@ -9,9 +9,6 @@
 >> Text(Blank())
 ""
 
->> Text(If(1<0,false))
-""
-
 // Expected: "0.00"
 // actual: ""
 >> Text(Blank(), "0.00")
