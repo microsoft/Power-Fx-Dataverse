@@ -418,8 +418,11 @@ namespace Microsoft.PowerFx.Dataverse
 
                     return node.Op switch
                     {
-                        UnaryOpKind.BooleanToText => RetVal.FromSQL(context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'"), context.GetReturnType(node)),
-                        _ => RetVal.FromSQL(context.WrapInlineBoolean(boolResult.ToString(), "1", "0"), context.GetReturnType(node))
+                        UnaryOpKind.BooleanToText => 
+                            RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'")), 
+                                context.GetReturnType(node)),
+                        _ => RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "1", "0")), 
+                                context.GetReturnType(node))
                     };
 
                 case UnaryOpKind.NumberToBoolean:
@@ -1323,7 +1326,7 @@ namespace Microsoft.PowerFx.Dataverse
                 else
                 {
                     _unsupportedWarnings.Add("Overflow numeric literal");
-                    AppendContentLine("RETURN NULL");
+                    throw new SqlCompileException(Core.Localization.TexlStrings.ErrNumberTooLarge, null, type._type.GetKindString());
                 }
 
                 return false;
@@ -1352,7 +1355,7 @@ namespace Microsoft.PowerFx.Dataverse
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
-                        AppendContentLine("RETURN NULL");
+                        throw new SqlCompileException(Core.Localization.TexlStrings.ErrNumberTooLarge, null, type._type.GetKindString());
                     }
 
                     return false;

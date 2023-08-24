@@ -378,6 +378,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Rewriting to have top-level else if also succeeds
                 ExecuteSqlTest("If(1=3,1,1=2,2,1=1,3)", 3M, cx, null);
+
+                ExecuteSqlTest("If(1<0, false) & \"b\"", "b", cx, null);
+                ExecuteSqlTest("If(1>0, false) & \"b\"", "falseb", cx, null);
+                ExecuteSqlTest("If(1>0, \"a\") & \"b\"", "ab", cx, null);
+                ExecuteSqlTest("If(1<0, \"a\") & \"b\"", "b", cx, null);
             }
         }
 
@@ -457,7 +462,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
                 ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata); 
-                ExecuteSqlTest("Text(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Text(NullStr) = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Upper(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Lower(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Concatenate(NullStr, \"a\", NullStr, \"b\") = \"ab\"", true, cx, metadata);
@@ -504,19 +509,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
 
-                ExecuteSqlTest("Text(Blank(), \"0\")", "", cx, metadata);
+                ExecuteSqlTest("Text(Blank(), \"0\")", "0", cx, metadata);
                 ExecuteSqlTest("IsError(Text(Blank(), \"0\"))", false, cx, metadata);
-                ExecuteSqlTest("IsBlank(Text(Blank(), \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(Blank(), \"0\"))", false, cx, metadata);
 
-                ExecuteSqlTest("Text(nulldecimal, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("Text(nulldecimal, \"0\")", "0", cx, metadata);
                 ExecuteSqlTest("IsError(Text(nulldecimal, \"0\"))", false, cx, metadata);
-                ExecuteSqlTest("IsBlank(Text(nulldecimal, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(nulldecimal, \"0\"))", false, cx, metadata);
 
-                ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any numeric arg value exceeds decimal range
                 ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, metadata); // IsError is true because '423456789013' overflows decimal range (-100000000000, 100000000000)
-                ExecuteSqlTest("IsBlank(Text(423456789013, \"0\"))", null, cx, metadata); // Legacy behavior
-                ExecuteSqlTest("IsBlank(423456789013)", null, cx, metadata); // Legacy behavior
-
+                ExecuteSqlTest("IsError(IsBlank(Text(423456789013, \"0\")))", true, cx, metadata); // IsError is true because of overflow numeric literal
+                ExecuteSqlTest("IsError(IsBlank(423456789013))", true, cx, metadata); // IsError is true because of overflow numeric literal
             }
         }
 
