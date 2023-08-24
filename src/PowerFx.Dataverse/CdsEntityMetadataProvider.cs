@@ -189,8 +189,9 @@ namespace Microsoft.PowerFx.Dataverse
                 var isLogicalEntity = xrmEntity.IsLogicalEntity ?? false;
                 var objectTypeCode = xrmEntity.ObjectTypeCode ?? 0;
                 var isPrivate = xrmEntity.IsPrivate ?? false;
+                var isInvalidEntity = Array.IndexOf(array: XrmUtility.BlackListedEntities(), objectTypeCode) != -1;
 
-                if (isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0)
+                if (isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0 || isInvalidEntity)
                 {
                     xrmEntity = null;
                     return false;

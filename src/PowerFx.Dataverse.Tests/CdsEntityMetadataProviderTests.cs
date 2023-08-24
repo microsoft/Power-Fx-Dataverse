@@ -91,6 +91,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                      },
             }
         };
+
+        private static readonly EntityMetadataModel _blackListedEntity = new EntityMetadataModel
+        {
+            LogicalName = "wontcache",
+            PrimaryIdAttribute = "wontcacheid",
+            ObjectTypeCode = 9944,
+            Attributes = new AttributeMetadataModel[]
+            {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Decimal
+                     },
+            }
+        };
         #endregion
 
 
@@ -160,13 +176,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void WontCache()
         {
-            var models = new EntityMetadataModel[] { _private, _intersect, _logicalEntity, _objectTypeCode };
+            var models = new EntityMetadataModel[] { _private, _intersect, _logicalEntity, _objectTypeCode, _blackListedEntity };
 
             foreach (var model in models)
             {
                 var provider1 = new SwitchMetadataProvider()
                 {
-                    _inner = new MockXrmMetadataProvider(_private)
+                    _inner = new MockXrmMetadataProvider(model)
                 };
 
                 var metadataCache = new CdsEntityMetadataProvider(provider1);
