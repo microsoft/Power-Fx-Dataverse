@@ -1956,6 +1956,37 @@ END
 
             Assert.Equal($"Field {columnName} is of type ErrorValue: {errorMessage}", result.Error.Errors[0].Message);
         }
+
+        [Theory]
+        [InlineData("10000000", true, true, "")]
+        [InlineData("1000000000000000", true, false, "value is too large")]
+        [InlineData("1000000000000000000000000000000000000000000000000", false, false, "value is too large")]
+        [InlineData("-10000000", true, true, "")]
+        [InlineData("-1000000000000000", true, false, "value is too large")]
+        [InlineData("-1000000000000000000000000000000000000000000000000", false, false, "value is too large")]
+        public void CheckOverflowNumericLiteral(string expr, bool pfxSuccess, bool sqlSuccess, string message = null)
+        {
+            var engine = new RecalcEngine();
+            var sqlEngine = new PowerFx2SqlEngine();
+            var pfxCheck = engine.Check(expr);
+
+            Assert.Equal(pfxSuccess, pfxCheck.IsSuccess);
+
+            if (!pfxCheck.IsSuccess)
+            {
+                Assert.True(pfxCheck.Errors.Select(err => err.Message.Contains(message)).Any());
+            }
+
+            var sqlCheck = sqlEngine.Check(expr);
+
+            Assert.NotNull(sqlCheck);
+            Assert.Equal(sqlSuccess, sqlCheck.IsSuccess);
+
+            if (!sqlCheck.IsSuccess)
+            {
+                Assert.True(sqlCheck.Errors.Select(err => err.Message.Contains(message)).Any());
+            }
+        }
     }
 
     // Helpers to leverage the EditorContextScope

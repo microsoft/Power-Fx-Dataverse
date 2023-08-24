@@ -147,6 +147,16 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey RelatedCurrency = DataverseStringResources.New("FormulaColumns_RelatedCurrency");
 
+        /// <summary>
+        /// The error resource key for overflow numeric literal
+        /// </summary>
+        internal readonly static ErrorResourceKey OverflowNumericLiteral = DataverseStringResources.New("FormulaColumns_OverflowNumericLiteral");
+        
+        /// <summary>
+        /// The error resource key for overflow decimal literal
+        /// </summary>
+        internal readonly static ErrorResourceKey OverflowDecimalLiteral = DataverseStringResources.New("FormulaColumns_OverflowDecimalLiteral");
+
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
             _error = new SqlError(key, context, DocumentErrorSeverity.Critical, args);

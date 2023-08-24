@@ -1323,7 +1323,7 @@ namespace Microsoft.PowerFx.Dataverse
                 else
                 {
                     _unsupportedWarnings.Add("Overflow numeric literal");
-                    AppendContentLine("RETURN NULL");
+                    throw new SqlCompileException(SqlCompileException.OverflowNumericLiteral, null, type._type.GetKindString());
                 }
 
                 return false;
@@ -1352,7 +1352,7 @@ namespace Microsoft.PowerFx.Dataverse
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
-                        AppendContentLine("RETURN NULL");
+                        throw new SqlCompileException(SqlCompileException.OverflowDecimalLiteral, null, type._type.GetKindString());
                     }
 
                     return false;
