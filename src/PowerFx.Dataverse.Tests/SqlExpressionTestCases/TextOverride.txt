@@ -1,6 +1,0 @@
-﻿#override: text.txt
-
-// Text of SQL does not return Blank() for Blank()
-
->> Text(Blank())
-""
