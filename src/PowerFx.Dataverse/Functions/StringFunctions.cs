@@ -70,20 +70,35 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Text(SqlVisitor visitor, CallNode node, Context context)
         {
-            if (node.Args.Count > 2)
+            if (node.Args.Count > 2 || node.Args.Count < 1)
             {
                 throw BuildUnsupportedArgumentException(node.Function, 2, node.Args[2].IRContext.SourceContext);
             }
 
             var val = node.Args[0].Accept(visitor, context);
-            if (context.IsNumericType(val))
-            {
-                // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
-                // return empty string if numeric arg is NULL (has exceeded Decimal range). 
-                if (val.inlineSQL == "NULL") {
-                    return context.SetIntermediateVariable(node, $"N''");
-                }
 
+            if (node.Args.Count == 1)
+            {
+                if (val.type is StringType)
+                {
+                    // String passes through Text()
+                    // Blank values should pass through too and not be converted to an empty string
+                    return context.SetIntermediateVariable(node, $"{val}");
+                }
+                else if (val.type is BlankType)
+                {
+                    // Blank() passes through Text()
+                    return context.SetIntermediateVariable(node, $"NULL");
+                }
+                else if (context.IsNumericType(val))
+                {
+                    throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
+                }
+            }
+
+            // node.Args.Count == 2, only supported for numbers, datetimes, and typed/untyped blanks
+            if (context.IsNumericType(val) || val.type is BlankType)
+            {
                 string format = null;
                 if (node.Args.Count > 1)
                 {
@@ -184,20 +199,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         // This needs to be done after all other adjustments above
                         format = format.Replace("'", "''");
 
-                        context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                        // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
+                        // use 0 if numeric arg is NULL which result in # placeholders not being filled (correctly)
+                        context.SetIntermediateVariable(result, $"FORMAT({CoerceNullToInt(val)}, N'{format}')");
                     }
                 }
                 return result;
-            }
-            else if (val.type is StringType)
-            {
-                // formatting a string is a pass-thru
-                return context.SetIntermediateVariable(node, $"{CoerceNullToString(val)}");
-            }
-            else if (val.type is BlankType)
-            {
-                // null should be coerced to empty string
-                return context.SetIntermediateVariable(node, $"N''");
             }
             else
             {
@@ -394,5 +401,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             return $"ISNULL({retVal},N'')";
         }
+
+
     }
 }

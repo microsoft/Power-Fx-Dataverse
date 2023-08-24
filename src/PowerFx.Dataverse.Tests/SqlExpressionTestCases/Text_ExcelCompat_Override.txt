@@ -1,53 +1,5 @@
 #override: Text_ExcelCompat.txt
 
-// Tracking https://github.com/microsoft/Power-Fx-Dataverse/issues/294
-
-// Text(Blank() is returning "" instead of Blank() 
-
-// Expected: Blank()
-// actual: ""
->> Text(Blank())
-""
-
+// Tracking https://github.com/microsoft/Power-Fx-Dataverse/issues/314
 >> Text(If(1<0,false))
 "false"
-
-// Expected: "0.00"
-// actual: ""
->> Text(Blank(), "0.00")
-""
-
-// Expected: "Foo "
-// actual: ""
->> Text(Blank(), "Foo ####")
-""
-
-// Expected: ".000"
-// actual: ""
->> Text(Blank(), "#.000")
-""
-
-// Expected: "$ "
-// actual: ""
->> Text(Blank(), "$ #,###")
-""
-
-// Expected: "Dec Sat 1899"
-// actual: ""
->> Text(Blank(), "mmm ddd yyy")
-""
-
-// Expected: "1899-12-30"
-// actual ""
->> Text(Blank(),"yyyy-mm-dd")
-""
-
-// Expected: "Dec Sat 1899"
-// ""
->> Text(Blank(),"mmm ddd yyy")
-""
-
-// Expected: ""
-// Actual: Blank()
->> Text(If(1<0,1,Blank()), "####")
-Blank()
