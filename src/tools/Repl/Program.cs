@@ -184,22 +184,24 @@ namespace Microsoft.PowerFx
 
             Console.WriteLine($"Experimental features enabled:{enabled}");
 
-#pragma warning disable CA1303 // Do not pass literals as localized parameters
-            Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
-#pragma warning restore CA1303 // Do not pass literals as localized parameters
+            Console.WriteLine($"{(ExpressionEvaluationTests.ConnectionString != null ? "Using" : "MISSING")} local SQL Server connection string in environment variable {ExpressionEvaluationTests.ConnectionStringVariable}.");
 
             var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
             if (File.Exists(batchPath))
             {
-                Console.WriteLine($"\n>> // Processing {batchPath}");
+                Console.WriteLine($"Processing {batchPath}...");
                 var batchFile = File.OpenText(batchPath);
                 REPL(batchFile, echo: true);
                 batchFile.Close();
             }
             else
             {
-                Console.WriteLine($"\n>> // Place autoexec formulas in {batchPath}");
+                Console.WriteLine($"Place autoexec formulas in {batchPath}");
             }
+
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
+            Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
+#pragma warning restore CA1303 // Do not pass literals as localized parameters
 
             REPL(Console.In, echo: false);
         }
@@ -838,6 +840,15 @@ namespace Microsoft.PowerFx
 
                 if (string.Equals(option.Value, OptionSQLEval, StringComparison.OrdinalIgnoreCase))
                 {
+                    if(ExpressionEvaluationTests.ConnectionString == null)
+                    {
+                        return FormulaValue.NewError(new ExpressionError()
+                        {
+                            Kind = ErrorKind.InvalidArgument,
+                            Severity = ErrorSeverity.Critical,
+                            Message = $"Missing local SQL Server connection string in environment variable {ExpressionEvaluationTests.ConnectionStringVariable}"
+                        });
+                    }
                     _SQLEval = value.Value;
                     return value;
                 }

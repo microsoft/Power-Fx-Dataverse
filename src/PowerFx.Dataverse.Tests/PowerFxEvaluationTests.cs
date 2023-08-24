@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             SkippedTestsReporting = fixture;            
         }
 
-        private const string ConnectionStringVariable = "FxTestSQLDatabase";
+        public const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         /// <summary>
         /// The connection string for the database to execute generated SQL
@@ -41,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <example> 
         /// "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
         /// </example>
-        private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        public static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
         // .txt tests will be filtered to match these seetings. 
         private static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
