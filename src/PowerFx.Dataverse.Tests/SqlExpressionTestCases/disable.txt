@@ -1,3 +1,0 @@
-
-// https://github.com/microsoft/Power-Fx-Dataverse/issues/294
-#DISABLE: Text_ExcelCompat.txt

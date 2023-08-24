@@ -46,3 +46,8 @@
 // ""
 >> Text(Blank(),"mmm ddd yyy")
 ""
+
+// Expected: ""
+// Actual: Blank()
+>> Text(If(1<0,1,Blank()), "####")
+Blank()

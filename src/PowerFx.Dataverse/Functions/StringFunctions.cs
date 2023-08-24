@@ -18,6 +18,7 @@ using System.Threading;
 using System.Xml;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -130,15 +131,61 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                     format = textFormatArgs.FormatArg;
 
-                    // except that % ‰ e : ' need to be escaped
-                    format = format.Replace("%", "\\%");
-                    format = format.Replace("‰", "\\‰");
-                    format = format.Replace("e", "\\e");
-                    format = format.Replace("E", "\\E");
-                    format = format.Replace(":", "\\:");
-                    format = format.Replace("'", "\\''");
+                    // For Excel compat, an empty format string should return an empty result string
+                    // .NET format will treat an empty format string as a general format
+                    if (format == "")
+                    {
+                        context.SetIntermediateVariable(result, "N''");
+                    }
+                    else
+                    {
+                        // Double quoted escaping appears to have a bug in SQL/CLR wtih SQL Server 2019.
+                        //
+                        // For example:
+                        //    Text( 567, "0 ""a"" 0" ) incorrectly returns "56 a 0"
+                        //    Text( 567, "0 \a 0" ) correctly returns "56 a 7"
+                        //
+                        // The equivalent SQL for the above is:
+                        //    SELECT FORMAT( 567.0, N'0 "a" 0') incorrectly returns "56 a 0"
+                        //    SELECT FORMAT( 567.0, N'0 \a 0' correctly returns "56 a 7"
+                        //
+                        // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
+                        //
+                        StringBuilder backslashEscaped = new StringBuilder();
+                        int strLength = format.Length;
+                        bool inDblQuotes = false;
+                        for (int i = 0; i < strLength; i++)
+                        {
+                            if (format[i] == '\"')
+                            {
+                                inDblQuotes = !inDblQuotes;
+                            }
+                            else if (format[i] == '\\' && !inDblQuotes)
+                            {
+                                backslashEscaped.Append('\\');
+                                if (++i < strLength)
+                                {
+                                    backslashEscaped.Append(format[i]);
+                                }
+                            }
+                            else
+                            {
+                                if (inDblQuotes)
+                                {
+                                    backslashEscaped.Append('\\');
+                                }
+                                backslashEscaped.Append(format[i]);
+                            }
+                        }
 
-                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                        format = backslashEscaped.ToString();
+
+                        // Single ticks need to be doubled in order to escape within the single tick delimited format string used in the FORMAT call below.
+                        // This needs to be done after all other adjustments above
+                        format = format.Replace("'", "''");
+
+                        context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                    }
                 }
                 return result;
             }
