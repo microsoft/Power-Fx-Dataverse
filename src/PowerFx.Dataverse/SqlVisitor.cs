@@ -1326,7 +1326,7 @@ namespace Microsoft.PowerFx.Dataverse
                 else
                 {
                     _unsupportedWarnings.Add("Overflow numeric literal");
-                    AppendContentLine("RETURN NULL");
+                    throw new SqlCompileException(Core.Localization.TexlStrings.ErrNumberTooLarge, null, type._type.GetKindString());
                 }
 
                 return false;
@@ -1355,7 +1355,7 @@ namespace Microsoft.PowerFx.Dataverse
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
-                        AppendContentLine("RETURN NULL");
+                        throw new SqlCompileException(Core.Localization.TexlStrings.ErrNumberTooLarge, null, type._type.GetKindString());
                     }
 
                     return false;
