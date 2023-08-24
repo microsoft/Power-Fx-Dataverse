@@ -457,7 +457,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
                 ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata); 
-                ExecuteSqlTest("Text(NullStr) = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Text(NullStr) = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Upper(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Lower(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Concatenate(NullStr, \"a\", NullStr, \"b\") = \"ab\"", true, cx, metadata);
@@ -504,18 +504,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
 
-                ExecuteSqlTest("Text(Blank(), \"0\")", "", cx, metadata);
+                ExecuteSqlTest("Text(Blank(), \"0\")", "0", cx, metadata);
                 ExecuteSqlTest("IsError(Text(Blank(), \"0\"))", false, cx, metadata);
-                ExecuteSqlTest("IsBlank(Text(Blank(), \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(Blank(), \"0\"))", false, cx, metadata);
 
-                ExecuteSqlTest("Text(nulldecimal, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("Text(nulldecimal, \"0\")", "0", cx, metadata);
                 ExecuteSqlTest("IsError(Text(nulldecimal, \"0\"))", false, cx, metadata);
-                ExecuteSqlTest("IsBlank(Text(nulldecimal, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(nulldecimal, \"0\"))", false, cx, metadata);
 
                 ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, metadata); // IsError is true because '423456789013' overflows decimal range (-100000000000, 100000000000)
                 ExecuteSqlTest("IsError(IsBlank(Text(423456789013, \"0\")))", true, cx, metadata); // IsError is true because of overflow numeric literal
                 ExecuteSqlTest("IsError(IsBlank(423456789013))", true, cx, metadata); // IsError is true because of overflow numeric literal
-
             }
         }
 
