@@ -1,5 +1,0 @@
-#override: Text_ExcelCompat.txt
-
-// Tracking https://github.com/microsoft/Power-Fx-Dataverse/issues/314
->> Text(If(1<0,false))
-"false"
