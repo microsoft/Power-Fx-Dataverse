@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
@@ -32,13 +32,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static readonly Features DefaultFeatures = Features.PowerFxV1;
 
-        // This NumberIsFloat should be removed when the SQL compiler is running on native Decimal
-        // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, numberIsFloat: true)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
         {
         }
 
@@ -65,8 +63,10 @@ namespace Microsoft.PowerFx.Dataverse
                     var sqlInfo = result.ApplySqlCompiler();
                     var res = sqlInfo._retVal;
 
+                    FormulaType nodeType = res.type == new SqlBigType() ? FormulaType.Decimal :  res.type;
+
                     var errors = new List<IDocumentError>();
-                    if (!ValidateReturnType(new SqlCompileOptions(), res.type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
+                    if (!ValidateReturnType(new SqlCompileOptions(), nodeType, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
                     {
                         errors.AddRange(typeErrors);
                     }
@@ -128,6 +128,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (error.MessageKey == "ErrUnknownFunction" || 
                         error.MessageKey == "ErrUnimplementedFunction" ||
                         error.MessageKey == "ErrNumberExpected" || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
+                        error.MessageKey == "ErrNumberTooLarge" || // Numeric value is too large.
                         (error.MessageKey == "ErrBadType_ExpectedType_ProvidedType" && error._messageArgs?.Length == 2 && error._messageArgs.Contains("Table")))
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);
@@ -150,7 +151,9 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
+                FormulaType nodeType = result.type == new SqlBigType() ? FormulaType.Decimal : result.type;
+
+                if (!ValidateReturnType(options, nodeType, irNode.IRContext.SourceContext, out var retType, out var errors))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
@@ -173,8 +176,20 @@ namespace Microsoft.PowerFx.Dataverse
                     var del = (i == parameters.Count - 1) ? "" : ",";
                     var fieldName = parameters[i].Item1.LogicalName;
                     var varName = ctx.GetVarName(fieldName, ctx.RootScope, null);
-                    // Existing CDS SQL generation passes money values as big type
-                    var typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+
+                    // For exchange rate, DV uses scale 28 and precision 12 so maintaing parity with DV
+                    string typeName = null;
+
+                    if (fieldName.Equals("exchangerate"))
+                    {
+                        typeName = SqlStatementFormat.SqlExchangeRateType;
+                    }
+                    else 
+                    {
+                        // Existing CDS SQL generation passes money values as big type
+                        typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                    }
+
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
@@ -197,7 +212,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = field.VarType is SqlMoneyType ? new SqlBigType().ToSqlType() : SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -248,7 +263,8 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {SqlVisitor.ToSqlType(temp.Item2)}");
+                    string tempVariableType = temp.Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(temp.Item2);
+                    tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 
                 if (ctx.DoesDateDiffOverflowCheck)
@@ -346,7 +362,7 @@ namespace Microsoft.PowerFx.Dataverse
             context.PerformRangeChecks(result, null, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (result.type is NumberType)
+            if (context.IsNumericType(result))
             {
                 int precision;
                 if (result.type is SqlIntType)
@@ -355,7 +371,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    precision = options.TypeHints?.Precision ?? (result.type is SqlMoneyType ? 2 : DefaultPrecision);
+                    precision = options.TypeHints?.Precision ?? DefaultPrecision;
                 }
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }

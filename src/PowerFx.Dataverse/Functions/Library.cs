@@ -48,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.DateTimeValue, DateTimeValue },
             //{ BuiltinFunctionsCore.DateValue, DateValue },
             { BuiltinFunctionsCore.Day, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Day) },
+            { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
           //  { BuiltinFunctionsCore.Exp, Exp },
@@ -154,10 +155,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 if (node.Args.Count == 2)
                 {
-                    if (node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0)
+                    if ((node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0) || (node.Args[1] is DecimalLiteralNode num1 && num1.LiteralValue == 0))
                     {
                         var arg0 = node.Args[0].IRContext.ResultType;
-                        if (arg0 == FormulaType.Number || arg0 == FormulaType.Blank)
+
+                        if (Context.IsNumericType(arg0) || arg0 == FormulaType.Blank)
                         {
                             Library.ValidateNumericArgument(node.Args[0]);
                             var arg = node.Args[0].Accept(runner, context);

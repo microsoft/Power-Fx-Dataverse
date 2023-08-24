@@ -483,6 +483,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("whole", "WholeDecimal"),
                     AttributeMetadataModel.NewDecimal("fractional", "FractionalDecimal"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewDecimal("nulldecimal", "NullDecimal")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -502,6 +503,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Int(\"30.5\"))", true, cx, metadata);
                 ExecuteSqlTest("Text(FractionalDecimal, \"0000\")", "0101", cx, metadata);
                 ExecuteSqlTest("Text(WholeDecimal, \"0000\")", "0030", cx, metadata);
+
+                ExecuteSqlTest("Text(Blank(), \"0\")", "", cx, metadata);
+                ExecuteSqlTest("IsError(Text(Blank(), \"0\"))", false, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(Blank(), \"0\"))", true, cx, metadata);
+
+                ExecuteSqlTest("Text(nulldecimal, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(nulldecimal, \"0\"))", false, cx, metadata);
+                ExecuteSqlTest("IsBlank(Text(nulldecimal, \"0\"))", true, cx, metadata);
+
+                ExecuteSqlTest("Text(423456789013, \"0\")", null, cx, metadata); // returns null if any numeric arg value exceeds decimal range
+                ExecuteSqlTest("IsError(Text(423456789013, \"0\"))", true, cx, metadata); // IsError is true because '423456789013' overflows decimal range (-100000000000, 100000000000)
+                ExecuteSqlTest("IsBlank(Text(423456789013, \"0\"))", null, cx, metadata); // Legacy behavior
+                ExecuteSqlTest("IsBlank(423456789013)", null, cx, metadata); // Legacy behavior
+
             }
         }
 
@@ -514,7 +529,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewDecimal("decimal", "Decimal"),
+                    AttributeMetadataModel.NewDecimal("decimal2", "Decimal2"),
+                    AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
                     AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
                 }
@@ -525,15 +543,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "20" },
+                    { "decimal2", "0.02188" },
+                    { "decimal3", "10000000000" },
                     { "int", "20"},
+                    { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax }
                 });
 
-                // Arithmatic
+                // Arithmetic
+                ExecuteSqlTest("Decimal(decimal2)", 0.02188M, cx, metadata);
+                ExecuteSqlTest("RoundUp(decimal2,3)", 0.022M, cx, metadata);
+                ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
+                ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
+                ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
+
+                // Overflow cases - return null
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
                 ExecuteSqlTest("BigInteger * BigDecimal", null, cx, metadata);
                 ExecuteSqlTest("BigInteger * BigInteger", null, cx, metadata);
+                ExecuteSqlTest("decimal3 * int2", null, cx, metadata);
+                ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
             }
         }
 
@@ -616,12 +646,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null)
         {
-            // This NumberIsFloat should be removed once the SQL compiler natively supports Decimal
-            // Tracked with https://github.com/microsoft/Power-Fx-Dataverse/issues/117
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = true });
+                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             var options = new SqlCompileOptions
             {

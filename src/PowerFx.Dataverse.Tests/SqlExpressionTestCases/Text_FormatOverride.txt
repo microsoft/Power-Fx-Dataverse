@@ -1,9 +1,0 @@
-#override: Text_Format.txt
-
-// Large numbers not supported yet: https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-
->> Text(423456789013, "0")
-#Skip
-
->> Text(423456789003, "0")
-#Skip

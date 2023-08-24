@@ -13,12 +13,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -53,8 +53,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
           
                 return result;
             }
-            else if (arg.type is NumberType)
-            {
+            else if (context.IsNumericType(arg))
+            {  
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
@@ -76,8 +76,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
 
             var val = node.Args[0].Accept(visitor, context);
-            if (val.type is NumberType)
+            if (context.IsNumericType(val))
             {
+                // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
+                // return empty string if numeric arg is NULL (has exceeded Decimal range). 
+                if (val.inlineSQL == "NULL") {
+                    return context.SetIntermediateVariable(node, $"N''");
+                }
+
                 string format = null;
                 if (node.Args.Count > 1)
                 {
@@ -114,17 +120,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     // The numeric formating placeholders for Text: https://docs.microsoft.com/en-us/powerapps/maker/canvas-apps/functions/function-text#number-placeholders
                     // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
-                    var textFormatArgs = new TextFormatArgs
-                    {
-                        FormatCultureName = null,
-                        FormatArg = null,
-                        HasDateTimeFmt = false,
-                        HasNumericFmt = false
-                    };
 
                     // Do not allow , . or locale tag or datetime format
-                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
-                        || textFormatArgs.HasDateTimeFmt || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out var textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
+                        || (textFormatArgs.DateTimeFmt != DateTimeFmtType.NoDateTimeFormat) || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
                         throw new SqlCompileException(SqlCompileException.NumericFormatNotSupported, node.Args[1].IRContext.SourceContext);
@@ -132,50 +131,61 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                     format = textFormatArgs.FormatArg;
 
-                    // Single ticks need to be doubled to escape within the format string used in the FORMAT call below.
-                    format = format.Replace("'", "''");
-
-                    // Double quoted escaping appears to have a bug in SQL/CLR.
-                    //
-                    // For example:
-                    //    Text( 1234567, "0 ""0"" 0" ) incorrectly returns "123456 0 0"
-                    //    while Text( 1234567, "0 \0 0" ) correctly returns "123456 0 7"
-                    //
-                    // Looking at the SQL, this equivalent of this is what is used (.0 on the end), and fails:
-                    //    select FORMAT(1234567.0, N'0 "0" 0') returns "123456 0 0"
-                    // And if it is just an integer instead of a decimal (no .0 on the end)?  Works great:
-                    //    select FORMAT(1234567, N'0 "0" 0') returns "123456 0 7"
-                    //
-                    // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
-                    //
-                    StringBuilder escaped = new StringBuilder();
-                    int strLength = format.Length;
-                    bool inDblQuotes = false;
-                    for (int i = 0; i < strLength; i++)
+                    // For Excel compat, an empty format string should return an empty result string
+                    // .NET format will treat an empty format string as a general format
+                    if (format == "")
                     {
-                        if(format[i] == '\"')
-                        {
-                            inDblQuotes = !inDblQuotes;
-                        }
-                        else if(format[i] == '\\')
-                        {
-                            escaped.Append('\\');
-                            if (++i < strLength)
-                            {
-                                escaped.Append(format[i]);
-                            }
-                        }
-                        else 
-                        {
-                            if (inDblQuotes)
-                            {
-                                escaped.Append('\\');
-                            }
-                            escaped.Append(format[i]);
-                        }
+                        context.SetIntermediateVariable(result, "N''");
                     }
+                    else
+                    {
+                        // Double quoted escaping appears to have a bug in SQL/CLR wtih SQL Server 2019.
+                        //
+                        // For example:
+                        //    Text( 567, "0 ""a"" 0" ) incorrectly returns "56 a 0"
+                        //    Text( 567, "0 \a 0" ) correctly returns "56 a 7"
+                        //
+                        // The equivalent SQL for the above is:
+                        //    SELECT FORMAT( 567.0, N'0 "a" 0') incorrectly returns "56 a 0"
+                        //    SELECT FORMAT( 567.0, N'0 \a 0' correctly returns "56 a 7"
+                        //
+                        // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
+                        //
+                        StringBuilder backslashEscaped = new StringBuilder();
+                        int strLength = format.Length;
+                        bool inDblQuotes = false;
+                        for (int i = 0; i < strLength; i++)
+                        {
+                            if (format[i] == '\"')
+                            {
+                                inDblQuotes = !inDblQuotes;
+                            }
+                            else if (format[i] == '\\' && !inDblQuotes)
+                            {
+                                backslashEscaped.Append('\\');
+                                if (++i < strLength)
+                                {
+                                    backslashEscaped.Append(format[i]);
+                                }
+                            }
+                            else
+                            {
+                                if (inDblQuotes)
+                                {
+                                    backslashEscaped.Append('\\');
+                                }
+                                backslashEscaped.Append(format[i]);
+                            }
+                        }
 
-                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{escaped}')");
+                        format = backslashEscaped.ToString();
+
+                        // Single ticks need to be doubled in order to escape within the single tick delimited format string used in the FORMAT call below.
+                        // This needs to be done after all other adjustments above
+                        format = format.Replace("'", "''");
+
+                        context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                    }
                 }
                 return result;
             }

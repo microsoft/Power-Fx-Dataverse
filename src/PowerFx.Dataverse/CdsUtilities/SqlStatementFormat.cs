@@ -162,6 +162,7 @@ ELSE
         public const string SqlMoneyType = "money";
         public const string SqlDateTimeType = "datetime";
         public const string SqlUniqueIdentifierType = "uniqueidentifier";
+        public const string SqlExchangeRateType = "decimal(28,12)";
 
         /// <summary>
         /// Declare intermediate variable
@@ -186,6 +187,10 @@ ELSE
         public const string DecimalTypeMax = "100000000000";
         public const double DecimalTypeMinValue = -100000000000;
         public const double DecimalTypeMaxValue = 100000000000;
+
+        // decimal constants for comparision with decimal literal node
+        public const decimal DDecimalTypeMinValue = -100000000000;
+        public const decimal DDecimalTypeMaxValue = 100000000000;
 
         public const string MoneyTypeMin = "-922337203685477.5808";
         public const string MoneyTypeMax = "922337203685477.5807";
