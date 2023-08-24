@@ -10,7 +10,7 @@
 ""
 
 >> Text(If(1<0,false))
-"false"
+""
 
 // Expected: "0.00"
 // actual: ""
