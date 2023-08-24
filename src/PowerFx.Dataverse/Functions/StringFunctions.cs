@@ -70,14 +70,15 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Text(SqlVisitor visitor, CallNode node, Context context)
         {
-            if (node.Args.Count > 2 || node.Args.Count < 1)
-            {
-                throw BuildUnsupportedArgumentException(node.Function, 2, node.Args[2].IRContext.SourceContext);
-            }
+            Contracts.Assert(node.Args.Count >= 1);
 
             var val = node.Args[0].Accept(visitor, context);
 
-            if (node.Args.Count == 1)
+            if (node.Args.Count > 2)
+            {
+                throw BuildUnsupportedArgumentException(node.Function, 2, node.Args[2].IRContext.SourceContext);
+            }
+            else if (node.Args.Count == 1)
             {
                 if (val.type is StringType)
                 {
@@ -95,34 +96,27 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
                 }
             }
-
-            // node.Args.Count == 2, only supported for numbers, datetimes, and typed/untyped blanks
-            if (context.IsNumericType(val) || val.type is BlankType)
+            // two arguments is only supported for numbers, datetimes, and typed/untyped blanks
+            else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.type is BlankType))
             {
                 string format = null;
-                if (node.Args.Count > 1)
+
+                if (node.Args[1] is TextLiteralNode)
                 {
-                    if (node.Args[1] is TextLiteralNode)
+                    using (context.NewInlineLiteralContext())
                     {
-                        using (context.NewInlineLiteralContext())
-                        {
-                            var formatArg = node.Args[1].Accept(visitor, context);
-                            format = formatArg.ToString();
-                        }
-                    }
-                    else if (node.Args[1].IRContext.ResultType is BlankType)
-                    {
-                        // if the format is blank, emit an empty string
-                        return context.SetIntermediateVariable(node, $"N''");
-                    }
-                    else
-                    {
-                        throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
+                        var formatArg = node.Args[1].Accept(visitor, context);
+                        format = formatArg.ToString();
                     }
                 }
-                else if (node.Args.Count == 1)
+                else if (node.Args[1].IRContext.ResultType is BlankType)
                 {
-                    throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
+                    // if the format is blank, emit an empty string
+                    return context.SetIntermediateVariable(node, $"N''");
+                }
+                else
+                {
+                    throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
                 }
 
                 var result = context.GetTempVar(context.GetReturnType(node));
@@ -206,10 +200,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
                 return result;
             }
-            else
-            {
-                throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
-            }
+
+            throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
         }
 
         public static RetVal UpperLower(SqlVisitor visitor, CallNode node, Context context, string function)
@@ -252,7 +244,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            return context.SetIntermediateVariable(node, args.Any() ? $"CONCAT({String.Join(",", args)})" : "''");
+            return context.SetIntermediateVariable(node, args.Any() ? $"CONCAT({string.Join(",", args)})" : "''");
         }
 
         public static RetVal Blank(SqlVisitor visitor, CallNode node, Context context)
