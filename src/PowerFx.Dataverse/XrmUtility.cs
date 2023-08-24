@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public static class XrmUtility
+    internal static class XrmUtility
     {
         /// <summary>
         /// Object type codes for blacklisted entities.
@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
             ActivityParty = 135
         }
 
-        public static int[] BlackListedEntities()
+        internal static int[] BlackListedEntities()
         {
             return Enum.GetValues(typeof(BlackListEntities)) as int[];
         }
