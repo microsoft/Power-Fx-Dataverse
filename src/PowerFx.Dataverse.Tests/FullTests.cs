@@ -378,6 +378,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // Rewriting to have top-level else if also succeeds
                 ExecuteSqlTest("If(1=3,1,1=2,2,1=1,3)", 3M, cx, null);
+
+                ExecuteSqlTest("If(1<0, false) & \"b\"", "b", cx, null);
+                ExecuteSqlTest("If(1>0, false) & \"b\"", "falseb", cx, null);
+                ExecuteSqlTest("If(1>0, \"a\") & \"b\"", "ab", cx, null);
+                ExecuteSqlTest("If(1<0, \"a\") & \"b\"", "b", cx, null);
             }
         }
 

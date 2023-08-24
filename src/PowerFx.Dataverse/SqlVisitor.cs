@@ -418,8 +418,11 @@ namespace Microsoft.PowerFx.Dataverse
 
                     return node.Op switch
                     {
-                        UnaryOpKind.BooleanToText => RetVal.FromSQL(context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'"), context.GetReturnType(node)),
-                        _ => RetVal.FromSQL(context.WrapInlineBoolean(boolResult.ToString(), "1", "0"), context.GetReturnType(node))
+                        UnaryOpKind.BooleanToText => 
+                            RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "N''", context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'")), 
+                                context.GetReturnType(node)),
+                        _ => RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "N''", context.WrapInlineBoolean(boolResult.ToString(), "1", "0")), 
+                                context.GetReturnType(node))
                     };
 
                 case UnaryOpKind.NumberToBoolean:
