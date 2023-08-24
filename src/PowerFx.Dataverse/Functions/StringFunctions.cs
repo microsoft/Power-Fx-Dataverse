@@ -401,7 +401,5 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             return $"ISNULL({retVal},N'')";
         }
-
-
     }
 }
