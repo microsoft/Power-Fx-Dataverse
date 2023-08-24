@@ -26,6 +26,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DisplayCollectionName = name;
             PrimaryIdAttribute = name;
             PrimaryNameAttribute = name;
+            IsPrivate = false;
+            IsIntersect = false;
+            ObjectTypeCode = 1;
+            IsLogicalEntity = false;
             Attributes = new AttributeMetadataModel[] { new AttributeMetadataModel { LogicalName = name, DisplayName = name, AttributeType = AttributeTypeCode.String } };
         }
 
@@ -39,6 +43,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public string PrimaryIdAttribute { get; set; }
         public string PrimaryNameAttribute { get; set; }
+        
+        public bool IsPrivate { get; set; }
+        public bool IsIntersect { get; set; }
+        public bool IsLogicalEntity { get; set; }
+        public int ObjectTypeCode { get; set; }
 
         public Guid? DataProviderId { get; set; }
 
