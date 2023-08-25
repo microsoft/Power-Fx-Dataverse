@@ -143,9 +143,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             errors = null;
 
-            // To make it backward compatible when no currency changes are there and using currency field in formula returns decimal.
-            // return type will only be currency when it is passed in hints, in all other cases, it would be decimal only.
-            if (options.TypeHints == null && nodeType._type.Kind == DKind.Currency)
+            // currency Formula Type is not supported so casting it to decimal, however currency fields can be used in formula expression
+            // so in that case, we need to return decimal
+            if (nodeType._type.Kind == DKind.Currency)
             {
                 returnType = BuildReturnType(FormulaType.Decimal);
             }

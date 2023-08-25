@@ -127,6 +127,130 @@ END
             Assert.Equal("\t\t\nnew_field*new_field1*\n2.0\t", result.LogicalFormula);
         }
 
+        public const string BaselineSingleCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(38,10) -- new_field
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(38,10)
+
+    -- expression body
+    SET @v1 = @v0
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 10)
+END
+";
+
+        [Fact]
+        public void CheckSingleCurrencyFieldCompile()
+        {
+            var expr = "field";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineSingleCurrencyFunction, result.SqlFunction);
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field", result.LogicalFormula);
+        }
+
+        public const string BaselineSingleCurrencyFunctionWithHints = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(38,10) -- new_field
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(38,10)
+
+    -- expression body
+    SET @v1 = @v0
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 3)
+END
+";
+
+        [Fact]
+        public void CheckSingleCurrencyFieldCompileWithHints()
+        {
+            var expr = "field";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var options = new SqlCompileOptions
+            {
+                CreateMode = SqlCompileOptions.Mode.Create,
+                UdfName = "fn_testUdf1"
+            };
+
+            options.TypeHints = new SqlCompileOptions.TypeDetails
+            {
+                TypeHint = AttributeTypeCode.Decimal,
+                Precision = 3
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+
+            Assert.Equal(BaselineSingleCurrencyFunctionWithHints, result.SqlFunction);
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.True(result.ReturnType is DecimalType);
+            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field", result.LogicalFormula);
+        }
+
         public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(28,12), -- exchangerate
     @v1 decimal(38,10) -- new_field1
