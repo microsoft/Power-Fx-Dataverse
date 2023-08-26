@@ -187,7 +187,7 @@ namespace Microsoft.PowerFx.Dataverse
                     else 
                     {
                         // Existing CDS SQL generation passes money values as big type
-                        typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
@@ -212,7 +212,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = field.VarType is SqlMoneyType ? new SqlBigType().ToSqlType() : SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -263,7 +263,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    string tempVariableType = temp.Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(temp.Item2);
+                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2);
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 

@@ -178,12 +178,12 @@ namespace Microsoft.PowerFx.Dataverse
                         var leftType = FormulaType.Decimal;
                         var rightType = FormulaType.Decimal;
 
-                        if (left != null && (left.type is SqlBigType || left.type is SqlMoneyType))
+                        if (left != null && left.type is SqlBigType)
                         {
                             leftType = new SqlBigType();
                         }
 
-                        if (right != null && (right.type is SqlBigType || right.type is SqlMoneyType))
+                        if (right != null && right.type is SqlBigType)
                         {
                             rightType = new SqlBigType();
                         }
@@ -669,10 +669,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return SqlStatementFormat.SqlDecimalType;
             }
-            else if (t is SqlMoneyType)
-            {
-                return SqlStatementFormat.SqlMoneyType;
-            }
             else if (t is StringType || t is HyperlinkType)
             {
                 return SqlStatementFormat.SqlNvarcharType;
@@ -967,11 +963,13 @@ namespace Microsoft.PowerFx.Dataverse
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
+#if false
                     // if related entity currency field is used in the formula field then block this operation
                     if (varType is SqlMoneyType && navigation != null)
                     {
                         throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
                     }
+#endif 
 
                     if (column.RequiresReference())
                     {
@@ -1277,10 +1275,12 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
                     }
+#if false
                     else if (result.type is SqlMoneyType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
                     }
+#endif
                     else if (IsNumericType(result))
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
@@ -1295,7 +1295,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return true;
                 }
-                else if ((type is SqlBigType || type is SqlMoneyType) && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
+                else if ((type is SqlBigType) && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
                 {
                     return true;
                 }
@@ -1522,7 +1522,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new IfIndenter(this);
             }
 
-            #endregion
+#endregion
 
             internal enum ContextState
             {
