@@ -1,6 +1,8 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
+//------------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
@@ -15,9 +17,7 @@ using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
-using Microsoft.PowerFx.Dataverse.Tests;
-using Microsoft.PowerFx.Core.Tests;
-using SharpYaml.Model;
+using Repl;
 
 namespace Microsoft.PowerFx
 {
@@ -27,7 +27,9 @@ namespace Microsoft.PowerFx
 
         private static DataverseConnection _dv;
 
-        private static ExpressionEvaluationTests _SQLTests;
+        // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";        
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private const string OptionFormatTable = "FormatTable";
         private static bool _formatTable = true;
@@ -152,9 +154,7 @@ namespace Microsoft.PowerFx
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            _engine = new RecalcEngine(config);
-
-            _SQLTests = new ExpressionEvaluationTests(null, null);
+            _engine = new RecalcEngine(config);            
         }
 
         public static void Main()
@@ -184,7 +184,7 @@ namespace Microsoft.PowerFx
 
             Console.WriteLine($"Experimental features enabled:{enabled}");
 
-            Console.WriteLine($"{(ExpressionEvaluationTests.ConnectionString != null ? "Using" : "MISSING")} local SQL Server connection string in environment variable {ExpressionEvaluationTests.ConnectionStringVariable}.");
+            Console.WriteLine($"{(ConnectionString != null ? "Using" : "MISSING")} local SQL Server connection string in environment variable {ConnectionStringVariable}.");
 
             var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
             if (File.Exists(batchPath))
@@ -199,9 +199,7 @@ namespace Microsoft.PowerFx
                 Console.WriteLine($"Place autoexec formulas in {batchPath}");
             }
 
-#pragma warning disable CA1303 // Do not pass literals as localized parameters
             Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
-#pragma warning restore CA1303 // Do not pass literals as localized parameters
 
             REPL(Console.In, echo: false);
         }
@@ -276,8 +274,9 @@ namespace Microsoft.PowerFx
             match = Regex.Match(expressionText, @"^\s*(?<func>[a-zA-Z]+)\(", RegexOptions.Singleline);
 
             if (_SQLEval && !(match.Success && _replFunctions.Contains(match.Groups["func"].Value)) )
-            {
-                return _SQLTests.RunExpr(expressionText);
+            {                
+                using SqlRunner sqlRunner = new SqlRunner(ConnectionString) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = Features.PowerFxV1 };
+                return sqlRunner.RunExpr(expressionText);
             }
             else
             {
@@ -320,7 +319,8 @@ namespace Microsoft.PowerFx
                     // SQL pretty printer: SQL( <expr> )
                     else if ((match = Regex.Match(expr, @"^\s*SQL\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
                     {
-                        var sql = _SQLTests.SQLExpr(match.Groups["expr"].Value);
+                        using SqlRunner sqlRunner = new SqlRunner(ConnectionString) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = Features.PowerFxV1 };
+                        var sql = sqlRunner.SQLExpr(match.Groups["expr"].Value);                        
                         Console.Write(sql);
                         output?.Write(sql);
                     }
@@ -840,13 +840,13 @@ namespace Microsoft.PowerFx
 
                 if (string.Equals(option.Value, OptionSQLEval, StringComparison.OrdinalIgnoreCase))
                 {
-                    if(ExpressionEvaluationTests.ConnectionString == null)
+                    if (ConnectionString == null)
                     {
                         return FormulaValue.NewError(new ExpressionError()
                         {
                             Kind = ErrorKind.InvalidArgument,
                             Severity = ErrorSeverity.Critical,
-                            Message = $"Missing local SQL Server connection string in environment variable {ExpressionEvaluationTests.ConnectionStringVariable}"
+                            Message = $"Missing local SQL Server connection string in environment variable {ConnectionStringVariable}"
                         });
                     }
                     _SQLEval = value.Value;
