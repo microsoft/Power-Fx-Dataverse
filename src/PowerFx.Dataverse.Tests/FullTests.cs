@@ -818,7 +818,7 @@ CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
         public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(38,10), -- new_CurrencyPrice
     @v2 uniqueidentifier -- accountid
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v1 decimal(38,10)
     DECLARE @v4 decimal(38,10)

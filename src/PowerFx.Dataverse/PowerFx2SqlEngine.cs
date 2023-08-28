@@ -182,7 +182,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");

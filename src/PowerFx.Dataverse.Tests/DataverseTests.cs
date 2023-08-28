@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(38,10), -- new_field
     @v1 decimal(38,10) -- new_field1
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v2 decimal(38,10)
@@ -129,7 +129,7 @@ END
 
         public const string BaselineSingleCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(38,10) -- new_field
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v1 decimal(38,10)
@@ -188,7 +188,7 @@ END
 
         public const string BaselineSingleCurrencyFunctionWithHints = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(38,10) -- new_field
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v1 decimal(38,10)
@@ -254,7 +254,7 @@ END
         public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(28,12), -- exchangerate
     @v1 decimal(38,10) -- new_field1
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v2 decimal(38,10)
@@ -444,7 +444,7 @@ END
         public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(38,10), -- new_CurrencyPrice
     @v2 uniqueidentifier -- accountid
-) RETURNS decimal(38,10)
+) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v1 decimal(38,10)
     DECLARE @v4 decimal(38,10)
