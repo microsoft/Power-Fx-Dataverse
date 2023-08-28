@@ -182,13 +182,14 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+                var returnStatement = options.TypeHints?.TypeHint == AttributeTypeCode.Integer ? $") RETURNS {SqlStatementFormat.SqlIntegerType}" : $") RETURNS {SqlVisitor.ToSqlType(retType)}";
+                tw.WriteLine(returnStatement);
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
                 if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
