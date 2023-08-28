@@ -107,17 +107,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
                 node = left;
-                try
+                if(InvertLeftRight(op, out var invertedOp))
                 {
-                    opKind = InvertLeftRight(op);
+                    opKind = invertedOp;
+                    return true;
                 }
-                catch (NotImplementedException)
+                else
                 {
                     opKind = default;
                     return false;
                 }
-
-                return true;
             }
             else if(TryGetFieldName(left, out var leftField2) && TryGetFieldName(right, out var rightField2))
             {
@@ -148,32 +147,73 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private BinaryOpKind InvertLeftRight(BinaryOpKind op)
+        private bool InvertLeftRight(BinaryOpKind op, out BinaryOpKind invertedOp)
         {
             switch (op)
             {
-                case BinaryOpKind.LtNumbers: return BinaryOpKind.GtNumbers;
-                case BinaryOpKind.LtDecimals: return BinaryOpKind.GtDecimals;
-                case BinaryOpKind.LtDateTime: return BinaryOpKind.GtDateTime;
-                case BinaryOpKind.LtDate: return BinaryOpKind.GtDate;
-                case BinaryOpKind.LtTime: return BinaryOpKind.GtTime;
-                case BinaryOpKind.LeqNumbers: return BinaryOpKind.GeqNumbers;
-                case BinaryOpKind.LeqDecimals: return BinaryOpKind.GeqDecimals;
-                case BinaryOpKind.LeqDateTime: return BinaryOpKind.GeqDateTime;
-                case BinaryOpKind.LeqDate: return BinaryOpKind.GeqDate;
-                case BinaryOpKind.LeqTime: return BinaryOpKind.GeqTime;
-                case BinaryOpKind.GtNumbers: return BinaryOpKind.LtNumbers;
-                case BinaryOpKind.GtDecimals: return BinaryOpKind.LtDecimals;
-                case BinaryOpKind.GtDateTime: return BinaryOpKind.LtDateTime;
-                case BinaryOpKind.GtDate: return BinaryOpKind.LtDate;
-                case BinaryOpKind.GtTime: return BinaryOpKind.LtTime;
-                case BinaryOpKind.GeqNumbers: return BinaryOpKind.LeqNumbers;
-                case BinaryOpKind.GeqDecimals: return BinaryOpKind.LeqDecimals;
-                case BinaryOpKind.GeqDateTime: return BinaryOpKind.LeqDateTime;
-                case BinaryOpKind.GeqDate: return BinaryOpKind.LeqDate;
-                case BinaryOpKind.GeqTime: return BinaryOpKind.LeqTime;
+                case BinaryOpKind.LtNumbers:
+                    invertedOp = BinaryOpKind.GtNumbers;
+                    return true;
+                case BinaryOpKind.LtDecimals: 
+                    invertedOp = BinaryOpKind.GtDecimals;
+                    return true;
+                case BinaryOpKind.LtDateTime: 
+                    invertedOp = BinaryOpKind.GtDateTime;
+                    return true;
+                case BinaryOpKind.LtDate: 
+                    invertedOp = BinaryOpKind.GtDate;
+                    return true;
+                case BinaryOpKind.LtTime: 
+                    invertedOp = BinaryOpKind.GtTime;
+                    return true;
+                case BinaryOpKind.LeqNumbers: 
+                    invertedOp = BinaryOpKind.GeqNumbers;
+                    return true;
+                case BinaryOpKind.LeqDecimals: 
+                    invertedOp = BinaryOpKind.GeqDecimals;
+                    return true;
+                case BinaryOpKind.LeqDateTime: 
+                    invertedOp = BinaryOpKind.GeqDateTime;
+                    return true;
+                case BinaryOpKind.LeqDate: 
+                    invertedOp = BinaryOpKind.GeqDate;
+                    return true;
+                case BinaryOpKind.LeqTime: 
+                    invertedOp = BinaryOpKind.GeqTime;
+                    return true;
+                case BinaryOpKind.GtNumbers: 
+                    invertedOp = BinaryOpKind.LtNumbers;
+                    return true;
+                case BinaryOpKind.GtDecimals: 
+                    invertedOp = BinaryOpKind.LtDecimals;
+                    return true;
+                case BinaryOpKind.GtDateTime: 
+                    invertedOp = BinaryOpKind.LtDateTime;
+                    return true;
+                case BinaryOpKind.GtDate: 
+                    invertedOp = BinaryOpKind.LtDate;
+                    return true;
+                case BinaryOpKind.GtTime: 
+                    invertedOp = BinaryOpKind.LtTime;
+                    return true;
+                case BinaryOpKind.GeqNumbers: 
+                    invertedOp = BinaryOpKind.LeqNumbers;
+                    return true;
+                case BinaryOpKind.GeqDecimals: 
+                    invertedOp = BinaryOpKind.LeqDecimals;
+                    return true;
+                case BinaryOpKind.GeqDateTime: 
+                    invertedOp = BinaryOpKind.LeqDateTime;
+                    return true;
+                case BinaryOpKind.GeqDate: 
+                    invertedOp = BinaryOpKind.LeqDate;
+                    return true;
+                case BinaryOpKind.GeqTime: 
+                    invertedOp = BinaryOpKind.LeqTime;
+                    return true;
                 default:
-                    throw new NotImplementedException($"BinaryOpKind not supported {op.ToString()}");
+                    invertedOp = default;
+                    return false;
             }
         }
 
