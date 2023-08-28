@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
                 node = left;
-                if(InvertLeftRight(op, out var invertedOp))
+                if(TryInvertLeftRight(op, out var invertedOp))
                 {
                     opKind = invertedOp;
                     return true;
@@ -147,7 +147,7 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private bool InvertLeftRight(BinaryOpKind op, out BinaryOpKind invertedOp)
+        private bool TryInvertLeftRight(BinaryOpKind op, out BinaryOpKind invertedOp)
         {
             switch (op)
             {
