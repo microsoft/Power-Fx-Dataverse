@@ -107,7 +107,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
                 node = left;
-                opKind = InvertLeftRight(op);
+                try
+                {
+                    opKind = InvertLeftRight(op);
+                }
+                catch (NotImplementedException)
+                {
+                    opKind = default;
+                    return false;
+                }
+
                 return true;
             }
             else if(TryGetFieldName(left, out var leftField2) && TryGetFieldName(right, out var rightField2))

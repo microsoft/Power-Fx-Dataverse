@@ -1537,6 +1537,7 @@ END
             PrimaryIdAttribute = "localid",
             Attributes = new AttributeMetadataModel[]
             {
+                AttributeMetadataModel.NewString("new_name", "Name"),
                 AttributeMetadataModel.NewDecimal("conflict1", "Conflict"),
                 AttributeMetadataModel.NewDecimal("conflict2", "Conflict"),
                 AttributeMetadataModel.NewDecimal("new_price", "Price"),
