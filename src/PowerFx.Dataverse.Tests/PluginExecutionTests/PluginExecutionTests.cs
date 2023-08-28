@@ -2411,6 +2411,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Comparing fields can't be delegated.
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        // Not All binary op are supported.
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // Error handling
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)")]
 
@@ -3700,6 +3703,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
+            entity1.Attributes["new_name"] = "row1";
+
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
