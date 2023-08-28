@@ -294,7 +294,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new SqlCompileOptions.TypeDetails
             {
-                TypeHint = AttributeTypeCode.Integer
+                TypeHint = AttributeTypeCode.Integer,
+                Precision = 0
             };
         }
     }
