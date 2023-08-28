@@ -179,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             // use the same return type as the input, so TZI type is retained
             var result = context.GetTempVar(date.type);
-            var validatedOffset = context.SetIntermediateVariable(new SqlBigType(), $"ISNULL({offset},0)");
+            var validatedOffset = context.SetIntermediateVariable(FormulaType.Decimal, $"ISNULL({offset},0)");
             context.DateAdditionOverflowCheck(validatedOffset, units, date);
             if (supportFractionalDays)
             {

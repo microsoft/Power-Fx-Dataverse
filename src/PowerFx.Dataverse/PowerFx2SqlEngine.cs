@@ -63,10 +63,8 @@ namespace Microsoft.PowerFx.Dataverse
                     var sqlInfo = result.ApplySqlCompiler();
                     var res = sqlInfo._retVal;
 
-                    FormulaType nodeType = res.type == new SqlBigType() ? FormulaType.Decimal :  res.type;
-
                     var errors = new List<IDocumentError>();
-                    if (!ValidateReturnType(new SqlCompileOptions(), nodeType, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
+                    if (!ValidateReturnType(new SqlCompileOptions(), res.type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
                     {
                         errors.AddRange(typeErrors);
                     }
@@ -151,9 +149,7 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                FormulaType nodeType = result.type == new SqlBigType() ? FormulaType.Decimal : result.type;
-
-                if (!ValidateReturnType(options, nodeType, irNode.IRContext.SourceContext, out var retType, out var errors))
+                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
@@ -186,8 +182,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        // Existing CDS SQL generation passes money values as big type
-                        typeName = parameters[i].Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
@@ -212,7 +207,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = field.VarType is SqlMoneyType ? new SqlBigType().ToSqlType() : SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -263,7 +258,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    string tempVariableType = temp.Item2 is SqlMoneyType ? SqlVisitor.ToSqlType(new SqlBigType()) : SqlVisitor.ToSqlType(temp.Item2);
+                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2);
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 
@@ -364,15 +359,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (context.IsNumericType(result))
             {
-                int precision;
-                if (result.type is SqlIntType)
-                {
-                    precision = 0;
-                }
-                else
-                {
-                    precision = options.TypeHints?.Precision ?? DefaultPrecision;
-                }
+                int precision = options.TypeHints?.Precision ?? DefaultPrecision;                
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
             else

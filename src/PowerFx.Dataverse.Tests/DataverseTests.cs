@@ -663,7 +663,7 @@ END
 
             var metadata = model.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
-            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer } };
+            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer, Precision = 0 } };
             var result = engine.Compile(expr, options);
 
             Assert.NotNull(result);
@@ -671,7 +671,6 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
-            Assert.True(result.ReturnType is SqlIntType);
         }
 
         [Fact]

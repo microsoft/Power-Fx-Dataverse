@@ -220,7 +220,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
+            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownToInt(val));
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -286,7 +286,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", new SqlIntType());
+                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", FormulaType.Decimal);
                 context.NegativeNumberCheck(length);
             }
             else
@@ -347,16 +347,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownNullToInt(instance));
+                var coercedInstance = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(instance));
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
-                var idx = context.GetTempVar(new SqlIntType());
-                var matchCount = context.GetTempVar(new SqlIntType());
+                var idx = context.GetTempVar(FormulaType.Decimal);
+                var matchCount = context.GetTempVar(FormulaType.Decimal);
                 context.SetIntermediateVariable(idx, $"1");
                 context.SetIntermediateVariable(matchCount, $"1");
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
+                var oldLen = context.SetIntermediateVariable(FormulaType.Decimal, $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
                 // find the appropriate instance (case sensitive) in the original string
                 context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(str)}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 

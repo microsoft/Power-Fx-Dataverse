@@ -16,13 +16,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Mod(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Decimal);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
-            var initialResult = context.SetIntermediateVariable(new SqlBigType(), $"{CoerceNullToInt(number)} % {divisor}");
+            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, $"{CoerceNullToInt(number)} % {divisor}");
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
             context.SetIntermediateVariable(result, $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
             context.PerformRangeChecks(result, node);
@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 throw new SqlCompileException(SqlCompileException.MathFunctionBadArity, node.IRContext.SourceContext, function, node.Args.Count, arity);
             }
 
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Decimal);
             var args = new List<string>(arity);
             for (int i = 0; i < arity; i++)
             {
@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal MathScalarSetFunction(SqlVisitor visitor, CallNode node, Context context, string function, bool zeroNulls = false, bool errorOnNulls = false)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Decimal);
             var args = new List<string>(node.Args.Count);
             for (int i = 0; i < node.Args.Count; i++)
             {
@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
                 else
                 {
-                    args.Add($"({context.SetIntermediateVariable(new SqlBigType(), coercedArg)})");
+                    args.Add($"({context.SetIntermediateVariable(FormulaType.Decimal, coercedArg)})");
                 }
             }
             context.SelectIntermediateVariable(result, $"{function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X)");
@@ -149,16 +149,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal RoundUp(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Decimal);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var rawDigits = node.Args[1].Accept(visitor, context);
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
-            var digits = context.SetIntermediateVariable(new SqlBigType(), RoundDownNullToInt(rawDigits));
-            context.PowerOverflowCheck(RetVal.FromSQL("10", new SqlFloatType()), digits);
-            var factor = context.GetTempVar(new SqlBigType());
+            var digits = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(rawDigits));
+            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Number), digits);
+            var factor = context.GetTempVar(FormulaType.Decimal);
             context.SetIntermediateVariable(factor, $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})");
             context.DivideByZeroCheck(factor);
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
@@ -170,7 +170,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal RoundDown(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Decimal);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
