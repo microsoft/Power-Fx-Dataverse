@@ -58,20 +58,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(23,10), -- new_field
+    @v0 decimal(38,10), -- new_field
     @v1 decimal(38,10) -- new_field1
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v2 decimal(38,10)
-    DECLARE @v3 decimal(23,10)
+    DECLARE @v3 decimal(38,10)
     DECLARE @v4 decimal(38,10)
 
     -- expression body
-    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(38,10)))
     -- end expression body
 
     IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
@@ -258,14 +258,14 @@ END
   WITH SCHEMABINDING
 AS BEGIN
     DECLARE @v2 decimal(38,10)
-    DECLARE @v3 decimal(23,10)
+    DECLARE @v3 decimal(38,10)
     DECLARE @v4 decimal(38,10)
 
     -- expression body
     SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(38,10)))
     -- end expression body
 
     IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
@@ -442,19 +442,19 @@ END
         }.SetSchemaName("Account");
 
         public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(23,10), -- new_CurrencyPrice
+    @v0 decimal(38,10), -- new_CurrencyPrice
     @v2 uniqueidentifier -- accountid
 ) RETURNS decimal(23,10)
 AS BEGIN
-    DECLARE @v1 decimal(23,10)
-    DECLARE @v4 decimal(23,10)
+    DECLARE @v1 decimal(38,10)
+    DECLARE @v4 decimal(38,10)
     DECLARE @v3 decimal(38,10)
     DECLARE @v5 decimal(38,10)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
     SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
     -- end expression body

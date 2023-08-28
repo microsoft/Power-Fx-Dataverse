@@ -188,7 +188,8 @@ namespace Microsoft.PowerFx.Dataverse
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+                var finalReturnType = IsNumericType(retType) ? SqlStatementFormat.SqlNumberAndDecimalReturnType : SqlVisitor.ToSqlType(retType);
+                tw.WriteLine($") RETURNS {finalReturnType}");
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
                 if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
