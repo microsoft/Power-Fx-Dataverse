@@ -244,7 +244,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static string CoerceNumberToType(string value, FormulaType type)
         {
             Contracts.Assert(type is NumberType);
-            if (Context.IsNumericType(type))
+            if (Context.IsNumericType(type) || type is BlankType)
             {
                 return $"CAST({value} AS decimal(25,10))";
             }

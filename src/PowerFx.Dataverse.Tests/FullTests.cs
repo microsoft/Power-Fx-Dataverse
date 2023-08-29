@@ -745,7 +745,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
                 else
                 {
-                    type = $"{SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType())} NULL";
+                    var attrType = attr.AttributeType == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType());
+                    type = $"{attrType} NULL";
                 }
 
                 baseTable += $@",
