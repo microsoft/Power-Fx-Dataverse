@@ -169,7 +169,7 @@
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
-    <value>Az eredménytípus ("{0}") nem támogatott a képletoszlopokban.</value>
+    <value>A(z) {0} eredménytípus nem támogatott a képletoszlopokban.</value>
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
