@@ -169,8 +169,23 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)})");
+                        var leftOperand = Library.CoerceNullToNumberType(left, left.type);
+                        var rightOperand = Library.CoerceNullToNumberType(right, right.type);
 
+                        if (left != null && !string.IsNullOrEmpty(left.varName) && IsExchangeRateColumn(left, context))
+                        {
+                            leftOperand = Library.CoerceNullToInt(left);
+                        }
+
+                        if (right != null && !string.IsNullOrEmpty(right.varName) && IsExchangeRateColumn(right, context))
+                        {
+                            rightOperand = Library.CoerceNullToInt(right);
+                        }
+
+                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({leftOperand} {op} {rightOperand})");
+                        //var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToNumberType(left, left.type)} {op} {Library.CoerceNullToNumberType(right, right.type)})");
+
+                        context.PerformRangeChecks(result, node);
                         return result;
                     }
 
@@ -370,6 +385,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(arg)}/100.0)");
+                    context.PerformRangeChecks(result, node);
                     return result;
 
                 // Coercions

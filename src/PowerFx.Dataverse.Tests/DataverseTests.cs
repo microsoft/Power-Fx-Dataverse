@@ -68,10 +68,10 @@ AS BEGIN
     DECLARE @v4 decimal(38,10)
 
     -- expression body
-    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(25,10)) * CAST(ISNULL(@v1,0) AS decimal(25,10)))
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(38,10)))
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(25,10)) * CAST(ISNULL(@v3,0) AS decimal(25,10)))
     -- end expression body
 
     IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
@@ -262,10 +262,10 @@ AS BEGIN
     DECLARE @v4 decimal(38,10)
 
     -- expression body
-    SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(25,10)))
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(38,10)))
+    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(25,10)) * CAST(ISNULL(@v3,0) AS decimal(25,10)))
     -- end expression body
 
     IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
@@ -454,9 +454,9 @@ AS BEGIN
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(25,10)) + CAST(ISNULL(@v1,0) AS decimal(25,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(25,10)) + CAST(ISNULL(@v4,0) AS decimal(25,10)))
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
