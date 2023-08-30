@@ -59,7 +59,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     ResponseName = "AIExtract"
                 };
-                resp["ExtractedData"] = new[] { "happy" };
+                resp["ExtractedData"] = new string[] { "happy" };
                 return resp;
             };
 
