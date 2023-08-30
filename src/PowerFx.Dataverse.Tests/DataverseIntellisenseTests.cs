@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Intellisense;
 using Xunit;
@@ -20,15 +21,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // For testing, provide a new engine instance each time to ensure their caches are reset between tests. 
         internal static PowerFx2SqlEngine _engine =>
             new PowerFx2SqlEngine(
-                DataverseTests.RelationshipModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.RelationshipModels)));
+                MockModels.RelationshipModels[0].ToXrm(),
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels)));
 
         internal static PowerFx2SqlEngine _allAttributesEngine => GetAllAttributesEngine(null);
 
         internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
             new PowerFx2SqlEngine(
-                DataverseTests.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
+                MockModels.AllAttributeModels[0].ToXrm(),
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
                 locale);
 
         /// <summary>
