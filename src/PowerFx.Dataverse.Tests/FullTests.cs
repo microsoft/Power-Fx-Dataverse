@@ -545,7 +545,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
-                    { "decimal", "20" },
+                    { "decimal", "19.69658" },
                     { "decimal2", "0.02188" },
                     { "decimal3", "10000000000" },
                     { "int", "20"},
@@ -555,6 +555,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 });
 
                 // Arithmetic
+                ExecuteSqlTest("decimal*decimal2", 0.4309611704M, cx, metadata);
                 ExecuteSqlTest("Decimal(decimal2)", 0.02188M, cx, metadata);
                 ExecuteSqlTest("RoundUp(decimal2,3)", 0.022M, cx, metadata);
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
@@ -829,9 +830,9 @@ AS BEGIN
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account1] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(25,10)) + CAST(ISNULL(@v1,0) AS decimal(25,10)))
+    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(25,10)) + CAST(ISNULL(@v4,0) AS decimal(25,10)))
+    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END

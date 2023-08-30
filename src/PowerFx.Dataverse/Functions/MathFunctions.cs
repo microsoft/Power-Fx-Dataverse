@@ -246,7 +246,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             Contracts.Assert(type is NumberType);
             if (Context.IsNumericType(type) || type is BlankType)
             {
-                return $"CAST({value} AS decimal(25,10))";
+                return $"CAST({value} AS decimal(23,10))";
             }
 
             return $"CAST({value} AS {ToSqlType(type)})";

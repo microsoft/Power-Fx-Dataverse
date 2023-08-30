@@ -169,7 +169,16 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
+                        if(left?.varName != null && context.GetVarDetails(left.varName).Column?.TypeCode == AttributeTypeCode.Money)
+                        {
+                            context.PerformOverflowCheck(left, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                        }
                         var leftOperand = Library.CoerceNullToNumberType(left, left.type);
+
+                        if (right?.varName != null && context.GetVarDetails(right.varName).Column?.TypeCode == AttributeTypeCode.Money)
+                        {
+                            context.PerformOverflowCheck(right, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                        }
                         var rightOperand = Library.CoerceNullToNumberType(right, right.type);
 
                         if (left != null && !string.IsNullOrEmpty(left.varName) && IsExchangeRateColumn(left, context))
@@ -1336,7 +1345,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
+            internal void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
             {
                 if (_checkOnly) return;
 
