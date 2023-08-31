@@ -21,14 +21,25 @@ namespace Microsoft.Dataverse.EntityMock
             return Copy<EntityMetadataModel, EntityMetadata>(model);
         }
 
-        public static EntityMetadata ToXrm(this EntityMetadataModel model, AttributeMetadataModel[] array)
+        public static EntityMetadata[] ToXrm(EntityMetadataModel[] array)
         {
-            return Copy<EntityMetadataModel, EntityMetadata>(model);
+            return Array.ConvertAll(array, item =>
+            {
+                return Copy<EntityMetadataModel, EntityMetadata>(item);
+            });
         }
 
         public static EntityMetadataModel ToModel(this EntityMetadata entity)
         {
             return Copy<EntityMetadata, EntityMetadataModel>(entity);
+        }
+
+        public static EntityMetadataModel[] ToModel(EntityMetadata[] array)
+        {
+            return Array.ConvertAll(array, item =>
+            {
+                return Copy<EntityMetadata, EntityMetadataModel>(item);
+            });
         }
 
         public static AttributeMetadata[] ToXrm(AttributeMetadataModel[] array)
@@ -158,6 +169,14 @@ namespace Microsoft.Dataverse.EntityMock
                 else if (val is OneToManyRelationshipMetadata[] a4)
                 {
                     val = ToModel(a4);
+                }
+                else if (val is EntityMetadataModel[] a5)
+                {
+                    val = ToXrm(a5);
+                }
+                else if(val is EntityMetadata[] a6)
+                {
+                    val = ToModel(a6);
                 }
 
                 if ((val is Label l1) && propDest.PropertyType == typeof(string))

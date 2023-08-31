@@ -213,6 +213,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
+        public void ModelArrayToMetadataArrayTest()
+        {
+            var xrmArray = ModelExtensions.ToXrm(MockModels.RelationshipModels);
+
+            foreach (var metadata in xrmArray)
+            {
+                Assert.IsType<EntityMetadata>(metadata);
+            }
+        }
+
+        [Fact]
         public void MetadataChecks()
         {
             var localName = MockModels.LocalModel.LogicalName;
