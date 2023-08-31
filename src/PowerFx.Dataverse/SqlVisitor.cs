@@ -192,7 +192,6 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({leftOperand} {op} {rightOperand})");
-                        //var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToNumberType(left, left.type)} {op} {Library.CoerceNullToNumberType(right, right.type)})");
 
                         context.PerformRangeChecks(result, node);
                         return result;
