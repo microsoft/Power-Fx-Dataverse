@@ -147,6 +147,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey RelatedCurrency = DataverseStringResources.New("FormulaColumns_RelatedCurrency");
 
+        internal readonly static ErrorResourceKey DirectCurrencyNotSupported = DataverseStringResources.New("FormulaColumns_DirectCurrencyNotSupported");
+
+
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
             _error = new SqlError(key, context, DocumentErrorSeverity.Critical, args);

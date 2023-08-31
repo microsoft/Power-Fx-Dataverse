@@ -916,6 +916,11 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
+                    if (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate"))
+                    {
+                        throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
+                    }
+
                     var varType = GetFormulaType(column, sourceContext);
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);

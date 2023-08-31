@@ -48,8 +48,8 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
 
                 case XrmAttributeTypeCode.Money:
-                    type = Types.FormulaType.Decimal;
-                    return true;
+                    type = default;
+                    return false;
 
                 case XrmAttributeTypeCode.Decimal:
                     type = Types.FormulaType.Decimal;
