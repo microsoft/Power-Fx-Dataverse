@@ -181,7 +181,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         var rightOperand = Library.CoerceNullToNumberType(right, right.type);
 
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}) AS decimal(23,10))");
+                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({leftOperand} {op} {rightOperand}) AS decimal(23,10))");
                         context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"{result} IS NULL"));
                         context.PerformRangeChecks(result, node);
 
