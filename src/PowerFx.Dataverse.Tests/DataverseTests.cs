@@ -4,24 +4,25 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Types;
-using Xunit;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dataverse.EntityMock;
+using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class DataverseTests
     {
         [Fact]
@@ -495,7 +496,7 @@ END
         {
             var expr = "field * Int - Money + If(Boolean || Picklist = 'Picklist (All Attributes)'.One, Value(String), 2)";
 
-            var metadata = AllAttributeModel.ToXrm();
+            var metadata = MockModels.AllAttributeModel.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
             var result = engine.Compile(expr, new SqlCompileOptions());
 
@@ -509,7 +510,7 @@ END
         {
             var expr = "Money"; // resolve to Money filed
 
-            var metadata = AllAttributeModel.ToXrm();
+            var metadata = MockModels.AllAttributeModel.ToXrm();
 
             var metadataProvider = new CdsEntityMetadataProvider(null)
             {
@@ -725,8 +726,8 @@ END
         [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             var checkResult = engine.Check(expr);
             Assert.False(checkResult.IsSuccess);
@@ -756,8 +757,8 @@ END
         [InlineData("Mod(int, int)", typeof(DecimalType))] // "Int from function returns decimal"
         public void CompileValidReturnType(string expr, Type returnType)
         {
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -775,7 +776,7 @@ END
             Assert.Equal(typeof(BlankType), result.ReturnType.GetType());
         }
 
-        // Verify that AllAttributeModel has an attribute of each type
+        // Verify that MockModels.AllAttributeModel has an attribute of each type
         [Fact]
         public void VerifyAllAttributes()
         {
@@ -785,7 +786,7 @@ END
                 set.Add(val);
             }
 
-            foreach (var attr in AllAttributeModel.Attributes)
+            foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
                 var code = attr.AttributeType.Value;
                 set.Remove(code);
@@ -869,7 +870,7 @@ END
         }
 
         // For each attribute type x, verify we can consume it.
-        // Explicitly iterate over every attribute in AllAttributeModels (to ensure we're being comprehensive.
+        // Explicitly iterate over every attribute in MockModels.AllAttributeModels (to ensure we're being comprehensive.
         // And if we can't consume it, verify the error. 
         [Fact]
         public void VerifyProduceAndConsumeAllTypes()
@@ -909,10 +910,10 @@ END
                 { "multiSelect", errCantProduceOptionSets }
             };
 
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
-            foreach (var attr in AllAttributeModel.Attributes)
+            foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
                 if (!attr.AttributeType.HasValue) { continue; }
 
@@ -1167,8 +1168,8 @@ END
         [InlineData("7 + 2", "")] // "Literals"
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1483,8 +1484,8 @@ END
         [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1508,16 +1509,16 @@ END
         [InlineData("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.")] // "Virtual lookup field access"
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
         [Fact]
         public void CompileLogicalLookup()
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1527,374 +1528,10 @@ END
 ", result.SqlCreateRow);
         }
 
-        /// <summary>
-        /// Models used to run relationship tests
-        /// </summary>
-        internal static readonly EntityMetadataModel LocalModel = new EntityMetadataModel
-        {
-            LogicalName = "local",
-            DisplayCollectionName = "Locals",
-            PrimaryIdAttribute = "localid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewString("new_name", "Name"),
-                AttributeMetadataModel.NewDecimal("conflict1", "Conflict"),
-                AttributeMetadataModel.NewDecimal("conflict2", "Conflict"),
-                AttributeMetadataModel.NewDecimal("new_price", "Price"),
-                AttributeMetadataModel.NewDecimal("old_price", "Old_Price"),
-                AttributeMetadataModel.NewDateTime("new_date", "Date", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("new_datetime", "DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewMoney("new_currency", "Currency"),
-                AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
-                AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
-                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),
-                AttributeMetadataModel.NewLookup("virtualid", "Virtual Lookup", new string[] { "virtualremote" }),
-                AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
-                AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                AttributeMetadataModel.NewDouble("float", "Float"),
-                AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
-                AttributeMetadataModel.NewInteger("new_int", "Integer"),
-                AttributeMetadataModel.NewString("new_string", "String"),
-                AttributeMetadataModel.NewGuid("some_id", "SomeId"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "Hot", Value = 1 },
-                    new OptionMetadataModel { Label = "Warm", Value = 2 },
-                    new OptionMetadataModel { Label = "Cold", Value = 3 }
-                }),
-                AttributeMetadataModel.NewPicklist("global_pick", "Global Picklist", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "High", Value = 1 },
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Low", Value = 3 }
-                },
-                isGlobal: true)
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "remoteid",
-                    ReferencedEntity = "remote",
-                    ReferencingAttribute = "otherid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "refd",
-                    ReferencingEntityNavigationPropertyName = "refg",
-                    SchemaName = "local_remote"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "localid",
-                    ReferencedEntity = "local",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "virtualremoteid",
-                    ReferencedEntity = "virtualremote",
-                    ReferencingAttribute = "virtualid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "virtual_refd",
-                    ReferencingEntityNavigationPropertyName = "virtual",
-                    SchemaName = "virtual"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "remoteid",
-                    ReferencedEntity = "remote",
-                    ReferencingAttribute = "logicalid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "logical_refd",
-                    ReferencingEntityNavigationPropertyName = "logical",
-                    SchemaName = "logical"
-                }
-            },
-            OneToManyRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "localid",
-                    ReferencedEntity = "local",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel RemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "remote",
-            DisplayCollectionName = "Remotes",
-            PrimaryIdAttribute = "remoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data", "Data"),
-                AttributeMetadataModel.NewGuid("remoteid", "RemoteId"),
-                AttributeMetadataModel.NewDecimal("calc", "Calculated Data").SetCalculated(),
-                AttributeMetadataModel.NewDecimal("float", "Float"),
-                AttributeMetadataModel.NewDouble("actual_float", "Actual Float"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {   new OptionMetadataModel { Label = "Small", Value = 1},
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Large", Value = 3 }
-                }),
-                AttributeMetadataModel.NewLookup("otherotherid", "Other Other", new string[] { "doubleremote" }),
-                AttributeMetadataModel.NewDouble("other", "Other")
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "doubleremoteid",
-                    ReferencedEntity = "doubleremote",
-                    ReferencingAttribute = "otherotherid",
-                    ReferencingEntity = "remote",
-                    ReferencedEntityNavigationPropertyName = "doublerefd",
-                    ReferencingEntityNavigationPropertyName = "doublerefg",
-                    SchemaName = "remote_doubleremote"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel DoubleRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "doubleremote",
-            DisplayCollectionName = "Double Remotes",
-            PrimaryIdAttribute = "doubleremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data2", "Data Two"),
-                AttributeMetadataModel.NewGuid("doubleremoteid", "DoubleRemoteId"),
-                AttributeMetadataModel.NewLookup("otherotherotherid", "Other Other Other", new string[] { "tripleremote" })
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "tripleremoteid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "otherotherotherid",
-                    ReferencingEntity = "doubleremote",
-                    ReferencedEntityNavigationPropertyName = "triplerefd",
-                    ReferencingEntityNavigationPropertyName = "triplerefg",
-                    SchemaName = "doubleremote_tripleremote"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel TripleRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "tripleremote",
-            DisplayCollectionName = "Triple Remotes",
-            PrimaryIdAttribute = "tripleremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data3", "Data Three"),
-                AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
-                AttributeMetadataModel.NewMoney("currencyField", "Currency Field")
-            }
-        };
-
-        internal static readonly EntityMetadataModel VirtualRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "virtualremote",
-            DisplayCollectionName = "Virtual Remotes",
-            PrimaryIdAttribute = "virtualremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("vdata", "Virtual Data"),
-                AttributeMetadataModel.NewGuid("virtualremoteid", "VirtualRemoteId")
-            }
-        }.SetVirtual();
-
-        internal static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel };
-
-        internal static readonly EntityMetadataModel AllAttributeModel = new EntityMetadataModel
-        {
-            LogicalName = "allattributes",
-            DisplayCollectionName = "All Attributes",
-            PrimaryIdAttribute = "allid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("new_field", "field"),
-                AttributeMetadataModel.NewDouble("double", "Double"),
-                AttributeMetadataModel.NewInteger("int", "Int"),
-                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new [] { "tripleremote" }),
-                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new [] { "allattributes" }),
-                AttributeMetadataModel.NewMoney("money", "Money"),
-                AttributeMetadataModel.NewGuid("guid", "Guid"),
-                AttributeMetadataModel.NewGuid("allid", "AllId"),
-                AttributeMetadataModel.NewString("string", "String"),
-                AttributeMetadataModel.NewString("hyperlink", "Hyperlink", StringFormat.Url),
-                AttributeMetadataModel.NewString("email", "Email", StringFormat.Email),
-                AttributeMetadataModel.NewString("ticker", "Ticker", StringFormat.TickerSymbol),
-                AttributeMetadataModel.NewInteger("timezone", "TimeZone", IntegerFormat.TimeZone),
-                AttributeMetadataModel.NewInteger("duration", "Duration", IntegerFormat.Duration),
-                AttributeMetadataModel.NewDateTime("userlocaldatetime", "UserLocal DateTime", DateTimeBehavior.UserLocal, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewDateTime("userlocaldateonly", "UserLocal DateOnly", DateTimeBehavior.UserLocal, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
-                new AttributeMetadataModel
-                {
-                    LogicalName= "bigint",
-                    DisplayName = "BigInt",
-                    AttributeType = AttributeTypeCode.BigInt
-                },
-                AttributeMetadataModel.NewBoolean("boolean", "Boolean", "Yes", "No"),
-                AttributeMetadataModel.NewLookup("customerid", "Customer", new [] { "tripleremote" }, AttributeTypeCode.Customer),
-                new AttributeMetadataModel
-                {
-                    LogicalName = "EntityName",
-                    DisplayName = "EntityName",
-                    AttributeType = AttributeTypeCode.EntityName
-                },
-                new AttributeMetadataModel
-                {
-                    LogicalName = "Memo",
-                    DisplayName = "Memo",
-                    AttributeType = AttributeTypeCode.Memo
-                },
-                AttributeMetadataModel.NewLookup("ownerid", "Owner", new [] { "tripleremote" }, AttributeTypeCode.Owner),
-                AttributeMetadataModel.NewPicklist(
-                    "statecode",
-                    "State",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
-                    AttributeTypeCode.State),
-                AttributeMetadataModel.NewPicklist(
-                    "statuscode",
-                    "Status",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
-                    AttributeTypeCode.Status),
-                AttributeMetadataModel.NewPicklist(
-                    "picklist",
-                    "Picklist",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "One",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Two",
-                            Value = 2
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Three",
-                            Value = 3
-                        }
-                    }),
-                AttributeMetadataModel.NewPicklist(
-                    "multiSelect",
-                    "MultiSelect",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Eight",
-                            Value = 8
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Nine",
-                            Value = 9
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Ten",
-                            Value = 10
-                        }
-                    },
-                    typeName: AttributeTypeDisplayName.MultiSelectPicklistType,
-                    attributeType: AttributeTypeCode.Virtual),
-                AttributeMetadataModel.NewImage("image", "Image"),
-                AttributeMetadataModel.NewFile("file", "File")
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "tripleremoteid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "new_lookup",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "lookup_refd",
-                    ReferencingEntityNavigationPropertyName = "lookup",
-                    SchemaName = "all_tripleremote"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "allid",
-                    ReferencedEntity = "allattributes",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "ownerid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "ownerid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "owner_allattributes",
-                    ReferencingEntityNavigationPropertyName = "ownerid",
-                    SchemaName = "owner_allattributes"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "accountid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "customerid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "allattributes_customer_account",
-                    ReferencingEntityNavigationPropertyName = "customerid_account",
-                    SchemaName = "allattributes_customer_account"
-                },
-            }
-        };
-
-        internal static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
-
         [Fact]
         public void CheckGlobalOptionSets()
         {
-            var xrmModel = AllAttributeModel.ToXrm();
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
             List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
             var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
                 new OptionMetadata[]
@@ -1924,7 +1561,7 @@ END
 
             globalOptionSets.Add(optionSet1);
             globalOptionSets.Add(optionSet2);
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
 
             // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
@@ -1945,8 +1582,8 @@ END
         [Fact]
         public void CheckRelatedEntityCurrencyUsedInFormula()
         {
-            var xrmModel = AllAttributeModel.ToXrm();
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
@@ -1966,8 +1603,8 @@ END
         [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] // "Preserves whitespace and comments"
         public void Translate(string expr, string translation)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
@@ -1996,8 +1633,8 @@ END
 
         public void Sanitize(string expr, string sanitized)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
 
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
@@ -2111,6 +1748,21 @@ END
             {
                 Assert.True(sqlCheck.Errors.Select(err => err.Message.Contains(message)).Any());
             }
+        }
+    }
+
+    public class MockXrmMetadataProvider : IXrmMetadataProvider
+    {
+        private readonly Dictionary<string, EntityMetadata> _entitiesByName;
+
+        public MockXrmMetadataProvider(params EntityMetadataModel[] entityModels)
+        {
+            _entitiesByName = entityModels.Select(model => model.ToXrm()).ToDictionary(model => model.LogicalName);
+        }
+
+        public bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity)
+        {
+            return _entitiesByName.TryGetValue(logicalOrDisplayName, out entity);
         }
     }
 
