@@ -17,7 +17,10 @@ namespace Microsoft.PowerFx.Dataverse
     public class AIClassifyFunction : ReflectionFunction
     {
         public AIClassifyFunction()
-            : base("AIExtract", FormulaType.String, FormulaType.UntypedObject, FormulaType.String)
+            : base("AIClassify",
+                  FormulaType.String,
+                  FormulaType.String,
+                  RecordType.Empty().Add("Value", FormulaType.String).ToTable())
         {
             this.ConfigType = typeof(IDataverseExecute);
         }

@@ -31,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             var engine = new RecalcEngine(config);
 
-            var result = engine.Check("AIClassify(\"very long string\", {\"string\", \"int\"})");
+            var result = engine.Check("AIClassify(\"very long string\", [\"string\", \"int\"])");
             Assert.Equal(enable, result.IsSuccess);
         }
 
@@ -48,24 +48,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
 
-
             client.Work = (req) =>
             {
                 // Validate parameters
                 Assert.Equal("AIClassify", req.RequestName);
                 Assert.Equal("very long string", req.Parameters["Text"]);
+                Assert.Equal("stringint", getConcatenatedStrings((TableValue)req.Parameters["Categories"]));
 
                 var resp = new OrganizationResponse
                 {
                     ResponseName = "AIClassify"
                 };
-                resp["SummarizedText"] = "short string";
+                resp["Classification"] = "string";
                 return resp;
             };
 
-            var result = await engine.EvalAsync("AIClassify(\"very long string\")", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync("AIClassify(\"very long string\", [\"string\", \"int\"])", default, runtimeConfig: rc);
+            Assert.Equal("string", result.ToObject());
+        }
 
-            Assert.Equal("short string", result.ToObject());
+        protected string getConcatenatedStrings(TableValue table)
+        {
+            var returnVal = "";
+            foreach (var row in table.Rows)
+            {
+                RecordValue val = row.Value;
+                string currStr = ((StringValue)val.GetField("Value")).Value;
+                returnVal += currStr;
+            }
+            return returnVal;
         }
 
         [Fact]
@@ -88,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException(msg);
             };
 
-            var result = await engine.EvalAsync("AIClassify(\"very long string\")", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync("AIClassify(\"very long string\", [\"string\", \"int\"])", default, runtimeConfig: rc);
 
             var errors = (ErrorValue)result;
             Assert.Equal(1, errors.Errors.Count);
