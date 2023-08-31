@@ -182,7 +182,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
@@ -211,7 +211,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = field.Column.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -262,7 +262,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    string tempVariableType = temp.Item3 ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(temp.Item2);
+                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2);
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 

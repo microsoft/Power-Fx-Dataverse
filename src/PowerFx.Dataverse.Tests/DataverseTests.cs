@@ -59,29 +59,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(23,10), -- new_field
-    @v1 decimal(38,10) -- new_field1
+    @v1 decimal(23,10) -- new_field1
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v2 decimal(38,10)
+    DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v5 decimal(38,10)
-    DECLARE @v6 decimal(23,10)
 
     -- expression body
-    IF(@v1<-9999999999999.9999999999 OR @v1>9999999999999.9999999999) BEGIN RETURN NULL END
-    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    IF(TRY_CAST(@v1 AS decimal(23,10)) IS NULL) BEGIN RETURN NULL END
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = CAST(ISNULL(@v2,0) AS decimal(23,10))
-    SET @v4 = 2.0
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) * CAST(ISNULL(@v4,0) AS decimal(23,10)))
-    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
-    SET @v6 = CAST(ISNULL(@v5,0) AS decimal(23,10))
+    SET @v3 = 2.0
+    SET @v4 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v3,0)) AS decimal(23,10))
+    IF(@v4 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v6<-100000000000 OR @v6>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v6, 10)
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
 END
 ";
         [Fact]
@@ -134,7 +131,7 @@ END
         }
 
         public const string BaselineSingleCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(38,10) -- new_field
+    @v0 decimal(23,10) -- new_field
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
@@ -193,7 +190,7 @@ END
         }
 
         public const string BaselineSingleCurrencyFunctionWithHints = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(38,10) -- new_field
+    @v0 decimal(23,10) -- new_field
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
@@ -259,29 +256,26 @@ END
 
         public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(28,12), -- exchangerate
-    @v1 decimal(38,10) -- new_field1
+    @v1 decimal(23,10) -- new_field1
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v2 decimal(38,10)
+    DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v5 decimal(38,10)
-    DECLARE @v6 decimal(23,10)
 
     -- expression body
-    IF(@v1<-9999999999999.9999999999 OR @v1>9999999999999.9999999999) BEGIN RETURN NULL END
-    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    IF(TRY_CAST(@v1 AS decimal(23,10)) IS NULL) BEGIN RETURN NULL END
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = CAST(ISNULL(@v2,0) AS decimal(23,10))
-    SET @v4 = 2.0
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(23,10)) * CAST(ISNULL(@v4,0) AS decimal(23,10)))
-    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
-    SET @v6 = CAST(ISNULL(@v5,0) AS decimal(23,10))
+    SET @v3 = 2.0
+    SET @v4 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v3,0)) AS decimal(23,10))
+    IF(@v4 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v6<-100000000000 OR @v6>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v6, 10)
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v4, 10)
 END
 ";
 
@@ -459,25 +453,22 @@ END
 ) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v1 decimal(23,10)
-    DECLARE @v5 decimal(23,10)
-    DECLARE @v3 decimal(38,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v6 decimal(38,10)
-    DECLARE @v7 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
-    SELECT TOP(1) @v5 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v4 = CAST(ISNULL(@v3,0) AS decimal(23,10))
-    SET @v6 = (CAST(ISNULL(@v4,0) AS decimal(23,10)) + CAST(ISNULL(@v5,0) AS decimal(23,10)))
-    IF(@v6<-100000000000 OR @v6>100000000000) BEGIN RETURN NULL END
-    SET @v7 = CAST(ISNULL(@v6,0) AS decimal(23,10))
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) + ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v7<-100000000000 OR @v7>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v7, 10)
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 10)
 END
 ";
         public const string BaselineCreateRow = @"fn_testUdf1([new_CurrencyPrice_Schema],[AccountId])

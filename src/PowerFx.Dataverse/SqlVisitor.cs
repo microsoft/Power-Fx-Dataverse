@@ -171,23 +171,19 @@ namespace Microsoft.PowerFx.Dataverse
 
                         if (left?.varName != null && context.GetVarDetails(left.varName).Column?.TypeCode == AttributeTypeCode.Money)
                         {
-                            context.PerformOverflowCheck(left, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                            context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"TRY_CAST({left} AS decimal(23,10)) IS NULL"));
                         }
                         var leftOperand = Library.CoerceNullToNumberType(left, left.type);
 
                         if (right?.varName != null && context.GetVarDetails(right.varName).Column?.TypeCode == AttributeTypeCode.Money)
                         {
-                            context.PerformOverflowCheck(right, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                            context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"TRY_CAST({right} AS decimal(23,10)) IS NULL"));
                         }
                         var rightOperand = Library.CoerceNullToNumberType(right, right.type);
 
-                        var overflowCheckVar = context.SetIntermediateVariable(FormulaType.Decimal, $"({leftOperand} {op} {rightOperand})");
-                        context.PerformOverflowCheck(overflowCheckVar, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax);
-                        context.GetVarDetails(overflowCheckVar.varName).isOverflowVar = true;
-
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"{Library.CoerceNullToNumberType(overflowCheckVar, overflowCheckVar.type)}");
-
-                        //context.PerformRangeChecks(result, node);
+                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}) AS decimal(23,10))");
+                        context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"{result} IS NULL"));
+                        context.PerformRangeChecks(result, node);
 
                         return result;
                     }
@@ -750,8 +746,6 @@ namespace Microsoft.PowerFx.Dataverse
                 /// The path to the field
                 /// </summary>
                 public DPath Path;
-
-                public bool isOverflowVar;
             }
 
             // Mapping of field names to details
@@ -804,14 +798,14 @@ namespace Microsoft.PowerFx.Dataverse
             /// Get temp variable details
             /// </summary>
             /// <returns>List of tuples of variable name and type</returns>
-            public IEnumerable<Tuple<string, FormulaType, bool>> GetTemps()
+            public IEnumerable<Tuple<string, FormulaType>> GetTemps()
             {
                 foreach (var pair in _vars)
                 {
                     // a variable is temporary if it has no backing attribute
                     if (pair.Value.Column == null)
                     {
-                        yield return Tuple.Create(pair.Key, pair.Value.VarType, pair.Value.isOverflowVar);
+                        yield return Tuple.Create(pair.Key, pair.Value.VarType);
                     }
                 }
             }
