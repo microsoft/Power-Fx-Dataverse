@@ -158,8 +158,8 @@ ELSE
         public const string SqlNvarcharType = "nvarchar(4000)";
         public const string SqlIntegerType = "int";
         public const string SqlBitType = "bit";
-        public const string SqlDecimalType = "decimal(38,10)";
-        public const string SqlNumberAndDecimalReturnType = "decimal(23,10)";
+        public const string SqlDecimalType = "decimal(23,10)";
+        public const string SqlCurrencyType = "decimal(38,10)";
 
         public const string SqlMoneyType = "money";
         public const string SqlDateTimeType = "datetime";
@@ -173,8 +173,8 @@ ELSE
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
         public const string BigMoneyType = "decimal(38,8)";
         public const string ExchangeRateType = "decimal(28,12)";
-        public const string SupportedCurrencyMin = "-9999999999999";
-        public const string SupportedCurrencyMax = "9999999999999";
+        public const string SupportedCurrencyMin = "-9999999999999.9999999999";
+        public const string SupportedCurrencyMax = "9999999999999.9999999999";
 
         /// <summary>
         /// Max/Min value for Int/Decimal/Money

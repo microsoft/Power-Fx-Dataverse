@@ -48,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 var numberType = ToSqlType(result.type);
 
                 // only allow whole numbers to be parsed
-                context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(38,10))");
+                context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
                 context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
           
                 return result;
