@@ -19,6 +19,7 @@ using System.Xml;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using System.Text;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -31,8 +32,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
 
+            context.valueFunctionCall = true;
+
             var arg0 = node.Args[0];
             var arg = arg0.Accept(visitor, context);
+
+            context.valueFunctionCall = false;
+
             if (arg.type is StringType)
             {
                 if (arg0 is TextLiteralNode literal)
@@ -55,6 +61,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
             else if (context.IsNumericType(arg))
             {  
+                if(context.GetVarDetails(arg.varName).Column?.TypeCode == AttributeTypeCode.Money)
+                {
+                    var result = context.GetTempVar(context.GetReturnType(node));
+                    var numberType = ToSqlType(result.type);
+
+                    // only allow whole numbers to be parsed
+                    context.SetIntermediateVariable(result, $"TRY_CAST({CoerceNullToInt(arg)} AS decimal(23,10))");
+                    context.ErrorCheck($"({result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                    return result;
+                }
+
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
