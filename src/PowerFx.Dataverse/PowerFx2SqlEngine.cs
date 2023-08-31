@@ -182,14 +182,17 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        typeName = SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(parameters[i].Item2);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                var finalReturnType = IsNumericType(retType) ? SqlStatementFormat.SqlNumberAndDecimalReturnType : SqlVisitor.ToSqlType(retType);
-                tw.WriteLine($") RETURNS {finalReturnType}");
+                // var finalReturnType = options.TypeHints?.TypeHint == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(retType);
+                // tw.WriteLine($") RETURNS {finalReturnType}");
+                
+                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
                 if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
@@ -208,7 +211,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = field.Column.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(field.VarType);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -259,7 +262,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2);
+                    string tempVariableType = temp.Item3 ? SqlStatementFormat.SqlCurrencyType : SqlVisitor.ToSqlType(temp.Item2);
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 

@@ -169,7 +169,25 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)})");
+                        if (left?.varName != null && context.GetVarDetails(left.varName).Column?.TypeCode == AttributeTypeCode.Money)
+                        {
+                            context.PerformOverflowCheck(left, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                        }
+                        var leftOperand = Library.CoerceNullToNumberType(left, left.type);
+
+                        if (right?.varName != null && context.GetVarDetails(right.varName).Column?.TypeCode == AttributeTypeCode.Money)
+                        {
+                            context.PerformOverflowCheck(right, SqlStatementFormat.SupportedCurrencyMin, SqlStatementFormat.SupportedCurrencyMax);
+                        }
+                        var rightOperand = Library.CoerceNullToNumberType(right, right.type);
+
+                        var overflowCheckVar = context.SetIntermediateVariable(FormulaType.Decimal, $"({leftOperand} {op} {rightOperand})");
+                        context.PerformOverflowCheck(overflowCheckVar, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax);
+                        context.GetVarDetails(overflowCheckVar.varName).isOverflowVar = true;
+
+                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"{Library.CoerceNullToNumberType(overflowCheckVar, overflowCheckVar.type)}");
+
+                        //context.PerformRangeChecks(result, node);
 
                         return result;
                     }
@@ -370,6 +388,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(arg)}/100.0)");
+                    context.PerformRangeChecks(result, node);
                     return result;
 
                 // Coercions
@@ -731,6 +750,8 @@ namespace Microsoft.PowerFx.Dataverse
                 /// The path to the field
                 /// </summary>
                 public DPath Path;
+
+                public bool isOverflowVar;
             }
 
             // Mapping of field names to details
@@ -783,14 +804,14 @@ namespace Microsoft.PowerFx.Dataverse
             /// Get temp variable details
             /// </summary>
             /// <returns>List of tuples of variable name and type</returns>
-            public IEnumerable<Tuple<string, FormulaType>> GetTemps()
+            public IEnumerable<Tuple<string, FormulaType, bool>> GetTemps()
             {
                 foreach (var pair in _vars)
                 {
                     // a variable is temporary if it has no backing attribute
                     if (pair.Value.Column == null)
                     {
-                        yield return Tuple.Create(pair.Key, pair.Value.VarType);
+                        yield return Tuple.Create(pair.Key, pair.Value.VarType, pair.Value.isOverflowVar);
                     }
                 }
             }
@@ -1320,7 +1341,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
+            internal void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
             {
                 if (_checkOnly) return;
 
