@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, SymTableName);
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, TableType.Empty(), SymTableName);
 
             var optionSetSymbols = new DVSymbolTable(metadataCache);
 

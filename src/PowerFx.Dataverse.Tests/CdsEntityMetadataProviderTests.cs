@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 using System;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.Xrm.Sdk.Metadata;
 using Xunit;
 

@@ -237,13 +237,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static string CoerceNullToNumberType(RetVal retVal, FormulaType type)
         {
-            Contracts.Assert(type is NumberType);
+            Contracts.Assert(type is DecimalType || type is NumberType);
             return CoerceNumberToType(CoerceNullToInt(retVal), type);
         }
 
         public static string CoerceNumberToType(string value, FormulaType type)
         {
-            Contracts.Assert(type is NumberType);
+            Contracts.Assert(type is DecimalType || type is NumberType);
             return $"CAST({value} AS {ToSqlType(type)})";
         }
 

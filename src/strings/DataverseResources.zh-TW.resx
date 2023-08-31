@@ -157,7 +157,7 @@
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>特定地區設定格式化權杖，例如公式欄中不支援「。」和「，」。</value>
+    <value>特定地區設定格式化權杖，例如公式欄中不支援「.」和「,」。</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
