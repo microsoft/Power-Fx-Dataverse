@@ -66,25 +66,27 @@ AS BEGIN
     DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
 
     -- expression body
-    IF(TRY_CAST(@v1 AS decimal(23,10)) IS NULL) BEGIN RETURN NULL END
-    SET @v2 = TRY_CAST((CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(23,10))) AS decimal(23,10))
-    IF(@v2 IS NULL) BEGIN RETURN NULL END
-    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = 2.0
-    SET @v4 = TRY_CAST((CAST(ISNULL(@v2,0) AS decimal(23,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10))) AS decimal(23,10))
-    IF(@v4 IS NULL) BEGIN RETURN NULL END
+    SET @v2 = TRY_CAST(ISNULL(@v1,0) AS decimal(23,10))
+    IF((@v2 IS NULL)) BEGIN RETURN NULL END
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v4 = 2.0
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) * ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v4, 10)
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 10)
 END
 ";
         [Fact]
         public void CheckCurrencyCompile()
         {
-            var expr = "\t\t\nfield*field1*\n2.0\t";
+            var expr = "\t\t\nfield*Decimal(field1)*\n2.0\t";
 
             var model = new EntityMetadataModel
             {
@@ -127,7 +129,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(2,result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("\t\t\nnew_field*new_field1*\n2.0\t", result.LogicalFormula);
+            Assert.Equal("\t\t\nnew_field*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
 
         public const string BaselineSingleCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
@@ -138,7 +140,8 @@ AS BEGIN
     DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = @v0
+    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
+    IF((@v1 IS NULL)) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -149,7 +152,7 @@ END
         [Fact]
         public void CheckSingleCurrencyFieldCompile()
         {
-            var expr = "field";
+            var expr = "Decimal(field)";
 
             var model = new EntityMetadataModel
             {
@@ -186,7 +189,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(1, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("new_field", result.LogicalFormula);
+            Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
 
         public const string BaselineSingleCurrencyFunctionWithHints = @"CREATE FUNCTION fn_testUdf1(
@@ -197,7 +200,8 @@ AS BEGIN
     DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = @v0
+    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
+    IF((@v1 IS NULL)) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -208,7 +212,7 @@ END
         [Fact]
         public void CheckSingleCurrencyFieldCompileWithHints()
         {
-            var expr = "field";
+            var expr = "Decimal(field)";
 
             var model = new EntityMetadataModel
             {
@@ -251,38 +255,43 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(1, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("new_field", result.LogicalFormula);
+            Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
 
         public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(28,12), -- exchangerate
-    @v1 decimal(38,10) -- new_field1
+    @v2 decimal(38,10) -- new_field1
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v2 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
+    DECLARE @v6 decimal(23,10)
 
     -- expression body
-    IF(TRY_CAST(@v1 AS decimal(23,10)) IS NULL) BEGIN RETURN NULL END
-    SET @v2 = TRY_CAST((CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(23,10))) AS decimal(23,10))
-    IF(@v2 IS NULL) BEGIN RETURN NULL END
-    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = 2.0
-    SET @v4 = TRY_CAST((CAST(ISNULL(@v2,0) AS decimal(23,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10))) AS decimal(23,10))
+    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
+    IF((@v1 IS NULL)) BEGIN RETURN NULL END
+    SET @v3 = TRY_CAST(ISNULL(@v2,0) AS decimal(23,10))
+    IF((@v3 IS NULL)) BEGIN RETURN NULL END
+    SET @v4 = TRY_CAST((ISNULL(@v1,0) * ISNULL(@v3,0)) AS decimal(23,10))
     IF(@v4 IS NULL) BEGIN RETURN NULL END
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    SET @v5 = 2.0
+    SET @v6 = TRY_CAST((ISNULL(@v4,0) * ISNULL(@v5,0)) AS decimal(23,10))
+    IF(@v6 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v4, 10)
+    IF(@v6<-100000000000 OR @v6>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v6, 10)
 END
 ";
 
         [Fact]
         public void CheckExchangeRateCompile()
         {
-            var expr = "\t\t\nexchangerate*field1*\n2.0\t";
+            var expr = "\t\t\nDecimal(exchangerate)*Decimal(field1)*\n2.0\t";
 
             var model = new EntityMetadataModel
             {
@@ -325,7 +334,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(2, result.TopLevelIdentifiers.Count);
             Assert.Equal("exchangerate", result.TopLevelIdentifiers.First());
-            Assert.Equal("\t\t\nexchangerate*new_field1*\n2.0\t", result.LogicalFormula);
+            Assert.Equal("\t\t\nDecimal(exchangerate)*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
 
         [Fact]
@@ -460,10 +469,10 @@ AS BEGIN
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = TRY_CAST((CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10))) AS decimal(23,10))
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
     IF(@v3 IS NULL) BEGIN RETURN NULL END
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = TRY_CAST((CAST(ISNULL(@v3,0) AS decimal(23,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10))) AS decimal(23,10))
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) + ISNULL(@v4,0)) AS decimal(23,10))
     IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
@@ -501,7 +510,7 @@ END
         [Fact]
         public void CheckCompileAllAttributeTypes()
         {
-            var expr = "field * Int - Money + If(Boolean || Picklist = 'Picklist (All Attributes)'.One, Value(String), 2)";
+            var expr = "field * Int - Decimal(Money) + If(Boolean || Picklist = 'Picklist (All Attributes)'.One, Value(String), 2)";
 
             var metadata = AllAttributeModel.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
@@ -509,13 +518,13 @@ END
 
             Assert.NotNull(result);
             Assert.True(result.IsSuccess);
-            Assert.Equal("new_field * int - money + If(boolean || picklist = allattributes_picklist_optionSet.'1', Value(string), 2)", result.LogicalFormula);
+            Assert.Equal("new_field * int - Decimal(money) + If(boolean || picklist = allattributes_picklist_optionSet.'1', Value(string), 2)", result.LogicalFormula);
         }
 
         [Fact]
         public void CheckMoney()
         {
-            var expr = "Money"; // resolve to Money filed
+            var expr = "Decimal(Money)"; // resolve to Money filed
 
             var metadata = AllAttributeModel.ToXrm();
 
@@ -530,7 +539,7 @@ END
             Assert.NotNull(result);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal("money", result.ApplyGetInvariant());
+            Assert.Equal("Decimal(money)", result.ApplyGetInvariant());
         }
 
         [Fact]
@@ -754,7 +763,7 @@ END
         [Theory]
         [InlineData("field", typeof(DecimalType))] // "Decimal"
         [InlineData("1.1", typeof(DecimalType))] // "Numeric literal returns Decimal"
-        [InlineData("Money", typeof(DecimalType))] // "Money returns Decimal"
+        [InlineData("Decimal(Money)", typeof(DecimalType))] // "Money returns Decimal"
         [InlineData("Int", typeof(DecimalType))] // "Int returns Decimal"
         [InlineData("String", typeof(StringType))] // "String"
         [InlineData("\"foo\"", typeof(StringType))] // "String literal returns String"
@@ -813,11 +822,11 @@ END
             List<string> expressions = new List<string>();
 
             bool addIdentityCheck = true;
+            var code = attr.AttributeType.Value;
 
             // IsBlank should accept any type, and always return a boolean.
-            expressions.Add($"IsBlank({attr.LogicalName})");
+            expressions.Add(code == AttributeTypeCode.Money ? $"IsBlank(Decimal({attr.LogicalName}))": $"IsBlank({attr.LogicalName})");
 
-            var code = attr.AttributeType.Value;
             switch (code)
             {
                 // Should be able to use arithmetic operator on any numerical type
@@ -825,8 +834,11 @@ END
                 case AttributeTypeCode.Decimal:
                 case AttributeTypeCode.Double:
                 case AttributeTypeCode.Integer:
-                case AttributeTypeCode.Money:
                     expressions.Add($"{attr.LogicalName} > 0");
+                    break;
+
+                case AttributeTypeCode.Money:
+                    expressions.Add($"Decimal({attr.LogicalName}) > 0");
                     break;
 
                 case AttributeTypeCode.Boolean:
@@ -853,7 +865,7 @@ END
             // Identity check. 
             if (addIdentityCheck)
             {
-                expressions.Add($"{attr.LogicalName} = '{attr.DisplayName}'");
+                expressions.Add(code == AttributeTypeCode.Money ? $"Decimal({attr.LogicalName}) = Decimal('{attr.DisplayName}')" : $"{attr.LogicalName} = '{attr.DisplayName}'");
             }
 
             return expressions.ToArray();
@@ -938,7 +950,7 @@ END
                     // To test producers, we just pass the field straight through. This means we must be able to consume the field first. 
                     // There are types we could produce that we can't consume (such as if a function or operator returned the type)
                     // but we don't have an automatic way of testing that. 
-                    var expr = $"{attr.LogicalName}";
+                    var expr = attr.AttributeType.Value == AttributeTypeCode.Money? $"Decimal({attr.LogicalName})" : $"{attr.LogicalName}";
                     var checkResult = engine.Check(expr);
 
                     AssertResult(checkResult, unsupportedProducer, attr.LogicalName, expr);
@@ -1954,9 +1966,9 @@ END
             var xrmModel = AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(AllAttributeModels);
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
-            var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
+            var result = engine.Compile("Decimal(money) + lookup.data3 + Decimal(lookup.currencyField) + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Equal("Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
+            Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
         [Theory]

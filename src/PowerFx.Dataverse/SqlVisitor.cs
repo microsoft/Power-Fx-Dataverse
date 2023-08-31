@@ -169,19 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        if (left?.varName != null && context.GetVarDetails(left.varName).Column?.TypeCode == AttributeTypeCode.Money)
-                        {
-                            context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"TRY_CAST({left} AS decimal(23,10)) IS NULL"));
-                        }
-                        var leftOperand = Library.CoerceNullToNumberType(left, left.type);
-
-                        if (right?.varName != null && context.GetVarDetails(right.varName).Column?.TypeCode == AttributeTypeCode.Money)
-                        {
-                            context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"TRY_CAST({right} AS decimal(23,10)) IS NULL"));
-                        }
-                        var rightOperand = Library.CoerceNullToNumberType(right, right.type);
-
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({leftOperand} {op} {rightOperand}) AS decimal(23,10))");
+                        var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}) AS decimal(23,10))");
                         context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"{result} IS NULL"));
                         context.PerformRangeChecks(result, node);
 
@@ -944,8 +932,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // if related entity currency field is used in the formula field then block this operation
                     if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
                     {
-                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                    }
+                            throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                        }
 
                     if (column.RequiresReference())
                     {
@@ -1342,7 +1330,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
+            private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
             {
                 if (_checkOnly) return;
 

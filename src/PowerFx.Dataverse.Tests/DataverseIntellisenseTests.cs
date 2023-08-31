@@ -129,7 +129,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
         [InlineData("Floa|")] // "Floating point fields are not suggested at all. Float function can't be used in the formula but is internally supported from IR."
-        [InlineData("Deci|")] // "Decimal function is not suggested by intellisense but can be used by manually typing"
         [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
         [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"
         [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"

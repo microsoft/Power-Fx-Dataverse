@@ -197,7 +197,7 @@ ELSE
         public const string MoneyTypeMax = "922337203685477.5807";
         public const double MoneyTypeMinValue = -922337203685477.5808;
         public const double MoneyTypeMaxValue = 922337203685477.5807;
-       
+
         /// <summary>
         /// DateTime part
         /// </summary>
