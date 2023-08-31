@@ -200,10 +200,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return FormulaType.Decimal;
             }
-            else if (type.Kind == DKind.Currency)
+            /*else if (type.Kind == DKind.Currency)
             {
                 return FormulaType.Decimal;
-            }
+            }*/
             else
             {
                 try

@@ -931,6 +931,11 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
+                    if (!valueFunctionCall && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
+                    {
+                        throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
+                    }
+
                     var varType = GetFormulaType(column, sourceContext);
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
@@ -1068,6 +1073,8 @@ namespace Microsoft.PowerFx.Dataverse
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
+
+            internal bool valueFunctionCall = false;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
