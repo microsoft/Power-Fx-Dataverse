@@ -13,7 +13,10 @@ namespace Microsoft.PowerFx.Dataverse
     public class AIExtractFunction : ReflectionFunction
     {
         public AIExtractFunction()
-            : base("AIExtract", FormulaType.UntypedObject, FormulaType.String, FormulaType.String)
+            : base("AIExtract",
+                  RecordType.Empty().Add("Value", FormulaType.String).ToTable(),
+                  FormulaType.String,
+                  FormulaType.String)
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
