@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -57,8 +58,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, metadata, new Dictionary<string, string> { { rawField, "1" } }, calculations: new Dictionary<string, string> { { "calc1", "" }, { "calc2", "" } });
 
                 var metadataArray = new EntityMetadataModel[] { metadata };
-                var calc1 = ExecuteSqlTest("raw + 1", 2, cx, metadataArray, true, false, "udfCalc1", AttributeMetadataModel.GetIntegerHint());
-                var calc2 = ExecuteSqlTest("raw + 2", 3, cx, metadataArray, true, false, "udfCalc2", AttributeMetadataModel.GetIntegerHint());
+                var calc1 = ExecuteSqlTest("raw + 1", 2, cx, metadataArray, true, false, "udfCalc1", GetIntegerHint());
+                var calc2 = ExecuteSqlTest("raw + 2", 3, cx, metadataArray, true, false, "udfCalc2", GetIntegerHint());
 
                 using (var tx = cx.BeginTransaction())
                 {
@@ -72,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
-                var calc3 = ExecuteSqlTest("calc1 + calc2 + raw", 6, cx, metadataArray, true, false, "udfCalc3", AttributeMetadataModel.GetIntegerHint());
+                var calc3 = ExecuteSqlTest("calc1 + calc2 + raw", 6, cx, metadataArray, true, false, "udfCalc3", GetIntegerHint());
 
                 using (var tx = cx.BeginTransaction())
                 {
@@ -139,59 +140,59 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Guid selfrefid;
                 using (var tx = cx.BeginTransaction())
                 {
-                    DropTable(cx, tx, DataverseTests.LocalModel);
-                    DropTable(cx, tx, DataverseTests.RemoteModel);
-                    DropTable(cx, tx, DataverseTests.DoubleRemoteModel);
-                    DropTable(cx, tx, DataverseTests.TripleRemoteModel);
+                    DropTable(cx, tx, MockModels.LocalModel);
+                    DropTable(cx, tx, MockModels.RemoteModel);
+                    DropTable(cx, tx, MockModels.DoubleRemoteModel);
+                    DropTable(cx, tx, MockModels.TripleRemoteModel);
 
                     var createCmd = cx.CreateCommand();
                     createCmd.Transaction = tx;
-                    createCmd.CommandText = GenerateTableScript(DataverseTests.LocalModel);
+                    createCmd.CommandText = GenerateTableScript(MockModels.LocalModel);
                     createCmd.ExecuteNonQuery();
 
-                    createCmd.CommandText = GenerateTableScript(DataverseTests.RemoteModel, calculations: new Dictionary<string, string> { { "calc", "data + 1" } });
+                    createCmd.CommandText = GenerateTableScript(MockModels.RemoteModel, calculations: new Dictionary<string, string> { { "calc", "data + 1" } });
                     createCmd.ExecuteNonQuery();
 
-                    createCmd.CommandText = GenerateTableScript(DataverseTests.DoubleRemoteModel);
+                    createCmd.CommandText = GenerateTableScript(MockModels.DoubleRemoteModel);
                     createCmd.ExecuteNonQuery();
 
-                    createCmd.CommandText = GenerateTableScript(DataverseTests.TripleRemoteModel);
+                    createCmd.CommandText = GenerateTableScript(MockModels.TripleRemoteModel);
                     createCmd.ExecuteNonQuery();
 
                     // first create the referenced triple remote row
                     var trid = Guid.NewGuid();
-                    InsertRow(cx, tx, DataverseTests.TripleRemoteModel, new Dictionary<string, string> {
-                        { DataverseTests.TripleRemoteModel.PrimaryIdAttribute, GuidToSql(trid) },
+                    InsertRow(cx, tx, MockModels.TripleRemoteModel, new Dictionary<string, string> {
+                        { MockModels.TripleRemoteModel.PrimaryIdAttribute, GuidToSql(trid) },
                         { "data3", "1" }
                     });
 
                     // then create the referenced double remote row
                     var drid = Guid.NewGuid();
-                    InsertRow(cx, tx, DataverseTests.DoubleRemoteModel, new Dictionary<string, string> {
-                        { DataverseTests.DoubleRemoteModel.PrimaryIdAttribute, GuidToSql(drid) },
+                    InsertRow(cx, tx, MockModels.DoubleRemoteModel, new Dictionary<string, string> {
+                        { MockModels.DoubleRemoteModel.PrimaryIdAttribute, GuidToSql(drid) },
                         { "otherotherotherid", GuidToSql(trid) },
                         { "data2", "1" }
                     });
 
                     // then create the referenced remote row
                     var rid = Guid.NewGuid();
-                    InsertRow(cx, tx, DataverseTests.RemoteModel, new Dictionary<string, string> {
-                        { DataverseTests.RemoteModel.PrimaryIdAttribute, GuidToSql(rid) },
+                    InsertRow(cx, tx, MockModels.RemoteModel, new Dictionary<string, string> {
+                        { MockModels.RemoteModel.PrimaryIdAttribute, GuidToSql(rid) },
                         { "data", "1" },
                         { "otherotherid", GuidToSql(drid) }
                     });
 
                     // then create the referenced local row
                     var lid = Guid.NewGuid();
-                    InsertRow(cx, tx, DataverseTests.LocalModel, new Dictionary<string, string> {
-                        { DataverseTests.LocalModel.PrimaryIdAttribute, GuidToSql(lid) },
+                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> {
+                        { MockModels.LocalModel.PrimaryIdAttribute, GuidToSql(lid) },
                         { "new_price", "1" }
                     });
 
                     // then create the row that references both
                     selfrefid = Guid.NewGuid();
-                    InsertRow(cx, tx, DataverseTests.LocalModel, new Dictionary<string, string> {
-                        { DataverseTests.LocalModel.PrimaryIdAttribute, GuidToSql(selfrefid) },
+                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> {
+                        { MockModels.LocalModel.PrimaryIdAttribute, GuidToSql(selfrefid) },
                         { "new_price", "1" },
                         { "otherid", GuidToSql(rid) },
                         { "selfid", GuidToSql(lid) }
@@ -200,16 +201,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
-                var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
+                var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.calc", calc.LogicalFormula);
 
-                calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
+                calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.data", calc.LogicalFormula);
 
-                calc = ExecuteSqlTest("Price + 'Self Reference'.Price", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
+                calc = ExecuteSqlTest("Price + 'Self Reference'.Price", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + self.new_price", calc.LogicalFormula);
 
-                calc = ExecuteSqlTest("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", 2M, cx, DataverseTests.RelationshipModels, rowid: selfrefid);
+                calc = ExecuteSqlTest("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", calc.LogicalFormula);
             }
         }
@@ -568,6 +569,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal3 * int2", null, cx, metadata);
                 ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
             }
+        }
+
+        public static TypeDetails GetIntegerHint()
+        {
+            return new TypeDetails
+            {
+                TypeHint = AttributeTypeCode.Integer
+            };
         }
 
         #region Full Test infra

@@ -4,31 +4,22 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.LanguageServerProtocol;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text.Json;
-using System.Web;
-
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // Unit tests on EditorContextScope.
     // This is used for intellisense. 
-    
+
     public class EditorContextScopeTests
     {
         private PowerFx2SqlEngine GetSqlEngine()
         {
-            var provider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
-            var sqlEngine = new PowerFx2SqlEngine(DataverseTests.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var sqlEngine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             return sqlEngine;
         }
 
