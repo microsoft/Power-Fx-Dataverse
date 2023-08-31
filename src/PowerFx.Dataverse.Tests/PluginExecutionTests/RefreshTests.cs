@@ -4,16 +4,17 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Xunit;
-using Microsoft.Xrm.Sdk;
 using System;
 using System.Linq;
 using System.Threading;
+using Microsoft.Dataverse.EntityMock;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class RefreshTests
     {
         internal static readonly EntityMetadataModel Accounts = new EntityMetadataModel
@@ -37,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Entity entity1 = new Entity("Accounts", Guid.NewGuid());
             entity1.Attributes.Add("Account Name", "Account0");
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(RefreshTests.Accounts);
+            var xrmMetadataProvider = new MockXrmMetadataProvider(RefreshTests.Accounts);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1);
 
