@@ -932,8 +932,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // if related entity currency field is used in the formula field then block this operation
                     if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
                     {
-                            throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                        }
+                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                    }
 
                     if (column.RequiresReference())
                     {
