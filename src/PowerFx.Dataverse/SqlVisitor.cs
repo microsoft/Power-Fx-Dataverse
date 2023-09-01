@@ -1198,7 +1198,10 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_checkOnly) return;
 
                 // compute approximate power to determine if there will be an overflow
-                var power = SetIntermediateVariable(FormulaType.Decimal, $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)");
+                var expression = TryCastToDecimal($"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)");
+                var power = SetIntermediateVariable(FormulaType.Decimal, expression);
+                NullCheck(power, postValidation: true);
+
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
 

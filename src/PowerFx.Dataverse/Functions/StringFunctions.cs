@@ -237,7 +237,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownToInt(val));
+
+            var expression = context.TryCastToDecimal(RoundDownToInt(val));
+            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, expression);
+            context.NullCheck(roundedVal, postValidation: true);
+
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
