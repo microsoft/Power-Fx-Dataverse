@@ -60,11 +60,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 return result;
             }
             else if (context.IsNumericType(arg))
-            {  
-                if(context.GetVarDetails(arg.varName).Column?.TypeCode == AttributeTypeCode.Money)
+            {
+                var column = context.GetVarDetails(arg.varName).Column;
+                if (column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
                 {
                     var result = context.GetTempVar(context.GetReturnType(node));
-                    var numberType = ToSqlType(result.type);
 
                     // only allow whole numbers to be parsed
                     context.SetIntermediateVariable(result, $"TRY_CAST({CoerceNullToInt(arg)} AS decimal(23,10))");
