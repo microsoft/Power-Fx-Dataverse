@@ -283,7 +283,6 @@ namespace Microsoft.Dataverse.EntityMock
             this.IsLogical = value;
             return this;
         }
-
     }
 
     public class OneToManyRelationshipMetadataModel
