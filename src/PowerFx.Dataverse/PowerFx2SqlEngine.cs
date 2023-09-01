@@ -355,7 +355,7 @@ namespace Microsoft.PowerFx.Dataverse
             result.type = returnType;
 
             context._sbContent = new System.Text.StringBuilder();
-            context.PerformRangeChecks(result, null, postCheck: true);
+            context.PerformRangeChecks(result, null, postCheck: true, isFinalCheck: true);
             tw.Write(context._sbContent);
 
             if (context.IsNumericType(result))

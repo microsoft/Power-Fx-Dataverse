@@ -167,7 +167,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var rawDigits = node.Args[1].Accept(visitor, context);
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
-            var digits = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(rawDigits));
+            var digits = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(rawDigits, context));
             context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Number), digits);
             var factor = context.GetTempVar(FormulaType.Decimal);
             var factorExpression = context.TryCastToDecimal($"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})");
@@ -219,17 +219,19 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         /// <summary>
         /// PowerApps Rounds Down towards zero, so 1.4 becomes 1 and -1.4 becomes -1 (
         /// </summary>s>
-        public static string RoundDownNullToInt(RetVal retVal)
+        public static string RoundDownNullToInt(RetVal retVal, Context context)
         {
-            return RoundDownToInt(RetVal.FromSQL(CoerceNullToInt(retVal), retVal.type));
+            return RoundDownToInt(RetVal.FromSQL(CoerceNullToInt(retVal), retVal.type), context);
         }
 
         /// <summary>
         /// PowerApps Rounds Down towards zero, so 1.4 becomes 1 and -1.4 becomes -1 (
         /// </summary>s>
-        public static string RoundDownToInt(RetVal retVal)
+        public static string RoundDownToInt(RetVal retVal, Context context)
         {
-            return $"IIF({retVal}<0,CEILING({retVal}),FLOOR({retVal}))";
+            var expr = context.TryCastToDecimal($"IIF({retVal}<0,CEILING({retVal}),FLOOR({retVal}))");
+            context.NullCheck(RetVal.FromSQL(expr, retVal.type), postValidation: true);
+            return expr;
         }
 
         /// <summary>

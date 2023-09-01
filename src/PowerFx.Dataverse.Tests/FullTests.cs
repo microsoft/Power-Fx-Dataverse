@@ -562,6 +562,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
+                ExecuteSqlTest("999999*999999/9999", 100009800.9801980198M, cx, metadata);
+
 
                 // Overflow cases - return null
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);

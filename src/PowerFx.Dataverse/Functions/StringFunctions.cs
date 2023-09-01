@@ -237,11 +237,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-
-            var expression = context.TryCastToDecimal(RoundDownToInt(val));
-            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, expression);
-            context.NullCheck(roundedVal, postValidation: true);
-
+            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownToInt(val, context));
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -307,7 +303,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", FormulaType.Decimal);
+                length = RetVal.FromSQL($"{node.Args[2].Accept(visitor, context)}", FormulaType.Decimal);
                 context.NegativeNumberCheck(length);
             }
             else
@@ -316,7 +312,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
             }
 
-            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},{start},{length})");
         }
 
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
@@ -368,7 +364,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var coercedInstance = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(instance));
+                var coercedInstance = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(instance, context));
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
