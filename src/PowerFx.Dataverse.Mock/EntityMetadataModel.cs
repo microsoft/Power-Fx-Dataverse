@@ -284,14 +284,6 @@ namespace Microsoft.Dataverse.EntityMock
             return this;
         }
 
-        public static SqlCompileOptions.TypeDetails GetIntegerHint()
-        {
-            return new SqlCompileOptions.TypeDetails
-            {
-                TypeHint = AttributeTypeCode.Integer,
-                Precision = 0
-            };
-        }
     }
 
     public class OneToManyRelationshipMetadataModel

@@ -578,7 +578,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new TypeDetails
             {
-                TypeHint = AttributeTypeCode.Integer
+                TypeHint = AttributeTypeCode.Integer,
+                Precision = 0
             };
         }
 
