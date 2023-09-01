@@ -568,6 +568,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("BigInteger * BigInteger", null, cx, metadata);
                 ExecuteSqlTest("decimal3 * int2", null, cx, metadata);
                 ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
+                ExecuteSqlTest("99999999 * 99999999", null, cx, metadata);
+                ExecuteSqlTest("IsError(99999999 * 99999999)", true, cx, metadata);
             }
         }
 

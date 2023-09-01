@@ -170,7 +170,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         var result = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST(({Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}) AS decimal(23,10))");
-                        context.AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, $"{result} IS NULL"));
+                        context.ErrorCheck($"{result} IS NULL", Context.ValidationErrorCode, true);
                         context.PerformRangeChecks(result, node);
 
                         return result;

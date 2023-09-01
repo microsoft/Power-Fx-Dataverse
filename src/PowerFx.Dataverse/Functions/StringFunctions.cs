@@ -61,8 +61,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
             else if (context.IsNumericType(arg))
             {
-                var varDetails = context.GetVarDetails(arg.varName);
-                if (varDetails.Column?.TypeCode == AttributeTypeCode.Money || varDetails.Column?.LogicalName == "exchangerate")
+                var column = context.GetVarDetails(arg.varName).Column;
+                if (column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
                 {
                     var result = context.GetTempVar(context.GetReturnType(node));
 

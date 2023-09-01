@@ -187,9 +187,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
-
-                // var finalReturnType = options.TypeHints?.TypeHint == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(retType);
-                // tw.WriteLine($") RETURNS {finalReturnType}");
                 
                 tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
 
