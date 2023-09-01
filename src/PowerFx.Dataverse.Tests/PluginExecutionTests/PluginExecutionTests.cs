@@ -12,6 +12,7 @@ using System.ServiceModel;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
@@ -115,10 +116,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void ConvertMetadataLazy()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -158,10 +159,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void ConvertMetadataLazyFloat()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -212,12 +213,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
+        public void ModelArrayToMetadataArrayTest()
+        {
+            var xrmArray = ModelExtensions.ToXrm(MockModels.RelationshipModels);
+
+            foreach (var metadata in xrmArray)
+            {
+                Assert.IsType<EntityMetadata>(metadata);
+            }
+        }
+
+        [Fact]
         public void MetadataChecks()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -2411,6 +2423,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Comparing fields can't be delegated.
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        // Not All binary op are supported.
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // Error handling
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)")]
 
@@ -3700,6 +3715,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
+            entity1.Attributes["new_name"] = "row1";
+
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
@@ -3709,7 +3726,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             entity2.Attributes["data"] = Convert.ToDecimal(200);
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
+            var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
@@ -3748,7 +3765,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["guid"] = _g1;
             entity1.Attributes["multiSelect"] = _listOptionSetValueCollection;
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
+            var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
 
             entityLookup.Add(CancellationToken.None, entity1);

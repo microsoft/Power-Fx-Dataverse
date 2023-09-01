@@ -22,9 +22,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
-            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, $"{CoerceNullToInt(number)} % {divisor}");
+
+            var expression = context.TryCastToDecimal($"{CoerceNullToInt(number)} % {divisor}");
+
+            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, expression);
+            context.NullCheck(initialResult, postValidation: true);
+
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
-            context.SetIntermediateVariable(result, $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
+            var finalExpression = context.TryCastToDecimal($"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
+
+            context.SetIntermediateVariable(result, finalExpression);
+            context.NullCheck(result, postValidation: true);
+
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -237,13 +246,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static string CoerceNullToNumberType(RetVal retVal, FormulaType type)
         {
-            Contracts.Assert(type is NumberType);
+            Contracts.Assert(type is DecimalType || type is NumberType);
             return CoerceNumberToType(CoerceNullToInt(retVal), type);
         }
 
         public static string CoerceNumberToType(string value, FormulaType type)
         {
-            Contracts.Assert(type is NumberType);
+            Contracts.Assert(type is DecimalType || type is NumberType);
             return $"CAST({value} AS {ToSqlType(type)})";
         }
 
