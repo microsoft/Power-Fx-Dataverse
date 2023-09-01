@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Web;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.LanguageServerProtocol;
@@ -22,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     // LSP is network layer on top of intellisense support.     
     public class DataverseLSPTests
     {
-        private static readonly string _entityLogicalName = DataverseTests.AllAttributeModel.LogicalName;
+        private static readonly string _entityLogicalName = MockModels.AllAttributeModel.LogicalName;
 
         public class PowerFxScopeFactory : IPowerFxScopeFactory
         {
