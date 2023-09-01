@@ -25,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, $"{CoerceNullToInt(number)} % {divisor}");
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
             context.SetIntermediateVariable(result, $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -93,6 +94,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.NullCheck(result, postValidation:true);
             }
 
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -162,6 +164,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
             context.SetIntermediateVariable(result, $"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})");
             context.ErrorCheck($"{number} <> 0 AND {result} = 0", Context.ValidationErrorCode);
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -173,6 +176,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
             context.SetIntermediateVariable(result, $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
+            context.PerformRangeChecks(result, node);
             return result;
         }
 

@@ -545,7 +545,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
-                    { "decimal", "20" },
+                    { "decimal", "19.69658" },
                     { "decimal2", "0.02188" },
                     { "decimal3", "10000000000" },
                     { "int", "20"},
@@ -555,6 +555,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 });
 
                 // Arithmetic
+                ExecuteSqlTest("decimal*decimal2", 0.4309611704M, cx, metadata);
                 ExecuteSqlTest("Decimal(decimal2)", 0.02188M, cx, metadata);
                 ExecuteSqlTest("RoundUp(decimal2,3)", 0.022M, cx, metadata);
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
@@ -567,6 +568,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("BigInteger * BigInteger", null, cx, metadata);
                 ExecuteSqlTest("decimal3 * int2", null, cx, metadata);
                 ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
+                ExecuteSqlTest("99999999 * 99999999", null, cx, metadata);
+                ExecuteSqlTest("IsError(99999999 * 99999999)", true, cx, metadata);
             }
         }
 
@@ -745,7 +748,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
                 else
                 {
-                    type = $"{SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType())} NULL";
+                    var attrType = attr.AttributeType == AttributeTypeCode.Integer ? SqlStatementFormat.SqlIntegerType : SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType());
+                    type = $"{attrType} NULL";
                 }
 
                 baseTable += $@",
@@ -814,29 +818,6 @@ CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
         public const string TestCreateViewScript = @"CREATE VIEW [dbo].ACCOUNT1(
    AccountId, new_Calc_Schema, address1_latitude) with view_metadata as
 (select t1.AccountId, t1.new_Calc_Schema,t2.address from[dbo].AccountBase1 t1 join[dbo].CustomerBase t2 on t1.customerId = t2.customerId);";
-
-        public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
-    @v0 decimal(38,10), -- new_CurrencyPrice
-    @v2 uniqueidentifier -- accountid
-) RETURNS decimal(23,10)
-AS BEGIN
-    DECLARE @v1 decimal(38,10)
-    DECLARE @v4 decimal(38,10)
-    DECLARE @v3 decimal(38,10)
-    DECLARE @v5 decimal(38,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase1] WHERE[AccountId] = @v2
-    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account1] WHERE[AccountId] = @v2
-
-    -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(38,10)) + CAST(ISNULL(@v1,0) AS decimal(38,10)))
-    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(38,10)))
-    -- end expression body
-
-    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v5, 10)
-END
-";
 
     }
 
