@@ -56,7 +56,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 args.Add(argString);
             }
             context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type)})");
-            context.NullCheck(result, postValidation: true);
             return result;
         }
 
