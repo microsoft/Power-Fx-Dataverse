@@ -1102,6 +1102,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
+            internal string TryCastToDecimal(string expression)
+            {
+                return $"TRY_CAST(({expression}) AS decimal(23,10))";
+            }
+
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);

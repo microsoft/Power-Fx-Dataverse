@@ -22,9 +22,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
-            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, $"{CoerceNullToInt(number)} % {divisor}");
+
+            var expression = context.TryCastToDecimal($"{CoerceNullToInt(number)} % {divisor}");
+
+            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, expression);
+            context.ErrorCheck($"({initialResult} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
-            context.SetIntermediateVariable(result, $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
+            var finalExpression = context.TryCastToDecimal($"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
+
+            context.SetIntermediateVariable(result, finalExpression);
+            context.ErrorCheck($"({result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+
             context.PerformRangeChecks(result, node);
             return result;
         }
