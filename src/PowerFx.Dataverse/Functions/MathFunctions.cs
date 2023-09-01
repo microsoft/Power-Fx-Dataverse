@@ -26,13 +26,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var expression = context.TryCastToDecimal($"{CoerceNullToInt(number)} % {divisor}");
 
             var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, expression);
-            context.ErrorCheck($"({initialResult} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+            context.NullCheck(initialResult, postValidation: true);
 
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
             var finalExpression = context.TryCastToDecimal($"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
 
             context.SetIntermediateVariable(result, finalExpression);
-            context.ErrorCheck($"({result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+            context.NullCheck(result, postValidation: true);
 
             context.PerformRangeChecks(result, node);
             return result;
