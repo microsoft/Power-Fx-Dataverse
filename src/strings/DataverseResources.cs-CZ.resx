@@ -137,7 +137,7 @@
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
-    <value>Pro tento argument je podporována pouze doslovná hodnota.</value>
+    <value>Pro tento argument je podporována pouze hodnota literál.</value>
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">

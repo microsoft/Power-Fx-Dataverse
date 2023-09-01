@@ -4,20 +4,42 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 
-namespace Microsoft.PowerFx.Dataverse.Tests
+namespace Microsoft.Dataverse.EntityMock
 {
     // Serializable form of EntityMetadata
     // Useful for testing. 
     public class EntityMetadataModel
     {
+        public string LogicalName { get; set; }
+        public string EntitySetName { get; set; }
+        public string DisplayName { get; set; }
+        public string DisplayCollectionName { get; set; }
+
+        private string _schemaName;
+        public string SchemaName => _schemaName ?? LogicalName;
+
+        public string PrimaryIdAttribute { get; set; }
+        public string PrimaryNameAttribute { get; set; }
+
+        public bool IsPrivate { get; set; }
+        public bool IsIntersect { get; set; }
+        public bool IsLogicalEntity { get; set; }
+        public int ObjectTypeCode { get; set; }
+
+        public Guid? DataProviderId { get; set; }
+
+        public AttributeMetadataModel[] Attributes { get; set; }
+
+        public OneToManyRelationshipMetadataModel[] ManyToOneRelationships { get; set; }
+
+        public OneToManyRelationshipMetadataModel[] OneToManyRelationships { get; set; }
         public EntityMetadataModel() : this("placeholder") { }
         public EntityMetadataModel(string name)
         {
@@ -33,41 +55,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Attributes = new AttributeMetadataModel[] { new AttributeMetadataModel { LogicalName = name, DisplayName = name, AttributeType = AttributeTypeCode.String } };
         }
 
-        public string LogicalName { get; set; }
-        public string EntitySetName { get; set; }
-        public string DisplayName { get; set; }
-        public string DisplayCollectionName { get; set; }
-
-        private string _schemaName;
-        public string SchemaName => _schemaName ?? LogicalName;
-
-        public string PrimaryIdAttribute { get; set; }
-        public string PrimaryNameAttribute { get; set; }
-        
-        public bool IsPrivate { get; set; }
-        public bool IsIntersect { get; set; }
-        public bool IsLogicalEntity { get; set; }
-        public int ObjectTypeCode { get; set; }
-
-        public Guid? DataProviderId { get; set; }
-
-        public AttributeMetadataModel[] Attributes { get; set; }
-
-        public OneToManyRelationshipMetadataModel[] ManyToOneRelationships { get; set; }
-        public OneToManyRelationshipMetadataModel[] OneToManyRelationships { get; set; }
-
         public EntityMetadataModel SetSchemaName(string schemaName)
         {
             if (schemaName != null)
             {
                 _schemaName = schemaName;
             }
-            return this;
-        }
-
-        public EntityMetadataModel SetVirtual()
-        {
-            DataProviderId = Guid.NewGuid();
             return this;
         }
     }
@@ -99,7 +92,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public bool? IsLogical { get; set; }
 
-        public AttributeMetadataModel() {
+        public AttributeMetadataModel()
+        {
             IsValidForRead = true;
         }
 
@@ -325,203 +319,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public OptionMetadataModel[] Options { get; set; }
         public OptionMetadataModel TrueOption { get; set; }
         public OptionMetadataModel FalseOption { get; set; }
-    }
-
-    public class MockXrmMetadataProvider : IXrmMetadataProvider
-    {
-        private readonly Dictionary<string, EntityMetadata> _entitiesByName;
-
-        public MockXrmMetadataProvider(params EntityMetadataModel[] entityModels)
-        {
-            _entitiesByName = entityModels.Select(model => model.ToXrm()).ToDictionary(model => model.LogicalName);
-        }
-
-        public bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity)
-        {
-            return _entitiesByName.TryGetValue(logicalOrDisplayName, out entity);
-        }
-    }
-
-    // Helpers for converting from the model classes to the real Xrm classes.
-    // The only reason we need this is that Xrm classes have private setters and
-    // can't be serialized / mocked. 
-    public static class ModelExtensions
-    {
-        public static EntityMetadata ToXrm(this EntityMetadataModel model)
-        {
-            return Copy<EntityMetadataModel, EntityMetadata>(model);
-        }
-
-        public static EntityMetadataModel ToModel(this EntityMetadata entity)
-        {
-            return Copy<EntityMetadata, EntityMetadataModel>(entity);
-        }
-
-        public static AttributeMetadata[] ToXrm(AttributeMetadataModel[] array)
-        {
-            return Array.ConvertAll<AttributeMetadataModel, AttributeMetadata>(array, item =>
-            {
-                Type type = GetAttributeType(item.AttributeType.Value, item.AttributeTypeName);
-                // use reflection to invoke the correct conversion for the specific attribute type
-                return (AttributeMetadata)typeof(ModelExtensions).GetMethod("Copy").
-                    MakeGenericMethod(typeof(AttributeMetadataModel), type).
-                    Invoke(null, new object[] { item });
-            });
-        }
-
-        private static Type GetAttributeType(AttributeTypeCode typeCode, AttributeTypeDisplayName typeName)
-        {
-            switch (typeCode)
-            {
-                case AttributeTypeCode.String:
-                    return typeof(StringAttributeMetadata);
-                case AttributeTypeCode.Integer:
-                    return typeof(IntegerAttributeMetadata);
-                case AttributeTypeCode.Double:
-                    return typeof(DoubleAttributeMetadata);
-                case AttributeTypeCode.Decimal:
-                    return typeof(DecimalAttributeMetadata);
-                case AttributeTypeCode.Money:
-                    return typeof(MoneyAttributeMetadata);
-                case AttributeTypeCode.BigInt:
-                    return typeof(BigIntAttributeMetadata);
-                case AttributeTypeCode.Boolean:
-                    return typeof(BooleanAttributeMetadata);
-                case AttributeTypeCode.Lookup:
-                case AttributeTypeCode.Customer:
-                case AttributeTypeCode.Owner:
-                    return typeof(LookupAttributeMetadata);
-                case AttributeTypeCode.DateTime:
-                    return typeof(DateTimeAttributeMetadata);
-                case AttributeTypeCode.Memo:
-                    return typeof(MemoAttributeMetadata);
-                case AttributeTypeCode.EntityName:
-                    return typeof(EntityNameAttributeMetadata);
-                case AttributeTypeCode.Picklist:
-                    return typeof(PicklistAttributeMetadata);
-                case AttributeTypeCode.State:
-                    return typeof(StateAttributeMetadata);
-                case AttributeTypeCode.Status:
-                    return typeof(StatusAttributeMetadata);
-                case AttributeTypeCode.Uniqueidentifier:
-                    return typeof(UniqueIdentifierAttributeMetadata);
-                case AttributeTypeCode.Virtual:
-                    if (typeName == AttributeTypeDisplayName.ImageType)
-                    {
-                        return typeof(ImageAttributeMetadata);
-                    }
-                    else if (typeName == AttributeTypeDisplayName.FileType)
-                    {
-                        return typeof(FileAttributeMetadata);
-                    }
-                    else if (typeName == AttributeTypeDisplayName.MultiSelectPicklistType)
-                    {
-                        return typeof(MultiSelectPicklistAttributeMetadata);
-                    }
-                    return typeof(AttributeMetadata);
-                case AttributeTypeCode.CalendarRules:
-                case AttributeTypeCode.ManagedProperty:
-                case AttributeTypeCode.PartyList:
-                default:
-                    // TODO - how to handle these?
-                    return typeof(AttributeMetadata);
-            }
-        }
-
-
-        public static AttributeMetadataModel[] ToModel(AttributeMetadata[] array)
-        {
-            return Array.ConvertAll(array, item =>
-                Copy<AttributeMetadata, AttributeMetadataModel>(item));
-        }
-
-        public static OneToManyRelationshipMetadata[] ToXrm(OneToManyRelationshipMetadataModel[] array)
-        {
-            return Array.ConvertAll(array, item =>
-                Copy<OneToManyRelationshipMetadataModel, OneToManyRelationshipMetadata>(item));
-        }
-
-        public static OneToManyRelationshipMetadataModel[] ToModel(OneToManyRelationshipMetadata[] array)
-        {
-            return Array.ConvertAll(array, item =>
-                Copy<OneToManyRelationshipMetadata, OneToManyRelationshipMetadataModel>(item));
-        }
-
-        public static OptionMetadataCollection ToXrm(OptionMetadataModel[] array)
-        {
-            return new OptionMetadataCollection(Array.ConvertAll(array, item =>
-                Copy<OptionMetadataModel, OptionMetadata>(item)));
-        }
-
-        public static TDest Copy<TSrc, TDest>(TSrc src) where TDest : new()
-        {
-            var obj = new TDest();
-
-            var typeSrc = typeof(TSrc);
-            var typeDest = typeof(TDest);
-            foreach (var propDest in typeDest.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                var propSrc = typeSrc.GetProperty(propDest.Name);
-                if (propSrc == null)
-                {
-                    continue;
-                }
-                var val = propSrc.GetValue(src);
-
-                // Arrays?
-                if (val is AttributeMetadataModel[] a1)
-                {
-                    val = ToXrm(a1);
-                }
-                else if (val is AttributeMetadata[] a2)
-                {
-                    val = ToModel(a2);
-                }
-                else if (val is OneToManyRelationshipMetadataModel[] a3)
-                {
-                    val = ToXrm(a3);
-                }
-                else if (val is OneToManyRelationshipMetadata[] a4)
-                {
-                    val = ToModel(a4);
-                }
-
-                if ((val is Label l1) && propDest.PropertyType == typeof(string))
-                {
-                    val = l1.UserLocalizedLabel?.Label;
-                }
-                else if ((val is string s1) && propDest.PropertyType == typeof(Label))
-                {
-                    var ll = new LocalizedLabel(s1, 1033);
-                    val = new Label(ll, new LocalizedLabel[0]);
-                }
-
-                if ((val is OptionSetMetadataModel bosm) && propDest.PropertyType == typeof(BooleanOptionSetMetadata))
-                {
-                    val = Copy<OptionSetMetadataModel, BooleanOptionSetMetadata>(bosm);
-                }
-                else if (val is OptionSetMetadataModel osm)
-                {
-                    val = Copy<OptionSetMetadataModel, OptionSetMetadata>(osm);
-                }
-                else if (val is OptionMetadataModel om)
-                {
-                    val = Copy<OptionMetadataModel, OptionMetadata>(om);
-                }
-                else if (val is OptionMetadataModel[] oma)
-                {
-                    val = ToXrm(oma);
-                }
-                else if (propDest.PropertyType == typeof(AttributeTypeDisplayName) && val == null)
-                {
-                    // don't update the type name with a null for optional types, as it will overwrite the default
-                    continue;
-                }
-
-                propDest.SetValue(obj, val);
-            }
-
-            return obj;
-        }
     }
 }
