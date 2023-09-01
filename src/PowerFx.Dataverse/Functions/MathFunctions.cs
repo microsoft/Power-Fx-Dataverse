@@ -184,7 +184,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
-            context.SetIntermediateVariable(result, $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
+
+            var expression = context.TryCastToDecimal($"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
+            context.SetIntermediateVariable(result, expression);
+            context.NullCheck(result, postValidation: true);
+
             context.PerformRangeChecks(result, node);
             return result;
         }
