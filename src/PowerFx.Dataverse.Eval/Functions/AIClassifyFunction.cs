@@ -36,11 +36,25 @@ namespace Microsoft.PowerFx.Dataverse
 
             public OrganizationRequest Get()
             {
+                var categoriesStringArray = ConvertFromTableValueToStringArray(this.Categories);
+
                 var req = new OrganizationRequest("AIClassify");
                 req[nameof(ClassifyRequest.Text)] = this.Text;
-                req[nameof(ClassifyRequest.Categories)] = this.Categories;
+                req[nameof(ClassifyRequest.Categories)] = categoriesStringArray;
 
                 return req;
+            }
+
+            private string[] ConvertFromTableValueToStringArray(TableValue table)
+            {
+                List<string> list = new List<string>();
+                foreach (var row in table.Rows)
+                {
+                    RecordValue val = row.Value;
+                    string currStr = ((StringValue)val.GetField("Value")).Value;
+                    list.Add(currStr);
+                }
+                return list.ToArray();
             }
         }
 

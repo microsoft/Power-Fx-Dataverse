@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Validate parameters
                 Assert.Equal("AIClassify", req.RequestName);
                 Assert.Equal("very long string", req.Parameters["Text"]);
-                Assert.Equal("stringint", getConcatenatedStrings((TableValue)req.Parameters["Categories"]));
+                Assert.Equal(new string[] { "string", "int", "double"}, req.Parameters["Categories"]);
 
                 var resp = new OrganizationResponse
                 {
@@ -63,20 +63,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return resp;
             };
 
-            var result = await engine.EvalAsync("AIClassify(\"very long string\", [\"string\", \"int\"])", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync("AIClassify(\"very long string\", [\"string\", \"int\", \"double\"])", default, runtimeConfig: rc);
             Assert.Equal("string", result.ToObject());
-        }
-
-        protected string getConcatenatedStrings(TableValue table)
-        {
-            var returnVal = "";
-            foreach (var row in table.Rows)
-            {
-                RecordValue val = row.Value;
-                string currStr = ((StringValue)val.GetField("Value")).Value;
-                returnVal += currStr;
-            }
-            return returnVal;
         }
 
         [Fact]
