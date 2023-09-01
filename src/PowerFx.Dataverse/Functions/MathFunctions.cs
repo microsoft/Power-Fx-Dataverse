@@ -56,6 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 args.Add(argString);
             }
             context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type)})");
+            context.NullCheck(result, postValidation: true);
             return result;
         }
 
@@ -92,7 +93,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     args.Add($"({context.SetIntermediateVariable(FormulaType.Decimal, coercedArg)})");
                 }
             }
-            context.SelectIntermediateVariable(result, $"{function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X)");
+            var finalExpression = context.TryCastToDecimal($"(SELECT {function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X))");
+            context.SelectIntermediateVariable(result, finalExpression);
+            context.NullCheck(result, postValidation: true);
 
             if (zeroNulls)
             {
@@ -168,11 +171,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var digits = context.SetIntermediateVariable(FormulaType.Decimal, RoundDownNullToInt(rawDigits));
             context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Number), digits);
             var factor = context.GetTempVar(FormulaType.Decimal);
-            context.SetIntermediateVariable(factor, $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})");
+            var factorExpression = context.TryCastToDecimal($"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})");
+            context.SetIntermediateVariable(factor, factorExpression);
             context.DivideByZeroCheck(factor);
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
-            context.SetIntermediateVariable(result, $"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})");
-            context.ErrorCheck($"{number} <> 0 AND {result} = 0", Context.ValidationErrorCode);
+            var finalExpression = context.TryCastToDecimal($"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})");
+            context.SetIntermediateVariable(result, finalExpression);
+            context.ErrorCheck($"{number} <> 0 AND {CoerceNullToInt(result)} = 0", Context.ValidationErrorCode);
             context.PerformRangeChecks(result, node);
             return result;
         }
