@@ -1740,6 +1740,8 @@ END
 
         [Theory]
         [InlineData("10000000", true, true, "")]
+        [InlineData("100000000000", true, true, "")]
+        [InlineData("-100000000000", true, true, "")]
         [InlineData("1000000000000000", true, false, "value is too large")]
         [InlineData("1000000000000000000000000000000000000000000000000", false, false, "value is too large")]
         [InlineData("-10000000", true, true, "")]

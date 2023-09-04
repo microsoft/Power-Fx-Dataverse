@@ -1283,7 +1283,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
                 else*/
-                if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                if (IsNumericType(type) && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1319,7 +1319,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
-                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    if (literal >= SqlStatementFormat.DDecimalTypeMinValue && literal <= SqlStatementFormat.DDecimalTypeMaxValue)
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();
