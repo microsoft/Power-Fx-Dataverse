@@ -547,6 +547,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("decimal", "Decimal"),
                     AttributeMetadataModel.NewDecimal("decimal2", "Decimal2"),
                     AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
+                    AttributeMetadataModel.NewDecimal("decimal4", "Decimal4"),
+                    AttributeMetadataModel.NewDecimal("decimal5", "Decimal5"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
@@ -563,6 +565,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal", "19.69658" },
                     { "decimal2", "0.02188" },
                     { "decimal3", "10000000000" },
+                    { "decimal4", SqlStatementFormat.DecimalTypeMaxForIntermediateOperations },
+                    { "decimal5", SqlStatementFormat.DecimalTypeMinForIntermediateOperations },
                     { "int", "20"},
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
@@ -589,8 +593,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal3 / decimal2", null, cx, metadata);
                 ExecuteSqlTest("99999999 * 99999999", null, cx, metadata);
                 ExecuteSqlTest("IsError(99999999 * 99999999)", true, cx, metadata);
+                ExecuteSqlTest("decimal4 + 1 - 5", null, cx, metadata);
+                ExecuteSqlTest("decimal5 - 1", null, cx, metadata);
+                ExecuteSqlTest("decimal4 + decimal5 + 2", 2.00M, cx, metadata);
+                ExecuteSqlTest("decimal4 + decimal5 + 2 + 99999999999", null, cx, metadata);
                 ExecuteSqlTest("Decimal(money1)/int2", null, cx, metadata); // null as money1 value cannot fit into decimal(23,10)
-
+                ExecuteSqlTest("Sum(Decimal(money2), Decimal(money2))", null, cx, metadata);
             }
         }
 
