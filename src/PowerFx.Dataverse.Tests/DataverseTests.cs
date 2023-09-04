@@ -339,6 +339,47 @@ END
         }
 
         [Fact]
+        public void CheckCurrencyExchangeRateCompile()
+        {
+            var expr = "decimal + money";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "exchangerate",
+                         AttributeType = AttributeTypeCode.Decimal
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "money",
+                         AttributeType = AttributeTypeCode.Money
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "decimal",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 10-15: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+
+            expr = "exchangerate * money";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+
+        }
+
+
+        [Fact]
         public void PowerFunctionBlockedTest()
         {
             var expr = "Power(2,5)";
