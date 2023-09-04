@@ -166,6 +166,8 @@ ELSE
         public const string SqlUniqueIdentifierType = "uniqueidentifier";
         public const string SqlExchangeRateType = "decimal(28,12)";
 
+        public const string SqlFloatType = "float";
+
         /// <summary>
         /// Declare intermediate variable
         /// </summary>
