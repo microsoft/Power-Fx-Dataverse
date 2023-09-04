@@ -300,23 +300,25 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var strArg = node.Args[0].Accept(visitor, context);
 
             ValidateNumericArgument(node.Args[1]);
-            RetVal start = node.Args[1].Accept(visitor, context);
+            RetVal start = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[1].Accept(visitor, context)} AS INT)");
+            context.NullCheck(start, postValidation: true);
             context.NonPositiveNumberCheck(start);
 
             RetVal length;
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", FormulaType.Decimal);
+                length = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[2].Accept(visitor, context)} AS INT)");
+                context.NullCheck(length, postValidation: true);
                 context.NegativeNumberCheck(length);
             }
             else
             {
                 // SQL ignores trailing spaces when counting the length
-                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
+                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Decimal);
             }
 
-            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},{start},{length})");
         }
 
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
