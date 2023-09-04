@@ -303,7 +303,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"{node.Args[2].Accept(visitor, context)}", FormulaType.Decimal);
+                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", FormulaType.Decimal);
                 context.NegativeNumberCheck(length);
             }
             else
@@ -312,7 +312,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
             }
 
-            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},{start},{length})");
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
         }
 
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
