@@ -1238,7 +1238,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true, bool isFinalCheck = false)
+            internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true)
             {
                 if (_checkOnly) return;
 
@@ -1255,16 +1255,21 @@ namespace Microsoft.PowerFx.Dataverse
                     }*/
                     if (IsNumericType(result))
                     {
-                        if (isFinalCheck)
-                        {
-                            PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-                            return;
-                        }
-
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMinForIntermediateOperations, SqlStatementFormat.DecimalTypeMaxForIntermediateOperations, postCheck);
 
                     }
                     // TODO: other range checks?
+                }
+            }
+
+            internal void PerformFinalRangeChecks(RetVal result, bool postCheck = true)
+            {
+                if (_checkOnly) return;
+
+                if (IsNumericType(result))
+                {
+                    PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                    return;
                 }
             }
 
