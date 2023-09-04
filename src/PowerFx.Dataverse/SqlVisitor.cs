@@ -1269,7 +1269,6 @@ namespace Microsoft.PowerFx.Dataverse
                 if (IsNumericType(result))
                 {
                     PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-                    return;
                 }
             }
 
