@@ -433,6 +433,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "string", "N'foo'"}
                 });
 
+                ExecuteSqlTest("Value(\"123.4\")", null, cx, metadata);
+                ExecuteSqlTest("Value(\"123,4\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Value(\"123.4\"))", true, cx, metadata);
+                ExecuteSqlTest("IsError(Value(\"123,4\"))", true, cx, metadata);
+
                 // coerce null to 0 or empty string for logical operators that aren't equality
                 ExecuteSqlTest("-5 < NullDec", true, cx, metadata);
                 ExecuteSqlTest("5 < NullDec", false, cx, metadata);
