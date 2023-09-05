@@ -481,7 +481,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Mid(NullStr,1,2) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Mid(String,1,11111111111) = \"\"", null, cx, metadata);
                 ExecuteSqlTest("Mid(String,11111111111,1) = \"\"", null, cx, metadata);
-                ExecuteSqlTest("Mid(String,1,4) = \"\"", "false", cx, metadata);
+                ExecuteSqlTest("Mid(String,1,4) = \"\"", false, cx, metadata);
                 ExecuteSqlTest("Len(NullStr) = 0", true, cx, metadata);
                 ExecuteSqlTest("TrimEnds(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Trim(NullStr) = \"\"", true, cx, metadata);
