@@ -44,8 +44,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        /* Whole no is supported in current system so commenting this unit test, once system starts supporting
-         * whole no, uncomment this test
+        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
+        /*
         [SkippableFact]
         public void SqlCalculatedDependencyTest()
         {
