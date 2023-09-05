@@ -553,6 +553,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
                     AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
+                    AttributeMetadataModel.NewMoney("money1", "Money1"),
+                    AttributeMetadataModel.NewMoney("money2", "Money2")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -568,7 +570,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "int", "20"},
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
-                    { "big_int", SqlStatementFormat.IntTypeMax }
+                    { "big_int", SqlStatementFormat.IntTypeMax },
+                    { "money1", "99999999999999" },
+                    { "money2", "9999999999999" }
                 });
 
                 // Arithmetic
@@ -579,7 +583,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
                 ExecuteSqlTest("999999*999999/9999", 100009800.9801980198M, cx, metadata);
-
+                ExecuteSqlTest("Decimal(money2)/int2", 4656.6128795821M, cx, metadata);
 
                 // Overflow cases - return null
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
@@ -593,6 +597,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal5 - 1", null, cx, metadata);
                 ExecuteSqlTest("decimal4 + decimal5 + 2", 2.00M, cx, metadata);
                 ExecuteSqlTest("decimal4 + decimal5 + 2 + 99999999999", null, cx, metadata);
+                ExecuteSqlTest("Decimal(money1)/int2", null, cx, metadata); // null as money1 value cannot fit into decimal(23,10)
+                ExecuteSqlTest("Sum(Decimal(money2), Decimal(money2))", null, cx, metadata);
             }
         }
 

@@ -74,7 +74,6 @@ AS BEGIN
     IF((@v2 IS NULL)) BEGIN RETURN NULL END
     SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
     IF(@v3 IS NULL) BEGIN RETURN NULL END
-    IF(@v3<-9999999999999.9999999999 OR @v3>9999999999999.9999999999) BEGIN RETURN NULL END
     SET @v4 = 2.0
     SET @v5 = TRY_CAST((ISNULL(@v3,0) * ISNULL(@v4,0)) AS decimal(23,10))
     IF(@v5 IS NULL) BEGIN RETURN NULL END
@@ -278,7 +277,6 @@ AS BEGIN
     IF((@v3 IS NULL)) BEGIN RETURN NULL END
     SET @v4 = TRY_CAST((ISNULL(@v1,0) * ISNULL(@v3,0)) AS decimal(23,10))
     IF(@v4 IS NULL) BEGIN RETURN NULL END
-    IF(@v4<-9999999999999.9999999999 OR @v4>9999999999999.9999999999) BEGIN RETURN NULL END
     SET @v5 = 2.0
     SET @v6 = TRY_CAST((ISNULL(@v4,0) * ISNULL(@v5,0)) AS decimal(23,10))
     IF(@v6 IS NULL) BEGIN RETURN NULL END
@@ -337,6 +335,113 @@ END
             Assert.Equal("exchangerate", result.TopLevelIdentifiers.First());
             Assert.Equal("\t\t\nDecimal(exchangerate)*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
+
+        [Fact]
+        public void CheckCurrencyExchangeRateCompile()
+        {
+            var expr = "decimal + money";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "exchangerate",
+                         AttributeType = AttributeTypeCode.Decimal
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "money",
+                         AttributeType = AttributeTypeCode.Money
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "decimal",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 10-15: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+
+            expr = "exchangerate * money";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+
+        }
+
+        public const string PercentUDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
+
+    -- expression body
+    SET @v0 = 12
+    SET @v1 = (ISNULL(@v0,0)/100.0)
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 10)
+END
+";
+
+        [Fact]
+        public void PercentTest()
+        {
+            var expr = "12%";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.Equal(PercentUDF, result.SqlFunction);
+        }
+
+        public const string PercentIntermediateOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+
+    -- expression body
+    SET @v0 = 12
+    SET @v1 = (ISNULL(@v0,0)/100.0)
+    IF(@v1<-9999999999999.9999999999 OR @v1>9999999999999.9999999999) BEGIN RETURN NULL END
+    SET @v2 = 1
+    SET @v3 = TRY_CAST((ISNULL(@v1,0) + ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
+END
+";
+
+        [Fact]
+        public void PercentIntermediateOperationsTest()
+        {
+            var expr = "12% + 1";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.Equal(PercentIntermediateOperationsUDF, result.SqlFunction);
+        }
+
 
         [Fact]
         public void PowerFunctionBlockedTest()
@@ -472,7 +577,6 @@ AS BEGIN
     -- expression body
     SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
     IF(@v3 IS NULL) BEGIN RETURN NULL END
-    IF(@v3<-9999999999999.9999999999 OR @v3>9999999999999.9999999999) BEGIN RETURN NULL END
     SET @v5 = TRY_CAST((ISNULL(@v3,0) + ISNULL(@v4,0)) AS decimal(23,10))
     IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body

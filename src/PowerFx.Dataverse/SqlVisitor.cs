@@ -171,7 +171,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                         var result = context.SetIntermediateVariable(FormulaType.Decimal, context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}"));
                         context.NullCheck(result, postValidation: true);
-                        context.PerformRangeChecks(result, node);
 
                         return result;
                     }
