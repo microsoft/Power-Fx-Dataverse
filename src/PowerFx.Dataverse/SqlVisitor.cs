@@ -919,6 +919,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
+                    // if related entity currency field is used in the formula field then block this operation
+                    if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
+                    {
+                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                    }
+
                     if (!valueFunctionCall && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
                     {
                         throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
@@ -928,12 +934,6 @@ namespace Microsoft.PowerFx.Dataverse
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
-
-                    // if related entity currency field is used in the formula field then block this operation
-                    if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
-                    {
-                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                    }
 
                     if (column.RequiresReference())
                     {
