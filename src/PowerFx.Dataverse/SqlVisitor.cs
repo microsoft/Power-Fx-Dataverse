@@ -878,9 +878,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return RetVal.FromVar(varName, type);
             }
 
-            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext)
+            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool valueFunctionCall = false)
             {
-                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext);
+                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, valueFunctionCall : valueFunctionCall);
             }
 
             // "new_Field" --> "@v0"
@@ -899,7 +899,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return _vars[varName];
             }
 
-            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool valueFunctionCall = false)
             {
                 var key = $"{scope.Symbol.Id}.{path.ToDottedSyntax()}";
 
@@ -1061,8 +1061,6 @@ namespace Microsoft.PowerFx.Dataverse
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
-
-            internal bool valueFunctionCall = false;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
