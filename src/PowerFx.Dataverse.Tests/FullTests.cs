@@ -604,7 +604,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal4 + decimal5 + 2 + 99999999999", null, cx, metadata);
                 ExecuteSqlTest("Decimal(money1)/int2", null, cx, metadata); // null as money1 value cannot fit into decimal(23,10)
                 ExecuteSqlTest("Sum(Decimal(money2), Decimal(money2))", null, cx, metadata);
+                ExecuteSqlTest("100000000000 * 10", null, cx, metadata);
                 ExecuteSqlTest("IsError(100000000000 * 10)", true, cx, metadata);
+                ExecuteSqlTest("If(IsError(100000000000 * 10), 1, 2)", 1M, cx, metadata);
+                ExecuteSqlTest("100000000000 * 100", null, cx, metadata);
+                ExecuteSqlTest("IsError(100000000000 * 100)", true, cx, metadata);
             }
         }
 
