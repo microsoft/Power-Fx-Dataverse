@@ -877,20 +877,20 @@ namespace Microsoft.PowerFx.Dataverse
                 return RetVal.FromVar(varName, type);
             }
 
-            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool valueFunctionCall = false)
+            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, valueFunctionCall : valueFunctionCall);
+                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, allowCurrencyFieldProcessing : allowCurrencyFieldProcessing);
             }
 
             // "new_Field" --> "@v0"
-            public string GetVarName(string fieldName, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            public string GetVarName(string fieldName, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(new DPath().Append(new DName(fieldName)), scope, sourceContext, navigation, create).VarName;
+                return GetVarDetails(new DPath().Append(new DName(fieldName)), scope, sourceContext, navigation, create, allowCurrencyFieldProcessing).VarName;
             }
 
-            public string GetVarName(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            public string GetVarName(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(path, scope, sourceContext, navigation, create).VarName;
+                return GetVarDetails(path, scope, sourceContext, navigation, create, allowCurrencyFieldProcessing).VarName;
             }
 
             public VarDetails GetVarDetails(string varName)
@@ -898,8 +898,22 @@ namespace Microsoft.PowerFx.Dataverse
                 return _vars[varName];
             }
 
-            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool valueFunctionCall = false)
+            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
+                // resolve the column against the navigation target, or the current entity
+                var column = scope.GetColumn(path, navigation: navigation);
+
+                // if related entity currency field is used in the formula field then block this operation
+                if (column?.TypeCode == AttributeTypeCode.Money && navigation != null)
+                {
+                    throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                }
+
+                if (!allowCurrencyFieldProcessing && column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
+                {
+                    throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
+                }
+
                 var key = $"{scope.Symbol.Id}.{path.ToDottedSyntax()}";
 
                 if (_fields.TryGetValue(key, out var details))
@@ -913,22 +927,9 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     var idx = _vars.Count;
                     var varName = "@v" + idx;
-                    // resolve the column against the navigation target, or the current entity
-                    var column = scope.GetColumn(path, navigation: navigation);
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
-
-                    // if related entity currency field is used in the formula field then block this operation
-                    if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
-                    {
-                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                    }
-
-                    if (!valueFunctionCall && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
-                    {
-                        throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
-                    }
-
+                    
                     var varType = GetFormulaType(column, sourceContext);
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
@@ -940,7 +941,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var parentPath = path.Parent;
                         var primaryKey = scope.Type.GetType(parentPath).CdsTableDefinition().PrimaryKeyColumn;
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));
-                        GetVarName(primaryKeyPath, scope, sourceContext, navigation);
+                        GetVarName(primaryKeyPath, scope, sourceContext, navigation, allowCurrencyFieldProcessing : allowCurrencyFieldProcessing);
                     }
                 }
                 return details;

@@ -772,7 +772,7 @@ END
         [InlineData("Decimal(currency + 0)", false, "Error 8-16: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
         [InlineData("currency + 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
         [InlineData("currency > 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
-        [InlineData("Decimal(currency) - currency", false, "Error 10-15: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        [InlineData("Decimal(currency) - currency", false, "Error 20-28: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
         public void VerifyCurrencyUsage(string expr, bool success, string message = null)
         {
             var model = new EntityMetadataModel

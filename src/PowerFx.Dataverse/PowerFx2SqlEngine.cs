@@ -171,7 +171,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var del = (i == parameters.Count - 1) ? "" : ",";
                     var fieldName = parameters[i].Item1.LogicalName;
-                    var varName = ctx.GetVarName(fieldName, ctx.RootScope, null);
+                    var varName = ctx.GetVarName(fieldName, ctx.RootScope, null, allowCurrencyFieldProcessing: true);
 
                     // For exchange rate, DV uses scale 28 and precision 12 so maintaing parity with DV
                     string typeName = null;
@@ -234,7 +234,7 @@ namespace Microsoft.PowerFx.Dataverse
                             DPath referencingPath = field.Path.Length > 1 ? field.Path.Parent.Parent : new DPath();
                             referencingPath = referencingPath.Append(new DName(referencing));
 
-                            var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false);
+                            var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
 
                             // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields hence Suffixing Base to the Schema Name
