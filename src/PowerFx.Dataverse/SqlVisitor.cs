@@ -877,9 +877,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return RetVal.FromVar(varName, type);
             }
 
-            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext)
+            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool valueFunctionCall = false)
             {
-                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext);
+                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, valueFunctionCall : valueFunctionCall);
             }
 
             // "new_Field" --> "@v0"
@@ -898,7 +898,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return _vars[varName];
             }
 
-            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool valueFunctionCall = false)
             {
                 var key = $"{scope.Symbol.Id}.{path.ToDottedSyntax()}";
 
@@ -918,6 +918,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
+                    // if related entity currency field is used in the formula field then block this operation
+                    if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
+                    {
+                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                    }
+
                     if (!valueFunctionCall && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
                     {
                         throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
@@ -927,12 +933,6 @@ namespace Microsoft.PowerFx.Dataverse
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
-
-                    // if related entity currency field is used in the formula field then block this operation
-                    if (column.TypeCode == AttributeTypeCode.Money && navigation != null)
-                    {
-                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                    }
 
                     if (column.RequiresReference())
                     {
@@ -1060,8 +1060,6 @@ namespace Microsoft.PowerFx.Dataverse
             internal StringBuilder _sbContent = new StringBuilder();
             internal bool expressionHasTimeBoundFunction = false;
             int _indentLevel = 1;
-
-            internal bool valueFunctionCall = false;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
@@ -1282,7 +1280,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
                 else*/
-                if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                if (IsNumericType(type) && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1318,7 +1316,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
-                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    if (literal >= SqlStatementFormat.DDecimalTypeMinValue && literal <= SqlStatementFormat.DDecimalTypeMaxValue)
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();

@@ -20,6 +20,7 @@ using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using System.Text;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Core.IR.Symbols;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -31,14 +32,20 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
-
-            context.valueFunctionCall = true;
-
             var arg0 = node.Args[0];
-            var arg = arg0.Accept(visitor, context);
+            RetVal arg = null;
 
-            context.valueFunctionCall = false;
-
+            // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
+            if (node.Args.Count == 1 && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
+            {
+                var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
+                arg = RetVal.FromVar(varDetails.VarName, context.GetReturnType(scopeAccessNode, varDetails.VarType));
+            }
+            else
+            {
+                arg = arg0.Accept(visitor, context);
+            }
+            
             if (arg.type is StringType)
             {
                 if (arg0 is TextLiteralNode literal)
