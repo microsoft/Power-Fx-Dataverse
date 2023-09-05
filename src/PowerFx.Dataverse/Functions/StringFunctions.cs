@@ -32,7 +32,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
 
-            context.valueFunctionCall = true;
+            if(node.Args.Count == 1 && node.Args[0] is ScopeAccessNode)
+            {
+                context.valueFunctionCall = true;
+            }
 
             var arg0 = node.Args[0];
             var arg = arg0.Accept(visitor, context);
