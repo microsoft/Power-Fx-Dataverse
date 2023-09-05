@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void CheckCompile1()
         {
-            var expr = "\t\t\nfield    *\n2.0\t";
+            var expr = "IsError(100000000000 * 10)";
             var model = new EntityMetadataModel
             {
                 Attributes = new AttributeMetadataModel[]
@@ -374,6 +374,36 @@ END
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
 
+        }
+
+        public const string PercentUDF = @"CREATE FUNCTION fn_udf_7f67eb4d22fd4956aa1e0149d56dfb9b(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
+
+    -- expression body
+    SET @v0 = 12
+    SET @v1 = (ISNULL(@v0,0)/100.0)
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 10)
+END
+";
+
+        [Fact]
+        public void PercentTest()
+        {
+            var expr = "12%";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.Equal(PercentUDF, result.SqlFunction);
         }
 
 
