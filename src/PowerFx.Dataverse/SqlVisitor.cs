@@ -941,7 +941,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var parentPath = path.Parent;
                         var primaryKey = scope.Type.GetType(parentPath).CdsTableDefinition().PrimaryKeyColumn;
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));
-                        GetVarName(primaryKeyPath, scope, sourceContext, navigation, allowCurrencyFieldProcessing : allowCurrencyFieldProcessing);
+                        GetVarName(primaryKeyPath, scope, sourceContext, navigation);
                     }
                 }
                 return details;
