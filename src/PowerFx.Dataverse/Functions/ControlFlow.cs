@@ -144,7 +144,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             using (var error = context.NewErrorContext())
             {
                 errorCode = error.Code;
-                node.Args[0].Accept(visitor, context);
+                var retVal = node.Args[0].Accept(visitor, context);
+                if (node == context.RootNode && Context.IsNumericType(retVal.type))
+                {
+                    context.PerformFinalRangeChecks(retVal, postCheck: true);
+                }
             }
             return context.SetIntermediateVariable(node, $"{errorCode} <> 0");
         }
