@@ -1242,14 +1242,6 @@ namespace Microsoft.PowerFx.Dataverse
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    /*if (result.type is SqlIntType)
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
-                    }
-                    else if (result.type is SqlMoneyType)
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
-                    }*/
                     if (IsNumericType(result))
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMinForIntermediateOperations, SqlStatementFormat.DecimalTypeMaxForIntermediateOperations, postCheck);

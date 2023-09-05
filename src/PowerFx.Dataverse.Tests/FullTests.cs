@@ -44,8 +44,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        /* Whole no is supported in current system so commenting this unit test, once system starts supporting
-         * whole no, uncomment this test
+        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
+        /*
         [SkippableFact]
         public void SqlCalculatedDependencyTest()
         {
@@ -432,6 +432,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal", "1" },
                     { "string", "N'foo'"}
                 });
+
+                ExecuteSqlTest("Value(\"123.4\")", null, cx, metadata);
+                ExecuteSqlTest("Value(\"123,4\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Value(\"123.4\"))", true, cx, metadata);
+                ExecuteSqlTest("IsError(Value(\"123,4\"))", true, cx, metadata);
 
                 // coerce null to 0 or empty string for logical operators that aren't equality
                 ExecuteSqlTest("-5 < NullDec", true, cx, metadata);

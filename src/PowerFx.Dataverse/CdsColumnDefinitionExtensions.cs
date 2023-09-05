@@ -40,19 +40,13 @@ namespace Microsoft.PowerFx.Dataverse
             switch (typeCode)
             {
                 case XrmAttributeTypeCode.Integer:
+                case XrmAttributeTypeCode.Money:
+                case XrmAttributeTypeCode.Decimal:
                     type = Types.FormulaType.Decimal;
                     return true;
 
                 case XrmAttributeTypeCode.Double:
                     type = Types.FormulaType.Number;
-                    return true;
-
-                case XrmAttributeTypeCode.Money:
-                    type = Types.FormulaType.Decimal;
-                    return true;
-
-                case XrmAttributeTypeCode.Decimal:
-                    type = Types.FormulaType.Decimal;
                     return true;
 
                 case XrmAttributeTypeCode.String:
