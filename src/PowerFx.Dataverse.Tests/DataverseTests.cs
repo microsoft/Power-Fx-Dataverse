@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void CheckCompile1()
         {
-            var expr = "IsError(100000000000 * 10)";
+            var expr = "\t\t\nfield    *\n2.0\t";
             var model = new EntityMetadataModel
             {
                 Attributes = new AttributeMetadataModel[]
@@ -376,7 +376,7 @@ END
 
         }
 
-        public const string PercentUDF = @"CREATE FUNCTION fn_udf_7f67eb4d22fd4956aa1e0149d56dfb9b(
+        public const string PercentUDF = @"CREATE FUNCTION fn_testUdf1(
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
@@ -399,7 +399,7 @@ END
             var expr = "12%";
 
             var engine = new PowerFx2SqlEngine();
-            var result = engine.Compile(expr, new SqlCompileOptions());
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
 
             Assert.NotNull(result);
             Assert.NotNull(result.SqlFunction);
