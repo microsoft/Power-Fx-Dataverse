@@ -553,7 +553,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
                     AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
-                    AttributeMetadataModel.NewMoney("money1", "Money2"),
+                    AttributeMetadataModel.NewMoney("money1", "Money1"),
                     AttributeMetadataModel.NewMoney("money2", "Money2")
                 }
             };
