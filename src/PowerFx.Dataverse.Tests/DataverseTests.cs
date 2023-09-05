@@ -765,6 +765,44 @@ END
             Assert.Equal(key, errors[0].MessageKey);
         }
 
+        [Theory]
+        [InlineData("Value(currency)", true)]
+        [InlineData("Decimal(currency)", true)]
+        [InlineData("Int(currency)", false, "Error 4-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")] 
+        [InlineData("Decimal(currency + 0)", false, "Error 8-16: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        [InlineData("currency + 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        [InlineData("currency > 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        [InlineData("Decimal(currency) - currency", false, "Error 10-15: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        public void VerifyCurrencyUsage(string expr, bool success, string message = null)
+        {
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_currency",
+                         DisplayName = "currency",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Check(expr);
+
+            Assert.NotNull(result);
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(message, result.Errors.First().ToString());
+                Assert.Equal(SqlCompileException.DirectCurrencyNotSupported.Key, result.Errors.First().MessageKey);
+            }
+        }
+
         [Fact]
         public void CompileTypeHint()
         {
@@ -869,6 +907,7 @@ END
         [InlineData("field", typeof(DecimalType))] // "Decimal"
         [InlineData("1.1", typeof(DecimalType))] // "Numeric literal returns Decimal"
         [InlineData("Decimal(Money)", typeof(DecimalType))] // "Money returns Decimal"
+        [InlineData("Value(Money)", typeof(DecimalType))] // "Money returns Decimal"
         [InlineData("Int", typeof(DecimalType))] // "Int returns Decimal"
         [InlineData("String", typeof(StringType))] // "String"
         [InlineData("\"foo\"", typeof(StringType))] // "String literal returns String"
