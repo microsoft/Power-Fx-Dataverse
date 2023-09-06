@@ -570,8 +570,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal", "19.69658" },
                     { "decimal2", "0.02188" },
                     { "decimal3", "10000000000" },
-                    { "decimal4", SqlStatementFormat.DecimalTypeMaxForIntermediateOperations },
-                    { "decimal5", SqlStatementFormat.DecimalTypeMinForIntermediateOperations },
+                    { "decimal4", SqlStatementFormat.DecimalTypeMax },
+                    { "decimal5", SqlStatementFormat.DecimalTypeMin },
                     { "int", "20"},
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
@@ -587,7 +587,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
-                ExecuteSqlTest("999999*999999/9999", 100009800.9801980198M, cx, metadata);
                 ExecuteSqlTest("Decimal(money2)/int2", 4656.6128795821M, cx, metadata);
 
                 // Overflow cases - return null
@@ -609,6 +608,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("If(IsError(100000000000 * 10), 1, 2)", 1M, cx, metadata);
                 ExecuteSqlTest("100000000000 * 100", null, cx, metadata);
                 ExecuteSqlTest("IsError(100000000000 * 100)", true, cx, metadata);
+                ExecuteSqlTest("999999*999999/9999", null, cx, metadata);
             }
         }
 
