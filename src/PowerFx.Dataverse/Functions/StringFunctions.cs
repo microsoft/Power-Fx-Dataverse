@@ -63,6 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // only allow whole numbers to be parsed
                 context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
                 context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                context.PerformRangeChecks(result, node);
                 return result;
             }
             else if (context.IsNumericType(arg))
