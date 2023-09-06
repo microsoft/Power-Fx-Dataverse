@@ -34,6 +34,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             context.SetIntermediateVariable(result, finalExpression);
             context.NullCheck(result, postValidation: true);
 
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -104,6 +105,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.NullCheck(result, postValidation:true);
             }
 
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -177,6 +179,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var finalExpression = context.TryCastToDecimal($"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})");
             context.SetIntermediateVariable(result, finalExpression);
             context.ErrorCheck($"{number} <> 0 AND {CoerceNullToInt(result)} = 0", Context.ValidationErrorCode, postValidation: true);
+            context.PerformRangeChecks(result, node);
             return result;
         }
 
@@ -192,6 +195,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             context.SetIntermediateVariable(result, expression);
             context.NullCheck(result, postValidation: true);
 
+            context.PerformRangeChecks(result, node);
             return result;
         }
 

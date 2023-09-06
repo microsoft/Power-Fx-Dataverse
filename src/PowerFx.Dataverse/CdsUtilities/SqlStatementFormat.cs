@@ -188,8 +188,7 @@ ELSE
         // CRM supported min and max for decimals. 
         public const string DecimalTypeMin = "-100000000000";
         public const string DecimalTypeMax = "100000000000";
-        public const string DecimalTypeMinForIntermediateOperations = "-9999999999999.9999999999";
-        public const string DecimalTypeMaxForIntermediateOperations = "9999999999999.9999999999";
+
         public const double DecimalTypeMinValue = -100000000000;
         public const double DecimalTypeMaxValue = 100000000000;
 

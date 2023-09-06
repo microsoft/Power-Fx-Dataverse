@@ -554,6 +554,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
                     AttributeMetadataModel.NewDecimal("decimal4", "Decimal4"),
                     AttributeMetadataModel.NewDecimal("decimal5", "Decimal5"),
+                    AttributeMetadataModel.NewDecimal("decimal6", "Decimal6"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
@@ -570,8 +571,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal", "19.69658" },
                     { "decimal2", "0.02188" },
                     { "decimal3", "10000000000" },
-                    { "decimal4", SqlStatementFormat.DecimalTypeMaxForIntermediateOperations },
-                    { "decimal5", SqlStatementFormat.DecimalTypeMinForIntermediateOperations },
+                    { "decimal4", SqlStatementFormat.DecimalTypeMax },
+                    { "decimal5", SqlStatementFormat.DecimalTypeMin },
+                    { "decimal6",  "1000000000000"},
                     { "int", "20"},
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
@@ -587,8 +589,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
-                ExecuteSqlTest("999999*999999/9999", 100009800.9801980198M, cx, metadata);
                 ExecuteSqlTest("Decimal(money2)/int2", 4656.6128795821M, cx, metadata);
+                ExecuteSqlTest("Text(decimal4, \"0\")", "100000000000", cx, metadata);
+                ExecuteSqlTest("IsError(Text(decimal4, \"0\"))", false, cx, metadata);
 
                 // Overflow cases - return null
                 ExecuteSqlTest("BigDecimal + 1", null, cx, metadata);
@@ -604,6 +607,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal4 + decimal5 + 2 + 99999999999", null, cx, metadata);
                 ExecuteSqlTest("Decimal(money1)/int2", null, cx, metadata); // null as money1 value cannot fit into decimal(23,10)
                 ExecuteSqlTest("Sum(Decimal(money2), Decimal(money2))", null, cx, metadata);
+                ExecuteSqlTest("100000000000 * 10", null, cx, metadata);
+                ExecuteSqlTest("IsError(100000000000 * 10)", true, cx, metadata);
+                ExecuteSqlTest("If(IsError(100000000000 * 10), 1, 2)", 1M, cx, metadata);
+                ExecuteSqlTest("100000000000 * 100", null, cx, metadata);
+                ExecuteSqlTest("IsError(100000000000 * 100)", true, cx, metadata);
+                ExecuteSqlTest("999999*999999/9999", null, cx, metadata);
+                ExecuteSqlTest("Text(decimal4+1, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(decimal4+1, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("Text(decimal6, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(decimal6, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("decimal6", null, cx, metadata);
+                ExecuteSqlTest("IsError(decimal6)", true, cx, metadata);
             }
         }
 

@@ -123,6 +123,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             // two arguments is only supported for numbers, datetimes, and typed/untyped blanks
             else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.type is BlankType))
             {
+                context.PerformRangeChecks(val, node.Args[0], postCheck: true);
                 string format = null;
 
                 if (node.Args[1] is TextLiteralNode)

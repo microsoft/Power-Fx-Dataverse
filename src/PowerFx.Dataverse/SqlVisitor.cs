@@ -171,6 +171,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                         var result = context.SetIntermediateVariable(FormulaType.Decimal, context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}"));
                         context.NullCheck(result, postValidation: true);
+                        context.PerformRangeChecks(result, node);
 
                         return result;
                     }
@@ -1245,20 +1246,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (IsNumericType(result))
                     {
-                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMinForIntermediateOperations, SqlStatementFormat.DecimalTypeMaxForIntermediateOperations, postCheck);
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
 
                     }
                     // TODO: other range checks?
-                }
-            }
-
-            internal void PerformFinalRangeChecks(RetVal result, bool postCheck = true)
-            {
-                if (_checkOnly) return;
-
-                if (IsNumericType(result))
-                {
-                    PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                 }
             }
 
