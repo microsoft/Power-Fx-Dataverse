@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // only allow whole numbers to be parsed
                 context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
                 context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
-          
+                context.PerformRangeChecks(result, arg0);
                 return result;
             }
             else if (context.IsNumericType(arg))
@@ -123,7 +123,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             // two arguments is only supported for numbers, datetimes, and typed/untyped blanks
             else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.type is BlankType))
             {
-                context.PerformRangeChecks(val, node.Args[0], postCheck: true);
                 string format = null;
 
                 if (node.Args[1] is TextLiteralNode)
