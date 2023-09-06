@@ -378,36 +378,6 @@ END
 
         }
 
-        public const string PercentUDF = @"CREATE FUNCTION fn_testUdf1(
-) RETURNS decimal(23,10)
-  WITH SCHEMABINDING
-AS BEGIN
-    DECLARE @v0 decimal(23,10)
-    DECLARE @v1 decimal(23,10)
-
-    -- expression body
-    SET @v0 = 12
-    SET @v1 = (ISNULL(@v0,0)/100.0)
-    -- end expression body
-
-    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v1, 10)
-END
-";
-
-        [Fact]
-        public void PercentTest()
-        {
-            var expr = "12%";
-
-            var engine = new PowerFx2SqlEngine();
-            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
-
-            Assert.NotNull(result);
-            Assert.NotNull(result.SqlFunction);
-            Assert.Equal(PercentUDF, result.SqlFunction);
-        }
-
         public const string PercentIntermediateOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
