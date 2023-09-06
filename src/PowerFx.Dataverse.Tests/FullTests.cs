@@ -554,7 +554,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
                     AttributeMetadataModel.NewDecimal("decimal4", "Decimal4"),
                     AttributeMetadataModel.NewDecimal("decimal5", "Decimal5"),
-                    AttributeMetadataModel.NewDecimal("decimal6", "Decimal6"),
+                    AttributeMetadataModel.NewMoney("decimal6", "Decimal6"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
@@ -589,7 +589,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal2 + int2", 2147483645.02188M, cx, metadata);
                 ExecuteSqlTest("decimal2 * int2", 46986942.1526M, cx, metadata);
                 ExecuteSqlTest("int2 / decimal2", 98148247029.2504570384M, cx, metadata);
-                ExecuteSqlTest("Decimal(money2)/int2", 4656.6128795821M, cx, metadata);
                 ExecuteSqlTest("Text(decimal4, \"0\")", "100000000000", cx, metadata);
                 ExecuteSqlTest("IsError(Text(decimal4, \"0\"))", false, cx, metadata);
 
@@ -605,6 +604,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("decimal5 - 1", null, cx, metadata);
                 ExecuteSqlTest("decimal4 + decimal5 + 2", 2.00M, cx, metadata);
                 ExecuteSqlTest("decimal4 + decimal5 + 2 + 99999999999", null, cx, metadata);
+                ExecuteSqlTest("Decimal(money2)/int2", null, cx, metadata);
                 ExecuteSqlTest("Decimal(money1)/int2", null, cx, metadata); // null as money1 value cannot fit into decimal(23,10)
                 ExecuteSqlTest("Sum(Decimal(money2), Decimal(money2))", null, cx, metadata);
                 ExecuteSqlTest("100000000000 * 10", null, cx, metadata);
@@ -615,10 +615,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("999999*999999/9999", null, cx, metadata);
                 ExecuteSqlTest("Text(decimal4+1, \"0\")", null, cx, metadata);
                 ExecuteSqlTest("IsError(Text(decimal4+1, \"0\"))", true, cx, metadata);
-                ExecuteSqlTest("Text(decimal6, \"0\")", null, cx, metadata);
-                ExecuteSqlTest("IsError(Text(decimal6, \"0\"))", true, cx, metadata);
-                ExecuteSqlTest("decimal6", null, cx, metadata);
-                ExecuteSqlTest("IsError(decimal6)", true, cx, metadata);
+                ExecuteSqlTest("Text(Decimal(decimal6), \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(Decimal(decimal6), \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("Decimal(decimal6)", null, cx, metadata);
+                ExecuteSqlTest("IsError(Decimal(decimal6))", true, cx, metadata);
             }
         }
 
