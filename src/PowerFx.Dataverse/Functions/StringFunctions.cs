@@ -75,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     // only allow whole numbers to be parsed
                     context.SetIntermediateVariable(result, $"TRY_CAST({CoerceNullToInt(arg)} AS decimal(23,10))");
                     context.ErrorCheck($"({result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
-                    context.PerformRangeChecks(result, arg0);
+                    context.PerformRangeChecks(result, node);
                     return result;
                 }
 

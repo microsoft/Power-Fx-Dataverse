@@ -144,8 +144,6 @@ AS BEGIN
     -- expression body
     SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
     IF((@v1 IS NULL)) BEGIN RETURN NULL END
-    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
-    
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -206,7 +204,6 @@ AS BEGIN
     -- expression body
     SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
     IF((@v1 IS NULL)) BEGIN RETURN NULL END
-    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
