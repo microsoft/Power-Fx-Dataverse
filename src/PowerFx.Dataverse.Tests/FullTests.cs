@@ -554,6 +554,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
                     AttributeMetadataModel.NewDecimal("decimal4", "Decimal4"),
                     AttributeMetadataModel.NewDecimal("decimal5", "Decimal5"),
+                    AttributeMetadataModel.NewDecimal("decimal6", "Decimal6"),
                     AttributeMetadataModel.NewInteger("int", "Integer"),
                     AttributeMetadataModel.NewInteger("int2", "Integer2"),
                     AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
@@ -572,6 +573,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal3", "10000000000" },
                     { "decimal4", SqlStatementFormat.DecimalTypeMax },
                     { "decimal5", SqlStatementFormat.DecimalTypeMin },
+                    { "decimal6",  "1000000000000"},
                     { "int", "20"},
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
@@ -613,6 +615,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("999999*999999/9999", null, cx, metadata);
                 ExecuteSqlTest("Text(decimal4+1, \"0\")", null, cx, metadata);
                 ExecuteSqlTest("IsError(Text(decimal4+1, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("Text(decimal6, \"0\")", null, cx, metadata);
+                ExecuteSqlTest("IsError(Text(decimal6, \"0\"))", true, cx, metadata);
+                ExecuteSqlTest("decimal6", null, cx, metadata);
+                ExecuteSqlTest("IsError(decimal6)", true, cx, metadata);
             }
         }
 
