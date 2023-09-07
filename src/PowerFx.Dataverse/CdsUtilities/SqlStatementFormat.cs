@@ -173,8 +173,6 @@ ELSE
         /// </summary>
         public const string DeclareIntermediateVariableFormat = "DECLARE {0} {1}";
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
-        public const string BigMoneyType = "decimal(38,8)";
-        public const string ExchangeRateType = "decimal(28,12)";
 
         /// <summary>
         /// Max/Min value for Int/Decimal/Money
@@ -188,7 +186,6 @@ ELSE
         // CRM supported min and max for decimals. 
         public const string DecimalTypeMin = "-100000000000";
         public const string DecimalTypeMax = "100000000000";
-
         public const double DecimalTypeMinValue = -100000000000;
         public const double DecimalTypeMaxValue = 100000000000;
 

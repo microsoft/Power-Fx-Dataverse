@@ -169,6 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
+                        // TryCast returns null if the cast fails, so a null indicates an overflow error
                         var result = context.SetIntermediateVariable(FormulaType.Decimal, context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}"));
                         context.NullCheck(result, postValidation: true);
                         context.PerformRangeChecks(result, node);
@@ -1255,15 +1256,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool ValidateNumericLiteral(double literal, FormulaType type)
             {
-                /*if (type is SqlIntType && literal > SqlStatementFormat.IntTypeMinValue && literal < SqlStatementFormat.IntTypeMaxValue)
-                {
-                    return true;
-                }
-                else if ((type is SqlBigType || type is SqlMoneyType) && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
-                {
-                    return true;
-                }
-                else*/
                 if (IsNumericType(type) && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
