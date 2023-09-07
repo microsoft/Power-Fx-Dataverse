@@ -32,13 +32,13 @@ namespace Microsoft.PowerFx.Dataverse
             /// <summary>
             /// The incoming entity that will extracted from the text. 
             /// </summary>
-            public string EntityToExtract { get; set; }
+            public string Entity { get; set; }
 
             public OrganizationRequest Get()
             {
                 var req = new OrganizationRequest("AIExtract");
                 req[nameof(ExtractRequest.Text)] = this.Text;
-                req[nameof(ExtractRequest.EntityToExtract)] = this.EntityToExtract;
+                req[nameof(ExtractRequest.Entity)] = this.Entity;
                 return req;
             }
         }
@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
             var req = new ExtractRequest
             {
                 Text = myText,
-                EntityToExtract = myEntity
+                Entity = myEntity
             }.Get();
 
             var result = await service.ExecuteAsync(req, cancel);
