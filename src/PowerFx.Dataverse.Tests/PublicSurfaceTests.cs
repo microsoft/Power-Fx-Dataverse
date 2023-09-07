@@ -60,8 +60,9 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
                 "Microsoft.PowerFx.Dataverse.AIReplyFunction",
                 "Microsoft.PowerFx.Dataverse.AISentimentFunction",
-                "Microsoft.PowerFx.Dataverse.AITranslateFunction"
-
+                "Microsoft.PowerFx.Dataverse.AITranslateFunction",
+                "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
+                "Microsoft.PowerFx.Dataverse.AIExtractFunction"
             };
 
             Verify(allowed, asm);
