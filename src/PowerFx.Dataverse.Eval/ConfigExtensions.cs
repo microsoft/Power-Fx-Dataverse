@@ -32,6 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             symbolTable.AddFunction(new AISummarizeFunction());
             symbolTable.AddFunction(new AIReplyFunction());
             symbolTable.AddFunction(new AISentimentFunction());
+            symbolTable.AddFunction(new AITranslateFunction());
             symbolTable.AddFunction(new AIClassifyFunction());
             symbolTable.AddFunction(new AIExtractFunction());
         }
