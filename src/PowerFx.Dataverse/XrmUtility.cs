@@ -41,12 +41,12 @@ namespace Microsoft.PowerFx.Dataverse
             ActivityParty = 135
         }
 
-        public static int[] BlackListedEntities()
+        internal static int[] BlackListedEntities()
         {
             return Enum.GetValues(typeof(BlackListEntities)) as int[];
         }
 
-        public static bool IsValid(this EntityMetadata entityMetadata)
+        internal static bool IsValid(this EntityMetadata entityMetadata)
         {
             var isIntersect = entityMetadata.IsIntersect ?? false;
             var isLogicalEntity = entityMetadata.IsLogicalEntity ?? false;

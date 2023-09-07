@@ -4,13 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Linq;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {

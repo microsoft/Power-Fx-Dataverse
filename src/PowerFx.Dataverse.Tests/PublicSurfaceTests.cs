@@ -103,7 +103,8 @@ namespace Microsoft.PowerFx.Tests
 
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
-                "Microsoft.PowerFx.Dataverse.DataverseHelpers"
+                "Microsoft.PowerFx.Dataverse.DataverseHelpers",
+                "Microsoft.PowerFx.Dataverse.XrmUtility"
             };
 
             Verify(allowed, asm);
