@@ -23,16 +23,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
 
-            var expression = context.TryCastToDecimal($"{CoerceNullToInt(number)} % {divisor}");
 
-            var initialResult = context.SetIntermediateVariable(FormulaType.Decimal, expression);
-            context.NullCheck(initialResult, postValidation: true);
+            var initialResult = context.TryCastToDecimal(null, $"{CoerceNullToInt(number)} % {divisor}");
 
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
-            var finalExpression = context.TryCastToDecimal($"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})");
-
-            context.SetIntermediateVariable(result, finalExpression);
-            context.NullCheck(result, postValidation: true);
+            var finalExpression = $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})";
+            context.TryCastToDecimal(result, finalExpression);
 
             context.PerformRangeChecks(result, node);
             return result;
@@ -92,9 +88,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     args.Add($"({context.SetIntermediateVariable(FormulaType.Decimal, coercedArg)})");
                 }
             }
-            var finalExpression = context.TryCastToDecimal($"(SELECT {function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X))");
-            context.SelectIntermediateVariable(result, finalExpression);
-            context.NullCheck(result, postValidation: true);
+            var finalExpression = $"(SELECT {function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X))";
+            context.TryCastToDecimal(result, finalExpression);
 
             if (zeroNulls)
             {
@@ -167,17 +162,15 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var rawDigits = node.Args[1].Accept(visitor, context);
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
-            var digitsExpression = context.TryCastToDecimal(RoundDownNullToInt(rawDigits));
-            var digits = context.SetIntermediateVariable(FormulaType.Decimal, digitsExpression);
-            context.NullCheck(digits, postValidation: true);
+            var digits = context.TryCastToDecimal(null, RoundDownNullToInt(rawDigits));
             context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Number), digits);
             var factor = context.GetTempVar(FormulaType.Decimal);
-            var factorExpression = context.TryCastToDecimal($"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})");
-            context.SetIntermediateVariable(factor, factorExpression);
+            var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})";
+            context.TryCastToDecimal(factor, factorExpression);
             context.DivideByZeroCheck(factor);
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
-            var finalExpression = context.TryCastToDecimal($"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})");
-            context.SetIntermediateVariable(result, finalExpression);
+            var finalExpression = $"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})";
+            context.TryCastToDecimal(result, finalExpression);
             context.ErrorCheck($"{number} <> 0 AND {CoerceNullToInt(result)} = 0", Context.ValidationErrorCode, postValidation: true);
             context.PerformRangeChecks(result, node);
             return result;
@@ -191,9 +184,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
 
-            var expression = context.TryCastToDecimal($"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
-            context.SetIntermediateVariable(result, expression);
-            context.NullCheck(result, postValidation: true);
+            var expression = $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)";
+            context.TryCastToDecimal(result, expression);
 
             context.PerformRangeChecks(result, node);
             return result;
