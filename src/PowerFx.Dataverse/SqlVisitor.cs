@@ -170,7 +170,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         // TryCast returns null if the cast fails, so a null indicates an overflow error
-                        var result = context.TryCastToDecimal(null, $"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
+                        var result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -1101,7 +1101,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
-            internal RetVal TryCastToDecimal(RetVal retVal, string expression)
+            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
             {
                 expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
@@ -1201,7 +1201,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // compute approximate power to determine if there will be an overflow
                 var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
-                var power = TryCastToDecimal(null, expression);
+                var power = TryCastToDecimal(expression);
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);

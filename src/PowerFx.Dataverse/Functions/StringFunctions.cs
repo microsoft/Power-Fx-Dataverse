@@ -74,7 +74,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     var result = context.GetTempVar(context.GetReturnType(node));
 
                     // only allow whole numbers to be parsed
-                    context.TryCastToDecimal(result, $"{CoerceNullToInt(arg)}");
+                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
                     context.PerformRangeChecks(result, node);
                     return result;
                 }
@@ -245,7 +245,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var val = node.Args[0].Accept(visitor, context);
             var expression = RoundDownToInt(val);
-            var roundedVal = context.TryCastToDecimal(null, expression);
+            var roundedVal = context.TryCastToDecimal(expression);
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -375,7 +375,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
                 var expression = RoundDownNullToInt(instance);
-                var coercedInstance = context.TryCastToDecimal(null, expression);
+                var coercedInstance = context.TryCastToDecimal(expression);
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
