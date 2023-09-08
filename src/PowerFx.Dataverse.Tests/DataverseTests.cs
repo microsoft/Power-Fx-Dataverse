@@ -70,8 +70,8 @@ AS BEGIN
     DECLARE @v5 decimal(23,10)
 
     -- expression body
-    SET @v2 = TRY_CAST(ISNULL(@v1,0) AS decimal(23,10))
-    IF((@v2 IS NULL)) BEGIN RETURN NULL END
+    SET @v2 = TRY_CAST((ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
     IF(@v3 IS NULL) BEGIN RETURN NULL END
@@ -142,8 +142,8 @@ AS BEGIN
     DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
-    IF((@v1 IS NULL)) BEGIN RETURN NULL END
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -202,8 +202,8 @@ AS BEGIN
     DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
-    IF((@v1 IS NULL)) BEGIN RETURN NULL END
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -273,11 +273,11 @@ AS BEGIN
     DECLARE @v6 decimal(23,10)
 
     -- expression body
-    SET @v1 = TRY_CAST(ISNULL(@v0,0) AS decimal(23,10))
-    IF((@v1 IS NULL)) BEGIN RETURN NULL END
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
-    SET @v3 = TRY_CAST(ISNULL(@v2,0) AS decimal(23,10))
-    IF((@v3 IS NULL)) BEGIN RETURN NULL END
+    SET @v3 = TRY_CAST((ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
     SET @v4 = TRY_CAST((ISNULL(@v1,0) * ISNULL(@v3,0)) AS decimal(23,10))
     IF(@v4 IS NULL) BEGIN RETURN NULL END

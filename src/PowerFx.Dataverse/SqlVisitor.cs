@@ -170,8 +170,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         // TryCast returns null if the cast fails, so a null indicates an overflow error
-                        var result = context.SetIntermediateVariable(FormulaType.Decimal, context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}"));
-                        context.NullCheck(result, postValidation: true);
+                        var result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -1102,9 +1101,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
-            internal string TryCastToDecimal(string expression)
+            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
             {
-                return $"TRY_CAST(({expression}) AS decimal(23,10))";
+                expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
+                NullCheck(retVal, postValidation: true);
+                return retVal;
             }
 
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
@@ -1198,9 +1200,8 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_checkOnly) return;
 
                 // compute approximate power to determine if there will be an overflow
-                var expression = TryCastToDecimal($"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)");
-                var power = SetIntermediateVariable(FormulaType.Decimal, expression);
-                NullCheck(power, postValidation: true);
+                var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
+                var power = TryCastToDecimal(expression);
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);

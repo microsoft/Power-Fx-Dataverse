@@ -74,8 +74,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     var result = context.GetTempVar(context.GetReturnType(node));
 
                     // only allow whole numbers to be parsed
-                    context.SetIntermediateVariable(result, $"TRY_CAST({CoerceNullToInt(arg)} AS decimal(23,10))");
-                    context.ErrorCheck($"({result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
                     context.PerformRangeChecks(result, node);
                     return result;
                 }
@@ -245,9 +244,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var expression = context.TryCastToDecimal(RoundDownToInt(val));
-            var roundedVal = context.SetIntermediateVariable(FormulaType.Decimal, expression);
-            context.NullCheck(roundedVal, postValidation: true);
+            var expression = RoundDownToInt(val);
+            var roundedVal = context.TryCastToDecimal(expression);
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -376,9 +374,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var expression = context.TryCastToDecimal(RoundDownNullToInt(instance));
-                var coercedInstance = context.SetIntermediateVariable(FormulaType.Decimal, expression);
-                context.NullCheck(coercedInstance, postValidation: true);
+                var expression = RoundDownNullToInt(instance);
+                var coercedInstance = context.TryCastToDecimal(expression);
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
