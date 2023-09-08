@@ -184,19 +184,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
             if (_innerProvider != null && _innerProvider.TryGetEntityMetadata(logicalName, out xrmEntity))
             {
-                // PA filters out entities based on the following criterias, plus XrmUtility.BlackListedEntities().
-                var isIntersect = xrmEntity.IsIntersect ?? false;
-                var isLogicalEntity = xrmEntity.IsLogicalEntity ?? false;
-                var objectTypeCode = xrmEntity.ObjectTypeCode ?? 0;
-                var isPrivate = xrmEntity.IsPrivate ?? false;
-                var isInvalidEntity = Array.IndexOf(array: XrmUtility.BlackListedEntities(), objectTypeCode) != -1;
-
-                if (isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0 || isInvalidEntity)
-                {
-                    xrmEntity = null;
-                    return false;
-                }
-
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
                 return true;
             }

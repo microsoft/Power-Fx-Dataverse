@@ -7,11 +7,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    internal static class XrmUtility
+    public static class XrmUtility
     {
         /// <summary>
         /// Object type codes for blacklisted entities.
@@ -41,6 +44,56 @@ namespace Microsoft.PowerFx.Dataverse
         internal static int[] BlackListedEntities()
         {
             return Enum.GetValues(typeof(BlackListEntities)) as int[];
+        }
+
+        internal static bool IsValid(this EntityMetadata entityMetadata)
+        {
+            var isIntersect = entityMetadata.IsIntersect ?? false;
+            var isLogicalEntity = entityMetadata.IsLogicalEntity ?? false;
+            var objectTypeCode = entityMetadata.ObjectTypeCode ?? 0;
+            var isPrivate = entityMetadata.IsPrivate ?? false;
+
+            // PA filters out some entities by a pre-defined lists of entities.
+            // Pre-defined lists: BlackListEntities SalesEntity (not implemented), ServiceEntity (not implemented), MarketingEntity (not implemented).
+            // PA returns a total of ~ 501 entities. PFx Dataverse is returning ~517 due to the not implemented lists.
+            var isInvalidEntity = Array.IndexOf(array: XrmUtility.BlackListedEntities(), objectTypeCode) != -1;
+
+            return !(isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0 || isInvalidEntity);
+        }
+
+        public static IEnumerable<EntityMetadata> GetAllValidEntityMetadata(this IOrganizationService client, EntityFilters entityFilters = EntityFilters.Entity)
+        {
+            RetrieveAllEntitiesRequest req = new RetrieveAllEntitiesRequest
+            {
+                EntityFilters = entityFilters
+            };
+
+            var resp = (RetrieveAllEntitiesResponse) client.Execute(req);
+
+            foreach (var entity in resp.EntityMetadata.Where(entity => entity.IsValid()))
+            {
+                yield return entity;
+            }
+        }
+
+        public static bool TryGetValidEntityMetadata(this IOrganizationService client, string logicalName, out EntityMetadata entityMetadata)
+        {
+            var request = new RetrieveEntityRequest
+            {
+                EntityFilters = EntityFilters.All, // retrieve all possible properties
+                LogicalName = logicalName
+            };
+
+            var response = (RetrieveEntityResponse)client.Execute(request);
+
+            if (response.EntityMetadata != null && response.EntityMetadata.IsValid())
+            {
+                entityMetadata = response.EntityMetadata;
+                return true;
+            }
+
+            entityMetadata = null;
+            return false;
         }
     }
 }

@@ -81,82 +81,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [SkippableTheory]
-        // Skipp this test case?
-        // Changing this to FALSE will trigger this test, which might take 2-3 hours.
-        [InlineData(true)]
-        public async Task TestAllTableAllFields(bool skip)
-        {
-            if (skip)
-            {
-                return;
-            }
-
-            ServiceClient svcClient = GetClient();
-            List<IDisposable> disposableObjects = new List<IDisposable>() { svcClient };
-
-            try
-            {
-                var displayNameProvider = svcClient.GetTableDisplayNames();
-                var allmetadata = svcClient.GetAllEntityMetadata();
-
-                var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + "exceptions.txt";
-                var writer = File.CreateText(batchPath);
-
-                foreach (EntityMetadata metadata in allmetadata.Where(md => md.IsPrivate == false))
-                {
-                    if (!displayNameProvider.TryGetLogicalOrDisplayName(new DName(metadata.LogicalName), out var logicalname, out var displayName))
-                    {
-                        continue;
-                    }
-
-                    var exprFirst = $"First('{displayName.Value}')";
-
-                    var dv = new DataverseConnection(svcClient);
-
-                    var result = BuildAndRunDataverseTest(displayName.Value, logicalname.Value, exprFirst, dv, out RecalcEngine recalcEngine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig);
-
-                    if (result is RecordValue record)
-                    {
-                        var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalname.Value);
-                        var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
-
-                        //foreach (var attr in attributes.Where(attr => attr.AttributeType != Xrm.Sdk.Metadata.AttributeTypeCode.Virtual))
-                        foreach (var field in record.Fields)
-                        {
-                            var fieldname = field.Name;
-                            var exprField = $"'{fieldname}'";
-
-                            try
-                            {
-                                var formulaValue = await recalcEngine.EvalAsync(exprField, cancellationToken: CancellationToken.None, runtimeConfig: rowScopeValues);
-
-                                if (formulaValue is ErrorValue errorValue)
-                                {
-                                    Assert.True(false, $"'{displayName}'.{fieldname} ({formulaValue.Type}) failed. " + string.Join("\r\n", errorValue.Errors.Select(ee => ee.Message)));
-                                }
-                            }
-
-                            // Catching any exceptions to a separate file to not stop the process.
-                            catch (Exception ex)
-                            {
-                                writer.WriteLine($"Error: {displayName.Value}.{fieldname}");
-                                writer.WriteLine(ex.Message);
-                                writer.WriteLine(ex.StackTrace);
-                                writer.WriteLine();
-                                writer.WriteLine();
-                                writer.WriteLine();
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                DisposeObjects(disposableObjects);
-            }
-        }
-
-        [SkippableTheory]
         [InlineData("LookUp(JV1S, reg = LookUp(JVLookups, Name <> \"test1\"))", "Result is Blank", true)]
         [InlineData("LookUp(JV1S, reg = LookUp(JVLookups, Name = \"test1\"))", "Name1", false)]
         [InlineData("LookUp(JV1S, reg <> LookUp(JVLookups, Name <> \"test1\"))", "Name2", false)]
@@ -906,21 +830,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
-        {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
-        }
-
-        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false)
-        {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async);
-        }
-
-        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
-        {
-            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
-        }
-
         [SkippableTheory]
         [InlineData("If(First(PFxTables).Choice, \"YES\", \"NO\")", "NO")]
         [InlineData("If(First(PFxTables).Choice = 'Choice (PFxTables)'.Positive, \"YES\", \"NO\")", "NO")]
@@ -1036,6 +945,54 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableFact]
+        public async Task TestAllTableAllFields()
+        {
+            ServiceClient svcClient = GetClient();
+            List<IDisposable> disposableObjects = new List<IDisposable>() { svcClient };
+
+            try
+            {
+                var displayNameProvider = svcClient.GetTableDisplayNames();
+                var allmetadatas = svcClient.GetAllValidEntityMetadata(entityFilters: EntityFilters.Entity);
+
+                foreach (var metadata in allmetadatas)
+                {
+                    if (!displayNameProvider.TryGetLogicalOrDisplayName(new DName(metadata.LogicalName), out var logicalname, out var displayName))
+                    {
+                        continue;
+                    }
+
+                    var engine = new RecalcEngine();
+                    var expr = $"First({logicalname})";
+                    var dv = SingleOrgPolicy.New(svcClient);
+
+                    var check = engine.Check(expr, symbolTable: dv.Symbols);
+
+                    Assert.True(check.IsSuccess);
+
+                    foreach (var fieldname in check.ReturnType._type.GetAllNames(DPath.Root))
+                    {
+                        var localEngine = new RecalcEngine();
+
+                        expr = $"First({logicalname}).'{fieldname.Name}'";
+
+                        var localCheck = localEngine.Check(expr, symbolTable: dv.Symbols);
+
+                        Assert.True(localCheck.IsSuccess);
+
+                        var formulaValue = await localCheck.GetEvaluator().EvalAsync(CancellationToken.None);
+
+                        Assert.IsNotType<ErrorValue>(formulaValue);
+                    }
+                }
+            }
+            finally
+            {
+                DisposeObjects(disposableObjects);
+            }
+        }
+
         [SkippableTheory]
         [InlineData("First('Appointments').appointment_PostRoles")]
         [InlineData("With({x:First('Appointments')}, x.appointment_PostRoles)")]
@@ -1057,6 +1014,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 DisposeObjects(disposableObjects);
             }
+        }
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, async);
+        }
+
+        private FormulaValue RunDataverseTest(string[] tableName, string expr, out List<IDisposable> disposableObjects, bool isCheckSucess = true, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out _, out _, out _, isCheckSucess, async);
+        }
+
+        private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolValues runtimeConfig, bool async = false)
+        {
+            return RunDataverseTest(tableName, expr, out disposableObjects, out engine, out _, out runtimeConfig, async);
         }
 
         private FormulaValue RunDataverseTest(string[] tableNames, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool isCheckSucess = true, bool async = false)
@@ -1138,34 +1110,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             { "Note", "annotation" },
             { "Contacts", "contact" }
         };
-
-        private FormulaValue BuildAndRunDataverseTest(string displayname, string logicalname, string expr, DataverseConnection dv, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
-        {
-            TableValue tableValue = dv.AddTable(variableName: displayname, tableLogicalName: logicalname);
-            //symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalname), dv.Symbols);
-            symbols = dv.Symbols;
-
-            Assert.NotNull(tableValue);
-            Assert.NotNull(symbols);
-
-            var config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
-            engine = new RecalcEngine(config);
-            runtimeConfig = dv.SymbolValues;
-
-            if (string.IsNullOrEmpty(expr))
-            {
-                return null;
-            }
-
-            CheckResult check = engine.Check(expr, symbolTable: symbols, options: new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = PowerFx2SqlEngine.NumberIsFloat });
-            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
-
-            IExpressionEvaluator run = check.GetEvaluator();
-            FormulaValue result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
-
-            return result;
-        }
 
         private FormulaValue RunDataverseTest(string tableName, string expr, out List<IDisposable> disposableObjects, out RecalcEngine engine, out ReadOnlySymbolTable symbols, out ReadOnlySymbolValues runtimeConfig, bool async = false)
         {

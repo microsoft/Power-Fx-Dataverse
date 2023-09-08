@@ -1762,7 +1762,15 @@ END
 
         public bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity)
         {
-            return _entitiesByName.TryGetValue(logicalOrDisplayName, out entity);
+            var ret = _entitiesByName.TryGetValue(logicalOrDisplayName, out entity);
+
+            if (ret && !entity.IsValid())
+            {
+                ret = false;
+                entity = null;
+            }
+
+            return ret;
         }
     }
 
