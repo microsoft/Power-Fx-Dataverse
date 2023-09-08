@@ -33,7 +33,8 @@
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" />
+    <!-- The Connectors version is hard coded to block breaking changes introduced in  https://github.com/microsoft/Power-Fx/commit/54b370ec29ac4b0b7fd72e356cb02515cacbd31f -->
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="1.0.0-build.20230907-1004" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>
