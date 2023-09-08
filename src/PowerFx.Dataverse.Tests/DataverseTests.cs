@@ -372,12 +372,12 @@ END
             var engine = new PowerFx2SqlEngine(metadata);
             var result = engine.Compile(expr, new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Equal("Error 10-15: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+            Assert.Equal("Error 10-15: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.", result.Errors.First().ToString());
 
             expr = "exchangerate * money";
             result = engine.Compile(expr, new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Equal("Error 0-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.", result.Errors.First().ToString());
+            Assert.Equal("Error 0-12: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.", result.Errors.First().ToString());
 
         }
 
@@ -744,11 +744,11 @@ END
         [Theory]
         [InlineData("Value(currency)", true)]
         [InlineData("Decimal(currency)", true)]
-        [InlineData("Int(currency)", false, "Error 4-12: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")] 
-        [InlineData("Decimal(currency + 0)", false, "Error 8-16: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
-        [InlineData("currency + 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
-        [InlineData("currency > 0", false, "Error 0-8: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
-        [InlineData("Decimal(currency) - currency", false, "Error 20-28: Using Currency Fields directly in Formula Columns are not supported. Use Decimal(currency field) instead.")]
+        [InlineData("Int(currency)", false, "Error 4-12: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")] 
+        [InlineData("Decimal(currency + 0)", false, "Error 8-16: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("currency + 0", false, "Error 0-8: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("currency > 0", false, "Error 0-8: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("Decimal(currency) - currency", false, "Error 20-28: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
         public void VerifyCurrencyUsage(string expr, bool success, string message = null)
         {
             var model = new EntityMetadataModel
