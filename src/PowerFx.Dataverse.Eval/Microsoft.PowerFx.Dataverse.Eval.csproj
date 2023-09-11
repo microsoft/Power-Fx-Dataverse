@@ -24,6 +24,14 @@
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Authors>Microsoft</Authors>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningsAsErrors>False</WarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningsAsErrors>False</WarningsAsErrors>
+  </PropertyGroup>
 
   <Import Project="..\Build.props" />
 
@@ -34,7 +42,7 @@
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
     <!-- The Connectors version is hard coded to block breaking changes introduced in  https://github.com/microsoft/Power-Fx/commit/54b370ec29ac4b0b7fd72e356cb02515cacbd31f and https://github.com/microsoft/Power-Fx/commit/a7eb7a0e6650f91086dce53176ddf5f7e3eb7152-->
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="1.0.0-build.20230911-0004" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="1.1.0-build.20230911-0004" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>

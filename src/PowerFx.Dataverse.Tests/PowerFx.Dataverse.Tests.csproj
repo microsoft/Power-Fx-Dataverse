@@ -16,6 +16,16 @@
     <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningsAsErrors>false</WarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningsAsErrors>false</WarningsAsErrors>
+  </PropertyGroup>
+
   <Import Project="..\Build.props" />
   
   <ItemGroup>
@@ -36,6 +46,7 @@
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="$(PowerFxVersion)" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="1.1.0-build.20230911-0004" />
   </ItemGroup>
 
   <ItemGroup>    
