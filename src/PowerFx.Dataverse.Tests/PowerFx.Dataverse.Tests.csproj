@@ -46,7 +46,7 @@
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="$(PowerFxVersion)" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="$(PowerFxVersion)" />
-    <PackageReference Include="Microsoft.PowerFx.Json" Version="1.1.0-build.20230911-0004" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
   </ItemGroup>
 
   <ItemGroup>    
