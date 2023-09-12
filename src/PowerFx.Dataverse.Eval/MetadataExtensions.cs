@@ -24,14 +24,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public static DisplayNameProvider GetTableDisplayNames(this IOrganizationService client)
         {
-            RetrieveAllEntitiesRequest req = new RetrieveAllEntitiesRequest
-            {
-                EntityFilters = Microsoft.Xrm.Sdk.Metadata.EntityFilters.Entity
-            };
-            var resp = (RetrieveAllEntitiesResponse)client.Execute(req);
-
             var map = new AllTablesDisplayNameProvider();
-            foreach (var entity in resp.EntityMetadata)
+            foreach (var entity in client.GetAllValidEntityMetadata())
             {
                 var displayName = GetDisplayName(entity);
                 map.Add(entity.LogicalName, displayName);

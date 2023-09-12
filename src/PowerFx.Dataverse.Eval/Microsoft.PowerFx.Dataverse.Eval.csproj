@@ -10,7 +10,7 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1702;1998;NU5104;NU1701</NoWarn>
+    <NoWarn>1702;1998;NU5104;NU1701;NU1605</NoWarn>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
@@ -32,9 +32,10 @@
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" />
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
+    <!-- The Connectors version is hard coded to block breaking changes introduced in  https://github.com/microsoft/Power-Fx/commit/54b370ec29ac4b0b7fd72e356cb02515cacbd31f and https://github.com/microsoft/Power-Fx/commit/a7eb7a0e6650f91086dce53176ddf5f7e3eb7152-->
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="1.1.0-build.20230911-0004" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

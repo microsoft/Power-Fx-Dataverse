@@ -2072,10 +2072,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), Float(2))")]
 
         // Variable as arg 
-        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), _count)")]
+        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Float(_count))")]
 
         // Function as arg 
-        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), If(LtDecimals(1,0), (_count), (Float(1))))")]
+        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))")]
 
         // Filter inside FirstN, both can be cominded (vice versa isn't true)
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), Float(10))")]
@@ -2160,10 +2160,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), 2)")]
 
         // Variable as arg 
-        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), _count)")]
+        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Value(_count))")]
 
         // Function as arg 
-        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (_count), (1)))")]
+        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))))")]
 
         // Filter inside FirstN, both can be cominded (vice versa isn't true)
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)")]
@@ -2518,10 +2518,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)")]
 
         // Variable as arg 
-        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)")]
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)")]
 
         // Function as arg 
-        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (1))), 999)")]
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)")]
 
         // Filter nested in another function both delegated.
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)")]

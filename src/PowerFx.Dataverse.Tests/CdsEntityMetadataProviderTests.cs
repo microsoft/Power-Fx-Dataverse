@@ -31,8 +31,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static readonly EntityMetadataModel _private = new EntityMetadataModel
         {
-            LogicalName = "wontcache",
-            PrimaryIdAttribute = "wontcached",
+            LogicalName = "private",
+            PrimaryIdAttribute = "privateid",
             IsPrivate = true,
             Attributes = new AttributeMetadataModel[]
             {
@@ -47,8 +47,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static readonly EntityMetadataModel _intersect = new EntityMetadataModel
         {
-            LogicalName = "wontcache",
-            PrimaryIdAttribute = "wontcacheid",
+            LogicalName = "intersect",
+            PrimaryIdAttribute = "intersectid",
             IsIntersect = true,
             Attributes = new AttributeMetadataModel[]
             {
@@ -61,10 +61,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         };
 
-        private static readonly EntityMetadataModel _logicalEntity = new EntityMetadataModel
+        private static readonly EntityMetadataModel _logical = new EntityMetadataModel
         {
-            LogicalName = "wontcache",
-            PrimaryIdAttribute = "wontcacheid",
+            LogicalName = "logical",
+            PrimaryIdAttribute = "logicalid",
             IsLogicalEntity = true,
             Attributes = new AttributeMetadataModel[]
             {
@@ -77,10 +77,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         };
 
-        private static readonly EntityMetadataModel _objectTypeCode = new EntityMetadataModel
+        private static readonly EntityMetadataModel _objecttypecode = new EntityMetadataModel
         {
-            LogicalName = "wontcache",
-            PrimaryIdAttribute = "wontcacheid",
+            LogicalName = "objecttypecode",
+            PrimaryIdAttribute = "objecttypecodeid",
             ObjectTypeCode = 0,
             Attributes = new AttributeMetadataModel[]
             {
@@ -93,10 +93,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         };
 
-        private static readonly EntityMetadataModel _blackListedEntity = new EntityMetadataModel
+        private static readonly EntityMetadataModel _blacklisted = new EntityMetadataModel
         {
-            LogicalName = "wontcache",
-            PrimaryIdAttribute = "wontcacheid",
+            LogicalName = "blacklisted",
+            PrimaryIdAttribute = "blacklistedentityid",
             ObjectTypeCode = 9944,
             Attributes = new AttributeMetadataModel[]
             {
@@ -174,26 +174,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // PA filter out certain entities base on IsPrivate, IsIntersect, IsLogicalEntity, ObjectTypeCode properties, along with a XrmUtility.BlackListedEntities() list.
-        [Fact]
-        public void WontCache()
+        [Theory]
+        [InlineData("private", false)]
+        [InlineData("intersect", false)]
+        [InlineData("logical", false)]
+        [InlineData("objecttypecode", false)]
+        [InlineData("blacklisted", false)]
+        [InlineData("local", true)]
+        public void FilterOutBadEntities(string name, bool willBeFound)
         {
-            var models = new EntityMetadataModel[] { _private, _intersect, _logicalEntity, _objectTypeCode, _blackListedEntity };
+            var models = new EntityMetadataModel[] { _private, _intersect, _logical, _objecttypecode, _blacklisted, _trivial };
+            var provider = new MockXrmMetadataProvider(models);
 
-            foreach (var model in models)
-            {
-                var provider1 = new SwitchMetadataProvider()
-                {
-                    _inner = new MockXrmMetadataProvider(model)
-                };
+            var cdsProvider = new CdsEntityMetadataProvider(provider);
+            var found = cdsProvider.TryGetXrmEntityMetadata(name, out _);
 
-                var metadataCache = new CdsEntityMetadataProvider(provider1);
-
-                // Wont cache
-                var ok = metadataCache.TryGetXrmEntityMetadata("wontcache", out var entityMetadata1);
-
-                Assert.False(ok);
-                Assert.Null(entityMetadata1);
-            }            
+            Assert.Equal(willBeFound, found);
         }
 
         [Fact]

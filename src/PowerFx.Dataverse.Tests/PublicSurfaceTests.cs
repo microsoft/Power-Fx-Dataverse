@@ -59,8 +59,10 @@ namespace Microsoft.PowerFx.Tests
                 // Functions
                 "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
                 "Microsoft.PowerFx.Dataverse.AIReplyFunction",
-                "Microsoft.PowerFx.Dataverse.AISentimentFunction"
-
+                "Microsoft.PowerFx.Dataverse.AISentimentFunction",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunction",
+                "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
+                "Microsoft.PowerFx.Dataverse.AIExtractFunction"
             };
 
             Verify(allowed, asm);
@@ -94,7 +96,8 @@ namespace Microsoft.PowerFx.Tests
 
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
-                "Microsoft.PowerFx.Dataverse.DataverseHelpers"
+                "Microsoft.PowerFx.Dataverse.DataverseHelpers",
+                "Microsoft.PowerFx.Dataverse.XrmUtility"
             };
 
             Verify(allowed, asm);
