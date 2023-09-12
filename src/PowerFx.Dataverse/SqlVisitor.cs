@@ -169,41 +169,8 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
-                        var returnType = new SqlBigType();
-
-                        /* 
-                         * In decimal cases, we need to use decimal(23,10) but in case of currency, we need to use SQLBigType decimal(38,10)
-                           in case of exchange rate, coercing to number type is not needed as it is already using decimal(28,12)
-                        */
-                        var leftType = FormulaType.Decimal;
-                        var rightType = FormulaType.Decimal;
-
-                        if (left != null && (left.type is SqlBigType || left.type is SqlMoneyType))
-                        {
-                            leftType = new SqlBigType();
-                        }
-
-                        if (right != null && (right.type is SqlBigType || right.type is SqlMoneyType))
-                        {
-                            rightType = new SqlBigType();
-                        }
-
-                        var leftOperand = Library.CoerceNullToNumberType(left, leftType);
-                        var rightOperand = Library.CoerceNullToNumberType(right, rightType);
-
-                        if (left != null && !string.IsNullOrEmpty(left.varName) && IsExchangeRateColumn(left, context))
-                        {
-                            leftOperand = Library.CoerceNullToInt(left);  
-                        }
-
-                        if (right != null && !string.IsNullOrEmpty(right.varName) && IsExchangeRateColumn(right, context))
-                        {
-                            rightOperand = Library.CoerceNullToInt(right);
-                        }
-
-                        // Casting to decimal to preserve 10 precision places while ensuring no overflow for max int value math
-                        // Docs: https://learn.microsoft.com/en-us/sql/t-sql/data-types/precision-scale-and-length-transact-sql?view=sql-server-ver15
-                        var result = context.SetIntermediateVariable(returnType, $"({leftOperand} {op} {rightOperand})");
+                        // TryCast returns null if the cast fails, so a null indicates an overflow error
+                        var result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -399,12 +366,12 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(new SqlBigType(), $"(-{Library.CoerceNullToInt(arg)})");
+                    return context.SetIntermediateVariable(FormulaType.Decimal, $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
                 case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
-                    var result = context.SetIntermediateVariable(new SqlBigType(), $"({Library.CoerceNullToInt(arg)}/100.0)");
+                    var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(arg)}/100.0)");
                     context.PerformRangeChecks(result, node);
                     return result;
 
@@ -655,23 +622,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static string ToSqlType(FormulaType t)
         {
-            // handle all numeric subtypes first
-            if (t is SqlNumberBase sqlNumber)
+            if (t is NumberType)
             {
-                return sqlNumber.ToSqlType();
-            }
-            else if (t is NumberType)
-            {
-                // use big as the numeric type if not already resolved (e.g. local variables)
-                return new SqlBigType().ToSqlType();
+                return SqlStatementFormat.SqlDecimalType;
             }
             else if (t is DecimalType)
             {
                 return SqlStatementFormat.SqlDecimalType;
-            }
-            else if (t is SqlMoneyType)
-            {
-                return SqlStatementFormat.SqlMoneyType;
             }
             else if (t is StringType || t is HyperlinkType)
             {
@@ -921,20 +878,20 @@ namespace Microsoft.PowerFx.Dataverse
                 return RetVal.FromVar(varName, type);
             }
 
-            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext)
+            public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext);
+                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, allowCurrencyFieldProcessing : allowCurrencyFieldProcessing);
             }
 
             // "new_Field" --> "@v0"
-            public string GetVarName(string fieldName, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            public string GetVarName(string fieldName, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(new DPath().Append(new DName(fieldName)), scope, sourceContext, navigation, create).VarName;
+                return GetVarDetails(new DPath().Append(new DName(fieldName)), scope, sourceContext, navigation, create, allowCurrencyFieldProcessing).VarName;
             }
 
-            public string GetVarName(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            public string GetVarName(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(path, scope, sourceContext, navigation, create).VarName;
+                return GetVarDetails(path, scope, sourceContext, navigation, create, allowCurrencyFieldProcessing).VarName;
             }
 
             public VarDetails GetVarDetails(string varName)
@@ -942,8 +899,22 @@ namespace Microsoft.PowerFx.Dataverse
                 return _vars[varName];
             }
 
-            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true)
+            private VarDetails GetVarDetails(DPath path, Scope scope, Span sourceContext, CdsNavigationTypeDefinition navigation = null, bool create = true, bool allowCurrencyFieldProcessing = false)
             {
+                // resolve the column against the navigation target, or the current entity
+                var column = scope.GetColumn(path, navigation: navigation);
+
+                // if related entity currency field is used in the formula field then block this operation
+                if (column?.TypeCode == AttributeTypeCode.Money && navigation != null)
+                {
+                    throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
+                }
+
+                if (!allowCurrencyFieldProcessing && column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
+                {
+                    throw new SqlCompileException(SqlCompileException.DirectCurrencyNotSupported, sourceContext);
+                }
+
                 var key = $"{scope.Symbol.Id}.{path.ToDottedSyntax()}";
 
                 if (_fields.TryGetValue(key, out var details))
@@ -957,21 +928,13 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     var idx = _vars.Count;
                     var varName = "@v" + idx;
-                    // resolve the column against the navigation target, or the current entity
-                    var column = scope.GetColumn(path, navigation: navigation);
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
-
+                    
                     var varType = GetFormulaType(column, sourceContext);
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
-
-                    // if related entity currency field is used in the formula field then block this operation
-                    if (varType is SqlMoneyType && navigation != null)
-                    {
-                        throw new SqlCompileException(SqlCompileException.RelatedCurrency, sourceContext);
-                    }
 
                     if (column.RequiresReference())
                     {
@@ -1138,6 +1101,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
+            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
+            {
+                expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
+                NullCheck(retVal, postValidation: true);
+                return retVal;
+            }
+
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);
@@ -1229,7 +1200,9 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_checkOnly) return;
 
                 // compute approximate power to determine if there will be an overflow
-                var power = SetIntermediateVariable(new SqlBigType(), $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)");
+                var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
+                var power = TryCastToDecimal(expression);
+
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
 
@@ -1273,17 +1246,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    if (result.type is SqlIntType)
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
-                    }
-                    else if (result.type is SqlMoneyType)
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.MoneyTypeMin, SqlStatementFormat.MoneyTypeMax, postCheck);
-                    }
-                    else if (IsNumericType(result))
+                    if (IsNumericType(result))
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+
                     }
                     // TODO: other range checks?
                 }
@@ -1291,16 +1257,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool ValidateNumericLiteral(double literal, FormulaType type)
             {
-                if (type is SqlIntType && literal > SqlStatementFormat.IntTypeMinValue && literal < SqlStatementFormat.IntTypeMaxValue)
-                {
-                    return true;
-                }
-                else if ((type is SqlBigType || type is SqlMoneyType) && literal > SqlStatementFormat.MoneyTypeMinValue && literal < SqlStatementFormat.MoneyTypeMaxValue)
-                {
-                    return true;
-                }
-                // check against range (-9999999999999, 9999999999999) for intermediate arithmetic operations
-                else if (IsNumericType(type) && literal > SqlStatementFormat.DecimalTypeMinValue && literal < SqlStatementFormat.DecimalTypeMaxValue)
+                if (IsNumericType(type) && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
                 {
                     // Do proper precision check. https://github.com/microsoft/Power-Fx-Dataverse/issues/176
                     var epsilon = Math.Abs(literal);
@@ -1336,7 +1293,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (type is DecimalType)
                 {
-                    if (literal > SqlStatementFormat.DDecimalTypeMinValue && literal < SqlStatementFormat.DDecimalTypeMaxValue)
+                    if (literal >= SqlStatementFormat.DDecimalTypeMinValue && literal <= SqlStatementFormat.DDecimalTypeMaxValue)
                     {
                         // for skipping testcases which include decimals with precision > 12
                         var arg = literal.ToString();
@@ -1697,7 +1654,7 @@ namespace Microsoft.PowerFx.Dataverse
                 internal ErrorContext(Context context)
                 {
                     _context = context;
-                    Code = context.GetTempVar(new SqlIntType());
+                    Code = context.GetTempVar(FormulaType.Decimal);
                     context.SetIntermediateVariable(Code, "0");
                     IndenterStack = new Stack<IfIndenter>();
                     IndenterStack.Push(new IfIndenter(context, this));

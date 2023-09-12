@@ -19,6 +19,8 @@ using System.Xml;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using System.Text;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Core.IR.Symbols;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -30,9 +32,20 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
-
             var arg0 = node.Args[0];
-            var arg = arg0.Accept(visitor, context);
+            RetVal arg = null;
+
+            // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
+            if (node.Args.Count == 1 && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
+            {
+                var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
+                arg = RetVal.FromVar(varDetails.VarName, context.GetReturnType(scopeAccessNode, varDetails.VarType));
+            }
+            else
+            {
+                arg = arg0.Accept(visitor, context);
+            }
+            
             if (arg.type is StringType)
             {
                 if (arg0 is TextLiteralNode literal)
@@ -49,12 +62,23 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // only allow whole numbers to be parsed
                 context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
-                context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
-          
+                context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                context.PerformRangeChecks(result, node);
                 return result;
             }
             else if (context.IsNumericType(arg))
-            {  
+            {
+                var column = context.GetVarDetails(arg.varName).Column;
+                if (column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
+                {
+                    var result = context.GetTempVar(context.GetReturnType(node));
+
+                    // only allow whole numbers to be parsed
+                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    context.PerformRangeChecks(result, node);
+                    return result;
+                }
+
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
@@ -220,7 +244,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
+            var expression = RoundDownToInt(val);
+            var roundedVal = context.TryCastToDecimal(expression);
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -279,23 +304,25 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var strArg = node.Args[0].Accept(visitor, context);
 
             ValidateNumericArgument(node.Args[1]);
-            RetVal start = node.Args[1].Accept(visitor, context);
+            RetVal start = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[1].Accept(visitor, context)} AS INT)");
+            context.NullCheck(start, postValidation: true);
             context.NonPositiveNumberCheck(start);
 
             RetVal length;
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", new SqlIntType());
+                length = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[2].Accept(visitor, context)} AS INT)");
+                context.NullCheck(length, postValidation: true);
                 context.NegativeNumberCheck(length);
             }
             else
             {
                 // SQL ignores trailing spaces when counting the length
-                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
+                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Decimal);
             }
 
-            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},{start},{length})");
         }
 
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
@@ -347,16 +374,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownNullToInt(instance));
+                var expression = RoundDownNullToInt(instance);
+                var coercedInstance = context.TryCastToDecimal(expression);
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
-                var idx = context.GetTempVar(new SqlIntType());
-                var matchCount = context.GetTempVar(new SqlIntType());
+                var idx = context.GetTempVar(FormulaType.Decimal);
+                var matchCount = context.GetTempVar(FormulaType.Decimal);
                 context.SetIntermediateVariable(idx, $"1");
                 context.SetIntermediateVariable(matchCount, $"1");
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
+                var oldLen = context.SetIntermediateVariable(FormulaType.Decimal, $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
                 // find the appropriate instance (case sensitive) in the original string
                 context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(str)}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 

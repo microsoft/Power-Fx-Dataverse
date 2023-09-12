@@ -94,13 +94,6 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.SqlCompileResult",
                 "Microsoft.PowerFx.Dataverse.SqlCompileResult",
 
-                // FormulaTypes that should exist in Fx Core
-                "Microsoft.PowerFx.Dataverse.SqlBigType",
-                "Microsoft.PowerFx.Dataverse.SqlFloatType",
-                "Microsoft.PowerFx.Dataverse.SqlIntType",
-                "Microsoft.PowerFx.Dataverse.SqlMoneyType",
-                "Microsoft.PowerFx.Dataverse.SqlNumberBase",
-
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
                 "Microsoft.PowerFx.Dataverse.DataverseHelpers",

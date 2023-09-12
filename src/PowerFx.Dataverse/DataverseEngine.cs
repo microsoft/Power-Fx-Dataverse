@@ -200,11 +200,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return FormulaType.Decimal;
             }
-            else if (type.Kind == DKind.Currency)
-            {
-                // Full currency support is not there but it is needed for formula expressions which is using currency fields 
-                return new SqlBigType();
-            }
             else
             {
                 try
