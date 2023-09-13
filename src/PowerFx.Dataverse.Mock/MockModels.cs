@@ -55,6 +55,14 @@ namespace Microsoft.Dataverse.EntityMock
                     new OptionMetadataModel { Label = "Medium", Value = 2 },
                     new OptionMetadataModel { Label = "Low", Value = 3 }
                 },
+                isGlobal: true),
+                AttributeMetadataModel.NewPicklist("new_status", "Status", new OptionMetadataModel[]
+                {
+                    new OptionMetadataModel { Label = "New", Value = 1 },
+                    new OptionMetadataModel { Label = "Active", Value = 2 },
+                    new OptionMetadataModel { Label = "Resolved", Value = 3 }
+                },
+                attributeType: AttributeTypeCode.Status,
                 isGlobal: true)
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
