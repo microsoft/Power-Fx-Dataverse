@@ -91,6 +91,18 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        public void RemoveCacheEntry(IEnumerable<Guid> list)
+        {
+            lock (_lock)
+            {
+                foreach (var id in list)
+                {
+                    _cacheList.Remove(id);
+                    _cache.Remove(id);
+                }
+            }
+        }
+
         public void ClearCache(string logicalTableName = null)
         {
             lock (_lock)
@@ -102,10 +114,15 @@ namespace Microsoft.PowerFx.Dataverse
                     return;
                 }
 
+                var toRemove = new List<Guid>();
+
                 foreach (var entityKvp in _cache.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)).ToList())
                 {
-                    RemoveCacheEntry(entityKvp.Key);
+                    // This approach avoids exception in case of host is running .NET 4.*.*.
+                    toRemove.Add(entityKvp.Key);
                 }
+
+                RemoveCacheEntry(toRemove);
             }
         }
 
@@ -208,13 +225,18 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 lock (_lock)
                 {
+                    var toRemove = new List<Guid>();
+
                     foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
                     {
                         if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
                         {
-                            RemoveCacheEntry(entityKvp.Key);
+                            // This approach avoids exception in case of host is running .NET 4.*.*.
+                            toRemove.Add(entityKvp.Key);
                         }
                     }
+
+                    RemoveCacheEntry(toRemove);
                 }
             }
         }
