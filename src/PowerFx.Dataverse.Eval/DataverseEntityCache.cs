@@ -102,11 +102,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return;
                 }
 
-                // Copy so we can mutate.
-                // This approach avoids exception in case of host is running .NET 4.*.*.
-                var toRemove = _cache.ToList();
-
-                foreach (var entityKvp in toRemove.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)))
+                foreach (var entityKvp in _cache.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)).ToList())
                 {
                     RemoveCacheEntry(entityKvp.Key);
                 }
