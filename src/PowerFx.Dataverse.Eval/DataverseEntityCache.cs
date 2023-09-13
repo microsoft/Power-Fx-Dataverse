@@ -91,18 +91,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public void RemoveCacheEntry(IEnumerable<Guid> list)
-        {
-            lock (_lock)
-            {
-                foreach (var id in list)
-                {
-                    _cacheList.Remove(id);
-                    _cache.Remove(id);
-                }
-            }
-        }
-
         public void ClearCache(string logicalTableName = null)
         {
             lock (_lock)
@@ -114,15 +102,14 @@ namespace Microsoft.PowerFx.Dataverse
                     return;
                 }
 
-                var toRemove = new List<Guid>();
+                // Copy so we can mutate.
+                // This approach avoids exception in case of host is running .NET 4.*.*.
+                var toRemove = _cache.ToList();
 
-                foreach (var entityKvp in _cache.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)).ToList())
+                foreach (var entityKvp in toRemove.Where(kvp => kvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    // This approach avoids exception in case of host is running .NET 4.*.*.
-                    toRemove.Add(entityKvp.Key);
+                    RemoveCacheEntry(entityKvp.Key);
                 }
-
-                RemoveCacheEntry(toRemove);
             }
         }
 
@@ -225,18 +212,19 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 lock (_lock)
                 {
-                    var toRemove = new List<Guid>();
+                    // Copy so we can mutate
+                    // This approach avoids exception in case of host is running .NET 4.*.*.
+                    var toRemove = _cache.ToList();
 
-                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in toRemove)
                     {
                         if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
                         {
-                            // This approach avoids exception in case of host is running .NET 4.*.*.
-                            toRemove.Add(entityKvp.Key);
+                            RemoveCacheEntry(entityKvp.Key);
                         }
                     }
 
-                    RemoveCacheEntry(toRemove);
+                    
                 }
             }
         }
