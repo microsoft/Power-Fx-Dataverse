@@ -208,13 +208,19 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 lock (_lock)
                 {
-                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                    // Copy so we can mutate
+                    // This approach avoids exception in case of host is running .NET 4.*.*.
+                    var toRemove = _cache.ToList();
+
+                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in toRemove)
                     {
                         if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
                         {
                             RemoveCacheEntry(entityKvp.Key);
                         }
                     }
+
+                    
                 }
             }
         }
