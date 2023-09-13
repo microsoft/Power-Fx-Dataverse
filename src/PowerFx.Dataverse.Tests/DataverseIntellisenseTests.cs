@@ -112,6 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "'Boolean (Locals)'",
             "'Global Picklist'",
             "'Rating (Locals)'",
+            "Status",
             "TimeUnit.Days",
             "TimeUnit.Hours",
             "TimeUnit.Milliseconds",
@@ -123,7 +124,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Text(UTCToday(),|",
             "'Boolean (Locals)'",
             "'Global Picklist'",
-            "'Rating (Locals)'")] // "DateTimeFormat in Text on Date"            
+            "'Rating (Locals)'",
+            "Status")] // "DateTimeFormat in Text on Date"            
         [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'")] // "One To Many not shown"
         [InlineData("Sel|", "'Self Reference'")] // "Lookup (Many To One) is shown"
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"

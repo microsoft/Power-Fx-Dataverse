@@ -3675,6 +3675,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [Fact]
+        public void StatusTypeOptionSetTest()
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            var expr = "Patch(t1, First(t1), {Status: Status.Resolved})";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
+            Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
@@ -3716,6 +3743,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
             entity1.Attributes["new_name"] = "row1";
+            entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
