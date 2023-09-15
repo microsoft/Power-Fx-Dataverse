@@ -212,4 +212,8 @@
     <value>Izračuni sa stupcima valuta u povezanim tablicama trenutno nisu podržani u stupcima formule.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Izravna uporaba polja valuta još nije podržana. Upotrijebite Decimal(CurrencyField) kao zamjensko rješenje, ali imajte na umu da decimalni broj ima manji raspon od valute.</value>
+    
+  </data>
 </root>

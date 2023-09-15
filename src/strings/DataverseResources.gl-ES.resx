@@ -212,4 +212,8 @@
     <value>Os cálculos con columnas de moeda en táboas relacionadas non se admiten actualmente en columnas de fórmulas.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>O uso directo dos campos de moeda aínda non se admite. Use Decimal(CurrencyField) como solución alternativa, pero teña en conta que o decimal ten un intervalo menor que a moeda.</value>
+    
+  </data>
 </root>

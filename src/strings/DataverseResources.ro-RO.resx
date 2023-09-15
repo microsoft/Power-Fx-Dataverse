@@ -212,4 +212,8 @@
     <value>Calculele cu coloane monetare din tabelele asociate nu sunt acceptate momentan în coloanele de formule.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Utilizarea directă a câmpurilor monetare nu are încă suport. Utilizați Decimal(CurrencyField) ca soluție temporară, dar rețineți că valoarea zecimală are un interval mai mic decât moneda.</value>
+    
+  </data>
 </root>

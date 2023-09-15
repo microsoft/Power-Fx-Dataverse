@@ -212,4 +212,8 @@
     <value>İlgili tablolardaki para birimi sütunlarıyla yapılan hesaplamalar şu anda formül sütunlarında desteklenmiyor.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Para birimi alanlarının doğrudan kullanımı henüz desteklenmiyor. Geçici bir çözüm olarak Decimal(CurrencyField) alanını kullanın ancak ondalık aralığının para biriminden daha küçük olduğunu unutmayın.</value>
+    
+  </data>
 </root>

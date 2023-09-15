@@ -212,4 +212,8 @@
     <value>Hiện không hỗ trợ các phép tính với cột tiền tệ trong các bảng liên quan trong các cột công thức.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Chưa hỗ trợ sử dụng trực tiếp các trường tiền tệ. Hãy dùng Decimal(CurrencyField) làm giải pháp thay thế nhưng lưu ý rằng số thập phân có phạm vi nhỏ hơn tiền tệ.</value>
+    
+  </data>
 </root>

@@ -212,4 +212,8 @@
     <value>Skaičiavimai su valiutų stulpeliais susijusių lentelių formulės stulpeliuose šiuo metu nepalaikomi.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Tiesioginis valiutos laukų naudojimas dar nepalaikomas. Kaip apėjimo būdą naudokite Decimal(CurrencyField), tačiau atminkite, kad dešimtainio skaičiaus diapazonas mažesnis už valiutos.</value>
+    
+  </data>
 </root>

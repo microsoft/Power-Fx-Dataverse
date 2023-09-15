@@ -212,4 +212,8 @@
     <value>Aprēķini ar valūtas kolonnām saistītajās tabulās pašlaik netiek atbalstīti formulas kolonnās.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Valūtas lauku tieša izmantošana vēl netiek atbalstīta. Izmantojiet Decimal(CurrencyField) kā risinājumu, taču ņemiet vērā, ka decimāldaļskaitļa diapazons ir mazāks nekā valūtas diapazons.</value>
+    
+  </data>
 </root>
