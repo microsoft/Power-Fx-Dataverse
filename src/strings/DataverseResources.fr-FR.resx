@@ -212,4 +212,8 @@
     <value>Les calculs avec des colonnes de devises dans les tables associées ne sont actuellement pas pris en charge dans les colonnes de formules.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>L’utilisation directe des champs de devises n’est pas encore prise en charge. Utilisez Décimale (CurrencyField) comme solution de contournement, mais notez que la plage de décimales est plus petite que la devise.</value>
+    
+  </data>
 </root>

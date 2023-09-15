@@ -212,4 +212,8 @@
     <value>公式列当前不支持使用相关表中的货币列进行计算。</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>尚不支持直接使用货币字段。请使用小数(CurrencyField)作为一种解决方法，但请注意，小数的范围小于货币的范围。</value>
+    
+  </data>
 </root>

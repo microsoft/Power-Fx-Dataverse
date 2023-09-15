@@ -212,4 +212,8 @@
     <value>Valuutaveergudega arvutused seostuvates tabelites pole praegu valemiveergudes toetatud.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Valuutaväljade otse kasutamist veel ei toetata. Kasutage lahendusena väärtust Decimal(CurrencyField), kuid pange tähele, et kümnendkohal on väiksem vahemik kui valuutal.</value>
+    
+  </data>
 </root>

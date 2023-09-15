@@ -212,4 +212,8 @@
     <value>Berekeningen met valutakolommen in gerelateerde tabellen worden momenteel niet ondersteund in formulekolommen.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Direct gebruik van valutavelden wordt nog niet ondersteund. Gebruik Decimal(CurrencyField) als tijdelijke oplossing, maar houd er rekening mee dat decimaal een kleiner bereik heeft dan valuta.</value>
+    
+  </data>
 </root>

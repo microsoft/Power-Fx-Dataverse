@@ -212,4 +212,8 @@
     <value>I calcoli con colonne di valuta nelle tabelle correlate non sono al momento supportati nelle colonne delle formule.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Uso diretto dei campi di valuta non ancora supportato. Usa Decimal(CurrencyField) per risolvere il problema, ma tieni presente che l'intervallo dei decimali è inferiore a quello della valuta.</value>
+    
+  </data>
 </root>

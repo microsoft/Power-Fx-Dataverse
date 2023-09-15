@@ -212,4 +212,8 @@
     <value>Penghitungan dengan kolom mata uang di tabel terkait saat ini tidak didukung di kolom formula.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Penggunaan langsung bidang mata uang belum didukung. Gunakan Desimal (Bidang Mata Uang) sebagai solusi, tetapi perlu diketahui bahwa desimal memiliki rentang yang lebih kecil dari mata uang.</value>
+    
+  </data>
 </root>

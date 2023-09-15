@@ -212,4 +212,8 @@
     <value>Изчисленията с колони с валута в свързани таблици в момента не се поддържат в колони за формули.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Все още не се поддържа директно използване на валутни полета. Използвайте Decimal(CurrencyField) като заобиколно решение, но имайте предвид, че типът decimal е с по-малък диапазон от типа за валута.</value>
+    
+  </data>
 </root>

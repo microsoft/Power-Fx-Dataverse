@@ -212,4 +212,8 @@
     <value>Actualment no s'admeten càlculs amb columnes de moneda a les taules relacionades.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Encara no s'admet l'ús directe dels camps de moneda. Utilitzeu Decimal(camp de moneda) com a solució alternativa, però tingueu en compte que Decimal té un interval més petit que Moneda.</value>
+    
+  </data>
 </root>

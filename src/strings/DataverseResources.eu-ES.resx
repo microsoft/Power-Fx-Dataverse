@@ -212,4 +212,8 @@
     <value>Ez dira onartzen erlazionatutako tauletan moneta-zutabeak dituzten kalkuluak formula-zutabeetan.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Oraindik ez da onartzen moneta-eremuen erabilera zuzena. Erabil ezazu hamartarra(CurrencyField) konponbide gisa, baina kontuan izan hamartarrak monetak baino barruti txikiagoa duela.</value>
+    
+  </data>
 </root>

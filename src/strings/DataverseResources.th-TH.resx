@@ -212,4 +212,8 @@
     <value>การคำนวณด้วยคอลัมน์สกุลเงินในตารางที่เกี่ยวข้องไม่ได้รับการสนับสนุนในคอลัมน์สูตรในขณะนี้</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>ยังไม่รองรับการใช้ฟิลด์สกุลเงินโดยตรง โปรดใช้ Decimal(CurrencyField) เป็นวิธีการแก้ไขไปก่อน แต่โปรดทราบว่าทศนิยมนั้นมีช่วงที่แคบกว่าสกุลเงิน</value>
+    
+  </data>
 </root>

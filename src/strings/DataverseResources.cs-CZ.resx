@@ -212,4 +212,8 @@
     <value>Výpočty se sloupci měny v souvisejících tabulkách nejsou aktuálně podporovány ve sloupcích vzorců.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Přímé použití polí měny zatím není podporováno. Jako alternativní řešení použijte Decimal(CurrencyField), ale všimněte si, že desítková soustava má menší rozsah než měna.</value>
+    
+  </data>
 </root>

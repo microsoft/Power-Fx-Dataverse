@@ -212,4 +212,8 @@
     <value>Obliczenia w kolumnach walutowych w powiązanych tabelach nie są aktualnie obsługiwane w kolumnach formuły.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Bezpośrednie używanie pól walutowych nie jest jeszcze obsługiwane. Ten problem można obejść, używając typu „Liczba dziesiętna (pole walutowe)”, ale należy pamiętać, że typ Liczba dziesiętna ma mniejszy zakres niż typ Waluta.</value>
+    
+  </data>
 </root>

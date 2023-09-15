@@ -212,4 +212,8 @@
     <value>関連するテーブルで通貨の列を計算することは、式の列では現在サポートされていません。</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>通貨フィールドを直接使用することは、現状ではサポートされていません。代わりに Decimal (CurrencyField) を使用してください。ただし、小数の範囲が通貨よりも小さい点に注意してください。</value>
+    
+  </data>
 </root>
