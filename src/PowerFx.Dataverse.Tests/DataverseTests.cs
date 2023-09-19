@@ -779,6 +779,25 @@ END
             }
         }
 
+        public const string IntegerHintsUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 2.0
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-2147483648 OR @v2>2147483647) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+
         [Fact]
         public void CompileTypeHint()
         {
@@ -799,11 +818,12 @@ END
 
             var metadata = model.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
-            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer, Precision = 0 } };
+            var options = new SqlCompileOptions { UdfName = "fn_testUdf1", TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer, Precision = 0 } };
             var result = engine.Compile(expr, options);
 
             Assert.NotNull(result);
             Assert.NotNull(result.SqlFunction);
+            Assert.Equal(IntegerHintsUDF, result.SqlFunction);
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 

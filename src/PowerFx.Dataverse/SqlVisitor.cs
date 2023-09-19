@@ -1239,7 +1239,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true)
+            internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true, SqlCompileOptions options = null)
             {
                 if (_checkOnly) return;
 
@@ -1248,6 +1248,12 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (IsNumericType(result))
                     {
+                        if (options?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                        {
+                            PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
+                            return;
+                        }
+
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
 
                     }

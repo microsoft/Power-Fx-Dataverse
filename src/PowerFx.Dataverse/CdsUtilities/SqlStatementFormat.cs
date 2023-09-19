@@ -181,6 +181,7 @@ ELSE
         public const string IntTypeMax = "2147483647";
         public const double IntTypeMinValue = -2147483648;
         public const double IntTypeMaxValue = 2147483647;
+        public const string Integer = "int";
 
         // Changing the min and max for decimals to match with
         // CRM supported min and max for decimals. 

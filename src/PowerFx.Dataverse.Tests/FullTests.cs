@@ -44,8 +44,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
-        /*
         [SkippableFact]
         public void SqlCalculatedDependencyTest()
         {
@@ -108,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
             }
-        }*/
+        }
 
         [SkippableFact]
         public void FormulaUDFTest()

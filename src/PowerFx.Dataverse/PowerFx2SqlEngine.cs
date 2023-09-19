@@ -187,8 +187,16 @@ namespace Microsoft.PowerFx.Dataverse
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
-                
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+
+                var returnType = SqlVisitor.ToSqlType(retType);
+
+                if (options?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                {
+                    returnType = SqlStatementFormat.Integer;
+                    sqlResult.MetadataTypeName = SqlStatementFormat.Integer;
+                }
+
+                tw.WriteLine($") RETURNS {returnType}");
 
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
@@ -355,7 +363,7 @@ namespace Microsoft.PowerFx.Dataverse
             result.type = returnType;
 
             context._sbContent = new System.Text.StringBuilder();
-            context.PerformRangeChecks(result, null, postCheck: true);
+            context.PerformRangeChecks(result, null, postCheck: true, options: options);
             tw.Write(context._sbContent);
 
             if (context.IsNumericType(result))
