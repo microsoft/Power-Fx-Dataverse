@@ -3675,6 +3675,47 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [Theory]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t2)})", false)]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t1)})", false)]
+
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t3)})", true)]
+        [InlineData("Collect(t1, {PolymorphicLookup: {test:1}})", true)]
+        public async Task PolymorphicMutationTestAsync(string expr, bool isErrorValue)
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, _) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("t2", "remote");
+            dv.AddTable("t3", "doubleremote");
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = _parserAllowSideEffects;
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            if (isErrorValue)
+            {
+                Assert.IsAssignableFrom<ErrorValue>(result);
+                return;
+            }
+
+            var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
+
+            var updatedPolyField = Assert.IsAssignableFrom<RecordValue>(resultRecord.GetFieldAsync("_new_polyfield_value", CancellationToken.None).Result);
+
+            Assert.NotNull(updatedPolyField);
+        }
+
         [Fact]
         public void StatusTypeOptionSetTest()
         {
@@ -3706,6 +3747,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
         static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
+        static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
@@ -3729,7 +3771,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
-
+            var entity5 = new Entity("doubleremote", _g5);
 
             var entity3 = new Entity("local", _g3);
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
