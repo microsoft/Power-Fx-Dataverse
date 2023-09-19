@@ -20,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse
             : base("AISummarizeRecord",
                   FormulaType.String,
                   FormulaType.String,
-                  FormulaType.Guid)
+                  FormulaType.String)
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
@@ -32,7 +32,8 @@ namespace Microsoft.PowerFx.Dataverse
             /// The incoming text. 
             /// </summary>
             public string EntityLogicalName { get; set; }
-            public Guid Id { get; set; }
+
+            public string Id { get; set; }
 
             public OrganizationRequest Get()
             {
@@ -63,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Entry called by Power Fx interpreter. 
-        public async Task<StringValue> Execute(IDataverseExecute client, StringValue entityName, GuidValue entityId, CancellationToken cancel)
+        public async Task<StringValue> Execute(IDataverseExecute client, StringValue entityName, StringValue entityId, CancellationToken cancel)
         {
             if (client == null)
             {
@@ -76,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
             return FormulaValue.New(result);
         }
 
-        private async Task<string> AISummarizeRecordAsync(string entityName, Guid entityId, IDataverseExecute service, CancellationToken cancel)
+        private async Task<string> AISummarizeRecordAsync(string entityName, string entityId, IDataverseExecute service, CancellationToken cancel)
         {
             var req = new AISummarizeRecordRequest
             {

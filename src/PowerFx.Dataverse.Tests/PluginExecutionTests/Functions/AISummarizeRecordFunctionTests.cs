@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Validate parameters
                 Assert.Equal("AISummarizeRecord", req.RequestName);
                 Assert.Equal("Account", req.Parameters["EntityLogicalName"]);
-                Assert.Equal(id, req.Parameters["Id"]);
+                Assert.Equal(id.ToString(), req.Parameters["Id"]);
 
                 var resp = new OrganizationResponse
                 {
