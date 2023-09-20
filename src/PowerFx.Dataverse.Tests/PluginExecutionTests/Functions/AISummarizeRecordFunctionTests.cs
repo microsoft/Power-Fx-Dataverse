@@ -18,7 +18,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
     public class AISummarizeRecordFunctionTests
     {
-        // FAils if config.EnableAIFunctions() is not called.
+        // Fails if config.EnableAIFunctions() is not called.
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -32,21 +32,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             var engine = new RecalcEngine(config);
 
-            var result = engine.Check($"AISummarizeRecord(\"Account\", \"{id}\")");
+            var result = engine.Check("AISummarizeRecord({})");
             Assert.Equal(enable, result.IsSuccess);
         }
 
         [Fact]
         public async Task Success()
         {
-            var id = Guid.NewGuid();
             var config = new PowerFxConfig();
             config.EnableAIFunctions();
 
+            var (dvc, ds, el) = PluginExecutionTests.CreateMemoryForRelationshipModelsInternal();
+            dvc.AddTable("Locals", "local");
+
             var engine = new RecalcEngine(config);
 
-            var rc = new RuntimeConfig();
-
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
 
@@ -54,8 +56,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 // Validate parameters
                 Assert.Equal("AISummarizeRecord", req.RequestName);
-                Assert.Equal("Account", req.Parameters["EntityLogicalName"]);
-                Assert.Equal(id.ToString(), req.Parameters["Id"]);
+                Assert.Equal("local", req.Parameters["EntityLogicalName"]);
+                Assert.NotEqual(Guid.Empty, req.Parameters["Id"]);
 
                 var resp = new OrganizationResponse
                 {
@@ -65,9 +67,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return resp;
             };
 
-            var result = await engine.EvalAsync($"AISummarizeRecord(\"Account\", \"{id}\")", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync($"AISummarizeRecord(First(Locals))", default, runtimeConfig: rc, symbolTable: dvc.Symbols);
             Assert.Equal("string", result.ToObject());
         }
+
+        // AISummarizeRecord if passed a non-dataverse record (such as a record literal)
+        [Fact]
+        public async Task FailNotDataverseRecord()
+        {
+            var config = new PowerFxConfig();
+            config.EnableAIFunctions();
+                        
+            var engine = new RecalcEngine(config);
+
+            var rc = new RuntimeConfig();
+
+            var client = new MockExecute();
+            rc.AddDataverseExecute(client);
+                        
+            var result = await engine.EvalAsync("AISummarizeRecord({})", default, runtimeConfig: rc);
+
+            var error = (ErrorValue)result;
+            string msg = error.Errors[0].Message;
+            Assert.Equal("Record must be a dataverse record", msg);
+        }
+
 
         [Fact]
         public async Task Failure()
@@ -77,9 +101,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var config = new PowerFxConfig();
             config.EnableAIFunctions();
 
+            var (dvc, ds, el) = PluginExecutionTests.CreateMemoryForRelationshipModelsInternal();
+            dvc.AddTable("Locals", "local");
+
             var engine = new RecalcEngine(config);
 
-            var rc = new RuntimeConfig();
+            var rc = new RuntimeConfig(dvc.SymbolValues);
 
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
@@ -91,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException(msg);
             };
 
-            var result = await engine.EvalAsync($"AISummarizeRecord(\"Account\", \"{id}\")", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync("AISummarizeRecord(First(Locals))", default, runtimeConfig: rc, symbolTable: dvc.Symbols);
 
             var errors = (ErrorValue)result;
             Assert.Equal(1, errors.Errors.Count);

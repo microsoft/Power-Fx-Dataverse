@@ -19,8 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
         public AISummarizeRecordFunction()
             : base("AISummarizeRecord",
                   FormulaType.String,
-                  FormulaType.String,
-                  FormulaType.Guid)
+                  RecordType.Empty())
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
@@ -64,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Entry called by Power Fx interpreter. 
-        public async Task<StringValue> Execute(IDataverseExecute client, StringValue entityName, GuidValue entityId, CancellationToken cancel)
+        public async Task<StringValue> Execute(IDataverseExecute client, RecordValue record, CancellationToken cancel)
         {
             if (client == null)
             {
@@ -72,7 +71,15 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Organization is not available");
             }
 
-            var result = await AISummarizeRecordAsync(entityName.Value, entityId.Value, client, cancel);
+            if (record is not DataverseRecordValue dataverseRecord)
+            {
+                throw new CustomFunctionErrorException("Record must be a dataverse record");
+            }
+
+            var entityName = dataverseRecord.Entity.LogicalName;
+            var entityId = dataverseRecord.Entity.Id;
+
+            var result = await AISummarizeRecordAsync(entityName, entityId, client, cancel);
 
             return FormulaValue.New(result);
         }
