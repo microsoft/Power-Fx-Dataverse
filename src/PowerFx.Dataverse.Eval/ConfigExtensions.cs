@@ -35,6 +35,7 @@ namespace Microsoft.PowerFx.Dataverse
             symbolTable.AddFunction(new AITranslateFunction());
             symbolTable.AddFunction(new AIClassifyFunction());
             symbolTable.AddFunction(new AIExtractFunction());
+            symbolTable.AddFunction(new AISummarizeRecordFunction());
         }
 
         public static void AddDataverseExecute(this RuntimeConfig config, IOrganizationService client)
