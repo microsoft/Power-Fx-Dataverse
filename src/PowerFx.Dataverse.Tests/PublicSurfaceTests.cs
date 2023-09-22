@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using Microsoft.PowerFx.Dataverse;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Tests
 {
-    [TestClass]
+    
     public class PublicSurfaceTests
     {
         // The goal for public namespaces is to make the SDK easy for the consumer. 
@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Tests
         // - Avoid nesting more than 1 level deep
 
 
-        [TestMethod]
+        [Fact]
         public void TestPowerFxDataverseEval()
         {
             var asm = typeof(DataverseConnection).Assembly;
@@ -30,6 +30,7 @@ namespace Microsoft.PowerFx.Tests
             {
                 "Microsoft.PowerFx.Dataverse.EngineExtensions",
                 "Microsoft.PowerFx.Dataverse.AttributeUtilityExtensions",
+                "Microsoft.PowerFx.Dataverse.ConfigExtensions",
 
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
                 "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
@@ -51,13 +52,23 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.IDataverseCreator",
                 "Microsoft.PowerFx.Dataverse.IDataverseReader",
                 "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
-                "Microsoft.PowerFx.Dataverse.IDataverseDeleter"
+                "Microsoft.PowerFx.Dataverse.IDataverseDeleter",
+                "Microsoft.PowerFx.Dataverse.IDataverseRefresh",
+                "Microsoft.PowerFx.Dataverse.IDataverseExecute",
+
+                // Functions
+                "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
+                "Microsoft.PowerFx.Dataverse.AIReplyFunction",
+                "Microsoft.PowerFx.Dataverse.AISentimentFunction",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunction",
+                "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
+                "Microsoft.PowerFx.Dataverse.AIExtractFunction"
             };
 
             Verify(allowed, asm);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestPowerFxDataverse()
         {
             var asm = typeof(IXrmMetadataProvider).Assembly;
@@ -83,16 +94,10 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.SqlCompileResult",
                 "Microsoft.PowerFx.Dataverse.SqlCompileResult",
 
-                // FormulaTypes that should exist in Fx Core
-                "Microsoft.PowerFx.Dataverse.SqlBigType",
-                "Microsoft.PowerFx.Dataverse.SqlDecimalType",
-                "Microsoft.PowerFx.Dataverse.SqlFloatType",
-                "Microsoft.PowerFx.Dataverse.SqlIntType",
-                "Microsoft.PowerFx.Dataverse.SqlMoneyType",
-                "Microsoft.PowerFx.Dataverse.SqlNumberBase",
-
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
+                "Microsoft.PowerFx.Dataverse.DataverseHelpers",
+                "Microsoft.PowerFx.Dataverse.XrmUtility"
             };
 
             Verify(allowed, asm);
@@ -114,10 +119,10 @@ namespace Microsoft.PowerFx.Tests
                 allowed.Remove(name);
             }
 
-            Assert.IsTrue(count == 0, $"Unexpected public types: {sb}");
+            Assert.True(count == 0, $"Unexpected public types: {sb}");
 
             // Types we expect to be in the assembly are all there. 
-            Assert.AreEqual("", string.Join(",", allowed));
+            Assert.Equal("", string.Join(",", allowed));
         }
     }
 }

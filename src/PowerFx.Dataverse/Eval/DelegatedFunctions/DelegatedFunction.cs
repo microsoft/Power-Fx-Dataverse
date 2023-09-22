@@ -1,10 +1,12 @@
 ﻿using Microsoft.PowerFx.Core.Functions;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -46,6 +48,26 @@ namespace Microsoft.PowerFx.Dataverse
             yield return new TexlStrings.StringGetter[0];
         }
 
-        public abstract Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken);
+        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        {
+            // If any of the args are errors, return the first one
+            List<ErrorValue> errors = new List<ErrorValue>();
+            foreach (var arg in args)
+            {
+                if (arg is ErrorValue error)
+                {
+                    errors.Add(error);
+                }
+            }
+
+            if (errors.Any())
+            {
+                return  Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));
+            }
+
+            return ExecuteAsync(args, cancellationToken);
+        }
+
+        protected abstract Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken);
     }
 }

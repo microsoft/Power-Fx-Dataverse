@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // Simulate dataverse entities. 
     // Handles both metadata and the instances of Entity objects for testing. 
-    internal class EntityLookup : IDataverseServices
+    internal class EntityLookup : IDataverseServices, IDataverseRefresh
     {
         internal readonly List<Entity> _list = new List<Entity>();
 
@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // Fails for EntityReference due to ReferencingEntityNavigationPropertyName. 
                     if (!(attr.Value is EntityReference))
                     {
-                        metadata.Attributes.First(x => x.LogicalName == attr.Key); // throw if missing. 
+                        metadata.Attributes.First(x => x.LogicalName == attr.Key || x.DisplayName.UserLocalizedLabel.Label == attr.Key); // throw if missing. 
                     }
                 }
 
@@ -162,7 +162,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup");
+            return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup").ConfigureAwait(false);
         }
 
         public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
@@ -209,7 +209,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
         {
-            List<Entity> entityList = new List<Entity>();
             IEnumerable<Entity> data = _list;
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -221,11 +220,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 take = int.MaxValue;
             }
 
+            var entityList = ProcessEntity(data, qe, take, cancellationToken);
+
+            return new DataverseResponse<EntityCollection>(new EntityCollection(entityList));
+        }
+
+        private IList<Entity> ProcessEntity(IEnumerable<Entity> data, QueryExpression qe, int take, CancellationToken cancellationToken)
+        {
+            var entityList = new List<Entity>();
+
             foreach (var entity in data)
             {
+                var metadata = LookupMetadata(entity.LogicalName, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-                if (entity.LogicalName == qe.EntityName)
+                if (entity.LogicalName == qe.EntityName &&
+                    IsCriteriaMatching(entity, qe.Criteria, metadata))
                 {
+                    
                     entityList.Add(Clone(entity, cancellationToken));
                     take--;
                     if (take == 0)
@@ -234,8 +245,197 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     }
                 }
             }
+            return entityList;
+        }
 
-            return new DataverseResponse<EntityCollection>(new EntityCollection(entityList));
+        private bool IsCriteriaMatching(Entity entity, FilterExpression criteria, EntityMetadata metadata)
+        {
+            switch (criteria.FilterOperator)
+            {
+                case LogicalOperator.Or:
+                    foreach (var filter in criteria.Filters)
+                    {
+                        if (IsCriteriaMatching(entity, filter, metadata))
+                        {
+                            return true;
+                        }
+                    }
+
+                    foreach(var condition in criteria.Conditions)
+                    {
+                        if (isSatisfyingCondition(condition, entity, metadata))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case LogicalOperator.And:
+                    foreach (var filter in criteria.Filters)
+                    {
+                        if (!IsCriteriaMatching(entity, filter, metadata))
+                        {
+                            return false;
+                        }
+                    }
+
+                    foreach (var condition in criteria.Conditions)
+                    {
+                        if (!isSatisfyingCondition(condition, entity, metadata))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public bool isSatisfyingCondition(ConditionExpression condition, Entity entity, EntityMetadata metadata)
+        {
+            metadata.TryGetAttribute(condition.AttributeName, out var amd);
+            var comparer = new AttributeComparer(amd);
+            if (!TryGetAttributeOrPrimaryId(entity, metadata, condition.AttributeName, out var value))
+            {
+                return false;
+            }
+
+            switch (condition.Operator)
+            {
+                case ConditionOperator.Equal:
+                    if (comparer.Compare(condition.Values[0], value) == 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.NotEqual:
+                    if (comparer.Compare(condition.Values[0], value) != 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.Null:
+                    if (value == null)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.NotNull:
+                    if (value != null)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.GreaterThan:
+                    if (comparer.Compare(condition.Values[0], value) < 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.GreaterEqual:
+                    if (comparer.Compare(condition.Values[0], value) <= 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.LessThan:
+                    if (comparer.Compare(condition.Values[0], value) > 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.LessEqual:
+                    if (comparer.Compare(condition.Values[0], value) >= 0)
+                    {
+                        return true;
+                    }
+                    break;
+                case ConditionOperator.In:
+                    foreach (var v in condition.Values)
+                    {
+                        if (comparer.Compare(v, value) == 0)
+                        {
+                            return true;
+                        }
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException($"Operator not supported: {condition.Operator.ToString()}");
+            }
+
+            return false;
+        }
+
+        private static bool TryGetAttributeOrPrimaryId(Entity entity, EntityMetadata metadata, string attributeName, out object value)
+        {
+            if(entity.Attributes.TryGetValue(attributeName, out value))
+            {
+                return true;
+            }
+            if(attributeName == metadata.PrimaryIdAttribute)
+            {
+                value = entity.Id;
+                return true;
+            }
+
+            return false;
+        }
+
+        class AttributeComparer : IComparer<object>
+        {
+            private readonly AttributeMetadata _amd;
+
+            public AttributeComparer(AttributeMetadata amd)
+            {
+                _amd = amd;
+            }
+
+            public int Compare(object x,object y)
+            {
+                switch (_amd.AttributeType.Value)
+                {
+                    case AttributeTypeCode.Boolean:
+                        return ((bool)x).CompareTo((bool)y);
+
+                    case AttributeTypeCode.DateTime:
+                        return ((DateTime)x).CompareTo((DateTime)y);
+
+                    case AttributeTypeCode.Decimal:
+                        return ((Decimal)x).CompareTo((Decimal)y);
+
+                    case AttributeTypeCode.Double:
+                        return ((Double)x).CompareTo((Double)y);
+
+                    case AttributeTypeCode.Integer:
+                        return ((int)x).CompareTo((int)y);
+
+                    case AttributeTypeCode.Memo:
+                    case AttributeTypeCode.String:
+                        return ((string)x).CompareTo((string)y);
+
+                    case AttributeTypeCode.Uniqueidentifier:
+                        return ((Guid)x).CompareTo((Guid)y);
+
+                    case AttributeTypeCode.Lookup:
+                    case AttributeTypeCode.Money:
+                    case AttributeTypeCode.Picklist:
+                    case AttributeTypeCode.BigInt:
+                    case AttributeTypeCode.CalendarRules:
+                    case AttributeTypeCode.Customer:
+                    case AttributeTypeCode.EntityName:
+                    case AttributeTypeCode.Virtual:
+                    case AttributeTypeCode.ManagedProperty:
+                    case AttributeTypeCode.PartyList:
+                    case AttributeTypeCode.State:
+                    case AttributeTypeCode.Status:
+                    default:
+                        throw new NotImplementedException($"FieldType {_amd.AttributeType.Value} not supported");
+                }
+            }
         }
 
         public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
@@ -278,7 +478,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return newEntity;
         }
 
-        public void Refresh(string logicalTableName)
+        public virtual void Refresh(string logicalTableName)
         {            
         }
     }

@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,21 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _symbols = new DVSymbolTable(metadataCache);
             return _symbols;
+        }
+
+        // Helper to create a DV connection over the given service client. 
+        public static DataverseConnection New(IOrganizationService client, bool numberIsFloat = false)
+        {
+            var displayNameMap = client.GetTableDisplayNames();
+
+            var services = new DataverseService(client);
+            var rawProvider = new XrmMetadataProvider(client);
+            var metadataProvider = new CdsEntityMetadataProvider(rawProvider, displayNameMap) { NumberIsFloat = numberIsFloat };
+
+            var policy = new MultiOrgPolicy();
+
+            var dvConnection = new DataverseConnection(policy, services, metadataProvider);
+            return dvConnection;
         }
 
         public override bool TryGetVariableName(string logicalName, out string variableName)
@@ -62,7 +78,10 @@ namespace Microsoft.PowerFx.Dataverse
             RecordType recordType = _parent.GetRecordType(entityMetadata);
             DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
 
-            var slot = _symbols.AddVariable(variableName, tableValue.Type, mutable: true);
+            var slot = _symbols.AddVariable(variableName, tableValue.Type, new SymbolProperties {
+                 CanSet = false,
+                 CanMutate = true
+            });
 
             _tablesDisplay2Value[variableName] = tableValue;
             _parent.SymbolValues.Set(slot, tableValue);

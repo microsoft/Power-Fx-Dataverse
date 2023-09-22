@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseEntityCache : IDataverseServices, IDataverseEntityCache
+    public class DataverseEntityCache : IDataverseServices, IDataverseEntityCache, IDataverseRefresh
     {
         public int MaxEntries { get; } // 0 = no cache
 
@@ -183,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();           
 
-            DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken);
+            DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {
@@ -202,19 +202,25 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.UpdateAsync(entity, cancellationToken);
         }
 
-        public void Refresh(string logicalTableName)
+        public virtual void Refresh(string logicalTableName)
         {
             if (MaxEntries != 0)
             {
                 lock (_lock)
                 {
-                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in _cache)
+                    // Copy so we can mutate
+                    // This approach avoids exception in case of host is running .NET 4.*.*.
+                    var toRemove = _cache.ToList();
+
+                    foreach (KeyValuePair<Guid, DataverseCachedEntity> entityKvp in toRemove)
                     {
                         if (entityKvp.Value.Entity.LogicalName.Equals(logicalTableName, StringComparison.Ordinal))
                         {
                             RemoveCacheEntry(entityKvp.Key);
                         }
                     }
+
+                    
                 }
             }
         }

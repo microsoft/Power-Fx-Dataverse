@@ -4,13 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Linq;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -68,14 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetEntityMetadata(string logicalName, out EntityMetadata entityMetadata)
         {
-            return _serviceClient.Execute<RetrieveEntityRequest, RetrieveEntityResponse, EntityMetadata>(
-                new RetrieveEntityRequest
-                {
-                    EntityFilters = EntityFilters.All, // retrieve all possible properties
-                    LogicalName = logicalName
-                },
-                rer => rer.EntityMetadata,
-                out entityMetadata);
+            return _serviceClient.TryGetValidEntityMetadata(logicalName, out entityMetadata);
         }
 
         // We should *never* call this API. Too expensive. 

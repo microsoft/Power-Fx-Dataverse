@@ -48,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.DateTimeValue, DateTimeValue },
             //{ BuiltinFunctionsCore.DateValue, DateValue },
             { BuiltinFunctionsCore.Day, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Day) },
+            { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
           //  { BuiltinFunctionsCore.Exp, Exp },
@@ -72,14 +73,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Len, Len },
          //   { BuiltinFunctionsCore.Ln, Ln },
             { BuiltinFunctionsCore.Lower, (SqlVisitor runner, CallNode node, Context context) => UpperLower(runner, node, context, "LOWER") },
-            { BuiltinFunctionsCore.Max, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MAX", zeroNulls:true) },
+            { BuiltinFunctionsCore.Max, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MAX") },
             { BuiltinFunctionsCore.Mid, Mid },
-            { BuiltinFunctionsCore.Min, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MIN", zeroNulls:true) },
+            { BuiltinFunctionsCore.Min, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MIN") },
             { BuiltinFunctionsCore.Minute, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Minute) },
             { BuiltinFunctionsCore.Mod, Mod },
             { BuiltinFunctionsCore.Month, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Month) },
             { BuiltinFunctionsCore.Not, Not },
-            { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NotSupported(runner, node, context, BuiltinFunctionsCore.UTCNow.LocaleSpecificName) },
+            { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTime) },
             { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
            // { BuiltinFunctionsCore.Power, Power },
             { BuiltinFunctionsCore.Replace, Replace },
@@ -103,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.TrimEnds, TrimEnds },
             { BuiltinFunctionsCore.Trunc, Trunc },
             { BuiltinFunctionsCore.Upper, (SqlVisitor runner, CallNode node, Context context) => UpperLower(runner, node, context, "UPPER") },
-            { BuiltinFunctionsCore.UTCNow, UTCNow },
+            { BuiltinFunctionsCore.UTCNow, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTimeNoTimeZone) },
             { BuiltinFunctionsCore.UTCToday, UTCToday },
             { BuiltinFunctionsCore.Value, Value },
             { BuiltinFunctionsCore.WeekNum, (SqlVisitor runner, CallNode node, Context context) => DatePart(runner, node, context, SqlStatementFormat.Week) },
@@ -154,17 +155,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 if (node.Args.Count == 2)
                 {
-                    if (node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0)
+                    if ((node.Args[1] is NumberLiteralNode num && num.LiteralValue == 0) || (node.Args[1] is DecimalLiteralNode num1 && num1.LiteralValue == 0))
                     {
                         var arg0 = node.Args[0].IRContext.ResultType;
-                        if (arg0 == FormulaType.Number || arg0 == FormulaType.Blank)
+
+                        if (Context.IsNumericType(arg0) || arg0 == FormulaType.Blank)
                         {
                             Library.ValidateNumericArgument(node.Args[0]);
                             var arg = node.Args[0].Accept(runner, context);
 
                             var argString = Library.CoerceNullToInt(arg);
 
-                            var result = context.GetTempVar(new SqlBigType());
+                            var result = context.GetTempVar(FormulaType.Decimal);
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;

@@ -17,11 +17,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 {
     internal static partial class Library
     {
-        public static RetVal UTCNow(SqlVisitor visitor, CallNode node, Context context)
+
+        internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
+
+        public static RetVal NowUTCNow(SqlVisitor visitor, CallNode node, Context context, FormulaType formulaType)
         {
             context.expressionHasTimeBoundFunction = true;
             // round to the second, for parity with existing legacy CDS calculated fields
-            return context.SetIntermediateVariable(FormulaType.DateTimeNoTimeZone, "DATEADD(ms, (0 - DATEPART(ms, GETUTCDATE())), GETUTCDATE())");
+            return context.SetIntermediateVariable(formulaType, "DATEADD(ms, (0 - DATEPART(ms, GETUTCDATE())), GETUTCDATE())");
         }
 
         public static RetVal UTCToday(SqlVisitor visitor, CallNode node, Context context)
@@ -119,7 +122,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var date = node.Args[0].Accept(visitor, context);
             if (node.Args.Count > 1)
             {
-                throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
+                // if second arg is of numeric type, node will be like '{Float:n(arg:w)}', taking correct context only for second arg instead of entire node
+                throw BuildUnsupportedArgumentException(node.Function, 1, (node.Args[1] is CallNode cNode && cNode.Args.Count > 0 ? cNode.Args[0] : node.Args[1]).IRContext.SourceContext);
             }
 
             // return the requested date part from the raw value, validating if the time zone needs conversion
@@ -175,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             // use the same return type as the input, so TZI type is retained
             var result = context.GetTempVar(date.type);
-            var validatedOffset = context.SetIntermediateVariable(new SqlBigType(), $"ISNULL({offset},0)");
+            var validatedOffset = context.SetIntermediateVariable(FormulaType.Decimal, $"ISNULL({offset},0)");
             context.DateAdditionOverflowCheck(validatedOffset, units, date);
             if (supportFractionalDays)
             {

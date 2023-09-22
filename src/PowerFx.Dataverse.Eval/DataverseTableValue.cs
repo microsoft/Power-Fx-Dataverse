@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
 
-        public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.GetAwaiter().GetResult();
+        public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
@@ -54,13 +54,17 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
-            _connection.Services.Refresh(_entityMetadata.LogicalName);
+            var services = _connection.Services;
+            if (services is IDataverseRefresh serviceRefresh)
+            {
+                serviceRefresh.Refresh(_entityMetadata.LogicalName);
+            }
         }
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new ();
-            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows);
+            DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
@@ -71,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -99,6 +103,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
 
+            if (entities.HasError)
+            {
+                return new List<DValue<RecordValue>>() { entities.DValueError("RetrieveMultiple") };
+            }
+
             var result = EntityCollectionToRecordValues(entities);
 
             return result;
@@ -110,14 +119,14 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(record));
 
             cancellationToken.ThrowIfCancellationRequested();
+            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
 
-            Entity entity = record.ConvertRecordToEntity(_entityMetadata, out var error1);
-            if (error1 != null)
+            if (error != null)
             {
-                return error1;
+                return error;
             }
 
-            DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken);
+            DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
 
             if (response.HasError)
                 return response.DValueError(nameof(IDataverseCreator.CreateAsync));
@@ -125,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
@@ -143,26 +152,22 @@ namespace Microsoft.PowerFx.Dataverse
             if (record == null)
                 throw new ArgumentNullException(nameof(record));
 
-            // Retrieve the primary key of the entity (should alwyas be present and a Guid)
-            FormulaValue fv = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
+            // Retrieve the primary key of the entity (should always be present and a Guid)
+            FormulaValue fieldFormulaValue = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (fv.Type == FormulaType.Blank)
+            if (fieldFormulaValue.Type == FormulaType.Blank)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
 
-            if (fv is not GuidValue id)
+            if (fieldFormulaValue is not GuidValue id)
+            {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+            }
 
-            DataverseResponse<Entity> entityResponse = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
-
-            if (entityResponse.HasError)
-                return entityResponse.DValueError(nameof(IDataverseReader.RetrieveAsync));
-
-            var item = new DataverseRecordValue(entityResponse.Response, _entityMetadata, Type.ToRecord(), _connection);
-            var ret = await item.UpdateFieldsAsync(record, cancellationToken);
+            var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
             Refresh();
@@ -188,7 +193,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken);
+                    DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
 
                     if (response.HasError)
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
@@ -232,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
             var dvRecord = (DataverseRecordValue)record;
             if (dvRecord.Entity.LogicalName != _entityMetadata.LogicalName)
             {
-                var error = new ExpressionError() { MessageKey = "InvalidCast", MessageArgs = new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName } };
+                ExpressionError error = DataverseHelpers.GetInvalidCastError(new string[] { dvRecord.Entity.LogicalName, _entityMetadata.LogicalName });
                 throw new CustomFunctionErrorException(error);
             }
 

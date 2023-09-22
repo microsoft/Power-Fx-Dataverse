@@ -1,7 +1,7 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=0.2.3-preview.20230511-1002
+set pfxVer=0.2.6-preview.20230629-1008
 set pfxRoot=C:\Data\Power-Fx
 set pfxConfig=Debug
 
@@ -43,3 +43,4 @@ robocopy "%source7%" "%nugetDest7%" %options% > NUL
 
 echo.
 echo *** DO NOT FORGET TO REBUILD ALL YOUR PROJECTS ***
+echo on

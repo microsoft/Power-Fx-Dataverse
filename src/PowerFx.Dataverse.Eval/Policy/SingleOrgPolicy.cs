@@ -41,13 +41,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // HElper to create a DV connection over the given service client. 
-        public static DataverseConnection New(IOrganizationService client)
+        public static DataverseConnection New(IOrganizationService client, bool numberIsFloat = false)
         {
             var displayNameMap = client.GetTableDisplayNames();
 
             var services = new DataverseService(client);
             var rawProvider = new XrmMetadataProvider(client);
-            var metadataProvider = new CdsEntityMetadataProvider(rawProvider, displayNameMap);
+            var metadataProvider = new CdsEntityMetadataProvider(rawProvider, displayNameMap) { NumberIsFloat = numberIsFloat };
 
             var policy = new SingleOrgPolicy(displayNameMap);
 
@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, SymTableName);
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, TableType.Empty(), SymTableName);
 
             var optionSetSymbols = new DVSymbolTable(metadataCache);
 
@@ -97,14 +97,14 @@ namespace Microsoft.PowerFx.Dataverse
         // This can be called on multiple threads, and multiple times. 
         // Called lazily when we encounter a new name and add the table.
         // Only called on explicit access by resolved; not called when we pickup via relationships. 
-        private FormulaType LazyAddTable(string logicalName, string displayName)
+        private DeferredSymbolPlaceholder LazyAddTable(string logicalName, string displayName)
         {
             lock (_tablesLogical2Value)
             {
                 if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
                 {
                     // Already present.
-                    return table.Type;
+                    return new DeferredSymbolPlaceholder(table.Type);
                 }
             }
 
@@ -124,53 +124,16 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_tablesLogical2Value.TryGetValue(logicalName, out var table))
                 {
                     // Already present.
-                    return table.Type;
+                    return new DeferredSymbolPlaceholder(table.Type);
                 }
 
                 _tablesLogical2Value.Add(logicalName, tableValue);
 
-                // The slot doesn't exist yet, so we can't populate the symbol values. 
-                // Add to derred list and DataverseConnection will handle. 
-                _pendingTables.Add(Tuple.Create(logicalName, tableValue));
-
-                return tableValue.Type;
-            } 
-        }
-
-        // Protected under lock. 
-        List<Tuple<string, DataverseTableValue>> _pendingTables = new List<Tuple<string, DataverseTableValue>>();
-
-        internal override void AddPendingTables()
-        {
-            // Copy to local for thread safety
-            Tuple<string, DataverseTableValue>[] list;
-
-            lock (_tablesLogical2Value)
-            {
-                list = _pendingTables.ToArray();
-                _pendingTables.Clear();
-            }
-
-            var slots = new Dictionary<ISymbolSlot, DataverseTableValue>();
-
-            foreach (var kv in list)
-            {
-                // Can't call TryLookup under a lock, 
-                // so create the list outside the lock. 
-                if (_allEntitieSymbols.TryLookupSlot(kv.Item1, out var slot))
+                return new DeferredSymbolPlaceholder(tableValue.Type, (slot) =>
                 {
-                    // _parent.Set(slot, kv.Item2);
-                    slots.Add(slot, kv.Item2);
-                }
-            }
-
-            // Now process the items again under the lock. 
-            lock (_tablesLogical2Value)
-            {
-                foreach (var kv in slots)
-                {
-                    _parent.SetInternal(kv.Key, kv.Value);
-                }
+                    // Invoked when we get the slot. 
+                    _parent.SetInternal(slot, tableValue);
+                });
             }
         }
 

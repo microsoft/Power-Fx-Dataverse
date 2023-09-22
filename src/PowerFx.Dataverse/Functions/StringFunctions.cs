@@ -6,14 +6,21 @@
 
 using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Types;
+using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using System.Text;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Core.IR.Symbols;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -25,9 +32,20 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
-
             var arg0 = node.Args[0];
-            var arg = arg0.Accept(visitor, context);
+            RetVal arg = null;
+
+            // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
+            if (node.Args.Count == 1 && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
+            {
+                var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
+                arg = RetVal.FromVar(varDetails.VarName, context.GetReturnType(scopeAccessNode, varDetails.VarType));
+            }
+            else
+            {
+                arg = arg0.Accept(visitor, context);
+            }
+            
             if (arg.type is StringType)
             {
                 if (arg0 is TextLiteralNode literal)
@@ -44,12 +62,23 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // only allow whole numbers to be parsed
                 context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
-                context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
-          
+                context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
+                context.PerformRangeChecks(result, node);
                 return result;
             }
-            else if (arg.type is NumberType)
+            else if (context.IsNumericType(arg))
             {
+                var column = context.GetVarDetails(arg.varName).Column;
+                if (column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
+                {
+                    var result = context.GetTempVar(context.GetReturnType(node));
+
+                    // only allow whole numbers to be parsed
+                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    context.PerformRangeChecks(result, node);
+                    return result;
+                }
+
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
@@ -65,34 +94,53 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Text(SqlVisitor visitor, CallNode node, Context context)
         {
+            Contracts.Assert(node.Args.Count >= 1);
+
+            var val = node.Args[0].Accept(visitor, context);
+
             if (node.Args.Count > 2)
             {
                 throw BuildUnsupportedArgumentException(node.Function, 2, node.Args[2].IRContext.SourceContext);
             }
-
-            var val = node.Args[0].Accept(visitor, context);
-            if (val.type is NumberType)
+            else if (node.Args.Count == 1)
+            {
+                if (val.type is StringType)
+                {
+                    // String passes through Text()
+                    // Blank values should pass through too and not be converted to an empty string
+                    return context.SetIntermediateVariable(node, $"{val}");
+                }
+                else if (val.type is BlankType)
+                {
+                    // Blank() passes through Text()
+                    return context.SetIntermediateVariable(node, $"NULL");
+                }
+                else if (context.IsNumericType(val))
+                {
+                    throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
+                }
+            }
+            // two arguments is only supported for numbers, datetimes, and typed/untyped blanks
+            else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.type is BlankType))
             {
                 string format = null;
-                if (node.Args.Count > 1)
+
+                if (node.Args[1] is TextLiteralNode)
                 {
-                    if (node.Args[1] is TextLiteralNode)
+                    using (context.NewInlineLiteralContext())
                     {
-                        using (context.NewInlineLiteralContext())
-                        {
-                            var formatArg = node.Args[1].Accept(visitor, context);
-                            format = formatArg.ToString();
-                        }
+                        var formatArg = node.Args[1].Accept(visitor, context);
+                        format = formatArg.ToString();
                     }
-                    else if (node.Args[1].IRContext.ResultType is BlankType)
-                    {
-                        // if the format is blank, emit an empty string
-                        return context.SetIntermediateVariable(node, $"N''");
-                    }
-                    else
-                    {
-                        throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
-                    }
+                }
+                else if (node.Args[1].IRContext.ResultType is BlankType)
+                {
+                    // if the format is blank, emit an empty string
+                    return context.SetIntermediateVariable(node, $"N''");
+                }
+                else
+                {
+                    throw BuildLiteralArgumentException(node.Args[1].IRContext.SourceContext);
                 }
 
                 var result = context.GetTempVar(context.GetReturnType(node));
@@ -106,39 +154,78 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     // The numeric formating placeholders for Text: https://docs.microsoft.com/en-us/powerapps/maker/canvas-apps/functions/function-text#number-placeholders
                     // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
 
-                    // Do not allow , . or locale tag
-                    if (Regex.IsMatch(format, @"(,|\.|\[\$-[\w-]+\])"))
+                    // Do not allow , . or locale tag or datetime format
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out var textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
+                        || (textFormatArgs.DateTimeFmt != DateTimeFmtType.NoDateTimeFormat) || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
                         throw new SqlCompileException(SqlCompileException.NumericFormatNotSupported, node.Args[1].IRContext.SourceContext);
                     }
 
-                    // except that % ‰ e : ' need to be escaped
-                    format = format.Replace("%", "\\%");
-                    format = format.Replace("‰", "\\‰");
-                    format = format.Replace("e", "\\e");
-                    format = format.Replace("E", "\\E");
-                    format = format.Replace(":", "\\:");
-                    format = format.Replace("'", "\\''");
+                    format = textFormatArgs.FormatArg;
 
-                    context.SetIntermediateVariable(result, $"FORMAT({val}, N'{format}')");
+                    // For Excel compat, an empty format string should return an empty result string
+                    // .NET format will treat an empty format string as a general format
+                    if (format == "")
+                    {
+                        context.SetIntermediateVariable(result, "N''");
+                    }
+                    else
+                    {
+                        // Double quoted escaping appears to have a bug in SQL/CLR wtih SQL Server 2019.
+                        //
+                        // For example:
+                        //    Text( 567, "0 ""a"" 0" ) incorrectly returns "56 a 0"
+                        //    Text( 567, "0 \a 0" ) correctly returns "56 a 7"
+                        //
+                        // The equivalent SQL for the above is:
+                        //    SELECT FORMAT( 567.0, N'0 "a" 0') incorrectly returns "56 a 0"
+                        //    SELECT FORMAT( 567.0, N'0 \a 0' correctly returns "56 a 7"
+                        //
+                        // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
+                        //
+                        StringBuilder backslashEscaped = new StringBuilder();
+                        int strLength = format.Length;
+                        bool inDblQuotes = false;
+                        for (int i = 0; i < strLength; i++)
+                        {
+                            if (format[i] == '\"')
+                            {
+                                inDblQuotes = !inDblQuotes;
+                            }
+                            else if (format[i] == '\\' && !inDblQuotes)
+                            {
+                                backslashEscaped.Append('\\');
+                                if (++i < strLength)
+                                {
+                                    backslashEscaped.Append(format[i]);
+                                }
+                            }
+                            else
+                            {
+                                if (inDblQuotes)
+                                {
+                                    backslashEscaped.Append('\\');
+                                }
+                                backslashEscaped.Append(format[i]);
+                            }
+                        }
+
+                        format = backslashEscaped.ToString();
+
+                        // Single ticks need to be doubled in order to escape within the single tick delimited format string used in the FORMAT call below.
+                        // This needs to be done after all other adjustments above
+                        format = format.Replace("'", "''");
+
+                        // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
+                        // use 0 if numeric arg is NULL which result in # placeholders not being filled (correctly)
+                        context.SetIntermediateVariable(result, $"FORMAT({CoerceNullToInt(val)}, N'{format}')");
+                    }
                 }
                 return result;
             }
-            else if (val.type is StringType)
-            {
-                // formatting a string is a pass-thru
-                return context.SetIntermediateVariable(node, $"{CoerceNullToString(val)}");
-            }
-            else if (val.type is BlankType)
-            {
-                // null should be coerced to empty string
-                return context.SetIntermediateVariable(node, $"N''");
-            }
-            else
-            {
-                throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
-            }
+
+            throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
         }
 
         public static RetVal UpperLower(SqlVisitor visitor, CallNode node, Context context, string function)
@@ -157,7 +244,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Char(SqlVisitor visitor, CallNode node, Context context)
         {
             var val = node.Args[0].Accept(visitor, context);
-            var roundedVal = context.SetIntermediateVariable(new SqlBigType(), RoundDownToInt(val));
+            var expression = RoundDownToInt(val);
+            var roundedVal = context.TryCastToDecimal(expression);
             context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
@@ -181,7 +269,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            return context.SetIntermediateVariable(node, $"CONCAT({String.Join(",", args)})");
+            return context.SetIntermediateVariable(node, args.Any() ? $"CONCAT({string.Join(",", args)})" : "''");
         }
 
         public static RetVal Blank(SqlVisitor visitor, CallNode node, Context context)
@@ -216,23 +304,25 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var strArg = node.Args[0].Accept(visitor, context);
 
             ValidateNumericArgument(node.Args[1]);
-            RetVal start = node.Args[1].Accept(visitor, context);
+            RetVal start = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[1].Accept(visitor, context)} AS INT)");
+            context.NullCheck(start, postValidation: true);
             context.NonPositiveNumberCheck(start);
 
             RetVal length;
             if (node.Args.Count > 2)
             {
                 ValidateNumericArgument(node.Args[2]);
-                length = RetVal.FromSQL($"CAST({node.Args[2].Accept(visitor, context)} AS INT)", new SqlIntType());
+                length = context.SetIntermediateVariable(FormulaType.Decimal, $"TRY_CAST({node.Args[2].Accept(visitor, context)} AS INT)");
+                context.NullCheck(length, postValidation: true);
                 context.NegativeNumberCheck(length);
             }
             else
             {
                 // SQL ignores trailing spaces when counting the length
-                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Number);
+                length = RetVal.FromSQL($"LEN({CoerceNullToString(strArg)}+N'x')-1", FormulaType.Decimal);
             }
 
-            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},CAST({start} AS INT),{length})");
+            return context.SetIntermediateVariable(node, $" SUBSTRING({CoerceNullToString(strArg)},{start},{length})");
         }
 
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
@@ -284,16 +374,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // TODO: this should converted to a UDF
                 ValidateNumericArgument(node.Args[3]);
                 var instance = node.Args[3].Accept(visitor, context);
-                var coercedInstance = context.SetIntermediateVariable(new SqlIntType(), RoundDownNullToInt(instance));
+                var expression = RoundDownNullToInt(instance);
+                var coercedInstance = context.TryCastToDecimal(expression);
 
                 context.LessThanOneNumberCheck(coercedInstance);
 
-                var idx = context.GetTempVar(new SqlIntType());
-                var matchCount = context.GetTempVar(new SqlIntType());
+                var idx = context.GetTempVar(FormulaType.Decimal);
+                var matchCount = context.GetTempVar(FormulaType.Decimal);
                 context.SetIntermediateVariable(idx, $"1");
                 context.SetIntermediateVariable(matchCount, $"1");
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
-                var oldLen = context.SetIntermediateVariable(new SqlIntType(), $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
+                var oldLen = context.SetIntermediateVariable(FormulaType.Decimal, $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
                 // find the appropriate instance (case sensitive) in the original string
                 context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(str)}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 

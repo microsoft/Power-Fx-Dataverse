@@ -4,18 +4,19 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -45,6 +46,14 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentException($"Entity {_entity.LogicalName} doesn't match Metadata {_metadata.LogicalName}.");
             }
         }
+
+        public override bool TryShallowCopy(out FormulaValue copy)
+        {
+            copy = this;
+            return true;
+        }
+
+        public override bool CanShallowCopy => true;
 
         internal Entity Entity => _entity;
         internal EntityMetadata Metadata => _metadata;
@@ -94,43 +103,10 @@ namespace Microsoft.PowerFx.Dataverse
             FormulaValue result;
 
             // If primary key is missing from Attributes, still get it from the entity. 
-            if (fieldName == _metadata.PrimaryIdAttribute)
+            if (fieldName == GetPrimaryKeyName())
             {
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
-            }
-
-            if (_metadata.TryGetAttribute(fieldName, out var amd))
-            {
-                bool unsupportedType = false;
-                string errorMessage = string.Empty;
-
-                if (amd is ImageAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Image column type not supported.";
-                }
-                else if (amd is FileAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "File column type not supported.";
-                }
-                else if (amd is ManagedPropertyAttributeMetadata)
-                {
-                    unsupportedType = true;
-                    errorMessage = "Managed property column type not supported.";
-                }
-
-                if (unsupportedType)
-                {
-                    result = NewError(new ExpressionError()
-                    {
-                        Kind = ErrorKind.Unknown,
-                        Severity = ErrorSeverity.Critical,
-                        Message = errorMessage
-                    });
-                    return (true, result);
-                }
             }
 
             // IR should convert the fieldName from display to Logical Name. 
@@ -142,14 +118,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (value is OneToManyRelationshipMetadata relationshipMetadata)
             {
-                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken);
+                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
             if (value is EntityReference reference)
             {
                 // Blank was already handled, value would have been null. 
-                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken);
+                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
@@ -182,16 +158,40 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            // Multi-select column type
+            if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
+            {
+                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
+                return (true, result);
+            }
+
+            _metadata.TryGetAttribute(fieldName, out var amd);
+
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
             {
                 Kind = ErrorKind.Unknown,
                 Severity = ErrorSeverity.Critical,
-                Message = string.Format("{0} column type not supported.", fieldType)
+                Message = string.Format("{0} column type not supported.", amd != null ? amd.AttributeTypeName.Value : fieldType)
             };
 
             result = NewError(expressionError);
             return (true, result);
+        }
+
+        private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
+        {
+            var records = new List<RecordValue>();            
+
+            foreach (var xrmOptionSetValue in optionSetValueCollection)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var fxOptionSetValue = AttributeUtility.ConvertXrmOptionSetValueToFormulaValue(tableType, xrmOptionSetValue);
+                records.Add(NewRecordFromFields(new NamedValue(tableType.FieldNames.First(), fxOptionSetValue)));
+            }
+
+            return NewTable(tableType.ToRecord(), records);
         }
 
         private async Task<FormulaValue> ResolveOneToManyRelationship(OneToManyRelationshipMetadata relationshipMetadata, FormulaType fieldType, CancellationToken cancellationToken)
@@ -199,12 +199,7 @@ namespace Microsoft.PowerFx.Dataverse
             var refernecingTable = relationshipMetadata.ReferencingEntity;
             string referencingAttribute = relationshipMetadata.ReferencingAttribute;
             FormulaValue result;
-            var recordType = ((TableType)fieldType).ToRecord();
-            if (recordType == null)
-            {
-                throw new InvalidOperationException("Field Type should be a table value");
-            }
-
+            var recordType = ((TableType)fieldType).ToRecord() ?? throw new InvalidOperationException("Field Type should be a table value");
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
@@ -217,7 +212,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             };
 
-            var filteredEntityCollection = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken);
+            var filteredEntityCollection = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (!filteredEntityCollection.HasError)
             {
@@ -241,7 +236,7 @@ namespace Microsoft.PowerFx.Dataverse
         private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, CancellationToken cancellationToken)
         {
             FormulaValue result;
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -260,12 +255,13 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        // Called by DataverseRecordValue, which wont internal entity attributes.
+        public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
-            var leanEntity = ConvertRecordToEntity(record, out var error);
+            var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue <RecordValue> error);
 
             if (error != null)
             {
@@ -273,7 +269,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            DataverseResponse result = await _connection.Services.UpdateAsync(leanEntity, cancellationToken);
+            DataverseResponse result = await connection.Services.UpdateAsync(leanEntity, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -281,26 +277,45 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entity.LogicalName, _entity.Id, cancellationToken);
+            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
             }
 
-            foreach (var attr in newEntity.Response.Attributes)
-            {
-                _entity.Attributes[attr.Key] = attr.Value;
-            }
+            var refreshed = new DataverseRecordValue(newEntity.Response, metadata, type, connection);
 
-            return DValue<RecordValue>.Of(this);
+            return DValue<RecordValue>.Of(refreshed);
         }
 
-        // Record should already be logical names. 
-        private Entity ConvertRecordToEntity(RecordValue record, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var leanEntity = record.ConvertRecordToEntity(_metadata, out error);
-            leanEntity.Id = _entity.Id;
+            var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
+
+            if (refreshedRecord.IsValue)
+            {
+                var dataverseRecord = (DataverseRecordValue)refreshedRecord.Value;
+                foreach (var attr in dataverseRecord.Entity.Attributes)
+                {
+                    _entity.Attributes[attr.Key] = attr.Value;
+                }
+            }
+
+            return refreshedRecord;
+        }
+
+        // Record should already be using logical names. 
+        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        {
+            var leanEntity = record.ConvertRecordToEntity(metadata, out error);
+
+            if (error != null)
+            { 
+                return null; 
+            }
+
+            leanEntity.Id = id;
             return leanEntity;
         }
 
@@ -339,11 +354,16 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
-            var keyName = _metadata.PrimaryIdAttribute;
+            var keyName = GetPrimaryKeyName();
 
             // Note that function names are case sensitive. 
             var expr = $"LookUp({IdentToken.MakeValidIdentifier(tableName)}, {keyName}=GUID(\"{id}\"))";
             sb.Append(expr);
+        }
+
+        public override string GetPrimaryKeyName()
+        {
+            return _metadata.PrimaryIdAttribute;
         }
     }
 }

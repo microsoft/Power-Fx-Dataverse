@@ -4,12 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Linq;
-using System.Xml;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -34,6 +34,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return null;
             }
+            else if (fxValue is ErrorValue)
+            {
+                throw new InvalidOperationException($"ErrorValue can not be serialized for : {amd.DisplayName} with Type: {amd.AttributeTypeName}");
+            }
+
 
             switch (amd.AttributeType.Value)
             {
@@ -54,27 +59,88 @@ namespace Microsoft.PowerFx.Dataverse
                     return (DateTime)fxValue.ToObject();
 
                 case AttributeTypeCode.Decimal:
-                    return (Decimal)((NumberValue)fxValue).Value;
+                    if (fxValue is DecimalValue dvd)
+                    {
+                        return dvd.Value;
+                    }
+                    else
+                    {
+                        return (decimal)((NumberValue)fxValue).Value;
+                    }
 
                 case AttributeTypeCode.Double:
                     return ((NumberValue)fxValue).Value;
 
                 case AttributeTypeCode.Integer:
-                    return (int)((NumberValue)fxValue).Value;
+                    if (fxValue is DecimalValue dvi)
+                    {
+                        return (int)dvi.Value;
+                    }
+                    else
+                    {
+                        return (int)((NumberValue)fxValue).Value;
+                    }
 
                 case AttributeTypeCode.Memo:
                 case AttributeTypeCode.String:
                     return ((StringValue)fxValue).Value;
 
                 case AttributeTypeCode.BigInt:
+                    if (fxValue is DecimalValue dvb)
+                    {
+                        return (long)dvb.Value;
+                    }
+                    else
+                    {
+                        return (long)((NumberValue)fxValue).Value;
+                    }
+                    
                 case AttributeTypeCode.Uniqueidentifier:
-                    return fxValue.ToObject();
+                    return ((GuidValue)fxValue).Value;
 
                 case AttributeTypeCode.Picklist:
+                case AttributeTypeCode.Status:
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
 
                 case AttributeTypeCode.Money:
-                    return new Money((decimal)((NumberValue)fxValue).Value);
+                    if (fxValue is DecimalValue dvm)
+                    {
+                        return new Money(dvm.Value);
+                    }
+                    else
+                    {
+                        return new Money((decimal)((NumberValue)fxValue).Value);
+                    }
+
+                case AttributeTypeCode.Virtual:
+                    if (amd is MultiSelectPicklistAttributeMetadata)
+                    {
+                        var tableValue = (TableValue)fxValue;
+                        var optionSetValueCollection = new OptionSetValueCollection();
+                        var optionSetValueSet = new HashSet<XrmOptionSetValue>();
+
+                        foreach (var row in tableValue.Rows)
+                        {
+                            if (row.IsError)
+                            {
+                                throw new InvalidOperationException($"The requested operation for {amd.LogicalName} field is invalid.");
+                            }
+
+                            var fieldValue = row.Value.GetField("Value");
+
+                            // Errors and blanks are ignored
+                            if (fieldValue is FxOptionSetValue fxOptionSetValue)
+                            {
+                                optionSetValueSet.Add(new XrmOptionSetValue(int.Parse(fxOptionSetValue.Option)));
+                            }
+                        }
+
+                        optionSetValueCollection.AddRange(optionSetValueSet);
+
+                        return optionSetValueCollection;
+                    }
+
+                    throw new NotImplementedException($"FieldType {amd.AttributeTypeName.Value} not supported");
 
                 case AttributeTypeCode.Lookup: // EntityReference
                     if (fxValue is DataverseRecordValue dv)
@@ -86,11 +152,9 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.CalendarRules:
                 case AttributeTypeCode.Customer:
                 case AttributeTypeCode.EntityName:
-                case AttributeTypeCode.Virtual:
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.PartyList:
                 case AttributeTypeCode.State:
-                case AttributeTypeCode.Status:
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
             }

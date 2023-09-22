@@ -57,19 +57,18 @@ namespace Microsoft.PowerFx.Dataverse
             var xrmEntity = currentEntityMetadata ?? Empty();
 
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
-            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null);
+            _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = NumberIsFloat };
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
+
         }
 
         #region Critical Virtuals
 
-        // https://github.com/microsoft/Power-Fx-Dataverse/issues/117
-        // 
-        public const bool NumberIsFloat = true;
+        public const bool NumberIsFloat = false;
 
         public override ParserOptions GetDefaultParserOptionsCopy()
         {
@@ -143,7 +142,17 @@ namespace Microsoft.PowerFx.Dataverse
         private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null)
         {
             errors = null;
-            returnType = BuildReturnType(nodeType);
+
+            // currency Formula Type is not supported so casting it to decimal, however currency fields can be used in formula expression
+            // so in that case, we need to return decimal
+            if (nodeType._type.Kind == DKind.Currency)
+            {
+                returnType = BuildReturnType(FormulaType.Decimal);
+            }
+            else 
+            {
+                returnType = BuildReturnType(nodeType);
+            }
 
             if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
@@ -153,10 +162,10 @@ namespace Microsoft.PowerFx.Dataverse
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
-                if (returnType is NumberType)
+                if (SqlVisitor.Context.IsNumericType(returnType))
                 {
                     // TODO: better type validation
-                    if (hintType is NumberType)
+                    if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
                         return true;
@@ -177,7 +186,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static bool SupportedReturnType(FormulaType type)
         {
             return
-                type is SqlDecimalType ||
+                type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
                 type is OptionSetValueType ||
@@ -186,15 +195,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static FormulaType BuildReturnType(DType type)
         {
+            // Even if NumberIsFloat=false, Number can be returned from IR and we have to support it so mapping Number
+            // to Core decimal type so SQL Compiler always returns decimal even if Number is coming from IR
             if (type.Kind == DKind.Number)
             {
-                // The default numeric type is decimal
-                return new SqlDecimalType();
-            }
-            else if (type.Kind == DKind.Currency)
-            {
-                // Currency isn't supported yet, for now, return decimal
-                return new SqlDecimalType();
+                return FormulaType.Decimal;
             }
             else
             {

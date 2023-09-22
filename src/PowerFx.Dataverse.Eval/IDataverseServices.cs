@@ -16,6 +16,12 @@ namespace Microsoft.PowerFx.Dataverse
     {
     }
 
+    // Channel for IOrganizationService.Execute()  
+    public interface IDataverseExecute
+    {
+        Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default);
+    }
+
     public interface IDataverseCreator
     {
         Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
@@ -24,7 +30,12 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseReader
     {
         Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
-        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));        
+    }
+
+    // Optional interface to enable clearing any caches.
+    public interface IDataverseRefresh
+    {
         void Refresh(string logicalTableName);
     }
 

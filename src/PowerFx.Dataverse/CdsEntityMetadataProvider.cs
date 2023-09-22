@@ -62,13 +62,19 @@ namespace Microsoft.PowerFx.Dataverse
         // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
         // Map logical name to display name
         private readonly Func<string,string> _displayNameLookup;
-
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
+                
+        private CdsEntityMetadataProvider()
         {
             // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
             // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
+        }
 
+        public bool NumberIsFloat { get; init; } = false;
+
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
+            : this()
+        {
             _innerProvider = provider;
             if(globalOptionSets != null)
             {
@@ -83,6 +89,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, DisplayNameProvider displayNameLookup)
+            : this()
         {
             _innerProvider = provider;
             _displayNameLookup = (logicalName) => displayNameLookup.TryGetDisplayName(new DName(logicalName), out var displayName) ? displayName.Value : null;
@@ -90,14 +97,14 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private CdsEntityMetadataProvider(IXrmMetadataProvider provider, CdsEntityMetadataProvider original, Func<string, string> displayNameLookup = null)
+            : this()
         {
             this._innerProvider = provider;
             this._document = new DataverseDocument(this);
 
-            // Share all caches
+            // Share all caches except CDS cache, since DataverseDataSourceInfo hold onto the metadata provider.
             this._optionSets = original._optionSets;
             this._xrmCache = original._xrmCache;
-            this._cdsCache = original._cdsCache;
             this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;            
         }
 
@@ -180,6 +187,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
                 return true;
             }
+
             return false;
         }
 
@@ -267,6 +275,12 @@ namespace Microsoft.PowerFx.Dataverse
                     case AttributeTypeCode.Boolean:
                         parsed = CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
+                    case AttributeTypeCode.Virtual:
+                        if (attribute is MultiSelectPicklistAttributeMetadata multiSelectPicklistAttributeMetadata)
+                        {
+                            parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, multiSelectPicklistAttributeMetadata, entity.LogicalName, dataSetName, out columnName, out optionSet);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -282,14 +296,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 string columnName = string.Empty;
                 bool parsed = false;
-                IExternalOptionSet optionSet = null;
                 var attribute = new PicklistAttributeMetadata(string.Empty)
                 {
                     OptionSet = globalOptionSet,
                     LogicalName = string.Empty,
                     MetadataId = Guid.Empty,
                 };
-                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
+                parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out IExternalOptionSet optionSet);
 
                 if (parsed)
                 {
@@ -305,7 +318,8 @@ namespace Microsoft.PowerFx.Dataverse
                 ToCdsEntityMetadata(entity),
                 options,
                 optionSets,
-                dataverseParserErrors);
+                dataverseParserErrors,
+                numberIsFloat: NumberIsFloat);
 
             // TODO: Dataverse should provide a method for non-fatal logs
 #if DEBUG
@@ -467,8 +481,7 @@ namespace Microsoft.PowerFx.Dataverse
         #region IExternalDataEntityMetadataProvider implementation
         bool IExternalDataEntityMetadataProvider.TryGetEntityMetadata(string expandInfoIdentity, out IDataEntityMetadata entityMetadata)
         {
-            DataverseDataSourceInfo dsInfo;
-            if (TryGetDataSource(expandInfoIdentity, out dsInfo))
+            if (TryGetDataSource(expandInfoIdentity, out DataverseDataSourceInfo dsInfo))
             {
                 entityMetadata = dsInfo;
                 return true;
@@ -489,8 +502,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         bool IExternalEntityScope.TryGetCdsDataSourceWithLogicalName(string datasetName, string expandInfoIdentity, out IExternalCdsDataSource dataSource)
         {
-            DataverseDataSourceInfo dsInfo;
-            if (TryGetDataSource(expandInfoIdentity, out dsInfo))
+            if (TryGetDataSource(expandInfoIdentity, out DataverseDataSourceInfo dsInfo))
             {
                 dataSource = dsInfo;
                 return true;

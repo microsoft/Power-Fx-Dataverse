@@ -92,13 +92,13 @@ namespace Microsoft.PowerFx.Dataverse
         /// DataverseConnection constructor.
         /// </summary>
         /// <param name="service"></param>
-        public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows)
-            : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows)
+        public DataverseConnection(IOrganizationService service, int maxRows = DefaultMaxRows, bool numberIsFloat = false)
+            : this(new DataverseService(service), new XrmMetadataProvider(service), maxRows, numberIsFloat)
         {
         }
 
-        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows)
-            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider), maxRows)
+        internal DataverseConnection(IDataverseServices dvServices, IXrmMetadataProvider xrmMetadataProvider, int maxRows = DefaultMaxRows, bool numberIsFloat = false)
+            : this(dvServices, new CdsEntityMetadataProvider(xrmMetadataProvider) { NumberIsFloat = numberIsFloat }, maxRows)
         {
         }
 
@@ -136,21 +136,42 @@ namespace Microsoft.PowerFx.Dataverse
         // Logical Name --> Row Scope symbols for that table 
         Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbols = new Dictionary<string, ReadOnlySymbolTable>();
 
+        // cache for row scope symbols without implicit this record
+        Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbolsNoITR = new Dictionary<string, ReadOnlySymbolTable>();
+
         public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName)
         {
-            lock (_rowScopeSymbols)
+            return GetRowScopeSymbols(tableLogicalName, allowImplicitThisRecord: true);
+        }
+
+        public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName, bool allowImplicitThisRecord = false)
+        {
+            var recordType = this.GetRecordType(tableLogicalName);
+            ReadOnlySymbolTable symTable;
+            if (allowImplicitThisRecord)
             {
-                if (!_rowScopeSymbols.TryGetValue(tableLogicalName, out var symTable))
+                lock (_rowScopeSymbols)
                 {
-                    var recordType = this.GetRecordType(tableLogicalName);
-
-                    symTable = ReadOnlySymbolTable.NewFromRecord(recordType, allowThisRecord: true, allowMutable: true, debugName: $"RowScope:{tableLogicalName}");
-                                        
-                    _rowScopeSymbols[tableLogicalName] = symTable;
+                    if (!_rowScopeSymbols.TryGetValue(tableLogicalName, out symTable))
+                    {
+                        symTable = ReadOnlySymbolTable.NewFromRecord(recordType, allowThisRecord: true, allowMutable: true, debugName: $"RowScope:{tableLogicalName}");
+                        _rowScopeSymbols[tableLogicalName] = symTable;
+                    }
                 }
-
-                return symTable;
             }
+            else
+            {
+                lock (_rowScopeSymbolsNoITR)
+                {
+                    if(!_rowScopeSymbolsNoITR.TryGetValue(tableLogicalName, out symTable))
+                    {
+                        symTable = ReadOnlySymbolTable.NewFromRecordWithoutImplicitThisRecord(recordType, allowMutable: true, debugName: $"RowScopeNoITR:{tableLogicalName}");
+                        _rowScopeSymbolsNoITR[tableLogicalName] = symTable;
+                    }
+                }
+            }
+
+            return symTable;
         }
 
         /// <summary>
@@ -225,7 +246,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken);
+            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             return response.HasError
@@ -265,7 +286,7 @@ namespace Microsoft.PowerFx.Dataverse
                 query.PageInfo.PagingCookie = null;
             }
 
-            DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken);
+            DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             if (response.HasError)

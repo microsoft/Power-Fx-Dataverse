@@ -4,12 +4,10 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Linq;
-using System.Xml;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Metadata;
 using FxOptionSetValue = Microsoft.PowerFx.Types.OptionSetValue;
 using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
@@ -128,6 +126,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 opt = "1";
             }
+        }
+
+        public static FxOptionSetValue ConvertXrmOptionSetValueToFormulaValue(TableType type, XrmOptionSetValue optionSetValue)
+        {
+            var fxOptionSetValueType = FormulaType.Build(type.SingleColumnFieldType._type) as OptionSetValueType;
+            
+            return new FxOptionSetValue(optionSetValue.Value.ToString(), fxOptionSetValueType);
         }
     }
 }
