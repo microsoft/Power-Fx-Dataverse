@@ -36,6 +36,7 @@
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="$(PowerFxVersion)" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxConnectorVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
   </ItemGroup>
 
@@ -50,6 +51,12 @@
     <ProjectReference Include="..\..\src\PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj" />
     <ProjectReference Include="..\..\src\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
     <ProjectReference Include="..\PowerFx.Dataverse.Mock\Microsoft.Dataverse.EntityMock.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Connectors\Swagger\*.json" />
+    <EmbeddedResource Include="Connectors\Responses\*.json" />
+    <EmbeddedResource Include="Connectors\Responses\*.jsonSet" />
   </ItemGroup>
 
   <ItemGroup>
