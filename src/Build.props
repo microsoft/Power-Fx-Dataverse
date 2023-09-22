@@ -6,6 +6,9 @@
     <PowerFxVersion>1.1.0-build.20230922-1002</PowerFxVersion>
       <!-- https://msazure.visualstudio.com/OneAgile/_artifacts/feed/PowerApps-Studio-Official/NuGet/Microsoft.PowerFx.Dataverse.Parser       -->
     <DataverseParserVersion>0.1.0-ci-20230714-76422488</DataverseParserVersion>
+
+    <!-- The Connectors version is hard coded to block breaking changes introduced in  https://github.com/microsoft/Power-Fx/commit/54b370ec29ac4b0b7fd72e356cb02515cacbd31f and https://github.com/microsoft/Power-Fx/commit/a7eb7a0e6650f91086dce53176ddf5f7e3eb7152-->
+    <PowerFxConnectorVersion>1.1.0-build.20230911-0004</PowerFxConnectorVersion>
   </PropertyGroup>
 
 </Project>
