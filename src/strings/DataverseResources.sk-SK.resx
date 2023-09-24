@@ -212,4 +212,8 @@
     <value>Výpočty so stĺpcami meny v súvisiacich tabuľkách momentálne nie sú v stĺpcoch vzorcov podporované.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Priame použitie polí meny zatiaľ nie je podporované. Ako alternatívne riešenie použite Decimal(CurrencyField), ale upozorňujeme, že desatinné číslo má menší rozsah ako mena.</value>
+    
+  </data>
 </root>

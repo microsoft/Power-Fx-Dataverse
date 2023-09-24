@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Intellisense;
 using Xunit;
@@ -20,15 +21,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // For testing, provide a new engine instance each time to ensure their caches are reset between tests. 
         internal static PowerFx2SqlEngine _engine =>
             new PowerFx2SqlEngine(
-                DataverseTests.RelationshipModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.RelationshipModels)));
+                MockModels.RelationshipModels[0].ToXrm(),
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels)));
 
         internal static PowerFx2SqlEngine _allAttributesEngine => GetAllAttributesEngine(null);
 
         internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
             new PowerFx2SqlEngine(
-                DataverseTests.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(DataverseTests.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
+                MockModels.AllAttributeModels[0].ToXrm(),
+                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
                 locale);
 
         /// <summary>
@@ -111,6 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "'Boolean (Locals)'",
             "'Global Picklist'",
             "'Rating (Locals)'",
+            "Status",
             "TimeUnit.Days",
             "TimeUnit.Hours",
             "TimeUnit.Milliseconds",
@@ -122,14 +124,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Text(UTCToday(),|",
             "'Boolean (Locals)'",
             "'Global Picklist'",
-            "'Rating (Locals)'")] // "DateTimeFormat in Text on Date"            
+            "'Rating (Locals)'",
+            "Status")] // "DateTimeFormat in Text on Date"            
         [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'")] // "One To Many not shown"
         [InlineData("Sel|", "'Self Reference'")] // "Lookup (Many To One) is shown"
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
         [InlineData("Floa|")] // "Floating point fields are not suggested at all. Float function can't be used in the formula but is internally supported from IR."
-        [InlineData("Deci|")] // "Decimal function is not suggested by intellisense but can be used by manually typing"
         [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
         [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"
         [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"

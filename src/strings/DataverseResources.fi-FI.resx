@@ -212,4 +212,8 @@
     <value>Kaavasarakkeet eivät tue tällä hetkellä laskelmia, joissa on valuuttasarakkeita liittyvässä taulukossa.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Valuuttakenttien suoraa käyttöä ei vielä tueta. Käytä ratkaisuna kenttää Desimaali (CurrencyField). Huomaa, että desimaalilla on pienempi kattavuusalue kuin valuutalla.</value>
+    
+  </data>
 </root>

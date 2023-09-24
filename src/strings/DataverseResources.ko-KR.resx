@@ -212,4 +212,8 @@
     <value>관련 테이블의 통화 열이 있는 계산은 현재 수식 열에서 지원되지 않습니다.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>통화 필드를 직접 사용할 수 없습니다. 10진수(CurrencyField)를 해결로 사용하지만 10진수의 범위는 통화보다 작습니다.</value>
+    
+  </data>
 </root>

@@ -212,4 +212,8 @@
     <value>Berechnungen mit Währungsspalten in verknüpften Tabellen werden derzeit in Formelspalten nicht unterstützt.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Die direkte Verwendung von Währungsfeldern wird noch nicht unterstützt. Verwenden Sie Decimal(CurrencyField) als Problemumgehung, beachten Sie jedoch, dass die Dezimalzahl einen kleineren Bereich als die Währung umfasst.</value>
+    
+  </data>
 </root>

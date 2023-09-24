@@ -11,7 +11,7 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1701;1702;1998</NoWarn>
+    <NoWarn>1701;1702;1998;NU1605</NoWarn>
     <LangVersion>9.0</LangVersion>
     <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
   </PropertyGroup>
@@ -36,6 +36,7 @@
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="$(PowerFxVersion)" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
   </ItemGroup>
 
   <ItemGroup>    
@@ -48,6 +49,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj" />
     <ProjectReference Include="..\..\src\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
+    <ProjectReference Include="..\PowerFx.Dataverse.Mock\Microsoft.Dataverse.EntityMock.csproj" />
   </ItemGroup>
 
   <ItemGroup>

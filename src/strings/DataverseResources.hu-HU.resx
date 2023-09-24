@@ -169,7 +169,7 @@
     
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
-    <value>Az eredménytípus ("{0}") nem támogatott a képletoszlopokban.</value>
+    <value>A(z) {0} eredménytípus nem támogatott a képletoszlopokban.</value>
     
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
@@ -210,6 +210,10 @@
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>A kapcsolódó táblák pénznemoszlopokkal kapcsolatos számításai jelenleg nem támogatottak a képletoszlopokban.</value>
+    
+  </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>A pénznemmezők közvetlen használata még nem támogatott. Megoldásként használja a Decimal(CurrencyField) lehetőséget, de felhívjuk figyelmét, hogy a decimális érték kisebb tartománnyal rendelkezik a pénznemnél.</value>
     
   </data>
 </root>

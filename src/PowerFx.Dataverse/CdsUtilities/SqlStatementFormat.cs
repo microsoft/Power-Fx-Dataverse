@@ -159,19 +159,20 @@ ELSE
         public const string SqlIntegerType = "int";
         public const string SqlBitType = "bit";
         public const string SqlDecimalType = "decimal(23,10)";
+        public const string SqlBigType = "decimal(38,10)";
+
         public const string SqlMoneyType = "money";
         public const string SqlDateTimeType = "datetime";
         public const string SqlUniqueIdentifierType = "uniqueidentifier";
         public const string SqlExchangeRateType = "decimal(28,12)";
+
+        public const string SqlFloatType = "float";
 
         /// <summary>
         /// Declare intermediate variable
         /// </summary>
         public const string DeclareIntermediateVariableFormat = "DECLARE {0} {1}";
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
-        public const string BigType = "decimal(38,10)";
-        public const string BigMoneyType = "decimal(38,8)";
-        public const string ExchangeRateType = "decimal(28,12)";
 
         /// <summary>
         /// Max/Min value for Int/Decimal/Money

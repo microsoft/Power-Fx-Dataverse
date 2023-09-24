@@ -43,6 +43,9 @@ true
 Error()
 
 >> RoundUp(1, -10)
+10000000000
+
+>> RoundUp(1,-11)
 Error()
 
 // literal overflow

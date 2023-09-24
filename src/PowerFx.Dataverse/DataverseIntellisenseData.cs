@@ -41,8 +41,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             BuiltinFunctionsCore.Error,
             BuiltinFunctionsCore.Today,
-            BuiltinFunctionsCore.IsToday,
-            BuiltinFunctionsCore.Decimal
+            BuiltinFunctionsCore.IsToday
         };
 
         /// <summary>

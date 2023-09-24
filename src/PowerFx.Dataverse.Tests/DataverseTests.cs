@@ -4,24 +4,25 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.Types;
-using Xunit;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dataverse.EntityMock;
+using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Intellisense;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Xunit;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
+
     public class DataverseTests
     {
         [Fact]
@@ -63,25 +64,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v2 decimal(38,10)
+    DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
-    DECLARE @v4 decimal(38,10)
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
 
     -- expression body
-    SET @v2 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
+    SET @v2 = TRY_CAST((ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v4 = 2.0
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) * ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v4, 10)
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 10)
 END
 ";
         [Fact]
         public void CheckCurrencyCompile()
         {
-            var expr = "\t\t\nfield*field1*\n2.0\t";
+            var expr = "\t\t\nfield*Decimal(field1)*\n2.0\t";
 
             var model = new EntityMetadataModel
             {
@@ -124,7 +131,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(2,result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("\t\t\nnew_field*new_field1*\n2.0\t", result.LogicalFormula);
+            Assert.Equal("\t\t\nnew_field*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
 
         public const string BaselineSingleCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
@@ -132,10 +139,11 @@ END
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v1 decimal(38,10)
+    DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = @v0
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -146,7 +154,7 @@ END
         [Fact]
         public void CheckSingleCurrencyFieldCompile()
         {
-            var expr = "field";
+            var expr = "Decimal(field)";
 
             var model = new EntityMetadataModel
             {
@@ -183,7 +191,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(1, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("new_field", result.LogicalFormula);
+            Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
 
         public const string BaselineSingleCurrencyFunctionWithHints = @"CREATE FUNCTION fn_testUdf1(
@@ -191,10 +199,11 @@ END
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v1 decimal(38,10)
+    DECLARE @v1 decimal(23,10)
 
     -- expression body
-    SET @v1 = @v0
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
@@ -205,7 +214,7 @@ END
         [Fact]
         public void CheckSingleCurrencyFieldCompileWithHints()
         {
-            var expr = "field";
+            var expr = "Decimal(field)";
 
             var model = new EntityMetadataModel
             {
@@ -248,35 +257,45 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(1, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
-            Assert.Equal("new_field", result.LogicalFormula);
+            Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
 
         public const string BaselineExchangeFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(28,12), -- exchangerate
-    @v1 decimal(38,10) -- new_field1
+    @v2 decimal(38,10) -- new_field1
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
 AS BEGIN
-    DECLARE @v2 decimal(38,10)
+    DECLARE @v1 decimal(23,10)
     DECLARE @v3 decimal(23,10)
-    DECLARE @v4 decimal(38,10)
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
+    DECLARE @v6 decimal(23,10)
 
     -- expression body
-    SET @v2 = (ISNULL(@v0,0) * CAST(ISNULL(@v1,0) AS decimal(38,10)))
-    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    SET @v3 = 2.0
-    SET @v4 = (CAST(ISNULL(@v2,0) AS decimal(38,10)) * CAST(ISNULL(@v3,0) AS decimal(23,10)))
+    SET @v1 = TRY_CAST((ISNULL(@v0,0)) AS decimal(23,10))
+    IF(@v1 IS NULL) BEGIN RETURN NULL END
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    SET @v3 = TRY_CAST((ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v4 = TRY_CAST((ISNULL(@v1,0) * ISNULL(@v3,0)) AS decimal(23,10))
+    IF(@v4 IS NULL) BEGIN RETURN NULL END
+    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
+    SET @v5 = 2.0
+    SET @v6 = TRY_CAST((ISNULL(@v4,0) * ISNULL(@v5,0)) AS decimal(23,10))
+    IF(@v6 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v4<-100000000000 OR @v4>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v4, 10)
+    IF(@v6<-100000000000 OR @v6>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v6, 10)
 END
 ";
 
         [Fact]
         public void CheckExchangeRateCompile()
         {
-            var expr = "\t\t\nexchangerate*field1*\n2.0\t";
+            var expr = "\t\t\nDecimal(exchangerate)*Decimal(field1)*\n2.0\t";
 
             var model = new EntityMetadataModel
             {
@@ -286,7 +305,7 @@ END
                      {
                          LogicalName= "exchangerate",
                          DisplayName = "exchangerate",
-                         AttributeType = AttributeTypeCode.Money
+                         AttributeType = AttributeTypeCode.Decimal
                      },
                     new AttributeMetadataModel
                      {
@@ -319,8 +338,85 @@ END
             Assert.True(result.ReturnType is DecimalType);
             Assert.Equal(2, result.TopLevelIdentifiers.Count);
             Assert.Equal("exchangerate", result.TopLevelIdentifiers.First());
-            Assert.Equal("\t\t\nexchangerate*new_field1*\n2.0\t", result.LogicalFormula);
+            Assert.Equal("\t\t\nDecimal(exchangerate)*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
+
+        [Fact]
+        public void CheckCurrencyExchangeRateCompile()
+        {
+            var expr = "decimal + money";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "exchangerate",
+                         AttributeType = AttributeTypeCode.Decimal
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "money",
+                         AttributeType = AttributeTypeCode.Money
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "decimal",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 10-15: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.", result.Errors.First().ToString());
+
+            expr = "exchangerate * money";
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-12: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.", result.Errors.First().ToString());
+
+        }
+
+        public const string PercentIntermediateOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+
+    -- expression body
+    SET @v0 = 12
+    SET @v1 = (ISNULL(@v0,0)/100.0)
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    SET @v2 = 1
+    SET @v3 = TRY_CAST((ISNULL(@v1,0) + ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
+END
+";
+
+        [Fact]
+        public void PercentIntermediateOperationsTest()
+        {
+            var expr = "12% + 1";
+
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.Equal(PercentIntermediateOperationsUDF, result.SqlFunction);
+        }
+
 
         [Fact]
         public void PowerFunctionBlockedTest()
@@ -448,15 +544,17 @@ END
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v4 decimal(23,10)
-    DECLARE @v3 decimal(38,10)
-    DECLARE @v5 decimal(38,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
     SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
-    SET @v3 = (CAST(ISNULL(@v0,0) AS decimal(23,10)) + CAST(ISNULL(@v1,0) AS decimal(23,10)))
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
     IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    SET @v5 = (CAST(ISNULL(@v3,0) AS decimal(38,10)) + CAST(ISNULL(@v4,0) AS decimal(23,10)))
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) + ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
     IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
@@ -493,23 +591,23 @@ END
         [Fact]
         public void CheckCompileAllAttributeTypes()
         {
-            var expr = "field * Int - Money + If(Boolean || Picklist = 'Picklist (All Attributes)'.One, Value(String), 2)";
+            var expr = "field * Int - Decimal(Money) + If(Boolean || Picklist = 'Picklist (All Attributes)'.One, Value(String), 2)";
 
-            var metadata = AllAttributeModel.ToXrm();
+            var metadata = MockModels.AllAttributeModel.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
             Assert.True(result.IsSuccess);
-            Assert.Equal("new_field * int - money + If(boolean || picklist = allattributes_picklist_optionSet.'1', Value(string), 2)", result.LogicalFormula);
+            Assert.Equal("new_field * int - Decimal(money) + If(boolean || picklist = allattributes_picklist_optionSet.'1', Value(string), 2)", result.LogicalFormula);
         }
 
         [Fact]
         public void CheckMoney()
         {
-            var expr = "Money"; // resolve to Money filed
+            var expr = "Decimal(Money)"; // resolve to Money filed
 
-            var metadata = AllAttributeModel.ToXrm();
+            var metadata = MockModels.AllAttributeModel.ToXrm();
 
             var metadataProvider = new CdsEntityMetadataProvider(null)
             {
@@ -522,7 +620,7 @@ END
             Assert.NotNull(result);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal("money", result.ApplyGetInvariant());
+            Assert.Equal("Decimal(money)", result.ApplyGetInvariant());
         }
 
         [Fact]
@@ -643,6 +741,44 @@ END
             Assert.Equal(key, errors[0].MessageKey);
         }
 
+        [Theory]
+        [InlineData("Value(currency)", true)]
+        [InlineData("Decimal(currency)", true)]
+        [InlineData("Int(currency)", false, "Error 4-12: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")] 
+        [InlineData("Decimal(currency + 0)", false, "Error 8-16: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("currency + 0", false, "Error 0-8: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("currency > 0", false, "Error 0-8: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        [InlineData("Decimal(currency) - currency", false, "Error 20-28: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.")]
+        public void VerifyCurrencyUsage(string expr, bool success, string message = null)
+        {
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_currency",
+                         DisplayName = "currency",
+                         AttributeType = AttributeTypeCode.Money
+                     },
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Check(expr);
+
+            Assert.NotNull(result);
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(message, result.Errors.First().ToString());
+                Assert.Equal(SqlCompileException.DirectCurrencyNotSupported.Key, result.Errors.First().MessageKey);
+            }
+        }
+
         [Fact]
         public void CompileTypeHint()
         {
@@ -663,7 +799,7 @@ END
 
             var metadata = model.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
-            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer } };
+            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer, Precision = 0 } };
             var result = engine.Compile(expr, options);
 
             Assert.NotNull(result);
@@ -671,7 +807,6 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
-            Assert.True(result.ReturnType is SqlIntType);
         }
 
         [Fact]
@@ -725,8 +860,8 @@ END
         [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             var checkResult = engine.Check(expr);
             Assert.False(checkResult.IsSuccess);
@@ -747,7 +882,8 @@ END
         [Theory]
         [InlineData("field", typeof(DecimalType))] // "Decimal"
         [InlineData("1.1", typeof(DecimalType))] // "Numeric literal returns Decimal"
-        [InlineData("Money", typeof(DecimalType))] // "Money returns Decimal"
+        [InlineData("Decimal(Money)", typeof(DecimalType))] // "Money returns Decimal"
+        [InlineData("Value(Money)", typeof(DecimalType))] // "Money returns Decimal"
         [InlineData("Int", typeof(DecimalType))] // "Int returns Decimal"
         [InlineData("String", typeof(StringType))] // "String"
         [InlineData("\"foo\"", typeof(StringType))] // "String literal returns String"
@@ -756,8 +892,8 @@ END
         [InlineData("Mod(int, int)", typeof(DecimalType))] // "Int from function returns decimal"
         public void CompileValidReturnType(string expr, Type returnType)
         {
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             AssertReturnType(engine, expr, returnType);
         }
@@ -775,7 +911,7 @@ END
             Assert.Equal(typeof(BlankType), result.ReturnType.GetType());
         }
 
-        // Verify that AllAttributeModel has an attribute of each type
+        // Verify that MockModels.AllAttributeModel has an attribute of each type
         [Fact]
         public void VerifyAllAttributes()
         {
@@ -785,7 +921,7 @@ END
                 set.Add(val);
             }
 
-            foreach (var attr in AllAttributeModel.Attributes)
+            foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
                 var code = attr.AttributeType.Value;
                 set.Remove(code);
@@ -806,11 +942,11 @@ END
             List<string> expressions = new List<string>();
 
             bool addIdentityCheck = true;
+            var code = attr.AttributeType.Value;
 
             // IsBlank should accept any type, and always return a boolean.
-            expressions.Add($"IsBlank({attr.LogicalName})");
+            expressions.Add(code == AttributeTypeCode.Money ? $"IsBlank(Decimal({attr.LogicalName}))": $"IsBlank({attr.LogicalName})");
 
-            var code = attr.AttributeType.Value;
             switch (code)
             {
                 // Should be able to use arithmetic operator on any numerical type
@@ -818,8 +954,11 @@ END
                 case AttributeTypeCode.Decimal:
                 case AttributeTypeCode.Double:
                 case AttributeTypeCode.Integer:
-                case AttributeTypeCode.Money:
                     expressions.Add($"{attr.LogicalName} > 0");
+                    break;
+
+                case AttributeTypeCode.Money:
+                    expressions.Add($"Decimal({attr.LogicalName}) > 0");
                     break;
 
                 case AttributeTypeCode.Boolean:
@@ -846,7 +985,7 @@ END
             // Identity check. 
             if (addIdentityCheck)
             {
-                expressions.Add($"{attr.LogicalName} = '{attr.DisplayName}'");
+                expressions.Add(code == AttributeTypeCode.Money ? $"Decimal({attr.LogicalName}) = Decimal('{attr.DisplayName}')" : $"{attr.LogicalName} = '{attr.DisplayName}'");
             }
 
             return expressions.ToArray();
@@ -869,7 +1008,7 @@ END
         }
 
         // For each attribute type x, verify we can consume it.
-        // Explicitly iterate over every attribute in AllAttributeModels (to ensure we're being comprehensive.
+        // Explicitly iterate over every attribute in MockModels.AllAttributeModels (to ensure we're being comprehensive.
         // And if we can't consume it, verify the error. 
         [Fact]
         public void VerifyProduceAndConsumeAllTypes()
@@ -909,10 +1048,10 @@ END
                 { "multiSelect", errCantProduceOptionSets }
             };
 
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
-            foreach (var attr in AllAttributeModel.Attributes)
+            foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
                 if (!attr.AttributeType.HasValue) { continue; }
 
@@ -931,7 +1070,7 @@ END
                     // To test producers, we just pass the field straight through. This means we must be able to consume the field first. 
                     // There are types we could produce that we can't consume (such as if a function or operator returned the type)
                     // but we don't have an automatic way of testing that. 
-                    var expr = $"{attr.LogicalName}";
+                    var expr = attr.AttributeType.Value == AttributeTypeCode.Money? $"Decimal({attr.LogicalName})" : $"{attr.LogicalName}";
                     var checkResult = engine.Check(expr);
 
                     AssertResult(checkResult, unsupportedProducer, attr.LogicalName, expr);
@@ -1167,8 +1306,8 @@ END
         [InlineData("7 + 2", "")] // "Literals"
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1483,8 +1622,8 @@ END
         [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -1508,16 +1647,16 @@ END
         [InlineData("'Virtual Lookup'.'Virtual Data'", "Error 16-31: Cannot reference virtual table Virtual Remotes in formula columns.")] // "Virtual lookup field access"
         public void CheckVirtualLookup(string expr, params string[] errors)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             AssertReturnTypeOrError(engine, expr, false, null, errors);
         }
 
         [Fact]
         public void CompileLogicalLookup()
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var options = new SqlCompileOptions { UdfName = "fn_udf_Logical" };
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
@@ -1527,373 +1666,10 @@ END
 ", result.SqlCreateRow);
         }
 
-        /// <summary>
-        /// Models used to run relationship tests
-        /// </summary>
-        internal static readonly EntityMetadataModel LocalModel = new EntityMetadataModel
-        {
-            LogicalName = "local",
-            DisplayCollectionName = "Locals",
-            PrimaryIdAttribute = "localid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("conflict1", "Conflict"),
-                AttributeMetadataModel.NewDecimal("conflict2", "Conflict"),
-                AttributeMetadataModel.NewDecimal("new_price", "Price"),
-                AttributeMetadataModel.NewDecimal("old_price", "Old_Price"),
-                AttributeMetadataModel.NewDateTime("new_date", "Date", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("new_datetime", "DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewMoney("new_currency", "Currency"),
-                AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
-                AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
-                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),
-                AttributeMetadataModel.NewLookup("virtualid", "Virtual Lookup", new string[] { "virtualremote" }),
-                AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
-                AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                AttributeMetadataModel.NewDouble("float", "Float"),
-                AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
-                AttributeMetadataModel.NewInteger("new_int", "Integer"),
-                AttributeMetadataModel.NewString("new_string", "String"),
-                AttributeMetadataModel.NewGuid("some_id", "SomeId"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "Hot", Value = 1 },
-                    new OptionMetadataModel { Label = "Warm", Value = 2 },
-                    new OptionMetadataModel { Label = "Cold", Value = 3 }
-                }),
-                AttributeMetadataModel.NewPicklist("global_pick", "Global Picklist", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "High", Value = 1 },
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Low", Value = 3 }
-                },
-                isGlobal: true)
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "remoteid",
-                    ReferencedEntity = "remote",
-                    ReferencingAttribute = "otherid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "refd",
-                    ReferencingEntityNavigationPropertyName = "refg",
-                    SchemaName = "local_remote"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "localid",
-                    ReferencedEntity = "local",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "virtualremoteid",
-                    ReferencedEntity = "virtualremote",
-                    ReferencingAttribute = "virtualid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "virtual_refd",
-                    ReferencingEntityNavigationPropertyName = "virtual",
-                    SchemaName = "virtual"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "remoteid",
-                    ReferencedEntity = "remote",
-                    ReferencingAttribute = "logicalid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "logical_refd",
-                    ReferencingEntityNavigationPropertyName = "logical",
-                    SchemaName = "logical"
-                }
-            },
-            OneToManyRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "localid",
-                    ReferencedEntity = "local",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "local",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel RemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "remote",
-            DisplayCollectionName = "Remotes",
-            PrimaryIdAttribute = "remoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data", "Data"),
-                AttributeMetadataModel.NewGuid("remoteid", "RemoteId"),
-                AttributeMetadataModel.NewDecimal("calc", "Calculated Data").SetCalculated(),
-                AttributeMetadataModel.NewDecimal("float", "Float"),
-                AttributeMetadataModel.NewDouble("actual_float", "Actual Float"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {   new OptionMetadataModel { Label = "Small", Value = 1},
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Large", Value = 3 }
-                }),
-                AttributeMetadataModel.NewLookup("otherotherid", "Other Other", new string[] { "doubleremote" }),
-                AttributeMetadataModel.NewDouble("other", "Other")
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "doubleremoteid",
-                    ReferencedEntity = "doubleremote",
-                    ReferencingAttribute = "otherotherid",
-                    ReferencingEntity = "remote",
-                    ReferencedEntityNavigationPropertyName = "doublerefd",
-                    ReferencingEntityNavigationPropertyName = "doublerefg",
-                    SchemaName = "remote_doubleremote"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel DoubleRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "doubleremote",
-            DisplayCollectionName = "Double Remotes",
-            PrimaryIdAttribute = "doubleremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data2", "Data Two"),
-                AttributeMetadataModel.NewGuid("doubleremoteid", "DoubleRemoteId"),
-                AttributeMetadataModel.NewLookup("otherotherotherid", "Other Other Other", new string[] { "tripleremote" })
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "tripleremoteid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "otherotherotherid",
-                    ReferencingEntity = "doubleremote",
-                    ReferencedEntityNavigationPropertyName = "triplerefd",
-                    ReferencingEntityNavigationPropertyName = "triplerefg",
-                    SchemaName = "doubleremote_tripleremote"
-                }
-            }
-        };
-
-        internal static readonly EntityMetadataModel TripleRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "tripleremote",
-            DisplayCollectionName = "Triple Remotes",
-            PrimaryIdAttribute = "tripleremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("data3", "Data Three"),
-                AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
-                AttributeMetadataModel.NewMoney("currencyField", "Currency Field")
-            }
-        };
-
-        internal static readonly EntityMetadataModel VirtualRemoteModel = new EntityMetadataModel
-        {
-            LogicalName = "virtualremote",
-            DisplayCollectionName = "Virtual Remotes",
-            PrimaryIdAttribute = "virtualremoteid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("vdata", "Virtual Data"),
-                AttributeMetadataModel.NewGuid("virtualremoteid", "VirtualRemoteId")
-            }
-        }.SetVirtual();
-
-        internal static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel };
-
-        internal static readonly EntityMetadataModel AllAttributeModel = new EntityMetadataModel
-        {
-            LogicalName = "allattributes",
-            DisplayCollectionName = "All Attributes",
-            PrimaryIdAttribute = "allid",
-            Attributes = new AttributeMetadataModel[]
-            {
-                AttributeMetadataModel.NewDecimal("new_field", "field"),
-                AttributeMetadataModel.NewDouble("double", "Double"),
-                AttributeMetadataModel.NewInteger("int", "Int"),
-                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new [] { "tripleremote" }),
-                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new [] { "allattributes" }),
-                AttributeMetadataModel.NewMoney("money", "Money"),
-                AttributeMetadataModel.NewGuid("guid", "Guid"),
-                AttributeMetadataModel.NewGuid("allid", "AllId"),
-                AttributeMetadataModel.NewString("string", "String"),
-                AttributeMetadataModel.NewString("hyperlink", "Hyperlink", StringFormat.Url),
-                AttributeMetadataModel.NewString("email", "Email", StringFormat.Email),
-                AttributeMetadataModel.NewString("ticker", "Ticker", StringFormat.TickerSymbol),
-                AttributeMetadataModel.NewInteger("timezone", "TimeZone", IntegerFormat.TimeZone),
-                AttributeMetadataModel.NewInteger("duration", "Duration", IntegerFormat.Duration),
-                AttributeMetadataModel.NewDateTime("userlocaldatetime", "UserLocal DateTime", DateTimeBehavior.UserLocal, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewDateTime("userlocaldateonly", "UserLocal DateOnly", DateTimeBehavior.UserLocal, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
-                AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
-                AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
-                new AttributeMetadataModel
-                {
-                    LogicalName= "bigint",
-                    DisplayName = "BigInt",
-                    AttributeType = AttributeTypeCode.BigInt
-                },
-                AttributeMetadataModel.NewBoolean("boolean", "Boolean", "Yes", "No"),
-                AttributeMetadataModel.NewLookup("customerid", "Customer", new [] { "tripleremote" }, AttributeTypeCode.Customer),
-                new AttributeMetadataModel
-                {
-                    LogicalName = "EntityName",
-                    DisplayName = "EntityName",
-                    AttributeType = AttributeTypeCode.EntityName
-                },
-                new AttributeMetadataModel
-                {
-                    LogicalName = "Memo",
-                    DisplayName = "Memo",
-                    AttributeType = AttributeTypeCode.Memo
-                },
-                AttributeMetadataModel.NewLookup("ownerid", "Owner", new [] { "tripleremote" }, AttributeTypeCode.Owner),
-                AttributeMetadataModel.NewPicklist(
-                    "statecode",
-                    "State",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
-                    AttributeTypeCode.State),
-                AttributeMetadataModel.NewPicklist(
-                    "statuscode",
-                    "Status",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
-                    AttributeTypeCode.Status),
-                AttributeMetadataModel.NewPicklist(
-                    "picklist",
-                    "Picklist",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "One",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Two",
-                            Value = 2
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Three",
-                            Value = 3
-                        }
-                    }),
-                AttributeMetadataModel.NewPicklist(
-                    "multiSelect",
-                    "MultiSelect",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Eight",
-                            Value = 8
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Nine",
-                            Value = 9
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Ten",
-                            Value = 10
-                        }
-                    },
-                    typeName: AttributeTypeDisplayName.MultiSelectPicklistType,
-                    attributeType: AttributeTypeCode.Virtual),
-                AttributeMetadataModel.NewImage("image", "Image"),
-                AttributeMetadataModel.NewFile("file", "File")
-            },
-            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
-            {
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "tripleremoteid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "new_lookup",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "lookup_refd",
-                    ReferencingEntityNavigationPropertyName = "lookup",
-                    SchemaName = "all_tripleremote"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "allid",
-                    ReferencedEntity = "allattributes",
-                    ReferencingAttribute = "selfid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "self_refd",
-                    ReferencingEntityNavigationPropertyName = "self",
-                    SchemaName = "self"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "ownerid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "ownerid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "owner_allattributes",
-                    ReferencingEntityNavigationPropertyName = "ownerid",
-                    SchemaName = "owner_allattributes"
-                },
-                new OneToManyRelationshipMetadataModel
-                {
-                    ReferencedAttribute = "accountid",
-                    ReferencedEntity = "tripleremote",
-                    ReferencingAttribute = "customerid",
-                    ReferencingEntity = "allattributes",
-                    ReferencedEntityNavigationPropertyName = "allattributes_customer_account",
-                    ReferencingEntityNavigationPropertyName = "customerid_account",
-                    SchemaName = "allattributes_customer_account"
-                },
-            }
-        };
-
-        internal static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
-
         [Fact]
         public void CheckGlobalOptionSets()
         {
-            var xrmModel = AllAttributeModel.ToXrm();
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
             List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
             var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
                 new OptionMetadata[]
@@ -1923,7 +1699,7 @@ END
 
             globalOptionSets.Add(optionSet1);
             globalOptionSets.Add(optionSet2);
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
 
             // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
@@ -1944,12 +1720,12 @@ END
         [Fact]
         public void CheckRelatedEntityCurrencyUsedInFormula()
         {
-            var xrmModel = AllAttributeModel.ToXrm();
-            var provider = new MockXrmMetadataProvider(AllAttributeModels);
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
-            var result = engine.Compile("money + lookup.data3 + lookup.currencyField + 11", new SqlCompileOptions());
+            var result = engine.Compile("Decimal(money) + lookup.data3 + Decimal(lookup.currencyField) + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Equal("Error 29-43: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
+            Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
         [Theory]
@@ -1965,8 +1741,8 @@ END
         [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] // "Preserves whitespace and comments"
         public void Translate(string expr, string translation)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
             var actualTranslation = engine.ConvertToDisplay(expr);
             Assert.Equal(translation, actualTranslation);
 
@@ -1995,8 +1771,8 @@ END
 
         public void Sanitize(string expr, string sanitized)
         {
-            var provider = new MockXrmMetadataProvider(RelationshipModels);
-            var engine = new PowerFx2SqlEngine(RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
+            var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider));
 
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
@@ -2083,6 +1859,8 @@ END
 
         [Theory]
         [InlineData("10000000", true, true, "")]
+        [InlineData("100000000000", true, true, "")]
+        [InlineData("-100000000000", true, true, "")]
         [InlineData("1000000000000000", true, false, "value is too large")]
         [InlineData("1000000000000000000000000000000000000000000000000", false, false, "value is too large")]
         [InlineData("-10000000", true, true, "")]
@@ -2110,6 +1888,29 @@ END
             {
                 Assert.True(sqlCheck.Errors.Select(err => err.Message.Contains(message)).Any());
             }
+        }
+    }
+
+    public class MockXrmMetadataProvider : IXrmMetadataProvider
+    {
+        private readonly Dictionary<string, EntityMetadata> _entitiesByName;
+
+        public MockXrmMetadataProvider(params EntityMetadataModel[] entityModels)
+        {
+            _entitiesByName = entityModels.Select(model => model.ToXrm()).ToDictionary(model => model.LogicalName);
+        }
+
+        public bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity)
+        {
+            var ret = _entitiesByName.TryGetValue(logicalOrDisplayName, out entity);
+
+            if (ret && !entity.IsValid())
+            {
+                ret = false;
+                entity = null;
+            }
+
+            return ret;
         }
     }
 

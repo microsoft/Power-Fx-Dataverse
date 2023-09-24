@@ -166,7 +166,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                             var argString = Library.CoerceNullToInt(arg);
 
-                            var result = context.GetTempVar(new SqlBigType());
+                            var result = context.GetTempVar(FormulaType.Decimal);
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;

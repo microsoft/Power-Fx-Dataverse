@@ -99,6 +99,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return ((GuidValue)fxValue).Value;
 
                 case AttributeTypeCode.Picklist:
+                case AttributeTypeCode.Status:
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
 
                 case AttributeTypeCode.Money:
@@ -154,7 +155,6 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.PartyList:
                 case AttributeTypeCode.State:
-                case AttributeTypeCode.Status:
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
             }

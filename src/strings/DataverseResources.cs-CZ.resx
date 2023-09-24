@@ -137,7 +137,7 @@
     
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
-    <value>Pro tento argument je podporována pouze doslovná hodnota.</value>
+    <value>Pro tento argument je podporována pouze hodnota literál.</value>
     
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
@@ -210,6 +210,10 @@
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Výpočty se sloupci měny v souvisejících tabulkách nejsou aktuálně podporovány ve sloupcích vzorců.</value>
+    
+  </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Přímé použití polí měny zatím není podporováno. Jako alternativní řešení použijte Decimal(CurrencyField), ale všimněte si, že desítková soustava má menší rozsah než měna.</value>
     
   </data>
 </root>

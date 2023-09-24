@@ -147,6 +147,12 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey RelatedCurrency = DataverseStringResources.New("FormulaColumns_RelatedCurrency");
 
+        // <summary>
+        /// The error resource key for a formula that references currency field directly. Recommnedation is to use Decimal(currency field)
+        /// </summary>
+        internal readonly static ErrorResourceKey DirectCurrencyNotSupported = DataverseStringResources.New("FormulaColumns_DirectCurrencyNotSupported");
+
+
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {
             _error = new SqlError(key, context, DocumentErrorSeverity.Critical, args);

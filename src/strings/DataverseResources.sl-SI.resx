@@ -212,4 +212,8 @@
     <value>Izračuni s stolpci za valute v povezanih tabelah trenutno niso podprti v stolpcih s formulo.</value>
     
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Neposredna uporaba denarnih polj še ni podprta. Kot rešitev uporabite polje Decimal(CurrencyField), vendar upoštevajte, da ima decimalno polje manjši obseg kot denarno.</value>
+    
+  </data>
 </root>

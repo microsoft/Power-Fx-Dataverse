@@ -12,6 +12,7 @@ using System.ServiceModel;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
@@ -115,10 +116,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void ConvertMetadataLazy()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -158,10 +159,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void ConvertMetadataLazyFloat()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -212,12 +213,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
+        public void ModelArrayToMetadataArrayTest()
+        {
+            var xrmArray = ModelExtensions.ToXrm(MockModels.RelationshipModels);
+
+            foreach (var metadata in xrmArray)
+            {
+                Assert.IsType<EntityMetadata>(metadata);
+            }
+        }
+
+        [Fact]
         public void MetadataChecks()
         {
-            var localName = DataverseTests.LocalModel.LogicalName;
+            var localName = MockModels.LocalModel.LogicalName;
 
             var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(DataverseTests.RelationshipModels)
+                new MockXrmMetadataProvider(MockModels.RelationshipModels)
             );
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
@@ -2060,10 +2072,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), Float(2))")]
 
         // Variable as arg 
-        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), _count)")]
+        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Float(_count))")]
 
         // Function as arg 
-        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), If(LtDecimals(1,0), (_count), (Float(1))))")]
+        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))")]
 
         // Filter inside FirstN, both can be cominded (vice versa isn't true)
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), Float(10))")]
@@ -2148,10 +2160,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), 2)")]
 
         // Variable as arg 
-        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), _count)")]
+        [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Value(_count))")]
 
         // Function as arg 
-        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (_count), (1)))")]
+        [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))))")]
 
         // Filter inside FirstN, both can be cominded (vice versa isn't true)
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)")]
@@ -2411,6 +2423,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Comparing fields can't be delegated.
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        // Not All binary op are supported.
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // Error handling
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)")]
 
@@ -2503,10 +2518,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)")]
 
         // Variable as arg 
-        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)")]
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)")]
 
         // Function as arg 
-        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (1))), 999)")]
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)")]
 
         // Filter nested in another function both delegated.
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)")]
@@ -3660,10 +3675,79 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [Theory]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t2)})", false)]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t1)})", false)]
+
+        [InlineData("Collect(t1, {PolymorphicLookup: First(t3)})", true)]
+        [InlineData("Collect(t1, {PolymorphicLookup: {test:1}})", true)]
+        public async Task PolymorphicMutationTestAsync(string expr, bool isErrorValue)
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, _) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+            dv.AddTable("t2", "remote");
+            dv.AddTable("t3", "doubleremote");
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = _parserAllowSideEffects;
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            if (isErrorValue)
+            {
+                Assert.IsAssignableFrom<ErrorValue>(result);
+                return;
+            }
+
+            var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
+
+            var updatedPolyField = Assert.IsAssignableFrom<RecordValue>(resultRecord.GetFieldAsync("_new_polyfield_value", CancellationToken.None).Result);
+
+            Assert.NotNull(updatedPolyField);
+        }
+
+        [Fact]
+        public void StatusTypeOptionSetTest()
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            var expr = "Patch(t1, First(t1), {Status: Status.Resolved})";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+
+            dv.AddTable(displayName, logicalName);
+
+            var opts = _parserAllowSideEffects;
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            var run = check.GetEvaluator();
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
+            Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
         static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
+        static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
@@ -3687,7 +3771,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
-
+            var entity5 = new Entity("doubleremote", _g5);
 
             var entity3 = new Entity("local", _g3);
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
@@ -3700,6 +3784,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
             entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
             entity1.Attributes["new_currency"] = new Money(100);
+            entity1.Attributes["new_name"] = "row1";
+            entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
             entity1.Attributes["otherid"] = entity2.ToEntityReference();
@@ -3709,7 +3796,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             entity2.Attributes["data"] = Convert.ToDecimal(200);
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.RelationshipModels);
+            var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
             entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
@@ -3748,7 +3835,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["guid"] = _g1;
             entity1.Attributes["multiSelect"] = _listOptionSetValueCollection;
 
-            MockXrmMetadataProvider xrmMetadataProvider = new MockXrmMetadataProvider(DataverseTests.AllAttributeModels);
+            var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
 
             entityLookup.Add(CancellationToken.None, entity1);

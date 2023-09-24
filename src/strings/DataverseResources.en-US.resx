@@ -212,4 +212,8 @@
     <value>Calculations with currency columns in related tables are not currently supported in formula columns.</value>
     <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.</value>
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
+  </data>
 </root>

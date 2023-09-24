@@ -157,7 +157,7 @@
     
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
-    <value>特定地區設定格式化權杖，例如公式欄中不支援「。」和「，」。</value>
+    <value>特定地區設定格式化權杖，例如公式欄中不支援「.」和「,」。</value>
     
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
@@ -210,6 +210,10 @@
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>公式資料行目前不支援使用相關資料表中的貨幣資料行進行計算。</value>
+    
+  </data>
+  <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
+    <value>目前尚不支援直接使用貨幣欄位。請使用 Decimal(CurrencyField) 做為因應措施，但請注意，小數的範圍小於貨幣。</value>
     
   </data>
 </root>
