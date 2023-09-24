@@ -1,6 +1,8 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
+//------------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Repl;
 
 namespace Microsoft.PowerFx
 {
@@ -23,6 +26,10 @@ namespace Microsoft.PowerFx
         private static RecalcEngine _engine;
 
         private static DataverseConnection _dv;
+
+        // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";        
+        private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+        private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         private const string OptionFormatTable = "FormatTable";
         private static bool _formatTable = true;
@@ -36,8 +43,13 @@ namespace Microsoft.PowerFx
         private const string OptionStackTrace = "StackTrace";
         private static bool _stackTrace = false;
 
+        private const string OptionSQLEval = "SQLEval";
+        private static bool _SQLEval = false;
+
         private const string OptionFormatTableColumns = "FormatTableColumns";
         private static HashSet<string> _formatTableColumns;
+
+        private static HashSet<string> _replFunctions;
 
         private const string OptionFeaturesNone = "FeaturesNone";
 
@@ -87,8 +99,11 @@ namespace Microsoft.PowerFx
                 { OptionFeaturesNone, OptionFeaturesNone },
                 { OptionPowerFxV1, OptionPowerFxV1 },
                 { OptionStackTrace, OptionStackTrace },
-                { OptionFormatTableColumns, OptionFormatTableColumns }
+                { OptionFormatTableColumns, OptionFormatTableColumns },
+                { OptionSQLEval, OptionSQLEval }
             };
+
+            _replFunctions = new HashSet<string> { };
 
             foreach (var featureProperty in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -105,16 +120,31 @@ namespace Microsoft.PowerFx
             config.EnableParseJSONFunction();
 
             config.AddFunction(new HelpFunction());
+            _replFunctions.Add("Help");
+
             config.AddFunction(new ResetFunction());
+            _replFunctions.Add("Reset");
+
             config.AddFunction(new ExitFunction());
+            _replFunctions.Add("Exit");
+
             config.AddFunction(new OptionFunctionBool());
             config.AddFunction(new OptionFunctionString());
+            _replFunctions.Add("Option");
+
             config.AddFunction(new ResetImportFunction());
+            _replFunctions.Add("ResetImport");
+
             config.AddFunction(new ImportFunction1Arg());
             config.AddFunction(new ImportFunction2Arg());
+            _replFunctions.Add("Import");
+
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
+            _replFunctions.Add("DVConnect");
+
             config.AddFunction(new DVAddTableFunction());
+            _replFunctions.Add("DVAddTable");
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
@@ -124,12 +154,15 @@ namespace Microsoft.PowerFx
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            _engine = new RecalcEngine(config);
+            _engine = new RecalcEngine(config);            
         }
 
         public static void Main()
         {
             var enabled = new StringBuilder();
+
+            Console.InputEncoding = System.Text.Encoding.Unicode;
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
 
             ResetEngine();
 
@@ -151,22 +184,22 @@ namespace Microsoft.PowerFx
 
             Console.WriteLine($"Experimental features enabled:{enabled}");
 
-#pragma warning disable CA1303 // Do not pass literals as localized parameters
-            Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
-#pragma warning restore CA1303 // Do not pass literals as localized parameters
+            Console.WriteLine($"{(ConnectionString != null ? "Using" : "MISSING")} local SQL Server connection string in environment variable {ConnectionStringVariable}.");
 
             var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
             if (File.Exists(batchPath))
             {
-                Console.WriteLine($"\n>> // Processing {batchPath}");
+                Console.WriteLine($"Processing {batchPath}...");
                 var batchFile = File.OpenText(batchPath);
                 REPL(batchFile, echo: true);
                 batchFile.Close();
             }
             else
             {
-                Console.WriteLine($"\n>> // Place autoexec formulas in {batchPath}");
+                Console.WriteLine($"Place autoexec formulas in {batchPath}");
             }
+
+            Console.WriteLine($"Enter Excel formulas.  Use \"Help()\" for details.");
 
             REPL(Console.In, echo: false);
         }
@@ -236,11 +269,23 @@ namespace Microsoft.PowerFx
 
         private static FormulaValue Eval(string expressionText)
         {
-            CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
-            checkResult.ThrowOnErrors();
+            Match match;
 
-            IExpressionEvaluator evaluator = checkResult.GetEvaluator();
-            return evaluator.Eval(GetRuntimeConfig());
+            match = Regex.Match(expressionText, @"^\s*(?<func>[a-zA-Z]+)\(", RegexOptions.Singleline);
+
+            if (_SQLEval && !(match.Success && _replFunctions.Contains(match.Groups["func"].Value)) )
+            {                
+                using SqlRunner sqlRunner = new SqlRunner(ConnectionString) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = Features.PowerFxV1 };
+                return sqlRunner.RunExpr(expressionText);
+            }
+            else
+            {
+                CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
+                checkResult.ThrowOnErrors();
+
+                IExpressionEvaluator evaluator = checkResult.GetEvaluator();
+                return evaluator.Eval(GetRuntimeConfig());
+            }
         }
 
         public static void REPL(TextReader input, bool echo = false, TextWriter output = null)
@@ -269,6 +314,15 @@ namespace Microsoft.PowerFx
                         Console.WriteLine(ir);
                         output?.WriteLine(ir);
                         cr.ThrowOnErrors();
+                    }
+
+                    // SQL pretty printer: SQL( <expr> )
+                    else if ((match = Regex.Match(expr, @"^\s*SQL\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
+                    {
+                        using SqlRunner sqlRunner = new SqlRunner(ConnectionString) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = Features.PowerFxV1 };
+                        var sql = sqlRunner.SQLExpr(match.Groups["expr"].Value);                        
+                        Console.Write(sql);
+                        output?.Write(sql);
                     }
 
                     // named formula definition: <ident> = <formula>
@@ -529,7 +583,7 @@ namespace Microsoft.PowerFx
                 else
                 {
                     var separator = string.Empty;
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
+                    var fieldNames = _formatTableColumns ?? record.Type.FieldNames;
 
                     resultString = new StringBuilder("{");
 
@@ -574,7 +628,7 @@ namespace Microsoft.PowerFx
                 {
                     // otherwise a full table treatment is needed
 
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
+                    var fieldNames = _formatTableColumns ?? table.Type.FieldNames;
                     var columnCount = fieldNames.Count();
 
                     if (columnCount == 0)
@@ -784,6 +838,21 @@ namespace Microsoft.PowerFx
                     return value;
                 }
 
+                if (string.Equals(option.Value, OptionSQLEval, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ConnectionString == null)
+                    {
+                        return FormulaValue.NewError(new ExpressionError()
+                        {
+                            Kind = ErrorKind.InvalidArgument,
+                            Severity = ErrorSeverity.Critical,
+                            Message = $"Missing local SQL Server connection string in environment variable {ConnectionStringVariable}"
+                        });
+                    }
+                    _SQLEval = value.Value;
+                    return value;
+                }
+
                 if (option.Value.ToLower(CultureInfo.InvariantCulture) == OptionStackTrace.ToLower(CultureInfo.InvariantCulture))
                 {
                     _stackTrace = value.Value;
@@ -851,12 +920,12 @@ namespace Microsoft.PowerFx
                 var fileName = fileNameSV.Value;
                 if (File.Exists(fileName))
                 {
-                    TextReader fileReader = new StreamReader(fileName);
+                    TextReader fileReader = new StreamReader(fileName, true);
                     TextWriter outputWriter = null;
 
                     if (outputSV != null)
                     {
-                        outputWriter = new StreamWriter(outputSV.Value);
+                        outputWriter = new StreamWriter(outputSV.Value, false, System.Text.Encoding.UTF8);
                     }
 
                     ConsoleRepl.REPL(fileReader, true, outputWriter);
