@@ -287,7 +287,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed) 
                 {
-                    var dataverseOptionSet = attribute.SourceType == 3 ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
+                    var dataverseOptionSet = (attribute.SourceType == 3 && attribute.AttributeType.Value != AttributeTypeCode.Boolean) 
+                        ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
             }
