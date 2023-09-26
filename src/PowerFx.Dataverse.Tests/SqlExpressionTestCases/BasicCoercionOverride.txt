@@ -1,0 +1,4 @@
+#override: BasicCoercion_V1Compat.txt
+
+>> If(1<0, false, If(1<0,"a"))
+#SKIP waiting on https://github.com/microsoft/Power-Fx-Dataverse/issues/366
