@@ -4,17 +4,24 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx
 {
@@ -47,10 +54,10 @@ namespace Microsoft.PowerFx
 
         private static readonly BasicUserInfo _userInfo = new BasicUserInfo
         {
-            FullName = "Susan Burk",
-            Email = "susan@contoso.com",
-            DataverseUserId = new Guid("aa1d4f65-044f-4928-a95f-30d4c8ebf118"),
-            TeamsMemberId = "29:1DUjC5z4ttsBQa0fX2O7B0IDu30R",
+            FullName = "First Last",
+            Email = "unknown@contoso.com",
+            DataverseUserId = new Guid("00000000-0000-1111-1111-111111111111"),
+            TeamsMemberId = "29:1111111111111111111111111111",
         };
 
         private static readonly Features _features = Features.PowerFxV1;
@@ -104,14 +111,17 @@ namespace Microsoft.PowerFx
             config.EnableSetFunction();
             config.EnableParseJSONFunction();
 
-            config.AddFunction(new HelpFunction());
             config.AddFunction(new ResetFunction());
             config.AddFunction(new ExitFunction());
             config.AddFunction(new OptionFunctionBool());
             config.AddFunction(new OptionFunctionString());
+
+#if false
             config.AddFunction(new ResetImportFunction());
             config.AddFunction(new ImportFunction1Arg());
             config.AddFunction(new ImportFunction2Arg());
+#endif
+
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
             config.AddFunction(new DVAddTableFunction());
@@ -127,7 +137,7 @@ namespace Microsoft.PowerFx
             _engine = new RecalcEngine(config);
         }
 
-        public static void Main2()
+        public static void Main()
         {
             var enabled = new StringBuilder();
 
@@ -159,545 +169,52 @@ namespace Microsoft.PowerFx
             if (File.Exists(batchPath))
             {
                 Console.WriteLine($"\n>> // Processing {batchPath}");
-                var batchFile = File.OpenText(batchPath);
-                REPL(batchFile, echo: true);
-                batchFile.Close();
+                var lines = File.ReadAllLines(batchPath);
+
+                var repl = CreateRepl(echo: true);
+
+                foreach (var line in lines)
+                {
+                    repl.HandleLineAsync(line).Wait();
+                }                
             }
             else
             {
                 Console.WriteLine($"\n>> // Place autoexec formulas in {batchPath}");
             }
 
-            REPL(Console.In, echo: false);
+            InteractiveRepl();
         }
 
-        // Pattern match for Set(x,y) so that we can define the variable
-        public static bool TryMatchSet(string expr, out string arg0name, out FormulaValue varValue)
+#pragma warning disable CS0618 // Type or member is obsolete
+        private static PowerFxREPL _repl;
+
+        public static PowerFxREPL CreateRepl(bool echo)
         {
-            var parserOptions = _engine.GetDefaultParserOptionsCopy();
-            parserOptions.AllowsSideEffects = true;
-
-            var parse = Engine.Parse(expr, options: parserOptions);
-            if (parse.IsSuccess)
+            var repl = new PowerFxREPL
             {
-                if (parse.Root.Kind == Microsoft.PowerFx.Syntax.NodeKind.Call)
-                {
-                    if (parse.Root is Microsoft.PowerFx.Syntax.CallNode call)
-                    {
-                        if (call.Head.Name.Value == "Set")
-                        {
-                            // Infer type based on arg1. 
-                            var arg0 = call.Args.ChildNodes[0];
-                            if (arg0 is Microsoft.PowerFx.Syntax.FirstNameNode arg0node)
-                            {
-                                arg0name = arg0node.Ident.Name.Value;
+                Engine = _engine,
+                UserInfo = _userInfo.UserInfo,
+                Echo = echo,
+                AllowSetDefinitions = true,                
+            };
+            repl.EnableUserObject(UserInfo.AllKeys);
 
-                                var arg1 = call.Args.ChildNodes[1];
-                                var arg1expr = arg1.GetCompleteSpan().GetFragment(expr);
-
-                                var check = _engine.Check(arg1expr, GetParserOptions(), GetSymbolTable());
-                                if (check.IsSuccess)
-                                {
-                                    var arg1Type = check.ReturnType;
-
-                                    varValue = check.GetEvaluator().Eval(GetRuntimeConfig());
-                                    _engine.UpdateVariable(arg0name, varValue);
-
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            varValue = null;
-            arg0name = null;
-            return false;
+            _repl = repl;
+            return repl;
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
-        private static ParserOptions GetParserOptions()
+        public static void InteractiveRepl()
         {
-            return new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-        }
+            var repl = CreateRepl(false);
 
-        private static ReadOnlySymbolTable GetSymbolTable()
-        {
-            return ReadOnlySymbolTable.Compose(_dv?.Symbols, _engine.EngineSymbols);
-        }
-
-        // Check may mutate the SymbolValues.  It's important to call this after Check has been run.
-        private static RuntimeConfig GetRuntimeConfig()
-        {
-            var rc = new RuntimeConfig(_dv?.SymbolValues);
-            rc.SetUserInfo(_userInfo);
-            return rc;
-        }
-
-        private static FormulaValue Eval(string expressionText)
-        {
-            CheckResult checkResult = _engine.Check(expressionText, GetParserOptions(), GetSymbolTable());
-            checkResult.ThrowOnErrors();
-
-            IExpressionEvaluator evaluator = checkResult.GetEvaluator();
-            return evaluator.Eval(GetRuntimeConfig());
-        }
-
-        public static void REPL(TextReader input, bool echo = false, TextWriter output = null)
-        {
-            string expr;
-
-            // main loop
-            while ((expr = ReadFormula(input, output, echo)) != null)
+            while (true)
             {
-                Match match;
-
-                try
-                {
-                    // variable assignment: Set( <ident>, <expr> )
-                    if (TryMatchSet(expr, out var varName, out var varValue))
-                    {
-                        Console.WriteLine(varName + ": " + PrintResult(varValue));
-                        output?.WriteLine(varName + ": " + PrintResult(varValue));
-                    }
-
-                    // IR pretty printer: IR( <expr> )
-                    else if ((match = Regex.Match(expr, @"^\s*IR\((?<expr>.*)\)\s*$", RegexOptions.Singleline)).Success)
-                    {
-                        var cr = _engine.Check(match.Groups["expr"].Value, GetParserOptions(), GetSymbolTable());
-                        var ir = cr.PrintIR();
-                        Console.WriteLine(ir);
-                        output?.WriteLine(ir);
-                        cr.ThrowOnErrors();
-                    }
-
-                    // named formula definition: <ident> = <formula>
-                    else if ((match = Regex.Match(expr, @"^\s*(?<ident>(\w+|'([^']|'')+'))\s*=(?<formula>.*)$", RegexOptions.Singleline)).Success &&
-                              !Regex.IsMatch(match.Groups["ident"].Value, "^\\d") &&
-                              match.Groups["ident"].Value != "true" && match.Groups["ident"].Value != "false" && match.Groups["ident"].Value != "blank")
-                    {
-                        var ident = match.Groups["ident"].Value;
-                        if (ident.StartsWith('\''))
-                        {
-                            ident = ident.Substring(1, ident.Length - 2).Replace("''", "'", StringComparison.Ordinal);
-                        }
-
-                        _engine.SetFormula(ident, match.Groups["formula"].Value, OnUpdate);
-                    }
-
-                    // function definition: <ident>( <ident> : <type>, ... ) : <type> = <formula>
-                    //                      <ident>( <ident> : <type>, ... ) : <type> { <formula>; <formula>; ... }
-                    else if (Regex.IsMatch(expr, @"^\s*\w+\((\s*\w+\s*\:\s*\w+\s*,?)*\)\s*\:\s*\w+\s*(\=|\{).*$", RegexOptions.Singleline))
-                    {
-                        var res = _engine.DefineFunctions(expr, _numberIsFloat);
-                        if (res.Errors.Count() > 0)
-                        {
-                            throw new Exception("Error: " + res.Errors.First());
-                        }
-                    }
-
-                    // eval and print everything else
-                    else
-                    {
-                        var opts = new ParserOptions() { AllowsSideEffects = true, NumberIsFloat = _numberIsFloat };
-#if true
-                        var result = Eval(expr);
-#else
-                        var result = _engine.EvalAsync(expr, CancellationToken.None, GetParserOptions(), GetSymbolTable(), GetRuntimeConfig()).Result;
-#endif
-
-                        if (output != null)
-                        {
-                            // same algorithm used by BaseRunner.cs
-                            var sb = new StringBuilder();
-                            var settings = new FormulaValueSerializerSettings()
-                            {
-                                UseCompactRepresentation = true,
-                            };
-
-                            // Serializer will produce a human-friedly representation of the value
-                            result.ToExpression(sb, settings);
-
-                            output.Write(sb.ToString() + "\n\n");
-                        }
-
-                        if (result is ErrorValue errorValue)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"Error: {errorValue.Errors[0].Kind} - {errorValue.Errors[0].Message}");
-                            Console.ResetColor();
-                        }
-                        else
-                        {
-                            Console.WriteLine(PrintResult(result));
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e.Message);
-                    if (_stackTrace)
-                    {
-                        Console.WriteLine(e.ToString());
-                    }
-                    Console.ResetColor();
-                    output?.WriteLine(Regex.Replace(e.InnerException.Message, "\r\n", "|") + "\n");
-                }
+                repl.WritePromptAsync().Wait();
+                var line = Console.ReadLine();
+                repl.HandleLineAsync(line).Wait();
             }
-        }
-
-        private static void OnUpdate(string name, FormulaValue newValue)
-        {
-            Console.Write($"{name}: ");
-            if (newValue is ErrorValue errorValue)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error: " + errorValue.Errors[0].Message);
-                Console.ResetColor();
-            }
-            else
-            {
-                if (newValue is TableValue)
-                {
-                    Console.WriteLine();
-                }
-
-                Console.WriteLine(PrintResult(newValue));
-            }
-        }
-
-        public static string ReadFormula(TextReader input, TextWriter output = null, bool echo = false)
-        {
-            string exprPartial;
-            int usefulCount;
-
-            // read
-            do
-            {
-                string exprOne;
-                int parenCount;
-
-                exprPartial = null;
-
-                do
-                {
-                    bool doubleQuote, singleQuote;
-                    bool lineComment, blockComment;
-                    char last;
-
-                    if (exprPartial == null && !echo)
-                    {
-#pragma warning disable CA1303 // Do not pass literals as localized parameters
-                        Console.Write("\n> ");
-#pragma warning restore CA1303 // Do not pass literals as localized parameters
-                    }
-
-                    exprOne = input.ReadLine();
-
-                    if (exprOne == null)
-                    {
-                        Console.Write("\n");
-                        return exprPartial;
-                    }
-
-                    exprPartial += exprOne + "\n";
-
-                    // determines if the parens, curly braces, and square brackets are closed
-                    // taking into escaping, block, and line comments
-                    // and continues reading lines if they are not, with a blank link terminating
-                    parenCount = 0;
-                    doubleQuote = singleQuote = lineComment = blockComment = false;
-                    last = '\0';
-                    usefulCount = 0;
-                    foreach (var c in exprPartial)
-                    {
-                        // don't need to worry about escaping as it looks like two 
-                        if (c == '"' && !singleQuote)
-                        {
-                            doubleQuote = !doubleQuote; // strings that are back to back
-                        }
-
-                        if (c == '\'' && !doubleQuote)
-                        {
-                            singleQuote = !singleQuote;
-                        }
-
-                        if (c == '*' && last == '/' && !blockComment)
-                        {
-                            blockComment = true;
-                            usefulCount--;                         // compensates for the last character already being added
-                        }
-
-                        if (c == '/' && last == '*' && blockComment)
-                        {
-                            blockComment = false;
-                            usefulCount--;
-                        }
-
-                        if (!doubleQuote && !singleQuote && !blockComment && !lineComment && c == '/' && last == '/')
-                        {
-                            lineComment = true;
-                            usefulCount--;
-                        }
-
-                        if (c == '\n')
-                        {
-                            lineComment = false;
-                        }
-
-                        if (!lineComment && !blockComment && !doubleQuote && !singleQuote)
-                        {
-                            if (c == '(' || c == '{' || c == '[')
-                            {
-                                parenCount++;
-                            }
-
-                            if (c == ')' || c == '}' || c == ']')
-                            {
-                                parenCount--;
-                            }
-                        }
-
-                        if (!char.IsWhiteSpace(c) && !lineComment && !blockComment)
-                        {
-                            usefulCount++;
-                        }
-
-                        last = c;
-                    }
-                }
-                while (!Regex.IsMatch(exprOne, "^\\s*$") && (parenCount != 0 || Regex.IsMatch(exprOne, "(=|=\\>)\\s*$")));
-
-                if (echo)
-                {
-                    if (!Regex.IsMatch(exprPartial, "^\\s*$"))
-                    {
-                        Console.Write("\n>> " + exprPartial);
-                    }
-
-                    // skip >> for comments and setup on output
-                    if (Regex.IsMatch(exprPartial, "^\\s*//") || Regex.IsMatch(exprPartial, "^#SETUP"))
-                    {
-                        output?.Write(exprPartial + "\n");
-                        usefulCount = 0;
-                    }
-                    else if (!Regex.IsMatch(exprPartial, "^\\s*$"))
-                    {
-                        output?.Write(">> " + exprPartial);
-                    }
-                }
-            }
-            while (usefulCount == 0);
-
-            return exprPartial;
-        }
-
-        internal static string PrintResult(FormulaValue value, bool minimal = false)
-        {
-            StringBuilder resultString;
-
-            if (value is BlankValue)
-            {
-                resultString = new StringBuilder(minimal ? string.Empty : "Blank()");
-            }
-            else if (value is ErrorValue errorValue)
-            {
-                resultString = new StringBuilder(minimal ? "<error>" : $"<Error: {errorValue.Errors[0].Message}>");
-            }
-            else if (value is UntypedObjectValue)
-            {
-                resultString = new StringBuilder(minimal ? "<untyped>" : "<Untyped: Use Value, Text, Boolean, or other functions to establish the type>");
-            }
-            else if (value is StringValue str)
-            {
-                resultString = new StringBuilder(minimal ? str.Value : str.ToExpression());
-            }
-            else if (value is RecordValue record)
-            {
-                if (minimal)
-                {
-                    resultString = new StringBuilder("<record>");
-                }
-                else  if (record.Fields.Count() == 1 && record.Fields.First().Name == "Value")
-                {
-                    resultString = new StringBuilder("{");
-                    resultString.Append("Value:");
-                    resultString.Append(record.Fields.First().GetPrintField());
-                    resultString.Append("}");
-                }
-                else
-                {
-                    var separator = string.Empty;
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
-
-                    resultString = new StringBuilder("{");
-
-                    foreach (NamedValue field in record.Fields)
-                    {
-                        if (fieldNames.Contains(field.Name))
-                        {
-                            resultString.Append(separator);
-                            resultString.Append(field.Name);
-                            resultString.Append(':');
-                            resultString.Append(field.GetPrintField());
-                            separator = ", ";
-                        }
-                    }
-
-                    resultString.Append('}');
-                }
-            }
-            else if (value is TableValue table)
-            {
-                if (minimal)
-                {
-                    resultString = new StringBuilder("<table>");
-                }
-
-                // special treatment for single column table named Value
-                else if (table.Rows.First().Value.Fields.Count() == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
-                {
-                    var separator = string.Empty;
-                    resultString = new StringBuilder("[");
-                    foreach (var row in table.Rows)
-                    {
-                        resultString.Append(separator);
-                        resultString.Append(row.Value.Fields.First().GetPrintField());
-                        separator = ", ";
-                    }
-
-                    resultString.Append("]");
-                }
-
-                else
-                {
-                    // otherwise a full table treatment is needed
-
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
-                    var columnCount = fieldNames.Count();
-
-                    if (columnCount == 0)
-                    {
-                        return minimal ? string.Empty : "Table()";
-                    }
-
-                    var columnWidth = new int[columnCount];
-
-                    foreach (var row in table.Rows)
-                    {
-                        if (row.Value != null)
-                        {
-                            var column = 0;
-
-                            foreach (NamedValue field in row.Value.Fields)
-                            {
-                                if (fieldNames.Contains(field.Name))
-                                {
-                                    columnWidth[column] = Math.Max(columnWidth[column], field.GetPrintField(true).Length);
-                                    column++;
-                                }
-                            }
-                        }
-                    }
-
-                    if (_formatTable)
-                    {
-                        resultString = new StringBuilder("\n ");
-                        var column = 0;
-
-                        foreach (var row in table.Rows)
-                        {
-                            if (row.Value != null)
-                            {
-                                column = 0;
-
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
-                                        resultString.Append(' ');
-                                        resultString.Append(field.Name.PadLeft(columnWidth[column]));
-                                        resultString.Append("  ");
-                                        column++;
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-
-                        resultString.Append("\n ");
-
-                        foreach (var row in table.Rows)
-                        {
-                            if (row.Value != null)
-                            {
-                                column = 0;
-
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        resultString.Append(new string('=', columnWidth[column] + 2));
-                                        resultString.Append(' ');
-                                        column++;
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-
-                        foreach (var row in table.Rows)
-                        {
-                            column = 0;
-                            resultString.Append("\n ");
-                            if (row.Value != null)
-                            {
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        resultString.Append(' ');
-                                        resultString.Append(field.GetPrintField(true).PadLeft(columnWidth[column]));
-                                        resultString.Append("  ");
-                                        column++;
-                                    }
-                                }                               
-                            }
-                            else
-                            {
-                                resultString.Append(row.IsError ? row.Error?.Errors?[0].Message : "Blank()");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // table without formatting 
-
-                        resultString = new StringBuilder("[");
-                        var separator = string.Empty;
-                        foreach (var row in table.Rows)
-                        {
-                            resultString.Append(separator);
-                            resultString.Append(PrintResult(row.Value));
-                            separator = ", ";
-                        }
-
-                        resultString.Append(']');
-                    }
-                }
-            }
-            else
-            {
-                resultString = new StringBuilder();
-                var settings = new FormulaValueSerializerSettings() { UseCompactRepresentation = true };
-                value.ToExpression(resultString, settings);                
-            }
-
-            return resultString.ToString();
         }
 
         private class ResetFunction : ReflectionFunction
@@ -828,50 +345,10 @@ namespace Microsoft.PowerFx
 
                 return FormulaValue.NewError(new ExpressionError()
                 {
-                        Kind = ErrorKind.InvalidArgument,
-                        Severity = ErrorSeverity.Critical,
-                        Message = $"Invalid option name: {option.Value}."
+                    Kind = ErrorKind.InvalidArgument,
+                    Severity = ErrorSeverity.Critical,
+                    Message = $"Invalid option name: {option.Value}."
                 });
-            }
-        }
-
-        private class ImportFunction1Arg : ReflectionFunction
-        {
-            public BooleanValue Execute(StringValue fileNameSV)
-            {
-                var if2 = new ImportFunction2Arg();
-                return if2.Execute(fileNameSV, null);
-            }
-        }
-
-        private class ImportFunction2Arg : ReflectionFunction
-        {
-            public BooleanValue Execute(StringValue fileNameSV, StringValue outputSV)
-            {
-                var fileName = fileNameSV.Value;
-                if (File.Exists(fileName))
-                {
-                    TextReader fileReader = new StreamReader(fileName);
-                    TextWriter outputWriter = null;
-
-                    if (outputSV != null)
-                    {
-                        outputWriter = new StreamWriter(outputSV.Value);
-                    }
-
-                    ConsoleRepl.REPL(fileReader, true, outputWriter);
-                    fileReader.Close();
-                    outputWriter?.Close();
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"File not found: {fileName}");
-                    Console.ResetColor();
-                    return BooleanValue.New(false);
-                }
-
-                return BooleanValue.New(true);
             }
         }
 
@@ -888,21 +365,46 @@ namespace Microsoft.PowerFx
         {
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
-                IOrganizationService _svcClient;
+                IOrganizationService svcClient;
 
                 var connectionString = connectionSV.Value;
-                _svcClient = new ServiceClient(connectionString) { UseWebApi = false };
+                svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
-                    _dv = MultiOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
+                    _dv = MultiOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
                 else
                 {
-                    _dv = SingleOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
+                    _dv = SingleOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
+                _repl.ExtraSymbolValues = _dv.SymbolValues;
+
+                UpdateUserInfo(svcClient);
+
 
                 return BooleanValue.New(true);
+            }
+
+            private void UpdateUserInfo(IOrganizationService svcClient)
+            {
+                // Get current user Id
+                var req = new Microsoft.Crm.Sdk.Messages.WhoAmIRequest();
+                var resp = (Microsoft.Crm.Sdk.Messages.WhoAmIResponse)svcClient.Execute(req);
+
+                _userInfo.DataverseUserId = resp.UserId;
+
+
+                // Get properties
+                const string userTable = "systemuser";
+                const string fullName = "fullname";
+                const string email = "internalemailaddress";
+
+                var resp2 = svcClient.Retrieve(userTable, resp.UserId, new ColumnSet(fullName, email));
+                _userInfo.FullName = (string)resp2.Attributes[fullName];
+                _userInfo.Email = (string)resp2.Attributes[email];
+
+                _repl.UserInfo = _userInfo.UserInfo;
             }
         }
 
@@ -915,94 +417,5 @@ namespace Microsoft.PowerFx
                 return BooleanValue.New(true);
             }
         }
-
-        private class ResetImportFunction : ReflectionFunction
-        {
-            public BooleanValue Execute(StringValue fileNameSV)
-            {
-                var import = new ImportFunction1Arg();
-                if (File.Exists(fileNameSV.Value))
-                {
-                    ResetEngine();
-                }
-
-                return import.Execute(fileNameSV);
-            }
-        }
-
-        private class HelpFunction : ReflectionFunction
-        {
-            public BooleanValue Execute()
-            {
-                var column = 0;
-                var funcList = string.Empty;
-                List<string> funcNames = _engine.SupportedFunctions.FunctionNames.ToList();
-                
-                funcNames.Sort();
-                foreach (var func in funcNames)
-                {
-                    funcList += $"  {func,-14}";
-                    if (++column % 5 == 0)
-                    {
-                        funcList += "\n";
-                    }
-                }
-
-                funcList += "  Set";
-
-                // If we return a string, it gets escaped. 
-                // Just write to console 
-                Console.WriteLine(
-                @"
-<formula> alone is evaluated and the result displayed.
-    Example: 1+1 or ""Hello, World""
-Set( <identifier>, <formula> ) creates or changes a variable's value.
-    Example: Set( x, x+1 )
-
-<identifier> = <formula> defines a named formula with automatic recalc.
-    Example: F = m * a
-<identifier>( <param> : <type>, ... ) : <type> = <formula> 
-        extends a named formula with parameters, creating a function.
-    Example: F( m: Number, a: Number ): Number = m * a
-<identifier>( <param> : <type>, ... ) : <type> { 
-       <expression>; <expression>; ...
-       }  defines a block function with chained formulas.
-    Example: Log( message: String ): None 
-             { 
-                    Collect( LogTable, message );
-                    Notify( message );
-             }
-Supported types: Number, String, Boolean, DateTime, Date, Time
-
-Available functions (all are case sensitive):
-" + funcList + @"
-
-Available operators: = <> <= >= + - * / % && And || Or ! Not in exactin 
-
-Record syntax is { < field >: < value >, ... } without quoted field names.
-    Example: { Name: ""Joe"", Age: 29 }
-Use the Table function for a list of records.  
-    Example: Table( { Name: ""Joe"" }, { Name: ""Sally"" } )
-Use [ <value>, ... ] for a single column table, field name is ""Value"".
-    Example: [ 1, 2, 3 ] 
-Records and Tables can be arbitrarily nested.
-
-Use Option( Options.FormatTable, false ) to disable table formatting.
-
-Once a formula is defined or a variable's type is defined, it cannot be changed.
-Use the Reset() function to clear all formulas and variables.
-");
-
-                return FormulaValue.New(true);
-            }
-        }
-    }
-}
-
-internal static class Exts
-{
-    public static string GetPrintField(this NamedValue field, bool minimal = false)
-    {
-        return field.IsExpandEntity ? "<EE>" : Microsoft.PowerFx.ConsoleRepl.PrintResult(field.Value, minimal);
     }
 }
