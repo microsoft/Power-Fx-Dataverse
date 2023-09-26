@@ -21,6 +21,7 @@ using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx
 {
@@ -53,10 +54,10 @@ namespace Microsoft.PowerFx
 
         private static readonly BasicUserInfo _userInfo = new BasicUserInfo
         {
-            FullName = "Susan Burk",
-            Email = "susan@contoso.com",
-            DataverseUserId = new Guid("aa1d4f65-044f-4928-a95f-30d4c8ebf118"),
-            TeamsMemberId = "29:1DUjC5z4ttsBQa0fX2O7B0IDu30R",
+            FullName = "First Last",
+            Email = "unknown@contoso.com",
+            DataverseUserId = new Guid("00000000-0000-1111-1111-111111111111"),
+            TeamsMemberId = "29:1111111111111111111111111111",
         };
 
         private static readonly Features _features = Features.PowerFxV1;
@@ -185,72 +186,24 @@ namespace Microsoft.PowerFx
             InteractiveRepl();
         }
 
-        // Hook repl engine with customizations.
-        private class MyRepl : PowerFxReplBase
+#pragma warning disable CS0618 // Type or member is obsolete
+        private static PowerFxREPL _repl;
+
+        public static PowerFxREPL CreateRepl(bool echo)
         {
-            public MyRepl()
-            {
-            }
-
-            public override async Task OnEvalExceptionAsync(Exception e, CancellationToken cancel)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e.Message);
-
-                if (ConsoleRepl2._stackTrace)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-
-                Console.ResetColor();
-            }
-
-            public override async Task<ReplResult> HandleCommandAsync(string expr, CancellationToken cancel = default)
-            {
-                this.Engine = _engine; // apply latest engine. 
-                this.ExtraSymbolValues = _dv?.SymbolValues;
-
-                // Intercept to enable  some experimentla commands 
-
-                Match match;
-
-                // named formula definition: <ident> = <formula>
-                if ((match = Regex.Match(expr, @"^\s*(?<ident>(\w+|'([^']|'')+'))\s*=(?<formula>.*)$", RegexOptions.Singleline)).Success &&
-                              !Regex.IsMatch(match.Groups["ident"].Value, "^\\d") &&
-                              match.Groups["ident"].Value != "true" && match.Groups["ident"].Value != "false" && match.Groups["ident"].Value != "blank")
-                {
-                    var ident = match.Groups["ident"].Value;
-                    if (ident.StartsWith('\''))
-                    {
-                        ident = ident.Substring(1, ident.Length - 2).Replace("''", "'", StringComparison.Ordinal);
-                    }
-
-                    _engine.SetFormula(ident, match.Groups["formula"].Value, OnUpdate);
-
-                    return new ReplResult();
-                }
-                else
-                {
-                    // Default to standard behavior. 
-                    return await base.HandleCommandAsync(expr, cancel).ConfigureAwait(false);
-                }
-            }
-        }
-
-        public static PowerFxReplBase CreateRepl(bool echo)
-        {
-            var repl = new MyRepl
+            var repl = new PowerFxREPL
             {
                 Engine = _engine,
                 UserInfo = _userInfo.UserInfo,
                 Echo = echo,
-                AllowSetDefinitions = true,
-                // ValueFormatter = new MyValueFormatter()
+                AllowSetDefinitions = true,                
             };
             repl.EnableUserObject(UserInfo.AllKeys);
 
+            _repl = repl;
             return repl;
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         public static void InteractiveRepl()
         {
@@ -262,280 +215,6 @@ namespace Microsoft.PowerFx
                 var line = Console.ReadLine();
                 repl.HandleLineAsync(line).Wait();
             }
-        }
-
-        private static void OnUpdate(string name, FormulaValue newValue)
-        {
-            Console.Write($"{name}: ");
-            if (newValue is ErrorValue errorValue)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error: " + errorValue.Errors[0].Message);
-                Console.ResetColor();
-            }
-            else
-            {
-                if (newValue is TableValue)
-                {
-                    Console.WriteLine();
-                }
-
-                Console.WriteLine(PrintResult(newValue));
-            }
-        }
-
-        /*
-        private class MyValueFormatter : ValueFormatter
-        {
-            public override string Format(FormulaValue result)
-            {                
-                if (result is TableValue table)
-                {
-                    var firstRow = table.Rows.FirstOrDefault();
-                    if (firstRow != null && firstRow.IsValue)
-                    {
-                        var record = firstRow.Value;
-                        if (record.TryGetSpecialFieldValue(SpecialFieldKind.PrimaryKey, out _) &&
-                            record.TryGetSpecialFieldName(SpecialFieldKind.PrimaryName, out _))
-                        {
-                            // Has special fields, print those. 
-
-                            int maxN = 10;
-                            var drows = table.Rows.Take(maxN);
-
-                            StringBuilder sb = new StringBuilder();
-                            foreach(var drow in drows)
-                            {
-                                if (drow.IsValue)
-                                {
-                                    var row = drow.Value;
-
-                                    if (row.TryGetSpecialFieldValue(SpecialFieldKind.PrimaryKey, out var keyValue) &&
-                                        row.TryGetSpecialFieldValue(SpecialFieldKind.PrimaryName, out var nameValue))
-                                    {
-                                        var keyStr = PrintResult(keyValue);
-                                        var nameStr = PrintResult(nameValue);
-
-                                        sb.AppendLine($"{keyStr}: {nameStr}");
-                                    }   
-                                }
-                            }
-
-                            return sb.ToString();
-                        }
-                    }
-                }
-
-                return PrintResult(result);
-            }
-        }
-        */
-
-        internal static string PrintResult(FormulaValue value, bool minimal = false)
-        {
-            StringBuilder resultString;
-
-            if (value is BlankValue)
-            {
-                resultString = new StringBuilder(minimal ? string.Empty : "Blank()");
-            }
-            else if (value is ErrorValue errorValue)
-            {
-                resultString = new StringBuilder(minimal ? "<error>" : $"<Error: {errorValue.Errors[0].Message}>");
-            }
-            else if (value is UntypedObjectValue)
-            {
-                resultString = new StringBuilder(minimal ? "<untyped>" : "<Untyped: Use Value, Text, Boolean, or other functions to establish the type>");
-            }
-            else if (value is StringValue str)
-            {
-                resultString = new StringBuilder(minimal ? str.Value : str.ToExpression());
-            }
-            else if (value is RecordValue record)
-            {
-                if (minimal)
-                {
-                    resultString = new StringBuilder("<record>");
-                }
-                else if (record.Fields.Count() == 1 && record.Fields.First().Name == "Value")
-                {
-                    resultString = new StringBuilder("{");
-                    resultString.Append("Value:");
-                    resultString.Append(record.Fields.First().GetPrintField());
-                    resultString.Append("}");
-                }
-                else
-                {
-                    var separator = string.Empty;
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : record.Type.FieldNames;
-
-                    resultString = new StringBuilder("{");
-
-                    foreach (NamedValue field in record.Fields)
-                    {
-                        if (fieldNames.Contains(field.Name))
-                        {
-                            resultString.Append(separator);
-                            resultString.Append(field.Name);
-                            resultString.Append(':');
-                            resultString.Append(field.GetPrintField());
-                            separator = ", ";
-                        }
-                    }
-
-                    resultString.Append('}');
-                }
-            }
-            else if (value is TableValue table)
-            {
-                if (minimal)
-                {
-                    resultString = new StringBuilder("<table>");
-                }
-
-                // special treatment for single column table named Value
-                else if (table.Rows.First().Value.Fields.Count() == 1 && table.Rows.First().Value != null && table.Rows.First().Value.Fields.First().Name == "Value")
-                {
-                    var separator = string.Empty;
-                    resultString = new StringBuilder("[");
-                    foreach (var row in table.Rows)
-                    {
-                        resultString.Append(separator);
-                        resultString.Append(row.Value.Fields.First().GetPrintField());
-                        separator = ", ";
-                    }
-
-                    resultString.Append("]");
-                }
-
-                else
-                {
-                    // otherwise a full table treatment is needed
-
-                    var fieldNames = _formatTableColumns != null ? _formatTableColumns : table.Type.FieldNames;
-                    var columnCount = fieldNames.Count();
-
-                    if (columnCount == 0)
-                    {
-                        return minimal ? string.Empty : "Table()";
-                    }
-
-                    var columnWidth = new int[columnCount];
-
-                    foreach (var row in table.Rows)
-                    {
-                        if (row.Value != null)
-                        {
-                            var column = 0;
-
-                            foreach (NamedValue field in row.Value.Fields)
-                            {
-                                if (fieldNames.Contains(field.Name))
-                                {
-                                    columnWidth[column] = Math.Max(columnWidth[column], field.GetPrintField(true).Length);
-                                    column++;
-                                }
-                            }
-                        }
-                    }
-
-                    if (_formatTable)
-                    {
-                        resultString = new StringBuilder("\n ");
-                        var column = 0;
-
-                        foreach (var row in table.Rows)
-                        {
-                            if (row.Value != null)
-                            {
-                                column = 0;
-
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        columnWidth[column] = Math.Max(columnWidth[column], field.Name.Length);
-                                        resultString.Append(' ');
-                                        resultString.Append(field.Name.PadLeft(columnWidth[column]));
-                                        resultString.Append("  ");
-                                        column++;
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-
-                        resultString.Append("\n ");
-
-                        foreach (var row in table.Rows)
-                        {
-                            if (row.Value != null)
-                            {
-                                column = 0;
-
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        resultString.Append(new string('=', columnWidth[column] + 2));
-                                        resultString.Append(' ');
-                                        column++;
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-
-                        foreach (var row in table.Rows)
-                        {
-                            column = 0;
-                            resultString.Append("\n ");
-                            if (row.Value != null)
-                            {
-                                foreach (NamedValue field in row.Value.Fields)
-                                {
-                                    if (fieldNames.Contains(field.Name))
-                                    {
-                                        resultString.Append(' ');
-                                        resultString.Append(field.GetPrintField(true).PadLeft(columnWidth[column]));
-                                        resultString.Append("  ");
-                                        column++;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                resultString.Append(row.IsError ? row.Error?.Errors?[0].Message : "Blank()");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // table without formatting 
-
-                        resultString = new StringBuilder("[");
-                        var separator = string.Empty;
-                        foreach (var row in table.Rows)
-                        {
-                            resultString.Append(separator);
-                            resultString.Append(PrintResult(row.Value));
-                            separator = ", ";
-                        }
-
-                        resultString.Append(']');
-                    }
-                }
-            }
-            else
-            {
-                resultString = new StringBuilder();
-                var settings = new FormulaValueSerializerSettings() { UseCompactRepresentation = true };
-                value.ToExpression(resultString, settings);
-            }
-
-            return resultString.ToString();
         }
 
         private class ResetFunction : ReflectionFunction
@@ -686,21 +365,46 @@ namespace Microsoft.PowerFx
         {
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
-                IOrganizationService _svcClient;
+                IOrganizationService svcClient;
 
                 var connectionString = connectionSV.Value;
-                _svcClient = new ServiceClient(connectionString) { UseWebApi = false };
+                svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
-                    _dv = MultiOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
+                    _dv = MultiOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
                 else
                 {
-                    _dv = SingleOrgPolicy.New(_svcClient, numberIsFloat: _numberIsFloat);
+                    _dv = SingleOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
+                _repl.ExtraSymbolValues = _dv.SymbolValues;
+
+                UpdateUserInfo(svcClient);
+
 
                 return BooleanValue.New(true);
+            }
+
+            private void UpdateUserInfo(IOrganizationService svcClient)
+            {
+                // Get current user Id
+                var req = new Microsoft.Crm.Sdk.Messages.WhoAmIRequest();
+                var resp = (Microsoft.Crm.Sdk.Messages.WhoAmIResponse)svcClient.Execute(req);
+
+                _userInfo.DataverseUserId = resp.UserId;
+
+
+                // Get properties
+                const string userTable = "systemuser";
+                const string fullName = "fullname";
+                const string email = "internalemailaddress";
+
+                var resp2 = svcClient.Retrieve(userTable, resp.UserId, new ColumnSet(fullName, email));
+                _userInfo.FullName = (string)resp2.Attributes[fullName];
+                _userInfo.Email = (string)resp2.Attributes[email];
+
+                _repl.UserInfo = _userInfo.UserInfo;
             }
         }
 

@@ -14,7 +14,7 @@ using System.Web;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Intellisense;
-using Microsoft.PowerFx.LanguageServerProtocol;
+using Microsoft.PowerFx.LanguageServerProtocol
 using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
