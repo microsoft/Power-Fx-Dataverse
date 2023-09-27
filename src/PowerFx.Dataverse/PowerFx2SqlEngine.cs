@@ -319,6 +319,7 @@ namespace Microsoft.PowerFx.Dataverse
                         sqlResult.OptionSetId = optionSet.OptionSetId;
                         if (!optionSet.IsGlobal)
                         {
+                            // adding dependency between formula field and optionset field used by formula field.
                             var key = optionSet.RelatedEntityName;
 
                             if (key != _currentEntityName)

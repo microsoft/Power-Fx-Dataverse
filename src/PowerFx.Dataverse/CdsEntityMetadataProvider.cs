@@ -287,6 +287,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed) 
                 {
+                    // Formula Fields doesn't have their own local optionset, they use either global optionset or other optionset field
+                    // hence skipping RegisterDataverseOptionSet for formula fields.
                     var dataverseOptionSet = (attribute.SourceType == 3 && attribute.AttributeType.Value != AttributeTypeCode.Boolean) 
                         ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
