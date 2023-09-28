@@ -37,6 +37,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),
                 AttributeMetadataModel.NewLookup("virtualid", "Virtual Lookup", new string[] { "virtualremote" }),
                 AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
+                AttributeMetadataModel.NewLookup("new_polyfield", "PolymorphicLookup", new string[] { "remote", "local" }),
                 AttributeMetadataModel.NewGuid("localid", "LocalId"),
                 AttributeMetadataModel.NewDouble("float", "Float"),
                 AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
@@ -102,6 +103,26 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencedAttribute = "remoteid",
                     ReferencedEntity = "remote",
                     ReferencingAttribute = "logicalid",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "logical_refd",
+                    ReferencingEntityNavigationPropertyName = "logical",
+                    SchemaName = "logical"
+                },
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "remoteid",
+                    ReferencedEntity = "remote",
+                    ReferencingAttribute = "new_polyfield",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "logical_refd",
+                    ReferencingEntityNavigationPropertyName = "logical",
+                    SchemaName = "logical"
+                },
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "localid",
+                    ReferencedEntity = "local",
+                    ReferencingAttribute = "new_polyfield",
                     ReferencingEntity = "local",
                     ReferencedEntityNavigationPropertyName = "logical_refd",
                     ReferencingEntityNavigationPropertyName = "logical",

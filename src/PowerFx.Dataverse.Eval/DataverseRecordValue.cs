@@ -60,6 +60,21 @@ namespace Microsoft.PowerFx.Dataverse
 
         public EntityReference EntityReference => _entity.ToEntityReference();
 
+
+        public override bool TryGetSpecialFieldName(SpecialFieldKind kind, out string fieldName)
+        {
+            fieldName = kind switch
+            {
+                SpecialFieldKind.PrimaryKey => this._metadata.PrimaryIdAttribute,
+                SpecialFieldKind.PrimaryName => this._metadata.PrimaryNameAttribute,
+                SpecialFieldKind.PrimaryImage => this._metadata.PrimaryImageAttribute,
+                _ => null
+            };
+
+            return fieldName != null;
+        }
+
+
         public override bool TryGetPrimaryKey(out string key)
         {
             key = _entity.Id.ToString();
