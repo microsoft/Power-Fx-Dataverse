@@ -4,7 +4,7 @@ using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Dataverse.Localization;
+//using Microsoft.PowerFx.Dataverse.Localization;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;

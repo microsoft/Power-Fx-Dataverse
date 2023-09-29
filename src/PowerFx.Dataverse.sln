@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerFx.Dataverse\PowerFx.Dataverse.csproj", "{40DCE36D-63E1-42F7-827B-C53538B90FE5}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Eval", "PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj", "{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse.Tests", "PowerFx.Dataverse.Tests\PowerFx.Dataverse.Tests.csproj", "{E56B859C-C6EA-4F70-8274-3CA9CFBFB866}"
@@ -20,7 +18,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Repl", "tools\Repl\Repl.csproj", "{A861B2EF-2DD7-4AFC-A155-F4A9B4256F91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Dataverse.EntityMock", "PowerFx.Dataverse.Mock\Microsoft.Dataverse.EntityMock.csproj", "{32D3ABFF-887E-43D0-BD4F-535475893AE4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Dataverse.EntityMock", "PowerFx.Dataverse.Mock\Microsoft.Dataverse.EntityMock.csproj", "{32D3ABFF-887E-43D0-BD4F-535475893AE4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerFx.Dataverse\PowerFx.Dataverse.csproj", "{A17D2F6E-1F7C-48A6-AAB0-68E2D6B74436}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Sql", "Microsoft.PowerFx.Dataverse.Sql\Microsoft.PowerFx.Dataverse.Sql.csproj", "{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,10 +30,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{40DCE36D-63E1-42F7-827B-C53538B90FE5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E7B7FC1-C4D4-4087-959E-0B248DCB7545}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -48,6 +46,14 @@ Global
 		{32D3ABFF-887E-43D0-BD4F-535475893AE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32D3ABFF-887E-43D0-BD4F-535475893AE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32D3ABFF-887E-43D0-BD4F-535475893AE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A17D2F6E-1F7C-48A6-AAB0-68E2D6B74436}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A17D2F6E-1F7C-48A6-AAB0-68E2D6B74436}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A17D2F6E-1F7C-48A6-AAB0-68E2D6B74436}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A17D2F6E-1F7C-48A6-AAB0-68E2D6B74436}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

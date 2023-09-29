@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <RootNamespace>Microsoft.PowerFx.Dataverse</RootNamespace>
+    <RootNamespace>Microsoft.PowerFx.Dataverse.Sql</RootNamespace>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
@@ -10,30 +10,30 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1702;1998;NU5104;NU1701;NU1605</NoWarn>
+    <NoWarn>1702;1998;NU5104;NU1701</NoWarn>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <!-- Nuget Properties -->
   <PropertyGroup>
-    <PackageId>Microsoft.PowerFx.Dataverse.Eval</PackageId>
-    <Title>Microsoft Power Fx Dataverse Integration</Title>
-    <Description>Dataverse support for the Power Fx interpreter</Description>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Company>Microsoft</Company>
+    <PackageId>Microsoft.PowerFx.Dataverse.Sql</PackageId>
+    <Title>Microsoft Power Fx SQL Compiler - Dataverse Target</Title>
+    <Description>The Dataverse backend for the Power Fx compiler</Description>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Company>Microsoft</Company>
     <Authors>Microsoft</Authors>
+    <RepositoryUrl>https://github.com/microsoft/Power-Fx-Dataverse</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <Import Project="..\Build.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" /> <!-- CVE-2023-29331 -->
+    <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" />
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605"/>    
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

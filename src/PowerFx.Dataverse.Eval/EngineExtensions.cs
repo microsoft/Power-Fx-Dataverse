@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
     public static class EngineExtensions
     {
         // Provides adapter for Dataverse project to call back into Dataverse.Eval types, like DataverseTableValue.
-        private class DelegationHooksImpl :  DelegationHooks
+        private class DelegationHooksImpl : DelegationHooks
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-                
+
                 var result = await t2.RetrieveAsync(id, cancel).ConfigureAwait(false);
                 return result;
             }
@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-                if(t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
+                if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                 {
                     return amd.ToAttributeObject(value);
                 }
@@ -52,8 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
             {
-                bool isRealTable = 
-                    symbolTable.DebugName == SingleOrgPolicy.SymTableName || 
+                bool isRealTable =
+                    symbolTable.DebugName == SingleOrgPolicy.SymTableName ||
                     symbolTable.DebugName == DVSymbolTable.SymTableName;
 
                 return isRealTable;
