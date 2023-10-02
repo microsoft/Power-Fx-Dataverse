@@ -4,22 +4,19 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
-using System;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
     internal static partial class Library
-    {
-
-        internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
-
+    {        
         public static RetVal NowUTCNow(SqlVisitor visitor, CallNode node, Context context, FormulaType formulaType)
         {
             context.expressionHasTimeBoundFunction = true;

@@ -1,19 +1,17 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
-//using Microsoft.PowerFx.Dataverse.Localization;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
-using PowerFxStringResources = Microsoft.PowerFx.Core.Localization.StringResources;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
 

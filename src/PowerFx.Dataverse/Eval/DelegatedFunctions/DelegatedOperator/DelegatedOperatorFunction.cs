@@ -1,14 +1,11 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Fx = Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-//using Microsoft.PowerFx.Dataverse.Functions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
