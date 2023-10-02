@@ -5,10 +5,8 @@
 //------------------------------------------------------------------------------
 
 using System.Collections.Generic;
-using System.ComponentModel;
 using Microsoft.PowerFx.Core;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse
