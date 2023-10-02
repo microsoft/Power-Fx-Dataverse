@@ -4,23 +4,17 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.AppMagic.Common;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Types;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Xml;
-using static Microsoft.PowerFx.Dataverse.SqlVisitor;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using System.Text;
-using Microsoft.Xrm.Sdk.Metadata;
+using System.Text.RegularExpressions;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {

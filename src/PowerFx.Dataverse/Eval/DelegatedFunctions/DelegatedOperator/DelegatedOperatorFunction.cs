@@ -1,14 +1,11 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Fx = Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using Microsoft.PowerFx.Dataverse.Functions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -175,13 +172,13 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.LeqDateTime:
                 case BinaryOpKind.GtDateTime:
                 case BinaryOpKind.GeqDateTime:
-                    return FormulaValue.New(Library._epoch);
+                    return FormulaValue.New(DelegationEngineExtensions._epoch);
 
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GeqDate:
-                    return FormulaValue.NewDateOnly(Library._epoch);
+                    return FormulaValue.NewDateOnly(DelegationEngineExtensions._epoch);
 
                 case BinaryOpKind.LtTime:
                 case BinaryOpKind.LeqTime:
