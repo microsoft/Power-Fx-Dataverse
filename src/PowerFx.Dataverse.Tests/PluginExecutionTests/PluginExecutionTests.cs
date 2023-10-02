@@ -3743,6 +3743,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
         }
 
+        // Run with 2 tables registered. 
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {fullname:\"new full name\"})")]
+        [InlineData("Collect(t1, {fullname:\"new full name\"})")]
+        public void ReadOnlyColumnTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            // Read-only columns will produce a runtime error
+            Assert.True(check.IsSuccess);
+
+            var result = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.IsType<ErrorValue>(result);
+            Assert.Contains("is read-only and can't be modified", ((ErrorValue)result).Errors.First().Message);
+        }
+
         static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
         static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
         static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
