@@ -18,5 +18,9 @@
     <PackageTags>powerfx;dataverse</PackageTags>
     <RepositoryType />    
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>
