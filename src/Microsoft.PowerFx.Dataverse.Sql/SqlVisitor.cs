@@ -442,6 +442,13 @@ namespace Microsoft.PowerFx.Dataverse
                     if (node.Child is RecordFieldAccessNode fieldNode)
                     {
                         string name = fieldNode.Field.ToString();
+
+                        if(fieldNode.From is ResolvedObjectNode resolvedObjectNode && resolvedObjectNode.Value is DataverseOptionSet optionSet) 
+                        {
+                            var optionDisplayName = optionSet.DisplayNameProvider.LogicalToDisplayPairs.ToDictionary(val => val.Key, val => val.Value)[fieldNode.Field];
+                            return context.SetIntermediateVariable(node, $"N'{optionDisplayName}'");
+                        }
+
                         return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
                     }
                     goto default;
