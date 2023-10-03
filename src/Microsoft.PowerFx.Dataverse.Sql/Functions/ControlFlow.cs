@@ -4,12 +4,10 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.IR;
-using System;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Span = Microsoft.PowerFx.Syntax.Span;
 using Microsoft.PowerFx.Core.Utils;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {

@@ -4,8 +4,6 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Core.IR;
-using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;

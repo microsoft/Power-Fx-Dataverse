@@ -5,7 +5,7 @@ namespace Microsoft.AppMagic.Common.Telemetry
     public sealed class Log
     {
         private static readonly Lazy<Log> _instance = new Lazy<Log>(() => new Log(), true);
-        public static Log Instance { get { return _instance.Value; } }
+        public static Log Instance => _instance.Value;
 
         internal void Error(string operationName, string message = null)
         {

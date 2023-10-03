@@ -13,6 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
 {
     public static class DelegationEngineExtensions
     {
+        internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
+
         // Only Dataverse Eval should use this.  
         // Nested class to decrease visibility. 
         public class DelegationHooks

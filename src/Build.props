@@ -2,10 +2,25 @@
 <Project>
 
   <PropertyGroup>
-    <!--https://github.com/microsoft/Power-Fx/commit/cdb85bba663fad0d78ac83c312065d3fb19e642f-->
-    <PowerFxVersion>1.1.0-build.20230913-1005</PowerFxVersion>
+    <!--https://github.com/microsoft/Power-Fx/commit/4b367d2f4584ef4f443410dc73cc46418bf27bc3-->
+    <PowerFxVersion>1.1.0</PowerFxVersion>
       <!-- https://msazure.visualstudio.com/OneAgile/_artifacts/feed/PowerApps-Studio-Official/NuGet/Microsoft.PowerFx.Dataverse.Parser       -->
-    <DataverseParserVersion>0.1.0-ci-20230714-76422488</DataverseParserVersion>
+    <DataverseParserVersion>0.1.0-ci-20230930-80527585</DataverseParserVersion>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Rules found at: https://aka.ms/Microsoft-NuGet-Compliance -->
+    <PackageProjectUrl>https://aka.ms/PowerFxDataverseGithub</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/microsoft/Power-Fx/main/src/libraries/Microsoft.PowerFx.Core/icon.png</PackageIconUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIcon>icon.png</PackageIcon>    
+    <PackageTags>powerfx;dataverse</PackageTags>
+    <RepositoryType />    
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

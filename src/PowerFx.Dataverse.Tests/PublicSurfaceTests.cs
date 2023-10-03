@@ -1,16 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using Microsoft.PowerFx.Dataverse;
-using Xunit;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.PowerFx.Dataverse;
+using Xunit;
 
 namespace Microsoft.PowerFx.Tests
 {
-    
+
     public class PublicSurfaceTests
     {
         // The goal for public namespaces is to make the SDK easy for the consumer. 
@@ -62,7 +62,8 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AISentimentFunction",
                 "Microsoft.PowerFx.Dataverse.AITranslateFunction",
                 "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
-                "Microsoft.PowerFx.Dataverse.AIExtractFunction"
+                "Microsoft.PowerFx.Dataverse.AIExtractFunction",
+                "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction"
             };
 
             Verify(allowed, asm);
@@ -86,14 +87,6 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DVSymbolTable",
                 "Microsoft.PowerFx.Dataverse.DelegationEngineExtensions",
                 
-                // SQL compilation 
-                "Microsoft.PowerFx.Dataverse.DataverseEngine",
-                "Microsoft.PowerFx.Dataverse.PowerFx2SqlEngine",
-                "Microsoft.PowerFx.Dataverse.SqlCompileOptions",
-                "Microsoft.PowerFx.Dataverse.SqlCompileResult",
-                "Microsoft.PowerFx.Dataverse.SqlCompileResult",
-                "Microsoft.PowerFx.Dataverse.SqlCompileResult",
-
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
                 "Microsoft.PowerFx.Dataverse.DataverseHelpers",
