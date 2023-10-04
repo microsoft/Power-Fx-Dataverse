@@ -186,8 +186,15 @@ namespace Microsoft.PowerFx.Dataverse
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
+
+                var returnType = SqlVisitor.ToSqlType(retType);
+
+                if (options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                {
+                    returnType = SqlStatementFormat.SqlIntegerType;
+                }
                 
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+                tw.WriteLine($") RETURNS {returnType}");
 
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
@@ -354,12 +361,18 @@ namespace Microsoft.PowerFx.Dataverse
             result.type = returnType;
 
             context._sbContent = new System.Text.StringBuilder();
-            context.PerformRangeChecks(result, null, postCheck: true);
+            context.PerformFinalRangeChecks(result, options, postCheck: true);
             tw.Write(context._sbContent);
 
             if (context.IsNumericType(result))
             {
-                int precision = options.TypeHints?.Precision ?? DefaultPrecision;                
+                int precision = options.TypeHints?.Precision ?? DefaultPrecision;
+                
+                if(options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                {
+                    precision = 0;
+                }
+
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
             else
