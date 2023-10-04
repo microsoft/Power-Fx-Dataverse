@@ -1713,6 +1713,22 @@ END
         }
 
         [Fact]
+        public void OptionSetsTests()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-97: OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
+
+            result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
+        }
+
+        [Fact]
         public void CheckRelatedEntityCurrencyUsedInFormula()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();

@@ -315,15 +315,17 @@ namespace Microsoft.PowerFx.Dataverse
                     _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
                     if (optionSet != null)
                     {
+                        // adding dependency for formula column to the option set used by formula field.
                         sqlResult.OptionSetId = optionSet.OptionSetId;
                         if (!optionSet.IsGlobal)
                         {
-                            // adding dependency between formula field and optionset field used by formula field.
+                            // if optionset used by formula field is a local optionset from another field,
+                            // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
 
                             if (key != _currentEntityName)
                             {
-                                errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, irNode.IRContext.SourceContext, retType._type.GetKindString()).GetErrors(irNode.IRContext.SourceContext);
+                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
                                 var errorResult = new SqlCompileResult(errors);
                                 errorResult.SanitizedFormula = sanitizedFormula;
                                 return errorResult;

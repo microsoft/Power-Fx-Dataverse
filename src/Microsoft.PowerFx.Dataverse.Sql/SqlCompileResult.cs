@@ -44,6 +44,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         public string SanitizedFormula { get; set; }
 
+        /// <summary>
+        /// OptionsetId of the optionset used by formula fields of type optionset
+        /// </summary>
         public string OptionSetId { get; set; }
 
         // Test harness can use to inspect exceptions.

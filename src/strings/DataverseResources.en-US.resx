@@ -216,4 +216,8 @@
     <value>Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.</value>
     <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>OptionSet '{0}' from related tables is not supported in formula columns.</value>
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
+  </data>
 </root>

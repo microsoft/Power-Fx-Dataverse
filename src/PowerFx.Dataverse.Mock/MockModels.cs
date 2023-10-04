@@ -223,7 +223,12 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 AttributeMetadataModel.NewDecimal("data3", "Data Three"),
                 AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
-                AttributeMetadataModel.NewMoney("currencyField", "Currency Field")
+                AttributeMetadataModel.NewMoney("currencyField", "Currency Field"),
+                AttributeMetadataModel.NewPicklist("optionsetField", "Optionset Field", new OptionMetadataModel[]
+                {
+                    new OptionMetadataModel { Label = "One", Value = 1 },
+                    new OptionMetadataModel { Label = "Two", Value = 2 },
+                })
             }
         };
 
