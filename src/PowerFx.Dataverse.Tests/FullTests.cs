@@ -617,6 +617,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Text(Decimal(decimal6), \"0\"))", true, cx, metadata);
                 ExecuteSqlTest("Decimal(decimal6)", null, cx, metadata);
                 ExecuteSqlTest("IsError(Decimal(decimal6))", true, cx, metadata);
+
+                ExecuteSqlTest("int2 + int", null, cx, metadata, typeHints:GetIntegerHint()); // whole no overflow
+                ExecuteSqlTest("big_int", int.Parse(SqlStatementFormat.IntTypeMax), cx, metadata, typeHints: GetIntegerHint());
             }
         }
 
