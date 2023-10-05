@@ -8,4 +8,19 @@
     <DataverseParserVersion>0.1.0-ci-20230930-80527585</DataverseParserVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Rules found at: https://aka.ms/Microsoft-NuGet-Compliance -->
+    <PackageProjectUrl>https://aka.ms/PowerFxDataverseGithub</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/microsoft/Power-Fx/main/src/libraries/Microsoft.PowerFx.Core/icon.png</PackageIconUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>powerfx;dataverse</PackageTags>
+    <RepositoryType />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  
 </Project>

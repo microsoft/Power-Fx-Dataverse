@@ -31,6 +31,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
     public class PluginExecutionTests
     {
+        internal static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
+        internal static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
+        internal static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
+        internal static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
+        internal static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
+
         internal static readonly ParserOptions _parserAllowSideEffects = new ParserOptions
         {
             AllowsSideEffects = true
@@ -2636,12 +2642,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
             Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
         }
-
-        internal static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
-        internal static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
-        internal static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
-        internal static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
-        internal static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
