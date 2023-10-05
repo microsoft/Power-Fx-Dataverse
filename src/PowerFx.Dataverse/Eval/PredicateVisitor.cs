@@ -226,6 +226,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 maybeScopeAccessNode = maybeFloat.Args[0];
             }
+            else if (node is CallNode maybeValue && maybeValue.Function == BuiltinFunctionsCore.Value)
+            {
+                maybeScopeAccessNode = maybeValue.Args[0];
+            }
             else
             {
                 maybeScopeAccessNode = node;
