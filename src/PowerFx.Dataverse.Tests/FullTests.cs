@@ -43,11 +43,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
             }
         }
-
-        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
-        /*
+        
         [SkippableFact]
-        public void SqlCalculatedDependencyTest()
+        public void SqlWholeNoCalculatedDependencyTest()
         {
             var rawField = "raw";
             var metadata = new EntityMetadataModel
@@ -108,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
             }
-        }*/
+        }
 
         [SkippableFact]
         public void FormulaUDFTest()
@@ -626,8 +624,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new TypeDetails
             {
-                TypeHint = AttributeTypeCode.Integer,
-                Precision = 0
+                TypeHint = AttributeTypeCode.Integer
             };
         }
 
