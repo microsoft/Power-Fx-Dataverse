@@ -443,12 +443,13 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         string name = fieldNode.Field.ToString();
 
-                        if(fieldNode.From is ResolvedObjectNode resolvedObjectNode && resolvedObjectNode.Value is DataverseOptionSet optionSet) 
+                        // blocking OptionSetToText operation if dataverse optionsetvalues are passed as args, as we can't return the labels which are locale-specific.
+                        if (fieldNode.From is ResolvedObjectNode resolvedObjectNode && resolvedObjectNode.Value is DataverseOptionSet)
                         {
-                            var optionDisplayName = optionSet.DisplayNameProvider.LogicalToDisplayPairs.ToDictionary(val => val.Key, val => val.Value)[fieldNode.Field];
-                            return context.SetIntermediateVariable(node, $"N'{optionDisplayName}'");
+                            throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
                         }
 
+                        // supporting OptionSetToText operation for enum cases like Text(TimeUnit.Days).
                         return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
                     }
                     goto default;

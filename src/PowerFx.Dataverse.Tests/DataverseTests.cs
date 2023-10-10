@@ -1722,6 +1722,10 @@ END
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-97: OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
 
+            result = engine.Compile("Text('Picklist (All Attributes)'.One)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.", result.Errors.First().ToString());
+
             result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
