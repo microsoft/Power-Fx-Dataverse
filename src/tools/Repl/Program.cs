@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -93,6 +94,8 @@ namespace Microsoft.PowerFx
 
             config.SymbolTable.EnableMutationFunctions();
 
+            config.SymbolTable.EnableAIFunctions();
+
             config.EnableSetFunction();
             config.EnableParseJSONFunction();
 
@@ -126,18 +129,22 @@ namespace Microsoft.PowerFx
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
             Console.WriteLine("Enter Excel formulas.  Use \"Help()\" for details, \"Option()\" for options.");
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
-            Console.WriteLine();
 
             InteractiveRepl();
         }
 
         public static PowerFxREPL CreateRepl()
         {
+            // used by the AI functions with a stub to return an error if used before connecting to Dataverse
+            var innerServices = new BasicServiceProvider();
+            innerServices.AddService<IDataverseExecute>(new DataverseNotPresent());
+
             var repl = new PowerFxREPL
             {
                 Engine = ReplRecalcEngine(),
                 ValueFormatter = new StandardFormatter(),
-                AllowSetDefinitions = true
+                AllowSetDefinitions = true,
+                InnerServices = innerServices
             };
             repl.EnableSampleUserObject();
 
@@ -235,6 +242,12 @@ namespace Microsoft.PowerFx
                 _repl.ExtraSymbolValues = _dv.SymbolValues;
 
                 UpdateUserInfo(svcClient);
+
+                // used by the AI functions and now we have a valid service to work with
+                var clientExecute = new DataverseService(svcClient);
+                var innerServices = new BasicServiceProvider();
+                innerServices.AddService<IDataverseExecute>(clientExecute);
+                _repl.InnerServices = innerServices;
 
                 return BooleanValue.New(true);
             }
@@ -471,6 +484,14 @@ namespace Microsoft.PowerFx
                     Message = $"Invalid option name: {option.Value}."
                 });
             }
+        }
+    }
+
+    public class DataverseNotPresent : IDataverseExecute
+    {
+        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            throw new Exception("AI functions require a connection to Dataverse. Use DVConnect() to connect first.");
         }
     }
 }
