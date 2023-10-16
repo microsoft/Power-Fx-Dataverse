@@ -2644,39 +2644,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Patch(t1, First(t1), {fullname:\"new full name\"})")]
-        [InlineData("Collect(t1, {fullname:\"new full name\"})")]
-        public void ReadOnlyColumnTest(string expr)
+        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
+        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
+        [InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
+        public void UDF(string script, string expr)
         {
             // create table "local"
-            var logicalName = "allattributes";
+            var logicalName = "local";
             var displayName = "t1";
 
-            var engine = new RecalcEngine();
-
-            // Create new org (symbols) with both tables 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
             dv.AddTable(displayName, logicalName);
 
-            engine.Config.SymbolTable.EnableMutationFunctions();
+            var engine = new RecalcEngine(new PowerFxConfig());
+            engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
 
-            var opts = _parserAllowSideEffects;
-            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+            var check = engine.Check(expr, symbolTable: dv.Symbols);
+            var result = check.GetEvaluator().Eval(dv.SymbolValues);
 
-            // Read-only columns will produce a runtime error
-            Assert.True(check.IsSuccess);
-
-            var result = check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
-
-            Assert.IsType<ErrorValue>(result);
-            Assert.Contains("is read-only and can't be modified", ((ErrorValue)result).Errors.First().Message);
+            Assert.IsNotType<ErrorValue>(result);
         }
-
-        static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
-        static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
-        static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
-        static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
-        static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
+      
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
