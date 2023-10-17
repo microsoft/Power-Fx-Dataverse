@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -2664,7 +2663,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.IsNotType<ErrorValue>(result);
         }
-      
+
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {allid:GUID(\"00000000-0000-0000-0000-000000000001\")})")]
+        [InlineData("Collect(t1, {allid:GUID(\"00000000-0000-0000-0000-000000000001\")})")]
+        public void ReadOnlyFieldsTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+            var errorMessageContains = "The specified column is read-only and can't be modified:";
+
+            (DataverseConnection dv, _) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            var powerFxConfig = new PowerFxConfig();
+
+            powerFxConfig.SymbolTable.EnableMutationFunctions();
+
+            var opt = new ParserOptions() { AllowsSideEffects = true };
+            var engine = new RecalcEngine(powerFxConfig);
+            var check = engine.Check(expr, options: opt, symbolTable: dv.Symbols);
+
+            Assert.False(check.IsSuccess);
+            Assert.Contains(errorMessageContains, check.Errors.First().Message);
+        }
+
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 

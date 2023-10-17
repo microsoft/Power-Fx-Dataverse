@@ -119,12 +119,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                 try
                 {
-                    if (amd.IsReadOnly())
-                    {
-                        error = DataverseExtensions.DataverseError<RecordValue>($"The specified column `{field.Name}` is read-only and can't be modified.", methodName);
-                        return null;
-                    }
-
                     object fieldValue = amd.ToAttributeObject(field.Value);
 
                     string fieldName = field.Name;

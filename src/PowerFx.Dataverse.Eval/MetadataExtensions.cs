@@ -38,44 +38,5 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
         }
-
-        /// <summary>
-        /// Checks whether attribute is a read-only attribute.
-        /// </summary>
-        /// <param name="attributeMetadata">XRM SDK attribute metadata</param>
-        /// <remarks>...\Cloud\DocumentServer.Core\XrmDataProvider\CdsPatchDatasourceHelper.cs</remarks>
-        /// <returns>True on success, false otherwise</returns>
-        public static bool IsReadOnly(this AttributeMetadata attributeMetadata)
-        {
-            return attributeMetadata.IsPrimaryId == true
-                || attributeMetadata.SourceType == (int)AttributeDataSourceType.Calculated
-                || attributeMetadata.SourceType == (int)AttributeDataSourceType.Rollup
-                || attributeMetadata.AttributeType == AttributeTypeCode.State
-                || (attributeMetadata.AttributeType == AttributeTypeCode.Money
-                    && attributeMetadata is MoneyAttributeMetadata { IsBaseCurrency: true })
-                || ReadOnlyAttributes.Contains(attributeMetadata.LogicalName);
-        }
-
-        /// <summary>
-        /// Indicates the source type for a calculated or rollup attribute.
-        /// </summary>
-        /// <remarks>...\Cloud\DocumentServer.Core\XrmDataProvider\CdsPatchDatasourceHelper.cs</remarks>
-        internal enum AttributeDataSourceType
-        {
-            Persistent = 0,
-            Calculated = 1,
-            Rollup = 2
-        }
-
-        private static readonly ICollection<string> ReadOnlyAttributes = new HashSet<string>()
-        {
-            "createdby",
-            "createdon",
-            "fullname",
-            "modifiedon",
-            "modifiedby",
-            "ownerid",
-            "ticketnumber"
-        };
     }
 }
