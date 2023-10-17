@@ -364,6 +364,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var oldStr = node.Args[1].Accept(visitor, context);
             var newStr = node.Args[2].Accept(visitor, context);
 
+            // SQL CHARINDEX function doesn't allow GUID as first arg
             if (oldStr.type is GuidType)
             {
                 throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, (node.Args[1] as UnaryOpNode).Child.IRContext.SourceContext, oldStr.type._type.GetKindString());
