@@ -401,6 +401,9 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.DecimalToText:
                     throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
+                case UnaryOpKind.GUIDToText:
+                    return node.Child.Accept(this, context);
+
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
                     var coercedArg = RetVal.FromSQL($"IIF({arg} IS NULL OR {arg} = N'', N'false', {arg})", FormulaType.String);

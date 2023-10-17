@@ -421,7 +421,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             Value = 2,
                         }
                     }),
-                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw")
+                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw"),
+                    AttributeMetadataModel.NewGuid("guid", "Guid")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -430,7 +431,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "1" },
-                    { "string", "N'foo'"}
+                    { "string", "N'foo'"},
+                    { "guid", "'70278D61-CD79-467E-8E89-AA3FA802EC79'" }
                 });
 
                 ExecuteSqlTest("Value(\"123.4\")", null, cx, metadata);
@@ -492,6 +494,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Trim(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Replace(\"ab\", 5, 1, NullStr) = \"ab\"", true, cx, metadata);
                 ExecuteSqlTest("Substitute(NullStr, NullStr, \"a\") = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Concatenate(guid, string)", "70278D61-CD79-467E-8E89-AA3FA802EC79foo", cx, metadata);
             }
         }
 
