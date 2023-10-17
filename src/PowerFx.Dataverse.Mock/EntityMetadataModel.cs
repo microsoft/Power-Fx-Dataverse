@@ -283,6 +283,12 @@ namespace Microsoft.Dataverse.EntityMock
             this.IsLogical = value;
             return this;
         }
+
+        public AttributeMetadataModel SetVirtual(bool value = true)
+        {
+            this.AttributeType = AttributeTypeCode.Virtual;
+            return this;
+        }
     }
 
     public class OneToManyRelationshipMetadataModel

@@ -43,7 +43,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
                 AttributeMetadataModel.NewInteger("new_int", "Integer"),
                 AttributeMetadataModel.NewString("new_string", "String"),
-                AttributeMetadataModel.NewString("fullname", "Full name"), // 'fullname' is a DV read-only reserved column name.
+                AttributeMetadataModel.NewString("fullname", "Full name").SetVirtual(), // 'fullname' is a DV read-only virtual field.
                 AttributeMetadataModel.NewGuid("some_id", "SomeId"),
                 AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
                 {

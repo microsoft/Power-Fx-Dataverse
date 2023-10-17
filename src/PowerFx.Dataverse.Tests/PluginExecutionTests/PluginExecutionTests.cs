@@ -2667,6 +2667,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("Patch(t1, First(t1), {allid:GUID(\"00000000-0000-0000-0000-000000000001\")})")]
         [InlineData("Collect(t1, {allid:GUID(\"00000000-0000-0000-0000-000000000001\")})")]
+        [InlineData("Collect(t1, {fullname:\"new full name\"})")]
         public void ReadOnlyFieldsTest(string expr)
         {
             // create table "local"
