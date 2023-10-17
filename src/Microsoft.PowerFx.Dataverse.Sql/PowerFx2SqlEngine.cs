@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
+                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors, sqlResult: sqlResult))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;

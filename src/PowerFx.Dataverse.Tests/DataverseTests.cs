@@ -779,7 +779,7 @@ END
             }
         }
 
-        public const string WholeNoFunction = @"CREATE FUNCTION fn_testUdf1(
+        public const string IntegerFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(23,10) -- new_field
 ) RETURNS int
   WITH SCHEMABINDING
@@ -799,7 +799,7 @@ END
 ";
 
         [Fact]
-        public void CompileWholeNoTypeHint()
+        public void CompileIntegerTypeHint()
         {
             var expr = "field * 2.0";
 
@@ -834,7 +834,9 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
-            Assert.Equal(WholeNoFunction, result.SqlFunction);
+            Assert.Equal(true, result.IsHintApplied);
+
+            Assert.Equal(IntegerFunction, result.SqlFunction);
             Assert.True(result.ReturnType is DecimalType);
         }
 

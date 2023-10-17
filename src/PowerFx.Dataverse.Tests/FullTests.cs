@@ -45,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
         
         [SkippableFact]
-        public void SqlWholeNoCalculatedDependencyTest()
+        public void SqlIntegerCalculatedDependencyTest()
         {
             var rawField = "raw";
             var metadata = new EntityMetadataModel
