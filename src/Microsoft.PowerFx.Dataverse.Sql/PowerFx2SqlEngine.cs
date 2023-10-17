@@ -189,7 +189,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 var returnType = SqlVisitor.ToSqlType(retType);
 
-                if (options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                // if the return type is numeric and type hint is of type integer then it is assignable, only in that 
+                // case use integer in UDF, actual return type of compiler will be decimal only
+                if (SqlVisitor.Context.IsNumericType(retType) && options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                 {
                     returnType = SqlStatementFormat.SqlIntegerType;
                 }
@@ -368,6 +370,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 int precision = options.TypeHints?.Precision ?? DefaultPrecision;
                 
+                // In case type hint is coming as integer, internal computations are done in FX types only (number/decimal)
+                // but on the way out UDF is returning integer so rounding off the value to 0 at end
                 if(options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                 {
                     precision = 0;
