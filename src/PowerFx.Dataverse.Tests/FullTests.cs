@@ -495,6 +495,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Replace(\"ab\", 5, 1, NullStr) = \"ab\"", true, cx, metadata);
                 ExecuteSqlTest("Substitute(NullStr, NullStr, \"a\") = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Concatenate(guid, string)", "70278D61-CD79-467E-8E89-AA3FA802EC79foo", cx, metadata);
+                ExecuteSqlTest("Substitute(guid, guid, string, 1)", "foo", cx, metadata);
             }
         }
 
