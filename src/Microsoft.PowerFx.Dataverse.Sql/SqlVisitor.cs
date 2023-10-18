@@ -402,7 +402,8 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
                 case UnaryOpKind.GUIDToText:
-                    return node.Child.Accept(this, context);
+                    var guidArg = node.Child.Accept(this, context);
+                    return context.SetIntermediateVariable(node, guidArg.ToString());
 
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);

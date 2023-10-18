@@ -1369,7 +1369,6 @@ END
         [InlineData("Replace(\"abcabcabc\", UTCToday(), UTCNow(), \"xx\")", false, "Error 21-31: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in first numeric arg in Replace function"
         [InlineData("Replace(\"abcabcabc\", 5, UTCNow(), \"xx\")", false, "Error 24-32: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in second numeric arg in Replace function"
         [InlineData("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Substitute function"
-        [InlineData("Substitute(\"abc\", guid, \"\", 1)", false, "Error 18-22: This argument cannot be passed as type Guid in formula columns.")] // "Arg of type GUID cannot be passed as second arg to Substitute function"
         public void CheckCoercionFailures(string expr, bool success, string message = null)
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
