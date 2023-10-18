@@ -363,7 +363,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var str = node.Args[0].Accept(visitor, context);
             var oldStr = node.Args[1].Accept(visitor, context);
             var newStr = node.Args[2].Accept(visitor, context);
-
             if (node.Args.Count == 4)
             {
                 // TODO: this should converted to a UDF
