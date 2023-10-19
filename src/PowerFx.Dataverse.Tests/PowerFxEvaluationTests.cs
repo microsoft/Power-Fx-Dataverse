@@ -204,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return new RunResult() { UnsupportedReason = "No connection string provided." };
                 }
 
-                if (iSetup.HandlerName != null ||
+                if (iSetup.HandlerNames != null ||
                     iSetup.TimeZoneInfo != null)
                 {
                     throw new SetupHandlerNotFoundException();
