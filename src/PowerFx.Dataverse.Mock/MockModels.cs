@@ -43,6 +43,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
                 AttributeMetadataModel.NewInteger("new_int", "Integer"),
                 AttributeMetadataModel.NewString("new_string", "String"),
+                AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 AttributeMetadataModel.NewGuid("some_id", "SomeId"),
                 AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
                 {
@@ -277,6 +278,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 new AttributeMetadataModel
                 {
                     LogicalName= "bigint",
