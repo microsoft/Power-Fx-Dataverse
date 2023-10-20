@@ -842,15 +842,12 @@ namespace Microsoft.PowerFx.Dataverse
                 var dependentFields = new Dictionary<string, HashSet<string>>();
                 foreach (var pair in _fields)
                 {
-                    if (!(pair.Value.VarType is GuidType))
+                    if (!dependentFields.ContainsKey(pair.Value.Table))
                     {
-                        if (!dependentFields.ContainsKey(pair.Value.Table))
-                        {
-                            dependentFields[pair.Value.Table] = new HashSet<string>();
-                        }
-                        // Add by logical name
-                        dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
+                        dependentFields[pair.Value.Table] = new HashSet<string>();
                     }
+                    // Add by logical name
+                    dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
                 }
                 return dependentFields;
             }

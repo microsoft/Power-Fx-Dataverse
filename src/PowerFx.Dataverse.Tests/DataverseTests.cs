@@ -580,7 +580,7 @@ END
             var engine = new PowerFx2SqlEngine(BaselineMetadata.ToXrm());
             var result = engine.Compile(exprStr, options);
 
-            Assert.Equal("address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
+            Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
 
             Assert.Equal(BaselineFunction, result.SqlFunction);
 
@@ -1300,7 +1300,7 @@ END
             "remote=>data",
             "local=>local_remote,self")] // "Multiple lookups"
         [InlineData("'Logical Lookup'.Data",
-            "logicalid",
+            "localid,logicalid",
             "remote=>data",
             "local=>logical")] // "Logical Lookup"
         [InlineData("7 + 2", "")] // "Literals"
@@ -1371,9 +1371,7 @@ END
         [InlineData("Substitute(\"abcabcabc\", \"ab\", \"xx\", UTCNow())", false, "Error 36-44: This argument cannot be passed as type Number in formula columns.")] // "Coerce date to number in Substitute function"
         public void CheckCoercionFailures(string expr, bool success, string message = null)
         {
-            var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var engine = new PowerFx2SqlEngine();
             var result = engine.Check(expr);
 
             Assert.NotNull(result);
@@ -1728,6 +1726,18 @@ END
             var result = engine.Compile("Decimal(money) + lookup.data3 + Decimal(lookup.currencyField) + 11", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
+        }
+
+        [Fact]
+        public void CheckGuidUsedInFormula()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("Concatenate(guid,\"abc\")", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("guid", result.TopLevelIdentifiers.ElementAt(0));
         }
 
         [Theory]
