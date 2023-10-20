@@ -341,6 +341,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
+                sqlResult.DependentOptionSetIds = ctx.GetDependentOptionSets(dependentFields, _metadataCache);
                 // The top-level identifiers are the logical names of fields on the main entity
                 sqlResult.ApplyDependencyAnalysis();
                 var topLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();

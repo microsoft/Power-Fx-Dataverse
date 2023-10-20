@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Errors;
 
@@ -45,9 +46,13 @@ namespace Microsoft.PowerFx.Dataverse
         public string SanitizedFormula { get; set; }
 
         /// <summary>
-        /// OptionsetId of the optionset used by formula fields of type optionset
+        /// OptionsetId of the optionset returned by formula fields of type optionset
         /// </summary>
-        public string OptionSetId { get; set; }
+        /// /// <example>
+        /// expression: "If( 'Option1' = 'Option1 (Table)'.Choice1, 'Option2 (Table)'.Choice1, 'Option2 (Table)'.Choice2)"
+        /// OptionsetId of the Optionset - 'Option2 (Table)'
+        /// </example>
+        public Guid OptionSetId { get; set; }
 
         // Test harness can use to inspect exceptions.
         internal List<string> _unsupportedWarnings;
@@ -74,6 +79,15 @@ namespace Microsoft.PowerFx.Dataverse
         ///    "account" => { "account_primary_contact" }
         /// </example>
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
+
+        /// <summary>
+        /// Hashset of optionsetids of optionsets used by formula fields
+        /// </summary>
+        /// <example>
+        /// expression: "If( 'Option1 (Table)'.Choice1 = 'Option1 (Table)'.Choice1, 100, 'Option2 (Table)'.Choice1 = 'Option2 (Table)'.Choice1, 200, 300)"
+        /// OptionsetIds of Optionsets => {'Option1 (Table)', 'Option2 (Table)'}
+        /// </example>
+        public HashSet<Guid> DependentOptionSetIds { get; set; }
     }
 
     // Additional info computed by the SQL comilation work

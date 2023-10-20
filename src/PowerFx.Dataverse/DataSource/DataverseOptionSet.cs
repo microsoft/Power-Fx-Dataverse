@@ -13,6 +13,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -25,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
         public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)
         {
             Name = optionSetName;
-            OptionSetId = optionSetId;
+            OptionSetId = string.IsNullOrEmpty(optionSetId) ? Guid.Empty : new Guid(optionSetId);
             IsBooleanValued = isBooleanValued;
             _relatedEntityName = entityName;
             RelatedColumnInvariantName = columnName;
@@ -49,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public string Name { get; }
 
-        public string OptionSetId { get; }
+        public Guid OptionSetId { get; }
 
         public bool IsBooleanValued { get; }
 

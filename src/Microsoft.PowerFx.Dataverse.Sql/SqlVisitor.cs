@@ -528,10 +528,11 @@ namespace Microsoft.PowerFx.Dataverse
                     return RetVal.FromVar(varName, context.GetReturnType(node));
                 }
             }
-            else if (node.From is ResolvedObjectNode resolvedObjectNode1 && resolvedObjectNode1.Value is DataverseOptionSet)
+            else if (node.From is ResolvedObjectNode resolvedObjectNode1 && resolvedObjectNode1.Value is DataverseOptionSet dataverseOptionSet)
             {
                 // This is an option set, which is treated as a record access
                 // the node Field will be a DName of the option set value
+                context._dependentOptionsets.Add(new DName(dataverseOptionSet.EntityName));
                 return context.SetIntermediateVariable(node, node.Field.Value);
             }
 
@@ -750,6 +751,9 @@ namespace Microsoft.PowerFx.Dataverse
             // Mapping of var names to details
             private Dictionary<string, VarDetails> _vars = new Dictionary<string, VarDetails>();
 
+            // OptionsetIds of optionsets used by formula fields
+            internal HashSet<DName> _dependentOptionsets = new HashSet<DName>();
+
             internal class Scope : DataverseType
             {
                 /// <summary>
@@ -857,6 +861,31 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
                 return dependentFields;
+            }
+
+            public HashSet<Guid> GetDependentOptionSets(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache)
+            {
+                var dependentOptionSets = new HashSet<Guid>();
+                foreach (var optionSetName in _dependentOptionsets)
+                {
+                    metadataCache.TryGetOptionSet(optionSetName, out var optionSet);
+                    if (optionSet != null)
+                    {
+                        if (!optionSet.IsGlobal)
+                        {
+                            var key = optionSet.RelatedEntityName;
+                            if (!dependentFields.ContainsKey(key))
+                            {
+                                dependentFields[key] = new HashSet<string>();
+                            }
+
+                            dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
+                        }
+                        
+                        dependentOptionSets.Add(optionSet.OptionSetId);
+                    }
+                }
+                return dependentOptionSets;
             }
 
             public Dictionary<string, HashSet<string>> GetDependentRelationships()

@@ -1716,8 +1716,10 @@ END
         public void OptionSetsTests()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider);
+            provider.TryGetOptionSet(new Core.Utils.DName("Picklist (All Attributes)"), out var optionSet);
+            provider.TryGetOptionSet(new Core.Utils.DName("Status (All Attributes)"), out var optionSet2);
             var result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-97: OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
@@ -1730,6 +1732,18 @@ END
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
+            Assert.NotEqual(Guid.Empty, result.OptionSetId);
+
+            result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, 'Status (All Attributes)'.Active = 'Status (All Attributes)'.Active, 2, 3)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
+            Assert.Equal("picklist,statuscode", ToStableString(result.TopLevelIdentifiers));
+            Assert.Equal(2, result.DependentOptionSetIds.Count);
+            Assert.Equal(optionSet.OptionSetId, result.DependentOptionSetIds.First());
+            Assert.Equal(optionSet2.OptionSetId, result.DependentOptionSetIds.ElementAt(1));
+            Assert.Equal(Guid.Empty, result.OptionSetId);
+
         }
 
         [Fact]
