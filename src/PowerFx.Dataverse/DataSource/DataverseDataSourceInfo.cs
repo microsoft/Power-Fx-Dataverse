@@ -181,9 +181,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var name in type.GetAllNames(DPath.Root))
             {
-                var columnDefinition = CdsTableDefinition.CdsColumnDefinition(name.Name.Value);
+                
+                var columnDefinition = CdsTableDefinition.CdsColumnDefinitionOrDefault(name.Name.Value);
 
-                if (columnDefinition.IsReadOnly)
+                if (columnDefinition!= null && columnDefinition.IsReadOnly)
                 {
                     invalidNames.Add(name.Name.Value);
                     isValid = false;
