@@ -4,15 +4,11 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Threading;
 using Microsoft.PowerFx.Core.Tests;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
