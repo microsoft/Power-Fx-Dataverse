@@ -2643,27 +2643,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
         }
 
-        [Theory]
-        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
-        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
-        [InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
-        public void UDF(string script, string expr)
-        {
-            // create table "local"
-            var logicalName = "local";
-            var displayName = "t1";
+        // Removing test as we can't call engine.AddUserDefinedFunction anymore
 
-            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-            dv.AddTable(displayName, logicalName);
+        //[Theory]
+        //[InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
+        //[InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
+        //[InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
+        //public void UDF(string script, string expr)
+        //{
+        //    // create table "local"
+        //    var logicalName = "local";
+        //    var displayName = "t1";
 
-            var engine = new RecalcEngine(new PowerFxConfig());
-            engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
+        //    (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+        //    dv.AddTable(displayName, logicalName);
 
-            var check = engine.Check(expr, symbolTable: dv.Symbols);
-            var result = check.GetEvaluator().Eval(dv.SymbolValues);
+        //    var engine = new RecalcEngine(new PowerFxConfig());
+        //    engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
 
-            Assert.IsNotType<ErrorValue>(result);
-        }
+        //    var check = engine.Check(expr, symbolTable: dv.Symbols);
+        //    var result = check.GetEvaluator().Eval(dv.SymbolValues);
+
+        //    Assert.IsNotType<ErrorValue>(result);
+        //}
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
