@@ -174,6 +174,28 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException();
         }
 
+        public bool IsArgTypeValidForMutation(DType type, out IEnumerable<string> invalidFieldName)
+        {
+            var isValid = true;
+            var invalidNames = new List<string>();
+
+            foreach (var name in type.GetAllNames(DPath.Root))
+            {
+                
+                var columnDefinition = CdsTableDefinition.CdsColumnDefinitionOrDefault(name.Name.Value);
+
+                if (columnDefinition!= null && columnDefinition.IsReadOnly)
+                {
+                    invalidNames.Add(name.Name.Value);
+                    isValid = false;
+                }
+            }
+
+            invalidFieldName = invalidNames;
+
+            return isValid;
+        }
+
         #region IDataEntityMetadata implementation
         string IDataEntityMetadata.EntityName => this.EntityName;
 
