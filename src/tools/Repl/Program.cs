@@ -237,18 +237,24 @@ namespace Microsoft.PowerFx
                 IDataverseReader dvex = _repl.InnerServices.GetService<IDataverseReader>();
 
                 if (dvex == null)
+                {
                     return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"No active Dataverse connection. Use ""DVConnect()"" to connector to Dataverse." });
+                }
 
                 QueryExpression query = new QueryExpression("customapi") { ColumnSet = new ColumnSet(true) };
                 DataverseResponse<EntityCollection> list = await dvex.RetrieveMultipleAsync(query).ConfigureAwait(false);
 
                 if (list.HasError)
+                {
                     return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Error: {list.Error}" });
+                }
 
                 RecordType recordType = RecordType.Empty().Add(new NamedFormulaType("Value", FormulaType.String));
 
                 if (list.Response.Entities.Count == 0)
+                {
                     return TableValue.NewTable(recordType);
+                }
 
                 List<string> pluginNames = list.Response.Entities.Select(entity => entity.Attributes["name"].ToString()).OrderBy(x => x).ToList();
 
@@ -305,6 +311,8 @@ namespace Microsoft.PowerFx
 //#endif
 
                 ConnectorFunction plugInFunction = _repl.Engine.Config.AddPlugIn(@namespace.Value, swagger).First();
+
+                //plugInFunction.InvokeAsync()
 
                 if (!plugInFunction.IsSupported)
                 {
