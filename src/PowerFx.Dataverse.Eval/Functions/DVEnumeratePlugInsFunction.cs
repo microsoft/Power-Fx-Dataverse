@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             QueryExpression query = new QueryExpression("customapi") { ColumnSet = new ColumnSet(true) };
-            DataverseResponse<EntityCollection> list = await dvReader.RetrieveMultipleAsync(query).ConfigureAwait(false);
+            DataverseResponse<EntityCollection> list = await dvReader.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (list.HasError)
             {
