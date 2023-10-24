@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Need a valid plugin name" });
             }
          
-            CustomApiSignature plugin = await context.GetDataverseObjectAsync<CustomApiSignature>(pluginName.Value, CancellationToken.None).ConfigureAwait(false);
+            CustomApiSignature plugin = await context.GetDataverseObjectAsync<CustomApiSignature>(pluginName.Value, cancellationToken).ConfigureAwait(false);
 
             if (plugin == null)
             {
