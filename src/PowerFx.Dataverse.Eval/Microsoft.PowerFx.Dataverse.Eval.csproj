@@ -28,12 +28,15 @@
   <Import Project="..\Build.props" />
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.OpenApi" Version="1.6.8" />
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.8" />
     <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" /> <!-- CVE-2023-29331 -->
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605"/>    
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>

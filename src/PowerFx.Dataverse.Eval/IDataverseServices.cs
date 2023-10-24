@@ -4,15 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter
+    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter, IDataversePlugInContext
     {
     }
 
@@ -20,9 +21,6 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseExecute
     {
         Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default);
-
-        //AddPlugIn
-        //ExecutePlugIn
     }
 
     public interface IDataverseCreator
@@ -51,5 +49,12 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseDeleter
     {
         Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default);
+    }
+
+    public interface IDataversePlugInContext : IDataverseReader, IDataverseExecute
+    {
+        FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature);
+
+        Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default);
     }
 }

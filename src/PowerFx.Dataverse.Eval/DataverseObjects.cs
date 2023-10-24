@@ -1,10 +1,12 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
+//------------------------------------------------------------------------------
 
 using Microsoft.Xrm.Sdk;
 
-namespace Repl
+namespace Microsoft.PowerFx.Dataverse
 {
     public class CustomApiSignature
     {

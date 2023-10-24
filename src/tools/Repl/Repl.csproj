@@ -12,10 +12,7 @@
 
   <Import Project="..\..\Build.props" />
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.OpenApi" Version="1.6.8" />
-    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.8" />
-    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="1.2.0-build.20231016-1002" />
+  <ItemGroup>  
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" NoWarn="NU1605" />

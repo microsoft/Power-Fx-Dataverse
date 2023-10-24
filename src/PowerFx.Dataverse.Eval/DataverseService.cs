@@ -4,19 +4,26 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.OpenApi.Models;
+using Microsoft.PowerFx.Connectors;
+using Microsoft.PowerFx.Connectors.Execution;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     public class DataverseService : IDataverseServices, IDataverseRefresh, IDataverseExecute
     {        
         private IOrganizationService _organizationService { get; }
+
+        private Dictionary<string, (string, CustomApiSignature)> _plugIns { get; } = new Dictionary<string, (string, CustomApiSignature)>();
 
         public DataverseService(IOrganizationService service)
         {
@@ -60,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
         public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();            
-            return DataverseExtensions.DataverseCall((Func<bool>)(() => { this._organizationService.Delete(entityName, id); return true; }), $"Delete '{entityName}':{id}");
+            return DataverseExtensions.DataverseCall(() => { this._organizationService.Delete(entityName, id); return true; }, $"Delete '{entityName}':{id}");
         }
 
         internal virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default)
@@ -77,6 +84,119 @@ namespace Microsoft.PowerFx.Dataverse
             return DataverseExtensions.DataverseCall(
                 () => _organizationService.Execute(request),
                 $"Execute '{request.RequestName}'");
+        }
+
+        public FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature)
+        {
+            string key = signature.Api.uniquename;
+
+            if (_plugIns.ContainsKey(key))
+            {
+                FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Plugin already declared with the same name." });
+            }
+
+            _plugIns.Add(key, (@namespace, signature));
+
+            return FormulaValue.New($"Loaded {signature.Api.uniquename} with success.");
+        }
+
+        public async Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!_plugIns.ContainsKey(name))
+            {
+                FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} not found." });
+            }
+
+            (string @namespace, CustomApiSignature plugin) = _plugIns[name];
+            OpenApiDocument swagger = plugin.GetSwagger();
+
+            IEnumerable<ConnectorFunction> functions = OpenApiParser.GetFunctions(new ConnectorSettings(@namespace) { Compatibility = ConnectorCompatibility.PowerAppsCompatibility }, swagger);
+
+            if (functions == null || !functions.Any())
+            {
+                return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} has no functions." });
+            }
+
+            if (functions.Count() > 1)
+            {
+                return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} has more than one function." });
+            }
+
+            ConnectorFunction function = functions.First();
+            PlugInRuntimeContext runtimeContext = new PlugInRuntimeContext(config, this, plugin);
+
+            return await function.InvokeAsync(new FormulaValue[] { arguments }, runtimeContext, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public class PlugInRuntimeContext : BaseRuntimeConnectorContext
+    {
+        internal CustomApiSignature _plugin { get; }
+
+        internal IDataversePlugInContext _pluginContext { get; }
+
+        public PlugInRuntimeContext(RuntimeConfig runtimeConfig, IDataversePlugInContext plugInContext, CustomApiSignature plugin)
+            : base(runtimeConfig)
+        {
+            _plugin = plugin;
+            _pluginContext = plugInContext;
+        }
+
+        public override FunctionInvoker GetInvoker(ConnectorFunction function, bool returnsRawResult = false)
+        {
+            return new PlugInInvoker(function, this);
+        }
+    }
+
+    public class PlugInInvoker : FunctionInvoker
+    {
+        public new PlugInRuntimeContext Context => (PlugInRuntimeContext)base.Context;
+
+        public PlugInInvoker(ConnectorFunction function, PlugInRuntimeContext runtimeContext) 
+            : base(function, runtimeContext)
+        {            
+        }
+
+        public override async Task<FormulaValue> SendAsync(InvokerParameters invokerElements, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RecordType inputType = RecordType.Empty();
+
+            // We only look at optional parameters as this is how instant plugin parameters are used (all optional)
+            foreach (ConnectorParameter optionalParameter in Function.OptionalParameters)
+            {
+                inputType = inputType.Add(optionalParameter.Name, optionalParameter.FormulaType);
+            }
+
+            // Read incoming data as a record to extract all fields
+            RecordValue record = FormulaValueJSON.FromJson(invokerElements.Body, inputType) as RecordValue;
+
+            OrganizationRequest instantActionRequest = new OrganizationRequest(Context._plugin.Api.uniquename);
+            ParameterCollection parameters = new ParameterCollection();
+
+            foreach (CustomApiRequestParam carp in Context._plugin.Inputs)
+            {
+                FormulaValue val = record.GetField(carp.name);
+
+                if (val != null && val is not BlankValue)
+                {
+                    parameters.Add(carp.uniquename, val.ToCustomApiObject(carp));
+                }
+            }
+
+            instantActionRequest.Parameters = parameters;
+
+            // Call plugin now
+            DataverseResponse<OrganizationResponse> response = await Context._pluginContext.ExecuteAsync(instantActionRequest, cancellationToken).ConfigureAwait(false);
+            response.ThrowEvalExOnError();
+
+            ParameterCollection output = response.Response.Results;
+
+            // We don't the full DataverseConnector here so I'm passing null for now
+            return DataverseEvalHelpers.Outputs2Fx(output, Context._plugin.Outputs, null);
         }
     }
 }

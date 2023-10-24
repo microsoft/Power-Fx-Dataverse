@@ -190,7 +190,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
@@ -256,7 +256,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }

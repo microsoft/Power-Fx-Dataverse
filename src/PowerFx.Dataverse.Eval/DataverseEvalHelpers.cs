@@ -1,6 +1,8 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
+//------------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
@@ -8,16 +10,129 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Dataverse;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Interfaces;
+using Microsoft.OpenApi.Models;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
-namespace Repl
+namespace Microsoft.PowerFx.Dataverse
 {
-    internal static class DVHelpers
+    internal static class DataverseEvalHelpers
     {
+        public static string ToOpenApiSchemaType(this CustomApiParamType typeCode)
+        {
+            return typeCode switch
+            {
+                CustomApiParamType.Float => "number",
+                CustomApiParamType.Integer => "number",
+                CustomApiParamType.Decimal => "number",
+                CustomApiParamType.Bool => "boolean",
+                CustomApiParamType.String => "string",
+                CustomApiParamType.DateTime => "string",
+                CustomApiParamType.Guid => "string",
+                _ => throw new NotSupportedException($"Unsupported param type: {typeCode}"),
+            };
+        }
+
+        public static string ToOpenApiSchemaFormat(this CustomApiParamType typeCode)
+        {
+            return typeCode switch
+            {
+                CustomApiParamType.Float => "float",
+                CustomApiParamType.Integer => "int32",
+                CustomApiParamType.Decimal => "number",
+                CustomApiParamType.Bool => null,
+                CustomApiParamType.String => null,
+                CustomApiParamType.DateTime => "date-time",
+                CustomApiParamType.Guid => null,
+                _ => throw new NotSupportedException($"Unsupported param type: {typeCode}"),
+            };
+        }
+
+        public static OpenApiDocument GetSwagger(this CustomApiSignature plugin)
+        {
+            return new OpenApiDocument
+            {
+                Info = new OpenApiInfo()
+                {
+                    Title = "OData Service for namespace Microsoft.Dynamics.CRM",
+                    Description = "This OData service is located at http://localhost",
+                    Version = "1.0.1"
+                },
+                Servers = new List<OpenApiServer>()
+                {
+                    new OpenApiServer()
+                    {
+                        Url = "https://localhost"
+                    }
+                },
+                Paths = new OpenApiPaths()
+                {
+                    [$"/{plugin.Api.uniquename}"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>()
+                        {
+                            [OperationType.Post] = new OpenApiOperation()
+                            {
+                                Tags = new List<OpenApiTag>() { new OpenApiTag() { Name = plugin.Api.uniquename } },
+                                Summary = $"Invoke actionImport {plugin.Api.uniquename}",
+                                OperationId = plugin.Api.uniquename, // $$$ should probably be name
+                                RequestBody = new OpenApiRequestBody()
+                                {
+                                    Required = true,
+                                    Description = "Action parameters",
+                                    Content = new Dictionary<string, OpenApiMediaType>()
+                                    {
+                                        ["application/json"] = new OpenApiMediaType()
+                                        {
+                                            Schema = new OpenApiSchema()
+                                            {
+                                                Type = "object",
+                                                Properties = plugin.Inputs.Select((CustomApiRequestParam param)
+                                                    => new KeyValuePair<string, OpenApiSchema>(param.name, new OpenApiSchema()
+                                                    {
+                                                        Description = param.description,
+                                                        Type = ToOpenApiSchemaType(param.type),
+                                                        Format = ToOpenApiSchemaFormat(param.type),
+                                                    })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                            }
+                                        }
+                                    },
+                                },
+                                Extensions = new Dictionary<string, IOpenApiExtension>()
+                                {
+                                    ["x-ms-dynamics-metadata"] = new OpenApiString("actionImport")
+                                },
+                                Responses = new OpenApiResponses()
+                                {
+                                    ["200"] = new OpenApiResponse()
+                                    {
+                                        Description = "Success",
+                                        Content = new Dictionary<string, OpenApiMediaType>()
+                                        {
+                                            ["application/json"] = new OpenApiMediaType()
+                                            {
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "object",
+                                                    Properties = plugin.Outputs.ToDictionary(param => param.name, param => new OpenApiSchema()
+                                                    {
+                                                        Type = ToOpenApiSchemaType(param.type),
+                                                        Format = ToOpenApiSchemaFormat(param.type)
+                                                    })
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+        }
         public static FormulaValue Outputs2Fx(ParameterCollection outputs, CustomApiResponse[] outputMetadata, DataverseConnection dataverseConnection)
         {
             if (outputMetadata.Length == 0)
@@ -184,8 +299,7 @@ namespace Repl
                         TableValue outputTable = fxValue as TableValue;
                         foreach (DValue<RecordValue> rows in outputTable?.Rows)
                         {
-                            RecordValue recordVal = rows.Value as RecordValue;
-                            if (recordVal != null)
+                            if (rows.Value is RecordValue recordVal)
                             {
                                 Entity entityVal = ToCdsEntity(recordVal, parameterType);
                                 outputEntityCollection.Entities.Add(entityVal);

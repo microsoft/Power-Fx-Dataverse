@@ -4,10 +4,10 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
 using System;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -25,10 +25,10 @@ namespace Microsoft.PowerFx.Dataverse
             Response = response;
         }
 
-        public new static DataverseResponse<T> NewError(string error)
+        public static new DataverseResponse<T> NewError(string error)
         {
             // Error and Response are mutually exclusive.
-            return new DataverseResponse<T>(default(T))
+            return new DataverseResponse<T>(default)
             {
                 Error = error ?? throw new ArgumentNullException(nameof(error))
             };

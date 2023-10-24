@@ -4,16 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -124,10 +124,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Modifying this entity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
         {
-            if (_onLookupRef != null)
-            {
-                _onLookupRef(entityRef);
-            }
+            _onLookupRef?.Invoke(entityRef);
 
             foreach (var entity in _list)
             {
@@ -151,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return false;
         }
 
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             Add(cancellationToken, entity);
@@ -159,13 +156,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return new DataverseResponse<Guid>(entity.Id);
         }
 
-        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup").ConfigureAwait(false);
         }
 
-        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -195,7 +192,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse());
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -207,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return LookupReferenceAsync(new EntityReference(entityName, id));
         }
 
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
             IEnumerable<Entity> data = _list;
 
@@ -385,7 +382,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return false;
         }
 
-        class AttributeComparer : IComparer<object>
+        private class AttributeComparer : IComparer<object>
         {
             private readonly AttributeMetadata _amd;
 
@@ -405,10 +402,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         return ((DateTime)x).CompareTo((DateTime)y);
 
                     case AttributeTypeCode.Decimal:
-                        return ((Decimal)x).CompareTo((Decimal)y);
+                        return ((decimal)x).CompareTo((decimal)y);
 
                     case AttributeTypeCode.Double:
-                        return ((Double)x).CompareTo((Double)y);
+                        return ((double)x).CompareTo((double)y);
 
                     case AttributeTypeCode.Integer:
                         return ((int)x).CompareTo((int)y);
@@ -438,12 +435,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -480,6 +477,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual void Refresh(string logicalTableName)
         {            
+        }
+
+        public FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

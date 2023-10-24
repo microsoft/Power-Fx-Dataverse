@@ -93,8 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (metadata.TryGetRelationship(field.Name, out var realAttributeName))
                     {
                         // Get primary key, set as guid. 
-                        DataverseRecordValue dvr = field.Value as DataverseRecordValue;
-                        if (dvr == null)
+                        if (field.Value is not DataverseRecordValue dvr)
                         {
                             // Binder should have stopped this. 
                             error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
@@ -143,7 +142,9 @@ namespace Microsoft.PowerFx.Dataverse
         private static string DisplayName(this Type t)
         {
             if (!t.IsGenericType)
+            {
                 return t.Name;
+            }
 
             string genericTypeName = t.GetGenericTypeDefinition().Name;
             genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));

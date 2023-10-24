@@ -4,6 +4,12 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
@@ -11,12 +17,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseTableValue : TableValue, IRefreshable
     {
         private readonly IConnectionValueContext _connection;
-        private RecordType _recordType;
+        private readonly RecordType _recordType;
 
         private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
 
@@ -67,13 +67,15 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)
+            {
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
+            }
 
             var result = EntityCollectionToRecordValues(entities);
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
 
@@ -113,10 +115,12 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default)
         {
             if (record == null)
+            {
                 throw new ArgumentNullException(nameof(record));
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
             Entity entity = record.ConvertRecordToEntity(_entityMetadata, out DValue<RecordValue> error);
@@ -129,7 +133,9 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseResponse<Guid> response = await _connection.Services.CreateAsync(entity, cancellationToken).ConfigureAwait(false);
 
             if (response.HasError)
+            {
                 return response.DValueError(nameof(IDataverseCreator.CreateAsync));
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -137,7 +143,9 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
+            {
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
+            }
 
             // After mutation, lazily refresh Rows from server.
             Refresh();
@@ -145,12 +153,17 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
         }
 
-        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken = default)
         {
             if (baseRecord == null)
+            {
                 throw new ArgumentNullException(nameof(baseRecord));
+            }
+
             if (record == null)
+            {
                 throw new ArgumentNullException(nameof(record));
+            }
 
             // Retrieve the primary key of the entity (should always be present and a Guid)
             FormulaValue fieldFormulaValue = baseRecord.GetField(_entityMetadata.PrimaryIdAttribute);
@@ -175,12 +188,17 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default)
         {
             if (recordsToRemove == null)
+            {
                 throw new ArgumentNullException(nameof(recordsToRemove));
+            }
+
             if (!recordsToRemove.All(rtr => rtr is RecordValue))
+            {
                 throw new ArgumentException($"All elements to be deleted must be of type RecordValue");
+            }
 
             foreach (var record in recordsToRemove.OfType<RecordValue>())
             {
@@ -196,7 +214,9 @@ namespace Microsoft.PowerFx.Dataverse
                     DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
 
                     if (response.HasError)
+                    {
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
+                    }
                 }
             }
 

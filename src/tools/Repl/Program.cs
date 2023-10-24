@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -12,9 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.OpenApi.Models;
-using Microsoft.PowerFx.Connectors;
-using Microsoft.PowerFx.Connectors.Execution;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Repl.Services;
@@ -22,7 +18,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
-using Repl;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
@@ -92,7 +87,6 @@ namespace Microsoft.PowerFx
             }
 
             config.SymbolTable.EnableMutationFunctions();
-
             config.SymbolTable.EnableAIFunctions();
 
             config.EnableSetFunction();
@@ -107,13 +101,13 @@ namespace Microsoft.PowerFx
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
             config.AddFunction(new DVAddTableFunction());
-            config.AddFunction(new DVEnumeratePlugIns());
-            config.AddFunction(new DVAddPlugIn());
+            config.AddFunction(new DVEnumeratePlugInsFunction());
+            config.AddFunction(new DVAddPlugInFunction());
+            config.AddFunction(new DVExecutePlugInFunction());
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
             config.AddOptionSet(optionsSet);
-
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
 
             return new RecalcEngine(config);
@@ -223,253 +217,17 @@ namespace Microsoft.PowerFx
             }
         }
 
-        private class DVEnumeratePlugIns : ReflectionFunction
+        public class DVExecutePlugInFunction : ReflectionFunction
         {
-            public DVEnumeratePlugIns()
-                : base("DVEnumeratePlugIns", TableType.Empty())
+            public DVExecutePlugInFunction()
+                : base("DVExecutePlugIn", RecordType.Empty(), FormulaType.String, RecordType.Empty())
             {
+                ConfigType = typeof(IDataversePlugInContext);
             }
 
-            public async Task<FormulaValue> Execute(CancellationToken cancellationToken)
+            public async Task<FormulaValue> Execute(IDataversePlugInContext context, StringValue name, RecordValue arguments, CancellationToken cancellationToken = default)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                IDataverseReader dvex = _repl.InnerServices.GetService<IDataverseReader>();
-
-                if (dvex == null)
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"No active Dataverse connection. Use ""DVConnect()"" to connector to Dataverse." });
-                }
-
-                QueryExpression query = new QueryExpression("customapi") { ColumnSet = new ColumnSet(true) };
-                DataverseResponse<EntityCollection> list = await dvex.RetrieveMultipleAsync(query).ConfigureAwait(false);
-
-                if (list.HasError)
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Error: {list.Error}" });
-                }
-
-                RecordType recordType = RecordType.Empty().Add(new NamedFormulaType("Value", FormulaType.String));
-
-                if (list.Response.Entities.Count == 0)
-                {
-                    return TableValue.NewTable(recordType);
-                }
-
-                List<string> pluginNames = list.Response.Entities.Select(entity => entity.Attributes["name"].ToString()).OrderBy(x => x).ToList();
-
-                return TableValue.NewTable(recordType, pluginNames.Select(name => RecordValue.NewRecordFromFields(new NamedValue("Value", FormulaValue.New(name)))));
-            }
-        }
-
-        private class DVAddPlugIn : ReflectionFunction
-        {
-            public DVAddPlugIn()
-                : base("DVAddPlugIn", FormulaType.String, FormulaType.String, FormulaType.String)
-            {
-            }
-
-            public async Task<FormulaValue> Execute(StringValue @namespace, StringValue pluginName, CancellationToken cancellationToken)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrEmpty(@namespace.Value))
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Need a valid namespace" });
-                }
-
-                if (string.IsNullOrEmpty(pluginName.Value))
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Need a valid plugin name" });
-                }
-
-                IDataverseReader dvex = _repl.InnerServices.GetService<IDataverseReader>();
-
-                if (dvex == null)
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"No active Dataverse connection. Use ""DVConnect()"" to connector to Dataverse." });
-                }
-
-                CustomApiSignature plugin = await dvex.GetDataverseObjectAsync<CustomApiSignature>(pluginName.Value, CancellationToken.None).ConfigureAwait(false);
-
-                if (plugin == null)
-                {
-                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"There is no plugin with that name." });
-                }
-
-                // Generate swagger file from plugin
-                OpenApiDocument swagger = plugin.GetSwagger();
-
-//#if DEBUG
-//                using var sw = new StringWriter();
-//                swagger.SerializeAsV2(new OpenApiJsonWriter(sw));
-//                sw.Flush();
-//                string swaggerString = sw.ToString();
-
-//                Console.WriteLine(swaggerString);
-//                Console.WriteLine();
-//#endif
-
-                ConnectorFunction plugInFunction = _repl.Engine.Config.AddPlugIn(@namespace.Value, swagger).First();
-
-                //plugInFunction.InvokeAsync()
-
-                if (!plugInFunction.IsSupported)
-                {
-                    Console.WriteLine($"PlugIn added but not supported: {plugInFunction.NotSupportedReason}");
-                }
-                
-                string func = $"{plugInFunction.Namespace}.{plugInFunction.Name}({string.Join(", ", plugInFunction.RequiredParameters.Select(rp => $"{rp.Name}:{rp.FormulaType}"))}";
-                if (plugInFunction.OptionalParameters.Any())
-                {
-                    if (plugInFunction.RequiredParameters.Any())
-                    {
-                        func += ", ";
-                    }
-
-                    func += $"{{ {string.Join(", ", plugInFunction.OptionalParameters.Select(op => $"{op.Name}:{op.FormulaType}"))} }}";
-                }
-                func += ")";
-
-                BasicServiceProvider serviceProvider = _repl.InnerServices as BasicServiceProvider;
-                var brcc = serviceProvider.GetService<BaseRuntimeConnectorContext>();
-
-                if (brcc == null)
-                {
-                    PlugInContext pluginContext = new PlugInContext(serviceProvider.GetService<IDataverseExecute>());
-                    pluginContext.AddPlugIn(plugInFunction, plugin);
-
-                    serviceProvider.AddService<BaseRuntimeConnectorContext>(pluginContext);
-                }
-                else if (brcc is PlugInContext pic)
-                {
-                    if (pic.GetInvoker(plugInFunction) is PlugInInvoker pii)
-                    {
-                        throw new ApplicationException($"Plugin invoker already defined with function {pii.Function.Namespace}.{pii.Function.Name}");
-                    }
-
-                    pic.AddPlugIn(plugInFunction, plugin);
-                }
-                else
-                {
-                    throw new ApplicationException("Unexpected BaseRuntimeConnectorContext");
-                }
-
-                // We return the usage of the function as a string
-                return FormulaValue.New($"Usage: {func}");                
-            }
-        }
-
-        private class PlugInContext : BaseRuntimeConnectorContext
-        {
-            public PlugInContext(IDataverseExecute dvService)
-            {
-                _dvService = dvService;
-            }
-
-            public override TimeZoneInfo TimeZoneInfo => TimeZoneInfo.Utc;
-
-            internal readonly IDataverseExecute _dvService;
-            private readonly Dictionary<ConnectorFunction, PlugInInvoker> _plugins = new Dictionary<ConnectorFunction, PlugInInvoker>(new ConnectorFunctionComparer());
-
-            public void AddPlugIn(ConnectorFunction function, CustomApiSignature plugin)
-            {
-                PlugInInvoker invoker = new PlugInInvoker(function, this, plugin, _dvService);
-                _plugins.Add(function, invoker);
-            }
-
-            // Custom invoker here
-            public override FunctionInvoker GetInvoker(ConnectorFunction function, bool returnRawResults = false)
-            {
-                if (!_plugins.TryGetValue(function, out PlugInInvoker invoker))
-                {
-                    return null;
-                }
-
-                return invoker;
-            }
-        }
-
-        private class PlugInInvoker : FunctionInvoker
-        {
-            private readonly CustomApiSignature _pluginSignature;
-            private readonly IDataverseExecute _dvService;
-
-            public PlugInInvoker(ConnectorFunction function, BaseRuntimeConnectorContext runtimeContext, CustomApiSignature pluginSignature, IDataverseExecute dvService) 
-                : base(function, runtimeContext)
-            {
-                _pluginSignature = pluginSignature;
-                _dvService = dvService;
-            }
-
-            public override async Task<FormulaValue> SendAsync(InvokerParameters invokerElements, CancellationToken cancellationToken)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                RecordType inputType = RecordType.Empty();
-
-                // We only look at optional parameters as this is how instant plugin parameters are used (all optional)
-                foreach (ConnectorParameter optionalParameter in Function.OptionalParameters)
-                {
-                    inputType = inputType.Add(optionalParameter.Name, optionalParameter.FormulaType);
-                }
-
-                // Read incoming data as a record to extract all fields
-                RecordValue record = FormulaValueJSON.FromJson(invokerElements.Body, inputType) as RecordValue;
-
-                OrganizationRequest instantActionRequest = new OrganizationRequest(_pluginSignature.Api.uniquename);
-                ParameterCollection parameters = new ParameterCollection();
-                
-                foreach (CustomApiRequestParam carp in _pluginSignature.Inputs)
-                {
-                    FormulaValue val = record.GetField(carp.name);
-
-                    if (val != null && val is not BlankValue)
-                    {                        
-                        parameters.Add(carp.uniquename, val.ToCustomApiObject(carp));
-                    }
-                }
-
-                instantActionRequest.Parameters = parameters;
-
-                // Call plugin now
-                DataverseResponse<OrganizationResponse> response = await _dvService.ExecuteAsync(instantActionRequest, cancellationToken).ConfigureAwait(false);
-                response.ThrowEvalExOnError();
-
-                ParameterCollection output = response.Response.Results;
-
-                // We don't the full DataverseConnector here so I'm passing null for now
-                return DVHelpers.Outputs2Fx(output, _pluginSignature.Outputs, null);
-            }
-        }
-
-
-        private class ConnectorFunctionComparer : IEqualityComparer<ConnectorFunction>
-        {
-            public bool Equals([AllowNull] ConnectorFunction x, [AllowNull] ConnectorFunction y)
-            {
-                if (x == null && y == null)
-                {
-                    return true;
-                }
-
-                if (x == null || y == null)
-                {
-                    return false;
-                }
-
-                return x.Namespace == y.Namespace && x.Name == y.Name;
-            }
-
-            public int GetHashCode([DisallowNull] ConnectorFunction obj)
-            {
-                unchecked
-                {
-                    int hash = 89;
-                    hash = hash * 31 + obj.Name.GetHashCode();
-                    hash = hash * 31 + obj.Namespace.GetHashCode();
-                    return hash;
-                }
+                return await context.ExecutePlugInAsync(new RuntimeConfig(), name.Value, arguments, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -499,6 +257,7 @@ namespace Microsoft.PowerFx
                 var innerServices = new BasicServiceProvider();
                 innerServices.AddService<IDataverseExecute>(clientExecute);
                 innerServices.AddService<IDataverseReader>(clientExecute);
+                innerServices.AddService<IDataversePlugInContext>(clientExecute);
                 _repl.InnerServices = innerServices;
 
                 return BooleanValue.New(true);

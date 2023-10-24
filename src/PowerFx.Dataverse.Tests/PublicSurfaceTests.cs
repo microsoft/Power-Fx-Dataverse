@@ -28,42 +28,55 @@ namespace Microsoft.PowerFx.Tests
 
             var allowed = new HashSet<string>()
             {
-                "Microsoft.PowerFx.Dataverse.EngineExtensions",
                 "Microsoft.PowerFx.Dataverse.AttributeUtilityExtensions",
                 "Microsoft.PowerFx.Dataverse.ConfigExtensions",
-
                 "Microsoft.PowerFx.Dataverse.DataverseConnection",                
-                "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
-                "Microsoft.PowerFx.Dataverse.MetadataExtensions",
                 "Microsoft.PowerFx.Dataverse.DataverseEntityCache",
+                "Microsoft.PowerFx.Dataverse.EngineExtensions",
                 "Microsoft.PowerFx.Dataverse.IDataverseEntityCache",
                 "Microsoft.PowerFx.Dataverse.IDataverseEntityCacheCleaner",
+                "Microsoft.PowerFx.Dataverse.MetadataExtensions",
+                "Microsoft.PowerFx.Dataverse.XrmMetadataProvider",
 
                 // Policies 
+                "Microsoft.PowerFx.Dataverse.MultiOrgPolicy",
                 "Microsoft.PowerFx.Dataverse.Policy",
                 "Microsoft.PowerFx.Dataverse.SingleOrgPolicy",
-                "Microsoft.PowerFx.Dataverse.MultiOrgPolicy",
 
                 // Optional services / Mocks.
-                "Microsoft.PowerFx.Dataverse.DataverseService",
-                "Microsoft.PowerFx.Dataverse.DataverseResponse`1",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse",
-                "Microsoft.PowerFx.Dataverse.IDataverseServices",
+                "Microsoft.PowerFx.Dataverse.DataverseResponse`1",
+                "Microsoft.PowerFx.Dataverse.DataverseService",
                 "Microsoft.PowerFx.Dataverse.IDataverseCreator",
-                "Microsoft.PowerFx.Dataverse.IDataverseReader",
-                "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
                 "Microsoft.PowerFx.Dataverse.IDataverseDeleter",
-                "Microsoft.PowerFx.Dataverse.IDataverseRefresh",
                 "Microsoft.PowerFx.Dataverse.IDataverseExecute",
+                "Microsoft.PowerFx.Dataverse.IDataverseReader",
+                "Microsoft.PowerFx.Dataverse.IDataverseRefresh",
+                "Microsoft.PowerFx.Dataverse.IDataverseServices",
+                "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
 
                 // Functions
-                "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
-                "Microsoft.PowerFx.Dataverse.AIReplyFunction",
-                "Microsoft.PowerFx.Dataverse.AISentimentFunction",
+                "Microsoft.PowerFx.Dataverse.DVEnumeratePlugInsFunction",
+                "Microsoft.PowerFx.Dataverse.DVAddPlugInFunction",
                 "Microsoft.PowerFx.Dataverse.AITranslateFunction",
-                "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
+                "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
+                "Microsoft.PowerFx.Dataverse.AISummarizeFunction",
+                "Microsoft.PowerFx.Dataverse.AISentimentFunction",
+                "Microsoft.PowerFx.Dataverse.AIReplyFunction",
                 "Microsoft.PowerFx.Dataverse.AIExtractFunction",
-                "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction"
+                "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
+
+                // Plugins
+                "Microsoft.PowerFx.Dataverse.CustomApiEntity",
+                "Microsoft.PowerFx.Dataverse.CustomApiParamType",
+                "Microsoft.PowerFx.Dataverse.CustomApiRequestParam",
+                "Microsoft.PowerFx.Dataverse.CustomApiResponse",
+                "Microsoft.PowerFx.Dataverse.CustomApiSignature",
+                "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
+                "Microsoft.PowerFx.Dataverse.IDataversePlugInContext",
+                "Microsoft.PowerFx.Dataverse.IParameterType",
+                "Microsoft.PowerFx.Dataverse.PlugInInvoker",
+                "Microsoft.PowerFx.Dataverse.PlugInRuntimeContext",
             };
 
             Verify(allowed, asm);
@@ -96,7 +109,7 @@ namespace Microsoft.PowerFx.Tests
             Verify(allowed, asm);
         }
 
-        static void Verify(HashSet<string> allowed, Assembly asm)
+        private static void Verify(HashSet<string> allowed, Assembly asm)
         {
             var sb = new StringBuilder();
             var count = 0;

@@ -1,8 +1,8 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=0.2.6-preview.20230629-1008
-set pfxRoot=C:\Data\Power-Fx
+set pfxVer=1.2.0-build.20231019-1004
+set pfxRoot=C:\Data\2\Power-Fx
 set pfxConfig=Debug
 
 set pfxSource=%pfxRoot%\src\libraries
