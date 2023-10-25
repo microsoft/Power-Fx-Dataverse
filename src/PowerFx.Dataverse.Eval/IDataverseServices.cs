@@ -13,7 +13,7 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter, IDataversePlugInContext
+    public interface IDataverseServices : IDataverseCreator, IDataverseReader, IDataverseUpdater, IDataverseDeleter
     {
     }
 
@@ -53,7 +53,9 @@ namespace Microsoft.PowerFx.Dataverse
 
     public interface IDataversePlugInContext : IDataverseReader, IDataverseExecute
     {
-        FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature);
+        Task<CustomApiSignature> GetPlugInAsync(string name, CancellationToken cancellationToken = default);
+
+        void AddPlugIn(CustomApiSignature signature);
 
         Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default);
     }

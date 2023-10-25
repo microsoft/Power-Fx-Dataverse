@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -224,23 +223,6 @@ namespace Microsoft.PowerFx.Dataverse
                     
                 }
             }
-        }
-
-        public FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature)
-        {
-            return _innerService.AddPlugIn(@namespace, signature);
-        }
-
-        public async Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return await _innerService.ExecutePlugInAsync(config, name, arguments).ConfigureAwait(false);
-        }
-
-        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return _innerService.ExecuteAsync(request, cancellationToken);
         }
     }
 }

@@ -1239,20 +1239,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void Refresh(string logicalTableName)
         {
         }
-
-        public FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -56,8 +56,6 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.IDataverseUpdater",
 
                 // Functions
-                "Microsoft.PowerFx.Dataverse.DVEnumeratePlugInsFunction",
-                "Microsoft.PowerFx.Dataverse.DVAddPlugInFunction",
                 "Microsoft.PowerFx.Dataverse.AITranslateFunction",
                 "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
                 "Microsoft.PowerFx.Dataverse.AISummarizeFunction",

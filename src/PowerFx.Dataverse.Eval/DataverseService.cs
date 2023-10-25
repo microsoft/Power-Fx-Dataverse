@@ -19,11 +19,11 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseService : IDataverseServices, IDataverseRefresh, IDataverseExecute
-    {        
+    public class DataverseService : IDataverseServices, IDataverseRefresh, IDataverseExecute, IDataversePlugInContext
+    {
         private IOrganizationService _organizationService { get; }
 
-        private Dictionary<string, (string, CustomApiSignature)> _plugIns { get; } = new Dictionary<string, (string, CustomApiSignature)>();
+        private Dictionary<string, CustomApiSignature> _plugIns { get; } = new Dictionary<string, CustomApiSignature>();
 
         public DataverseService(IOrganizationService service)
         {
@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();            
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => { this._organizationService.Delete(entityName, id); return true; }, $"Delete '{entityName}':{id}");
         }
 
@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public void Refresh(string logicalTableName)
-        {            
+        {
         }
 
         public virtual async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
@@ -86,18 +86,22 @@ namespace Microsoft.PowerFx.Dataverse
                 $"Execute '{request.RequestName}'");
         }
 
-        public FormulaValue AddPlugIn(string @namespace, CustomApiSignature signature)
+        public async Task<CustomApiSignature> GetPlugInAsync(string name, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return await this.GetDataverseObjectAsync<CustomApiSignature>(name, cancellationToken).ConfigureAwait(false);
+        }
+
+        public void AddPlugIn(CustomApiSignature signature)
         {
             string key = signature.Api.uniquename;
 
             if (_plugIns.ContainsKey(key))
             {
-                FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Plugin already declared with the same name." });
+                throw new ArgumentException(@"Plugin already declared with the same name.");
             }
 
-            _plugIns.Add(key, (@namespace, signature));
-
-            return FormulaValue.New($"Loaded {signature.Api.uniquename} with success.");
+            _plugIns.Add(key, signature);
         }
 
         public async Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
@@ -109,10 +113,10 @@ namespace Microsoft.PowerFx.Dataverse
                 FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} not found." });
             }
 
-            (string @namespace, CustomApiSignature plugin) = _plugIns[name];
+            CustomApiSignature plugin = _plugIns[name];
             OpenApiDocument swagger = plugin.GetSwagger();
 
-            IEnumerable<ConnectorFunction> functions = OpenApiParser.GetFunctions(new ConnectorSettings(@namespace) { Compatibility = ConnectorCompatibility.PowerAppsCompatibility }, swagger);
+            IEnumerable<ConnectorFunction> functions = OpenApiParser.GetFunctions(new ConnectorSettings("__plugin__") { Compatibility = ConnectorCompatibility.PowerAppsCompatibility }, swagger);
 
             if (functions == null || !functions.Any())
             {
@@ -127,7 +131,7 @@ namespace Microsoft.PowerFx.Dataverse
             ConnectorFunction function = functions.First();
             PlugInRuntimeContext runtimeContext = new PlugInRuntimeContext(config, this, plugin);
 
-            return await function.InvokeAsync(new FormulaValue[] { arguments }, runtimeContext, cancellationToken).ConfigureAwait(false);
+            return await function.InvokeAsync(arguments.Fields.Select(field => field.Value).ToArray(), runtimeContext, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -137,11 +141,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal IDataversePlugInContext _pluginContext { get; }
 
+        internal DataverseConnection _dvConnection { get; }
+
         public PlugInRuntimeContext(RuntimeConfig runtimeConfig, IDataversePlugInContext plugInContext, CustomApiSignature plugin)
             : base(runtimeConfig)
         {
             _plugin = plugin;
             _pluginContext = plugInContext;
+            _dvConnection = runtimeConfig.GetService<DataverseConnection>();
         }
 
         public override FunctionInvoker GetInvoker(ConnectorFunction function, bool returnsRawResult = false)
@@ -154,34 +161,21 @@ namespace Microsoft.PowerFx.Dataverse
     {
         public new PlugInRuntimeContext Context => (PlugInRuntimeContext)base.Context;
 
-        public PlugInInvoker(ConnectorFunction function, PlugInRuntimeContext runtimeContext) 
+        public PlugInInvoker(ConnectorFunction function, PlugInRuntimeContext runtimeContext)
             : base(function, runtimeContext)
-        {            
+        {
         }
 
-        public override async Task<FormulaValue> SendAsync(InvokerParameters invokerElements, CancellationToken cancellationToken)
+        public override async Task<FormulaValue> SendAsync(InvokerParameters invokerParameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            RecordType inputType = RecordType.Empty();
-
-            // We only look at optional parameters as this is how instant plugin parameters are used (all optional)
-            foreach (ConnectorParameter optionalParameter in Function.OptionalParameters)
-            {
-                inputType = inputType.Add(optionalParameter.Name, optionalParameter.FormulaType);
-            }
-
-            // Read incoming data as a record to extract all fields
-            RecordValue record = FormulaValueJSON.FromJson(invokerElements.Body, inputType) as RecordValue;
-
             OrganizationRequest instantActionRequest = new OrganizationRequest(Context._plugin.Api.uniquename);
             ParameterCollection parameters = new ParameterCollection();
-
+                        
             foreach (CustomApiRequestParam carp in Context._plugin.Inputs)
             {
-                FormulaValue val = record.GetField(carp.name);
-
-                if (val != null && val is not BlankValue)
+                if (TryGetParameter(carp.name, invokerParameters, out FormulaValue val))
                 {
                     parameters.Add(carp.uniquename, val.ToCustomApiObject(carp));
                 }
@@ -194,9 +188,25 @@ namespace Microsoft.PowerFx.Dataverse
             response.ThrowEvalExOnError();
 
             ParameterCollection output = response.Response.Results;
+            
+            return DataverseEvalHelpers.Outputs2Fx(output, Context._plugin.Outputs, Context._dvConnection);
+        }
 
-            // We don't the full DataverseConnector here so I'm passing null for now
-            return DataverseEvalHelpers.Outputs2Fx(output, Context._plugin.Outputs, null);
+        public bool TryGetParameter(string name, InvokerParameters ip, out FormulaValue val)
+        {
+            InvokerParameter param = ip.QueryParameters.FirstOrDefault(ip => ip.Name == name)
+                                  ?? ip.PathParameters.FirstOrDefault(ip => ip.Name == name)
+                                  ?? ip.HeaderParameters.FirstOrDefault(ip => ip.Name == name)
+                                  ?? ip.BodyParameters.FirstOrDefault(ip => ip.Name == name);
+
+            if (param == null)
+            {
+                val = null;
+                return false;
+            }
+
+            val = param.Value;
+            return val is not BlankValue;
         }
     }
 }

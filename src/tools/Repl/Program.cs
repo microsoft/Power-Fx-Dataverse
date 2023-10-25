@@ -217,6 +217,74 @@ namespace Microsoft.PowerFx
             }
         }
 
+        public class DVAddPlugInFunction : ReflectionFunction
+        {
+            public DVAddPlugInFunction()
+                : base("DVAddPlugIn", FormulaType.String, FormulaType.String)
+            {
+                ConfigType = typeof(IDataversePlugInContext);
+            }
+
+            public async Task<FormulaValue> Execute(IDataversePlugInContext context, StringValue pluginName, CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                if (string.IsNullOrEmpty(pluginName.Value))
+                {
+                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"Need a valid plugin name" });
+                }
+
+                CustomApiSignature plugin = await context.GetPlugInAsync(pluginName.Value, cancellationToken).ConfigureAwait(false);
+
+                if (plugin == null)
+                {
+                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"There is no plugin with that name." });
+                }
+
+                context.AddPlugIn(plugin);
+
+                return FormulaValue.New($"Successfully added plugin {plugin.Api.uniquename}");
+            }
+        }
+
+        public class DVEnumeratePlugInsFunction : ReflectionFunction
+        {
+            public DVEnumeratePlugInsFunction()
+                : base("DVEnumeratePlugIns", TableType.Empty())
+            {
+                ConfigType = typeof(IDataverseReader);
+            }
+
+            public async Task<FormulaValue> Execute(IDataverseReader dvReader, CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (dvReader == null)
+                {
+                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = @"No active Dataverse connection. Use ""DVConnect()"" to connector to Dataverse." });
+                }
+
+                QueryExpression query = new QueryExpression("customapi") { ColumnSet = new ColumnSet(true) };
+                DataverseResponse<EntityCollection> list = await dvReader.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
+
+                if (list.HasError)
+                {
+                    return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Error: {list.Error}" });
+                }
+
+                RecordType recordType = RecordType.Empty().Add(new NamedFormulaType("Value", FormulaType.String));
+
+                if (list.Response.Entities.Count == 0)
+                {
+                    return TableValue.NewTable(recordType);
+                }
+
+                List<string> pluginNames = list.Response.Entities.Select(entity => entity.Attributes["name"].ToString()).OrderBy(x => x).ToList();
+
+                return TableValue.NewTable(recordType, pluginNames.Select(name => RecordValue.NewRecordFromFields(new NamedValue("Value", FormulaValue.New(name)))));
+            }
+        }
+
         public class DVExecutePlugInFunction : ReflectionFunction
         {
             public DVExecutePlugInFunction()

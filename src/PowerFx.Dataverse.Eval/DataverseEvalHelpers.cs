@@ -51,6 +51,20 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
+        public static FormulaType ToPrimitiveType(this CustomApiParamType typeCode)
+        {
+            return typeCode switch
+            {
+                CustomApiParamType.Float => FormulaType.Number,
+                CustomApiParamType.Integer or CustomApiParamType.Decimal => FormulaType.Decimal,
+                CustomApiParamType.Bool => FormulaType.Boolean,
+                CustomApiParamType.String => FormulaType.String,
+                CustomApiParamType.DateTime => FormulaType.DateTime,
+                CustomApiParamType.Guid => FormulaType.Guid,
+                _ => throw new NotSupportedException($"Unsupported param type: {typeCode}"),
+            };
+        }
+
         public static OpenApiDocument GetSwagger(this CustomApiSignature plugin)
         {
             return new OpenApiDocument
@@ -78,29 +92,44 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 Tags = new List<OpenApiTag>() { new OpenApiTag() { Name = plugin.Api.uniquename } },
                                 Summary = $"Invoke actionImport {plugin.Api.uniquename}",
-                                OperationId = plugin.Api.uniquename, // $$$ should probably be name
-                                RequestBody = new OpenApiRequestBody()
-                                {
-                                    Required = true,
-                                    Description = "Action parameters",
-                                    Content = new Dictionary<string, OpenApiMediaType>()
+                                OperationId = plugin.Api.uniquename,
+                                Parameters = plugin.Inputs.Where(carp => !carp.isoptional).Select((CustomApiRequestParam param) 
+                                    => new OpenApiParameter()
                                     {
-                                        ["application/json"] = new OpenApiMediaType()
+                                        Name = param.name,
+                                        In = ParameterLocation.Query,
+                                        Required = true,
+                                        Description = param.description,
+                                        Schema = new OpenApiSchema()
                                         {
-                                            Schema = new OpenApiSchema()
-                                            {
-                                                Type = "object",
-                                                Properties = plugin.Inputs.Select((CustomApiRequestParam param)
-                                                    => new KeyValuePair<string, OpenApiSchema>(param.name, new OpenApiSchema()
-                                                    {
-                                                        Description = param.description,
-                                                        Type = ToOpenApiSchemaType(param.type),
-                                                        Format = ToOpenApiSchemaFormat(param.type),
-                                                    })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                                            }
+                                            Type = ToOpenApiSchemaType(param.type),
+                                            Format = ToOpenApiSchemaFormat(param.type)
                                         }
-                                    },
-                                },
+                                    }).ToList(),
+                                RequestBody = plugin.Inputs.Where(carp => carp.isoptional).Any() 
+                                    ? new OpenApiRequestBody()
+                                    {
+                                        Required = true,
+                                        Description = "Action parameters",
+                                        Content = new Dictionary<string, OpenApiMediaType>()
+                                        {
+                                            ["application/json"] = new OpenApiMediaType()
+                                            {
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "object",
+                                                    Properties = plugin.Inputs.Where(carp => carp.isoptional).Select((CustomApiRequestParam param)
+                                                        => new KeyValuePair<string, OpenApiSchema>(param.name, new OpenApiSchema()
+                                                        {
+                                                            Description = param.description,
+                                                            Type = ToOpenApiSchemaType(param.type),                                                       
+                                                            Format = ToOpenApiSchemaFormat(param.type),
+                                                        })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                                }
+                                            }
+                                        },
+                                    }
+                                    : null,
                                 Extensions = new Dictionary<string, IOpenApiExtension>()
                                 {
                                     ["x-ms-dynamics-metadata"] = new OpenApiString("actionImport")
@@ -133,6 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             };
         }
+
         public static FormulaValue Outputs2Fx(ParameterCollection outputs, CustomApiResponse[] outputMetadata, DataverseConnection dataverseConnection)
         {
             if (outputMetadata.Length == 0)

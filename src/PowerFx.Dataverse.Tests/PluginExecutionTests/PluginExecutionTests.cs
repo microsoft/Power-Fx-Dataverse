@@ -2640,31 +2640,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
             Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
+        }        
+
+        [Theory]
+        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
+        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
+        [InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
+        public void UDF(string script, string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine(new PowerFxConfig());
+            engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
+
+            var check = engine.Check(expr, symbolTable: dv.Symbols);
+            var result = check.GetEvaluator().Eval(dv.SymbolValues);
+
+            Assert.IsNotType<ErrorValue>(result);
         }
-
-        // Removing test as we can't call engine.AddUserDefinedFunction anymore
-
-        //[Theory]
-        //[InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
-        //[InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
-        //[InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
-        //public void UDF(string script, string expr)
-        //{
-        //    // create table "local"
-        //    var logicalName = "local";
-        //    var displayName = "t1";
-
-        //    (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
-        //    dv.AddTable(displayName, logicalName);
-
-        //    var engine = new RecalcEngine(new PowerFxConfig());
-        //    engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
-
-        //    var check = engine.Check(expr, symbolTable: dv.Symbols);
-        //    var result = check.GetEvaluator().Eval(dv.SymbolValues);
-
-        //    Assert.IsNotType<ErrorValue>(result);
-        //}
 
         [Theory]
         [InlineData("Patch(t1, First(t1), {allid:GUID(\"00000000-0000-0000-0000-000000000001\")})")]
