@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     {
         // https://docs.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect                        
         // $"Url=https://aurorabapenv9984a.crm10.dynamics.com/; Username={username}; Password={pwd}; authtype=OAuth";
-        private static readonly string cx = $"Url=https://aurorabapenv9984a.crm10.dynamics.com/; Username=aurorauser09@capintegration01.onmicrosoft.com; Password=9wS29#&Wr; authtype=OAuth";
+        private static readonly string cx = null;
 
         [SkippableFact]
         public async Task PlugInExecutionTest()
@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             OpenApiDocument msnWeatherDoc = ReadSwagger(@"Swagger\MSNWeather.json");
             using var httpClient = new HttpClient();           
-            using var client = new PowerPlatformConnectorClient("https://tip1002-002.azure-apihub.net", "b29c41cf-173b-e469-830b-4f00163d296b", "b17aa2032f6742dd971437fd4295040b", () => "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IjlHbW55RlBraGMzaE91UjIybXZTdmduTG83WSIsImtpZCI6IjlHbW55RlBraGMzaE91UjIybXZTdmduTG83WSJ9.eyJhdWQiOiJodHRwczovL2FwaWh1Yi5henVyZS5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC85MWJlZTNkOS0wYzE1LTRmMTctODYyNC1jOTJiYjhiMzZlYWQvIiwiaWF0IjoxNjk4MzMwNTYwLCJuYmYiOjE2OTgzMzA1NjAsImV4cCI6MTY5ODMzNTg2MiwiYWNyIjoiMSIsImFpbyI6IkFUUUF5LzhVQUFBQUtucHZ1YWNjbWQ3Kzl4NmZRV29QcS9xMXQ1N2lReThiS0d4WXM5R0hHcHBxUkh3SWoySWx4S3FLQ3B5WVJSS1AiLCJhbXIiOlsicHdkIl0sImFwcGlkIjoiYThmN2E2NWMtZjViYS00ODU5LWIyZDYtZGY3NzJjMjY0ZTlkIiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJ1c2VyMDkiLCJnaXZlbl9uYW1lIjoiYXVyb3JhIiwiaXBhZGRyIjoiOTAuMTA0LjczLjIwMyIsIm5hbWUiOiJhdXJvcmF1c2VyMDkiLCJvaWQiOiIzMmJhMTFiZC1mZjE1LTQ2ZjctYmQzMy02YjQ4MWU1ZjVjN2UiLCJwdWlkIjoiMTAwMzIwMDEzQjlCODhDNCIsInJoIjoiMC5BVzhBMmVPLWtSVU1GMC1HSk1rcnVMTnVyVjg4QmY2U05oUlBydkx1TlB3SUhLNXZBTEUuIiwic2NwIjoiUnVudGltZS5BbGwiLCJzdWIiOiJaeWlBRHY0Yk9JXzFldWNsNko2dzd6ZHp3bFZBMmktWlYtZ25PQUtGRVQ0IiwidGlkIjoiOTFiZWUzZDktMGMxNS00ZjE3LTg2MjQtYzkyYmI4YjM2ZWFkIiwidW5pcXVlX25hbWUiOiJhdXJvcmF1c2VyMDlAY2FwaW50ZWdyYXRpb24wMS5vbm1pY3Jvc29mdC5jb20iLCJ1cG4iOiJhdXJvcmF1c2VyMDlAY2FwaW50ZWdyYXRpb24wMS5vbm1pY3Jvc29mdC5jb20iLCJ1dGkiOiJoWWZwM2p2eGFFV01TbU5vYThFY0FBIiwidmVyIjoiMS4wIn0.enQPDIEf3FvKCDcPLZmyBexF5Gb9riNtZppbVjIyKYiPuuTOa5cnMoPK2LbCMR5qWucQDR2t-ELb2zl7hHtahkLvzH-OhTJaEfeWOJDVwDphkqrlJqxp2cI1LBk8RbKSAtpSCMG0evzegvqOvpe1ekwFajkhTKR49PAelQqZ1lh_yYI3kuhq4Mg9YH5_k5RGZFjdR5aeDULU94RrxrMihkD5q0s0ykb3BHVHPXkRfWf6MnsoN1snkLnGFLOBK4d1H40Ybr-hbxs1f2OjavqpqBrlhgk7ECi3DSSjMaJHligP_BuJEDK-w_rF0D7pkuELB4wuBvyQpio1HPBh6CG4yA", httpClient) { SessionId = Guid.NewGuid().ToString() };
+            using var client = new PowerPlatformConnectorClient("https://tip1002-002.azure-apihub.net", "b29c41cf-173b-e469-830b-4f00163d296b", "b17aa2032f6742dd971437fd4295040b", () => "eyJ0eXAiO...", httpClient) { SessionId = Guid.NewGuid().ToString() };
 
             PowerFxConfig pfxConfig = new PowerFxConfig();
             pfxConfig.AddActionConnector("MsnWeather", msnWeatherDoc);
