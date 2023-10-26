@@ -67,6 +67,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Swagger\MSNWeather.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Docs\DataverseFormulaColumns.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

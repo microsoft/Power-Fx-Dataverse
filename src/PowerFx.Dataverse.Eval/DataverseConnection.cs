@@ -86,6 +86,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         IDataverseServices IConnectionValueContext.Services => _dvServices;
 
+        public DataverseService DataverseService => _dvServices as DataverseService;
+
         public Policy Policy => _policy;
 
         /// <summary>

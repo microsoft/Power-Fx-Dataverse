@@ -81,9 +81,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public virtual async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
         {
-            return DataverseExtensions.DataverseCall(
-                () => _organizationService.Execute(request),
-                $"Execute '{request.RequestName}'");
+            return DataverseExtensions.DataverseCall(() => _organizationService.Execute(request), $"Execute '{request.RequestName}'");
         }
 
         public async Task<CustomApiSignature> GetPlugInAsync(string name, CancellationToken cancellationToken = default)
@@ -94,14 +92,24 @@ namespace Microsoft.PowerFx.Dataverse
 
         public void AddPlugIn(CustomApiSignature signature)
         {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            ValidateHasPlugInOrThrow(signature);
+
+            _plugIns.Add(signature.Api.uniquename, signature);
+        }
+
+        public void ValidateHasPlugInOrThrow(CustomApiSignature signature)
+        {
             string key = signature.Api.uniquename;
 
             if (_plugIns.ContainsKey(key))
             {
                 throw new ArgumentException(@"Plugin already declared with the same name.");
             }
-
-            _plugIns.Add(key, signature);
         }
 
         public async Task<FormulaValue> ExecutePlugInAsync(RuntimeConfig config, string name, RecordValue arguments, CancellationToken cancellationToken = default)
@@ -114,66 +122,93 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             CustomApiSignature plugin = _plugIns[name];
-            OpenApiDocument swagger = plugin.GetSwagger();
+            OpenApiDocument swagger = GetSwagger(plugin);
+            ConnectorFunction function = GetPlugInFunction("__plugin__", swagger, name, plugin.Api.uniquename);
+            PlugInRuntimeContext runtimeContext = new PlugInRuntimeContext(config, this);
+            runtimeContext.AddPlugIn(plugin);
 
-            IEnumerable<ConnectorFunction> functions = OpenApiParser.GetFunctions(new ConnectorSettings("__plugin__") { Compatibility = ConnectorCompatibility.PowerAppsCompatibility }, swagger);
+            return await function.InvokeAsync(arguments.Fields.Select(field => field.Value).ToArray(), runtimeContext, cancellationToken).ConfigureAwait(false);
+        }
+
+        public static OpenApiDocument GetSwagger(CustomApiSignature plugIn) => plugIn.GetSwagger();
+
+        public static ConnectorFunction GetPlugInFunction(string @namespace, OpenApiDocument swagger, string name, string uniqueName)
+        {
+            IEnumerable<ConnectorFunction> functions = OpenApiParser.GetFunctions(new ConnectorSettings(@namespace) { Compatibility = ConnectorCompatibility.PowerAppsCompatibility }, swagger);
 
             if (functions == null || !functions.Any())
             {
-                return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} has no functions." });
+                throw new ArgumentException($"Plugin {name} has no functions.");
             }
 
             if (functions.Count() > 1)
             {
-                return FormulaValue.NewError(new ExpressionError() { Kind = ErrorKind.InvalidArgument, Severity = ErrorSeverity.Critical, Message = $"Plugin {name} has more than one function." });
+                throw new ArgumentException($"Plugin {name} has more than one function.");
             }
 
-            ConnectorFunction function = functions.First();
-            PlugInRuntimeContext runtimeContext = new PlugInRuntimeContext(config, this, plugin);
+            ConnectorFunction connectorFunction = functions.First();
+            connectorFunction.InvokerSignature = uniqueName;
 
-            return await function.InvokeAsync(arguments.Fields.Select(field => field.Value).ToArray(), runtimeContext, cancellationToken).ConfigureAwait(false);
+            return connectorFunction;
         }
     }
 
     public class PlugInRuntimeContext : BaseRuntimeConnectorContext
-    {
-        internal CustomApiSignature _plugin { get; }
+    {                
+        private readonly Dictionary<string, Func<ConnectorFunction, bool, FunctionInvoker>> _invokers = new ();
 
         internal IDataversePlugInContext _pluginContext { get; }
 
         internal DataverseConnection _dvConnection { get; }
 
-        public PlugInRuntimeContext(RuntimeConfig runtimeConfig, IDataversePlugInContext plugInContext, CustomApiSignature plugin)
+        public PlugInRuntimeContext(RuntimeConfig runtimeConfig, IDataversePlugInContext plugInContext)
             : base(runtimeConfig)
-        {
-            _plugin = plugin;
+        {            
             _pluginContext = plugInContext;
             _dvConnection = runtimeConfig.GetService<DataverseConnection>();
         }
 
-        public override FunctionInvoker GetInvoker(ConnectorFunction function, bool returnsRawResult = false)
+        public void AddHttpInvoker(string @namespace, HttpMessageInvoker client)
         {
-            return new PlugInInvoker(function, this);
+            _invokers.Add(@namespace, (function, rawResults) => new HttpFunctionInvoker(function, this, rawResults, client));
+        }
+
+        public void AddPlugIn(CustomApiSignature plugIn)
+        {            
+            _invokers.Add(plugIn.Api.uniquename, (function, rawResults) => new PlugInInvoker(function, this, plugIn));
+        }
+
+        public override FunctionInvoker GetInvoker(ConnectorFunction function, bool rawResults = false)
+        {
+            if (_invokers.TryGetValue(function.InvokerSignature, out var getInvoker))
+            {                
+                return getInvoker(function, rawResults);
+            }
+
+            throw new ArgumentException($"Plugin {function.Name} not found.");
         }
     }
 
     public class PlugInInvoker : FunctionInvoker
     {
+        internal CustomApiSignature _plugin { get; set; }
+
         public new PlugInRuntimeContext Context => (PlugInRuntimeContext)base.Context;
 
-        public PlugInInvoker(ConnectorFunction function, PlugInRuntimeContext runtimeContext)
+        public PlugInInvoker(ConnectorFunction function, PlugInRuntimeContext runtimeContext, CustomApiSignature plugIn)
             : base(function, runtimeContext)
         {
+            _plugin = plugIn;
         }
 
         public override async Task<FormulaValue> SendAsync(InvokerParameters invokerParameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            OrganizationRequest instantActionRequest = new OrganizationRequest(Context._plugin.Api.uniquename);
+            OrganizationRequest instantActionRequest = new OrganizationRequest(_plugin.Api.uniquename);
             ParameterCollection parameters = new ParameterCollection();
                         
-            foreach (CustomApiRequestParam carp in Context._plugin.Inputs)
+            foreach (CustomApiRequestParam carp in _plugin.Inputs)
             {
                 if (TryGetParameter(carp.name, invokerParameters, out FormulaValue val))
                 {
@@ -189,7 +224,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             ParameterCollection output = response.Response.Results;
             
-            return DataverseEvalHelpers.Outputs2Fx(output, Context._plugin.Outputs, Context._dvConnection);
+            return DataverseEvalHelpers.Outputs2Fx(output, _plugin.Outputs, Context._dvConnection);
         }
 
         public bool TryGetParameter(string name, InvokerParameters ip, out FormulaValue val)

@@ -92,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 Tags = new List<OpenApiTag>() { new OpenApiTag() { Name = plugin.Api.uniquename } },
                                 Summary = $"Invoke actionImport {plugin.Api.uniquename}",
-                                OperationId = plugin.Api.uniquename,
+                                OperationId = plugin.Api.name, // uniquename??
                                 Parameters = plugin.Inputs.Where(carp => !carp.isoptional).Select((CustomApiRequestParam param) 
                                     => new OpenApiParameter()
                                     {
