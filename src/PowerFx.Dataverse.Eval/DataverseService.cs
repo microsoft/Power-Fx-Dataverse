@@ -127,7 +127,11 @@ namespace Microsoft.PowerFx.Dataverse
             PlugInRuntimeContext runtimeContext = new PlugInRuntimeContext(config, this);
             runtimeContext.AddPlugIn(plugin);
 
+#if RESPECT_REQUIRED_OPTIONAL
             return await function.InvokeAsync(arguments.Fields.Select(field => field.Value).ToArray(), runtimeContext, cancellationToken).ConfigureAwait(false);
+#else
+            return await function.InvokeAsync(new FormulaValue[] { arguments }, runtimeContext, cancellationToken).ConfigureAwait(false);
+#endif
         }
 
         public static OpenApiDocument GetSwagger(CustomApiSignature plugIn) => plugIn.GetSwagger();

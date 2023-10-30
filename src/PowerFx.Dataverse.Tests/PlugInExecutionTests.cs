@@ -12,16 +12,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
+using Microsoft.OpenApi.Writers;
 using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     public class PlugInExecutionTests
     {
+        private readonly ITestOutputHelper _output;
+
+        public PlugInExecutionTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         // https://docs.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect                        
         // $"Url=https://aurorabapenv9984a.crm10.dynamics.com/; Username={username}; Password={pwd}; authtype=OAuth";
         private static readonly string cx = null;
@@ -48,6 +57,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dvService.AddPlugIn(plugIn);
             
             RuntimeConfig runtimeConfig = new RuntimeConfig().AddService(dvConnection);            
+            OpenApiDocument swagger = DataverseService.GetSwagger(plugIn);
+
+            using var sw = new StringWriter();
+            swagger.SerializeAsV2(new OpenApiJsonWriter(sw));
+            sw.Flush();
+            string swaggerString = sw.ToString();
+
+            _output.WriteLine(swaggerString);
+            _output.WriteLine("");
+
             FormulaValue result = await dvService.ExecutePlugInAsync(runtimeConfig, plugIn.Api.uniquename, FormulaValue.NewRecordFromFields(new NamedValue("x", FormulaValue.New("str")), new NamedValue("y", FormulaValue.New(29))), CancellationToken.None).ConfigureAwait(false);
 
             RecordValue record = Assert.IsAssignableFrom<RecordValue>(result);
@@ -75,7 +94,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             RuntimeConfig runtimeConfig = await new RuntimeConfig().AddService(dvConnection).AddPlugInAsync(pfxConfig, "PlugIn", plugIn).ConfigureAwait(false);
 
             RecalcEngine engine = new RecalcEngine(pfxConfig);
+
+#if RESPECT_REQUIRED_OPTIONAL
             FormulaValue result = await engine.EvalAsync(@"PlugIn.lucgen1(""str"", 19).z", CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).ConfigureAwait(false);
+#else
+            FormulaValue result = await engine.EvalAsync(@"PlugIn.lucgen1({x: ""str"", y: 19}).z", CancellationToken.None, new ParserOptions() { AllowsSideEffects = true }, runtimeConfig: runtimeConfig).ConfigureAwait(false);
+#endif
             Assert.Equal("str38", (result as StringValue).Value);
         }
 
@@ -112,7 +136,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             await runtimeConfig.AddPlugInAsync(pfxConfig, "PlugIn", "lucgen2").ConfigureAwait(false);            
 
             RecalcEngine engine = new RecalcEngine(pfxConfig);
+
+#if RESPECT_REQUIRED_OPTIONAL
             CheckResult checkResult = engine.Check(@"PlugIn.lucgen1(""str"", 19).z &  ""-"" & PlugIn.lucgen2(""xyz"", 71).t & ""-"" & Text(MsnWeather.CurrentWeather(""Paris"", ""I"").responses.weather.current.temp)", new ParserOptions() { AllowsSideEffects = true });
+#else
+            CheckResult checkResult = engine.Check(@"PlugIn.lucgen1({x: ""str"", y: 19}).z &  ""-"" & PlugIn.lucgen2({x: ""xyz"", y: 71}).t & ""-"" & Text(MsnWeather.CurrentWeather(""Paris"", ""I"").responses.weather.current.temp)", new ParserOptions() { AllowsSideEffects = true });
+#endif
             Assert.True(checkResult.IsSuccess);
 
             FormulaValue result = await checkResult.GetEvaluator().EvalAsync(CancellationToken.None, runtimeConfig).ConfigureAwait(false);

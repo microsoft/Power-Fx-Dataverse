@@ -93,6 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 Tags = new List<OpenApiTag>() { new OpenApiTag() { Name = plugin.Api.uniquename } },
                                 Summary = $"Invoke actionImport {plugin.Api.uniquename}",
                                 OperationId = plugin.Api.name, // uniquename??
+#if RESPECT_REQUIRED_OPTIONAL
                                 Parameters = plugin.Inputs.Where(carp => !carp.isoptional).Select((CustomApiRequestParam param) 
                                     => new OpenApiParameter()
                                     {
@@ -107,6 +108,10 @@ namespace Microsoft.PowerFx.Dataverse
                                         }
                                     }).ToList(),
                                 RequestBody = plugin.Inputs.Where(carp => carp.isoptional).Any() 
+#else
+                                // All parameters are declared as optional even if they are not.
+                                RequestBody = plugin.Inputs.Any()
+#endif
                                     ? new OpenApiRequestBody()
                                     {
                                         Required = true,
@@ -118,12 +123,16 @@ namespace Microsoft.PowerFx.Dataverse
                                                 Schema = new OpenApiSchema()
                                                 {
                                                     Type = "object",
+#if RESPECT_REQUIRED_OPTIONAL
                                                     Properties = plugin.Inputs.Where(carp => carp.isoptional).Select((CustomApiRequestParam param)
+#else
+                                                    Properties = plugin.Inputs.Select((CustomApiRequestParam param)
+#endif
                                                         => new KeyValuePair<string, OpenApiSchema>(param.name, new OpenApiSchema()
                                                         {
                                                             Description = param.description,
                                                             Type = ToOpenApiSchemaType(param.type),                                                       
-                                                            Format = ToOpenApiSchemaFormat(param.type),
+                                                            Format = ToOpenApiSchemaFormat(param.type)                                                            
                                                         })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                                                 }
                                             }
