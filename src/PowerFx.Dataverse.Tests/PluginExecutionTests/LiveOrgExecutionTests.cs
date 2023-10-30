@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Expected usage from PowerApps::
             // Environment.crbcd_lucgen1({x:Value,y:Value})
-            await dvc.AddPluginAsync("crbcd_lucgen1");
+            await dvc.AddPluginAsync("crbcd_lucgen13333");
 
             var engine = new RecalcEngine();
 

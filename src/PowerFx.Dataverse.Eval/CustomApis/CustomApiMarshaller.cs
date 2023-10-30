@@ -211,9 +211,8 @@ namespace Microsoft.PowerFx.Dataverse
                 return record;
             }
         }
-
-        // $$$ This should be private to enforce everybody is using methods above. 
-        public static FormulaType ToType(IParameterType parameterType, CdsEntityMetadataProvider metadataCache)
+                
+        private static FormulaType ToType(IParameterType parameterType, CdsEntityMetadataProvider metadataCache)
         {
             parameterType = parameterType ?? throw new NotSupportedException($"parameterType is null.");
 
@@ -275,21 +274,6 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new NotSupportedException($"Unsupported param type: {typeCode}");
             }
         }
-
-        /* $$$
-        // Check if parameter type is entity/entity collection
-        public static bool CheckForEntityType(Item outputParameter)
-        {
-            bool isParamTypeEntity = ((CustomApiParamType)outputParameter.type) == CustomApiParamType.Entity
-                                        || ((CustomApiParamType)outputParameter.type) == CustomApiParamType.EntityReference
-                                        || ((CustomApiParamType)outputParameter.type) == CustomApiParamType.EntityCollection;
-            if (isParamTypeEntity && string.IsNullOrEmpty(outputParameter.entityLogicalName))
-            {
-                throw new NotSupportedException($"Invalid parameter : {outputParameter.name} of type : {outputParameter.type} requires ${nameof(IParameterType.logicalentityname)} to be set");
-            }
-
-            return isParamTypeEntity;
-        }*/
 
         // Called when a Custom API returns a FxValue and we need to marshal it back to Custom API type. 		
         private static object ToCustomApiObject(FormulaValue fxValue, IParameterType parameterType, string hintName)
