@@ -129,7 +129,7 @@ namespace Microsoft.PowerFx.Dataverse
             this._policy = policy ?? new MultiOrgPolicy(); 
 
             this._symbols = _policy.CreateSymbols(this, _metadataCache);
-            _symbolValues = this._symbols.CreateValues();
+            _symbolValues = this.Symbols.CreateValues();
 
             _maxRows = maxRows;
         }

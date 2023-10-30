@@ -4,12 +4,19 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
 using System.Diagnostics;
+using System.Text;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    [DebuggerDisplay("{Api.uniquename}")]
+    /// <summary>
+    /// Schemas for Custom APIs. 
+    /// See https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api-tables?tabs=webapi.
+    /// </summary>
+    [DebuggerDisplay("{DebuggerToString()}")]
     public class CustomApiSignature
     {
         [DataverseEntity("customapi")]
@@ -18,6 +25,45 @@ namespace Microsoft.PowerFx.Dataverse
         public CustomApiRequestParam[] Inputs;
 
         public CustomApiResponse[] Outputs;
+
+        // Just a debugging hint. 
+        private string DebuggerToString()
+        {
+            if (this.Api == null)
+            {
+                return "<null>";
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append(this.Api.uniquename);
+            sb.Append("(");
+            DebugAppend(sb, Inputs);
+            sb.Append(") -->");
+            DebugAppend(sb, Outputs);
+
+            return sb.ToString();
+        }
+
+        private static void DebugAppend(StringBuilder sb, IParameterType[] parameters)
+        {
+            string dil = "";
+            sb.Append("{");
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
+                {
+                    sb.Append(dil);
+                    sb.Append(param.name);
+                    sb.Append(":");
+
+                    var typeName = Enum.GetName(typeof(CustomApiParamType), param.type);
+                    sb.Append(typeName);
+                    dil = ", ";
+                }
+            }
+            sb.Append('}');
+        }
     }
 
     [DataverseEntity("customapi")]
@@ -70,6 +116,10 @@ namespace Microsoft.PowerFx.Dataverse
         string logicalentityname { get; }
     }
 
+    /// <summary>
+    /// Different kinds of parameters supported by Custom API.
+    /// Name is the Label, Numeric value is the Value.
+    /// </summary>
     public enum CustomApiParamType
     {
         Bool = 0,

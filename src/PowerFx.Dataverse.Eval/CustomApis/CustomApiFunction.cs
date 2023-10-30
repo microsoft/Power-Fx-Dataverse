@@ -14,7 +14,7 @@ namespace Microsoft.PowerFx.Dataverse
     // Input: single Record, each field is a parameter
     // Output: a scalar if API has 1 output, else a record of outputs. 
     // cr378_TestApi2({ cr378_Param1 : 1})
-    public class CustomApiFunction : ReflectionFunction
+    internal class CustomApiFunction : ReflectionFunction
     {
         private readonly string _name;
 
@@ -29,15 +29,19 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
-            RecordType inputType) : base(signature.Api.name, returnType, inputType)
+            RecordType inputType) : base(signature.Api.uniquename, returnType, inputType)
         {
-            _name = signature.Api.name;
+            // To invoke, use uniqueName
+            // Also support display names: https://github.com/microsoft/Power-Fx-Dataverse/issues/389
+            _name = signature.Api.uniquename;
             _signature = signature;
             _dataverseConnection = dataverseConnection;
 
             this.InputParameters = inputType;
             this.OutputParameters = returnType;
 
+            // May need other services, like tracing:
+            // https://github.com/microsoft/Power-Fx/issues/2001
             this.ConfigType = typeof(IDataverseExecute);
         }
 
@@ -56,8 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
             ParameterCollection inputs = new ParameterCollection();
             CustomApiMarshaller.Fx2Inputs(inputs, namedArgs, this._signature.Inputs);
 
-            // To invoke, use uniqueName
-            var request = new OrganizationRequest(_signature.Api.uniquename)
+            var request = new OrganizationRequest(_name)
             {
                 Parameters = inputs
             };

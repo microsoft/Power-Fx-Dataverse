@@ -8,29 +8,9 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Lookup a Custom API signature from dataverse
+    /// Convert from a dataverse signature to a  Power Fx function.
     /// </summary>
-    internal static class CustomApiLookupExtensions
-    {
-        public static async Task<CustomApiSignature> GetApiSignatureAsync(
-            this IDataverseReader reader,
-            string logicalName, 
-            CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // $$$ "uniquename" or "name"? 
-            var sig = await reader.GetDataverseObjectAsync<CustomApiSignature>("name", logicalName, cancellationToken)
-                .ConfigureAwait(false);
-
-            // $$$ What if it's missing, not found?
-            return sig;
-        }
-    }
-
-
-    // Default implementation of ICustomApiRestore
-    public class CustomApiRestore 
+    internal class CustomApiRestore
     {
         // Needed to resolve Entity/EntityReference to a FormulaType
         // These could be null if we ust use primitives. 

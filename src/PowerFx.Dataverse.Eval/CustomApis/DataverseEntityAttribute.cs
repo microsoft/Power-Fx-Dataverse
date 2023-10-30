@@ -8,6 +8,9 @@ using System;
 
 namespace Microsoft.PowerFx.Dataverse
 {
+    /// <summary>
+    /// Used to decorate pocos so that dataverse Entity marshaller can read them. 
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field)]
     public class DataverseEntityAttribute : Attribute
     {
