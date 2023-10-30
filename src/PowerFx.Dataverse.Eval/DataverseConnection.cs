@@ -217,13 +217,29 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(logicalName));
             }
             IDataverseReader reader = _dvServices;
-            var sig = await reader.GetApiSignatureAsync(logicalName, cancel)
+            var signature = await reader.GetApiSignatureAsync(logicalName, cancel)
                 .ConfigureAwait(false);
-                        
+
+            AddPlugin(signature);
+        }
+
+        /// <summary>
+        /// Import custom API with the given signature. 
+        /// API is invokable via the <see cref="IDataverseExecute"/> runtime service.
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddPlugin(CustomApiSignature signature)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
             // IDataverseExecute invoker = this._dvServices;
             var x = new CustomApiRestore(this._metadataCache);
-            
-            var function = x.ToFunction(sig, this);
+
+            var function = x.ToFunction(signature, this);
             _pluginFunctions.AddFunction(function);
         }
 

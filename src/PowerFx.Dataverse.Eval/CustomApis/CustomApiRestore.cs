@@ -13,8 +13,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class CustomApiRestore
     {
         // Needed to resolve Entity/EntityReference to a FormulaType
-        // These could be null if we ust use primitives. 
-        // $$$ Can we get _metadataCache from the DVC?
+        // These could be null if we just use primitives. 
         private readonly CdsEntityMetadataProvider _metadataCache;
 
         public CustomApiRestore(CdsEntityMetadataProvider metadataCache)
