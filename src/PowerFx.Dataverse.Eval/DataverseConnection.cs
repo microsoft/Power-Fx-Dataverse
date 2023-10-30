@@ -53,7 +53,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         protected readonly ReadOnlySymbolTable _symbols;
 
-        public ReadOnlySymbolTable Symbols => _symbols;
+        private readonly SymbolTable _pluginFunctions = new SymbolTable { DebugName = "Plugins"};
+
+        public ReadOnlySymbolTable Symbols => ReadOnlySymbolTable.Compose(_symbols, _pluginFunctions);
 
         private readonly Policy _policy;
 
@@ -206,6 +208,23 @@ namespace Microsoft.PowerFx.Dataverse
                 return variableName;
             }
             return tableLogicalName;
+        }
+
+        public async Task AddPluginAsync(string logicalName, CancellationToken cancel = default)
+        {
+            if (logicalName == null)
+            {
+                throw new ArgumentNullException(nameof(logicalName));
+            }
+            IDataverseReader reader = _dvServices;
+            var sig = await reader.GetApiSignatureAsync(logicalName, cancel)
+                .ConfigureAwait(false);
+                        
+            // IDataverseExecute invoker = this._dvServices;
+            var x = new CustomApiRestore(this._metadataCache);
+            
+            var function = x.ToFunction(sig, this);
+            _pluginFunctions.AddFunction(function);
         }
 
         /// <summary>
