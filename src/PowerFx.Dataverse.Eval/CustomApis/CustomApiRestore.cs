@@ -8,7 +8,7 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Convert from a dataverse signature to a  Power Fx function.
+    /// Convert from a dataverse signature to a Power Fx function.
     /// </summary>
     internal class CustomApiRestore
     {
@@ -28,11 +28,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static CustomApiFunction ToFunction(CustomApiSignature model, CdsEntityMetadataProvider metadataCache, DataverseConnection dataverseConnection)
         {
+            var marshaller = new CustomApiParameterMarshaller(metadataCache);
+
             // Inputs are always as a record. Enables named input parameters. 
-            RecordType inRecord = CustomApiMarshaller.GetInputType(model.Inputs, metadataCache);
+            RecordType inRecord = CustomApiMarshaller.GetInputType(model.Inputs, marshaller);
 
             // If multiple return types, then use a record. 
-            FormulaType outType = CustomApiMarshaller.GetOutputType(model.Outputs, metadataCache);
+            FormulaType outType = CustomApiMarshaller.GetOutputType(model.Outputs, marshaller);
 
             var apiFunc = new CustomApiFunction(
                 dataverseConnection,

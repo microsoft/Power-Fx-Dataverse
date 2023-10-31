@@ -65,9 +65,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             DataverseConnection dvc = SingleOrgPolicy.New(client);
 
+            var c2 = new DataverseService(client);
+            var names = c2.GetApiNamesAsync().Result;
+
             // Expected usage from PowerApps::
             // Environment.crbcd_lucgen1({x:Value,y:Value})
-            await dvc.AddPluginAsync("crbcd_lucgen13333");
+            await dvc.AddPluginAsync("crbcd_lucgen1");
 
             var engine = new RecalcEngine();
 

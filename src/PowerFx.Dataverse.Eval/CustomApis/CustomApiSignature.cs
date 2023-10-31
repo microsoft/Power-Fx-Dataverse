@@ -19,9 +19,8 @@ namespace Microsoft.PowerFx.Dataverse
     [DebuggerDisplay("{DebuggerToString()}")]
     public class CustomApiSignature
     {
-        [DataverseEntity("customapi")]
         public CustomApiEntity Api;
-        
+
         public CustomApiRequestParam[] Inputs;
 
         public CustomApiResponse[] Outputs;
@@ -66,9 +65,14 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    [DataverseEntity("customapi")]
+    [DebuggerDisplay("CustomApi: {uniquename}")]
+    [DataverseEntity(TableName)]
     public class CustomApiEntity
     {
+        public const string TableName = "customapi";
+
+        public Guid customapiid { get; set; }
+
         public string uniquename { get; set; }
         public string name { get; set; }
         public string displayname { get; set; }
@@ -76,11 +80,18 @@ namespace Microsoft.PowerFx.Dataverse
         public bool isfunction { get; set; }
         public bool isprivate { get; set; }
         public EntityReference plugintypeid { get; set; }
+
+        // fxexpression table.
+        // If non-null, then this is a low-code plugin. 
+        public EntityReference fxexpressionid { get; set; }
     }
 
-    [DataverseEntity("customapirequestparameter")]
+
+    [DataverseEntity(TableName)]
     public class CustomApiRequestParam : IParameterType
     {
+        public const string TableName = "customapirequestparameter";
+
         public string uniquename { get; set; }
         public string name { get; set; }
         public string displayname { get; set; }
@@ -95,9 +106,11 @@ namespace Microsoft.PowerFx.Dataverse
         public string logicalentityname { get; set; }
     }
 
-    [DataverseEntity("customapiresponseproperty")]
+    [DataverseEntity(TableName)]
     public class CustomApiResponse : IParameterType
     {
+        public const string TableName = "customapiresponseproperty";
+
         public string uniquename { get; set; }
         public string name { get; set; }
         public string displayname { get; set; }

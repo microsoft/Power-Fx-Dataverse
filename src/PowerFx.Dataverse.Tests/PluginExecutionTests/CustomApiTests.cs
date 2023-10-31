@@ -73,6 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 NewIn("p1", CustomApiParamType.Integer),
                 NewOut("out", CustomApiParamType.Integer));
 
+        // Normal Check and Eval. 
         [Fact]
         public async Task CustomApiTestsStatic()
         {
@@ -111,9 +112,85 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await eval.EvalAsync(default, rc);
 
             Assert.Equal(38, result.ToDouble());
+        }
 
-            // "str38" 
-            // Success!!!
+        // An error parameter gets short circuited and won't call. 
+        [Fact]
+        public async Task Error()
+        {
+            var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
+
+            dvc.AddPlugin(_api1Signature);
+
+            var engine = new RecalcEngine();
+
+            var expr = "api1({p1:1/0}).out";
+            var check = engine.Check(expr, symbolTable: dvc.Symbols);
+
+            Assert.True(check.IsSuccess);
+
+            // Now invoke it. 
+            var eval = check.GetEvaluator();
+
+            bool called = false;
+            var mockExec = new MockExecute
+            {
+                Work = (req) =>
+                {
+                    // Should never call.
+                    // set flag instead of throwing - in case things are catching the exception. 
+                    called = true;
+                    return new OrganizationResponse();
+                }
+            };
+
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            rc.AddDataverseExecute(mockExec);
+
+            var result = await eval.EvalAsync(default, rc);
+            Assert.False(called);
+
+            Assert.IsType<ErrorValue>(result);
+        }
+
+        // Server-side errors are caught. 
+        [Fact]
+        public async Task ServerError()
+        {
+            var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
+
+            dvc.AddPlugin(_api1Signature);
+
+            var engine = new RecalcEngine();
+
+            var expr = "api1({p1:19}).out";
+            var check = engine.Check(expr, symbolTable: dvc.Symbols);
+
+            Assert.True(check.IsSuccess);
+
+            // Now invoke it. 
+            var eval = check.GetEvaluator();
+
+            var msg = $"xyz"; // some message from server. 
+
+            var mockExec = new MockExecute
+            {
+                Work = (req) =>
+                {
+                    throw new InvalidOperationException(msg);
+                }
+            };
+
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            rc.AddDataverseExecute(mockExec);
+
+            var result = await eval.EvalAsync(default, rc);
+
+            Assert.IsType<ErrorValue>(result);
+            
+            // Error should have message from server. 
+            var actualMsg = ((ErrorValue)result).Errors[0].Message;
+            Assert.Contains(msg, actualMsg);
         }
 
         public class MockExecute : IDataverseExecute
@@ -127,6 +204,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     "method");
             }
         }
-
     }
 }

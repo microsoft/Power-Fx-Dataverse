@@ -18,151 +18,80 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseEvalHelpers
     {
-        public static async Task<T> GetDataverseObjectAsync<T>(this IDataverseReader dvReader, string filterName, string filterValue, CancellationToken cancellationToken)
-            where T : class, new()
+        // Lookup, expect exactly one. 
+        public static async Task<T> RetrieveAsync<T>(this IDataverseReader reader, string filterName, string filterValue, CancellationToken cancel)
+              where T : class, new()
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int i = 0;
-            string entityName = typeof(T).GetEntityName();
-            
-            if (string.IsNullOrEmpty(entityName) && typeof(T).GetProperties().Any())
-            {
-                entityName = typeof(T).GetProperties().First().GetEntityName();
-
-                if (string.IsNullOrEmpty(entityName))
-                {
-                    throw new ArgumentException($"Cannot find DataverseEntity attribute on first property of {typeof(T).Name} object.");
-                }
-
-                T t = new T();
-                string parentId = null;
-
-                foreach (PropertyInfo pi in typeof(T).GetProperties())
-                {
-                    if (i > 0)
-                    {
-                        entityName = pi.PropertyType.GetElementTypeOrType().GetEntityName();
-                        filterName = pi.PropertyType.GetEntityReferenceName();
-                        filterValue = parentId;
-                    }
-
-                    Entity[] ea = await dvReader.GetEntitiesAsync(entityName, filterName, filterValue).ConfigureAwait(false);
-
-                    if (ea.Length == 0)
-                    {
-                        return null;
-                    }
-
-                    object[] properties = ea.Select(e => e.ToObject(pi.PropertyType.GetElementTypeOrType())).ToArray();
-
-                    if (pi.PropertyType.IsArray)
-                    {
-                        Array newArray = Array.CreateInstance(pi.PropertyType.GetElementTypeOrType(), properties.Length);
-                        Array.Copy(properties, newArray, properties.Length);
-
-                        pi.SetValue(t, newArray);
-                    }
-                    else
-                    {
-                        pi.SetValue(t, properties[0]);
-                    }
-
-
-                    if (i++ == 0)
-                    {
-                        parentId = ea.First().Id.ToString();
-                    }
-                }
-
-                return t;
-            }
-
-            if (string.IsNullOrEmpty(entityName) && typeof(T).GetFields().Any())
-            {
-                entityName = typeof(T).GetFields().First().GetEntityName();
-
-                if (string.IsNullOrEmpty(entityName))
-                {
-                    throw new ArgumentException($"Cannot find DataverseEntity attribute on first field of {typeof(T).Name} object.");
-                }
-
-                T t = new T();
-                string parentId = null;
-
-                foreach (FieldInfo fi in typeof(T).GetFields())
-                {
-                    if (i > 0)
-                    {
-                        entityName = fi.FieldType.GetElementTypeOrType().GetEntityName();
-                        filterName = fi.FieldType.GetEntityReferenceName();
-                        filterValue = parentId;
-                    }
-
-                    Entity[] ea = await dvReader.GetEntitiesAsync(entityName, filterName, filterValue).ConfigureAwait(false);
-
-                    if (ea.Length == 0)
-                    {
-                        return null;
-                    }
-
-                    object[] properties = ea.Select(e => e.ToObject(fi.FieldType.GetElementTypeOrType())).ToArray();
-
-                    if (fi.FieldType.IsArray)
-                    {
-                        Array newArray = Array.CreateInstance(fi.FieldType.GetElementTypeOrType(), properties.Length);
-                        Array.Copy(properties, newArray, properties.Length);
-
-                        fi.SetValue(t, newArray);
-                    }
-                    else
-                    {
-                        fi.SetValue(t, properties[0]);
-                    }
-
-                    
-                    if (i++ == 0)
-                    {
-                        parentId = ea.First().Id.ToString();
-                    }
-                }
-
-                return t;
-            }
-
-            return null;
-        }        
-
-        private static string GetEntityName(this ICustomAttributeProvider type)
-        {
-            return ((DataverseEntityAttribute)type.GetCustomAttributes(true).FirstOrDefault(ca => ca.GetType() == typeof(DataverseEntityAttribute)))?.LogicalName;
-        }
-
-        private static Type GetElementTypeOrType(this Type t)
-        {
-            return t.IsArray ? t.GetElementType() : t;
-        }
-
-        private static string GetEntityReferenceName(this Type type)
-        {
-            type = GetElementTypeOrType(type);
-
-            return type.GetFields().FirstOrDefault(fi => fi.FieldType == typeof(EntityReference))?.Name 
-                ?? type.GetProperties().FirstOrDefault(pi => pi.PropertyType == typeof(EntityReference))?.Name
-                ?? throw new ArgumentException($"Cannot find EntityReference property or field on {type.Name} object.");
-        }
-
-        private static async Task<Entity[]> GetEntitiesAsync(this IDataverseReader dvReader, string entityName, string filterName, string filterValue)
-        {
-            FilterExpression filter = new FilterExpression();
+            var filter = new FilterExpression();
             filter.AddCondition(filterName, ConditionOperator.Equal, filterValue);
 
-            QueryExpression query = new QueryExpression(entityName) { ColumnSet = new ColumnSet(true), Criteria = filter };
-            DataverseResponse<EntityCollection> ec = await dvReader.RetrieveMultipleAsync(query).ConfigureAwait(false);
+            var tableName = typeof(T).GetEntityName();
+            var query = new QueryExpression(tableName)
+            {
+                Criteria = filter,
+                ColumnSet = new ColumnSet(true) // Could infer from T
+            };
 
-            ec.ThrowEvalExOnError();
+            var list = await reader.RetrieveMultipleAsync(query, cancel);
+            list.ThrowEvalExOnError();
             
-            return ec.Response.Entities.ToArray();
+            var entities = list.Response.Entities;
+            if (entities.Count != 1)
+            {
+                throw new InvalidOperationException($"{entities.Count} entities in {tableName} with {filterName} equal to {filterValue}.");
+            }
+            var entity = entities[0];
+            return entity.ToObject<T>();
+        }
+
+        // Lookup, can return 0, 1, or many. 
+        public static Task<T[]> RetrieveMultipleAsync<T>(this IDataverseReader reader, string filterName, object filterValue, CancellationToken cancel)
+              where T : class, new()
+        {
+            var filter = new FilterExpression();
+            filter.AddCondition(filterName, ConditionOperator.Equal, filterValue);
+
+            return reader.RetrieveMultipleAsync<T>(filter, cancel);
+        }
+
+        // Lookup, can return 0, 1, or many. 
+        public static async Task<T[]> RetrieveMultipleAsync<T>(this IDataverseReader reader, FilterExpression filter, CancellationToken cancel)
+              where T : class, new()
+        {
+            var tableName = typeof(T).GetEntityName();
+            var query = new QueryExpression(tableName)
+            {
+                Criteria = filter,
+                ColumnSet = new ColumnSet(true) // could infer from T
+            };
+
+            var list = await reader.RetrieveMultipleAsync(query, cancel);
+            list.ThrowEvalExOnError();
+
+            List<T> items = new List<T>();
+
+            var all = list.Response;
+            foreach (var x in all.Entities)
+            {
+                var param = x.ToObject<T>();
+                items.Add(param);
+            }
+
+            return items.ToArray();
+        }
+
+
+        // Lookup the entity name via the DataverseEntityAttribute on a type. 
+        private static string GetEntityName(this ICustomAttributeProvider type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(DataverseEntityAttribute), true);
+            if (attrs.Length == 1)
+            {
+                return ((DataverseEntityAttribute)attrs[0]).LogicalName;
+            }
+
+            // This is a bug, since only calls here are determined at compile time.  
+            throw new InvalidOperationException($"Type {type} does not have a {nameof(DataverseEntityAttribute)}");
         }
 
         public static T ToObject<T>(this Entity entity)
@@ -189,6 +118,19 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return obj;
+        }
+
+        public static T[] ToArray<T>(this EntityCollection entityCollection)
+            where T : class, new()
+        {
+            var entities = entityCollection.Entities;
+            T[] result = new T[entities.Count];
+            for(int i = 0; i < entities.Count; i++) {
+                Entity entity = entities[i];
+                T obj = entity.ToObject<T>();
+                result[i] = obj;
+            }
+            return result;
         }
 
         private static object Translate(object cdsVal, Type targetType)

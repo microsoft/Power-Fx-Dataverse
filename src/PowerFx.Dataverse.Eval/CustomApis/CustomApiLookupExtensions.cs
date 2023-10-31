@@ -4,13 +4,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// Lookup a Custom API signature from dataverse
     /// </summary>
-    internal static class CustomApiLookupExtensions
+    public static class CustomApiLookupExtensions
     {
         /// <summary>
         /// Lookup an API signature given its logical name (aka uniqueName). 
@@ -31,16 +33,63 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            string filterName = "uniquename";
-            var sig = await reader.GetDataverseObjectAsync<CustomApiSignature>(filterName, logicalName, cancellationToken)
-                .ConfigureAwait(false);
+            var api = await reader.RetrieveAsync<CustomApiEntity>(
+                nameof(CustomApiEntity.uniquename), logicalName, cancellationToken);
 
-            if (sig == null)
+            var inputs = await reader.RetrieveMultipleAsync<CustomApiRequestParam>(
+                nameof(CustomApiRequestParam.customapiid), api.customapiid, cancellationToken);
+
+            var outputs = await reader.RetrieveMultipleAsync<CustomApiResponse>(
+                nameof(CustomApiResponse.customapiid), api.customapiid, cancellationToken);
+                        
+            var sig = new CustomApiSignature
             {
-                throw new InvalidOperationException($"No signature found where '{filterName}' is '{logicalName}'");
-            }
-
+                Api = api,
+                Inputs = inputs,
+                Outputs = outputs
+            };
+         
             return sig;
+        }
+
+        /// <summary>
+        /// Give a <see cref="CustomApiEntity"/>, lookup the parameters to get a complete <see cref="CustomApiSignature"/>.
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="api"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static async Task<CustomApiSignature> GetApiSignatureAsync(
+            this IDataverseReader reader,
+            CustomApiEntity api,
+            CancellationToken cancellationToken = default)
+        {
+            return await reader.GetApiSignatureAsync(api.uniquename, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Helper to get list of lowcode plugins.
+        /// There are 1000s of custom apis in an org, most are private and not interesting. 
+        /// LowCode plugins have the fxexpressionid column set. 
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static async Task<CustomApiEntity[]> GetApiNamesAsync(
+            this IDataverseReader reader,        
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Lowcode plugins have the fxexpressionid set. 
+            FilterExpression filter = new FilterExpression();
+            filter.AddCondition(nameof(CustomApiEntity.fxexpressionid), ConditionOperator.NotNull);
+                     
+            var results = await reader.RetrieveMultipleAsync<CustomApiEntity>(
+                               filter, cancellationToken).ConfigureAwait(false);
+
+            return results;
         }
     }
 }

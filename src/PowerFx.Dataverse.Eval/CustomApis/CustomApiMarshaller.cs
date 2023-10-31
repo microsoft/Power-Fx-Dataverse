@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
     public static class CustomApiMarshaller
     {
         // Get a record, with each field correspdonding to an input. Matched by name. 
-        private static RecordType GetRecordType(IParameterType[] inputs, CdsEntityMetadataProvider metadataCache)
+        private static RecordType GetRecordType(IParameterType[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
             // Inputs are always as a record. Enables named input parameters. 
             var inRecord = RecordType.Empty();
@@ -41,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 inRecord = inRecord.Add(new NamedFormulaType(
-                    name, ToType(input, metadataCache)
+                    name, parameterMarshaller.ToType(input)
                      ));
             }
 
@@ -50,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Given CustomAPI inputs, calculate the power fx type. 
         // Record, with each field correspdonding to an input. Matched by name. 
-        public static RecordType GetInputType(CustomApiRequestParam[] inputs, CdsEntityMetadataProvider metadataCache)
+        public static RecordType GetInputType(CustomApiRequestParam[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
             foreach (var input in inputs)
             {
@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            return GetRecordType(inputs, metadataCache);
+            return GetRecordType(inputs, parameterMarshaller);
         }
 
         // Get runtime values, correpsonding to GetInputType.
@@ -153,16 +153,16 @@ namespace Microsoft.PowerFx.Dataverse
             return outputMetadata.Length == 1 && outputMetadata[0].name == TableValue.ValueName;
         }
 
-        public static FormulaType GetOutputType(CustomApiResponse[] outputs, CdsEntityMetadataProvider metadataCache)
+        public static FormulaType GetOutputType(CustomApiResponse[] outputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
             FormulaType outType;
             if (IsOutputTypeSingle(outputs))
             {
-                outType = ToType(outputs[0], metadataCache);
+                outType = parameterMarshaller.ToType(outputs[0]);
             }
             else
             {
-                outType = GetRecordType(outputs, metadataCache);
+                outType = GetRecordType(outputs, parameterMarshaller);
             }
 
             return outType;
@@ -211,43 +211,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return record;
             }
         }
-                
-        private static FormulaType ToType(IParameterType parameterType, CdsEntityMetadataProvider metadataCache)
-        {
-            parameterType = parameterType ?? throw new NotSupportedException($"parameterType is null.");
 
-            var typeCode = parameterType.type;
-            if (typeCode == CustomApiParamType.EntityReference || typeCode == CustomApiParamType.Entity || typeCode == CustomApiParamType.EntityCollection)
-            {
-                // TODO: Need to handle logical as well as displaynames
-                var logicalName = parameterType.logicalentityname;
-                if (string.IsNullOrWhiteSpace(logicalName))
-                {
-                    // We normally need a logical name so we can create a strongly typed Fx type.
-                    // But if we're just calling (not implementing) an existing Custom API - we can loosen. 
-                    if (parameterType is CustomApiRequestParam)
-                    {
-                        return RecordType.Empty();
-                    }
-
-                    throw new NotSupportedException($"Type {typeCode} requires ${nameof(IParameterType.logicalentityname)} to be set");
-                }
-                metadataCache = metadataCache ?? throw new NotSupportedException($"Can't resolve {typeCode}:{logicalName}  - Metadatacache is not set");
-
-                var type = metadataCache.GetRecordType(logicalName);
-
-                if (typeCode == CustomApiParamType.EntityCollection)
-                {
-                    return type?.ToTable();
-                }
-
-                return type;
-            }
-
-            return ToPrimitiveType(typeCode); // throws if not handled 
-        }
-
-        public static FormulaType ToPrimitiveType(CustomApiParamType typeCode)
+        /// <summary>
+        /// Convert primitive parameters to Power Fx. 
+        /// For non-primitives, use <see cref="ICustomApiParameterMarshaller"/>.
+        /// </summary>
+        /// <param name="typeCode"></param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public static FormulaType ToPrimitivePowerFxType(this CustomApiParamType typeCode)
         {
             switch (typeCode)
             {

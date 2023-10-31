@@ -66,6 +66,9 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
 
                 // Custom APIs 
+                "Microsoft.PowerFx.Dataverse.CustomApiLookupExtensions",
+                "Microsoft.PowerFx.Dataverse.CustomApiParameterMarshaller",                
+                "Microsoft.PowerFx.Dataverse.ICustomApiParameterMarshaller",
                 "Microsoft.PowerFx.Dataverse.CustomApiMarshaller",
                 "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
                 "Microsoft.PowerFx.Dataverse.CustomApiSignature",
