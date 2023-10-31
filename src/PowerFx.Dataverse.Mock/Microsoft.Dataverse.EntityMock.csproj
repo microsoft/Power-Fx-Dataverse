@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <RootNamespace>Microsoft.Dataverse.Mock</RootNamespace>
+    <RootNamespace>Microsoft.Dataverse.EntityMock</RootNamespace>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
   
@@ -16,7 +16,7 @@
   
   <!-- Nuget Properties -->
   <PropertyGroup>
-    <PackageId>Microsoft.Dataverse.Mock</PackageId>
+    <PackageId>Microsoft.Dataverse.EntityMock</PackageId>
     <Title>Microsoft Dataverse Entity Mock</Title>
     <Description>Helps with mocking Dataverse locally.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
