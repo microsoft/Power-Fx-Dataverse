@@ -1,8 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>Microsoft.Dataverse.Mock</RootNamespace>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>1702;1998;NU5104;NU1701;NU1605</NoWarn>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+  
+  <!-- Nuget Properties -->
+  <PropertyGroup>
+    <PackageId>Microsoft.Dataverse.Mock</PackageId>
+    <Title>Microsoft Dataverse Entity Mock</Title>
+    <Description>Helps with mocking Dataverse locally.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Company>Microsoft</Company>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Authors>Microsoft</Authors>
   </PropertyGroup>
 
   <ItemGroup>
