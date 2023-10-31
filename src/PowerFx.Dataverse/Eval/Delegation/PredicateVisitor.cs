@@ -35,13 +35,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly CallNode _caller;
 
-        private readonly ResolvedObjectNode _callerSourceTable;
+        private readonly IntermediateNode _callerSourceTable;
 
         private readonly ScopeSymbol _callerScope;
 
         private readonly FormulaType _callerReturnType;
 
-        public PredicateVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow, CallNode caller, ResolvedObjectNode callerTable)
+        public PredicateVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow, CallNode caller, IntermediateNode callerTable)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));

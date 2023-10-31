@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -69,18 +71,18 @@ namespace Microsoft.PowerFx.Dataverse
                         
             
             // IR node that will resolve to the TableValue at runtime. 
-            // From here, we can downcast at get the services. 
-            public readonly ResolvedObjectNode _sourceTableIRNode;
+            // From here, we can downcast at get the services. Ideally would be either Scope node or ResolvedObjectNode
+            public readonly DelegableIntermediateNode _sourceTableIRNode;
 
             // Table type  and original metadata for table that we're delegating to. 
             public readonly TableType _tableType;
 
             public readonly EntityMetadata _metadata;
 
-            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, ResolvedObjectNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows)
+            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
-                this._sourceTableIRNode = sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode));
+                this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this._tableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this._originalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this._hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
@@ -292,26 +294,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
             
             // we don't support delegation for functions with aliasing.
-            if(func == BuiltinFunctionsCore.With.Name) 
+             if(func == BuiltinFunctionsCore.With.Name) 
             {
-                var arg0 = node.Args[0] as RecordNode;
-                foreach(var field in arg0.Fields)
-                {
-                    var fieldRetVal = field.Value.Accept(this, context);
-                    if (fieldRetVal.IsDelegating)
-                    {
-                        CreateNotSupportedErrorAndReturn(node, fieldRetVal);
-                    }
-                }
-
-                var arg1 = Materialize(node.Args[1].Accept(this, context));
-                if (!ReferenceEquals(node.Args[1], arg1))
-                {
-                    var result = _hooks.MakeCallNode(node.Function, node.IRContext, new List<IntermediateNode> { arg0, arg1}, node.Scope);
-                    return Ret(result);
-                }
-
-                return Ret(node);
+                return ProcessWith(node, context);
             }
 
             // Only below function fulfills assumption that first arg is Table
@@ -320,7 +305,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return base.Visit(node, context);
             }
 
-            RetVal tableArg = node.Args[0].Accept(this, context);
+            RetVal tableArg;
+            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType)
+            {
+                tableArg = new RetVal(_hooks, node, scopedFirstArg, aggType, filter: null, count: null, _maxRows);
+            }
+            else
+            {
+                tableArg = node.Args[0].Accept(this, context);
+            }
 
             if (!tableArg.IsDelegating)
             {
@@ -339,6 +332,22 @@ namespace Microsoft.PowerFx.Dataverse
             // Other delegating functions, continue to compose...
             // - Sort   
             return ret;
+        }
+
+        private RetVal ProcessWith(CallNode node, Context context)
+        {
+            var arg0 = node.Args[0] as RecordNode;
+            var arg1 = node.Args[1] as LazyEvalNode;
+            var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
+
+            if (!arg1MaybeDelegable.Equals(arg1.Child))
+            {
+                var lazyArg1 = new LazyEvalNode(arg1.Child.IRContext, arg1MaybeDelegable);
+                var delegatedWith = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { arg0, lazyArg1 });
+                return Ret(delegatedWith);
+            }
+
+            return Ret(node);
         }
 
         private RetVal ProcessLookUp(CallNode node, Context context, RetVal tableArg)
