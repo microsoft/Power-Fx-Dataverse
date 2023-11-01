@@ -48,6 +48,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback invoked by Power Fx engine during expression execution. 
         public async Task<FormulaValue> Execute(IDataverseExecute invoker, RecordValue namedArgs, CancellationToken cancel)
         {
+            cancel.ThrowIfCancellationRequested();
+
             // Don't invoke if there are any incoming errors. 
             foreach (var fields in namedArgs.Fields)
             {

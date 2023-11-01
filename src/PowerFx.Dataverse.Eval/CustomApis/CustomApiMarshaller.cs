@@ -52,6 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Record, with each field correspdonding to an input. Matched by name. 
         public static RecordType GetInputType(CustomApiRequestParam[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
+            // Handle optional:
+            // https://github.com/microsoft/Power-Fx-Dataverse/issues/393
             foreach (var input in inputs)
             {
                 if (input.isoptional)
