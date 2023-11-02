@@ -384,10 +384,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Aliasing prevents delegation. 
         [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
+            "With({r:t1}, ((__retrieveGUID(r, _g1)).new_price))",
             true,
-            true,
-            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
 
         // $$$ Confirm is NotFound Error or Blank? 
         [InlineData("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
@@ -966,28 +965,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
 
-        ////Basic case 
-        //[InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
-        //[InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
-        //[InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
-        //[InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
+        //Basic case 
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
 
-        //// Filter inside FirstN, both can be combined *(vice versa isn't true)*
-        //[InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
-        //[InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
-        //[InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
-        //[InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
+        // Filter inside FirstN, both can be combined *(vice versa isn't true)*
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
 
-        //[InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
-        //[InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
-        //[InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
-        //[InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
 
         // Aliasing prevents delegation. 
         [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(r, __noFilter())).new_price))", false, false)]
-        //[InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", true, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", true, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", false, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(r, __noFilter())).new_price))", true, true)]
+        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(r, __noFilter())).new_price))", true, false)]
+        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(r, __noFilter())).new_price))", false, true)]
         public void FirstDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"

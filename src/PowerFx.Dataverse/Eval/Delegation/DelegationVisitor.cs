@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
@@ -35,11 +36,14 @@ namespace Microsoft.PowerFx.Dataverse
         // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
+        private readonly Stack<IDictionary<string, IntermediateNode>> _withScopeStack;
+
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
+            _withScopeStack = new Stack<IDictionary<string, IntermediateNode>>();
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -306,6 +310,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             RetVal tableArg;
+            // special casing Scope access for With()
             if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType)
             {
                 tableArg = new RetVal(_hooks, node, scopedFirstArg, aggType, filter: null, count: null, _maxRows);
@@ -338,7 +343,12 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var arg0 = node.Args[0] as RecordNode;
             var arg1 = node.Args[1] as LazyEvalNode;
+
+            var withScope = RecordNodeToDictionary(arg0);
+
+            _withScopeStack.Push(withScope);
             var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
+            _withScopeStack.Pop();
 
             if (!arg1MaybeDelegable.Equals(arg1.Child))
             {
@@ -348,6 +358,37 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return Ret(node);
+        }
+
+        private IDictionary<string, IntermediateNode> RecordNodeToDictionary(RecordNode arg0)
+        {
+            var scope = new Dictionary<string, IntermediateNode>();
+            foreach(var field in arg0.Fields)
+            {
+                scope.Add(field.Key.Value, field.Value);
+            }
+
+            return scope;
+        }
+
+        private bool TryGetScopedVariable(string variable, out IntermediateNode node)
+        {
+            if(_withScopeStack.Count() == 0)
+            {
+                node = default;
+                return false;
+            }
+
+            foreach (var kv in _withScopeStack)
+            {
+                if (kv.TryGetValue(variable, out node))
+                {
+                    return true;
+                }
+            }
+
+            node = default;
+            return false;
         }
 
         private RetVal ProcessLookUp(CallNode node, Context context, RetVal tableArg)
@@ -386,7 +427,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // We can successfully delegate this call. 
                         // __retrieveGUID(table, guid);
 
-                        if (tableArg._originalNode is ResolvedObjectNode)
+                        if (IsTableArgLookUpDelegable(tableArg))
                         {
                             var newNode = _hooks.MakeRetrieveCall(tableArg, right);
                             return Ret(newNode);
@@ -414,7 +455,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if tableArg was DV Table, delegate the call.
-            if (tableArg._originalNode is ResolvedObjectNode)
+            if (IsTableArgLookUpDelegable(tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.filter, node.Scope);
                 result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
@@ -426,6 +467,20 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
+        }
+
+        private bool IsTableArgLookUpDelegable(RetVal tableArg)
+        {
+            if (tableArg._originalNode is ResolvedObjectNode ||
+                (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
+                && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
+                && TryGetScopedVariable(scopedSymbol.Name, out var scopedNode)
+                && scopedNode is ResolvedObjectNode))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private RetVal ProcessFilter(CallNode node, RetVal tableArg)
