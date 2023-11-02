@@ -401,6 +401,10 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.DecimalToText:
                     throw new SqlCompileException(SqlCompileException.ImplicitNumberToText, node.Child.IRContext.SourceContext);
 
+                case UnaryOpKind.GUIDToText:
+                    var guidArg = node.Child.Accept(this, context);
+                    return context.SetIntermediateVariable(node, guidArg.ToString());
+
                 case UnaryOpKind.TextToBoolean:
                     arg = node.Child.Accept(this, context);
                     var coercedArg = RetVal.FromSQL($"IIF({arg} IS NULL OR {arg} = N'', N'false', {arg})", FormulaType.String);
@@ -838,15 +842,12 @@ namespace Microsoft.PowerFx.Dataverse
                 var dependentFields = new Dictionary<string, HashSet<string>>();
                 foreach (var pair in _fields)
                 {
-                    if (!(pair.Value.VarType is GuidType))
+                    if (!dependentFields.ContainsKey(pair.Value.Table))
                     {
-                        if (!dependentFields.ContainsKey(pair.Value.Table))
-                        {
-                            dependentFields[pair.Value.Table] = new HashSet<string>();
-                        }
-                        // Add by logical name
-                        dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
+                        dependentFields[pair.Value.Table] = new HashSet<string>();
                     }
+                    // Add by logical name
+                    dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
                 }
                 return dependentFields;
             }
