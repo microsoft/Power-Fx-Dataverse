@@ -1738,6 +1738,10 @@ END
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("guid", result.TopLevelIdentifiers.ElementAt(0));
+
+            result = engine.Compile("Concatenate(lookup.tripleremoteid,\"abc\")", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal("tripleremoteid", result.RelatedIdentifiers.ToArray()[0].Value.First());
         }
 
         [Theory]
