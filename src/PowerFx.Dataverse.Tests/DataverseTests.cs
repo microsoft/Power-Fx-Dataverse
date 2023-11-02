@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -1840,7 +1841,7 @@ END
         public void Coalesce()
         {
             // Once we add Coalesce to Library.cs, remove TryCoalesceNum.
-            var ok = Functions.Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
+            var ok = Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
             Assert.False(ok);
             Assert.Null(ptr);
         }

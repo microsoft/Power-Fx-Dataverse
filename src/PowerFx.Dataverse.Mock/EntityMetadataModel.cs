@@ -79,6 +79,12 @@ namespace Microsoft.Dataverse.EntityMock
 
         public bool IsValidForRead { get; set; }
 
+        public bool IsValidForUpdate { get; set; }
+
+        public bool IsValidForCreate { get; set; }
+
+        public bool IsKey { get; set; }
+
         public string[] Targets { get; set; }
 
         // format can be a StringFormat for strings, or a DateTimeFormat for dates
@@ -95,6 +101,8 @@ namespace Microsoft.Dataverse.EntityMock
         public AttributeMetadataModel()
         {
             IsValidForRead = true;
+            IsValidForUpdate = true;
+            IsValidForCreate = true;
         }
 
         public AttributeMetadataModel SetSchemaName(string schemaName)
@@ -178,7 +186,20 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 LogicalName = logicalName,
                 DisplayName = displayName,
-                AttributeType = AttributeTypeCode.Uniqueidentifier
+                AttributeType = AttributeTypeCode.Uniqueidentifier,
+                IsKey = true,
+                IsValidForCreate = false,
+                IsValidForUpdate = false,
+            };
+        }
+
+        public static AttributeMetadataModel NewKey(string logicalName, string displayName)
+        {
+            return new AttributeMetadataModel
+            {
+                LogicalName = logicalName,
+                DisplayName = displayName,
+                AttributeType = AttributeTypeCode.Uniqueidentifier,
             };
         }
 
@@ -281,6 +302,13 @@ namespace Microsoft.Dataverse.EntityMock
         public AttributeMetadataModel SetLogical(bool value = true)
         {
             this.IsLogical = value;
+            return this;
+        }
+
+        public AttributeMetadataModel SetReadOnly()
+        {
+            this.IsValidForCreate = false;
+            this.IsValidForUpdate = false;
             return this;
         }
     }
