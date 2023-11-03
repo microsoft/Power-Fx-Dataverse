@@ -11,6 +11,7 @@ using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
+using Microsoft.Rest.TransientFaultHandling;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -311,9 +312,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal tableArg;
             // special casing Scope access for With()
-            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType)
+            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol
+                && TryGetScopedVariable(scopedSymbol.Name, out var scopedNode))
             {
-                tableArg = new RetVal(_hooks, node, scopedFirstArg, aggType, filter: null, count: null, _maxRows);
+                tableArg = scopedNode.Accept(this, context);
+            }
+            else if (node.Args[0] is ScopeAccessNode)
+            {
+                // if first arg is ScopeAccessNode, and It's scope variable wasn't on stack, then we can't delegate (This can happen when function predicate has expression refereeing to scoped variable).
+                return CreateExpressionNotSupportedError(node);
             }
             else
             {
@@ -588,6 +595,27 @@ namespace Microsoft.PowerFx.Dataverse
             };
             AddError(reason);
             return new RetVal(node);
+        }
+
+
+
+        private RetVal CreateExpressionNotSupportedError(CallNode node)
+        {
+            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol)
+            {
+                var symbolName = scopedSymbol.Name;
+                var reason = new ExpressionError()
+                {
+                    MessageArgs = new object[] { symbolName, _maxRows },
+                    Span = node.Args[0].IRContext.SourceContext ?? new Span(1, 2),
+                    Severity = ErrorSeverity.Warning,
+                    ResourceKey = TexlStrings.WrnDelegationTableNotSupported
+                };
+
+                this.AddError(reason);
+            }
+
+            return Ret(node);
         }
     }
 }
