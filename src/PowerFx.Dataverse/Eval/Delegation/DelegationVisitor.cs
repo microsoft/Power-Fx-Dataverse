@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Rest.TransientFaultHandling;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -37,17 +38,11 @@ namespace Microsoft.PowerFx.Dataverse
         // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
-        private readonly Stack<IDictionary<string, RetVal>> _withScopeStack;
-
-        private readonly Stack<(CallNode caller, DelegableIntermediateNode callerTable)> _callNodePredicateEval;
-
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
-            _withScopeStack = new Stack<IDictionary<string, RetVal>>();
-            _callNodePredicateEval = new Stack<(CallNode, DelegableIntermediateNode)>();
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -136,6 +131,42 @@ namespace Microsoft.PowerFx.Dataverse
         public class Context
         {
             public bool _ignoreDelegation;
+
+            public bool IsPredicateEvalInProgress => CallerNode != null && CallerTableNode != null;
+
+            public readonly CallNode CallerNode;
+
+            public readonly DelegableIntermediateNode CallerTableNode;
+
+            public readonly Stack<IDictionary<string, RetVal>> WithScopes;
+
+            public Context()
+            {
+                WithScopes = new ();
+            }
+
+            private Context(bool ignoreDelegation, Stack<IDictionary<string, RetVal>> withScopes, CallNode callerNode, DelegableIntermediateNode callerTableNode)
+            {
+                WithScopes = withScopes;
+                CallerNode = callerNode;
+                CallerTableNode = callerTableNode;
+                _ignoreDelegation = ignoreDelegation;
+            }
+
+            public Context GetContextForPredicateEval(CallNode callerNode, DelegableIntermediateNode callerTableNode)
+            {
+                return new Context(this._ignoreDelegation, this.WithScopes, callerNode, callerTableNode);
+            }
+
+            internal void PushWithScope(IDictionary<string, RetVal> withScope)
+            {
+                WithScopes.Push(withScope);
+            }
+
+            internal void PopWithScope()
+            {
+                WithScopes.Pop();
+            }
         }
 
         // If an attempted delegation can't be complete, then fail it. 
@@ -280,42 +311,42 @@ namespace Microsoft.PowerFx.Dataverse
         // BinaryOpNode can be only materialized when called via CallNode.
         public override RetVal Visit(BinaryOpNode node, Context context)
         {
-            if(_callNodePredicateEval.Count() == 0)
+            if(!context.IsPredicateEvalInProgress)
             {
                 return base.Visit(node, context);
             }
 
-            var _callerReturnType = _callNodePredicateEval.Peek().caller.IRContext.ResultType;
-            var _caller = _callNodePredicateEval.Peek().caller;
-            var _callerSourceTable = _callNodePredicateEval.Peek().callerTable;
-            var _callerScope = _caller.Scope;
+            var caller = context.CallerNode;
+            var callerReturnType = caller.IRContext.ResultType;
+            var callerSourceTable = context.CallerTableNode;
+            var callerScope = caller.Scope;
 
             TableType tableType;
-            if (_callerReturnType is RecordType recordType)
+            if (callerReturnType is RecordType recordType)
             {
                 tableType = recordType.ToTable();
             }
             else
             {
-                tableType = (TableType)_callerReturnType;
+                tableType = (TableType)callerReturnType;
             }
 
             // Either left or right is field (not both)
-            if (!TryGetFieldName(node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation))
+            if (!TryGetFieldName(context, node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation))
             {
                 return new RetVal(node);
             }
 
-            var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(_caller, rightNode);
+            var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(caller, rightNode);
             if (findThisRecord != null)
             {
-                CreateThisRecordErrorAndReturn(_caller, findThisRecord);
+                CreateThisRecordErrorAndReturn(caller, findThisRecord);
             }
 
             var findBehaviorFunc = BehaviorIRVisitor.Find(rightNode);
             if (findBehaviorFunc != null)
             {
-                return CreateBehaviorErrorAndReturn(_caller, findBehaviorFunc);
+                return CreateBehaviorErrorAndReturn(caller, findBehaviorFunc);
             }
 
             var retDelegationVisitor = rightNode.Accept(this, context);
@@ -331,7 +362,7 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal ret;
 
             // Money can't be delegated, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-            if (TryDisableMoneyComaprison(node, fieldName, out var result))
+            if (TryDisableMoneyComaprison(node, fieldName, context, out var result))
             {
                 return result;
             }
@@ -347,8 +378,8 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqDecimals:
                 case BinaryOpKind.EqCurrency:
-                    var eqNode = _hooks.MakeEqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, eqNode, count: null);
+                    var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, eqNode);
                     return ret;
                 case BinaryOpKind.NeqNumbers:
                 case BinaryOpKind.NeqBoolean:
@@ -359,54 +390,56 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.NeqGuid:
                 case BinaryOpKind.NeqDecimals:
                 case BinaryOpKind.NeqCurrency:
-                    var neqNode = _hooks.MakeNeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, neqNode, count: null);
+                    var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, neqNode);
                     return ret;
                 case BinaryOpKind.LtNumbers:
                 case BinaryOpKind.LtDecimals:
                 case BinaryOpKind.LtDateTime:
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtTime:
-                    var ltNode = _hooks.MakeLtCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, ltNode, count: null);
+                    var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, ltNode);
                     return ret;
                 case BinaryOpKind.LeqNumbers:
                 case BinaryOpKind.LeqDecimals:
                 case BinaryOpKind.LeqDateTime:
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqTime:
-                    var leqNode = _hooks.MakeLeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, leqNode, count: null);
+                    var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, leqNode);
                     return ret;
                 case BinaryOpKind.GtNumbers:
                 case BinaryOpKind.GtDecimals:
                 case BinaryOpKind.GtDateTime:
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtTime:
-                    var gtNode = _hooks.MakeGtCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, gtNode, count: null);
+                    var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, gtNode);
                     return ret;
                 case BinaryOpKind.GeqNumbers:
                 case BinaryOpKind.GeqDecimals:
                 case BinaryOpKind.GeqDateTime:
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqTime:
-                    var geqNode = _hooks.MakeGeqCall(_callerSourceTable, tableType, fieldName, operation, rightNode, _callerScope);
-                    ret = CreateBinaryOpRetVal(node, geqNode, count: null);
+                    var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                    ret = CreateBinaryOpRetVal(context, node, geqNode);
                     return ret;
                 default:
                     return new RetVal(node);
             }
         }
 
-        private RetVal CreateBinaryOpRetVal(IntermediateNode node, IntermediateNode eqNode, IntermediateNode count)
+        private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode eqNode)
         {
-            return new RetVal(_hooks, node, _callNodePredicateEval.Peek().callerTable, _callNodePredicateEval.Peek().callerTable.IRContext.ResultType as TableType, eqNode, count, _maxRows);
+            var callerTable = context.CallerTableNode;
+            var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, count: null, _maxRows);
         }
 
         public override RetVal Visit(LazyEvalNode node, Context context)
         {
-            if(_callNodePredicateEval.Count == 0)
+            if(!context.IsPredicateEvalInProgress)
             {
                 return base.Visit(node, context);
             }
@@ -426,11 +459,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var func = node.Function.Name;
 
-            if (func == BuiltinFunctionsCore.And.Name && _callNodePredicateEval.Count != 0)
+            if (func == BuiltinFunctionsCore.And.Name && context.IsPredicateEvalInProgress)
             {
                 return ProcessAnd(node, context);
             }
-            else if (func == BuiltinFunctionsCore.Or.Name && _callNodePredicateEval.Count != 0)
+            else if (func == BuiltinFunctionsCore.Or.Name && context.IsPredicateEvalInProgress)
             {
                 return ProcessOr(node, context);
             }
@@ -469,8 +502,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal tableArg;
             // special casing Scope access for With()
-            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol
-                && TryGetScopedVariable(scopedSymbol.Name, out var scopedNode))
+            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol
+                && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode))
             {
                 tableArg = scopedNode;
             }
@@ -510,9 +543,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             var withScope = RecordNodeToDictionary(arg0, context);
 
-            _withScopeStack.Push(withScope);
+            context.PushWithScope(withScope);
             var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
-            _withScopeStack.Pop();
+            context.PopWithScope();
 
             if (!arg1MaybeDelegable.Equals(arg1.Child))
             {
@@ -536,15 +569,15 @@ namespace Microsoft.PowerFx.Dataverse
             return scope;
         }
 
-        private bool TryGetScopedVariable(string variable, out RetVal node)
+        private bool TryGetScopedVariable(Stack<IDictionary<string, RetVal>> withScopes, string variable, out RetVal node)
         {
-            if(_withScopeStack.Count() == 0)
+            if(withScopes.Count() == 0)
             {
                 node = default;
                 return false;
             }
 
-            foreach (var kv in _withScopeStack)
+            foreach (var kv in withScopes)
             {
                 if (kv.TryGetValue(variable, out node))
                 {
@@ -592,7 +625,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // We can successfully delegate this call. 
                         // __retrieveGUID(table, guid);
 
-                        if (IsTableArgLookUpDelegable(tableArg))
+                        if (IsTableArgLookUpDelegable(context, tableArg))
                         {
                             var newNode = _hooks.MakeRetrieveCall(tableArg, right);
                             return Ret(newNode);
@@ -611,9 +644,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Pattern match to see if predicate is delegable when field is non primary key.
-            _callNodePredicateEval.Push((node, tableArg._sourceTableIRNode));
-            var pr = predicate.Accept(this, context);
-            _callNodePredicateEval.Pop();
+            var predicteContext = context.GetContextForPredicateEval(node, tableArg._sourceTableIRNode);
+            var pr = predicate.Accept(this, predicteContext);
 
             if (!pr.IsDelegating)
             {
@@ -621,7 +653,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if tableArg was DV Table, delegate the call.
-            if (IsTableArgLookUpDelegable(tableArg))
+            if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
                 result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
@@ -635,12 +667,12 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        private bool IsTableArgLookUpDelegable(RetVal tableArg)
+        private bool IsTableArgLookUpDelegable(Context context, RetVal tableArg)
         {
             if (tableArg._originalNode is ResolvedObjectNode ||
                 (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
                 && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
-                && TryGetScopedVariable(scopedSymbol.Name, out var scopedNode)
+                && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
                 && scopedNode._originalNode is ResolvedObjectNode))
             {
                 return true;
@@ -656,9 +688,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var predicate = node.Args[1];
-            _callNodePredicateEval.Push((node, tableArg._sourceTableIRNode));
-            var pr = predicate.Accept(this, context);
-            _callNodePredicateEval.Pop();
+            var predicteContext = context.GetContextForPredicateEval(node, tableArg._sourceTableIRNode);
+            var pr = predicate.Accept(this, predicteContext);
 
             if (!pr.IsDelegating)
             {
@@ -808,7 +839,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (isDelegating)
             {
                 var filter = filterDelegate(delegatedChild);
-                var rVal = CreateBinaryOpRetVal(node, filter, count: null);
+                var rVal = CreateBinaryOpRetVal(context, node, filter);
                 return rVal;
             }
 
@@ -817,24 +848,24 @@ namespace Microsoft.PowerFx.Dataverse
 
         public RetVal ProcessOr(CallNode node, Context context)
         {
-            var _callerReturnType = _callNodePredicateEval.Peek().caller.IRContext.ResultType;
-            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeOrCall(_callerReturnType, delegatedChildren, node.Scope));
+            var callerReturnType = context.CallerNode.IRContext.ResultType;
+            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeOrCall(callerReturnType, delegatedChildren, node.Scope));
         }
 
         public RetVal ProcessAnd(CallNode node, Context context)
         {
-            var _callerReturnType = _callNodePredicateEval.Peek().caller.IRContext.ResultType;
-            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(_callerReturnType, delegatedChildren, node.Scope));
+            var callerReturnType = context.CallerNode.IRContext.ResultType;
+            return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(callerReturnType, delegatedChildren, node.Scope));
         }
 
 
         // Used to stop Money delegation, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, out RetVal result)
+        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, Context context, out RetVal result)
         {
-            var _callerSourceTable = _callNodePredicateEval.Peek().callerTable;
-            var callerTableType = (TableType)_callerSourceTable.IRContext.ResultType;
+            var callerSourceTable = context.CallerTableNode;
+            var callerTableType = (TableType)callerSourceTable.IRContext.ResultType;
             var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
-            EntityMetadata metadata = null;
+            EntityMetadata metadata;
             if (tableDS != null)
             {
                 var tableLogicalName = tableDS.TableMetadata.Name; // logical name
@@ -870,16 +901,16 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        public bool TryGetFieldName(IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
+        public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            if (TryGetFieldName(left, out var leftField) && !TryGetFieldName(right, out _))
+            if (TryGetFieldName(context, left, out var leftField) && !TryGetFieldName(context, right, out _))
             {
                 fieldName = leftField;
                 node = right;
                 opKind = op;
                 return true;
             }
-            else if (TryGetFieldName(right, out var rightField) && !TryGetFieldName(left, out _))
+            else if (TryGetFieldName(context, right, out var rightField) && !TryGetFieldName(context, left, out _))
             {
                 fieldName = rightField;
                 node = left;
@@ -894,7 +925,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
             }
-            else if (TryGetFieldName(left, out var leftField2) && TryGetFieldName(right, out var rightField2))
+            else if (TryGetFieldName(context, left, out var leftField2) && TryGetFieldName(context, right, out var rightField2))
             {
                 if (leftField2 == rightField2)
                 {
@@ -993,7 +1024,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public bool TryGetFieldName(IntermediateNode node, out string fieldName)
+        public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName)
         {
             IntermediateNode maybeScopeAccessNode;
 
@@ -1011,8 +1042,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (scopeAccessNode.Value is ScopeAccessSymbol scopeAccessSymbol)
                 {
-                    var _callerScope = _callNodePredicateEval.Peek().caller.Scope;
-                    var callerId = _callerScope.Id;
+                    var callerScope = context.CallerNode.Scope;
+                    var callerId = callerScope.Id;
                     if (scopeAccessSymbol.Parent.Id == callerId)
                     {
                         fieldName = scopeAccessSymbol.Name;
