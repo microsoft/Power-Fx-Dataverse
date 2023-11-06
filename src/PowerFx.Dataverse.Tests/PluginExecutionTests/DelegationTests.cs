@@ -1508,45 +1508,45 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
 
-        //// Error for inner first which can't be delegated.
-        //[InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
-        //   1,
-        //   "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (First(Filter(r1, (GtDecimals(new_price,90))))).new_price)), 999)))))",
-        //   false,
-        //   false,
-        //   "Warning 103-105: This operation on table 'r1' may not work if it has more than 999 rows.")]
+        //Inner first which can still be delegated.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           false,
+           false)]
 
-        //[InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
-        //    1, 
-        //    "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", 
-        //    false, 
-        //    false)]
-
-        //[InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 
-        //    1, 
-        //    "With({r:t1}, (With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))", 
-        //    false, 
-        //    false)]
-
-        //[InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 
-        //    1, 
-        //    "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))", 
-        //    false, 
-        //    false)]
-
-        //// Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
-        //[InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
-        //    1,
-        //    "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(r1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
-        //    false,
-        //    false)]
-
-        // $$$ inner lookup should delegate.
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
             1,
-            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(r1, (EqDecimals(new_price,100)))).new_price), 999)))))",
+            "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
             false,
             false)]
+
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            false,
+            false)]
+
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            false,
+            false)]
+
+        // Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(r1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            false,
+            false)]
+
+        // inner lookup has filter and that should delegate.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqDecimals(new_price,100)))).new_price), 999)))))",
+            false,
+            false,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         public void WithDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
