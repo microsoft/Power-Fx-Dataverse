@@ -1066,276 +1066,263 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
 
-        ////Basic case 
-        //[InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", false, true)]
+        //Basic case 
+        [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, false)]
-        //[InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", true, true)]
-        //[InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, true)]
+        [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, false)]
+        [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", true, true)]
+        [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)", true, false)]
+        [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, false)]
-        //[InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", true, true)]
-        //[InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, true)]
+        [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, false)]
+        [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", true, true)]
+        [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)", true, false)]
+        [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, false)]
-        //[InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", true, true)]
-        //[InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, true)]
+        [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, false)]
+        [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", true, true)]
+        [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)", true, false)]
+        [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, false)]
-        //[InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", true, true)]
-        //[InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, true)]
+        [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, false)]
+        [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", true, true)]
+        [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)", true, false)]
+        [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, true)]
+        [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, false)]
+        [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, true)]
+        [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, false)]
+        [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, true)]
+        [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, false)]
+        [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)", true, true)]
+        [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)", true, false)]
+        [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Value(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Float(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Value(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Float(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", false, true)]
-        //// These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
-        //// Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
-        //// Date
-        //[InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)", false, false)]
-        //[InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", true, true)]
-        //[InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)", true, false)]
-        //[InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", false, true)]
+        [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)", false, false)]
+        [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", true, true)]
+        [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)", true, false)]
+        [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", false, true)]
+        // These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
+        // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
+        // Date
+        [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)", false, false)]
+        [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", true, true)]
+        [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)", true, false)]
+        [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", false, true)]
 
-        //// DateTime with coercion
-        //[InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", false, false)]
-        //[InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)", true, true)]
-        //[InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", true, false)]
-        //[InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)", false, true)]
+        // DateTime with coercion
+        [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", false, false)]
+        [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)", true, true)]
+        [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", true, false)]
+        [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", false, true)]
 
-        ////Order doesn't matter
-        //[InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, false)]
-        //[InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", true, true)]
-        //[InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)", true, false)]
-        //[InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, true)]
+        //Order doesn't matter
+        [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, false)]
+        [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", true, true)]
+        [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)", true, false)]
+        [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, true)]
 
-        //// Variable as arg 
-        //[InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, false)]
-        //[InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)", true, true)]
-        //[InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)", true, false)]
-        //[InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, true)]
+        // Variable as arg 
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, false)]
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)", true, true)]
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)", true, false)]
+        [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, true)]
 
-        //// Function as arg 
-        //[InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtDecimals(1,0), (_count), (1))), 999)", false, false)]
-        //[InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)", true, true)]
-        //[InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)", false, true)]
+        // Function as arg 
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtDecimals(1,0), (_count), (1))), 999)", false, false)]
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)", true, true)]
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)", true, false)]
+        [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)", false, true)]
 
-        //// Filter nested in another function both delegated.
-        //[InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, false)]
-        //[InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", true, true)]
-        //[InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)", true, false)]
-        //[InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, true)]
+        // Filter nested in another function both delegated.
+        [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, false)]
+        [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", true, true)]
+        [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)", true, false)]
+        [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, true)]
 
-        //// Basic case with And
-        //[InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, true)]
+        // Basic case with And
+        [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, true)]
 
-        //// Basic case with Or
-        //[InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, true)]
-
-
-        //// Delegation Not Allowed 
-
-        //// predicate that uses function that is not delegable.
-        //[InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        //// predicate that uses function that is not delegable.
-        //[InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,120), (IsBlank(_count)))))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        //// Filter nested in FirstN function. Only FirstN is delegated.
-        //[InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))", false, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(new_price,100)))", true, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))", true, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))", false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        //// Aliasing prevents delegation. 
-        //[InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, false)]
-        //[InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", true, true)]
-        //[InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
-        //[InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, true)]
-
-        //[InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))", 1, "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", false, false)]
-
-        //[InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 1, "With({r:t1}, (With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))", false, false)]
-
-        //[InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 1, "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))", false, false)]
-
-        // $$$ error for inner first which can't be delegated.
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
-            1, 
-            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (First(Filter(r1, (GtDecimals(new_price,90))))).new_price)), 999)))))", 
-            false, 
-            false,
-            "Warning 103-105: This operation on table 'r1' may not work if it has more than 999 rows.")]
-
-        //// Comparing fields can't be delegated.
-        //[InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtNumbers(new_price,old_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtNumbers(new_price,old_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        //[InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // Basic case with Or
+        [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, true)]
 
 
-        //// Not All binary op are supported.
-        //[InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // Delegation Not Allowed 
 
-        //[InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // predicate that uses function that is not delegable.
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //// Error handling
-        //[InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", false, true)]
+        // predicate that uses function that is not delegable.
+        [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,120), (IsBlank(_count)))))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //[InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", false, true)]
+        // Filter nested in FirstN function. Only FirstN is delegated.
+        [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))", false, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(new_price,100)))", true, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))", true, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))", false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //// Blank handling
-        //[InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, false)]
-        //[InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, true)]
-        //[InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, false)]
-        //[InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, true)]
+        // Aliasing prevents delegation. 
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, false)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", true, true)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, true)]
 
-        //[InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, false)]
-        //[InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, true)]
-        //[InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, false)]
-        //[InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, true)]
+        // Comparing fields can't be delegated.
+        [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtNumbers(new_price,old_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtNumbers(new_price,old_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //[InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //[InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, false)]
-        //[InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, true)]
-        //[InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, false)]
-        //[InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, true)]
+        // Not All binary op are supported.
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //[InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, false)]
-        //[InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, true)]
-        //[InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, false)]
-        //[InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, true)]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        //[InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, true)]
-        //[InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, false)]
-        //[InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, true)]
+        // Error handling
+        [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", false, true)]
 
-        //[InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtDecimals(new_currency,0)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,0)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,Float(0))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(Value(new_currency),0)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", false, true)]
 
-        //[InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtDecimals(new_currency,0)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,0)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,Float(0))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        //[InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(Value(new_currency),0)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        // Blank handling
+        [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, true)]
+
+        [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, true)]
+
+        [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, true)]
+
+        [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, true)]
+
+        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtDecimals(new_currency,0)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,0)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,Float(0))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(Value(new_currency),0)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtDecimals(new_currency,0)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,0)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,Float(0))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(Value(new_currency),0)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
@@ -1516,6 +1503,105 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             for (int i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+        }
+
+        [Theory]
+
+        //// Error for inner first which can't be delegated.
+        //[InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+        //   1,
+        //   "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (First(Filter(r1, (GtDecimals(new_price,90))))).new_price)), 999)))))",
+        //   false,
+        //   false,
+        //   "Warning 103-105: This operation on table 'r1' may not work if it has more than 999 rows.")]
+
+        //[InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+        //    1, 
+        //    "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", 
+        //    false, 
+        //    false)]
+
+        //[InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 
+        //    1, 
+        //    "With({r:t1}, (With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))", 
+        //    false, 
+        //    false)]
+
+        //[InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 
+        //    1, 
+        //    "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))", 
+        //    false, 
+        //    false)]
+
+        //// Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
+        //[InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+        //    1,
+        //    "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(r1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+        //    false,
+        //    false)]
+
+        // $$$ inner lookup should delegate.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(r1, (EqDecimals(new_price,100)))).new_price), 999)))))",
+            false,
+            false)]
+
+        public void WithDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = parserNumberIsFloatOption ?
+                PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
+                PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.Equal(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.Equal(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            // To check error cases.
+            if (expectedRows < 0)
+            {
+                Assert.IsType<ErrorValue>(result);
+            }
+            else
+            {
+                Assert.IsAssignableFrom<TableValue>(result);
+                Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
             }
         }
     }

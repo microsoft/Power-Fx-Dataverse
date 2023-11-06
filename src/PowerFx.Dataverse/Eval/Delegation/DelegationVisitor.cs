@@ -37,14 +37,14 @@ namespace Microsoft.PowerFx.Dataverse
         // For reporting delegation Warnings. 
         private readonly ICollection<ExpressionError> _errors;
 
-        private readonly Stack<IDictionary<string, IntermediateNode>> _withScopeStack;
+        private readonly Stack<IDictionary<string, RetVal>> _withScopeStack;
 
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow)
         {
             _hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
-            _withScopeStack = new Stack<IDictionary<string, IntermediateNode>>();
+            _withScopeStack = new Stack<IDictionary<string, RetVal>>();
         }
 
         // Return Value passed through at each phase of the walk. 
@@ -315,7 +315,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType aggType && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol
                 && TryGetScopedVariable(scopedSymbol.Name, out var scopedNode))
             {
-                tableArg = scopedNode.Accept(this, context);
+                tableArg = scopedNode;
             }
             else if (node.Args[0] is ScopeAccessNode)
             {
@@ -351,7 +351,7 @@ namespace Microsoft.PowerFx.Dataverse
             var arg0 = node.Args[0] as RecordNode;
             var arg1 = node.Args[1] as LazyEvalNode;
 
-            var withScope = RecordNodeToDictionary(arg0);
+            var withScope = RecordNodeToDictionary(arg0, context);
 
             _withScopeStack.Push(withScope);
             var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
@@ -367,18 +367,19 @@ namespace Microsoft.PowerFx.Dataverse
             return Ret(node);
         }
 
-        private IDictionary<string, IntermediateNode> RecordNodeToDictionary(RecordNode arg0)
+        private IDictionary<string, RetVal> RecordNodeToDictionary(RecordNode arg0, Context context)
         {
-            var scope = new Dictionary<string, IntermediateNode>();
+            var scope = new Dictionary<string, RetVal>();
             foreach(var field in arg0.Fields)
             {
-                scope.Add(field.Key.Value, field.Value);
+                var valueRetVal = field.Value.Accept(this, context);
+                scope.Add(field.Key.Value, valueRetVal);
             }
 
             return scope;
         }
 
-        private bool TryGetScopedVariable(string variable, out IntermediateNode node)
+        private bool TryGetScopedVariable(string variable, out RetVal node)
         {
             if(_withScopeStack.Count() == 0)
             {
