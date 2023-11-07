@@ -1,4 +1,5 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using Microsoft.PowerFx.Core.Functions;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
@@ -222,9 +223,9 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if(node is CallNode maybeFloat && maybeFloat.Function == BuiltinFunctionsCore.Float)
+            if(node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value))
             {
-                maybeScopeAccessNode = maybeFloat.Args[0];
+                maybeScopeAccessNode = functionCall.Args[0];
             }
             else
             {
