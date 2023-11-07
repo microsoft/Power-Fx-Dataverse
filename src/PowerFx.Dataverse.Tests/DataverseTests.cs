@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -580,7 +581,7 @@ END
             var engine = new PowerFx2SqlEngine(BaselineMetadata.ToXrm());
             var result = engine.Compile(exprStr, options);
 
-            Assert.Equal("address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
+            Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
 
             Assert.Equal(BaselineFunction, result.SqlFunction);
 
@@ -1331,7 +1332,7 @@ END
             "remote=>data",
             "local=>local_remote,self")] // "Multiple lookups"
         [InlineData("'Logical Lookup'.Data",
-            "logicalid",
+            "localid,logicalid",
             "remote=>data",
             "local=>logical")] // "Logical Lookup"
         [InlineData("7 + 2", "")] // "Literals"
@@ -1759,6 +1760,45 @@ END
             Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
+        public const string guidTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- guid
+) RETURNS nvarchar(4000)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 nvarchar(4000)
+    DECLARE @v2 nvarchar(4000)
+    DECLARE @v3 nvarchar(4000)
+    DECLARE @v4 nvarchar(4000)
+    DECLARE @v5 nvarchar(4000)
+
+    -- expression body
+    SET @v1 = @v0
+    SET @v2 = ISNULL(@v1,N'')
+    SET @v3 = N'abc'
+    SET @v4 = ISNULL(@v3,N'')
+    SET @v5 = CONCAT(@v2,@v4)
+    -- end expression body
+
+    RETURN @v5
+END
+";
+        [Fact]
+        public void CheckGuidUsedInFormula()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("Concatenate(guid,\"abc\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("guid", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.Equal(guidTestUDF, result.SqlFunction);
+
+            result = engine.Compile("Concatenate(lookup.tripleremoteid,\"abc\")", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal("tripleremoteid", result.RelatedIdentifiers.ToArray()[0].Value.First());
+        }
+
         [Theory]
         [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
         [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] // "ThisRecord"
@@ -1855,7 +1895,7 @@ END
         public void Coalesce()
         {
             // Once we add Coalesce to Library.cs, remove TryCoalesceNum.
-            var ok = Functions.Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
+            var ok = Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
             Assert.False(ok);
             Assert.Null(ptr);
         }
