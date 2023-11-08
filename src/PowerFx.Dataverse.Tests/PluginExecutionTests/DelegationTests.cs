@@ -341,6 +341,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
 
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price))",
+            true,
+            true,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtDecimals(new_price,50), (_g1), (_gMissing)))))).new_price))",
+            false,
+            false,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,Float(50)), (_g1), (_gMissing)))))).new_price))",
+            true,
+            false,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(Value(new_price),50), (_g1), (_gMissing)))))).new_price))",
+            false,
+            true,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+
         // On non primary field.
         [InlineData("LookUp(t1, Price > 50).Price",
             100.0,
@@ -368,6 +393,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
             true,
             true)]
+        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
+            false,
+            false)]
+        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, Float(50)))).new_price))",
+            true,
+            false)]
+        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
+            false,
+            true)]
 
         // successful with complex expression
         [InlineData("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
@@ -376,10 +416,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(true, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, If(True, (_g1), (_gMissing)))).new_price))",
+            true,
+            true)]
+
         // nested delegation, both delegated.
         [InlineData("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price",
             100.0,
             "(__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price",
+            true,
+            true)]
+
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price))",
             true,
             true)]
 
@@ -413,6 +465,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
         )]
 
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            false,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            false,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+
         // Can't delegate if Table Arg is delegated.
         [InlineData("LookUp(FirstN(t1, 1), localid=_g1).Price",
             100.0,
@@ -420,6 +501,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true,
             "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
+
+        [InlineData("With({r:t1}, LookUp(FirstN(r, 1), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
 
         // Can Delegate on non primary-key field.
         [InlineData("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
@@ -443,9 +531,38 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
+
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
+            true,
+            true)]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
+            false,
+            false)]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, Float(50)))).localid)).new_price))",
+            true,
+            false)]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
+            false,
+            true)]
+
         [InlineData("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
             "(__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price",
+            true,
+            true)]
+
+
+        [InlineData("With({r:t1}, LookUp(r, LocalId=First([_g1,_gMissing]).Value).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price))",
             true,
             true)]
 
@@ -525,24 +642,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(Collect((t1), RecordToRecord([new_price:Decimal(new_price)],({new_price:200}))).new_price",
             false,
             true)]
-
-
-        // Aliasing prevents delegation. 
-        [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
-            true,
-            true)]
-
-        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 100.0, "With({r:Filter(t1, (LtDecimals(new_price,120)))}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", false, false, "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        [InlineData("With({r: t1} ,LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price))",
-            true,
-            true)]
-
-
 
         // $$$ Confirm is NotFound Error or Blank? 
         [InlineData("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
@@ -822,7 +921,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        public void LookUpDelegationFloat(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
+            true,
+            true)]
+
+        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 100.0, "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", false, false, "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r: t1} ,LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price))",
+            true,
+            true)]
+
+        public void LookUpDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
@@ -1141,6 +1254,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", true, true)]
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)", true, false)]
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(t1, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)))", false, true)]
+
         // These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
         // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
         // Date
@@ -1193,11 +1312,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)", true, false)]
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)", false, true)]
 
+        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, If(LtDecimals(1,0), (_count), (1))), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)))", false, true)]
+
         // Filter nested in another function both delegated.
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, false)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", true, true)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)", true, false)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", false, true)]
 
         // Basic case with And
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, false)]
@@ -1205,11 +1334,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, true)]
 
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", false, true)]
+
         // Basic case with Or
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, false)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", true, true)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", false, true)]
 
 
         // Delegation Not Allowed 
@@ -1220,11 +1359,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // predicate that uses function that is not delegable.
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,120), (IsBlank(_count)))))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtDecimals(new_price,120), (IsBlank(_count)))))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(new_price,120), (IsBlank(_count)))))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Filter nested in FirstN function. Only FirstN is delegated.
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))", false, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -1232,12 +1381,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))", true, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))", false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        // Aliasing prevents delegation. 
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(new_price,100)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, false)]
         [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", true, true)]
         [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
         [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, true)]
-
 
         // Comparing fields can't be delegated.
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -1396,18 +1548,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
         [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
 
+        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
+        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
+        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
+        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, true)]
+
         // Filter inside FirstN, both can be combined *(vice versa isn't true)*
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
 
+        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", false, false)]
+        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", true, true)]
+        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price))", true, false)]
+        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", false, true)]
+
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
 
-        // Aliasing prevents delegation. 
+        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
+        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
+        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
+        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, true)]
+
         [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
         [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
         [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
@@ -1511,39 +1677,39 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         //Inner first which can still be delegated.
         [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
            1,
-           "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
            false,
            false)]
 
         [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
             1,
-            "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
             false,
             false)]
 
         [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
             1,
-            "With({r:t1}, (With({r:Filter(t1, (LtDecimals(new_price,120)))}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
             false,
             false)]
 
         [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
             1,
-            "With({r:Filter(t1, (LtDecimals(new_price,120)))}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
             false,
             false)]
 
         // Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
         [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
             1,
-            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(r1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
             false,
             false)]
 
         // inner lookup has filter and that should delegate.
         [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
             1,
-            "With({r1:Filter(t1, (LtDecimals(new_price,120)))}, (With({r2:Filter(t1, (GtDecimals(new_price,90)))}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqDecimals(new_price,100)))).new_price), 999)))))",
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqDecimals(new_price,100)))).new_price), 999)))))",
             false,
             false,
             "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]

@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Syntax;
@@ -488,7 +489,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return base.Visit(node, context);
             }
             
-            // we don't support delegation for functions with aliasing.
+            // Since With supports scopes, it needs to be processed differently.
              if(func == BuiltinFunctionsCore.With.Name) 
             {
                 return ProcessWith(node, context);
@@ -506,11 +507,6 @@ namespace Microsoft.PowerFx.Dataverse
                 && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode))
             {
                 tableArg = scopedNode;
-            }
-            else if (node.Args[0] is ScopeAccessNode)
-            {
-                // if first arg is ScopeAccessNode, and It's scope variable wasn't on stack, then we can't delegate (This can happen when function predicate has expression refereeing to scoped variable).
-                return CreateExpressionNotSupportedError(node);
             }
             else
             {
@@ -542,6 +538,7 @@ namespace Microsoft.PowerFx.Dataverse
             var arg1 = node.Args[1] as LazyEvalNode;
 
             var withScope = RecordNodeToDictionary(arg0, context);
+            var maybeDelegatedArg0 = new RecordNode(arg0.IRContext, withScope.ToDictionary(kv => new DName(kv.Key), kv => Materialize(kv.Value)));
 
             context.PushWithScope(withScope);
             var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
@@ -550,11 +547,13 @@ namespace Microsoft.PowerFx.Dataverse
             if (!arg1MaybeDelegable.Equals(arg1.Child))
             {
                 var lazyArg1 = new LazyEvalNode(arg1.Child.IRContext, arg1MaybeDelegable);
-                var delegatedWith = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { arg0, lazyArg1 });
+                var delegatedWith = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { maybeDelegatedArg0, lazyArg1 });
                 return Ret(delegatedWith);
             }
-
-            return Ret(node);
+            else
+            {
+                return Ret(new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { maybeDelegatedArg0, arg1 }));
+            }
         }
 
         private IDictionary<string, RetVal> RecordNodeToDictionary(RecordNode arg0, Context context)
