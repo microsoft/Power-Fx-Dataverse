@@ -51,6 +51,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
+        private readonly ConcurrentDictionary<string, string> _baseTableNames = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+
         /// <summary>
         /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
         /// so, we are passing list of all global option sets so that these option sets are also processed and will be suggested in intellisense. 
@@ -403,6 +405,23 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return _optionSets.TryGetValue(name.Value, out optionSet);
         }
+
+        internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
+        {
+            if (_baseTableNames.TryGetValue(logicalName, out baseTableName))
+            {
+                return true;
+            }
+
+            if (_innerProvider != null && _innerProvider.TryGetBaseTableName(logicalName, out baseTableName))
+            {
+                _baseTableNames[logicalName] = baseTableName;
+                return true;
+            }
+
+            return false;
+        }
+
         internal IEnumerable<DataverseOptionSet> OptionSets => _optionSets.Values.Distinct();
 
         public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)

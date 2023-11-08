@@ -115,6 +115,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 _requests.Add(logicalOrDisplayName);
                 return _inner.TryGetEntityMetadata(logicalOrDisplayName, out entity);
             }
+
+            public bool TryGetBaseTableName(string logicalOrDisplayName, out string basteTableName)
+            {
+                basteTableName = null;
+                return false;
+            }
         }
 
         // Verify we can convert EntityMetadata to RecordType

@@ -137,6 +137,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 throw new InvalidOperationException($"failure");
             }
+
+            public bool TryGetBaseTableName(string logicalOrDisplayName, out string basteTableName)
+            {
+                basteTableName = null;
+                return false;
+            }
         }
 
         // Create a cloned CdsEntityMetadataProvider against a new provider.

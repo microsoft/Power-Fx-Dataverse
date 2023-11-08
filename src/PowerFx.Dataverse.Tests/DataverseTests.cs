@@ -547,7 +547,7 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v5 decimal(23,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[Accountbase] WHERE[AccountId] = @v2
     SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
@@ -578,7 +578,7 @@ END
                 UdfName = "fn_testUdf1"
             };
 
-            var engine = new PowerFx2SqlEngine(BaselineMetadata.ToXrm());
+            var engine = new PowerFx2SqlEngine(BaselineMetadata.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(BaselineMetadata)));
             var result = engine.Compile(exprStr, options);
 
             Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
@@ -1951,6 +1951,18 @@ END
             }
 
             return ret;
+        }
+
+        public bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName)
+        {
+            if (TryGetEntityMetadata(logicalOrDisplayName, out var entity))
+            {
+                baseTableName = entity.SchemaName + "base";
+                return true;
+            }
+
+            baseTableName = null;
+            return false;
         }
     }
 
