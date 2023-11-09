@@ -535,9 +535,8 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
         {
             var maybeDelegableTable = Materialize(tableArg);
-
             // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
-            if (!node.Args[0].Equals(maybeDelegableTable))
+            if (!ReferenceEquals(node.Args[0], maybeDelegableTable))
             {
                 var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
                 delegableArgs.AddRange(node.Args.Skip(1));
@@ -565,7 +564,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException("With scope stack is corrupted");
             }
 
-            if (!arg1MaybeDelegable.Equals(arg1.Child))
+            if (!ReferenceEquals(arg1MaybeDelegable,arg1.Child))
             {
                 var lazyArg1 = new LazyEvalNode(arg1.Child.IRContext, arg1MaybeDelegable);
                 var delegatedWith = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { maybeDelegatedArg0, lazyArg1 });
