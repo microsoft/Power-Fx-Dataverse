@@ -120,13 +120,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__retrieveGUID(t1, _g1)).new_price",
             true,
             true)]
-
+        
         // Date
         [InlineData("LookUp(t1, Date = Date(2023, 6, 1)).Price",
             100.0,
             "(__retrieveSingle(t1, __eq(t1, new_date, Date(2023, 6, 1)))).new_price",
             true,
             true)]
+
         // These three tests have Coalesce for numeric literals where the NumberIsFloat version does not.
         // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
         [InlineData("LookUp(t1, Date = Date(2023, 6, 1)).Price",
@@ -147,12 +148,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)))).new_price",
             true,
             true)]
+
         [InlineData("LookUp(t1, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price",
              100.0,
             "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))))).new_price",
             false,
             false)]
-
 
         // reversed order still ok 
         [InlineData("LookUp(t1, _g1 = LocalId).Price",
@@ -200,6 +201,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true,
             "Warning 22-27: Can't delegate LookUp: Expression compares multiple fields.")]
+
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price))",
+            true,
+            true,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtDecimals(new_price,50), (_g1), (_gMissing)))))).new_price))",
+            false,
+            false,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,Float(50)), (_g1), (_gMissing)))))).new_price))",
+            true,
+            false,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
+        [InlineData("With({r:t1}, LookUp(r, LocalId=If(Price>50, _g1, _gMissing)).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(Value(new_price),50), (_g1), (_gMissing)))))).new_price))",
+            false,
+            true,
+            "Warning 34-39: Can't delegate LookUp: Expression compares multiple fields.")]
 
         // On non primary field.
         [InlineData("LookUp(t1, Price > 50).Price",
@@ -267,13 +293,49 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows."
         )]
 
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            false,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+        [InlineData("With({r:t1}, LookUp(Filter(r, Price = 100), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __eq(t1, new_price, 100), 999), (EqGuid(localid,_g1)))).new_price))",
+            false,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows."
+        )]
+
         // Can't delegate if Table Arg is delegated.
         [InlineData("LookUp(FirstN(t1, 1), localid=_g1).Price",
             100.0,
             "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price",
             true,
             true,
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] 
+
+        [InlineData("With({r:t1}, LookUp(FirstN(r, 1), localid=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price))",
+            true,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Can Delegate on non primary-key field.
         [InlineData("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
@@ -358,7 +420,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 15-17: This operation on table 'local' may not work if it has more than 999 rows."
             )]
 
-
         [InlineData("Collect(t1, { Price : 200}).Price",
             200.0, // Collect shouldn't give warnings. 
             "(Collect((t1), {new_price:200})).new_price",
@@ -380,15 +441,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-
-        // Aliasing prevents delegation. 
-        [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
-            100.0,
-            "With({r:t1}, ((LookUp(r, (EqGuid(localid,_g1)))).new_price))",
-            true,
-            true,
-            "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-
         // $$$ Confirm is NotFound Error or Blank? 
         [InlineData("IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))",
             true, // delegated, but not found is Error
@@ -403,12 +455,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)] // variable
 
-        [InlineData("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
-            100.0,
-            "(With({f:_g1}, (__retrieveGUID(t1, f)))).new_price",
-            true,
-            true)] // variable
-
         [InlineData("LookUp(t1, LocalId=LocalId).Price",
             100.0,
             "(LookUp(t1, (EqGuid(localid,localid)))).new_price",
@@ -416,6 +462,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             "Warning 18-19: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
             "Warning 19-26: Can't delegate LookUp: Expression compares multiple fields.")] // variable
+
+        [InlineData("With({r:t1}, LookUp(r, LocalId=LocalId).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (EqGuid(localid,localid)))).new_price))",
+            true,
+            true,
+            "Warning 30-31: This predicate will always be true. Did you mean to use ThisRecord or [@ ]?",
+            "Warning 31-38: Can't delegate LookUp: Expression compares multiple fields.")] // variable
 
         // Error Handling
         [InlineData("LookUp(t1, Price = If(1/0, 255)).Price",
@@ -527,7 +581,52 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true,
             "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        public void LookUpDelegationFloat(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+
+        [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,0)))).new_price))",
+            true,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (GtDecimals(new_currency,0)))).new_price))",
+            false,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,Float(0))))).new_price))",
+            true,
+            false,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
+            100.0,
+            "With({r:t1}, ((LookUp(r, (GtNumbers(Value(new_currency),0)))).new_price))",
+            false,
+            true,
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
+            true,
+            true)]
+
+        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 
+            100.0, 
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", 
+            false, 
+            false, 
+            "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r: t1} ,LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price)",
+            100.0,
+            "With({r:t1}, ((__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001))).new_price))",
+            true,
+            true)]
+
+        public void LookUpDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
@@ -554,63 +653,71 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1.Type);
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
-            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // comapre IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach(var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            // Can still run and verify results. 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
+                Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
-            // Place a reference to tableT1 in the fakeT1 symbol values and compose in
-            var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
-            fakeSymbolValues.Set(fakeSlot, tableT1);
-            var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+                // comapre IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
 
-            if (expected is null)
-            {
-                Assert.IsType<BlankValue>(result);
-            }
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
-            if (expected is Type expectedType)
-            {
-                Assert.IsType<ErrorValue>(result);
-            }
-            else
-            {
-                if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                    (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
                 {
-                    Assert.Equal(expected, result.ToObject());
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
-                else if(cdsNumberIsFloat && !parserNumberIsFloatOption)
+
+                // Can still run and verify results. 
+                var run = check.GetEvaluator();
+
+                // Place a reference to tableT1 in the fakeT1 symbol values and compose in
+                var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
+                fakeSymbolValues.Set(fakeSlot, tableT1);
+                var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+
+                var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+
+                if (expected is null)
                 {
-                    Assert.Equal(expected, result.ToObject());
+                    Assert.IsType<BlankValue>(result);
+                }
+
+                if (expected is Type expectedType)
+                {
+                    Assert.IsType<ErrorValue>(result);
                 }
                 else
                 {
-                    Assert.Equal(expected is double dexp ? new decimal(dexp) : expected, result.ToObject());
+                    if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
+                        (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                    {
+                        Assert.Equal(expected, result.ToObject());
+                    }
+                    else if(cdsNumberIsFloat && !parserNumberIsFloatOption)
+                    {
+                        Assert.Equal(expected, result.ToObject());
+                    }
+                    else
+                    {
+                        Assert.Equal(expected is double dexp ? new decimal(dexp) : expected, result.ToObject());
+                    }
                 }
             }
         }
-
+        
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -646,10 +753,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)", false, true)]
 
         // Aliasing prevents delegation. 
-        [InlineData("With({r : t1}, FirstN(r, Float(100)))", 3, "With({r:t1}, (FirstN(r, Float(100))))", false, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (FirstN(r, 100)))", true, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (FirstN(r, Float(100))))", true, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (FirstN(r, 100)))", false, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r : t1}, FirstN(r, Float(100)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(100))))", false, false)]
+        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 100)))", true, true)]
+        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(100))))", true, false)]
+        [InlineData("With({r : t1}, FirstN(r, 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 100)))", false, true)]
 
         // Error handling
 
@@ -690,39 +797,47 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100));
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess);
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach (var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            // To check error cases.
-            if (expectedRows < 0)
-            {
-                Assert.IsType<ErrorValue>(result);
-            }
-            else
-            {
-                Assert.IsAssignableFrom<TableValue>(result);
-                Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                // To check error cases.
+                if (expectedRows < 0)
+                {
+                    Assert.IsType<ErrorValue>(result);
+                }
+                else
+                {
+                    Assert.IsAssignableFrom<TableValue>(result);
+                    Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                }
             }
         }
 
@@ -791,6 +906,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", true, false)]
         [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)", false, true)]
 
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))), 999)))", false, true)]
+
         //Order doesn't matter
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, false)]
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", true, true)]
@@ -836,11 +956,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // predicate that uses function that is not delegable.
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,120), (IsBlank(_count)))))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtDecimals(new_price,120), (IsBlank(_count)))))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(new_price,120), (IsBlank(_count)))))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(new_price,Float(120)), (IsBlank(_count)))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < 120 And IsBlank(_count)))", 0, "With({r:t1}, (Filter(r, (And(LtNumbers(Value(new_price),120), (IsBlank(_count)))))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Filter nested in FirstN function. Only FirstN is delegated.
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))", false, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -848,11 +978,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))", true, false, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(FirstN(t1, 100), Price = 100)", 1, "Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))", false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        // Aliasing prevents delegation. 
-        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (Filter(r, (LtDecimals(new_price,120)))))", false, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (Filter(r, (LtNumbers(new_price,120)))))", true, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (Filter(r, (LtNumbers(new_price,Float(120))))))", true, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (Filter(r, (LtNumbers(Value(new_price),120)))))", false, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqDecimals(new_price,100)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(new_price,100)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), Float(100)), (EqNumbers(new_price,Float(100))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(FirstN(r, 100), Price = 100))", 1, "With({r:t1}, (Filter(__retrieveMultiple(t1, __noFilter(), 100), (EqNumbers(Value(new_price),100)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, false)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", true, true)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
+        [InlineData("With({r : t1}, Filter(r, Price < 120))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)))", false, true)]
 
         // Comparing fields can't be delegated.
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -860,19 +994,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtNumbers(new_price,old_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Price < Old_Price)", 2, "Filter(t1, (LtDecimals(new_price,old_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtNumbers(new_price,old_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Price < Old_Price))", 2, "With({r:t1}, (Filter(r, (LtDecimals(new_price,old_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+
         // Not All binary op are supported.
         [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, \"row1\" in Name)", 1, "Filter(t1, (InText(row1,new_name)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        
+
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, \"row1\" in Name))", 1, "With({r:t1}, (Filter(r, (InText(row1,new_name)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Error handling
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)", false, false)]
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", true, true)]
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", false, true)]
-
         // Blank handling
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, false)]
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, true)]
@@ -899,7 +1042,339 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,Float(0))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(Value(new_currency),0)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtDecimals(new_currency,0)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,0)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,Float(0))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(Value(new_currency),0)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = parserNumberIsFloatOption ?
+                PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
+                PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
+
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
+
+            foreach (var input in inputs)
+            {
+                expr = input.Item1;
+                expectedIr = input.Item2;
+
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
+
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
+
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                // To check error cases.
+                if (expectedRows < 0)
+                {
+                    Assert.IsType<ErrorValue>(result);
+                }
+                else
+                {
+                    Assert.IsAssignableFrom<TableValue>(result);
+                    Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                }
+            }
+        }
+
+        // Table 't1' has
+        // 1st item with
+        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
+        // 2nd item with
+        // Price = 10
+        // 3rd item with
+        // Price = -10
+
+        [Theory]
+
+        //Basic case 
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
+        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
+
+        // Filter inside FirstN, both can be combined *(vice versa isn't true)*
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
+        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
+
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
+        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
+        public void FirstDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = parserNumberIsFloatOption ?
+                PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
+                PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100));
+
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
+
+            foreach (var input in inputs)
+            {
+                expr = input.Item1;
+                expectedIr = input.Item2;
+
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
+
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
+
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
+                    (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                {
+                    Assert.Equal(expected, result.ToObject());
+                }
+                else
+                {
+                    Assert.Equal(new decimal((double)expected), result.ToObject());
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
+            "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
+        [InlineData("LookUp(t1, LocalId=LocalId).Price",
+            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
+            "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
+        [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price",
+            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
+            )]
+        public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
+        {
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
+            var tableT1 = dv.AddTable(displayName, logicalName);
+
+            var opts = PluginExecutionTests._parserAllowSideEffects;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_g1", FormulaValue.New(PluginExecutionTests._g1)); // matches entity
+            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+
+            var errors_pt_br = check.GetErrorsInLocale(culture: CultureInfo.CreateSpecificCulture("pt-BR"));
+
+            var errorList = errors_pt_br.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.Equal(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+        }
+
+        [Theory]
+
+        //Inner first which can still be delegated.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           false,
+           false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           true,
+           true)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(90)), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))))).new_price)), 999)))))",
+           true,
+           false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           false,
+           true)]
+
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            false,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            true,
+            true)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))",
+            true,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            false,
+            true)]
+
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            false,
+            false)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            false,
+            true)]
+
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            false,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            false,
+            true)]
+
+        // Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            false,
+            false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), __eq(t1, new_price, Float(100))), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            false,
+            true)]
+
+        // inner lookup has filter and that should delegate.
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqDecimals(new_price,100)))).new_price), 999)))))",
+            false,
+            false,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqNumbers(new_price,100)))).new_price), 999)))))",
+            true,
+            true,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999), (EqNumbers(new_price,Float(100))))).new_price), 999)))))",
+            true,
+            false,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqNumbers(Value(new_price),100)))).new_price), 999)))))",
+            false,
+            true,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        public void WithDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
@@ -956,130 +1431,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        // Table 't1' has
-        // 1st item with
-        // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
-        // 2nd item with
-        // Price = 10
-        // 3rd item with
-        // Price = -10
-
-        [Theory]
-
-        //Basic case 
-        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
-        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
-        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
-        [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
-
-        // Filter inside FirstN, both can be combined *(vice versa isn't true)*
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
-
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
-
-        // Aliasing prevents delegation. 
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", false, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", true, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", true, false, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((First(r)).new_price))", false, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-        public void FirstDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        private static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)
         {
-            // create table "local"
-            var logicalName = "local";
-            var displayName = "t1";
+            var inputs = new List<(string, string)> { (expr, expectedIr) };
 
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
-
-            var tableT1 = dv.AddTable(displayName, logicalName);
-
-            var opts = parserNumberIsFloatOption ?
-                PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
-                PluginExecutionTests._parserAllowSideEffects;
-
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation(dv.MaxRows);
-            engine1.UpdateVariable("_count", FormulaValue.New(100));
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess);
-
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            if (warningCount > 0 || expr.StartsWith("With(") || expr.StartsWith("Collect("))
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
+                return inputs;
             }
 
-            var run = check.GetEvaluator();
+            // transforms input expression without with, to wrap inside with.
+            // e.g. LookUp(t1, Price = 255).Price -> With({r:t1}, LookUp(r, Price = 255).Price)
+            var withExpr = new StringBuilder("With({r:t1},");
+            withExpr.Append(expr.Replace("(t1,", "(r,"));
+            withExpr.Append(")");
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            // transforms expected IR without with, to wrap inside with.
+            // e.g. __retrieveSingle(t1, __eq(t1, new_price, 255))).new_price -> With({r:t1}, (__retrieveSingle(t1, __eq(r, new_price, 255))).new_price)
+            var withIr = new StringBuilder("With({r:t1}, (");
+            withIr.Append(expectedIr);
+            withIr.Append("))");
 
-            if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                (cdsNumberIsFloat && !parserNumberIsFloatOption))
-            {
-                Assert.Equal(expected, result.ToObject());
-            }
-            else
-            {
-                Assert.Equal(new decimal((double)expected), result.ToObject());
-            }
-        }
+            inputs.Add((withExpr.ToString(), withIr.ToString()));
 
-        [Theory]
-        [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
-        [InlineData("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
-        [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
-            )]
-        public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
-        {
-            var logicalName = "local";
-            var displayName = "t1";
-
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
-            var tableT1 = dv.AddTable(displayName, logicalName);
-
-            var opts = PluginExecutionTests._parserAllowSideEffects;
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation(dv.MaxRows);
-            engine1.UpdateVariable("_g1", FormulaValue.New(PluginExecutionTests._g1)); // matches entity
-            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
-
-            var errors_pt_br = check.GetErrorsInLocale(culture: CultureInfo.CreateSpecificCulture("pt-BR"));
-
-            var errorList = errors_pt_br.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
-            {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+            return inputs;
         }
     }
 }
