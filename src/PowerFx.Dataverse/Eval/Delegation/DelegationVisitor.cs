@@ -164,9 +164,9 @@ namespace Microsoft.PowerFx.Dataverse
                 WithScopes.Push(withScope);
             }
 
-            internal void PopWithScope()
+            internal IDictionary<string, RetVal> PopWithScope()
             {
-                WithScopes.Pop();
+                return WithScopes.Pop();
             }
         }
 
@@ -534,15 +534,20 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessWith(CallNode node, Context context)
         {
-            var arg0 = node.Args[0] as RecordNode;
-            var arg1 = node.Args[1] as LazyEvalNode;
+            var arg0 = (RecordNode)node.Args[0];
+            var arg1 = (LazyEvalNode)node.Args[1];
 
             var withScope = RecordNodeToDictionary(arg0, context);
             var maybeDelegatedArg0 = new RecordNode(arg0.IRContext, withScope.ToDictionary(kv => new DName(kv.Key), kv => Materialize(kv.Value)));
 
             context.PushWithScope(withScope);
             var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
-            context.PopWithScope();
+            var poppedWithScope = context.PopWithScope();
+            
+            if(withScope != poppedWithScope)
+            {
+                throw new InvalidOperationException("With scope stack is corrupted");
+            }
 
             if (!arg1MaybeDelegable.Equals(arg1.Child))
             {

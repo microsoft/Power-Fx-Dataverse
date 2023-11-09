@@ -44,28 +44,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, Price = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, 255))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, 255))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Float(255)))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, 255))).new_price))",
-            false,
-            true)]
-
-
         [InlineData("LookUp(t1, Integer = 255).Price",
             null,
             "(__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price",
@@ -86,28 +64,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price",
             false,
             true)]
-
-        [InlineData("With({r:t1}, LookUp(r, Integer = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Integer = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Integer = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_int, Float(255)))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Integer = 255).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price))",
-            false,
-            true)]
-
 
         [InlineData("LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price",
             100.0,
@@ -137,28 +93,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, Float(0))))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\") And Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __and(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            false,
-            true)]
-
-
         [InlineData("LookUp(t1, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price",
             100.0,
             "(__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price",
@@ -180,52 +114,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            true,
-            true)]
-         [InlineData("With({r:t1}, LookUp(r, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            false,
-            false)]
-         [InlineData("With({r:t1}, LookUp(r, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, Float(0))))).new_price))",
-            true,
-            false)]
-         [InlineData("With({r:t1}, LookUp(r, LocalId=GUID(\"00000000-0000-0000-0000-000000000001\") Or Price > 0).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __or(__eq(t1, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(t1, new_price, 0)))).new_price))",
-            false,
-            true)]
-
-
         // variable
         [InlineData("LookUp(t1, LocalId=_g1).Price",
             100.0,
             "(__retrieveGUID(t1, _g1)).new_price",
             true,
             true)]
-
-        [InlineData("With({r:t1}, LookUp(r, LocalId=_g1).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
-            true,
-            true)]
-
-
+        
         // Date
         [InlineData("LookUp(t1, Date = Date(2023, 6, 1)).Price",
             100.0,
             "(__retrieveSingle(t1, __eq(t1, new_date, Date(2023, 6, 1)))).new_price",
-            true,
-            true)]
-
-        [InlineData("With({r:t1}, LookUp(r, Date = Date(2023, 6, 1)).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_date, Date(2023, 6, 1)))).new_price))",
             true,
             true)]
 
@@ -237,23 +136,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             false)]
 
-        [InlineData("With({r:t1}, LookUp(r, Date = Date(2023, 6, 1)).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))))).new_price))",
-            false,
-            false)]
-
-
         // DateTime with coercion
         [InlineData("LookUp(t1, DateTime = Date(2023, 6, 1)).Price",
              null,
             "(__retrieveSingle(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))))).new_price",
-            true,
-            true)]
-
-        [InlineData("With({r:t1}, LookUp(r, DateTime = Date(2023, 6, 1)).Price)",
-             null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_datetime, DateToDateTime(Date(2023, 6, 1))))).new_price))",
             true,
             true)]
 
@@ -263,22 +149,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price)",
-             100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)))).new_price))",
-            true,
-            true)]
-
         [InlineData("LookUp(t1, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price",
              100.0,
             "(__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))))).new_price",
-            false,
-            false)]
-
-
-        [InlineData("With({r:t1}, LookUp(r, DateTime = DateTime(2023, 6, 1, 12, 0, 0)).Price)",
-             100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))))).new_price))",
             false,
             false)]
 
@@ -289,22 +162,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, _g1 = LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
-            true,
-            true)]
-
         // explicit ThisRecord is ok. IR will handle. 
         [InlineData("LookUp(t1, ThisRecord.LocalId=_g1).Price",
             100.0,
             "(__retrieveGUID(t1, _g1)).new_price",
-            true,
-            true)]
-
-        [InlineData("With({r:t1}, LookUp(r, ThisRecord.LocalId=_g1).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, _g1)).new_price))",
             true,
             true)]
 
@@ -388,27 +249,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, Float(50)))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price > 50).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_price, 50))).new_price))",
-            false,
-            true)]
-
         // successful with complex expression
         [InlineData("LookUp(t1, LocalId=If(true, _g1, _gMissing)).Price",
             100.0,
@@ -416,22 +256,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, LocalId=If(true, _g1, _gMissing)).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, If(True, (_g1), (_gMissing)))).new_price))",
-            true,
-            true)]
-
         // nested delegation, both delegated.
         [InlineData("LookUp(t1, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price",
             100.0,
             "(__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price",
-            true,
-            true)]
-
-        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, LocalId=_g1).LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveGUID(t1, _g1)).localid)).new_price))",
             true,
             true)]
 
@@ -500,14 +328,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price",
             true,
             true,
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] 
 
         [InlineData("With({r:t1}, LookUp(FirstN(r, 1), localid=_g1).Price)",
             100.0,
             "With({r:t1}, ((LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price))",
             true,
             true,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")] // $$$ span
+            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Can Delegate on non primary-key field.
         [InlineData("LookUp(t1, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price",
@@ -531,38 +359,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-
-        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, Float(50)))).localid)).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, LocalId=LookUp(t1, ThisRecord.Price>50).LocalId).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (__retrieveSingle(t1, __gt(t1, new_price, 50))).localid)).new_price))",
-            false,
-            true)]
-
         [InlineData("LookUp(t1, LocalId=First([_g1,_gMissing]).Value).Price",
             100.0,
             "(__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price",
-            true,
-            true)]
-
-
-        [InlineData("With({r:t1}, LookUp(r, LocalId=First([_g1,_gMissing]).Value).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveGUID(t1, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price))",
             true,
             true)]
 
@@ -621,7 +420,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "Warning 15-17: This operation on table 'local' may not work if it has more than 999 rows."
             )]
 
-
         [InlineData("Collect(t1, { Price : 200}).Price",
             200.0, // Collect shouldn't give warnings. 
             "(Collect((t1), {new_price:200})).new_price",
@@ -650,35 +448,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r:t1}, IsError(LookUp(r, LocalId=If(false, _g1, _gMissing))))",
-            true, // delegated, but not found is Error
-            "With({r:t1}, (IsError(__retrieveGUID(t1, If(False, (_g1), (_gMissing))))))",
-            true,
-            true)]
-
-
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [InlineData("LookUp(fakeT1, LocalId=_g1).Price",
             100.0,
             "(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price",
-            true,
-            true)] // variable
-
-        [InlineData("With({r:fakeT1}, LookUp(r, LocalId=_g1).Price)",
-            100.0,
-            "With({r:fakeT1}, ((LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price))",
-            true,
-            true)] // variable
-
-        [InlineData("With( { f : _g1}, LookUp(t1, LocalId=f)).Price",
-            100.0,
-            "(With({f:_g1}, (__retrieveGUID(t1, f)))).new_price",
-            true,
-            true)] // variable
-
-        [InlineData("With({f:_g1}, LookUp(t1, LocalId=f)).Price",
-            100.0,
-            "(With({f:_g1}, (__retrieveGUID(t1, f)))).new_price",
             true,
             true)] // variable
 
@@ -720,28 +493,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, Price = If(1/0, 255)).Price)",
-            typeof(ErrorValue),
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price = If(1/0, 255)).Price)",
-            typeof(ErrorValue),
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, If(DecimalToBoolean(DivDecimals(1,0)), (255))))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = If(1/0, 255)).Price)",
-            typeof(ErrorValue),
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Float(If(DecimalToBoolean(DivDecimals(1,0)), (255)))))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = If(1/0, 255)).Price)",
-            typeof(ErrorValue),
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))))).new_price))",
-            false,
-            true)]
-
-
         // Blank Handling
         [InlineData("LookUp(t1, Price = Blank()).Price",
             null,
@@ -764,28 +515,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, Price = Blank()).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price = Blank()).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = Blank()).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price = Blank()).Price)",
-            null,
-            "With({r:t1}, ((__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price))",
-            false,
-            true)]
-
-
         [InlineData("LookUp(t1, Price <> Blank()).Price",
             100.0,
             "(__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price",
@@ -807,28 +536,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
-        [InlineData("With({r:t1}, LookUp(r, Price <> Blank()).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price <> Blank()).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price <> Blank()).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price <> Blank()).Price)",
-            100.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __neq(t1, new_price, Blank()))).new_price))",
-            false,
-            true)]
-
-
         [InlineData("LookUp(t1, Price < Blank()).Price",
             -10.0,
             "(__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price",
@@ -847,27 +554,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("LookUp(t1, Price < Blank()).Price",
             -10.0,
             "(__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price",
-            false,
-            true)]
-
-        [InlineData("With({r:t1}, LookUp(r, Price < Blank()).Price)",
-            -10.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price))",
-            true,
-            true)]
-        [InlineData("With({r:t1}, LookUp(r, Price < Blank()).Price)",
-            -10.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price))",
-            false,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price < Blank()).Price)",
-            -10.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price))",
-            true,
-            false)]
-        [InlineData("With({r:t1}, LookUp(r, Price < Blank()).Price)",
-            -10.0,
-            "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Blank()))).new_price))",
             false,
             true)]
 
@@ -927,7 +613,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 100.0, "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", false, false, "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 
+            100.0, 
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", 
+            false, 
+            false, 
+            "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData("With({r: t1} ,LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price)",
             100.0,
@@ -962,63 +653,71 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1.Type);
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
-            Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // comapre IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach(var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            // Can still run and verify results. 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
+                Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
 
-            // Place a reference to tableT1 in the fakeT1 symbol values and compose in
-            var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
-            fakeSymbolValues.Set(fakeSlot, tableT1);
-            var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+                // comapre IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
 
-            if (expected is null)
-            {
-                Assert.IsType<BlankValue>(result);
-            }
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
-            if (expected is Type expectedType)
-            {
-                Assert.IsType<ErrorValue>(result);
-            }
-            else
-            {
-                if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                    (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
                 {
-                    Assert.Equal(expected, result.ToObject());
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
-                else if(cdsNumberIsFloat && !parserNumberIsFloatOption)
+
+                // Can still run and verify results. 
+                var run = check.GetEvaluator();
+
+                // Place a reference to tableT1 in the fakeT1 symbol values and compose in
+                var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
+                fakeSymbolValues.Set(fakeSlot, tableT1);
+                var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+
+                var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+
+                if (expected is null)
                 {
-                    Assert.Equal(expected, result.ToObject());
+                    Assert.IsType<BlankValue>(result);
+                }
+
+                if (expected is Type expectedType)
+                {
+                    Assert.IsType<ErrorValue>(result);
                 }
                 else
                 {
-                    Assert.Equal(expected is double dexp ? new decimal(dexp) : expected, result.ToObject());
+                    if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
+                        (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                    {
+                        Assert.Equal(expected, result.ToObject());
+                    }
+                    else if(cdsNumberIsFloat && !parserNumberIsFloatOption)
+                    {
+                        Assert.Equal(expected, result.ToObject());
+                    }
+                    else
+                    {
+                        Assert.Equal(expected is double dexp ? new decimal(dexp) : expected, result.ToObject());
+                    }
                 }
             }
         }
-
+        
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -1035,21 +734,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), Float(2))", true, false)]
         [InlineData("FirstN(t1, 2)", 2, "__retrieveMultiple(t1, __noFilter(), 2)", false, true)]
 
-        [InlineData("With({r:t1}, FirstN(r, 2))", 2, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(2))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(r, 2))", 2, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 2)))", true, true)]
-        [InlineData("With({r:t1}, FirstN(r, 2))", 2, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(2))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(r, 2))", 2, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 2)))", false, true)]
-
         // Variable as arg 
         [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Float(_count))", false, false)]
         [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Value(_count))", true, true)]
         [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Float(_count))", true, false)]
         [InlineData("FirstN(t1, _count)", 3, "__retrieveMultiple(t1, __noFilter(), Value(_count))", false, true)]
-
-        [InlineData("With({r:t1}, FirstN(t1, _count))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(_count))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(t1, _count))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Value(_count))))", true, true)]
-        [InlineData("With({r:t1}, FirstN(t1, _count))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(_count))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(t1, _count))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Value(_count))))", false, true)]
 
         // Function as arg 
         [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))", false, false)]
@@ -1057,21 +746,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))", true, false)]
         [InlineData("FirstN(t1, If(1<0,_count, 1))", 1, "__retrieveMultiple(t1, __noFilter(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))))", false, true)]
 
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, _count, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, _count, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))))))", true, true)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, _count, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (_count), (1))))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, _count, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))))))", false, true)]
-
         // Filter inside FirstN, both can be cominded (vice versa isn't true)
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), Float(10))", false, false)]
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)", true, true)]
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), Float(10))", true, false)]
         [InlineData("FirstN(Filter(t1, Price > 90), 10)", 1, "__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)", false, true)]
-
-        [InlineData("With({r:t1}, FirstN(Filter(r, Price > 90), 10))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), Float(10))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(Filter(r, Price > 90), 10))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)))", true, true)]
-        [InlineData("With({r:t1}, FirstN(Filter(r, Price > 90), 10))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), Float(10))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(Filter(r, Price > 90), 10))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 10)))", false, true)]
 
         // Aliasing prevents delegation. 
         [InlineData("With({r : t1}, FirstN(r, Float(100)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(100))))", false, false)]
@@ -1087,32 +766,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("FirstN(t1, 1/0)", -1, "__retrieveMultiple(t1, __noFilter(), Float(DivDecimals(1,0)))", true, false)]
         [InlineData("FirstN(t1, 1/0)", -1, "__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))", false, true)]
 
-        [InlineData("With({r:t1}, FirstN(r, 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(DivDecimals(1,0)))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(r, 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))))", true, true)]
-        [InlineData("With({r:t1}, FirstN(r, 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(DivDecimals(1,0)))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(r, 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), DivNumbers(1,0))))", false, true)]
-
         // Blank is treated as 0.
         [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (1))))", false, false)]
         [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))", true,  true)]
         [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (1))))", true,  false)]
         [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))", false,  true)]
 
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (1))))))", false, false)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))))", true, true)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), Float(If(LtDecimals(1,0), (1))))))", true, false)]
-        [InlineData("With({r:t1}, FirstN(r, If(1<0, 1)))", 0, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), If(LtNumbers(1,0), (1)))))", false, true)]
-
         //Inserts default second arg.
         [InlineData("FirstN(t1)", 1, "__retrieveMultiple(t1, __noFilter(), 1)", false, false)]
         [InlineData("FirstN(t1)", 1, "__retrieveMultiple(t1, __noFilter(), 1)", true, true)]
         [InlineData("FirstN(t1)", 1, "__retrieveMultiple(t1, __noFilter(), 1)", true, false)]
         [InlineData("FirstN(t1)", 1, "__retrieveMultiple(t1, __noFilter(), 1)", false, true)]
-
-        [InlineData("With({r:t1}, FirstN(r))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 1)))", false, false)]
-        [InlineData("With({r:t1}, FirstN(r))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 1)))", true, true)]
-        [InlineData("With({r:t1}, FirstN(r))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 1)))", true, false)]
-        [InlineData("With({r:t1}, FirstN(r))", 1, "With({r:t1}, (__retrieveMultiple(t1, __noFilter(), 1)))", false, true)]
         public void FirstNDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
@@ -1133,39 +797,47 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100));
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess);
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach (var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            // To check error cases.
-            if (expectedRows < 0)
-            {
-                Assert.IsType<ErrorValue>(result);
-            }
-            else
-            {
-                Assert.IsAssignableFrom<TableValue>(result);
-                Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                // To check error cases.
+                if (expectedRows < 0)
+                {
+                    Assert.IsType<ErrorValue>(result);
+                }
+                else
+                {
+                    Assert.IsAssignableFrom<TableValue>(result);
+                    Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                }
             }
         }
 
@@ -1185,80 +857,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)", true, false)]
         [InlineData("Filter(t1, Price < 100)", 2, "__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(100)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 100))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 100), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, false)]
         [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", true, true)]
         [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)", true, false)]
         [InlineData("Filter(t1, Price <= 100)", 3, "__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, Float(100)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price <= 100))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lte(t1, new_price, 100), 999)))", false, true)]
 
         [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, false)]
         [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", true, true)]
         [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)", true, false)]
         [InlineData("Filter(t1, Price = 100)", 1, "__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Float(100)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price = 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, 100), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, false)]
         [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", true, true)]
         [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)", true, false)]
         [InlineData("Filter(t1, Price > 100)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(100)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > 100))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 100), 999)))", false, true)]
 
         [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, false)]
         [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", true, true)]
         [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)", true, false)]
         [InlineData("Filter(t1, Price >= 100)", 1, "__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, Float(100)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price >= 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gte(t1, new_price, 100), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, false)]
         [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, true)]
         [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", true, false)]
         [InlineData("Filter(t1, Price < Float(120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Float(120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)))", false, true)]
 
         [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, false)]
         [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)", true, true)]
         [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)", true, false)]
         [InlineData("Filter(t1, Price < Decimal(20))", 2, "__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Value(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Value(Decimal(20))), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < Float(Decimal(20))))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(Decimal(20))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Decimal(20)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Decimal(20)), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)", false, false)]
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", true, true)]
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)", true, false)]
         [InlineData("Filter(t1, Price < Abs(-120))", 3, "__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(NegateDecimal(120), 0))), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(t1, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Abs(-120)))", 3, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Abs(Coalesce(Negate(120), 0))), 999)))", false, true)]
 
         // These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
         // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
@@ -1267,11 +899,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", true, true)]
         [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)", true, false)]
         [InlineData("Filter(t1, Date = Date(2023, 6, 1))", 1, "__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Date = Date(2023, 6, 1)))", 1, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_date, Date(2023, 6, 1)), 999)))", false, true)]
 
         // DateTime with coercion
         [InlineData("Filter(t1, DateTime = Date(2023, 6, 1))", 0, "__retrieveMultiple(t1, __eq(t1, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), 999)", false, false)]
@@ -1290,21 +917,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)", true, false)]
         [InlineData("Filter(t1, 0 > Price)", 1, "__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(0)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, 0 > Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, 0), 999)))", false, true)]
-
         // Variable as arg 
         [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, false)]
         [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)", true, true)]
         [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)", true, false)]
         [InlineData("Filter(t1, Price > _count)", 0, "__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Value(_count)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(_count)), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > _count))", 0, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, _count), 999)))", false, true)]
 
         // Function as arg 
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtDecimals(1,0), (_count), (1))), 999)", false, false)]
@@ -1312,21 +929,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)", true, false)]
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, "__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, If(LtDecimals(1,0), (_count), (1))), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > If(1<0,_count, 1)))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), 999)))", false, true)]
-
         // Filter nested in another function both delegated.
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, false)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", true, true)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)", true, false)]
         [InlineData("Filter(Filter(t1, Price > 0), Price < 100)", 1, "__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(0)), __lt(t1, new_price, Float(100))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(Filter(r, Price > 0), Price < 100))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 0), __lt(t1, new_price, 100)), 999)))", false, true)]
 
         // Basic case with And
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, false)]
@@ -1334,21 +941,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 120 And 90 < Price)", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 120 And 90 < Price))", 1, "With({r:t1}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))", false, true)]
-
         // Basic case with Or
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, false)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", true, true)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, "__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, Float(0)), __gt(t1, new_price, Float(90))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 0 Or Price > 90))", 2, "With({r:t1}, (__retrieveMultiple(t1, __or(__lt(t1, new_price, 0), __gt(t1, new_price, 90)), 999)))", false, true)]
 
 
         // Delegation Not Allowed 
@@ -1419,52 +1016,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", true, true)]
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)", true, false)]
         [InlineData("Filter(t1, Price < 1/0)", -1, "__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivDecimals(1,0)), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Float(DivDecimals(1,0))), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < 1/0))", -1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, DivNumbers(1,0)), 999)))", false, true)]
-
         // Blank handling
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, false)]
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, true)]
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price < Blank())", 1, "__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price < Blank()))", 1, "With({r:t1}, (__retrieveMultiple(t1, __lt(t1, new_price, Blank()), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, false)]
         [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, true)]
         [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price > Blank())", 2, "__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price > Blank()))", 2, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Blank()), 999)))", false, true)]
 
         [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, false)]
         [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, true)]
         [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price = Blank())", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price = Blank()))", 0, "With({r:t1}, (__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)))", false, true)]
-
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, false)]
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, true)]
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, true)]
-
-        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, false)]
-        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, true)]
-        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", true, false)]
-        [InlineData("With({r:t1}, Filter(r, Price <> Blank()))", 3, "With({r:t1}, (__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)))", false, true)]
 
         [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtDecimals(new_currency,0)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,0)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -1496,39 +1067,47 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100m));
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess);
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach (var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            // To check error cases.
-            if (expectedRows < 0)
-            {
-                Assert.IsType<ErrorValue>(result);
-            }
-            else
-            {
-                Assert.IsAssignableFrom<TableValue>(result);
-                Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                // To check error cases.
+                if (expectedRows < 0)
+                {
+                    Assert.IsType<ErrorValue>(result);
+                }
+                else
+                {
+                    Assert.IsAssignableFrom<TableValue>(result);
+                    Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
+                }
             }
         }
 
@@ -1548,36 +1127,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
         [InlineData("First(t1).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
 
-        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
-        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
-        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
-        [InlineData("With({r:t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, true)]
-
         // Filter inside FirstN, both can be combined *(vice versa isn't true)*
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, false)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", true, true)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price", true, false)]
         [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, "(__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price", false, true)]
 
-        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", false, false)]
-        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", true, true)]
-        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, Float(100)))).new_price))", true, false)]
-        [InlineData("With({r:t1}, First(Filter(r, Price < 100)).Price)", 10.0, "With({r:t1}, ((__retrieveSingle(t1, __lt(t1, new_price, 100))).new_price))", false, true)]
-
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, false)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, true)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", true, false)]
         [InlineData("First(FirstN(t1, 2)).Price", 100.0, "(__retrieveSingle(t1, __noFilter())).new_price", false, true)]
-
-        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
-        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
-        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
-        [InlineData("With({r:t1}, First(FirstN(r, 2)).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, true)]
-
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, false)]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, true)]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", true, false)]
-        [InlineData("With({r : t1}, First(r).Price)", 100.0, "With({r:t1}, ((__retrieveSingle(t1, __noFilter())).new_price))", false, true)]
         public void FirstDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
@@ -1598,38 +1157,46 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100));
 
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-            Assert.True(check.IsSuccess);
+            var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-            Assert.Equal(expectedIr, actualIr);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            foreach (var input in inputs)
             {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
+                expr = input.Item1;
+                expectedIr = input.Item2;
 
-            var run = check.GetEvaluator();
+                var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+                Assert.True(check.IsSuccess);
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                // compare IR to verify the delegations are happening exactly where we expect 
+                var irNode = check.ApplyIR();
+                var actualIr = check.GetCompactIRString();
+                Assert.Equal(expectedIr, actualIr);
 
-            if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                (cdsNumberIsFloat && !parserNumberIsFloatOption))
-            {
-                Assert.Equal(expected, result.ToObject());
-            }
-            else
-            {
-                Assert.Equal(new decimal((double)expected), result.ToObject());
+                // Validate delegation warnings.
+                // error.ToString() will capture warning status, message, and source span. 
+                var errors = check.ApplyErrors();
+
+                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                for (int i = 0; i < errorList.Length; i++)
+                {
+                    Assert.Equal(expectedWarnings[i], errorList[i]);
+                }
+
+                var run = check.GetEvaluator();
+
+                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+                if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
+                    (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                {
+                    Assert.Equal(expected, result.ToObject());
+                }
+                else
+                {
+                    Assert.Equal(new decimal((double)expected), result.ToObject());
+                }
             }
         }
 
@@ -1680,24 +1247,84 @@ namespace Microsoft.PowerFx.Dataverse.Tests
            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
            false,
            false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           true,
+           true)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, Float(90)), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))))).new_price)), 999)))))",
+           true,
+           false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
+           1,
+           "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __and(__gt(t1, new_price, 90), __eq(t1, new_price, (__retrieveSingle(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)))).new_price)), 999)))))",
+           false,
+           true)]
 
         [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
             1,
             "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
             false,
             false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            true,
+            true)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))",
+            true,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))",
+            false,
+            true)]
 
         [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
             1,
             "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
             false,
             false)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
+            1,
+            "With({r:t1}, (With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)))))",
+            false,
+            true)]
 
         [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
             1,
             "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
             false,
             false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
+            1,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)))))",
+            false,
+            true)]
 
         // Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
         [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
@@ -1705,6 +1332,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
             false,
             false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            true,
+            true)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, Float(120)), __gt(t1, new_price, Float(90))), __eq(t1, new_price, Float(100))), 999)))))",
+            true,
+            false)]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), 999)}, (__retrieveMultiple(t1, __and(__and(__lt(t1, new_price, 120), __gt(t1, new_price, 90)), __eq(t1, new_price, 100)), 999)))))",
+            false,
+            true)]
 
         // inner lookup has filter and that should delegate.
         [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
@@ -1712,6 +1354,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqDecimals(new_price,100)))).new_price), 999)))))",
             false,
             false,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqNumbers(new_price,100)))).new_price), 999)))))",
+            true,
+            true,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, Float(90)), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, Float(120)), 999), (EqNumbers(new_price,Float(100))))).new_price), 999)))))",
+            true,
+            false,
+            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
+            1,
+            "With({r1:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, (With({r2:__retrieveMultiple(t1, __gt(t1, new_price, 90), 999)}, (__retrieveMultiple(t1, __eq(t1, new_price, (LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (EqNumbers(Value(new_price),100)))).new_price), 999)))))",
+            false,
+            true,
             "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         public void WithDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
@@ -1769,6 +1429,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsAssignableFrom<TableValue>(result);
                 Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
             }
+        }
+
+        private static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)
+        {
+            var inputs = new List<(string, string)> { (expr, expectedIr) };
+
+            if (warningCount > 0 || expr.StartsWith("With(") || expr.StartsWith("Collect("))
+            {
+                return inputs;
+            }
+
+            // transforms input expression without with, to wrap inside with.
+            // e.g. LookUp(t1, Price = 255).Price -> With({r:t1}, LookUp(r, Price = 255).Price)
+            var withExpr = new StringBuilder("With({r:t1},");
+            withExpr.Append(expr.Replace("(t1,", "(r,"));
+            withExpr.Append(")");
+
+            // transforms expected IR without with, to wrap inside with.
+            // e.g. __retrieveSingle(t1, __eq(t1, new_price, 255))).new_price -> With({r:t1}, (__retrieveSingle(t1, __eq(r, new_price, 255))).new_price)
+            var withIr = new StringBuilder("With({r:t1}, (");
+            withIr.Append(expectedIr);
+            withIr.Append("))");
+
+            inputs.Add((withExpr.ToString(), withIr.ToString()));
+
+            return inputs;
         }
     }
 }
