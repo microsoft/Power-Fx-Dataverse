@@ -524,12 +524,28 @@ namespace Microsoft.PowerFx.Dataverse
                 _ when func == BuiltinFunctionsCore.Filter.Name => ProcessFilter(node, tableArg, context),
                 _ when func == BuiltinFunctionsCore.FirstN.Name => ProcessFirstN(node, tableArg),
                 _ when func == BuiltinFunctionsCore.First.Name => ProcessFirst(node, tableArg),
-                _ => CreateNotSupportedErrorAndReturn(node, tableArg)
+                _ => ProcessOtherFunctions(node, tableArg)
             };
 
             // Other delegating functions, continue to compose...
             // - Sort   
             return ret;
+        }
+
+        private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
+        {
+            var maybeDelegableTable = Materialize(tableArg);
+
+            // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
+            if (!node.Args[0].Equals(maybeDelegableTable))
+            {
+                var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
+                delegableArgs.AddRange(node.Args.Skip(1));
+                var delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                return Ret(delegableCallNode);
+            }
+
+            return CreateNotSupportedErrorAndReturn(node, tableArg);
         }
 
         private RetVal ProcessWith(CallNode node, Context context)
