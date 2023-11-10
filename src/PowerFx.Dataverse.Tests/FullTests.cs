@@ -43,11 +43,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
             }
         }
-
-        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
-        /*
+        
         [SkippableFact]
-        public void SqlCalculatedDependencyTest()
+        public void SqlIntegerCalculatedDependencyTest()
         {
             var rawField = "raw";
             var metadata = new EntityMetadataModel
@@ -108,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
             }
-        }*/
+        }
 
         [SkippableFact]
         public void FormulaUDFTest()
@@ -624,6 +622,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Text(Decimal(decimal6), \"0\"))", true, cx, metadata);
                 ExecuteSqlTest("Decimal(decimal6)", null, cx, metadata);
                 ExecuteSqlTest("IsError(Decimal(decimal6))", true, cx, metadata);
+
+                ExecuteSqlTest("int2 + int", null, cx, metadata, typeHints:GetIntegerHint()); // whole no overflow
+                ExecuteSqlTest("big_int", int.Parse(SqlStatementFormat.IntTypeMax), cx, metadata, typeHints: GetIntegerHint());
             }
         }
 
@@ -631,8 +632,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new TypeDetails
             {
-                TypeHint = AttributeTypeCode.Integer,
-                Precision = 0
+                TypeHint = AttributeTypeCode.Integer
             };
         }
 

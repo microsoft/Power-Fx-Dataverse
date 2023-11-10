@@ -1256,6 +1256,23 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            internal void PerformFinalRangeChecks(RetVal result, SqlCompileOptions sqlCompileOptions, bool postCheck = true)
+            {
+                if (_checkOnly) return;
+
+                if (IsNumericType(result))
+                {
+                    if(sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                    {
+                        PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
+                    }
+                    else
+                    {
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                    }    
+                }
+            }
+
             internal bool ValidateNumericLiteral(double literal, FormulaType type)
             {
                 if (IsNumericType(type) && literal >= SqlStatementFormat.DecimalTypeMinValue && literal <= SqlStatementFormat.DecimalTypeMaxValue)
