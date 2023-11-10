@@ -132,7 +132,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            internal IntermediateNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedNeq(this, operation);
                 var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
