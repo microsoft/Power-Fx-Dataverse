@@ -116,9 +116,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return _inner.TryGetEntityMetadata(logicalOrDisplayName, out entity);
             }
 
-            public bool TryGetBaseTableName(string logicalOrDisplayName, out string basteTableName)
+            public bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName)
             {
-                basteTableName = null;
+                baseTableName = null;
                 return false;
             }
         }

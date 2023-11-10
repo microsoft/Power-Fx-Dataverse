@@ -51,6 +51,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
+        /// <summary>
+        /// Cache of entity's base table names already retrieved, indexed by entity's logical name
+        /// </summary>
         private readonly ConcurrentDictionary<string, string> _baseTableNames = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
 
         /// <summary>

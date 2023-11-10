@@ -138,9 +138,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException($"failure");
             }
 
-            public bool TryGetBaseTableName(string logicalOrDisplayName, out string basteTableName)
+            public bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName)
             {
-                basteTableName = null;
+                baseTableName = null;
                 return false;
             }
         }
