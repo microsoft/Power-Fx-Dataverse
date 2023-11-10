@@ -88,11 +88,12 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, CancellationToken cancel)
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
         {
+            var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
             var query = new QueryExpression(_entityMetadata.LogicalName)
             {
-                ColumnSet = new ColumnSet(true),
+                ColumnSet = columns,
                 Criteria = filter ?? new FilterExpression()
             };
 
@@ -175,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (recordsToRemove == null)
                 throw new ArgumentNullException(nameof(recordsToRemove));

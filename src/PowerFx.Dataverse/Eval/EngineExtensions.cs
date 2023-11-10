@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
@@ -61,38 +61,42 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 DelegateFunction func;
                 CallNode node;
-
+                FormulaType returnType;
+                List<IntermediateNode> args;
                 // If original node was returning record type, execute retrieveSingle. Otherwise, execute retrieveMultiple.
-                if(query._originalNode.IRContext.ResultType is RecordType returnType)
+                if(query._originalNode.IRContext.ResultType is RecordType recordReturnType)
                 {
-                    func = new DelegatedRetrieveSingleFunction(this, returnType);
-                    var args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter };
-
-                    if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
-                    {
-                        var scopeSymbol = originalCallNode.Scope;
-                        node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
-                    }
-                    else
-                    {
-                        node = new CallNode(IRContext.NotInSource(returnType), func, args);
-                    }
+                    func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter };
+                    returnType = recordReturnType;
+                }
+                else if(query._originalNode.IRContext.ResultType is TableType tableReturnType)
+                {
+                    func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
+                    returnType = tableReturnType;
                 }
                 else
                 {
-                    func = new DelegatedRetrieveMultipleFunction(this, query._tableType);
-                    var args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
-                    if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
-                    {
-                        var scopeSymbol= originalCallNode.Scope;
-                        node = new CallNode(IRContext.NotInSource(query._tableType), func, scopeSymbol, args);
-                    }
-                    else
-                    {
-                        node = new CallNode(IRContext.NotInSource(query._tableType), func, args);
-                    }
+                    throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
-                
+
+                if (query.hasColumnSet)
+                {
+                    args.AddRange(query._columnSet);
+                }
+
+                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                {
+                    var scopeSymbol = originalCallNode.Scope;
+                    node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
+                }
+                else
+                {
+                    node = new CallNode(IRContext.NotInSource(returnType), func, args);
+                }
+
+
                 return node;
             }
 

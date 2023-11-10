@@ -1,7 +1,9 @@
-﻿using Microsoft.PowerFx.Dataverse.Eval.Core;
+﻿using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,15 +40,29 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg should alway be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, cancellationToken).ConfigureAwait(false);
-
-            var result = row.FirstOrDefault();
-            if (result == null)
+            // column names to fetch.
+            IEnumerable<string> columns = null;
+            if (args.Length > 2)
             {
-                return FormulaValue.NewBlank();
+                columns = args.Skip(2).Select(x => ((StringValue)x).Value);
             }
 
-            return result.ToFormulaValue();
+            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, columns, cancellationToken).ConfigureAwait(false);
+
+            var result = row.FirstOrDefault();
+            if (result == null || result.IsBlank)
+            {
+                return FormulaValue.NewBlank(this.ReturnFormulaType);
+            }
+            else if (result.IsError)
+            {
+                return result.Error;
+            }
+            else
+            {
+                var resultRecord = new InMemoryRecordValue(IRContext.NotInSource(this.ReturnFormulaType), (result.Value).Fields);
+                return resultRecord;
+            }
         }
     }
 }

@@ -1510,6 +1510,100 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expected, result.ToObject());
         }
 
+        [Theory]
+
+        [InlineData("FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)",
+          2,
+          "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)")]
+
+        [InlineData("ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')",
+          2,
+          "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)")]
+
+        [InlineData("FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)",
+          2,
+          "__retrieveMultiple(t1, __lt(t1, new_price, 120), Float(1), new_price, old_price)")]
+
+        [InlineData("First(ShowColumns(t1, 'new_price', 'old_price'))",
+          2,
+          "__retrieveSingle(t1, __noFilter(), new_price, old_price)")]
+
+        [InlineData("First(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120))",
+          2,
+          "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)")]
+
+        [InlineData("LookUp(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
+          2,
+          "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)")]
+
+        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price')",
+          1,
+          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price)")]
+
+        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price', 'old_price')",
+          2,
+          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)")]
+
+        [InlineData("Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
+          2,
+          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)")]
+
+        public void ShowColumnDelegation(string expr, int expectedCount, string expectedIr, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: false);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+            Assert.True(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.Equal(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.Equal(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            int columnCount = 0;
+            if (result is TableValue tv)
+            {
+                columnCount = tv.Type.FieldNames.Count();
+            } 
+            else if(result is RecordValue rv)
+            {
+                columnCount = rv.Type.FieldNames.Count();
+            }
+
+            Assert.Equal(expectedCount, columnCount);
+        }
+
         private static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)
         {
             var inputs = new List<(string, string)> { (expr, expectedIr) };
