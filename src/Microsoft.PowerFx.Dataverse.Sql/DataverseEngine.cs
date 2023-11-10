@@ -134,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
             return entity;
         }
 
-        private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null)
+        private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null, SqlCompileResult sqlResult = null)
         {
             errors = null;
 
@@ -157,17 +157,29 @@ namespace Microsoft.PowerFx.Dataverse
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
+
                 if (SqlVisitor.Context.IsNumericType(returnType))
                 {
                     // TODO: better type validation
                     if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
+
+                        if(sqlResult != null )
+                        {
+                            sqlResult.IsHintApplied = true;
+                        }
+
                         return true;
                     }
                 }
                 else if (returnType == hintType)
                 {
+                    if (sqlResult != null)
+                    {
+                        sqlResult.IsHintApplied = true;
+                    }
+
                     return true;
                 }
 

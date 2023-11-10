@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Errors;
 
@@ -43,6 +44,11 @@ namespace Microsoft.PowerFx.Dataverse
         /// A modified version of the formula that does not contain string or numeric literals, for telemetry purposes
         /// </summary>
         public string SanitizedFormula { get; set; }
+
+        /// <summary>
+        /// A modified version of the formula that does not contain string or numeric literals, for telemetry purposes
+        /// </summary>
+        public bool IsHintApplied { get; set; }
 
         // Test harness can use to inspect exceptions.
         internal List<string> _unsupportedWarnings;
