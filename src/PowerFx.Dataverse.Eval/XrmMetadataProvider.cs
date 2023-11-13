@@ -70,6 +70,12 @@ namespace Microsoft.PowerFx.Dataverse
             return _serviceClient.TryGetValidEntityMetadata(logicalName, out entityMetadata);
         }
 
+        public bool TryGetBaseTableName(string logicalName, out string baseTableName)
+        {
+            baseTableName = null;
+            return false;
+        }
+
         // We should *never* call this API. Too expensive. 
         // 236 mb working set , 196.28412 mb allocations ,  9104ms , 517 entities
         [Obsolete("Bad perf API - avoid this. Use SingleOrgPolicy instead for lazy loading.")]

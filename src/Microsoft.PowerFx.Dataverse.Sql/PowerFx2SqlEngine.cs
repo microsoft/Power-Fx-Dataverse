@@ -249,7 +249,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = tableSchemaName + "Base";
+                                tableSchemaName = _metadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? baseTableName : tableSchemaName + "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
