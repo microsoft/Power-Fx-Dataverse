@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -472,6 +473,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ProcessOr(node, context);
             }
+            else if (func == BuiltinFunctionsCore.IsBlank.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessIsBlank(node, context);
+            }
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning. 
@@ -535,6 +540,19 @@ namespace Microsoft.PowerFx.Dataverse
             // Other delegating functions, continue to compose...
             // - Sort   
             return ret;
+        }
+
+        private RetVal ProcessIsBlank(CallNode node, Context context)
+        {
+            if (TryGetFieldName(context, node, out var fieldName))
+            {
+                var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
+                var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
+                var ret = CreateBinaryOpRetVal(context, node, eqNode);
+                return ret;
+            }
+
+            return Ret(node);
         }
 
         private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
@@ -1039,7 +1057,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value))
+            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
             {
                 maybeScopeAccessNode = functionCall.Args[0];
             }

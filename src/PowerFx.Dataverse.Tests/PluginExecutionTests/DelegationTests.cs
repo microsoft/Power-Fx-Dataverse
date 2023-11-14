@@ -44,6 +44,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             false,
             true)]
 
+        [InlineData("LookUp(t1, IsBlank(Price)).Price",
+            null,
+            "(__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price",
+            true,
+            true)]
+
         [InlineData("LookUp(t1, Integer = 255).Price",
             null,
             "(__retrieveSingle(t1, __eq(t1, new_int, 255))).new_price",
@@ -951,15 +957,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Delegation Not Allowed 
 
         // predicate that uses function that is not delegable.
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(200)), __eq(t1, old_price, Blank())), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", false, true)]
 
         // predicate that uses function that is not delegable.
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]

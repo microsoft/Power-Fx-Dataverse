@@ -2716,6 +2716,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var entity3 = new Entity("local", _g3);
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
+            entity3.Attributes["old_price"] = null;
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
