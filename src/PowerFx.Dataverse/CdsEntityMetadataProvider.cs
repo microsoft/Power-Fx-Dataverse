@@ -196,6 +196,16 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
+        public bool IsInheritsFromNotNull(string entityLogicalName, string columnLogicalName)
+        {
+            if (TryGetXrmEntityMetadata(entityLogicalName, out var xrmEntity) && xrmEntity.TryGetAttribute(columnLogicalName, out var attribute))
+            {
+                return !xrmEntity.PrimaryIdAttribute.Equals(columnLogicalName) && attribute.InheritsFrom != null;
+            }
+
+            return false;
+        }
+
         internal static string GetOptionSetLogicalName(DataverseOptionSet optionSet)
         {
             return (optionSet.IsGlobal ? "global" : optionSet.RelatedEntityName) + "_" + optionSet.InvariantName;

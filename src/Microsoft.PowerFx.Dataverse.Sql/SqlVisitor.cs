@@ -819,7 +819,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsReferenceField(VarDetails field)
             {
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null);
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.Scope.Type.IsInheritsFromNotNull(field.Table, field.Column.LogicalName));
             }
 
             /// <summary>
@@ -937,7 +937,7 @@ namespace Microsoft.PowerFx.Dataverse
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    if (column.RequiresReference())
+                    if (column.RequiresReference() || scope.Type.IsInheritsFromNotNull(table, column.LogicalName))
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
                         var parentPath = path.Parent;

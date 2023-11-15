@@ -98,6 +98,8 @@ namespace Microsoft.Dataverse.EntityMock
 
         public bool? IsLogical { get; set; }
 
+        public string InheritsFrom { get; set; }
+
         public AttributeMetadataModel()
         {
             IsValidForRead = true;
@@ -114,13 +116,14 @@ namespace Microsoft.Dataverse.EntityMock
             return this;
         }
 
-        public static AttributeMetadataModel NewDecimal(string logicalName, string displayName, string schemaName = null)
+        public static AttributeMetadataModel NewDecimal(string logicalName, string displayName, string schemaName = null, string inheritsFrom = null)
         {
             return new AttributeMetadataModel
             {
                 LogicalName = logicalName,
                 DisplayName = displayName,
-                AttributeType = AttributeTypeCode.Decimal
+                AttributeType = AttributeTypeCode.Decimal,
+                InheritsFrom = inheritsFrom
             }.SetSchemaName(schemaName);
         }
 

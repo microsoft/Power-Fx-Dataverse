@@ -1818,6 +1818,22 @@ AS BEGIN
     RETURN ROUND(@v3, 10)
 END
 ";
+        public const string InheritsFromTestUDF = @"CREATE FUNCTION test(
+    @v1 uniqueidentifier -- testentityid
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    SELECT TOP(1) @v0 = [new_Simple] FROM [dbo].[TestEntityTestBase] WHERE[TestEntityId] = @v1
+
+    -- expression body
+    SET @v2 = @v0
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 10)
+END
+";
         [Fact]
         public void BaseTableNameTest()
         {
@@ -1825,6 +1841,7 @@ END
                 LogicalName = "testentity",
                 PrimaryIdAttribute = "testentityid",
                 Attributes = new AttributeMetadataModel[] {
+                    AttributeMetadataModel.NewDecimal("new_simple", "Simple", "new_Simple", Guid.NewGuid().ToString()),
                     AttributeMetadataModel.NewDecimal("new_calc", "Calc", "new_Calc").SetCalculated(),
                     AttributeMetadataModel.NewGuid("testentityid","testentityid").SetSchemaName("TestEntityId"),
                 }
@@ -1833,6 +1850,10 @@ END
             var result = engine.Compile("new_calc * 2", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
+
+            result = engine.Compile("new_simple", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
         }
 
         [Theory]

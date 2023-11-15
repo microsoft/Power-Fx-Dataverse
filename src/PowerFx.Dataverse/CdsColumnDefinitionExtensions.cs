@@ -19,6 +19,16 @@ namespace Microsoft.PowerFx.Dataverse
             return column.IsCalculated || column.IsLogical;
         }
 
+        public static bool IsInheritsFromNotNull(this DType type, string entityLogicalName, string columnLogicalName)
+        {
+            if ((type.AssociatedDataSources.First().DataEntityMetadataProvider is CdsEntityMetadataProvider metadataProvider) && metadataProvider != null) 
+            {
+                return metadataProvider.IsInheritsFromNotNull(entityLogicalName, columnLogicalName);
+            }
+
+            return false;
+        }
+
         internal static FormulaType FormulaType(this XrmAttributeTypeCode typeCode)
         {
             if (typeCode.TryGetFormulaType(out var type))

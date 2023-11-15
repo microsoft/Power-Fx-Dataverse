@@ -227,7 +227,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
 
                         }
-                        else if (field.Column.RequiresReference())
+                        else if (field.Column.RequiresReference() || field.Scope.Type.IsInheritsFromNotNull(field.Table, field.Column.LogicalName))
                         {
                             // for calculated or logical fields on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
