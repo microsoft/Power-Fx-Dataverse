@@ -158,9 +158,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
 
-                if (SqlVisitor.Context.IsNumericType(returnType))
+                if (returnType is DecimalType)
                 {
-                    // TODO: better type validation
                     if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
@@ -196,34 +195,27 @@ namespace Microsoft.PowerFx.Dataverse
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
+                type is NumberType ||
                 Library.IsDateTimeType(type);
         }
 
         internal static FormulaType BuildReturnType(DType type)
         {
-            // Even if NumberIsFloat=false, Number can be returned from IR and we have to support it so mapping Number
-            // to Core decimal type so SQL Compiler always returns decimal even if Number is coming from IR
-            if (type.Kind == DKind.Number)
+            try
             {
-                return FormulaType.Decimal;
+                var fxType = FormulaType.Build(type);
+                if (fxType == FormulaType.Unknown)
+                {
+                    throw new NotImplementedException();
+                }
+                return fxType;
             }
-            else
+            catch (NotImplementedException)
             {
-                try
-                {
-                    var fxType = FormulaType.Build(type);
-                    if (fxType == FormulaType.Unknown)
-                    {
-                        throw new NotImplementedException();
-                    }
-                    return fxType;
-                }
-                catch (NotImplementedException)
-                {
-                    // if the return type is not supported, report it as a failure
-                    throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, null, type.GetKindString());
-                }
+                // if the return type is not supported, report it as a failure
+                throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, null, type.GetKindString());
             }
+            
         }
 
         internal static FormulaType BuildReturnType(FormulaType type)

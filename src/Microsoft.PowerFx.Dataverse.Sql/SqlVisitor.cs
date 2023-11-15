@@ -628,7 +628,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (t is NumberType)
             {
-                return SqlStatementFormat.SqlDecimalType;
+                return SqlStatementFormat.SqlFloatType;
             }
             else if (t is DecimalType)
             {
