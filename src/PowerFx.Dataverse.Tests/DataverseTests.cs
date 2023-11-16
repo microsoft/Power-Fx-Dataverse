@@ -547,8 +547,7 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v5 decimal(23,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
-    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
     SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
@@ -1806,7 +1805,7 @@ AS BEGIN
     DECLARE @v0 decimal(23,10)
     DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v0 = [new_Calc] FROM [dbo].[TestEntityTestBase] WHERE[TestEntityId] = @v1
+    SELECT TOP(1) @v0 = [new_Calc] FROM [dbo].[TestEntity] WHERE[TestEntityId] = @v1
 
     -- expression body
     SET @v2 = 2
@@ -1824,7 +1823,7 @@ END
 AS BEGIN
     DECLARE @v0 decimal(23,10)
     DECLARE @v2 decimal(23,10)
-    SELECT TOP(1) @v0 = [new_Simple] FROM [dbo].[TestEntityTestBase] WHERE[TestEntityId] = @v1
+    SELECT TOP(1) @v0 = [new_Simple] FROM [dbo].[TestEntity] WHERE[TestEntityId] = @v1
 
     -- expression body
     SET @v2 = @v0
@@ -1841,7 +1840,7 @@ END
                 LogicalName = "testentity",
                 PrimaryIdAttribute = "testentityid",
                 Attributes = new AttributeMetadataModel[] {
-                    AttributeMetadataModel.NewDecimal("new_simple", "Simple", "new_Simple", Guid.NewGuid().ToString()),
+                    AttributeMetadataModel.NewDecimal("new_simple", "Simple", "new_Simple"),
                     AttributeMetadataModel.NewDecimal("new_calc", "Calc", "new_Calc").SetCalculated(),
                     AttributeMetadataModel.NewGuid("testentityid","testentityid").SetSchemaName("TestEntityId"),
                 }
@@ -2041,15 +2040,39 @@ END
             return ret;
         }
 
-        public bool TryGetBaseTableName(string logicalName, out string baseTableName)
+        public bool TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity)
         {
-            if (TryGetEntityMetadata(logicalName, out var entity))
+            if (TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                baseTableName = entity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base");
+                entity = new CDSEntityMetadata()
+                {
+                    LogicalName = xrmEntity.LogicalName,
+                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
+                    IsInheritsFromNull = !logicalName.Equals("testentity"),
+                    PrimaryIdAttribute = xrmEntity.PrimaryIdAttribute
+                };
+
                 return true;
             }
 
-            baseTableName = null;
+            entity = null;
+            return false;
+        }
+
+        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute)
+        {
+            if (TryGetEntityMetadata(entityLogicalName, out var xrmEntity) && xrmEntity.TryGetAttribute(attributeLogicalName, out var xrmAttribute))
+            {
+                attribute = new CDSAttributeMetadata()
+                {
+                    LogicalName = xrmAttribute.LogicalName,
+                    IsStoredOnPrimaryTable = true//!attributeLogicalName.Equals("new_simple")
+                };
+
+                return true;
+            }
+
+            attribute = null;
             return false;
         }
     }

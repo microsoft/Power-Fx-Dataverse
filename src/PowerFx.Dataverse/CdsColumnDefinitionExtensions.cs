@@ -19,11 +19,14 @@ namespace Microsoft.PowerFx.Dataverse
             return column.IsCalculated || column.IsLogical;
         }
 
-        public static bool IsInheritsFromNotNull(this DType type, string entityLogicalName, string columnLogicalName)
+        /// <summary>
+        /// Returns True if column is stored on primary table, else returns false if the column is inherited from different table.
+        /// </summary>
+        public static bool GetIsStoredOnPrimaryTableValue(this DType type, string entityLogicalName, string columnLogicalName, bool isReferenceField)
         {
-            if ((type.AssociatedDataSources.First().DataEntityMetadataProvider is CdsEntityMetadataProvider metadataProvider) && metadataProvider != null) 
+            if (type.AssociatedDataSources.First().DataEntityMetadataProvider is CdsEntityMetadataProvider metadataProvider)
             {
-                return metadataProvider.IsInheritsFromNotNull(entityLogicalName, columnLogicalName);
+                return metadataProvider.GetIsStoredOnPrimaryTableValue(entityLogicalName, columnLogicalName, isReferenceField);
             }
 
             return false;

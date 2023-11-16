@@ -227,9 +227,9 @@ namespace Microsoft.PowerFx.Dataverse
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
 
                         }
-                        else if (field.Column.RequiresReference() || field.Scope.Type.IsInheritsFromNotNull(field.Table, field.Column.LogicalName))
+                        else if (field.Column.RequiresReference() || !field.IsStoredOnPrimaryTable)
                         {
-                            // for calculated or logical fields on the root scope, use the primary key for referencing and referenced
+                            // for calculated or logical fields or fields not stored on primary table on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
                             referencing = field.Scope.Type.CdsTableDefinition().PrimaryKeyColumn;
                             referenced = field.Scope.Type.CdsColumnDefinition(referencing).SchemaName;
@@ -245,9 +245,10 @@ namespace Microsoft.PowerFx.Dataverse
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
 
-                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields hence Suffixing Base to the Schema Name
+                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of fields stored on primary table and non logical simple/ rollup fields
+                            // Fields that are not stored on primary table and are inherited from a different table will be referred from view
                             // because logical fields can only be referred from view 
-                            if (!field.Column.IsLogical)
+                            if (!field.Column.IsLogical && !field.Column.IsCalculated && field.IsStoredOnPrimaryTable)
                             {
                                 tableSchemaName = _metadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? baseTableName : tableSchemaName + "Base";
                             }

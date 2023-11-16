@@ -738,6 +738,12 @@ namespace Microsoft.PowerFx.Dataverse
                 /// The path to the field
                 /// </summary>
                 public DPath Path;
+
+                /// <summary>
+                /// True if the field is stored on Primary Table
+                /// False if the field is inherited from a different table
+                /// </summary>
+                public bool IsStoredOnPrimaryTable = false;
             }
 
             // Mapping of field names to details
@@ -819,7 +825,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsReferenceField(VarDetails field)
             {
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.Scope.Type.IsInheritsFromNotNull(field.Table, field.Column.LogicalName));
+                // Fields not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || !field.IsStoredOnPrimaryTable);
             }
 
             /// <summary>
@@ -931,15 +938,17 @@ namespace Microsoft.PowerFx.Dataverse
                     var varName = "@v" + idx;
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
-                    
+                    var isStoredOnPrimaryTableValue = scope.Type.GetIsStoredOnPrimaryTableValue(table, column.LogicalName, navigation != null);
+
                     var varType = GetFormulaType(column, sourceContext);
-                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
+                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsStoredOnPrimaryTable = isStoredOnPrimaryTableValue};
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    if (column.RequiresReference() || scope.Type.IsInheritsFromNotNull(table, column.LogicalName))
+                    if (column.RequiresReference() || !isStoredOnPrimaryTableValue)
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
+                        // Fields that are not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
                         var parentPath = path.Parent;
                         var primaryKey = scope.Type.GetType(parentPath).CdsTableDefinition().PrimaryKeyColumn;
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));
