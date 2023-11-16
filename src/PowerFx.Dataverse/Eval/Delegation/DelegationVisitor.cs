@@ -272,7 +272,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount))
+            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasColumnSet))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -458,6 +458,19 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return Ret(node);
             }
+        }
+
+        public override RetVal Visit(SingleColumnTableAccessNode node, Context context)
+        {
+            var maybeDelegatedfrom = Materialize(node.From.Accept(this, context));
+
+            if (!ReferenceEquals(node.From, maybeDelegatedfrom))
+            {
+                var delegatedSCTANode = new SingleColumnTableAccessNode(node.IRContext, maybeDelegatedfrom, node.Field);
+                return Ret(delegatedSCTANode);
+            }
+
+            return Ret(node);
         }
 
         public override RetVal Visit(CallNode node, Context context)
@@ -656,7 +669,8 @@ namespace Microsoft.PowerFx.Dataverse
                         // We can successfully delegate this call. 
                         // __retrieveGUID(table, guid);
 
-                        if (IsTableArgLookUpDelegable(context, tableArg))
+                        // $$$ __retrieveGUID can't delegate columnSet, can enable it but that would require breaking change to MakeRetrieveCall
+                        if (IsTableArgLookUpDelegable(context, tableArg) && !tableArg.hasColumnSet)
                         {
                             var newNode = _hooks.MakeRetrieveCall(tableArg, right);
                             return Ret(newNode);

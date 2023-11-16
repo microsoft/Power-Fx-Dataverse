@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Types;
 using System.Threading;
 using Xunit;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -1513,42 +1514,76 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
 
         [InlineData("FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)",
-          2,
-          "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)")]
+            2,
+            "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)",
+            true)]
 
         [InlineData("ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')",
-          2,
-          "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)")]
+            2,
+            "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)",
+            true)]
 
         [InlineData("FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)",
-          2,
-          "__retrieveMultiple(t1, __lt(t1, new_price, 120), Float(1), new_price, old_price)")]
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), Float(1), new_price, old_price)",
+            true)]
 
         [InlineData("First(ShowColumns(t1, 'new_price', 'old_price'))",
-          2,
-          "__retrieveSingle(t1, __noFilter(), new_price, old_price)")]
+            2,
+            "__retrieveSingle(t1, __noFilter(), new_price, old_price)",
+            true)]
 
         [InlineData("First(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120))",
-          2,
-          "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)")]
+            2,
+            "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)",
+            true)]
 
         [InlineData("LookUp(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
-          2,
-          "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)")]
+            2,
+            "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)",
+            true)]
 
         [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price')",
-          1,
-          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price)")]
+            1,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price)",
+            true)]
 
         [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price', 'old_price')",
-          2,
-          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)")]
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)",
+            true)]
 
         [InlineData("Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
-          2,
-          "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)")]
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)",
+            true)]
 
-        public void ShowColumnDelegation(string expr, int expectedCount, string expectedIr, params string[] expectedWarnings)
+        [InlineData("ShowColumns(LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")), 'new_price')",
+            1,
+            "ShowColumns(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001)), new_price)",
+            true)]
+
+        // $$$ incorrect
+        [InlineData("LookUp(ShowColumns(t1, 'localid'), localid=GUID(\"00000000-0000-0000-0000-000000000001\"))",
+            1,
+            "LookUp(__retrieveMultiple(t1, __noFilter(), 999, localid), (EqGuid(localid,GUID(00000000-0000-0000-0000-000000000001))))",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))",
+            1,
+            "__retrieveSingle(t1, __noFilter(), localid)",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))",
+            1,
+            "__retrieveSingle(t1, __noFilter(), localid)",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))",
+            1,
+            "(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001), localid)).localid",
+            false)]
+        public void ShowColumnDelegation(string expr, int expectedCount, string expectedIr, bool isCheckSuccess, params string[] expectedWarnings)
         {
             // create table "local"
             var logicalName = "local";
@@ -1568,6 +1603,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             engine1.UpdateVariable("_count", FormulaValue.New(100m));
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+
+            if (!isCheckSuccess)
+            {
+                Assert.False(check.IsSuccess);
+                return;
+            }
+
             Assert.True(check.IsSuccess);
 
             // compare IR to verify the delegations are happening exactly where we expect 

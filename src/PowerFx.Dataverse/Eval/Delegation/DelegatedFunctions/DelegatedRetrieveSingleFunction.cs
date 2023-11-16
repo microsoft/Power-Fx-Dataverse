@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -60,7 +61,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                var resultRecord = new InMemoryRecordValue(IRContext.NotInSource(this.ReturnFormulaType), (result.Value).Fields);
+                // Adjust type, as function like ShowColumn() can manipulate it.
+                var resultRecord =  CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
                 return resultRecord;
             }
         }
