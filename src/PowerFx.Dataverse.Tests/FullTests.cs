@@ -36,17 +36,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var metadata = DataverseTests.BaselineMetadata;
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "new_CurrencyPrice_Schema", "1" } }, calculations: new Dictionary<string, string> { { "new_Calc", "new_CurrencyPrice_Schema + 1" } });
-                using (var tx = cx.BeginTransaction())
-                {
-                    CreateTableSynonym(cx, tx, metadata.SchemaName);
-                    tx.Commit();
-                }
 
                 var result = ExecuteSqlTest(exprStr, 3M, cx, new EntityMetadataModel[] { metadata }, false, false, "fn_testUdf1");
                 StringMatchIgnoreNewlines(DataverseTests.BaselineFunction, result.SqlFunction, "Baseline SQL has changed");
                 Assert.Equal(DataverseTests.BaselineCreateRow, result.SqlCreateRow); // "Baseline create row has changed"
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
-                DropTableSynonym(cx, metadata.SchemaName);
             }
         }
         
@@ -76,7 +70,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 using (var tx = cx.BeginTransaction())
                 {
-                    CreateTableSynonym(cx, tx, metadata.SchemaName);
                     var alterCmd = cx.CreateCommand();
                     alterCmd.Transaction = tx;
                     alterCmd.CommandText = $@"ALTER TABLE {metadata.SchemaName}Base ADD [calc1]  AS ([dbo].{calc1.SqlCreateRow})";
@@ -112,8 +105,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(2, calc1Value); // "Calc1 Value Mismatch"
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
-                reader.Close();
-                DropTableSynonym(cx, metadata.SchemaName);
             }
         }
 
@@ -165,19 +156,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     createCmd.Transaction = tx;
                     createCmd.CommandText = GenerateTableScript(MockModels.LocalModel);
                     createCmd.ExecuteNonQuery();
-                    CreateTableSynonym(cx, tx, MockModels.LocalModel.SchemaName);
 
                     createCmd.CommandText = GenerateTableScript(MockModels.RemoteModel, calculations: new Dictionary<string, string> { { "calc", "data + 1" } });
                     createCmd.ExecuteNonQuery();
-                    CreateTableSynonym(cx, tx, MockModels.RemoteModel.SchemaName);
 
                     createCmd.CommandText = GenerateTableScript(MockModels.DoubleRemoteModel);
                     createCmd.ExecuteNonQuery();
-                    CreateTableSynonym(cx, tx, MockModels.DoubleRemoteModel.SchemaName);
 
                     createCmd.CommandText = GenerateTableScript(MockModels.TripleRemoteModel);
                     createCmd.ExecuteNonQuery();
-                    CreateTableSynonym(cx, tx, MockModels.TripleRemoteModel.SchemaName);
 
                     // first create the referenced triple remote row
                     var trid = Guid.NewGuid();
@@ -232,11 +219,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 calc = ExecuteSqlTest("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", calc.LogicalFormula);
-
-                DropTableSynonym(cx, MockModels.LocalModel.SchemaName);
-                DropTableSynonym(cx, MockModels.RemoteModel.SchemaName);
-                DropTableSynonym(cx, MockModels.DoubleRemoteModel.SchemaName);
-                DropTableSynonym(cx, MockModels.TripleRemoteModel.SchemaName);
             }
         }
         private static string GuidToSql(Guid guid)
@@ -870,30 +852,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             dropCmd.Transaction = tx;
             dropCmd.CommandText = $"DROP TABLE IF EXISTS {metadata.SchemaName}Base";
             dropCmd.ExecuteNonQuery();
-        }
-        
-        // Fields that require reference - calculated/logical/formula will be referred from view,
-        // creating synonym for table with view name for tests, instead of creating view.
-        private static void CreateTableSynonym(SqlConnection cx, SqlTransaction tx, string schemaName)
-        {
-            var createCmd = cx.CreateCommand();
-            createCmd.Transaction = tx;
-            createCmd.CommandText = $"DROP SYNONYM IF EXISTS {schemaName}";
-            createCmd.ExecuteNonQuery();
-            createCmd.CommandText = $"CREATE SYNONYM {schemaName} for {schemaName}Base";
-            createCmd.ExecuteNonQuery();          
-        }
-
-        private static void DropTableSynonym(SqlConnection cx, string schemaName)
-        {
-            using (var tx = cx.BeginTransaction())
-            {
-                var createCmd = cx.CreateCommand();
-                createCmd.Transaction = tx;
-                createCmd.CommandText = $"DROP SYNONYM IF EXISTS {schemaName}";
-                createCmd.ExecuteNonQuery();
-                tx.Commit();
-            }
         }
 
         private static void InsertRow(SqlConnection cx, SqlTransaction tx, EntityMetadataModel metadata, Dictionary<string, string> initializations)
