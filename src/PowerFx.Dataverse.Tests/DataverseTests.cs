@@ -2066,7 +2066,7 @@ END
                 attribute = new CDSAttributeMetadata()
                 {
                     LogicalName = xrmAttribute.LogicalName,
-                    IsStoredOnPrimaryTable = true//!attributeLogicalName.Equals("new_simple")
+                    IsStoredOnPrimaryTable = true
                 };
 
                 return true;

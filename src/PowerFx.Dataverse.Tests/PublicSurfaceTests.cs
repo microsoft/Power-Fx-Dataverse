@@ -92,9 +92,8 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DataverseHelpers",
                 "Microsoft.PowerFx.Dataverse.XrmUtility",
 
-                "Microsoft.PowerFx.Dataverse.
-                
-                ",
+                // Additional entity and attribute properties which are not present in XRMEntity
+                "Microsoft.PowerFx.Dataverse.CDSEntityMetadata",
                 "Microsoft.PowerFx.Dataverse.CDSAttributeMetadata"
 
             };
