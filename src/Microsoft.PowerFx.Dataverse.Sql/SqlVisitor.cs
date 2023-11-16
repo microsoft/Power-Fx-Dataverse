@@ -146,6 +146,8 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.DivDecimals:
                 case BinaryOpKind.MulDecimals:
                     {
+                        RetVal result;
+
                         var op = node.Op switch
                         {
                             BinaryOpKind.AddNumbers => "+",
@@ -169,8 +171,16 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
+                        if (node.Op == BinaryOpKind.AddNumbers || node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.MulNumbers)
+                        {
+                            result = context.TryCastToFloat($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
+                        }
+                        else
+                        {
+                            result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
+                        }
+
                         // TryCast returns null if the cast fails, so a null indicates an overflow error
-                        var result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -301,7 +311,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal EqualityCheck(IntermediateNode left, IntermediateNode right, BinaryOpKind op, FormulaType type, Context context, Span sourceContext = default, bool equals = true)
         {
             // Don't do any null coercions for not equals checks, but check for date to number coercion
-            if (op == BinaryOpKind.EqNumbers || op == BinaryOpKind.NeqNumbers)
+            if (op == BinaryOpKind.EqNumbers || op == BinaryOpKind.NeqNumbers || op == BinaryOpKind.EqDecimals || op == BinaryOpKind.NeqDecimals)
             {
                 Library.ValidateNumericArgument(left);
                 Library.ValidateNumericArgument(right);
@@ -363,12 +373,21 @@ namespace Microsoft.PowerFx.Dataverse
             switch (node.Op)
             {
                 case UnaryOpKind.Negate:
+                    Library.ValidateNumericArgument(node.Child);
+                    arg = node.Child.Accept(this, context);
+                    return context.SetIntermediateVariable(FormulaType.Number, $"(-{Library.CoerceNullToInt(arg)})");
+
                 case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
                     return context.SetIntermediateVariable(FormulaType.Decimal, $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
+                    arg = node.Child.Accept(this, context);
+                    var res = context.SetIntermediateVariable(FormulaType.Number, $"({Library.CoerceNullToInt(arg)}/100.0)");
+                    context.PerformRangeChecks(res, node);
+                    return res;
+
                 case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(arg)}/100.0)");
@@ -955,6 +974,8 @@ namespace Microsoft.PowerFx.Dataverse
                 switch (dkind)
                 {
                     case DKind.Number:
+                        return FormulaType.Number;
+
                     case DKind.Decimal:
                         // formatted integer types are not supported
                         if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
@@ -1106,6 +1127,14 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
+                NullCheck(retVal, postValidation: true);
+                return retVal;
+            }
+
+            internal RetVal TryCastToFloat(string expression, RetVal retVal = null)
+            {
+                expression = $"TRY_CAST(({expression}) AS FLOAT)";
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Number, expression);
                 NullCheck(retVal, postValidation: true);
                 return retVal;
             }

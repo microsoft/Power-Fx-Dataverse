@@ -163,7 +163,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
             var digits = context.TryCastToDecimal(RoundDownNullToInt(rawDigits));
-            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Number), digits);
+            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits);
             var factor = context.GetTempVar(FormulaType.Decimal);
             var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})";
             context.TryCastToDecimal(factorExpression, factor);

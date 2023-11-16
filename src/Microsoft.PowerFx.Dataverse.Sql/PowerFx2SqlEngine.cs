@@ -366,7 +366,7 @@ namespace Microsoft.PowerFx.Dataverse
             context.PerformFinalRangeChecks(result, options, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (context.IsNumericType(result))
+            if (result.type is DecimalType)
             {
                 int precision = options.TypeHints?.Precision ?? DefaultPrecision;
                 
