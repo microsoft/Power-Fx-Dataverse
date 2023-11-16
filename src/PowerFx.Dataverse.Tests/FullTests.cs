@@ -36,9 +36,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var metadata = DataverseTests.BaselineMetadata;
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "new_CurrencyPrice_Schema", "1" } }, calculations: new Dictionary<string, string> { { "new_Calc", "new_CurrencyPrice_Schema + 1" } });
-                ExecuteScript(cx, "drop view if exists Account;");
-                var cmd = @"CREATE VIEW [dbo].Account(AccountId, new_Calc_Schema, address1_latitude) with view_metadata as 
-                            (select AccountId, new_Calc_Schema, address1_latitude from [dbo].AccountBase);";
+                ExecuteScript(cx, "drop view if exists AccountEntity;");
+                var cmd = @"CREATE VIEW [dbo].AccountEntity(AccountId, new_Calc_Schema, address1_latitude) with view_metadata as 
+                            (select AccountId, new_Calc_Schema, address1_latitude from [dbo].AccountEntityBase);";
                 ExecuteScript(cx, cmd);
 
                 var result = ExecuteSqlTest(exprStr, 3M, cx, new EntityMetadataModel[] { metadata }, false, false, "fn_testUdf1");
@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(DataverseTests.BaselineCreateRow, result.SqlCreateRow); // "Baseline create row has changed"
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
 
-                ExecuteScript(cx, "drop view if exists Account;");
+                ExecuteScript(cx, "drop view if exists AccountEntity;");
             }
         }
         
@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewInteger("calc2", "Calc2").SetCalculated(),
                     AttributeMetadataModel.NewGuid("fooid", "FooId")
                 }
-            };
+            }.SetSchemaName("FooEntity");
 
             using (var cx = GetSql())
             {
@@ -86,6 +86,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
+                ExecuteScript(cx, "drop view if exists FooEntity;");
+                var cmd = @"CREATE VIEW [dbo].FooEntity(fooid, calc1, calc2) with view_metadata as 
+                            (select fooid, calc1, calc2 from [dbo].FooEntityBase);";
+                ExecuteScript(cx, cmd);
+
                 var calc3 = ExecuteSqlTest("calc1 + calc2 + raw", 6, cx, metadataArray, true, false, "udfCalc3", GetIntegerHint());
 
                 using (var tx = cx.BeginTransaction())
@@ -96,6 +101,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     alterCmd.ExecuteNonQuery();
                     tx.Commit();
                 }
+
+                cmd = @"ALTER VIEW [dbo].FooEntity(fooid, calc1, calc2, calc3) with view_metadata as 
+                            (select fooid, calc1, calc2, calc3 from [dbo].FooEntityBase);";
+                ExecuteScript(cx, cmd);
 
                 var selectCmd = cx.CreateCommand();
                 selectCmd.CommandText = $"select {rawField}, calc1, calc2, calc3 from {metadata.SchemaName}Base";
@@ -111,6 +120,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(2, calc1Value); // "Calc1 Value Mismatch"
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
+
+                reader.Close();
+                ExecuteScript(cx, "drop view if exists FooEntity;");
             }
         }
 
@@ -214,14 +226,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
-                ExecuteScript(cx, "drop view if exists Remote;");
-                var cmd = @"CREATE VIEW [dbo].Remote(RemoteId, calc) with view_metadata as (select RemoteId, calc from [dbo].RemoteBase);";
+                ExecuteScript(cx, "drop view if exists RemoteEntity;");
+                var cmd = @"CREATE VIEW [dbo].RemoteEntity(RemoteId, calc) with view_metadata as (select RemoteId, calc from [dbo].RemoteEntityBase);";
                 ExecuteScript(cx, cmd);
 
                 var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.calc", calc.LogicalFormula);
 
-                ExecuteScript(cx, "drop view if exists Remote;");
+                ExecuteScript(cx, "drop view if exists RemoteEntity;");
 
                 calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.data", calc.LogicalFormula);
