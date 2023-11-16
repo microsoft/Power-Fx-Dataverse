@@ -195,7 +195,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse());
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 

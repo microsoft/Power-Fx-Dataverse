@@ -569,7 +569,17 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var filter = tableArg.hasFilter ? tableArg.Filter : null;
             var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, count, _maxRows, node.Args.Skip(1));
+
+            // change to original node to current node and appends columnSet.
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, count, _maxRows, node.Args.Skip(1));
+
+            if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
+            {
+                var guidCallWithColSet = _hooks.MakeRetrieveCall(resultingTable, maybeGuidCall.Args[1]);
+                return Ret(guidCallWithColSet);
+            }
+
+            return resultingTable;
         }
 
         private RetVal ProcessWith(CallNode node, Context context)
@@ -669,8 +679,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // We can successfully delegate this call. 
                         // __retrieveGUID(table, guid);
 
-                        // $$$ __retrieveGUID can't delegate columnSet, can enable it but that would require breaking change to MakeRetrieveCall
-                        if (IsTableArgLookUpDelegable(context, tableArg) && !tableArg.hasColumnSet)
+                        if (IsTableArgLookUpDelegable(context, tableArg))
                         {
                             var newNode = _hooks.MakeRetrieveCall(tableArg, right);
                             return Ret(newNode);

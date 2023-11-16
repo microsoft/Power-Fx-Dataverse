@@ -73,9 +73,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -135,7 +135,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columns:null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));

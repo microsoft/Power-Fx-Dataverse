@@ -239,14 +239,14 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns>DataverseRecordValue or ErrorValue in case of error</returns>
         /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
-        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default)
+        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             return response.HasError

@@ -1447,13 +1447,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
            false,
            false)]
 
-        // Give warning when source is not delegable.
         [InlineData("Concat(ShowColumns(t1, 'new_price'), new_price & \",\")",
            "100,10,-10,",
-           "Concat(ShowColumns(t1, new_price), (Concatenate(DecimalToText(new_price), ,)))",
+           "Concat(__retrieveMultiple(t1, __noFilter(), 999, new_price), (Concatenate(DecimalToText(new_price), ,)))",
            false,
-           false,
-           "Warning 19-21: This operation on table 'local' may not work if it has more than 999 rows.")]
+           false)]
 
         // Give warning when source is entire table.
         [InlineData("Concat(t1, Price & \",\")",
@@ -1558,15 +1556,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)",
             true)]
 
+        // This is not delegated, but doesn't impact perf.
         [InlineData("ShowColumns(LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")), 'new_price')",
             1,
             "ShowColumns(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001)), new_price)",
             true)]
 
-        // $$$ incorrect
         [InlineData("LookUp(ShowColumns(t1, 'localid'), localid=GUID(\"00000000-0000-0000-0000-000000000001\"))",
             1,
-            "LookUp(__retrieveMultiple(t1, __noFilter(), 999, localid), (EqGuid(localid,GUID(00000000-0000-0000-0000-000000000001))))",
+            "__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001), localid)",
             true)]
 
         [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))",

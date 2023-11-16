@@ -45,7 +45,16 @@ namespace Microsoft.PowerFx.Dataverse
             IEnumerable<string> columns = null;
             if (args.Length > 2)
             {
-                columns = args.Skip(2).Select(x => ((StringValue)x).Value);
+                columns = args.Skip(2).Select(x => {
+                    if (x is StringValue stringValue)
+                    {
+                        return stringValue.Value;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"From Args2 onwards, all all args should have been String Value");
+                    }
+                });
             }
 
             var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, columns, cancellationToken).ConfigureAwait(false);

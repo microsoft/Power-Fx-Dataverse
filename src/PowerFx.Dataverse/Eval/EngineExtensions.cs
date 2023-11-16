@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
-            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
+            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, IEnumerable<string> columns, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
@@ -188,9 +188,25 @@ namespace Microsoft.PowerFx.Dataverse
             // Generate a lookup call for: Lookup(Table, Id=Guid)  
             internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
             {
-                var func = new DelegatedRetrieveGUIDFunction(this, query._tableType);
-                
-                var node = new CallNode(IRContext.NotInSource(query._tableType), func, query._sourceTableIRNode, argGuid);
+                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
+                var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid };
+                var returnType = query._originalNode.IRContext.ResultType;
+                if (query.hasColumnSet)
+                {
+                    args.AddRange(query._columnSet);
+                }
+
+                CallNode node;
+                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                {
+                    var scopeSymbol = originalCallNode.Scope;
+                    node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
+                }
+                else
+                {
+                    node = new CallNode(IRContext.NotInSource(returnType), func, args);
+                }
+
                 return node;
             }
         }
