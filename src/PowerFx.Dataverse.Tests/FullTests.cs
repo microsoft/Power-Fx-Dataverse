@@ -36,11 +36,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var metadata = DataverseTests.BaselineMetadata;
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "new_CurrencyPrice_Schema", "1" } }, calculations: new Dictionary<string, string> { { "new_Calc", "new_CurrencyPrice_Schema + 1" } });
+                ExecuteScript(cx, "drop view if exists Account;");
+                var cmd = @"CREATE VIEW [dbo].Account(AccountId, new_Calc_Schema, address1_latitude) with view_metadata as 
+                            (select AccountId, new_Calc_Schema, address1_latitude from [dbo].AccountBase);";
+                ExecuteScript(cx, cmd);
 
                 var result = ExecuteSqlTest(exprStr, 3M, cx, new EntityMetadataModel[] { metadata }, false, false, "fn_testUdf1");
                 StringMatchIgnoreNewlines(DataverseTests.BaselineFunction, result.SqlFunction, "Baseline SQL has changed");
                 Assert.Equal(DataverseTests.BaselineCreateRow, result.SqlCreateRow); // "Baseline create row has changed"
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
+
+                ExecuteScript(cx, "drop view if exists Account;");
             }
         }
         
@@ -208,8 +214,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
+                ExecuteScript(cx, "drop view if exists Remote;");
+                var cmd = @"CREATE VIEW [dbo].Remote(RemoteId, calc) with view_metadata as (select RemoteId, calc from [dbo].RemoteBase);";
+                ExecuteScript(cx, cmd);
+
                 var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.calc", calc.LogicalFormula);
+
+                ExecuteScript(cx, "drop view if exists Remote;");
 
                 calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.data", calc.LogicalFormula);
