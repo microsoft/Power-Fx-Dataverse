@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return metadataProvider.GetIsStoredOnPrimaryTableValue(entityLogicalName, columnLogicalName, isReferenceField);
             }
 
-            return false;
+            return true;
         }
 
         internal static FormulaType FormulaType(this XrmAttributeTypeCode typeCode)

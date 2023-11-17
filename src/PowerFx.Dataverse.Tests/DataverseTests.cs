@@ -1799,34 +1799,15 @@ END
         }
 
         public const string BaseTableNameTestUDF = @"CREATE FUNCTION test(
-    @v1 uniqueidentifier -- testentityid
+    @v0 uniqueidentifier -- new_lookup
 ) RETURNS decimal(23,10)
 AS BEGIN
-    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
     DECLARE @v2 decimal(23,10)
-    DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v0 = [new_Calc] FROM [dbo].[TestEntity] WHERE[TestEntityId] = @v1
+    SELECT TOP(1) @v1 = [simplefield] FROM [dbo].[testentityTestBase] WHERE[testentityid] = @v0
 
     -- expression body
-    SET @v2 = 2
-    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
-    IF(@v3 IS NULL) BEGIN RETURN NULL END
-    -- end expression body
-
-    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v3, 10)
-END
-";
-        public const string InheritsFromTestUDF = @"CREATE FUNCTION test(
-    @v1 uniqueidentifier -- testentityid
-) RETURNS decimal(23,10)
-AS BEGIN
-    DECLARE @v0 decimal(23,10)
-    DECLARE @v2 decimal(23,10)
-    SELECT TOP(1) @v0 = [new_Simple] FROM [dbo].[TestEntity] WHERE[TestEntityId] = @v1
-
-    -- expression body
-    SET @v2 = @v0
+    SET @v2 = @v1
     -- end expression body
 
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
@@ -1836,24 +1817,49 @@ END
         [Fact]
         public void BaseTableNameTest()
         {
-            var model = new EntityMetadataModel {
-                LogicalName = "testentity",
-                PrimaryIdAttribute = "testentityid",
-                Attributes = new AttributeMetadataModel[] {
-                    AttributeMetadataModel.NewDecimal("new_simple", "Simple", "new_Simple"),
-                    AttributeMetadataModel.NewDecimal("new_calc", "Calc", "new_Calc").SetCalculated(),
-                    AttributeMetadataModel.NewGuid("testentityid","testentityid").SetSchemaName("TestEntityId"),
-                }
-            }.SetSchemaName("TestEntity");
-            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(model)));
-            var result = engine.Compile("new_calc * 2", new SqlCompileOptions() { UdfName = "test" });
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.TestAllAttributeModels)));
+            var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
+        }
 
-            result = engine.Compile("new_simple", new SqlCompileOptions() { UdfName = "test" });
+        public const string InheritsFromTestUDF = @"CREATE FUNCTION test(
+    @v1 uniqueidentifier -- testinheritedentityid
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+    SELECT TOP(1) @v0 = [testsimplefield] FROM [dbo].[Testinheritedentity] WHERE[TestinheritedentityId] = @v1
+
+    -- expression body
+    SET @v2 = 1
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
+END
+";
+        [Fact]
+        public void InheritsFromTest()
+        {
+            var model = new EntityMetadataModel
+            {
+                LogicalName = "testinheritedentity",
+                PrimaryIdAttribute = "testinheritedentityid",
+                Attributes = new AttributeMetadataModel[] {
+                    AttributeMetadataModel.NewDecimal("testsimplefield", "TestSimpleField", "testsimplefield"),
+                    AttributeMetadataModel.NewGuid("testinheritedentityid","testinheritedentityid").SetSchemaName("TestinheritedentityId"),
+                }
+            }.SetSchemaName("Testinheritedentity");
+            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(model)));
+            var result = engine.Compile("testsimplefield + 1", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
         }
+
 
         [Theory]
         [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
@@ -2048,7 +2054,7 @@ END
                 {
                     LogicalName = xrmEntity.LogicalName,
                     BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
-                    IsInheritsFromNull = !logicalName.Equals("testentity"),
+                    IsInheritsFromNull = !logicalName.Equals("testinheritedentity"),
                     PrimaryIdAttribute = xrmEntity.PrimaryIdAttribute
                 };
 

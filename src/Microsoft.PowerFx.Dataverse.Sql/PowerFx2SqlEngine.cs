@@ -246,8 +246,8 @@ namespace Microsoft.PowerFx.Dataverse
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
 
                             // Table Schema name returns table view and we need to refer Base tables  in UDF in case of fields stored on primary table and non logical simple/ rollup fields
-                            // Fields that are not stored on primary table and are inherited from a different table will be referred from view
                             // because logical fields can only be referred from view 
+                            // Fields that are not stored on primary table and are inherited from a different table will be referred from view
                             if (!field.Column.IsLogical && !field.Column.IsCalculated && field.IsStoredOnPrimaryTable)
                             {
                                 tableSchemaName = _metadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? baseTableName : tableSchemaName + "Base";
