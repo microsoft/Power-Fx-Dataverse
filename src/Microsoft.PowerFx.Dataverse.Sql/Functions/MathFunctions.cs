@@ -104,15 +104,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             return result;
         }
 
-        /*
-         * Commenting these functions to filter them out from formula bar as it will return floating point soon and formula columsn don't support floating point
-         * 
+       
         public static RetVal Exp(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
-            context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", new SqlDecimalType()), arg);
+            context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", FormulaType.Number), arg);
             context.SetIntermediateVariable(result, $"EXP({arg})");
             context.PerformRangeChecks(result, node);
             return result;
@@ -120,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Power(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
@@ -133,7 +131,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Sqrt(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.NegativeNumberCheck(arg);
@@ -144,14 +142,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Ln(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(new SqlBigType());
+            var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
             context.NonPositiveNumberCheck(arg);
             context.SetIntermediateVariable(result, $"LOG({arg})");
             context.PerformRangeChecks(result, node);
             return result;
-        }*/
+        }
 
         public static RetVal RoundUp(SqlVisitor visitor, CallNode node, Context context)
         {
