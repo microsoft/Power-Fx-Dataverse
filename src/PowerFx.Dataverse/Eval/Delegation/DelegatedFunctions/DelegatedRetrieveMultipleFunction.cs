@@ -12,7 +12,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// Executes a query against a table and returns a table.
-    /// First Arg is the table to query, Second Arg is the filter to apply, Third Arg is the number of records to return.
+    /// First Arg is the table to query, Second Arg is the filter to apply, Third Arg is the number of records to return..
     /// </summary>
     internal class DelegatedRetrieveMultipleFunction : DelegateFunction
     {
