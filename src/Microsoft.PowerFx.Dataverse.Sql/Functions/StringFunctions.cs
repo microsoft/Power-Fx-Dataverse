@@ -52,10 +52,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
                 var result = context.GetTempVar(context.GetReturnType(node));
-                var numberType = ToSqlType(result.type);
 
-                // only allow whole numbers to be parsed
-                context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
+                if(result.type is NumberType)
+                {
+                    context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS FLOAT)");
+                }
+                else
+                {
+                    // only allow whole numbers to be parsed
+                    context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
+                }
+
                 context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
                 context.PerformRangeChecks(result, node);
                 return result;
@@ -67,8 +74,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     var result = context.GetTempVar(context.GetReturnType(node));
 
-                    // only allow whole numbers to be parsed
-                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    if (result.type is NumberType)
+                    {
+                        context.TryCastToFloat($"{CoerceNullToInt(arg)}", result);
+                    }
+                    else
+                    {
+                        // only allow whole numbers to be parsed
+                        context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    }
+                        
                     context.PerformRangeChecks(result, node);
                     return result;
                 }
