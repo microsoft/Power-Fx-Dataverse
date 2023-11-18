@@ -123,6 +123,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 reader.Close();
                 ExecuteScript(cx, "drop view if exists FooEntity;");
+                using (var tx = cx.BeginTransaction())
+                {
+                    DropTable(cx, tx, metadata);
+                    tx.Commit();
+                }
             }
         }
 
