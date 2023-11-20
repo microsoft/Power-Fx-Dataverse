@@ -189,14 +189,22 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal RoundDown(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(FormulaType.Decimal);
+            bool isFloatFlow = false;
+
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
 
+            if(node.Args[0].IRContext.ResultType is NumberType || node.Args[1].IRContext.ResultType is NumberType)
+            {
+                isFloatFlow = true;
+            }
+
+            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
+
             var expression = $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)";
-            context.TryCastToDecimal(expression, result);
+            context.TryCast(expression, result, castToFloat : isFloatFlow);
 
             context.PerformRangeChecks(result, node);
             return result;
