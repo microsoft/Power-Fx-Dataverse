@@ -167,7 +167,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                             var argString = Library.CoerceNullToInt(arg);
 
-                            var result = context.GetTempVar(FormulaType.Decimal);
+                            bool isFloatFlow = node.Args[0].IRContext.ResultType is NumberType;
+
+                            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;

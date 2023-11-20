@@ -1118,6 +1118,18 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
+            internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = true)
+            {
+                if(castToFloat)
+                {
+                    return TryCastToFloat(expression, retVal);
+                }
+                else
+                {
+                    return TryCastToDecimal(expression, retVal);
+                }
+            }
+
             internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
             {
                 expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    

@@ -16,19 +16,25 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Mod(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(FormulaType.Decimal);
+            bool isFloatFlow = false;
+
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
 
+            if(node.Args[0].IRContext.ResultType is NumberType || node.Args[1].IRContext.ResultType is NumberType)
+            {
+                isFloatFlow = true;
+            }
 
-            var initialResult = context.TryCastToDecimal($"{CoerceNullToInt(number)} % {divisor}");
+            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
+            var initialResult = context.TryCast($"{CoerceNullToInt(number)} % {divisor}", castToFloat: isFloatFlow);
 
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
             var finalExpression = $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})";
-            context.TryCastToDecimal(finalExpression, result);
+            context.TryCast(finalExpression, result, castToFloat: isFloatFlow);
 
             context.PerformRangeChecks(result, node);
             return result;
