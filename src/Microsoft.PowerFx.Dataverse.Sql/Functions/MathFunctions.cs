@@ -43,12 +43,19 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         // Blank coercion was already handled by IR. 
         public static RetVal MathNaryFunction(SqlVisitor visitor, CallNode node, Context context, string function, int arity)
         {
+            bool isFloatFlow = false;
+
             if (node.Args.Count != arity)
             {
                 throw new SqlCompileException(SqlCompileException.MathFunctionBadArity, node.IRContext.SourceContext, function, node.Args.Count, arity);
             }
 
-            var result = context.GetTempVar(FormulaType.Decimal);
+            if(arity > 0)
+            {
+                isFloatFlow = node.Args[0].IRContext.ResultType is NumberType;
+            }
+
+            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             var args = new List<string>(arity);
             for (int i = 0; i < arity; i++)
             {
