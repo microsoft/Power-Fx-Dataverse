@@ -166,22 +166,24 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal RoundUp(SqlVisitor visitor, CallNode node, Context context)
         {
-            var result = context.GetTempVar(FormulaType.Decimal);
+            bool isFloatFlow = node.IRContext.ResultType is NumberType;  
+
+            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var rawDigits = node.Args[1].Accept(visitor, context);
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
-            var digits = context.TryCastToDecimal(RoundDownNullToInt(rawDigits));
-            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits);
-            var factor = context.GetTempVar(FormulaType.Decimal);
+            var digits = context.TryCast(RoundDownNullToInt(rawDigits), castToFloat : isFloatFlow);
+            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits, isFloatFlow: true);
+            var factor = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})";
-            context.TryCastToDecimal(factorExpression, factor);
+            context.TryCast(factorExpression, factor, castToFloat: isFloatFlow);
             context.DivideByZeroCheck(factor);
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
             var finalExpression = $"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})";
-            context.TryCastToDecimal(finalExpression, result);
+            context.TryCast(finalExpression, result, castToFloat: isFloatFlow);
             context.ErrorCheck($"{number} <> 0 AND {CoerceNullToInt(result)} = 0", Context.ValidationErrorCode, postValidation: true);
             context.PerformRangeChecks(result, node);
             return result;

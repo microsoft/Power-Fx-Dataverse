@@ -1118,7 +1118,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
-            internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = true)
+            internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = false)
             {
                 if(castToFloat)
                 {
@@ -1232,13 +1232,13 @@ namespace Microsoft.PowerFx.Dataverse
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
             }
 
-            internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false)
+            internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false, bool isFloatFlow = false)
             {
                 if (_checkOnly) return;
 
                 // compute approximate power to determine if there will be an overflow
                 var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
-                var power = TryCastToDecimal(expression);
+                var power = TryCast(expression, castToFloat : isFloatFlow);
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
