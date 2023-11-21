@@ -1048,7 +1048,6 @@ END
             // mapping of field's logicalName --> fragment of Error received when trying to consume the type. 
             var unsupportedConsumer = new Dictionary<string, string>
             {
-                { "double", "Columns of type Double are not supported in formula columns." },
                 { "multiSelect", "Columns of type Virtual are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
                 { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },

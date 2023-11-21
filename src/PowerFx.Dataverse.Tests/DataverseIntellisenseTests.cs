@@ -131,9 +131,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
-        [InlineData("Floa|")] // "Floating point fields are not suggested at all. Float function can't be used in the formula but is internally supported from IR."
-        [InlineData("Other.Actual|")] // "Floating point fields on relationships are not suggested"
-        [InlineData("Other.Floa|", "Float")] // "Name collisions with floating point fields are handled"
+        [InlineData("Floa|", "Float")]
+        [InlineData("Other.Actual|", "'Actual Float'")] 
+        [InlineData("Other.Floa|", "'Actual Float'", "Float")] // "Name collisions with floating point fields are handled"
         [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"
         [InlineData("'Virtual Lookup'.|")] // "Fields on virtual tables are not"
         public void CheckSuggestions(string expression, params string[] expectedSuggestions)
@@ -193,7 +193,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Emai|")] // "Email not suggested"
         [InlineData("Ticke|")] // "Ticker not suggested"        
         [InlineData("Duratio|")] // "Duration not suggested"
-        [InlineData("Doubl|")] // "Double not suggested"
+        [InlineData("Doubl|", "Double")] // "Double suggested"
         [InlineData("Mone|", "Money")] // "Currency suggested"
         [InlineData("Imag|")] // "Image not suggested"
         [InlineData("Fil|")] // "File not suggested"
