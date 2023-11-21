@@ -16,6 +16,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity);
 
-        bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName);
+        bool TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity);
+
+        bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute);
     }
 }

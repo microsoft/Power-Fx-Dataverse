@@ -70,9 +70,15 @@ namespace Microsoft.PowerFx.Dataverse
             return _serviceClient.TryGetValidEntityMetadata(logicalName, out entityMetadata);
         }
 
-        public bool TryGetBaseTableName(string logicalName, out string baseTableName)
+        bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity)
         {
-            baseTableName = null;
+            entity = null;
+            return false;
+        }
+
+        bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute)
+        {
+            attribute = null;
             return false;
         }
 

@@ -416,11 +416,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            if (_innerProvider != null && _innerProvider.TryGetBaseTableName(logicalName, out baseTableName))
+            /* if (_innerProvider != null && _innerProvider.TryGetBaseTableName(logicalName, out baseTableName))
             {
                 _baseTableNames[logicalName] = baseTableName;
                 return true;
-            }
+            } */
 
             return false;
         }

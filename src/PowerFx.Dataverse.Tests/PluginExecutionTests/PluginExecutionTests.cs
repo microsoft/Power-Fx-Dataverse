@@ -116,9 +116,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return _inner.TryGetEntityMetadata(logicalOrDisplayName, out entity);
             }
 
-            public bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName)
+            bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity)
             {
-                baseTableName = null;
+                entity = null;
+                return false;
+            }
+
+            bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute)
+            {
+                attribute = null;
                 return false;
             }
         }
