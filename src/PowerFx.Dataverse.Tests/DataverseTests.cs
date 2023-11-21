@@ -428,13 +428,13 @@ END
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
-            Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Power' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
         }
 
         [Fact]
-        public void SqrtFunctionBlockedTest()
+        public void SqrtFunctionTest()
         {
             var expr = "Sqrt(16)";
 
@@ -442,13 +442,13 @@ END
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
-            Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Sqrt' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
         }
 
         [Fact]
-        public void LnFunctionBlockedTest()
+        public void LnFunctionTest()
         {
             var expr = "Ln(20)";
 
@@ -456,13 +456,13 @@ END
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
-            Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Ln' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
         }
 
         [Fact]
-        public void ExpFunctionBlockedTest()
+        public void ExpFunctionTest()
         {
             var expr = "Exp(10)";
 
@@ -470,9 +470,9 @@ END
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
-            Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Exp' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
         }
 
         [Fact]
@@ -1649,9 +1649,9 @@ END
         }
 
         [Theory]
-        [InlineData("Float", false, "Error 0-5: Columns of type Double are not supported in formula columns.")] // "Local Float"
+        [InlineData("Float", true)] // "Local Float"
         [InlineData("Other.Float", true)] // "Remote non-float with name collision"
-        [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
+        [InlineData("Other.'Actual Float'", true)] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
