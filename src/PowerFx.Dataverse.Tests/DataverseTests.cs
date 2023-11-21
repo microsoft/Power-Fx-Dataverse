@@ -1984,13 +1984,13 @@ END
             return ret;
         }
 
-        public bool TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity)
+        public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
         {
             entity = null;
             return false;
         }
 
-        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute)
+        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
         {
             attribute = null;
             return false;
