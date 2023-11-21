@@ -1799,6 +1799,31 @@ END
             Assert.Equal("tripleremoteid", result.RelatedIdentifiers.ToArray()[0].Value.First());
         }
 
+        public const string BaseTableNameTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- new_lookup
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    SELECT TOP(1) @v1 = [simplefield] FROM [dbo].[testentityTestBase] WHERE[testentityid] = @v0
+
+    -- expression body
+    SET @v2 = @v1
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 10)
+END
+";
+        [Fact]
+        public void BaseTableNameTest()
+        {
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.TestAllAttributeModels)));
+            var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
+        }
+
         [Theory]
         [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
         [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] // "ThisRecord"
@@ -1986,6 +2011,14 @@ END
 
         public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
         {
+            entity = new Dictionary<string, object>();
+            if (TryGetEntityMetadata(logicalName, out var xrmEntity))
+            {
+                entity.Add("logicalname", xrmEntity.LogicalName);
+                entity.Add("basetablename", xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
+                return true;
+            }
+
             entity = null;
             return false;
         }

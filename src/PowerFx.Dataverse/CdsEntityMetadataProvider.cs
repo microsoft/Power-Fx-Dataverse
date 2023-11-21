@@ -54,12 +54,12 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// Cache of EntityMetadata - entity's additional properties like base table names, etc., indexed by entity's logical name
         /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _entityMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _entityMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Cache of AttributeMetadata, indexed by entity's logical concatenated with attribute's logical name
         /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _attributeMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _attributeMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
@@ -449,15 +449,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
-            if (_entityMetadataCache.TryGetValue(logicalName, out var entityMetadata) && 
+            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata) &&
                 entityMetadata.TryGetValue("basetablename", out var name))
-            {
-                baseTableName = (string)name;
-                return true;
-            }
-
-            if (_innerProvider != null && _innerProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata) &&
-                entityMetadata.TryGetValue("basetablename", out name))
             {
                 baseTableName = (string)name;
                 return true;
