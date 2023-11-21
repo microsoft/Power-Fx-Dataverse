@@ -16,18 +16,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Mod(SqlVisitor visitor, CallNode node, Context context)
         {
-            bool isFloatFlow = false;
+            bool isFloatFlow = node.IRContext.ResultType is NumberType; ;
 
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
-
-            if(node.Args[0].IRContext.ResultType is NumberType || node.Args[1].IRContext.ResultType is NumberType)
-            {
-                isFloatFlow = true;
-            }
 
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             var initialResult = context.TryCast($"{CoerceNullToInt(number)} % {divisor}", castToFloat: isFloatFlow);
@@ -43,16 +38,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         // Blank coercion was already handled by IR. 
         public static RetVal MathNaryFunction(SqlVisitor visitor, CallNode node, Context context, string function, int arity)
         {
-            bool isFloatFlow = false;
+            bool isFloatFlow = node.IRContext.ResultType is NumberType; ;
 
             if (node.Args.Count != arity)
             {
                 throw new SqlCompileException(SqlCompileException.MathFunctionBadArity, node.IRContext.SourceContext, function, node.Args.Count, arity);
-            }
-
-            if(arity > 0)
-            {
-                isFloatFlow = node.Args[0].IRContext.ResultType is NumberType;
             }
 
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
@@ -70,7 +60,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal MathScalarSetFunction(SqlVisitor visitor, CallNode node, Context context, string function, bool zeroNulls = false, bool errorOnNulls = false)
         {
-            var result = context.GetTempVar(FormulaType.Decimal);
+            bool isFloatFlow = node.IRContext.ResultType is NumberType;
+            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             var args = new List<string>(node.Args.Count);
             for (int i = 0; i < node.Args.Count; i++)
             {
@@ -102,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
             var finalExpression = $"(SELECT {function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X))";
-            context.TryCastToDecimal(finalExpression, result);
+            context.TryCast(finalExpression, result, castToFloat : isFloatFlow);
 
             if (zeroNulls)
             {
@@ -191,17 +182,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal RoundDown(SqlVisitor visitor, CallNode node, Context context)
         {
-            bool isFloatFlow = false;
+            bool isFloatFlow = node.IRContext.ResultType is NumberType; ;
 
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
-
-            if(node.Args[0].IRContext.ResultType is NumberType || node.Args[1].IRContext.ResultType is NumberType)
-            {
-                isFloatFlow = true;
-            }
 
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
 
