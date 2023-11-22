@@ -1146,6 +1146,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return retVal;
             }
 
+            internal RetVal TryCastToInteger(string expression, RetVal retVal = null)
+            {
+                expression = $"TRY_CAST(({expression}) AS INT)";
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
+                NullCheck(retVal, postValidation: true);
+                return retVal;
+            }
+
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);
