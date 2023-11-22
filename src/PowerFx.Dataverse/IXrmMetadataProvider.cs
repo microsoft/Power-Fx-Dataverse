@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 
 
+using System.Collections.Generic;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -16,6 +17,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity);
 
-        bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName);
+        bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity);
+
+        bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute);
     }
 }

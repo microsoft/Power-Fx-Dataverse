@@ -52,9 +52,14 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
         /// <summary>
-        /// Cache of entity's base table names already retrieved, indexed by entity's logical name
+        /// Cache of EntityMetadata - entity's additional properties like base table names, etc., indexed by entity's logical name
         /// </summary>
-        private readonly ConcurrentDictionary<string, string> _baseTableNames = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _entityMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Cache of AttributeMetadata, indexed by entity's logical concatenated with attribute's logical name
+        /// </summary>
+        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _attributeMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
@@ -190,6 +195,39 @@ namespace Microsoft.PowerFx.Dataverse
             if (_innerProvider != null && _innerProvider.TryGetEntityMetadata(logicalName, out xrmEntity))
             {
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
+                return true;
+            }
+
+            return false;
+        }
+
+        internal bool TryGetCDSEntityMetadata(string logicalName, out Dictionary<string, object> entityMetadata)
+        {
+            if (_entityMetadataCache.TryGetValue(logicalName, out entityMetadata))
+            {
+                return true;
+            }
+
+            if (_innerProvider != null && _innerProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata))
+            {
+                _entityMetadataCache[logicalName] = entityMetadata;
+                return true;
+            }
+
+            return false;
+        }
+
+        internal bool TryGetCDSAttributeMetadata(string entityLogicalName, string columnLogicalName, out Dictionary<string, object> attributeMetadata)
+        {
+            var key = entityLogicalName + "_" + columnLogicalName;
+            if (_attributeMetadataCache.TryGetValue(key, out attributeMetadata))
+            {
+                return true;
+            }
+
+            if (_innerProvider != null && _innerProvider.TryGetAdditionalAttributeMetadata(entityLogicalName, columnLogicalName, out attributeMetadata))
+            {
+                _attributeMetadataCache[key] = attributeMetadata;
                 return true;
             }
 
@@ -411,17 +449,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
-            if (_baseTableNames.TryGetValue(logicalName, out baseTableName))
+            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata) &&
+                entityMetadata.TryGetValue("basetablename", out var name))
             {
+                baseTableName = (string)name;
                 return true;
             }
 
-            if (_innerProvider != null && _innerProvider.TryGetBaseTableName(logicalName, out baseTableName))
-            {
-                _baseTableNames[logicalName] = baseTableName;
-                return true;
-            }
-
+            baseTableName = null;
             return false;
         }
 
