@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -71,15 +70,9 @@ namespace Microsoft.PowerFx.Dataverse
             return _serviceClient.TryGetValidEntityMetadata(logicalName, out entityMetadata);
         }
 
-        bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
+        public bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
-            entity = null;
-            return false;
-        }
-
-        bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
-        {
-            attribute = null;
+            baseTableName = null;
             return false;
         }
 
