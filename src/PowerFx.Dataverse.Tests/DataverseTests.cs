@@ -1860,7 +1860,6 @@ END
             Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
         }
 
-
         [Theory]
         [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
         [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] // "ThisRecord"
@@ -2046,39 +2045,31 @@ END
             return ret;
         }
 
-        public bool TryGetAdditionalEntityMetadata(string logicalName, out CDSEntityMetadata entity)
+        public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
         {
+            entity = new Dictionary<string, object>();
             if (TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                entity = new CDSEntityMetadata()
-                {
-                    LogicalName = xrmEntity.LogicalName,
-                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
-                    IsInheritsFromNull = !logicalName.Equals("testinheritedentity"),
-                    PrimaryIdAttribute = xrmEntity.PrimaryIdAttribute
-                };
-
+                entity.Add(EntityColumnNames.LogicalName, xrmEntity.LogicalName);
+                entity.Add(EntityColumnNames.BaseTableName, xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
+                entity.Add(EntityColumnNames.PrimaryIdAttribute, xrmEntity.PrimaryIdAttribute);
+                entity.Add(EntityColumnNames.IsInheritsFromNull, !logicalName.Equals("testinheritedentity"));
                 return true;
             }
 
-            entity = null;
             return false;
         }
 
-        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out CDSAttributeMetadata attribute)
+        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
         {
+            attribute = new Dictionary<string, object>();
             if (TryGetEntityMetadata(entityLogicalName, out var xrmEntity) && xrmEntity.TryGetAttribute(attributeLogicalName, out var xrmAttribute))
             {
-                attribute = new CDSAttributeMetadata()
-                {
-                    LogicalName = xrmAttribute.LogicalName,
-                    IsStoredOnPrimaryTable = true
-                };
-
+                attribute.Add(AttributeColumnNames.LogicalName, xrmAttribute.LogicalName);
+                attribute.Add(AttributeColumnNames.IsStoredOnPrimaryTable, true);
                 return true;
             }
 
-            attribute = null;
             return false;
         }
     }

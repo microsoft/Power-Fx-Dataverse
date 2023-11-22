@@ -90,11 +90,7 @@ namespace Microsoft.PowerFx.Tests
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
                 "Microsoft.PowerFx.Dataverse.DataverseHelpers",
-                "Microsoft.PowerFx.Dataverse.XrmUtility",
-
-                // Additional entity and attribute properties which are not present in XRMEntity
-                "Microsoft.PowerFx.Dataverse.CDSEntityMetadata",
-                "Microsoft.PowerFx.Dataverse.CDSAttributeMetadata"
+                "Microsoft.PowerFx.Dataverse.XrmUtility"
 
             };
 
