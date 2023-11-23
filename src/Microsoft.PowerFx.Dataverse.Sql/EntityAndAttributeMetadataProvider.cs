@@ -71,13 +71,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    internal static class EntityColumnNames
+    public static class EntityColumnNames
     {
         public const string BaseTableName = "basetablename";
         public const string IsInheritsFromNull = "isinheritsfromnull";
     }
 
-    internal static class AttributeColumnNames
+    public static class AttributeColumnNames
     {
         public const string IsStoredOnPrimaryTable = "isstoredonprimarytable";
     }
