@@ -152,7 +152,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Will cache
             var ok = metadataCache.TryGetXrmEntityMetadata("local", out var entityMetadata1);
-            var tst = metadataCache.TryGetBaseTableName("test", out var tst2);
 
             Assert.True(ok);
             Assert.NotNull(entityMetadata1);
