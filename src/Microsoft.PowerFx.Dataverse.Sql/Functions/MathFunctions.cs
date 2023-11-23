@@ -24,8 +24,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var divisor = node.Args[1].Accept(visitor, context);
             context.DivideByZeroCheck(divisor);
 
+            // Modulo operator always expect dividend and divisor arg to be of type other than float/real
+            number = context.TryCastToDecimal($"{CoerceNullToInt(number)}");
+            divisor = context.TryCastToDecimal($"{divisor}");
+
+
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
-            var initialResult = context.TryCast($"{CoerceNullToInt(number)} % {divisor}", castToFloat: isFloatFlow);
+            var initialResult = context.TryCast($"{number} % {divisor}", castToFloat: isFloatFlow);
 
             // SQL returns the modulo where the sign matches the number.  PowerApps and Excel match the sign of the divisor.  If the result doesn't match the sign of the divisor, add the divior
             var finalExpression = $"IIF(({initialResult} <= 0 AND {divisor} <= 0) OR ({initialResult} >= 0 AND {divisor} >= 0), {initialResult}, {initialResult} + {divisor})";
@@ -114,7 +119,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var arg = node.Args[0].Accept(visitor, context);
-            context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", FormulaType.Number), arg);
+            context.PowerOverflowCheck(RetVal.FromSQL("EXP(1)", FormulaType.Number), arg, isFloatFlow : true);
             context.SetIntermediateVariable(result, $"EXP({arg})");
             context.PerformRangeChecks(result, node);
             return result;
@@ -127,7 +132,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var exponent = node.Args[1].Accept(visitor, context);
-            context.PowerOverflowCheck(number, exponent);
+            context.PowerOverflowCheck(number, exponent, isFloatFlow: true);
             context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type)},{CoerceNullToNumberType(exponent, result.type)}) AS {ToSqlType(result.type)})");
             context.PerformRangeChecks(result, node);
             return result;
