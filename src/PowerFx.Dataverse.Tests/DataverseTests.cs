@@ -2026,8 +2026,7 @@ END
             entity = new Dictionary<string, object>();
             if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                entity.Add("logicalname", xrmEntity.LogicalName);
-                entity.Add("basetablename", xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
+                entity.Add(EntityColumnNames.BaseTableName, xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
                 return true;
             }
 

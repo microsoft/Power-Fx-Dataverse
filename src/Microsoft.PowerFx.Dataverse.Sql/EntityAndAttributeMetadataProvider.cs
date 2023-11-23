@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
             if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata) &&
-                entityMetadata.TryGetValue("basetablename", out var name))
+                entityMetadata.TryGetValue(EntityColumnNames.BaseTableName, out var name))
             {
                 baseTableName = (string)name;
                 return true;
@@ -69,5 +69,16 @@ namespace Microsoft.PowerFx.Dataverse
             baseTableName = null;
             return false;
         }
+    }
+
+    internal static class EntityColumnNames
+    {
+        public const string BaseTableName = "basetablename";
+        public const string IsInheritsFromNull = "isinheritsfromnull";
+    }
+
+    internal static class AttributeColumnNames
+    {
+        public const string IsStoredOnPrimaryTable = "isstoredonprimarytable";
     }
 }
