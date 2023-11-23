@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 
-using System.Collections.Generic;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse

@@ -403,7 +403,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return _optionSets.TryGetValue(name.Value, out optionSet);
         }
-
         internal IEnumerable<DataverseOptionSet> OptionSets => _optionSets.Values.Distinct();
 
         public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)
