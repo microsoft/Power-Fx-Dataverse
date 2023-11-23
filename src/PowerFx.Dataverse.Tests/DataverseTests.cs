@@ -1818,7 +1818,9 @@ END
         [Fact]
         public void BaseTableNameTest()
         {
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.TestAllAttributeModels)));
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var metadataProvider = new MockEntityAndAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAndAttributeMetadataProvider: new EntityAndAttributeMetadataProvider(metadataProvider)); 
             var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
@@ -1987,7 +1989,7 @@ END
         }
     }
 
-    public class MockXrmMetadataProvider : IEntityAndAttributeMetadataProvider
+    public class MockXrmMetadataProvider : IXrmMetadataProvider
     {
         private readonly Dictionary<string, EntityMetadata> _entitiesByName;
 
@@ -2008,11 +2010,21 @@ END
 
             return ret;
         }
+    }
+
+    public class MockEntityAndAttributeMetadataProvider : IEntityAndAttributeMetadataProvider
+    {
+        private readonly MockXrmMetadataProvider _xrmMetadataProvider;
+
+        public MockEntityAndAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
+        {
+            _xrmMetadataProvider = xrmMetadataProvider; 
+        }
 
         public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
         {
             entity = new Dictionary<string, object>();
-            if (TryGetEntityMetadata(logicalName, out var xrmEntity))
+            if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
                 entity.Add("logicalname", xrmEntity.LogicalName);
                 entity.Add("basetablename", xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));

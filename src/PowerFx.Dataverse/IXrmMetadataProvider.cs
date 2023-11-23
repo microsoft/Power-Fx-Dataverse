@@ -17,11 +17,4 @@ namespace Microsoft.PowerFx.Dataverse
     {
         bool TryGetEntityMetadata(string logicalOrDisplayName, out EntityMetadata entity);
     }
-
-    public interface IEntityAndAttributeMetadataProvider : IXrmMetadataProvider
-    {
-        bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity);
-
-        bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute);
-    }
 }

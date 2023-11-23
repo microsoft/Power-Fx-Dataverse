@@ -82,7 +82,6 @@ namespace Microsoft.PowerFx.Tests
                 // Common Entity metadata providers
                 "Microsoft.PowerFx.Dataverse.IXrmMetadataProvider",
                 "Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider",
-                "Microsoft.PowerFx.Dataverse.IEntityAndAttributeMetadataProvider",
 
                 // used for Eval, but here because they need Fx Core Internals. 
                 "Microsoft.PowerFx.Dataverse.DVSymbolTable",

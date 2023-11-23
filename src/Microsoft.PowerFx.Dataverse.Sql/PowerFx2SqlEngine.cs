@@ -34,8 +34,9 @@ namespace Microsoft.PowerFx.Dataverse
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
-            CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
+            CultureInfo culture = null,
+            EntityAndAttributeMetadataProvider entityAndAttributeMetadataProvider = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAndAttributeMetadataProvider)
         {
         }
 
@@ -249,7 +250,8 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = _metadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? baseTableName : tableSchemaName + "Base";
+                                tableSchemaName = _metadataProvider != null && _metadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                    baseTableName : tableSchemaName + "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
