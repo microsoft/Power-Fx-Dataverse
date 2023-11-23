@@ -480,14 +480,13 @@ END
         {
             var engine = new PowerFx2SqlEngine();
             var result = engine.Compile("Float(5)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString()); // Float function can't be used in the formula.
+            Assert.True(result.IsSuccess);
 
             result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
             Assert.True(result.IsSuccess);
 
             result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
-            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are internally supported from IR
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are supported from IR
             Assert.True(result.IsSuccess);
         }
 

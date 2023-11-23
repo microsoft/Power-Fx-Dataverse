@@ -169,6 +169,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var number = node.Args[0].Accept(visitor, context);
             ValidateNumericArgument(node.Args[1]);
             var rawDigits = node.Args[1].Accept(visitor, context);
+
+            rawDigits = context.TryCastToDecimal($"{rawDigits}");
+
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
             var digits = context.TryCast(RoundDownNullToInt(rawDigits), castToFloat : isFloatFlow);
