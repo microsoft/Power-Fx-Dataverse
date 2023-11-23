@@ -399,7 +399,7 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, metadataProvider: (check.Engine as PowerFx2SqlEngine)?.MetadataProvider);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
