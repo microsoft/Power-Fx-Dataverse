@@ -1987,7 +1987,7 @@ END
         }
     }
 
-    public class MockXrmMetadataProvider : IXrmMetadataProvider
+    public class MockXrmMetadataProvider : IEntityAndAttributeMetadataProvider
     {
         private readonly Dictionary<string, EntityMetadata> _entitiesByName;
 

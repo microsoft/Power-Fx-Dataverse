@@ -115,18 +115,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 _requests.Add(logicalOrDisplayName);
                 return _inner.TryGetEntityMetadata(logicalOrDisplayName, out entity);
             }
-
-            bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
-            {
-                entity = null;
-                return false;
-            }
-
-            bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
-            {
-                attribute = null;
-                return false;
-            }
         }
 
         // Verify we can convert EntityMetadata to RecordType

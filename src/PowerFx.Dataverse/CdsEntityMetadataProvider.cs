@@ -208,7 +208,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            if (_innerProvider != null && _innerProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata))
+            if (_innerProvider != null && (_innerProvider is IEntityAndAttributeMetadataProvider metadataProvider) && metadataProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata))
             {
                 _entityMetadataCache[logicalName] = entityMetadata;
                 return true;
@@ -225,7 +225,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            if (_innerProvider != null && _innerProvider.TryGetAdditionalAttributeMetadata(entityLogicalName, columnLogicalName, out attributeMetadata))
+            if (_innerProvider != null && (_innerProvider is IEntityAndAttributeMetadataProvider metadataProvider) && metadataProvider.TryGetAdditionalAttributeMetadata(entityLogicalName, columnLogicalName, out attributeMetadata))
             {
                 _attributeMetadataCache[key] = attributeMetadata;
                 return true;

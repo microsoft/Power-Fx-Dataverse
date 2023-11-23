@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.Xrm.Sdk.Metadata;
 using Xunit;
@@ -138,18 +137,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 throw new InvalidOperationException($"failure");
             }
-
-            bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
-            {
-                entity = null;
-                return false;
-            }
-
-            bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
-            {
-                attribute = null;
-                return false;
-            }
         }
 
         // Create a cloned CdsEntityMetadataProvider against a new provider.
@@ -165,6 +152,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Will cache
             var ok = metadataCache.TryGetXrmEntityMetadata("local", out var entityMetadata1);
+            var tst = metadataCache.TryGetBaseTableName("test", out var tst2);
 
             Assert.True(ok);
             Assert.NotNull(entityMetadata1);
