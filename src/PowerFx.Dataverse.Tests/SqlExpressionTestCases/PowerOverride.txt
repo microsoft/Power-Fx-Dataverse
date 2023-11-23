@@ -1,0 +1,11 @@
+﻿#override: Power.txt
+
+// Overflow bcz of DV Limit -100000000000 to 100000000000
+>> Power(230,10)
+Error({Kind:ErrorKind.Numeric})
+
+>> Power(-456,9)
+Error({Kind:ErrorKind.Numeric})
+
+>> Power(Exp(29.5),2)
+Error({Kind:ErrorKind.Numeric})
