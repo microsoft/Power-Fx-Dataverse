@@ -250,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = _metadataProvider != null && _metadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                tableSchemaName = MetadataProvider != null && MetadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
                                     baseTableName : tableSchemaName + "Base";
                             }
 
