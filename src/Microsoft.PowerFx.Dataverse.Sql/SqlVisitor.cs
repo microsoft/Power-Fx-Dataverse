@@ -1130,27 +1130,42 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
+            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
-                NullCheck(retVal, postValidation: true);
+                
+                if(applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+                
                 return retVal;
             }
 
-            internal RetVal TryCastToFloat(string expression, RetVal retVal = null)
+            internal RetVal TryCastToFloat(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 expression = $"TRY_CAST(({expression}) AS FLOAT)";
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Number, expression);
-                NullCheck(retVal, postValidation: true);
+
+                if (applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+
                 return retVal;
             }
 
-            internal RetVal TryCastToInteger(string expression, RetVal retVal = null)
+            internal RetVal TryCastToInteger(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 expression = $"TRY_CAST(({expression}) AS INT)";
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
-                NullCheck(retVal, postValidation: true);
+
+                if (applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+                    
                 return retVal;
             }
 

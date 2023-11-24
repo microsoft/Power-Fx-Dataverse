@@ -416,12 +416,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var start = node.Args[1].Accept(visitor, context);
             // the start value must be 1 or larger
             context.NonPositiveNumberCheck(start);
-            start = context.TryCastToInteger($"{start}");
+            start = context.TryCastToInteger($"{start}", applyNullCheck : false);
             ValidateNumericArgument(node.Args[2]);
             var count = node.Args[2].Accept(visitor, context);
             // the count value must be 0 or larger
             context.NegativeNumberCheck(count);
-            count = context.TryCastToInteger($"{count}");
+            count = context.TryCastToInteger($"{count}", applyNullCheck: false);
             var newStr = node.Args[3].Accept(visitor, context);
             var coercedNewStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(newStr));
             // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case

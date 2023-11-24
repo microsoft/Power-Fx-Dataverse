@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
     {
         public static RetVal Mod(SqlVisitor visitor, CallNode node, Context context)
         {
-            bool isFloatFlow = node.IRContext.ResultType is NumberType; ;
+            bool isFloatFlow = node.IRContext.ResultType is NumberType;
 
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
@@ -56,6 +56,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 ValidateNumericArgument(node.Args[i]);
                 var arg = node.Args[i].Accept(visitor, context);
+
+                if(function.Equals("ROUND") && i == 1)
+                {
+                    arg = context.TryCastToInteger($"{arg}", applyNullCheck : false);
+                }
+
                 var argString = arg.ToString();
                 args.Add(argString);
             }
@@ -127,6 +133,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
         public static RetVal Power(SqlVisitor visitor, CallNode node, Context context)
         {
+            // First arg should be of type float or type that can be implicitly converted to float
+            // Second arg can be exact numeric or approximate data type 
             var result = context.GetTempVar(FormulaType.Number);
             ValidateNumericArgument(node.Args[0]);
             var number = node.Args[0].Accept(visitor, context);
@@ -197,6 +205,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
 
+            // 2nd arg to Round function must be an expression of type tinyint, smallint, or int.
+            digits = context.TryCastToInteger($"{digits}", applyNullCheck: false);
+
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
 
             var expression = $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)";
@@ -215,6 +226,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 ValidateNumericArgument(node.Args[1]);
                 var digits = node.Args[1].Accept(visitor, context);
+
+                digits = context.TryCastToInteger($"{digits}", applyNullCheck: false);
+
                 context.SetIntermediateVariable(result, $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
                 return result;
             }
