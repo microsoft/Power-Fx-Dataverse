@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
-        internal EntityAndAttributeMetadataProvider MetadataProvider { get; }
+        protected readonly EntityAndAttributeMetadataProvider _metadataProvider;
 
         protected readonly CultureInfo _cultureInfo;
 
@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = NumberIsFloat };
 
-            MetadataProvider = entityAndAttributeMetadataProvider;
+            _metadataProvider = entityAndAttributeMetadataProvider;
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 

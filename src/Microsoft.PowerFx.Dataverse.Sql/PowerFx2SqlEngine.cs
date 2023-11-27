@@ -250,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = MetadataProvider != null && MetadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                tableSchemaName = _metadataProvider != null && _metadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
                                     baseTableName : tableSchemaName + "Base";
                             }
 
@@ -399,7 +399,7 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, metadataProvider: (check.Engine as PowerFx2SqlEngine)?.MetadataProvider);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);

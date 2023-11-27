@@ -763,15 +763,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
-            // Used during GetVarDetails to verify if a dependent field is stored on primary table or not to decide if field requires reference.
-            private readonly EntityAndAttributeMetadataProvider metadataProvider;
-
             /// <summary>
             /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAndAttributeMetadataProvider metadataProvider = null)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -785,7 +782,6 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopes[rootScope.Id] = RootScope;
 
                 DoesDateDiffOverflowCheck = false;
-                this.metadataProvider = metadataProvider;
             }
 
             public bool DoesDateDiffOverflowCheck { get; internal set; }
