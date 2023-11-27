@@ -1819,8 +1819,8 @@ END
         public void BaseTableNameTest()
         {
             var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
-            var metadataProvider = new MockEntityAndAttributeMetadataProvider(provider);
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAndAttributeMetadataProvider: new EntityAndAttributeMetadataProvider(metadataProvider)); 
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
             var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
@@ -2012,20 +2012,20 @@ END
         }
     }
 
-    public class MockEntityAndAttributeMetadataProvider : IEntityAndAttributeMetadataProvider
+    public class MockEntityAttributeMetadataProvider : IEntityAttributeMetadataProvider
     {
         private readonly MockXrmMetadataProvider _xrmMetadataProvider;
 
-        public MockEntityAndAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
+        public MockEntityAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
         {
             _xrmMetadataProvider = xrmMetadataProvider; 
         }
 
-        public bool TryGetAdditionalEntityMetadata(string logicalName, out AddtionalEntityMetadata entity)
+        public bool TryGetSecondaryEntityMetadata(string logicalName, out SecondaryEntityMetadata entity)
         {
             if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                entity = new AddtionalEntityMetadata()
+                entity = new SecondaryEntityMetadata()
                 {
                     BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base")
                 };
@@ -2036,7 +2036,7 @@ END
             return false;
         }
 
-        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out AddtionalAttributeMetadata attribute)
+        public bool TryGetSecondaryAttributeMetadata(string entityLogicalName, string attributeLogicalName, out SecondaryAttributeMetadata attribute)
         {
             attribute = null;
             return false;

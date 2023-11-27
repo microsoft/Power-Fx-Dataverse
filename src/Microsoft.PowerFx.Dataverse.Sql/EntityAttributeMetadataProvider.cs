@@ -5,28 +5,28 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class EntityAndAttributeMetadataProvider
+    public class EntityAttributeMetadataProvider
     {
-        private readonly IEntityAndAttributeMetadataProvider _metadataProvider;
+        private readonly IEntityAttributeMetadataProvider _metadataProvider;
 
         /// <summary>
         /// Cache of EntityMetadata - entity's additional properties like base table names, etc., indexed by entity's logical name
         /// </summary>
-        private readonly ConcurrentDictionary<string, AddtionalEntityMetadata> _entityMetadataCache = new ConcurrentDictionary<string, AddtionalEntityMetadata>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, SecondaryEntityMetadata> _entityMetadataCache = new ConcurrentDictionary<string, SecondaryEntityMetadata>(StringComparer.Ordinal);
 
-        public EntityAndAttributeMetadataProvider(IEntityAndAttributeMetadataProvider metadataProvider)
+        public EntityAttributeMetadataProvider(IEntityAttributeMetadataProvider metadataProvider)
         {
             _metadataProvider = metadataProvider;
         }
 
-        internal bool TryGetCDSEntityMetadata(string logicalName, out AddtionalEntityMetadata entityMetadata)
+        internal bool TryGetCDSEntityMetadata(string logicalName, out SecondaryEntityMetadata entityMetadata)
         {
             if (_entityMetadataCache.TryGetValue(logicalName, out entityMetadata))
             {
                 return true;
             }
 
-            if (_metadataProvider != null && _metadataProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata))
+            if (_metadataProvider != null && _metadataProvider.TryGetSecondaryEntityMetadata(logicalName, out entityMetadata))
             {
                 _entityMetadataCache[logicalName] = entityMetadata;
                 return true;
@@ -48,13 +48,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    public class AddtionalEntityMetadata
+    public class SecondaryEntityMetadata
     {
         public string BaseTableName { get; set; }
         public bool IsInheritsFromNull { get; set; }
     }
 
-    public class AddtionalAttributeMetadata
+    public class SecondaryAttributeMetadata
     {
         public bool IsStoredOnPrimaryTable { get; set; }
     }

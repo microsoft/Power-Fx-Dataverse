@@ -35,8 +35,8 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
-            EntityAndAttributeMetadataProvider entityAndAttributeMetadataProvider = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAndAttributeMetadataProvider)
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
         {
         }
 
@@ -250,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = _metadataProvider != null && _metadataProvider.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
                                     baseTableName : tableSchemaName + "Base";
                             }
 
