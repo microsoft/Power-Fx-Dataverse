@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
             _metadataProvider = metadataProvider;
         }
 
-        internal bool TryGetCDSEntityMetadata(string logicalName, out SecondaryEntityMetadata entityMetadata)
+        internal bool TryGetEntityMetadata(string logicalName, out SecondaryEntityMetadata entityMetadata)
         {
             if (_entityMetadataCache.TryGetValue(logicalName, out entityMetadata))
             {
@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
-            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata))
+            if (TryGetEntityMetadata(logicalName, out var entityMetadata))
             {
                 baseTableName = entityMetadata.BaseTableName;
                 return true;
