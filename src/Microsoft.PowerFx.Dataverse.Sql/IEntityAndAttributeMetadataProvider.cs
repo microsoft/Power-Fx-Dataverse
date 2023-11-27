@@ -6,8 +6,8 @@ namespace Microsoft.PowerFx.Dataverse
 {
     public interface IEntityAndAttributeMetadataProvider
     {
-        bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity);
+        bool TryGetAdditionalEntityMetadata(string logicalName, out AddtionalEntityMetadata entity);
 
-        bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute);
+        bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out AddtionalAttributeMetadata attribute);
     }
 }

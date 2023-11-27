@@ -12,19 +12,14 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// Cache of EntityMetadata - entity's additional properties like base table names, etc., indexed by entity's logical name
         /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _entityMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Cache of AttributeMetadata, indexed by entity's logical concatenated with attribute's logical name
-        /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _attributeMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, AddtionalEntityMetadata> _entityMetadataCache = new ConcurrentDictionary<string, AddtionalEntityMetadata>(StringComparer.Ordinal);
 
         public EntityAndAttributeMetadataProvider(IEntityAndAttributeMetadataProvider metadataProvider)
         {
             _metadataProvider = metadataProvider;
         }
 
-        internal bool TryGetCDSEntityMetadata(string logicalName, out Dictionary<string, object> entityMetadata)
+        internal bool TryGetCDSEntityMetadata(string logicalName, out AddtionalEntityMetadata entityMetadata)
         {
             if (_entityMetadataCache.TryGetValue(logicalName, out entityMetadata))
             {
@@ -40,29 +35,11 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        internal bool TryGetCDSAttributeMetadata(string entityLogicalName, string columnLogicalName, out Dictionary<string, object> attributeMetadata)
-        {
-            var key = entityLogicalName + "_" + columnLogicalName;
-            if (_attributeMetadataCache.TryGetValue(key, out attributeMetadata))
-            {
-                return true;
-            }
-
-            if (_metadataProvider != null && _metadataProvider.TryGetAdditionalAttributeMetadata(entityLogicalName, columnLogicalName, out attributeMetadata))
-            {
-                _attributeMetadataCache[key] = attributeMetadata;
-                return true;
-            }
-
-            return false;
-        }
-
         internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
         {
-            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata) &&
-                entityMetadata.TryGetValue(EntityColumnNames.BaseTableName, out var name))
+            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata))
             {
-                baseTableName = (string)name;
+                baseTableName = entityMetadata.BaseTableName;
                 return true;
             }
 
@@ -71,14 +48,14 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    public static class EntityColumnNames
+    public class AddtionalEntityMetadata
     {
-        public const string BaseTableName = "basetablename";
-        public const string IsInheritsFromNull = "isinheritsfromnull";
+        public string BaseTableName { get; set; }
+        public bool IsInheritsFromNull { get; set; }
     }
 
-    public static class AttributeColumnNames
+    public class AddtionalAttributeMetadata
     {
-        public const string IsStoredOnPrimaryTable = "isstoredonprimarytable";
+        public bool IsStoredOnPrimaryTable { get; set; }
     }
 }

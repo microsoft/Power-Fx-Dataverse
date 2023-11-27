@@ -763,7 +763,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
-            // Used during GetVarDetails to verify if a field is stored on primary table or not to decide if field requires reference.
+            // Used during GetVarDetails to verify if a dependent field is stored on primary table or not to decide if field requires reference.
             private readonly EntityAndAttributeMetadataProvider metadataProvider;
 
             /// <summary>

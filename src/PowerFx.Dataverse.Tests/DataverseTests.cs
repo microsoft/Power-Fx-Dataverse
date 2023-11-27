@@ -2021,12 +2021,14 @@ END
             _xrmMetadataProvider = xrmMetadataProvider; 
         }
 
-        public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
+        public bool TryGetAdditionalEntityMetadata(string logicalName, out AddtionalEntityMetadata entity)
         {
-            entity = new Dictionary<string, object>();
             if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                entity.Add(EntityColumnNames.BaseTableName, xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
+                entity = new AddtionalEntityMetadata()
+                {
+                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base")
+                };
                 return true;
             }
 
@@ -2034,7 +2036,7 @@ END
             return false;
         }
 
-        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
+        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out AddtionalAttributeMetadata attribute)
         {
             attribute = null;
             return false;
