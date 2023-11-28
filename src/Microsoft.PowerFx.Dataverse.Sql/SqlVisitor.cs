@@ -942,7 +942,9 @@ namespace Microsoft.PowerFx.Dataverse
                     var varName = "@v" + idx;
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
-                    var isNotStoredOnPrimaryTable= _secondaryMetadataCache != null && _secondaryMetadataCache.GetIsNotStoredOnPrimaryTableValue(table, column.LogicalName, navigation != null);
+
+                    var isNotStoredOnPrimaryTable = !column.IsKey && _secondaryMetadataCache != null && 
+                        _secondaryMetadataCache.GetIsNotStoredOnPrimaryTableValue(table, column.LogicalName, navigation != null);
 
                     var varType = GetFormulaType(column, sourceContext);
                     details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsNotStoredOnPrimaryTable = isNotStoredOnPrimaryTable };

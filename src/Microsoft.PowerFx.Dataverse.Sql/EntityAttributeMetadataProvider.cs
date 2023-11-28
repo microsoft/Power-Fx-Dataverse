@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -72,8 +71,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool GetIsNotStoredOnPrimaryTableValue(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
         {
-            if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && !entityMetadata.PrimaryIdAttribute.Equals(columnLogicalName) &&
-                TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
+            if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {
                 return isRelatedEntityField ? !attributeMetadata.IsStoredOnPrimaryTable : entityMetadata.IsInheritsFromNull != attributeMetadata.IsStoredOnPrimaryTable;
             }
@@ -86,7 +84,6 @@ namespace Microsoft.PowerFx.Dataverse
     {
         public string BaseTableName { get; set; }
         public bool IsInheritsFromNull { get; set; }
-        public string PrimaryIdAttribute { get; set; }
     }
 
     public class SecondaryAttributeMetadata

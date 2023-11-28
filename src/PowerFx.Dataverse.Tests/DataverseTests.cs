@@ -2066,7 +2066,6 @@ END
                 entity = new SecondaryEntityMetadata()
                 {
                     BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
-                    PrimaryIdAttribute = xrmEntity.PrimaryIdAttribute,
                     IsInheritsFromNull = !logicalName.Equals("testinheritedentity")
                 };
                 return true;
