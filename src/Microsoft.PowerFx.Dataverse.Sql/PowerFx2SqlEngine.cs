@@ -34,8 +34,9 @@ namespace Microsoft.PowerFx.Dataverse
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
-            CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
+            CultureInfo culture = null,
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
         {
         }
 
@@ -227,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
 
                         }
-                        else if (field.Column.RequiresReference() || !field.IsStoredOnPrimaryTable)
+                        else if (field.Column.RequiresReference() || field.IsNotStoredOnPrimaryTable)
                         {
                             // for calculated or logical fields or fields not stored on primary table on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
@@ -248,9 +249,10 @@ namespace Microsoft.PowerFx.Dataverse
                             // Table Schema name returns table view and we need to refer Base tables  in UDF in case of fields stored on primary table and non logical simple/ rollup fields
                             // because logical fields can only be referred from view 
                             // Fields that are not stored on primary table and are inherited from a different table will be referred from view
-                            if (!field.Column.IsLogical && !field.Column.IsCalculated && field.IsStoredOnPrimaryTable)
+                            if (!field.Column.IsLogical && !field.Column.IsCalculated && !field.IsNotStoredOnPrimaryTable)
                             {
-                                tableSchemaName = _metadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? baseTableName : tableSchemaName + "Base";
+                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                    baseTableName : tableSchemaName + "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
@@ -398,7 +400,7 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);

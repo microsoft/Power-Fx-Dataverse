@@ -52,16 +52,6 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
         /// <summary>
-        /// Cache of EntityMetadata - entity's additional properties like base table names, etc., indexed by entity's logical name
-        /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _entityMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Cache of AttributeMetadata, indexed by entity's logical concatenated with attribute's logical name
-        /// </summary>
-        private readonly ConcurrentDictionary<string, Dictionary<string, object>> _attributeMetadataCache = new ConcurrentDictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
         /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
         /// so, we are passing list of all global option sets so that these option sets are also processed and will be suggested in intellisense. 
         /// </summary>
@@ -195,39 +185,6 @@ namespace Microsoft.PowerFx.Dataverse
             if (_innerProvider != null && _innerProvider.TryGetEntityMetadata(logicalName, out xrmEntity))
             {
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
-                return true;
-            }
-
-            return false;
-        }
-
-        internal bool TryGetCDSEntityMetadata(string logicalName, out Dictionary<string, object> entityMetadata)
-        {
-            if (_entityMetadataCache.TryGetValue(logicalName, out entityMetadata))
-            {
-                return true;
-            }
-
-            if (_innerProvider != null && _innerProvider.TryGetAdditionalEntityMetadata(logicalName, out entityMetadata))
-            {
-                _entityMetadataCache[logicalName] = entityMetadata;
-                return true;
-            }
-
-            return false;
-        }
-
-        internal bool TryGetCDSAttributeMetadata(string entityLogicalName, string columnLogicalName, out Dictionary<string, object> attributeMetadata)
-        {
-            var key = entityLogicalName + "_" + columnLogicalName;
-            if (_attributeMetadataCache.TryGetValue(key, out attributeMetadata))
-            {
-                return true;
-            }
-
-            if (_innerProvider != null && _innerProvider.TryGetAdditionalAttributeMetadata(entityLogicalName, columnLogicalName, out attributeMetadata))
-            {
-                _attributeMetadataCache[key] = attributeMetadata;
                 return true;
             }
 
@@ -446,33 +403,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return _optionSets.TryGetValue(name.Value, out optionSet);
         }
-
-        internal bool TryGetBaseTableName(string logicalName, out string baseTableName)
-        {
-            if (TryGetCDSEntityMetadata(logicalName, out var entityMetadata) &&
-                entityMetadata.TryGetValue(EntityColumnNames.BaseTableName, out var name))
-            {
-                baseTableName = (string)name;
-                return true;
-            }
-
-            baseTableName = null;
-            return false;
-        }
-
-        internal bool GetIsStoredOnPrimaryTableValue(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
-        {
-            if (!TryGetCDSEntityMetadata(entityLogicalName, out var entityMetadata) || !TryGetCDSAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata) || 
-                !entityMetadata.TryGetValue(EntityColumnNames.PrimaryIdAttribute, out var primaryIdAttribute) || primaryIdAttribute.Equals(columnLogicalName) || 
-                !entityMetadata.TryGetValue(EntityColumnNames.IsInheritsFromNull, out var isInheritsFromNull) || 
-                !attributeMetadata.TryGetValue(AttributeColumnNames.IsStoredOnPrimaryTable, out var isStoredOnPrimaryTable))
-            {
-                return true;
-            }
-
-            return isRelatedEntityField ? (bool)isStoredOnPrimaryTable : (bool)isInheritsFromNull == (bool)isStoredOnPrimaryTable;
-        }
-
         internal IEnumerable<DataverseOptionSet> OptionSets => _optionSets.Values.Distinct();
 
         public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)
@@ -594,19 +524,5 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException();
         }
         #endregion
-    }
-
-    internal static class EntityColumnNames
-    {
-        public const string LogicalName = "logicalname";
-        public const string BaseTableName = "basetablename";
-        public const string PrimaryIdAttribute = "primaryidattribute";
-        public const string IsInheritsFromNull = "isinheritsfromnull";
-    }
-
-    internal static class AttributeColumnNames
-    {
-        public const string LogicalName = "logicalname";
-        public const string IsStoredOnPrimaryTable = "isstoredonprimarytable";
     }
 }

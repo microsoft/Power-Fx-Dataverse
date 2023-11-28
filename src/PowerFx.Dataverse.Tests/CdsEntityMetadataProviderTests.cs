@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.Xrm.Sdk.Metadata;
 using Xunit;
@@ -137,18 +136,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
 
                 throw new InvalidOperationException($"failure");
-            }
-
-            bool IXrmMetadataProvider.TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
-            {
-                entity = null;
-                return false;
-            }
-
-            bool IXrmMetadataProvider.TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
-            {
-                attribute = null;
-                return false;
             }
         }
 

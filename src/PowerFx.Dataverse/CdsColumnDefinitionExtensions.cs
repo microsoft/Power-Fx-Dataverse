@@ -19,19 +19,6 @@ namespace Microsoft.PowerFx.Dataverse
             return column.IsCalculated || column.IsLogical;
         }
 
-        /// <summary>
-        /// Returns True if column is stored on primary table, else returns false if the column is inherited from different table.
-        /// </summary>
-        public static bool GetIsStoredOnPrimaryTableValue(this DType type, string entityLogicalName, string columnLogicalName, bool isReferenceField)
-        {
-            if (type.AssociatedDataSources.First().DataEntityMetadataProvider is CdsEntityMetadataProvider metadataProvider)
-            {
-                return metadataProvider.GetIsStoredOnPrimaryTableValue(entityLogicalName, columnLogicalName, isReferenceField);
-            }
-
-            return true;
-        }
-
         internal static FormulaType FormulaType(this XrmAttributeTypeCode typeCode)
         {
             if (typeCode.TryGetFormulaType(out var type))

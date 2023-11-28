@@ -1817,7 +1817,9 @@ END
         [Fact]
         public void BaseTableNameTest()
         {
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.TestAllAttributeModels)));
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
             var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
@@ -1854,7 +1856,9 @@ END
                     AttributeMetadataModel.NewGuid("testinheritedentityid","testinheritedentityid").SetSchemaName("TestinheritedentityId"),
                 }
             }.SetSchemaName("Testinheritedentity");
-            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(model)));
+            var provider = new MockXrmMetadataProvider(model);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
             var result = engine.Compile("testsimplefield + 1", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
@@ -2044,33 +2048,42 @@ END
 
             return ret;
         }
+    }
 
-        public bool TryGetAdditionalEntityMetadata(string logicalName, out Dictionary<string, object> entity)
+    public class MockEntityAttributeMetadataProvider : IEntityAttributeMetadataProvider
+    {
+        private readonly MockXrmMetadataProvider _xrmMetadataProvider;
+
+        public MockEntityAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
         {
-            entity = new Dictionary<string, object>();
-            if (TryGetEntityMetadata(logicalName, out var xrmEntity))
+            _xrmMetadataProvider = xrmMetadataProvider; 
+        }
+
+        public bool TryGetSecondaryEntityMetadata(string logicalName, out SecondaryEntityMetadata entity)
+        {
+            if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                entity.Add(EntityColumnNames.LogicalName, xrmEntity.LogicalName);
-                entity.Add(EntityColumnNames.BaseTableName, xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"));
-                entity.Add(EntityColumnNames.PrimaryIdAttribute, xrmEntity.PrimaryIdAttribute);
-                entity.Add(EntityColumnNames.IsInheritsFromNull, !logicalName.Equals("testinheritedentity"));
+                entity = new SecondaryEntityMetadata()
+                {
+                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
+                    PrimaryIdAttribute = xrmEntity.PrimaryIdAttribute,
+                    IsInheritsFromNull = !logicalName.Equals("testinheritedentity")
+                };
                 return true;
             }
 
+            entity = null;
             return false;
         }
 
-        public bool TryGetAdditionalAttributeMetadata(string entityLogicalName, string attributeLogicalName, out Dictionary<string, object> attribute)
+        public bool TryGetSecondaryAttributeMetadata(string entityLogicalName, string attributeLogicalName, out SecondaryAttributeMetadata attribute)
         {
-            attribute = new Dictionary<string, object>();
-            if (TryGetEntityMetadata(entityLogicalName, out var xrmEntity) && xrmEntity.TryGetAttribute(attributeLogicalName, out var xrmAttribute))
+            attribute = new SecondaryAttributeMetadata()
             {
-                attribute.Add(AttributeColumnNames.LogicalName, xrmAttribute.LogicalName);
-                attribute.Add(AttributeColumnNames.IsStoredOnPrimaryTable, true);
-                return true;
-            }
+                IsStoredOnPrimaryTable = true
+            };
 
-            return false;
+            return true;
         }
     }
 
