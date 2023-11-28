@@ -140,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (value is EntityReference reference)
             {
                 // Blank was already handled, value would have been null. 
-                result = await ResolveEntityReferenceAsync(reference, fieldType, cancellationToken).ConfigureAwait(false);
+                result = await ResolveEntityReferenceAsync(reference, fieldType, columns:null,cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
@@ -248,10 +248,18 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, CancellationToken cancellationToken)
+        /// <summary>
+        /// Resolves EntityReference to a RecordValue.
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="fieldType"></param>
+        /// <param name="columns"> Columns to retrieve, if null fetches all columns.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, IEnumerable<string> columns, CancellationToken cancellationToken)
         {
             FormulaValue result;
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, columns, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -292,7 +300,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, columns:null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {

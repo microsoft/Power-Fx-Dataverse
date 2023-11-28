@@ -73,9 +73,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -88,11 +88,12 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, CancellationToken cancel)
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
         {
+            var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
             var query = new QueryExpression(_entityMetadata.LogicalName)
             {
-                ColumnSet = new ColumnSet(true),
+                ColumnSet = columns,
                 Criteria = filter ?? new FilterExpression()
             };
 
@@ -134,7 +135,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columns:null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
                 return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
@@ -175,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-        public async override Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<DValue<BooleanValue>> RemoveAsync(IEnumerable<FormulaValue> recordsToRemove, bool all, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (recordsToRemove == null)
                 throw new ArgumentNullException(nameof(recordsToRemove));

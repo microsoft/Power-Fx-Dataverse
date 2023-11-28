@@ -195,7 +195,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse());
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -237,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     IsCriteriaMatching(entity, qe.Criteria, metadata))
                 {
                     
-                    entityList.Add(Clone(entity, cancellationToken));
+                    entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
                     take--;
                     if (take == 0)
                     {
@@ -474,6 +474,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var attr in entity.Attributes)
             {
                 newEntity.Attributes[attr.Key] = attr.Value;
+            }
+            return newEntity;
+        }
+
+        private Entity Clone(Entity entity, ColumnSet columnSet, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var columnFilter = columnSet.Columns.ToHashSet();
+
+            var newEntity = new Entity(entity.LogicalName, entity.Id);
+            foreach (var attr in entity.Attributes)
+            {
+                if(columnSet.AllColumns || columnFilter.Contains(attr.Key))
+                {
+                    newEntity.Attributes[attr.Key] = attr.Value;
+                }
             }
             return newEntity;
         }

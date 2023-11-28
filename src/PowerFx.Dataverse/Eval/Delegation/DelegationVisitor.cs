@@ -64,6 +64,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
+            public bool hasColumnSet => _columnSet != null;
+
+            public readonly IEnumerable<IntermediateNode> _columnSet;
+
             public readonly DelegationHooks _hooks;
 
             // Original IR node for non-delegating path.
@@ -83,7 +87,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly EntityMetadata _metadata;
 
-            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows)
+            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows, IEnumerable<IntermediateNode> columnSet)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -94,7 +98,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // topCount and filter are optional.
                 this._topCount = count;
                 this._filter = filter;
-
+                this._columnSet = columnSet;
                 var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
                 if (tableDS != null)
                 {
@@ -268,7 +272,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount))
+            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasColumnSet))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -299,7 +303,7 @@ namespace Microsoft.PowerFx.Dataverse
                     bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
                     if (isRealTable)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows, columnSet: null);
                         return ret;
                     }
                 }
@@ -435,7 +439,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, count: null, _maxRows);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, count: null, _maxRows, columnSet: null);
         }
 
         public override RetVal Visit(LazyEvalNode node, Context context)
@@ -454,6 +458,19 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return Ret(node);
             }
+        }
+
+        public override RetVal Visit(SingleColumnTableAccessNode node, Context context)
+        {
+            var maybeDelegatedfrom = Materialize(node.From.Accept(this, context));
+
+            if (!ReferenceEquals(node.From, maybeDelegatedfrom))
+            {
+                var delegatedSCTANode = new SingleColumnTableAccessNode(node.IRContext, maybeDelegatedfrom, node.Field);
+                return Ret(delegatedSCTANode);
+            }
+
+            return Ret(node);
         }
 
         public override RetVal Visit(CallNode node, Context context)
@@ -524,6 +541,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _ when func == BuiltinFunctionsCore.Filter.Name => ProcessFilter(node, tableArg, context),
                 _ when func == BuiltinFunctionsCore.FirstN.Name => ProcessFirstN(node, tableArg),
                 _ when func == BuiltinFunctionsCore.First.Name => ProcessFirst(node, tableArg),
+                _ when func == BuiltinFunctionsCore.ShowColumns.Name => ProcessShowColumn(node, tableArg),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
 
@@ -545,6 +563,23 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return CreateNotSupportedErrorAndReturn(node, tableArg);
+        }
+
+        private RetVal ProcessShowColumn(CallNode node, RetVal tableArg)
+        {
+            var filter = tableArg.hasFilter ? tableArg.Filter : null;
+            var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+
+            // change to original node to current node and appends columnSet.
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, count, _maxRows, node.Args.Skip(1));
+
+            if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
+            {
+                var guidCallWithColSet = _hooks.MakeRetrieveCall(resultingTable, maybeGuidCall.Args[1]);
+                return Ret(guidCallWithColSet);
+            }
+
+            return resultingTable;
         }
 
         private RetVal ProcessWith(CallNode node, Context context)
@@ -675,7 +710,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
+                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows, tableArg._columnSet);
             }
             else
             {
@@ -688,11 +723,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool IsTableArgLookUpDelegable(Context context, RetVal tableArg)
         {
-            if (tableArg._originalNode is ResolvedObjectNode ||
-                (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
-                && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
-                && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
-                && scopedNode._originalNode is ResolvedObjectNode))
+            if (tableArg._originalNode is ResolvedObjectNode 
+                || (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
+                    && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
+                    && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
+                    && scopedNode._originalNode is ResolvedObjectNode)
+                || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.ShowColumns.Name)
+                )
             {
                 return true;
             }
@@ -726,7 +763,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows, tableArg._columnSet);
             }
 
             return result;
@@ -736,7 +773,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
             var filter = tableArg.Filter;
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne, _maxRows);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne, _maxRows, tableArg._columnSet);
             return res;
         }
 
@@ -755,7 +792,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Since table was delegating it potentially has filter attached to it, so also add that filter to the new node.
             var filter = tableArg.Filter;
             var topCount = node.Args[1];
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount, _maxRows);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount, _maxRows, tableArg._columnSet);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)
@@ -806,29 +843,6 @@ namespace Microsoft.PowerFx.Dataverse
             AddError(reason);
             return new RetVal(node);
         }
-
-
-
-        private RetVal CreateExpressionNotSupportedError(CallNode node)
-        {
-            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol)
-            {
-                var symbolName = scopedSymbol.Name;
-                var reason = new ExpressionError()
-                {
-                    MessageArgs = new object[] { symbolName, _maxRows },
-                    Span = node.Args[0].IRContext.SourceContext ?? new Span(1, 2),
-                    Severity = ErrorSeverity.Warning,
-                    ResourceKey = TexlStrings.WrnDelegationTableNotSupported
-                };
-
-                this.AddError(reason);
-            }
-
-            return Ret(node);
-        }
-
-
 
         private RetVal ProcessAndOr(CallNode node, Context context, Func<IList<IntermediateNode>, IntermediateNode> filterDelegate)
         {

@@ -1,5 +1,7 @@
 ﻿using Microsoft.PowerFx.Types;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -10,7 +12,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DelegatedRetrieveGUIDFunction : DelegateFunction
     {
         public DelegatedRetrieveGUIDFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__retrieveGUID", tableType.ToRecord(), tableType, FormulaType.Guid)
+          : base(hooks, "__retrieveGUID", tableType.ToRecord())
         {
         }
 
@@ -23,11 +25,29 @@ namespace Microsoft.PowerFx.Dataverse
 
             var guid = ((GuidValue)args[1]).Value;
 
-            var result = await _hooks.RetrieveAsync(table, guid, cancellationToken).ConfigureAwait(false);
-                        
-            var fv = result.ToFormulaValue();
+            // column names to fetch.
+            IEnumerable<string> columns = null;
+            if (args.Length > 2)
+            {
+                columns = args.Skip(2).Select(x => ((StringValue)x).Value);
+            }
 
-            return fv;
+            var result = await _hooks.RetrieveAsync(table, guid, columns, cancellationToken).ConfigureAwait(false);
+
+            if (result == null || result.IsBlank)
+            {
+                return FormulaValue.NewBlank(this.ReturnFormulaType);
+            }
+            else if (result.IsError)
+            {
+                return result.Error;
+            }
+            else
+            {
+                // Adjust type, as function like ShowColumn() can manipulate it.
+                var resultRecord = CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
+                return resultRecord;
+            }
         }
     }
 }
