@@ -246,10 +246,11 @@ namespace Microsoft.PowerFx.Dataverse
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
 
-                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of fields stored on primary table and non logical simple/ rollup fields
+                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields
                             // because logical fields can only be referred from view 
                             // Fields that are not stored on primary table and are inherited from a different table will be referred from view
-                            if (!field.Column.IsLogical && !field.Column.IsCalculated && !field.IsNotStoredOnPrimaryTable)
+                            bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsNotStoredOnPrimaryTable || (field.Column.IsCalculated && field.Navigation == null));
+                            if (!shouldReferColumnFromView)
                             {
                                 tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
                                     baseTableName : tableSchemaName + "Base";

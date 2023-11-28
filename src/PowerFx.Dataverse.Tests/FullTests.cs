@@ -231,14 +231,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     tx.Commit();
                 }
 
-                ExecuteScript(cx, "drop view if exists RemoteEntity;");
-                var cmd = @"CREATE VIEW [dbo].RemoteEntity(RemoteId, calc) with view_metadata as (select RemoteId, calc from [dbo].RemoteEntityBase);";
-                ExecuteScript(cx, cmd);
-
                 var calc = ExecuteSqlTest("Price + Other.'Calculated Data'", 3M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.calc", calc.LogicalFormula);
-
-                ExecuteScript(cx, "drop view if exists RemoteEntity;");
 
                 calc = ExecuteSqlTest("Price + Other.Data", 2M, cx, MockModels.RelationshipModels, rowid: selfrefid);
                 Assert.Equal("new_price + refg.data", calc.LogicalFormula);

@@ -181,7 +181,7 @@ namespace Microsoft.Dataverse.EntityMock
                     SchemaName = "remote_doubleremote"
                 }
             }
-        }.SetSchemaName("RemoteEntity");
+        };
 
         /// <summary>
         ///  Simple model used to simulate a double level lookup column (entity.remote.doubleremote).
