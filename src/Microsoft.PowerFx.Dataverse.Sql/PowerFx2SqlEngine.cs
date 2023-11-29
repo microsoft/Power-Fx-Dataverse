@@ -246,7 +246,7 @@ namespace Microsoft.PowerFx.Dataverse
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
                             var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
 
-                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields
+                            // Table Schema name returns table view and we need to refer Base tables in UDF in case of non logical fields that are stored on primarytable
                             // because logical fields can only be referred from view 
                             // Fields that are not stored on primary table and are inherited from a different table will be referred from view
                             bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsNotStoredOnPrimaryTable || (field.Column.IsCalculated && field.Navigation == null));
@@ -254,6 +254,13 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
                                     baseTableName : tableSchemaName + "Base";
+                            }
+                            // For related entity's dependent fields that are not stored on primary table, refer such fields using extensiontablename, because referring
+                            // from view will cause solution import failures as related entity's views may not be regenerated at the time of formula field UDF creation.
+                            else if (field.IsNotStoredOnPrimaryTable && field.Navigation != null)
+                            {
+                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetExtensionTableName(field.Table, out var extensionTableName) ?
+                                    extensionTableName : tableSchemaName + "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field

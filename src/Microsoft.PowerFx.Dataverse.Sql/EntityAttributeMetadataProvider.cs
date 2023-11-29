@@ -69,6 +69,18 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
+        internal bool TryGetExtensionTableName(string logicalName, out string extensionTableName)
+        {
+            if (TryGetEntityMetadata(logicalName, out var entityMetadata))
+            {
+                extensionTableName = entityMetadata.ExtensionTableName;
+                return true;
+            }
+
+            extensionTableName = null;
+            return false;
+        }
+
         internal bool GetIsNotStoredOnPrimaryTableValue(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
         {
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
@@ -83,6 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
     public class SecondaryEntityMetadata
     {
         public string BaseTableName { get; set; }
+        public string ExtensionTableName { get; set; }
         public bool IsInheritsFromNull { get; set; }
     }
 
