@@ -1817,7 +1817,7 @@ END
         [Fact]
         public void BaseTableNameTest()
         {
-            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testentity") });
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
             var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
@@ -1832,7 +1832,7 @@ AS BEGIN
     DECLARE @v0 decimal(23,10)
     DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v0 = [testsimplefield] FROM [dbo].[Testinheritedentity] WHERE[TestinheritedentityId] = @v1
+    SELECT TOP(1) @v0 = [testsimplefield] FROM [dbo].[testinheritedentity] WHERE[TestinheritedentityId] = @v1
 
     -- expression body
     SET @v2 = 1
@@ -1855,13 +1855,42 @@ END
                     AttributeMetadataModel.NewDecimal("testsimplefield", "TestSimpleField", "testsimplefield"),
                     AttributeMetadataModel.NewGuid("testinheritedentityid","testinheritedentityid").SetSchemaName("TestinheritedentityId"),
                 }
-            }.SetSchemaName("Testinheritedentity");
+            }.SetSchemaName("testinheritedentity");
             var provider = new MockXrmMetadataProvider(model);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
             var result = engine.Compile("testsimplefield + 1", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
-            Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
+            Assert.Equal(InheritsFromTestUDF, result.SqlFunction); // current entity's simple field is not passed as parameter to UDF.
+        }
+
+        public const string ExtensionTableTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- new_lookup
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 uniqueidentifier
+    DECLARE @v3 decimal(23,10)
+    SELECT TOP(1) @v1 = [fieldnotstoredonprimarytable] FROM [dbo].[TestExtensionTableName] WHERE[testentityid] = @v0
+    SELECT TOP(1) @v2 = [testentityid] FROM [dbo].[testinheritedentityTestBase] WHERE[testentityid] = @v0
+
+    -- expression body
+    SET @v3 = @v1
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
+END
+";
+        [Fact]
+        public void ExtensionTableTest()
+        {
+            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testinheritedentity") });
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+            var result = engine.Compile("lookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
         }
 
         [Theory]
@@ -2066,7 +2095,8 @@ END
                 entity = new SecondaryEntityMetadata()
                 {
                     BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
-                    IsInheritsFromNull = !logicalName.Equals("testinheritedentity")
+                    ExtensionTableName = "TestExtensionTableName",
+                    IsInheritsFromNull = !xrmEntity.SchemaName.Equals("testinheritedentity")
                 };
                 return true;
             }
@@ -2079,7 +2109,7 @@ END
         {
             attribute = new SecondaryAttributeMetadata()
             {
-                IsStoredOnPrimaryTable = true
+                IsStoredOnPrimaryTable = !attributeLogicalName.Equals("fieldnotstoredonprimarytable")
             };
 
             return true;

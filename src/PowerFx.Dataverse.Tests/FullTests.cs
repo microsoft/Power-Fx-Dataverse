@@ -36,6 +36,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var metadata = DataverseTests.BaselineMetadata;
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "new_CurrencyPrice_Schema", "1" } }, calculations: new Dictionary<string, string> { { "new_Calc", "new_CurrencyPrice_Schema + 1" } });
+                
+                // Creating views as current entity's calculated/formula fields will be referred from view.
                 ExecuteScript(cx, "drop view if exists AccountEntity;");
                 var cmd = @"CREATE VIEW [dbo].AccountEntity(AccountId, new_Calc_Schema, address1_latitude) with view_metadata as 
                             (select AccountId, new_Calc_Schema, address1_latitude from [dbo].AccountEntityBase);";
