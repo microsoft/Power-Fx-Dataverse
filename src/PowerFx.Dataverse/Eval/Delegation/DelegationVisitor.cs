@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
-using Microsoft.Rest.TransientFaultHandling;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -259,16 +255,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // If RetVal just represent a table, then ok. 
-        // If it's any other in-progress delegation, then it's a warning. 
-        private RetVal MaterializeTableOnly(RetVal ret)
-        {
-            // IsBlank(table) // ok
-            // IsBlank(Filter(table,true)) // warning
-
-            return new RetVal(ret._originalNode);
-        }
-
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
@@ -372,67 +358,106 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            switch (operation)
+            if (IsOpKindEqualityComparison(operation))
             {
-                case BinaryOpKind.EqNumbers:
-                case BinaryOpKind.EqBoolean:
-                case BinaryOpKind.EqText:
-                case BinaryOpKind.EqDate:
-                case BinaryOpKind.EqTime:
-                case BinaryOpKind.EqDateTime:
-                case BinaryOpKind.EqGuid:
-                case BinaryOpKind.EqDecimals:
-                case BinaryOpKind.EqCurrency:
-                    var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, eqNode);
-                    return ret;
-                case BinaryOpKind.NeqNumbers:
-                case BinaryOpKind.NeqBoolean:
-                case BinaryOpKind.NeqText:
-                case BinaryOpKind.NeqDate:
-                case BinaryOpKind.NeqTime:
-                case BinaryOpKind.NeqDateTime:
-                case BinaryOpKind.NeqGuid:
-                case BinaryOpKind.NeqDecimals:
-                case BinaryOpKind.NeqCurrency:
-                    var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, neqNode);
-                    return ret;
-                case BinaryOpKind.LtNumbers:
-                case BinaryOpKind.LtDecimals:
-                case BinaryOpKind.LtDateTime:
-                case BinaryOpKind.LtDate:
-                case BinaryOpKind.LtTime:
-                    var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, ltNode);
-                    return ret;
-                case BinaryOpKind.LeqNumbers:
-                case BinaryOpKind.LeqDecimals:
-                case BinaryOpKind.LeqDateTime:
-                case BinaryOpKind.LeqDate:
-                case BinaryOpKind.LeqTime:
-                    var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, leqNode);
-                    return ret;
-                case BinaryOpKind.GtNumbers:
-                case BinaryOpKind.GtDecimals:
-                case BinaryOpKind.GtDateTime:
-                case BinaryOpKind.GtDate:
-                case BinaryOpKind.GtTime:
-                    var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, gtNode);
-                    return ret;
-                case BinaryOpKind.GeqNumbers:
-                case BinaryOpKind.GeqDecimals:
-                case BinaryOpKind.GeqDateTime:
-                case BinaryOpKind.GeqDate:
-                case BinaryOpKind.GeqTime:
-                    var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, geqNode);
-                    return ret;
-                default:
-                    return new RetVal(node);
+                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, eqNode);
             }
+            else if (IsOpKindInequalityComparison(operation))
+            {
+                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, neqNode);
+            }
+            else if (IsOpKindLessThanComparison(operation))
+            {
+                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, ltNode);
+            }
+            else if (IsOpKindLessThanEqualComparison(operation))
+            {
+                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, leqNode);
+            }
+            else if (IsOpKindGreaterThanComparison(operation))
+            {
+                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, gtNode);
+            }
+            else if (IsOpKindGreaterThanEqalComparison(operation))
+            {
+                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, geqNode);
+            }
+            else
+            {
+                ret = new RetVal(node);
+            }
+
+            return ret;
+        }
+
+
+
+        private bool IsOpKindEqualityComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.EqBoolean ||
+                op == BinaryOpKind.EqCurrency ||
+                op == BinaryOpKind.EqDate ||
+                op == BinaryOpKind.EqDateTime ||
+                op == BinaryOpKind.EqDecimals ||
+                op == BinaryOpKind.EqGuid ||
+                op == BinaryOpKind.EqNumbers ||
+                op == BinaryOpKind.EqText ||
+                op == BinaryOpKind.EqTime;
+        }
+
+        private bool IsOpKindInequalityComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.NeqBoolean ||
+                op == BinaryOpKind.NeqCurrency ||
+                op == BinaryOpKind.NeqDate ||
+                op == BinaryOpKind.NeqDateTime ||
+                op == BinaryOpKind.NeqDecimals ||
+                op == BinaryOpKind.NeqGuid ||
+                op == BinaryOpKind.NeqNumbers ||
+                op == BinaryOpKind.NeqText ||
+                op == BinaryOpKind.NeqTime;
+        }
+
+        private bool IsOpKindLessThanComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.LtNumbers ||
+                op == BinaryOpKind.LtDecimals ||
+                op == BinaryOpKind.LtDateTime ||
+                op == BinaryOpKind.LtDate ||
+                op == BinaryOpKind.LtTime;
+        }
+
+        private bool IsOpKindLessThanEqualComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.LeqNumbers ||
+                op == BinaryOpKind.LeqDecimals ||
+                op == BinaryOpKind.LeqDateTime ||
+                op == BinaryOpKind.LeqDate ||
+                op == BinaryOpKind.LeqTime;
+        }
+
+        private bool IsOpKindGreaterThanComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.GtNumbers ||
+                op == BinaryOpKind.GtDecimals ||
+                op == BinaryOpKind.GtDateTime ||
+                op == BinaryOpKind.GtDate ||
+                op == BinaryOpKind.GtTime;
+        }
+
+        private bool IsOpKindGreaterThanEqalComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.GeqNumbers ||
+                op == BinaryOpKind.GeqDecimals ||
+                op == BinaryOpKind.GeqDateTime ||
+                op == BinaryOpKind.GeqDate ||
+                op == BinaryOpKind.GeqTime;
         }
 
         private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode eqNode)
@@ -456,6 +481,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
+                if (!ReferenceEquals(child._originalNode, node.Child))
+                {
+                    node = new LazyEvalNode(node.IRContext, child._originalNode);
+                }
+                
                 return Ret(node);
             }
         }
@@ -485,6 +515,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ProcessOr(node, context);
             }
+            else if (func == BuiltinFunctionsCore.IsBlank.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessIsBlank(node, context);
+            }
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning. 
@@ -493,8 +527,6 @@ namespace Microsoft.PowerFx.Dataverse
                 func == "Patch" || func == "Collect")
             {
                 RetVal arg0c = node.Args[0].Accept(this, context);
-
-                arg0c = MaterializeTableOnly(arg0c);
                                 
                 return base.Visit(node, context, arg0c);
             }
@@ -548,6 +580,23 @@ namespace Microsoft.PowerFx.Dataverse
             // Other delegating functions, continue to compose...
             // - Sort   
             return ret;
+        }
+
+        private RetVal ProcessIsBlank(CallNode node, Context context)
+        {
+            if (TryGetFieldName(context, node, out var fieldName))
+            {
+                var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
+
+                // BinaryOpKind doesn't matter for IsBlank because all value will be compared to null, so just use EqText.
+                var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
+                var ret = CreateBinaryOpRetVal(context, node, eqNode);
+                return ret;
+            }
+
+            RetVal arg0c = node.Args[0].Accept(this, context);
+
+            return base.Visit(node, context, arg0c);
         }
 
         private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
@@ -703,6 +752,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!pr.IsDelegating)
             {
+                // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
+                if (!ReferenceEquals(pr._originalNode, predicate))
+                {
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                }
+
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
@@ -749,6 +804,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!pr.IsDelegating)
             {
+                // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
+                if(!ReferenceEquals(pr._originalNode, predicate))
+                {
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                }
+
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
@@ -963,16 +1024,19 @@ namespace Microsoft.PowerFx.Dataverse
                 if (leftField2 == rightField2)
                 {
                     // Issue warning
-                    var min = left.IRContext.SourceContext.Lim;
-                    var lim = right.IRContext.SourceContext.Min;
-                    var span = new Span(min, lim);
-                    var reason = new ExpressionError()
+                    if (IsOpKindEqualityComparison(op))
                     {
-                        Span = span,
-                        Severity = ErrorSeverity.Warning,
-                        ResourceKey = TexlStrings.WrnDelegationPredicate
-                    };
-                    this.AddError(reason);
+                        var min = left.IRContext.SourceContext.Lim;
+                        var lim = right.IRContext.SourceContext.Min;
+                        var span = new Span(min, lim);
+                        var reason = new ExpressionError()
+                        {
+                            Span = span,
+                            Severity = ErrorSeverity.Warning,
+                            ResourceKey = TexlStrings.WrnDelegationPredicate
+                        };
+                        this.AddError(reason);
+                    }
 
                     opKind = op;
                     fieldName = default;
@@ -1062,7 +1126,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value))
+            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
             {
                 maybeScopeAccessNode = functionCall.Args[0];
             }
