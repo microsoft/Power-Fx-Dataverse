@@ -90,6 +90,25 @@ namespace Microsoft.PowerFx.Dataverse
 
             return false;
         }
+
+        internal string GetTableColumnName(SqlVisitor.Context.VarDetails varDetails)
+        {
+            var entityLogicalName = varDetails.Table;
+            var columnLogicalName = varDetails.Column.LogicalName;
+            var columnPhysicalName = varDetails.Column.SchemaName;
+
+            if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
+            {
+                if (!entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable && 
+                    !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase) &&
+                    attributeMetadata.TableColumnName != null)
+                {
+                    return attributeMetadata.TableColumnName;
+                }
+            }
+
+            return columnPhysicalName;
+        }
     }
 
     public class SecondaryEntityMetadata
@@ -102,5 +121,6 @@ namespace Microsoft.PowerFx.Dataverse
     public class SecondaryAttributeMetadata
     {
         public bool IsStoredOnPrimaryTable { get; set; }
+        public string TableColumnName { get; set; }
     }
 }

@@ -465,7 +465,8 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 AttributeMetadataModel.NewDecimal("simplefield", "SimpleField"),
                 AttributeMetadataModel.NewGuid("testentityid", "Testentityid"),
-                AttributeMetadataModel.NewDecimal("fieldnotstoredonprimarytable", "FieldNotStoredOnPrimaryTable", "fieldnotstoredonprimarytable")
+                AttributeMetadataModel.NewDecimal("fieldnotstoredonprimarytable", "FieldNotStoredOnPrimaryTable", "fieldnotstoredonprimarytable"),
+                AttributeMetadataModel.NewDecimal("testfield", "testfield")
             }
         };
 

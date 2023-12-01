@@ -292,7 +292,8 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
+                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " +
+                            $"[{(_secondaryMetadataCache != null ? _secondaryMetadataCache.GetTableColumnName(field) : field.Column.SchemaName)}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
