@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using System.Globalization;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -52,19 +54,24 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
             var args = new List<string>(arity);
+            var retValList = new List<RetVal>(arity);
+
             for (int i = 0; i < arity; i++)
             {
                 ValidateNumericArgument(node.Args[i]);
                 var arg = node.Args[i].Accept(visitor, context);
-
-                if(function.Equals("ROUND") && i == 1)
-                {
-                    arg = context.TryCastToInteger($"{arg}", applyNullCheck : false);
-                }
-
+                
                 var argString = arg.ToString();
                 args.Add(argString);
+                
+                retValList.Add(arg);
             }
+
+            if (function.Equals("ROUND"))
+            {
+                context.AppendRoundMaxMinConditions(retValList[1]);
+            }
+
             context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type)})");
             return result;
         }
@@ -178,16 +185,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var rawDigits = node.Args[1].Accept(visitor, context);
 
-            rawDigits = context.TryCastToInteger($"{rawDigits}", applyNullCheck: false);
-
+            context.AppendRoundMaxMinConditions(rawDigits);
+            
             // SQL does not implement any version of round that rounds digits less that 5 up, so use ceiling/floor instead
             // the digits should be converted to a whole number, by rounding towards zero
-            var digits = context.TryCast(RoundDownNullToInt(rawDigits), castToFloat : isFloatFlow);
-            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits, isFloatFlow: true);
-            var factor = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
+            var digits = context.TryCastToDecimal(RoundDownNullToInt(rawDigits));
+            context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits, isFloatFlow: false);
+            var factor = context.GetTempVar(FormulaType.Decimal);
             var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type)}),{digits})";
-            context.TryCast(factorExpression, factor, castToFloat: isFloatFlow);
+            context.TryCastToDecimal(factorExpression, factor);
             context.DivideByZeroCheck(factor);
+
             // PowerApps rounds up away from zero, so use floor for negative numbers and ceiling for positive
             var finalExpression = $"IIF({CoerceNullToInt(number)}>0,CEILING({CoerceNullToInt(number)}*{factor})/{factor},FLOOR({CoerceNullToInt(number)}*{factor})/{factor})";
             context.TryCast(finalExpression, result, castToFloat: isFloatFlow);
@@ -205,8 +213,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var digits = node.Args[1].Accept(visitor, context);
 
-            // 2nd arg to Round function must be an expression of type tinyint, smallint, or int.
-            digits = context.TryCastToInteger($"{digits}", applyNullCheck: false);
+            context.AppendRoundMaxMinConditions(digits);
 
             var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
 
@@ -227,7 +234,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 ValidateNumericArgument(node.Args[1]);
                 var digits = node.Args[1].Accept(visitor, context);
 
-                digits = context.TryCastToInteger($"{digits}", applyNullCheck: false);
+                context.AppendRoundMaxMinConditions(digits);
 
                 context.SetIntermediateVariable(result, $"ROUND({CoerceNullToInt(number)}, {CoerceNullToInt(digits)}, 1)");
                 return result;

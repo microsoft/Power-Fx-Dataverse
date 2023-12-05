@@ -303,7 +303,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var offset = node.Args[1].Accept(visitor, context);
+            
             context.NegativeNumberCheck(offset);
+            //Left Right functions doesn't support offset more than int range
+            context.ErrorCheck($"{offset} > {SqlStatementFormat.IntTypeMaxValue}", Context.ValidationErrorCode, postValidation: true);
+
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
         }
@@ -416,12 +420,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var start = node.Args[1].Accept(visitor, context);
             // the start value must be 1 or larger
             context.NonPositiveNumberCheck(start);
-            start = context.TryCastToInteger($"{start}", applyNullCheck : false);
+            start = context.TryCastToInteger($"{start}", applyNullCheck : true);
             ValidateNumericArgument(node.Args[2]);
             var count = node.Args[2].Accept(visitor, context);
             // the count value must be 0 or larger
             context.NegativeNumberCheck(count);
-            count = context.TryCastToInteger($"{count}", applyNullCheck: false);
+            count = context.TryCastToInteger($"{count}", applyNullCheck: true);
             var newStr = node.Args[3].Accept(visitor, context);
             var coercedNewStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(newStr));
             // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case

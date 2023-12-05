@@ -1169,6 +1169,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return retVal;
             }
 
+            internal void AppendRoundMaxMinConditions(RetVal retVal)
+            {
+                var inlineSql = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueIfLessThanValue, retVal, SqlStatementFormat.RoundArgMinLength);
+                AppendContentLine(inlineSql);
+                inlineSql = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueIfGreaterThanValue, retVal, SqlStatementFormat.RoundArgMaxLength);
+                AppendContentLine(inlineSql);
+            }
+
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
                 Contracts.AssertNonEmptyOrNull(retVal.varName);

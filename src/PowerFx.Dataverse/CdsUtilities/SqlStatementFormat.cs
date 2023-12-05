@@ -152,6 +152,12 @@ ELSE
         /// </summary>
         public const string SetEmptyValueForNull = "IF({0} IS NULL) BEGIN SET {0} = N'' END";
 
+        public const string SetValueIfLessThanValue = "IF({0} < {1}) BEGIN SET {0} = {1} END";
+
+        public const string SetValueIfGreaterThanValue = "IF({0} > {1}) BEGIN SET {0} = {1} END";
+
+
+
         /// <summary>
         /// Sql data type
         /// </summary>
@@ -197,6 +203,9 @@ ELSE
         public const string MoneyTypeMax = "922337203685477.5807";
         public const double MoneyTypeMinValue = -922337203685477.5808;
         public const double MoneyTypeMaxValue = 922337203685477.5807;
+
+        public const string RoundArgMaxLength = "400";
+        public const string RoundArgMinLength = "-400";
 
         /// <summary>
         /// DateTime part
