@@ -125,12 +125,12 @@ END
             Assert.NotNull(result.SqlCreateRow);
 
             Assert.Equal(BaselineCurrencyFunction, result.SqlFunction);
-            
+
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("\t\t\nnew_field*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
@@ -379,6 +379,76 @@ END
             result = engine.Compile(expr, new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-12: Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.", result.Errors.First().ToString());
+
+        }
+
+        public const string FloatingPointArithmeticOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float -- field
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 float
+    DECLARE @v3 float
+
+    -- expression body
+    SET @v1 = 2
+    SET @v2 = @v1
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS FLOAT)
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN @v3
+END
+";
+
+        [Fact]
+        public void CheckArithmeticOperationsFloatingPoint()
+        {
+            var expr = "field*2";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field",
+                         AttributeType = AttributeTypeCode.Double
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field1",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(FloatingPointArithmeticOperationsUDF, result.SqlFunction);
+
+            expr = "field*field1*2";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            expr = "field/field1";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            expr = "field+field1";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
 
         }
 
