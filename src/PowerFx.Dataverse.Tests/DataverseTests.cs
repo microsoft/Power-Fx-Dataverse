@@ -670,8 +670,20 @@ END
             Assert.Equal(FormulaType.Number, result.ReturnType);
             Assert.Equal(FloatFunctionUDF, result.SqlFunction);
 
-            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
+            result = engine.Compile("Float(Decimal(5))", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); 
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("Decimal(Ln(20))", new SqlCompileOptions()); 
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
+
+            result = engine.Compile("Decimal(Float(25))", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
 
             result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are supported from IR
@@ -720,6 +732,25 @@ END
         }
 
         [Fact]
+        public void CheckLeftRightOverloadedFunction()
+        {
+            // Left n Right function treats 2nd arg as float even if literal value is given
+            CallEngineAndVerifyResult("Left(\"abc\", 1)", FormulaType.String, "Left(#$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Left(\"abc\", Float(1))", FormulaType.String, "Left(#$string$#, Float(#$decimal$#))");
+            CallEngineAndVerifyResult("Right(\"abc\", 1)", FormulaType.String, "Right(#$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Right(\"abc\", Float(1))", FormulaType.String, "Right(#$string$#, Float(#$decimal$#))");
+        }
+
+        [Fact]
+        public void CheckSubstituteAndReplaceOverloadedFunction()
+        {
+            CallEngineAndVerifyResult("Replace(\"abc\", 1, 2, \"ae\")", FormulaType.String, "Replace(#$string$#, #$decimal$#, #$decimal$#, #$string$#)");
+            CallEngineAndVerifyResult("Replace(\"abc\", Float(1), 2, \"ae\")", FormulaType.String, "Replace(#$string$#, Float(#$decimal$#), #$decimal$#, #$string$#)");
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", 1)", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", Float(1))", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, Float(#$decimal$#))");
+        }
+
+        [Fact]
         public void CheckOverloadedAbsFunction()
         {
             CallEngineAndVerifyResult("Abs(-132)", FormulaType.Decimal, "Abs(-#$decimal$#)"); // producing decimal
@@ -733,6 +764,7 @@ END
             CallEngineAndVerifyResult("Max(Float(1),2,3,4)", FormulaType.Number, "Max(Float(#$decimal$#), #$decimal$#, #$decimal$#, #$decimal$#)"); // producing float
             CallEngineAndVerifyResult("Max(1, Float(2),3,4)", FormulaType.Decimal, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)"); // producing decimal
         }
+
 
         private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula)
         {
