@@ -81,7 +81,10 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        internal bool GetIsNotStoredOnPrimaryTableValue(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
+        /// <summary>
+        /// Returns true if field is not stored on the primary table.
+        /// </summary>
+        internal bool IsFieldStoredOnExtensionTable(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
         {
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {

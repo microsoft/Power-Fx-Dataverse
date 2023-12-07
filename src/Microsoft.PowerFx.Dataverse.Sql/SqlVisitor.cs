@@ -743,7 +743,7 @@ namespace Microsoft.PowerFx.Dataverse
                 /// True if the field is stored on Primary Table
                 /// False if the field is inherited from a different table
                 /// </summary>
-                public bool IsNotStoredOnPrimaryTable;
+                public bool IsStoredOnExtensionTable;
             }
 
             // Mapping of field names to details
@@ -830,7 +830,7 @@ namespace Microsoft.PowerFx.Dataverse
             public bool IsReferenceField(VarDetails field)
             {
                 // Fields not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsNotStoredOnPrimaryTable);
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsStoredOnExtensionTable);
             }
 
             /// <summary>
@@ -943,15 +943,15 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
-                    var isNotStoredOnPrimaryTable = !column.IsKey && _secondaryMetadataCache != null && 
-                        _secondaryMetadataCache.GetIsNotStoredOnPrimaryTableValue(table, column.LogicalName, navigation != null);
+                    var isStoredOnExtensionTable = !column.IsKey && _secondaryMetadataCache != null && 
+                        _secondaryMetadataCache.IsFieldStoredOnExtensionTable(table, column.LogicalName, navigation != null);
 
                     var varType = GetFormulaType(column, sourceContext);
-                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsNotStoredOnPrimaryTable = isNotStoredOnPrimaryTable };
+                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsStoredOnExtensionTable = isStoredOnExtensionTable };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    if (column.RequiresReference() || isNotStoredOnPrimaryTable)
+                    if (column.RequiresReference() || isStoredOnExtensionTable)
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
                         // Fields that are not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
