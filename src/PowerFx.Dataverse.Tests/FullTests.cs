@@ -43,11 +43,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
             }
         }
-
-        // Whole no is supported in current system so commenting this unit test, once system starts supporting whole no, uncomment this test
-        /*
+        
         [SkippableFact]
-        public void SqlCalculatedDependencyTest()
+        public void SqlIntegerCalculatedDependencyTest()
         {
             var rawField = "raw";
             var metadata = new EntityMetadataModel
@@ -108,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(3, calc2Value); // "Calc2 Value Mismatch"
                 Assert.Equal(6, calc3Value); // "Calc3 Value Mismatch"
             }
-        }*/
+        }
 
         [SkippableFact]
         public void FormulaUDFTest()
@@ -423,7 +421,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             Value = 2,
                         }
                     }),
-                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw")
+                    AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw"),
+                    AttributeMetadataModel.NewGuid("guid", "Guid")
                 }
             };
             var metadata = new EntityMetadataModel[] { model };
@@ -432,7 +431,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "1" },
-                    { "string", "N'foo'"}
+                    { "string", "N'foo'"},
+                    { "guid", "'70278D61-CD79-467E-8E89-AA3FA802EC79'" }
                 });
 
                 ExecuteSqlTest("Value(\"123.4\")", null, cx, metadata);
@@ -494,6 +494,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Trim(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Replace(\"ab\", 5, 1, NullStr) = \"ab\"", true, cx, metadata);
                 ExecuteSqlTest("Substitute(NullStr, NullStr, \"a\") = \"\"", true, cx, metadata);
+                ExecuteSqlTest("Concatenate(guid, string)", "70278D61-CD79-467E-8E89-AA3FA802EC79foo", cx, metadata);
+                ExecuteSqlTest("guid & string", "70278D61-CD79-467E-8E89-AA3FA802EC79foo", cx, metadata);
+                ExecuteSqlTest("Substitute(guid, guid, string, 1)", "foo", cx, metadata);
             }
         }
 
@@ -621,6 +624,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsError(Text(Decimal(decimal6), \"0\"))", true, cx, metadata);
                 ExecuteSqlTest("Decimal(decimal6)", null, cx, metadata);
                 ExecuteSqlTest("IsError(Decimal(decimal6))", true, cx, metadata);
+
+                ExecuteSqlTest("int2 + int", null, cx, metadata, typeHints:GetIntegerHint()); // whole no overflow
+                ExecuteSqlTest("big_int", int.Parse(SqlStatementFormat.IntTypeMax), cx, metadata, typeHints: GetIntegerHint());
             }
         }
 
@@ -628,8 +634,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new TypeDetails
             {
-                TypeHint = AttributeTypeCode.Integer,
-                Precision = 0
+                TypeHint = AttributeTypeCode.Integer
             };
         }
 

@@ -36,6 +36,9 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting metadata for other entities, such as with relationships. 
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
+        // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
+        protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
+
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length
@@ -46,13 +49,16 @@ namespace Microsoft.PowerFx.Dataverse
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
-          CultureInfo culture = null)
+          CultureInfo culture = null,
+          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
 
             // if no provider is given, create a standalone provider to convert the metadata that will not support references
             _metadataCache = metadataProvider ?? new CdsEntityMetadataProvider(null) { NumberIsFloat = NumberIsFloat };
+
+            _secondaryMetadataCache = entityAttributeMetadataProvider;
 
             _currentDataSource = _metadataCache.FromXrm(xrmEntity);
 
@@ -134,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse
             return entity;
         }
 
-        private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null)
+        private protected bool ValidateReturnType(SqlCompileOptions options, FormulaType nodeType, Span sourceContext, out FormulaType returnType, out IEnumerable<IDocumentError> errors, bool allowEmptyExpression = false, string expression = null, SqlCompileResult sqlResult = null)
         {
             errors = null;
 
@@ -157,17 +163,29 @@ namespace Microsoft.PowerFx.Dataverse
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
+
                 if (SqlVisitor.Context.IsNumericType(returnType))
                 {
                     // TODO: better type validation
                     if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
+
+                        if(sqlResult != null )
+                        {
+                            sqlResult.IsHintApplied = true;
+                        }
+
                         return true;
                     }
                 }
                 else if (returnType == hintType)
                 {
+                    if (sqlResult != null)
+                    {
+                        sqlResult.IsHintApplied = true;
+                    }
+
                     return true;
                 }
 

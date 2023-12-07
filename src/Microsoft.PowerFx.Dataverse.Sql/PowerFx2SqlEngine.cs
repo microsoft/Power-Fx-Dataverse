@@ -34,8 +34,9 @@ namespace Microsoft.PowerFx.Dataverse
         public PowerFx2SqlEngine(
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
-            CultureInfo culture = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture)
+            CultureInfo culture = null,
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
         {
         }
 
@@ -148,7 +149,7 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors))
+                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors, sqlResult: sqlResult))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
@@ -186,8 +187,17 @@ namespace Microsoft.PowerFx.Dataverse
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
+
+                var returnType = SqlVisitor.ToSqlType(retType);
+
+                // if the return type is numeric and type hint is of type integer then it is assignable, only in that 
+                // case use integer in UDF, actual return type of compiler will be decimal only
+                if (SqlVisitor.Context.IsNumericType(retType) && options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                {
+                    returnType = SqlStatementFormat.SqlIntegerType;
+                }
                 
-                tw.WriteLine($") RETURNS {SqlVisitor.ToSqlType(retType)}");
+                tw.WriteLine($") RETURNS {returnType}");
 
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
@@ -240,7 +250,8 @@ namespace Microsoft.PowerFx.Dataverse
                             // because logical fields can only be referred from view 
                             if (!field.Column.IsLogical)
                             {
-                                tableSchemaName = tableSchemaName + "Base";
+                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
+                                    baseTableName : tableSchemaName + "Base";
                             }
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
@@ -386,12 +397,20 @@ namespace Microsoft.PowerFx.Dataverse
             result.type = returnType;
 
             context._sbContent = new System.Text.StringBuilder();
-            context.PerformRangeChecks(result, null, postCheck: true);
+            context.PerformFinalRangeChecks(result, options, postCheck: true);
             tw.Write(context._sbContent);
 
             if (context.IsNumericType(result))
             {
-                int precision = options.TypeHints?.Precision ?? DefaultPrecision;                
+                int precision = options.TypeHints?.Precision ?? DefaultPrecision;
+                
+                // In case type hint is coming as integer, internal computations are done in FX types only (number/decimal)
+                // but on the way out UDF is returning integer so rounding off the value to 0 at end
+                if(options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                {
+                    precision = 0;
+                }
+
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
             else

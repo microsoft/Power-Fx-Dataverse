@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -580,7 +581,7 @@ END
             var engine = new PowerFx2SqlEngine(BaselineMetadata.ToXrm());
             var result = engine.Compile(exprStr, options);
 
-            Assert.Equal("address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
+            Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
 
             Assert.Equal(BaselineFunction, result.SqlFunction);
 
@@ -779,8 +780,27 @@ END
             }
         }
 
+        public const string IntegerFunction = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 2.0
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-2147483648 OR @v2>2147483647) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+
         [Fact]
-        public void CompileTypeHint()
+        public void CompileIntegerTypeHint()
         {
             var expr = "field * 2.0";
 
@@ -799,7 +819,15 @@ END
 
             var metadata = model.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
-            var options = new SqlCompileOptions { TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer, Precision = 0 } };
+
+            // SQL Compiler will always produce Number/Decimal for Numeric types. There is no concept of whole no here, Although
+            // the UDF will return integer in this case but Sql Compile Result would be Decimal only
+            var options = new SqlCompileOptions 
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Integer  },
+                UdfName = "fn_testUdf1"
+            };
+            
             var result = engine.Compile(expr, options);
 
             Assert.NotNull(result);
@@ -807,6 +835,10 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
+            Assert.Equal(true, result.IsHintApplied);
+
+            Assert.Equal(IntegerFunction, result.SqlFunction);
+            Assert.True(result.ReturnType is DecimalType);
         }
 
         [Fact]
@@ -1291,7 +1323,7 @@ END
             "remote=>data",
             "local=>local_remote,self")] // "Multiple lookups"
         [InlineData("'Logical Lookup'.Data",
-            "logicalid",
+            "localid,logicalid",
             "remote=>data",
             "local=>logical")] // "Logical Lookup"
         [InlineData("7 + 2", "")] // "Literals"
@@ -1757,6 +1789,72 @@ END
             Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
+        public const string guidTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- guid
+) RETURNS nvarchar(4000)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 nvarchar(4000)
+    DECLARE @v2 nvarchar(4000)
+    DECLARE @v3 nvarchar(4000)
+    DECLARE @v4 nvarchar(4000)
+    DECLARE @v5 nvarchar(4000)
+
+    -- expression body
+    SET @v1 = @v0
+    SET @v2 = ISNULL(@v1,N'')
+    SET @v3 = N'abc'
+    SET @v4 = ISNULL(@v3,N'')
+    SET @v5 = CONCAT(@v2,@v4)
+    -- end expression body
+
+    RETURN @v5
+END
+";
+        [Fact]
+        public void CheckGuidUsedInFormula()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile("Concatenate(guid,\"abc\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("guid", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.Equal(guidTestUDF, result.SqlFunction);
+
+            result = engine.Compile("Concatenate(lookup.tripleremoteid,\"abc\")", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal("tripleremoteid", result.RelatedIdentifiers.ToArray()[0].Value.First());
+        }
+
+        public const string BaseTableNameTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- new_lookup
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    SELECT TOP(1) @v1 = [simplefield] FROM [dbo].[testentityTestBase] WHERE[testentityid] = @v0
+
+    -- expression body
+    SET @v2 = @v1
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 10)
+END
+";
+        [Fact]
+        public void BaseTableNameTest()
+        {
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
+            var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
+        }
+
         [Theory]
         [InlineData("new_price * new_quantity", "Price * Quantity")] // "Logical Names"
         [InlineData("ThisRecord.new_price + new_quantity", "ThisRecord.Price + Quantity")] // "ThisRecord"
@@ -1853,7 +1951,7 @@ END
         public void Coalesce()
         {
             // Once we add Coalesce to Library.cs, remove TryCoalesceNum.
-            var ok = Functions.Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
+            var ok = Library.TryLookup(Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore.Coalesce, out var ptr);
             Assert.False(ok);
             Assert.Null(ptr);
         }
@@ -1940,6 +2038,37 @@ END
             }
 
             return ret;
+        }
+    }
+
+    public class MockEntityAttributeMetadataProvider : IEntityAttributeMetadataProvider
+    {
+        private readonly MockXrmMetadataProvider _xrmMetadataProvider;
+
+        public MockEntityAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
+        {
+            _xrmMetadataProvider = xrmMetadataProvider; 
+        }
+
+        public bool TryGetSecondaryEntityMetadata(string logicalName, out SecondaryEntityMetadata entity)
+        {
+            if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
+            {
+                entity = new SecondaryEntityMetadata()
+                {
+                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base")
+                };
+                return true;
+            }
+
+            entity = null;
+            return false;
+        }
+
+        public bool TryGetSecondaryAttributeMetadata(string entityLogicalName, string attributeLogicalName, out SecondaryAttributeMetadata attribute)
+        {
+            attribute = null;
+            return false;
         }
     }
 

@@ -43,6 +43,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
                 AttributeMetadataModel.NewInteger("new_int", "Integer"),
                 AttributeMetadataModel.NewString("new_string", "String"),
+                AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 AttributeMetadataModel.NewGuid("some_id", "SomeId"),
                 AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
                 {
@@ -282,6 +283,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDateTime("dateonly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdatetime", "TimeZoneIndependent DateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
                 AttributeMetadataModel.NewDateTime("timezoneindependentdateonly", "TimeZoneIndependent DateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 new AttributeMetadataModel
                 {
                     LogicalName= "bigint",
@@ -433,5 +435,44 @@ namespace Microsoft.Dataverse.EntityMock
         /// Array with multiple models pre-loaded.
         /// </summary>
         public static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
+
+        public static readonly EntityMetadataModel TestEntity1 = new EntityMetadataModel
+        {
+            LogicalName = "testentity1",
+            DisplayCollectionName = "TestEntity1",
+            PrimaryIdAttribute = "testentity1id",
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new [] { "testentity" }),
+                AttributeMetadataModel.NewGuid("testentity1id", "Testentity1Id"),
+            },
+            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
+            {
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "testentityid",
+                    ReferencedEntity = "testentity",
+                    ReferencingAttribute = "new_lookup",
+                    ReferencingEntity = "testentity1",
+                    ReferencedEntityNavigationPropertyName = "lookup_refd",
+                    ReferencingEntityNavigationPropertyName = "lookup",
+                    SchemaName = "testentity1_testentity"
+                }
+            }
+        };
+
+        public static readonly EntityMetadataModel TestEntity = new EntityMetadataModel
+        {
+            LogicalName = "testentity",
+            DisplayCollectionName = "TestEntity",
+            PrimaryIdAttribute = "testentityid",
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewDecimal("simplefield", "SimpleField"),
+                AttributeMetadataModel.NewGuid("testentityid", "Testentityid"),
+            }
+        };
+
+        public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { TestEntity1, TestEntity };
     }
 }

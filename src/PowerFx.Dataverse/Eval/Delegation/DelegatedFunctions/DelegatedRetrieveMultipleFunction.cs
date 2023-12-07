@@ -4,6 +4,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -55,7 +56,23 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args1 should alway be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, cancellationToken).ConfigureAwait(false);
+            // column names to fetch. if kept null, fetches all columns.
+            IEnumerable<string> columns = null;
+            if(args.Length > 3)
+            {
+                columns = args.Skip(3).Select(x => {
+                    if (x is StringValue stringValue)
+                    {
+                        return stringValue.Value;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"From Args3 onwards, all args should have been String Value");
+                    }
+                });
+            }
+
+            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, columns, cancellationToken).ConfigureAwait(false);
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
             return result;
         }

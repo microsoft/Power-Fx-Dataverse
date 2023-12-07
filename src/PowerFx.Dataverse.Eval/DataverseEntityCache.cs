@@ -155,7 +155,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.DeleteAsync(entityName, id, cancellationToken);
         }
 
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -169,7 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {

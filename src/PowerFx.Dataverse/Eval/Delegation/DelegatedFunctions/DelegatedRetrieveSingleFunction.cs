@@ -1,8 +1,11 @@
-﻿using Microsoft.PowerFx.Dataverse.Eval.Core;
+﻿using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -38,15 +41,39 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg should alway be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, cancellationToken).ConfigureAwait(false);
-
-            var result = row.FirstOrDefault();
-            if (result == null)
+            // column names to fetch.
+            IEnumerable<string> columns = null;
+            if (args.Length > 2)
             {
-                return FormulaValue.NewBlank();
+                columns = args.Skip(2).Select(x => {
+                    if (x is StringValue stringValue)
+                    {
+                        return stringValue.Value;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"From Args2 onwards, all all args should have been String Value");
+                    }
+                });
             }
 
-            return result.ToFormulaValue();
+            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, columns, cancellationToken).ConfigureAwait(false);
+
+            var result = row.FirstOrDefault();
+            if (result == null || result.IsBlank)
+            {
+                return FormulaValue.NewBlank(this.ReturnFormulaType);
+            }
+            else if (result.IsError)
+            {
+                return result.Error;
+            }
+            else
+            {
+                // Adjust type, as function like ShowColumn() can manipulate it.
+                var resultRecord =  CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
+                return resultRecord;
+            }
         }
     }
 }

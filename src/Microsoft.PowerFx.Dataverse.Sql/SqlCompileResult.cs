@@ -46,6 +46,11 @@ namespace Microsoft.PowerFx.Dataverse
         public string SanitizedFormula { get; set; }
 
         /// <summary>
+        /// A modified version of the formula that does not contain string or numeric literals, for telemetry purposes
+        /// </summary>
+        public bool IsHintApplied { get; set; }
+
+        /// <summary>
         /// OptionsetId of the optionset returned by formula fields of type optionset
         /// </summary>
         /// /// <example>
