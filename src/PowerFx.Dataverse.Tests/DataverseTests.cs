@@ -450,6 +450,105 @@ END
             Assert.True(result.IsSuccess);
             Assert.Equal(FormulaType.Number, result.ReturnType);
 
+            expr = "field1-field";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal("#$FieldDecimal$# + -#$FieldDouble$#", result.SanitizedFormula);
+
+            expr = "field%";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal("#$FieldDouble$#%", result.SanitizedFormula);
+
+        }
+
+        public const string DecimalFormulaProducingFloatUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 2
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN @v2
+END
+";
+
+
+        [Theory]
+        [InlineData("Error 5-6: The result type for this formula is expected to be Decimal, but the actual result type is Float. The result type of a formula column cannot be changed.")] 
+        public void CheckFloatingPointWithHint(string errorMessage)
+        {
+            /*
+            * Formula Producing Float don't honor hints because Float is approximate data type and is unassignable to other data type
+            * like whole no/decimal/currency
+            */
+            var expr = "field*2";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field",
+                         AttributeType = AttributeTypeCode.Double
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field1",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata);
+
+            var options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Decimal }
+            };
+
+            var result = engine.Compile(expr, options);
+            
+            Assert.False(result.IsSuccess);
+            
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal(errorMessage, errors[0].ToString());
+
+            Assert.False(result.IsHintApplied);
+
+            /*
+            * Formula Producing decimal can be converted to Float if Float is coming in hint then it will honor hint and will produce float
+            * because decimal is accurate data type and is assignable to approximate data type like real/float
+            */
+            expr = "field1*2";
+
+            options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double },
+                UdfName = "fn_testUdf1"
+            };
+
+            result = engine.Compile(expr, options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(DecimalFormulaProducingFloatUDF, result.SqlFunction);
         }
 
         public const string PercentIntermediateOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
@@ -545,12 +644,31 @@ END
             Assert.True(result.ReturnType is NumberType);
         }
 
+        public const string FloatFunctionUDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 float
+
+    -- expression body
+    SET @v0 = 5
+    SET @v1 = @v0
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN @v1
+END
+";
+
         [Fact]
         public void CheckDecimalFloatFunctions()
         {
             var engine = new PowerFx2SqlEngine();
-            var result = engine.Compile("Float(5)", new SqlCompileOptions());
+            var result = engine.Compile("Float(5)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(FloatFunctionUDF, result.SqlFunction);
 
             result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
             Assert.True(result.IsSuccess);

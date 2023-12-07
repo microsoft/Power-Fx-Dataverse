@@ -17,6 +17,7 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 
 
 namespace Microsoft.PowerFx.Dataverse
@@ -182,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
 
-                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, returnType._type.GetKindString()).GetErrors(sourceContext);
+                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, returnType._type.GetKindString() == FormulaType.Number.ToString() ? SqlStatementFormat.Float : returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
             }
 

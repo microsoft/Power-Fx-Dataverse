@@ -174,6 +174,8 @@ ELSE
 
         public const string SqlFloatType = "float";
 
+        public const string Float = "Float";
+
         /// <summary>
         /// Declare intermediate variable
         /// </summary>
