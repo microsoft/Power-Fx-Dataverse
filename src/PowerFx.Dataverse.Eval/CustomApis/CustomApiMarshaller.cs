@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (obj is EntityReference er)
             {
                 // For entity Reference, the lookup could be deferred.
-                var record = dvc.RetrieveAsync(er.LogicalName, er.Id).GetAwaiter().GetResult();
+                var record = dvc.RetrieveAsync(er.LogicalName, er.Id, columns: null).GetAwaiter().GetResult();
                 return record;
             }
             else if (obj is Entity entity)

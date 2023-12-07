@@ -79,11 +79,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
             
+            // Plugins are imported into "Environment" namespace by default. 
             dvc.AddPlugin(_api1Signature);
 
             var engine = new RecalcEngine();
 
-            var expr = "api1({p1:19}).out";
+            var expr = "Environment.api1({p1:19}).out";
             var check = engine.Check(expr, symbolTable: dvc.Symbols);
                         
             Assert.True(check.IsSuccess);
@@ -124,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
 
-            var expr = "api1({p1:1/0}).out";
+            var expr = "Environment.api1({p1:1/0}).out";
             var check = engine.Check(expr, symbolTable: dvc.Symbols);
 
             Assert.True(check.IsSuccess);
@@ -163,7 +164,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
 
-            var expr = "api1({p1:19}).out";
+            var expr = "Environment.api1({p1:19}).out";
             var check = engine.Check(expr, symbolTable: dvc.Symbols);
 
             Assert.True(check.IsSuccess);

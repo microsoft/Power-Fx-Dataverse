@@ -1,4 +1,5 @@
 ﻿using Microsoft.PowerFx;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -25,11 +26,14 @@ namespace Microsoft.PowerFx.Dataverse
         public RecordType InputParameters { get; private set; }
         public FormulaType OutputParameters { get; private set; }
 
+        // Custom APIs by default appear in "Environment" namespace. 
+        public static DPath EnvironmentNamespace = DPath.Root.Append(new DName("Environment"));
+
         public CustomApiFunction(
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
-            RecordType inputType) : base(signature.Api.uniquename, returnType, inputType)
+            RecordType inputType) : base(EnvironmentNamespace, signature.Api.uniquename, returnType, inputType)
         {
             // To invoke, use uniqueName
             // Also support display names: https://github.com/microsoft/Power-Fx-Dataverse/issues/389
