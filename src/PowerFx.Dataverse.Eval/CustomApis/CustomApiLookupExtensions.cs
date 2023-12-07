@@ -34,13 +34,16 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             var api = await reader.RetrieveAsync<CustomApiEntity>(
-                nameof(CustomApiEntity.uniquename), logicalName, cancellationToken);
+                nameof(CustomApiEntity.uniquename), logicalName, cancellationToken)
+                .ConfigureAwait(false);
 
             var inputs = await reader.RetrieveMultipleAsync<CustomApiRequestParam>(
-                nameof(CustomApiRequestParam.customapiid), api.customapiid, cancellationToken);
+                nameof(CustomApiRequestParam.customapiid), api.customapiid, cancellationToken)
+                .ConfigureAwait(false);
 
             var outputs = await reader.RetrieveMultipleAsync<CustomApiResponse>(
-                nameof(CustomApiResponse.customapiid), api.customapiid, cancellationToken);
+                nameof(CustomApiResponse.customapiid), api.customapiid, cancellationToken)
+                .ConfigureAwait(false);
                         
             var sig = new CustomApiSignature
             {
@@ -76,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="reader"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<CustomApiEntity[]> GetApiNamesAsync(
+        public static async Task<CustomApiEntity[]> GetLowCodeApiNamesAsync(
             this IDataverseReader reader,        
             CancellationToken cancellationToken = default)
         {

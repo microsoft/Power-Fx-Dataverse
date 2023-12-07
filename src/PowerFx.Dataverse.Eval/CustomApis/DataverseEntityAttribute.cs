@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
         public string LogicalName { get; private set; }
         public DataverseEntityAttribute(string name)
         {
-            this.LogicalName = name;
+            this.LogicalName = name ?? throw new ArgumentNullException(nameof(name));
         }
     }
 }

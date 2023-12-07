@@ -71,7 +71,7 @@ namespace Microsoft.PowerFx.Dataverse
                 Parameters = inputs
             };
 
-            var resp2 = await invoker.ExecuteAsync(request, cancel);
+            var resp2 = await invoker.ExecuteAsync(request, cancel).ConfigureAwait(false);
 
             resp2.ThrowEvalExOnError();
             OrganizationResponse resp = resp2.Response;
