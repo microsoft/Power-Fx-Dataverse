@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DataverseConnection dvc = SingleOrgPolicy.New(client);
 
             var c2 = new DataverseService(client);
-            var names = c2.GetApiNamesAsync().Result;
+            var names = c2.GetLowCodeApiNamesAsync().Result;
 
             // Expected usage from PowerApps::
             // Environment.crbcd_lucgen1({x:Value,y:Value})
