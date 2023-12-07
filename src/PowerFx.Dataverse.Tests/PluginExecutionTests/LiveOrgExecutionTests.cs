@@ -36,6 +36,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
             var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
+            //cx = File.ReadAllText(@"c:\secrets\dv_cx.txt");
+
             // short-circuit if connection string is not set
             if (cx == null)
             {
@@ -55,6 +57,66 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             return svcClient;
         }
+
+        [SkippableFact]
+        public async Task CustomApiTestsStatic()
+        {
+            var client = GetClient();
+
+            DataverseConnection dvc = SingleOrgPolicy.New(client);
+
+            var c2 = new DataverseService(client);
+            var names = c2.GetLowCodeApiNamesAsync().Result;
+
+            // Expected usage from PowerApps::
+            // Environment.crbcd_lucgen1({x:Value,y:Value})
+            await dvc.AddPluginAsync("crbcd_lucgen1");
+
+            var engine = new RecalcEngine();
+
+            var expr = "crbcd_lucgen1({x:\"str\", y:19}).z";
+            var check = engine.Check(expr, symbolTable: dvc.Symbols);
+
+            if (!check.IsSuccess)
+            {
+
+            }
+            Assert.True(check.IsSuccess);
+
+            // Now invoke it. 
+            var eval = check.GetEvaluator();
+            
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            rc.AddDataverseExecute(client);
+
+            var result = await eval.EvalAsync(default, rc);
+
+            Assert.Equal("str38", ((StringValue)result).Value);
+
+            // "str38" 
+            // Success!!!
+        }
+
+        [SkippableFact]
+        public async Task CustomApiTests()
+        {
+            var client = GetClient();
+
+            DataverseConnection dvc = SingleOrgPolicy.New(client);
+
+            // Environment.crbcd_lucgen1({x:Value,y:Value})
+            await dvc.AddPluginAsync("crbcd_lucgen1");
+
+            var engine = new RecalcEngine();
+
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            rc.AddDataverseExecute(client);
+
+            var expr = "crbcd_lucgen1({x:\"str\", y:19}).z";
+            var result = await engine.EvalAsync(expr, default, runtimeConfig: rc);
+
+        }
+
 
         [SkippableFact]
         public void ExecuteViaInterpreterFirst()
