@@ -71,7 +71,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool TryGetExtensionTableName(string logicalName, out string extensionTableName)
         {
-            if (TryGetEntityMetadata(logicalName, out var entityMetadata))
+            if (TryGetEntityMetadata(logicalName, out var entityMetadata) && !string.IsNullOrEmpty(entityMetadata.ExtensionTableName))
             {
                 extensionTableName = entityMetadata.ExtensionTableName;
                 return true;
@@ -118,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (!entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable && 
                     !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase) &&
-                    attributeMetadata.TableColumnName != null)
+                    !string.IsNullOrEmpty(attributeMetadata.TableColumnName))
                 {
                     tableColumnName = attributeMetadata.TableColumnName;
                     return true;
