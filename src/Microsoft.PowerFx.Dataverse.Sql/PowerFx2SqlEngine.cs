@@ -35,8 +35,9 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
-            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
+            SupportedFeatureFlags supportedFeatureFlags = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, supportedFeatureFlags)
         {
         }
 
@@ -430,8 +431,9 @@ namespace Microsoft.PowerFx.Dataverse
             var irNode = irResult.TopNode;
             var scopeSymbol = irResult.RuleScopeSymbol;
 
+            var supportedFeatureFlags = (check.Engine as PowerFx2SqlEngine)?.SupportedFeatureFlags;
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, supportedFeatureFlags: supportedFeatureFlags);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
@@ -472,5 +474,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
             return info;
         }
+    }
+
+    public sealed class SupportedFeatureFlags
+    {
+        /// <summary>
+        /// Enables support for optionset returntype.
+        /// </summary>
+        internal bool SupportOptionSetsInFormulaColumns { get; set; }
+
+        public static SupportedFeatureFlags DefaultSupportedFeatureFlagValues => new() {
+            SupportOptionSetsInFormulaColumns = false
+        };
     }
 }

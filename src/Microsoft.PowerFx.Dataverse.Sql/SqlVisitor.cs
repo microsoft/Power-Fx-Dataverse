@@ -536,7 +536,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // This is an option set, which is treated as a record access
                 // the node Field will be a DName of the option set value
-                context._dependentOptionsets.Add(new DName(dataverseOptionSet.EntityName));
+                if (context.SupportedFeatureFlags.SupportOptionSetsInFormulaColumns)
+                {
+                    context._dependentOptionsets.Add(new DName(dataverseOptionSet.EntityName));
+                }
+
                 return context.SetIntermediateVariable(node, node.Field.Value);
             }
 
@@ -780,7 +784,9 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false)
+            internal readonly SupportedFeatureFlags SupportedFeatureFlags;
+
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, SupportedFeatureFlags supportedFeatureFlags = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -794,6 +800,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopes[rootScope.Id] = RootScope;
 
                 DoesDateDiffOverflowCheck = false;
+                SupportedFeatureFlags = supportedFeatureFlags ?? SupportedFeatureFlags.DefaultSupportedFeatureFlagValues;
             }
 
             public bool DoesDateDiffOverflowCheck { get; internal set; }
