@@ -582,7 +582,7 @@ END
 
             Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
 
-            Assert.Equal(BaselineFunction, result.SqlFunction);
+            Assert.Equal(BaselineFunction, result.SqlFunction); // Current entity's calculated fields are referred from view
 
             Assert.Equal(BaselineCreateRow, result.SqlCreateRow);
             Assert.Equal(BaselineLogicalFormula, result.LogicalFormula);
@@ -1882,6 +1882,17 @@ AS BEGIN
     RETURN ROUND(@v3, 10)
 END
 ";
+        [Fact]
+        public void ExtensionTableTest()
+        {
+            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testinheritedentity") });
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+            var result = engine.Compile("lookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
+        }
+
         public const string TableColumnNameTestUDF = @"CREATE FUNCTION test(
     @v0 uniqueidentifier -- new_lookup
 ) RETURNS decimal(23,10)
@@ -1899,18 +1910,16 @@ AS BEGIN
 END
 ";
         [Fact]
-        public void ExtensionTableAndTableColumnNameTests()
+        public void TableColumnNameTest()
         {
             var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testinheritedentity") });
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
-            var result = engine.Compile("lookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
-            Assert.True(result.IsSuccess);
-            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
 
-            result = engine.Compile("lookup.testfield", new SqlCompileOptions() { UdfName = "test" });
+            // 'testfield' has different TableColumnName and id from an entity is inherited from another entity. so, we use TableColumnName in UDF.
+            var result = engine.Compile("lookup.testfield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
-            Assert.Equal(TableColumnNameTestUDF, result.SqlFunction);
+            Assert.Equal(TableColumnNameTestUDF, result.SqlFunction); 
         }
 
         [Theory]

@@ -228,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
 
                         }
-                        else if (field.Column.RequiresReference() || field.IsStoredOnExtensionTable)
+                        else if (field.Column.RequiresReference() || field.IsReferenceFieldOnInheritedEntity)
                         {
                             // for calculated or logical fields or fields not stored on primary table on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
@@ -248,8 +248,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                             // Table Schema name returns table view and we need to refer Base tables in UDF in case of non logical fields that are stored on primarytable
                             // because logical fields can only be referred from view 
-                            // Fields that are not stored on primary table and are inherited from a different table will be referred from view
-                            bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsStoredOnExtensionTable || (field.Column.IsCalculated && field.Navigation == null));
+                            // Referring current entity's calculated fields from view because there are cases where this field is from an entity which is inherited from different entity
+                            // so, basetablename will be different for such fields and can't be referred using basetablename for eg., Task entity - BaseTableName is ActivityPointerBase
+                            bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsReferenceFieldOnInheritedEntity || (field.Column.IsCalculated && field.Navigation == null));
                             if (!shouldReferColumnFromView)
                             {
                                 tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
@@ -257,7 +258,7 @@ namespace Microsoft.PowerFx.Dataverse
                             }
                             // For related entity's dependent fields that are not stored on primary table, refer such fields using extensiontablename, because referring
                             // from view will cause solution import failures as related entity's views may not be regenerated at the time of formula field UDF creation.
-                            else if (field.IsStoredOnExtensionTable && field.Navigation != null)
+                            else if (field.IsReferenceFieldOnInheritedEntity && field.Navigation != null)
                             {
                                 tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetExtensionTableName(field.Table, out var extensionTableName) ?
                                     extensionTableName : tableSchemaName + "Base";
@@ -289,11 +290,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (refFieldCount > 0)
                 {
+                    var isMetadataCacheNull = _secondaryMetadataCache == null;
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
                         var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " +
-                            $"[{(_secondaryMetadataCache != null ? _secondaryMetadataCache.GetTableColumnName(field) : field.Column.SchemaName)}]"; }));
+                            $"[{(!isMetadataCacheNull && _secondaryMetadataCache.IsSchemaNameDifferentFromTableColumnName(field, out string tableColumName) ? tableColumName : field.Column.SchemaName)}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }

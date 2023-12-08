@@ -743,7 +743,7 @@ namespace Microsoft.PowerFx.Dataverse
                 /// True if the field is stored on Primary Table
                 /// False if the field is inherited from a different table
                 /// </summary>
-                public bool IsStoredOnExtensionTable;
+                public bool IsReferenceFieldOnInheritedEntity;
             }
 
             // Mapping of field names to details
@@ -829,8 +829,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsReferenceField(VarDetails field)
             {
-                // Fields not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsStoredOnExtensionTable);
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null ||
+
+                    // For fields on entity which is inherited from another entity, if field is stored on primary table,
+                    // field require reference and cannot be passed as a parameter to UDF, and will be referred from view
+                    // and fields which are not stored on primary table will be referred from extension table.
+                    field.IsReferenceFieldOnInheritedEntity);
             }
 
             /// <summary>
@@ -943,18 +947,17 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
-                    var isStoredOnExtensionTable = !column.IsKey && _secondaryMetadataCache != null && 
-                        _secondaryMetadataCache.IsFieldStoredOnExtensionTable(table, column.LogicalName, navigation != null);
+                    var isReferenceFieldOnInheritedEntity = !column.IsKey && _secondaryMetadataCache != null && 
+                        _secondaryMetadataCache.IsFieldOnInheritedEntityRequiresReference(table, column.LogicalName, navigation != null);
 
                     var varType = GetFormulaType(column, sourceContext);
-                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsStoredOnExtensionTable = isStoredOnExtensionTable };
+                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsReferenceFieldOnInheritedEntity = isReferenceFieldOnInheritedEntity };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    if (column.RequiresReference() || isStoredOnExtensionTable)
+                    if (column.RequiresReference() || isReferenceFieldOnInheritedEntity)
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
-                        // Fields that are not stored on primary table require reference and cannot be passed as a parameter to UDF, they will be referred from table view
                         var parentPath = path.Parent;
                         var primaryKey = scope.Type.GetType(parentPath).CdsTableDefinition().PrimaryKeyColumn;
                         var primaryKeyPath = parentPath.Append(new DName(primaryKey));

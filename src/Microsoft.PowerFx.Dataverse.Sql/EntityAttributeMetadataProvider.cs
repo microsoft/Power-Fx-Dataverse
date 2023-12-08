@@ -82,9 +82,14 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Returns true if field is not stored on the primary table.
+        /// Returns true if field from an inherited entity requires reference.
+        /// For current entity, we check if entity is inherited from another entity and if the dependent field is stored on primary table. If entity's 
+        /// inheritsFrom is not null(false) and if field is stored on primary table(true), even if this field is a simple/rollup field, it requires reference.
+        /// For related entity's field, as they anyways require reference and if entity's inheritsfrom is null, field's IsStoredOnPrimaryTable will always be true 
+        /// so, we only check if field is stored on primary table and refer the dependent field from extension table name if it is not stored on primary table 
+        /// else refer from base/primary table.
         /// </summary>
-        internal bool IsFieldStoredOnExtensionTable(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
+        internal bool IsFieldOnInheritedEntityRequiresReference(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
         {
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {
@@ -94,8 +99,17 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        internal string GetTableColumnName(SqlVisitor.Context.VarDetails varDetails)
+        /// <summary>
+        /// Returns true if TableColumnName and SchemaName of a field are different and returns TableColumnName, else returns false.
+        /// For an entity which is inherited from another entity and a dependent field is stored on primary table, there are cases where the schema name
+        /// of this field is different on the primary table. For e.g., Category field on Task entity has name as 'TaskCategory' on the primary table. 
+        /// So, we use TableColumnName property for referring such fields from primary table.
+        /// </summary>
+        internal bool IsSchemaNameDifferentFromTableColumnName(SqlVisitor.Context.VarDetails varDetails, out string tableColumnName)
         {
+            tableColumnName = null;
+            if (varDetails == null) { return false; }
+
             var entityLogicalName = varDetails.Table;
             var columnLogicalName = varDetails.Column.LogicalName;
             var columnPhysicalName = varDetails.Column.SchemaName;
@@ -106,11 +120,12 @@ namespace Microsoft.PowerFx.Dataverse
                     !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase) &&
                     attributeMetadata.TableColumnName != null)
                 {
-                    return attributeMetadata.TableColumnName;
+                    tableColumnName = attributeMetadata.TableColumnName;
+                    return true;
                 }
             }
 
-            return columnPhysicalName;
+            return false;
         }
     }
 
