@@ -14,32 +14,50 @@ namespace Microsoft.PowerFx.Dataverse
 {
     // AITranslate(String) : string 
     // given a string, call GPT to return a English-translated version of the string. 
-    public class AITranslateFunction : ReflectionFunction
+    public abstract class AITranslateFunction : ReflectionFunction
     {
         public AITranslateFunction()
+                : base("AITranslate",
+                      FormulaType.String,
+                      FormulaType.String)
+        {
+            this.ConfigType = typeof(IDataverseExecute);
+        }
+
+        public AITranslateFunction(FormulaType fieldType)
+                : base("AITranslate", 
+                      FormulaType.String, 
+                      FormulaType.String, 
+                      fieldType)
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
 
         // POCO for the OrganizationRequest message.
-        private class TranslateRequest
+        protected class TranslateRequest
         {
             /// <summary>
             /// The incoming text. 
             /// </summary>
             public string Text { get; set; }
 
+            /// <summary>
+            /// The target language to translate the text to. 
+            /// </summary>
+            public string TargetLanguage { get; set; }
+
             public OrganizationRequest Get()
             {
                 var req = new OrganizationRequest("AITranslate");
                 req[nameof(TranslateRequest.Text)] = this.Text;
+                req[nameof(TranslateRequest.TargetLanguage)] = this.TargetLanguage;
 
                 return req;
             }
         }
 
         // POCO for the OrganizationResponse message.
-        private class TranslateResponse
+        protected class TranslateResponse
         {
             public string TranslatedText { get; set; }
 
@@ -55,9 +73,17 @@ namespace Microsoft.PowerFx.Dataverse
                 };
             }
         }
+    }
+
+    public class AITranslateFunctionDefault : AITranslateFunction
+    {
+        public AITranslateFunctionDefault() 
+            : base()
+        {
+        }
 
         // Entry called by Power Fx interpreter. 
-        public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, CancellationToken cancel)
+        public async Task<StringValue> Execute(IDataverseExecute client, StringValue text, CancellationToken cancel)
         {
             if (client == null)
             {
@@ -65,7 +91,8 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result = await TranslatedText(value.Value, client, cancel);
+            var result = await TranslatedText(text.Value, client, cancel);
+
 
             return FormulaValue.New(result);
         }
@@ -75,6 +102,45 @@ namespace Microsoft.PowerFx.Dataverse
             var req = new TranslateRequest
             {
                 Text = myText
+            }.Get();
+
+            var result = await service.ExecuteAsync(req, cancel);
+            result.ThrowEvalExOnError();
+
+            var response = TranslateResponse.Parse(result.Response);
+
+            return response.TranslatedText;
+        }
+    }
+
+    public class AITranslateFunctionWithLanguage : AITranslateFunction
+    {
+        public AITranslateFunctionWithLanguage()
+            : base(FormulaType.String)
+        {
+        }
+
+        // Entry called by Power Fx interpreter. 
+        public async Task<StringValue> Execute(IDataverseExecute client, StringValue text, StringValue targetLanguage, CancellationToken cancel)
+        {
+            if (client == null)
+            {
+                // We missed a call to AddDataverseExecute in the runtime config.
+                throw new CustomFunctionErrorException("Org not available");
+            }
+
+            var result =  await TranslatedText(text.Value, targetLanguage.Value, client, cancel);
+             
+
+            return FormulaValue.New(result);
+        }
+
+        private async Task<string> TranslatedText(string myText, string myTargetLanguage, IDataverseExecute service, CancellationToken cancel)
+        {
+            var req = new TranslateRequest
+            {
+                Text = myText,
+                TargetLanguage = myTargetLanguage
             }.Get();
 
             var result = await service.ExecuteAsync(req, cancel);
