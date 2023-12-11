@@ -829,12 +829,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsReferenceField(VarDetails field)
             {
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null ||
-
-                    // For fields on entity which is inherited from another entity, if field is stored on primary table,
-                    // field require reference and cannot be passed as a parameter to UDF, and will be referred from view
-                    // and fields which are not stored on primary table will be referred from extension table.
-                    field.IsReferenceFieldOnInheritedEntity);
+                // For fields on inherited entity, if field is stored on primary table,
+                // field require reference and cannot be passed as a parameter to UDF 
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsReferenceFieldOnInheritedEntity);
             }
 
             /// <summary>

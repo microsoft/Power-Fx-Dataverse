@@ -248,8 +248,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                             // Table Schema name returns table view and we need to refer Base tables in UDF in case of non logical fields that are stored on primarytable
                             // because logical fields can only be referred from view 
-                            // Referring current entity's calculated fields from view because there are cases where this field is from an entity which is inherited from different entity
-                            // so, basetablename will be different for such fields and can't be referred using basetablename for eg., Task entity - BaseTableName is ActivityPointerBase
+                            // Referring current entity's calculated fields from view because there are cases where this field is from an inherited entity and field is not stored on 
+                            // primary table. so, basetablename will be different for such fields and can't be referred using basetablename for eg., Task entity - BaseTableName is ActivityPointerBase
                             bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsReferenceFieldOnInheritedEntity || (field.Column.IsCalculated && field.Navigation == null));
                             if (!shouldReferColumnFromView)
                             {
