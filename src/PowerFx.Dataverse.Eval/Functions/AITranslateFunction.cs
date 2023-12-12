@@ -73,6 +73,22 @@ namespace Microsoft.PowerFx.Dataverse
                 };
             }
         }
+
+        protected async Task<string> TranslatedText(string myText, string myTargetLanguage, IDataverseExecute service, CancellationToken cancel)
+        {
+            var req = new TranslateRequest
+            {
+                Text = myText,
+                TargetLanguage = myTargetLanguage
+            }.Get();
+
+            var result = await service.ExecuteAsync(req, cancel);
+            result.ThrowEvalExOnError();
+
+            var response = TranslateResponse.Parse(result.Response);
+
+            return response.TranslatedText;
+        }
     }
 
     public class AITranslateFunctionDefault : AITranslateFunction
@@ -91,25 +107,10 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result = await TranslatedText(text.Value, client, cancel);
+            var result = await TranslatedText(text.Value, null, client, cancel);
 
 
             return FormulaValue.New(result);
-        }
-
-        private async Task<string> TranslatedText(string myText, IDataverseExecute service, CancellationToken cancel)
-        {
-            var req = new TranslateRequest
-            {
-                Text = myText
-            }.Get();
-
-            var result = await service.ExecuteAsync(req, cancel);
-            result.ThrowEvalExOnError();
-
-            var response = TranslateResponse.Parse(result.Response);
-
-            return response.TranslatedText;
         }
     }
 
@@ -133,22 +134,6 @@ namespace Microsoft.PowerFx.Dataverse
              
 
             return FormulaValue.New(result);
-        }
-
-        private async Task<string> TranslatedText(string myText, string myTargetLanguage, IDataverseExecute service, CancellationToken cancel)
-        {
-            var req = new TranslateRequest
-            {
-                Text = myText,
-                TargetLanguage = myTargetLanguage
-            }.Get();
-
-            var result = await service.ExecuteAsync(req, cancel);
-            result.ThrowEvalExOnError();
-
-            var response = TranslateResponse.Parse(result.Response);
-
-            return response.TranslatedText;
         }
     }
 }
