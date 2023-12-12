@@ -426,7 +426,7 @@ END
             };
 
             var metadata = model.ToXrm();
-            var engine = new PowerFx2SqlEngine(metadata);
+            var engine = new PowerFx2SqlEngine(metadata, dvFeatureControlBlock : new DVFeatureControlBlock() { IsFloatingPointEnabled = true});
             var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.True(result.IsSuccess);
             Assert.Equal(FormulaType.Number, result.ReturnType);
@@ -514,7 +514,7 @@ END
             };
 
             var metadata = model.ToXrm();
-            var engine = new PowerFx2SqlEngine(metadata);
+            var engine = new PowerFx2SqlEngine(metadata, dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
 
             var options = new SqlCompileOptions
             {
@@ -593,7 +593,7 @@ END
         {
             var expr = "Power(2,5)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
@@ -607,7 +607,7 @@ END
         {
             var expr = "Sqrt(16)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
@@ -621,7 +621,7 @@ END
         {
             var expr = "Ln(20)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
@@ -635,7 +635,7 @@ END
         {
             var expr = "Exp(10)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
@@ -664,7 +664,7 @@ END
         [Fact]
         public void CheckDecimalFloatFunctions()
         {
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile("Float(5)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.True(result.IsSuccess);
             Assert.Equal(FormulaType.Number, result.ReturnType);
@@ -768,7 +768,7 @@ END
 
         private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula)
         {
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
@@ -1367,7 +1367,8 @@ END
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
+                    , dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -1928,7 +1929,7 @@ END
                 }
             };
 
-            var engine = new PowerFx2SqlEngine(localModel.ToXrm());
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var result = engine.Check("'Picklist (global1)' = [@Picklist].'Eeny (1)' || 'Picklist (global2)' = [@Picklist].'Eeny (3)'");
 
             Assert.True(result.IsSuccess);

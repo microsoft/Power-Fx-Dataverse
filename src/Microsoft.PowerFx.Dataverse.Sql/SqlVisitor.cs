@@ -121,6 +121,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return ptr(this, node, context);
             }
 
+            // if floating point is disabled then float function will not present in library and need to map to Value to be in parity with old behavior
+            if (!context._dvFeatureControlBlock.IsFloatingPointEnabled && node.Function == BuiltinFunctionsCore.Float)
+            {
+                return Library.Value(this, node, context);
+            }
+
             // Match against Coalesce(number, 0) for blank coercion            
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
@@ -638,11 +644,18 @@ namespace Microsoft.PowerFx.Dataverse
             return RetVal.FromSQL($"(ISNULL(FORMAT({result},N'0'),''))", FormulaType.String);
         }
 
-        public static string ToSqlType(FormulaType t)
+        public static string ToSqlType(FormulaType t, DVFeatureControlBlock dvFeatureControlBlock)
         {
             if (t is NumberType)
             {
-                return SqlStatementFormat.SqlFloatType;
+                if (dvFeatureControlBlock.IsFloatingPointEnabled)
+                {
+                    return SqlStatementFormat.SqlFloatType;
+                }
+                else
+                {
+                    return SqlStatementFormat.SqlDecimalType;
+                }
             }
             else if (t is DecimalType)
             {
@@ -777,12 +790,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
+            internal readonly DVFeatureControlBlock _dvFeatureControlBlock;
+
             /// <summary>
             /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, DVFeatureControlBlock dvFeatureControlBlock = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -796,6 +811,8 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopes[rootScope.Id] = RootScope;
 
                 DoesDateDiffOverflowCheck = false;
+
+                _dvFeatureControlBlock = dvFeatureControlBlock;
             }
 
             public bool DoesDateDiffOverflowCheck { get; internal set; }
@@ -966,11 +983,15 @@ namespace Microsoft.PowerFx.Dataverse
             public FormulaType GetFormulaType(CdsColumnDefinition column, Span sourceContext)
             {
                 var dkind = column.TypeDefinition.DKind;
+
+                if(_dvFeatureControlBlock.IsFloatingPointEnabled && dkind == DKind.Number)
+                {
+                    return FormulaType.Number;
+                }
+
                 switch (dkind)
                 {
                     case DKind.Number:
-                        return FormulaType.Number;
-
                     case DKind.Decimal:
                         // formatted integer types are not supported
                         if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
@@ -1026,7 +1047,7 @@ namespace Microsoft.PowerFx.Dataverse
                             throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                         }
 
-                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType());
+                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType(), _dvFeatureControlBlock);
 
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
@@ -1047,7 +1068,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // otherwise, translate existing binding node type to SQL
-                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType);
+                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType, _dvFeatureControlBlock);
             }
 
             public Scope GetScope(ScopeSymbol symbol)
@@ -1120,7 +1141,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = false)
             {
-                if(castToFloat)
+                if(_dvFeatureControlBlock.IsFloatingPointEnabled && castToFloat)
                 {
                     return TryCastToFloat(expression, retVal);
                 }
@@ -1145,6 +1166,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal TryCastToFloat(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
+                // If Floating point is disabled then route the value to decimal
+                if(!_dvFeatureControlBlock.IsFloatingPointEnabled)
+                {
+                    return TryCastToDecimal(expression, retVal, applyNullCheck);
+                }
+
                 expression = $"TRY_CAST(({expression}) AS FLOAT)";
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Number, expression);
 

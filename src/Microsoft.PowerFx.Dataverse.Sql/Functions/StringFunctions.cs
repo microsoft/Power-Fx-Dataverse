@@ -52,8 +52,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
                 var result = context.GetTempVar(context.GetReturnType(node));
+                var numberType = ToSqlType(result.type, context._dvFeatureControlBlock);
 
-                if(result.type is NumberType)
+                if (context._dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
                 {
                     context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS FLOAT)");
                 }

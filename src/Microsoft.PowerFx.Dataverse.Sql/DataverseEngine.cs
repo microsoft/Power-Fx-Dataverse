@@ -40,6 +40,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
+        protected readonly DVFeatureControlBlock _dvFeatureControlBlock;
+
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length
@@ -51,7 +53,8 @@ namespace Microsoft.PowerFx.Dataverse
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
           CultureInfo culture = null,
-          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
+          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
+          DVFeatureControlBlock dvFeatureControlBlock = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -65,6 +68,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
+
+            _dvFeatureControlBlock = dvFeatureControlBlock ?? new DVFeatureControlBlock() { IsFloatingPointEnabled = false };
 
         }
 
@@ -149,14 +154,15 @@ namespace Microsoft.PowerFx.Dataverse
             // so in that case, we need to return decimal
             if (nodeType._type.Kind == DKind.Currency)
             {
-                returnType = BuildReturnType(FormulaType.Decimal);
+                returnType = BuildReturnType(FormulaType.Decimal, _dvFeatureControlBlock);
             }
             else 
             {
-                returnType = BuildReturnType(nodeType);
+                // if Floating Point Feature is disabled this method will never return Number but it will return decimal in its place
+                returnType = BuildReturnType(nodeType, _dvFeatureControlBlock);
             }
 
-            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
+            if (!SupportedReturnType(returnType, _dvFeatureControlBlock) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
@@ -196,18 +202,24 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        internal static bool SupportedReturnType(FormulaType type)
+        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
         {
             return
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                type is NumberType ||
-                Library.IsDateTimeType(type);
+                Library.IsDateTimeType(type) ||
+                (dvFeatureControlBlock.IsFloatingPointEnabled && type is NumberType); // if Floating Point enabled, only then number type supported
         }
 
-        internal static FormulaType BuildReturnType(DType type)
+        internal static FormulaType BuildReturnType(DType type, DVFeatureControlBlock dvFeatureControlBlock)
         {
+            // if floating point feature is disabled then run on legacy functionality ie mapping number to decimal
+            if (!dvFeatureControlBlock.IsFloatingPointEnabled && type.Kind == DKind.Number)
+            {
+                return FormulaType.Decimal;
+            }
+
             try
             {
                 var fxType = FormulaType.Build(type);
@@ -225,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
             
         }
 
-        internal static FormulaType BuildReturnType(FormulaType type)
+        internal static FormulaType BuildReturnType(FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
         {
             // if the type is TZI pass it along
             if (type == FormulaType.DateTimeNoTimeZone)
@@ -234,7 +246,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // otherwise, use the internal DType to produce the final return type
-            return BuildReturnType(type._type);
+            return BuildReturnType(type._type, dvFeatureControlBlock);
         }
     }
 }
