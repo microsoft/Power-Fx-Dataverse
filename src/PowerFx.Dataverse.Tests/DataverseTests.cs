@@ -2086,37 +2086,28 @@ END
         }
 
         public const string BaseTableNameTestUDF = @"CREATE FUNCTION test(
-    @v1 uniqueidentifier -- testentityid
+    @v0 uniqueidentifier -- new_lookup
 ) RETURNS decimal(23,10)
 AS BEGIN
-    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 decimal(23,10)
     DECLARE @v2 decimal(23,10)
-    DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v0 = [new_Calc] FROM [dbo].[TestEntityTestBase] WHERE[TestEntityId] = @v1
+    SELECT TOP(1) @v1 = [simplefield] FROM [dbo].[testentityTestBase] WHERE[testentityid] = @v0
 
     -- expression body
-    SET @v2 = 2
-    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
-    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    SET @v2 = @v1
     -- end expression body
 
-    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v3, 10)
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 10)
 END
 ";
         [Fact]
         public void BaseTableNameTest()
         {
-            var model = new EntityMetadataModel {
-                LogicalName = "testentity",
-                PrimaryIdAttribute = "testentityid",
-                Attributes = new AttributeMetadataModel[] {
-                    AttributeMetadataModel.NewDecimal("new_calc", "Calc", "new_Calc").SetCalculated(),
-                    AttributeMetadataModel.NewGuid("testentityid","testentityid").SetSchemaName("TestEntityId"),
-                }
-            }.SetSchemaName("TestEntity");
-            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(model)));
-            var result = engine.Compile("new_calc * 2", new SqlCompileOptions() { UdfName = "test" });
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
+            var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
         }
@@ -2305,16 +2296,35 @@ END
 
             return ret;
         }
+    }
 
-        public bool TryGetBaseTableName(string logicalName, out string baseTableName)
+    public class MockEntityAttributeMetadataProvider : IEntityAttributeMetadataProvider
+    {
+        private readonly MockXrmMetadataProvider _xrmMetadataProvider;
+
+        public MockEntityAttributeMetadataProvider (MockXrmMetadataProvider xrmMetadataProvider)
         {
-            if (TryGetEntityMetadata(logicalName, out var entity))
+            _xrmMetadataProvider = xrmMetadataProvider; 
+        }
+
+        public bool TryGetSecondaryEntityMetadata(string logicalName, out SecondaryEntityMetadata entity)
+        {
+            if (_xrmMetadataProvider.TryGetEntityMetadata(logicalName, out var xrmEntity))
             {
-                baseTableName = entity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base");
+                entity = new SecondaryEntityMetadata()
+                {
+                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base")
+                };
                 return true;
             }
 
-            baseTableName = null;
+            entity = null;
+            return false;
+        }
+
+        public bool TryGetSecondaryAttributeMetadata(string entityLogicalName, string attributeLogicalName, out SecondaryAttributeMetadata attribute)
+        {
+            attribute = null;
             return false;
         }
     }

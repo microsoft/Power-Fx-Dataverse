@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Types;
 using System.Threading;
 using Xunit;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -43,6 +44,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__retrieveSingle(t1, __eq(t1, new_price, 255))).new_price",
             false,
             true)]
+
+        [InlineData("LookUp(t1, IsBlank(Price)).Price",
+            null,
+            "(__retrieveSingle(t1, __eq(t1, new_price, Blank()))).new_price",
+            true,
+            true)]
+
+        // can't delegate IsBlank, because inside is non delegable.
+        [InlineData("LookUp(t1, IsBlank(Price * Price)).Price",
+            null,
+            "(LookUp(t1, (IsBlank(MulNumbers(new_price,new_price))))).new_price",
+            true,
+            true,
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData("LookUp(t1, IsBlank(LookUp(t1, IsBlank(Price)))).Price",
+            100.0,
+            "(LookUp(t1, (IsBlank(__retrieveSingle(t1, __eq(t1, new_price, Blank())))))).new_price",
+            true,
+            true,
+            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData("LookUp(t1, Integer = 255).Price",
             null,
@@ -951,15 +973,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Delegation Not Allowed 
 
         // predicate that uses function that is not delegable.
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, IsBlank(Price))", 0, "Filter(t1, (IsBlank(new_price)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, false)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, true)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", true, false)]
+        [InlineData("Filter(t1, IsBlank(Price))", 0, "__retrieveMultiple(t1, __eq(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, IsBlank(Price)))", 0, "With({r:t1}, (Filter(r, (IsBlank(new_price)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", false, false)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", true, true)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, Float(200)), __eq(t1, old_price, Blank())), 999)", true, false)]
+        [InlineData("Filter(t1, Price < 200 And IsBlank(Old_Price))", 1, "__retrieveMultiple(t1, __and(__lt(t1, new_price, 200), __eq(t1, old_price, Blank())), 999)", false, true)]
 
         // predicate that uses function that is not delegable.
         [InlineData("Filter(t1, Price < 120 And IsBlank(_count))", 0, "Filter(t1, (And(LtDecimals(new_price,120), (IsBlank(_count)))))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -1446,13 +1468,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
            false,
            false)]
 
-        // Give warning when source is not delegable.
         [InlineData("Concat(ShowColumns(t1, 'new_price'), new_price & \",\")",
            "100,10,-10,",
-           "Concat(ShowColumns(t1, new_price), (Concatenate(DecimalToText(new_price), ,)))",
+           "Concat(__retrieveMultiple(t1, __noFilter(), 999, new_price), (Concatenate(DecimalToText(new_price), ,)))",
            false,
-           false,
-           "Warning 19-21: This operation on table 'local' may not work if it has more than 999 rows.")]
+           false)]
 
         // Give warning when source is entire table.
         [InlineData("Concat(t1, Price & \",\")",
@@ -1508,6 +1528,193 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
             Assert.Equal(expected, result.ToObject());
+        }
+
+        [Theory]
+
+        [InlineData("FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)",
+            2,
+            "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)",
+            true)]
+
+        [InlineData("ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')",
+            2,
+            "__retrieveMultiple(t1, __noFilter(), Float(1), new_price, old_price)",
+            true)]
+
+        [InlineData("FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)",
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), Float(1), new_price, old_price)",
+            true)]
+
+        [InlineData("First(ShowColumns(t1, 'new_price', 'old_price'))",
+            2,
+            "__retrieveSingle(t1, __noFilter(), new_price, old_price)",
+            true)]
+
+        [InlineData("First(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120))",
+            2,
+            "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)",
+            true)]
+
+        [InlineData("LookUp(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
+            2,
+            "__retrieveSingle(t1, __lt(t1, new_price, 120), new_price, old_price)",
+            true)]
+
+        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price')",
+            1,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price)",
+            true)]
+
+        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price', 'old_price')",
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)",
+            true)]
+
+        [InlineData("Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)",
+            2,
+            "__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price, old_price)",
+            true)]
+
+        // This is not delegated, but doesn't impact perf.
+        [InlineData("ShowColumns(LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")), 'new_price')",
+            1,
+            "ShowColumns(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001)), new_price)",
+            true)]
+
+        [InlineData("LookUp(ShowColumns(t1, 'localid'), localid=GUID(\"00000000-0000-0000-0000-000000000001\"))",
+            1,
+            "__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001), localid)",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))",
+            1,
+            "__retrieveSingle(t1, __noFilter(), localid)",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))",
+            1,
+            "__retrieveSingle(t1, __noFilter(), localid)",
+            true)]
+
+        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))",
+            1,
+            "(__retrieveGUID(t1, GUID(00000000-0000-0000-0000-000000000001), localid)).localid",
+            false)]
+        public void ShowColumnDelegation(string expr, int expectedCount, string expectedIr, bool isCheckSuccess, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: false);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+
+            if (!isCheckSuccess)
+            {
+                Assert.False(check.IsSuccess);
+                return;
+            }
+
+            Assert.True(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.Equal(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.Equal(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            int columnCount = 0;
+            if (result is TableValue tv)
+            {
+                columnCount = tv.Type.FieldNames.Count();
+            } 
+            else if(result is RecordValue rv)
+            {
+                columnCount = rv.Type.FieldNames.Count();
+            }
+
+            Assert.Equal(expectedCount, columnCount);
+        }
+
+        [Theory]
+
+        [InlineData("IsBlank(FirstN(t1, 1))", false, "IsBlank(__retrieveMultiple(t1, __noFilter(), Float(1)))")]
+        [InlineData("IsBlank(ShowColumns(Filter(t1, Price < 120), 'new_price'))", false, "IsBlank(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999, new_price))")]
+        [InlineData("IsBlank(LookUp(t1, Price < -100))", true, "IsBlank(__retrieveSingle(t1, __lt(t1, new_price, NegateDecimal(100))))")]
+        public void IsBlankDelegation(string expr, bool expected, string expectedIr, params string[] expectedWarnings)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: false);
+
+            var tableT1 = dv.AddTable(displayName, logicalName);
+            var tableT2 = dv.AddTable("t2", "remote");
+
+            var opts = PluginExecutionTests._parserAllowSideEffects;
+
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+            engine1.UpdateVariable("_count", FormulaValue.New(100m));
+
+            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
+
+            Assert.True(check.IsSuccess);
+
+            // compare IR to verify the delegations are happening exactly where we expect 
+            var irNode = check.ApplyIR();
+            var actualIr = check.GetCompactIRString();
+            Assert.Equal(expectedIr, actualIr);
+
+            // Validate delegation warnings.
+            // error.ToString() will capture warning status, message, and source span. 
+            var errors = check.ApplyErrors();
+
+            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
+
+            Assert.Equal(expectedWarnings.Length, errorList.Length);
+            for (int i = 0; i < errorList.Length; i++)
+            {
+                Assert.Equal(expectedWarnings[i], errorList[i]);
+            }
+
+            var run = check.GetEvaluator();
+
+            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+
+            Assert.Equal(expected, ((BooleanValue)result).Value);
         }
 
         private static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)

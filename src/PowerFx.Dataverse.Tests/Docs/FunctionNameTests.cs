@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
     public class FunctionNameTests
     {
-        private static EngineSchema GetActual()
+        private static EngineDocumentation GetActual()
         {
             var funcs = Dataverse.Functions.Library.FunctionList;
             var set = new HashSet<string>(funcs.Select(f => f.Name));
@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             set.Remove("IsToday");
             set.Remove("Today");
 
-            var actualSchema = new EngineSchema
+            var actualSchema = new EngineDocumentation
             {
                 FunctionNames = set.ToArray()
             }.Normalize();
@@ -34,11 +34,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return actualSchema;
         }
 
-        private static EngineSchema Read(string schemaName)
+        private static EngineDocumentation Read(string schemaName)
         {
             var path = Path.GetFullPath(schemaName);
             var json = File.ReadAllText(path);
-            var schema = JsonSerializer.Deserialize<EngineSchema>(json).Normalize();
+            var schema = JsonSerializer.Deserialize<EngineDocumentation>(json).Normalize();
 
             return schema;
         }

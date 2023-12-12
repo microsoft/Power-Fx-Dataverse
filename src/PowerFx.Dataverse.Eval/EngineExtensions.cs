@@ -21,20 +21,20 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
-            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, CancellationToken cancel)
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, IEnumerable<string> columns, CancellationToken cancel)
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
 
-                var result = await t2.RetrieveAsync(id, cancel).ConfigureAwait(false);
+                var result = await t2.RetrieveAsync(id, columns, cancel).ConfigureAwait(false);
                 return result;
             }
 
-            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, CancellationToken cancel)
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
             {
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-                var result = await t2.RetrieveMultipleAsync(filter, count, cancel).ConfigureAwait(false);
+                var result = await t2.RetrieveMultipleAsync(filter, count, columnSet, cancel).ConfigureAwait(false);
                 return result;
             }
 

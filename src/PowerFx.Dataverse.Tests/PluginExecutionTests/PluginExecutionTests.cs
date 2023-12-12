@@ -115,12 +115,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 _requests.Add(logicalOrDisplayName);
                 return _inner.TryGetEntityMetadata(logicalOrDisplayName, out entity);
             }
-
-            public bool TryGetBaseTableName(string logicalOrDisplayName, out string baseTableName)
-            {
-                baseTableName = null;
-                return false;
-            }
         }
 
         // Verify we can convert EntityMetadata to RecordType
@@ -448,7 +442,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id)).ConfigureAwait(false) as RecordValue;
+            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id), columns: null).ConfigureAwait(false) as RecordValue;
 
             // Test the serializer! 
             var expr = record.ToExpression();
@@ -2308,7 +2302,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
-            var entity = el.RetrieveAsync("allattributes", _g1).Result.Response;
+            var entity = el.RetrieveAsync("allattributes", _g1, columns:null).Result.Response;
 
             var expectedErrors = new List<string>()
             {
@@ -2722,6 +2716,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var entity3 = new Entity("local", _g3);
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
+            entity3.Attributes["old_price"] = null;
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
