@@ -99,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Entry called by Power Fx interpreter. 
-        public async Task<StringValue> Execute(IDataverseExecute client, StringValue text, CancellationToken cancel)
+        public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, CancellationToken cancel)
         {
             if (client == null)
             {
@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result = await TranslatedText(text.Value, null, client, cancel);
+            var result = await TranslatedText(value.Value, null, client, cancel);
 
 
             return FormulaValue.New(result);
@@ -122,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Entry called by Power Fx interpreter. 
-        public async Task<StringValue> Execute(IDataverseExecute client, StringValue text, StringValue targetLanguage, CancellationToken cancel)
+        public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, StringValue targetLanguage, CancellationToken cancel)
         {
             if (client == null)
             {
@@ -130,7 +130,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result =  await TranslatedText(text.Value, targetLanguage.Value, client, cancel);
+            var result =  await TranslatedText(value.Value, targetLanguage.Value, client, cancel);
              
 
             return FormulaValue.New(result);
