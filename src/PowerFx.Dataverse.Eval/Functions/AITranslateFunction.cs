@@ -14,9 +14,9 @@ namespace Microsoft.PowerFx.Dataverse
 {
     // AITranslate(String) : string 
     // given a string, call GPT to return a English-translated version of the string. 
-    public abstract class AITranslateFunction : ReflectionFunction
+    public abstract class AITranslateFunctionBase : ReflectionFunction
     {
-        public AITranslateFunction()
+        public AITranslateFunctionBase()
                 : base("AITranslate",
                       FormulaType.String,
                       FormulaType.String)
@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
             this.ConfigType = typeof(IDataverseExecute);
         }
 
-        public AITranslateFunction(FormulaType fieldType)
+        public AITranslateFunctionBase(FormulaType fieldType)
                 : base("AITranslate", 
                       FormulaType.String, 
                       FormulaType.String, 
@@ -91,9 +91,9 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    public class AITranslateFunctionDefault : AITranslateFunction
+    public class AITranslateFunction : AITranslateFunctionBase
     {
-        public AITranslateFunctionDefault() 
+        public AITranslateFunction() 
             : base()
         {
         }
@@ -114,7 +114,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    public class AITranslateFunctionWithLanguage : AITranslateFunction
+    public class AITranslateFunctionWithLanguage : AITranslateFunctionBase
     {
         public AITranslateFunctionWithLanguage()
             : base(FormulaType.String)
