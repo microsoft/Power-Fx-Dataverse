@@ -628,6 +628,125 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableFact]
+        public void FloatingPointTests()
+        {
+            var model = new EntityMetadataModel
+            {
+                LogicalName = "local",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewDecimal("decimal", "Decimal"),
+                    AttributeMetadataModel.NewDecimal("decimal2", "Decimal2"),
+                    AttributeMetadataModel.NewDecimal("decimal3", "Decimal3"),
+                    AttributeMetadataModel.NewDecimal("decimal4", "Decimal4"),
+                    AttributeMetadataModel.NewDecimal("decimal5", "Decimal5"),
+                    AttributeMetadataModel.NewMoney("decimal6", "Decimal6"),
+                    AttributeMetadataModel.NewDouble("double1",  "Double1"),
+                    AttributeMetadataModel.NewDouble("double2", "Double2"),
+                    AttributeMetadataModel.NewDouble("double3", "Double3"),
+                    AttributeMetadataModel.NewDouble("double4", "Double4"),
+                    AttributeMetadataModel.NewDouble("double5", "Double5"),
+                    AttributeMetadataModel.NewDouble("double6", "Double6"),
+                    AttributeMetadataModel.NewInteger("int", "Integer"),
+                    AttributeMetadataModel.NewInteger("int2", "Integer2"),
+                    AttributeMetadataModel.NewDecimal("big_decimal", "BigDecimal"),
+                    AttributeMetadataModel.NewInteger("big_int", "BigInteger"),
+                    AttributeMetadataModel.NewMoney("money1", "Money1"),
+                    AttributeMetadataModel.NewMoney("money2", "Money2")
+                }
+            };
+            var metadata = new EntityMetadataModel[] { model };
+            using (var cx = GetSql())
+            {
+                CreateTable(cx, model, new Dictionary<string, string>
+                {
+                    { "decimal", "19.69658" },
+                    { "decimal2", "0.02188" },
+                    { "decimal3", "10000000000" },
+                    { "decimal4", SqlStatementFormat.DecimalTypeMax },
+                    { "decimal5", SqlStatementFormat.DecimalTypeMin },
+                    { "decimal6",  "1000000000000"},
+                    { "double1", "25.63658" },
+                    { "double2", "1.02342" },
+                    { "double3", "10000000000" },
+                    { "double4", SqlStatementFormat.DecimalTypeMax },
+                    { "double5", SqlStatementFormat.DecimalTypeMin },
+                    { "double6", "-1343.2233" },
+                    { "int", "20"},
+                    { "int2", "2147483645" },
+                    { "big_decimal", SqlStatementFormat.DecimalTypeMax },
+                    { "big_int", SqlStatementFormat.IntTypeMax },
+                    { "money1", "99999999999999" },
+                    { "money2", "9999999999999" }
+                });
+
+                // arithmetic
+                ExecuteSqlTest("double1+double2", 26.66D, cx, metadata); // 26.66D means 26.66 of type double and 26.66M means 26.66 of type decimal
+                ExecuteSqlTest("double1-double2", 24.613159999999997D, cx, metadata);
+                ExecuteSqlTest("double1*double2", 26.236988703599998D, cx, metadata);
+                ExecuteSqlTest("double1/double2", 25.049911082449043D, cx, metadata);
+                ExecuteSqlTest("double1+decimal2", 25.658459999999998D, cx, metadata);
+                ExecuteSqlTest("double1-decimal2", 25.6147D, cx, metadata);
+                ExecuteSqlTest("double1*decimal2", 0.5609283704D, cx, metadata);
+                ExecuteSqlTest("double1/decimal2", 1171.6901279707495D, cx, metadata);
+                ExecuteSqlTest("double1%", 0.2563658D, cx, metadata);
+                ExecuteSqlTest("int+double1", 45.636579999999995D, cx, metadata);
+
+                // overflow
+                ExecuteSqlTest("double4+1", null, cx, metadata);
+                ExecuteSqlTest("double5-1", null, cx, metadata);
+                ExecuteSqlTest("double4+int", null, cx, metadata);
+                ExecuteSqlTest("big_decimal+double1", null, cx, metadata);
+
+                // math functions
+                ExecuteSqlTest("Mod(double1,decimal)", 5.94D, cx, metadata);
+                ExecuteSqlTest("Mod(double1,double2)", 0.05108D, cx, metadata);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata);
+
+                ExecuteSqlTest("Round(double1,2)", 25.64D, cx, metadata);
+                ExecuteSqlTest("Round(double1,double2)", 25.6D, cx, metadata);
+                ExecuteSqlTest("Round(decimal,double2)", 19.7000000000M, cx, metadata);
+
+                ExecuteSqlTest("RoundUp(double1,2)", 25.64D, cx, metadata);
+                ExecuteSqlTest("RoundUp(double1,double2)", 25.7D, cx, metadata);
+                ExecuteSqlTest("RoundUp(decimal,double2)", 19.7000000000M, cx, metadata);
+
+                ExecuteSqlTest("RoundDown(double1,2)", 25.63D, cx, metadata);
+                ExecuteSqlTest("RoundDown(double1,double2)", 25.6D, cx, metadata);
+                ExecuteSqlTest("RoundDown(decimal,double2)", 19.6000000000M, cx, metadata);
+
+                ExecuteSqlTest("Trunc(double1,2)", 25.63D, cx, metadata);
+                ExecuteSqlTest("Trunc(double1,double2)", 25.6D, cx, metadata);
+                ExecuteSqlTest("Trunc(decimal,double2)", 19.6000000000M, cx, metadata);
+
+                ExecuteSqlTest("Abs(double6)", 1343.2233D, cx, metadata);
+                ExecuteSqlTest("Int(double1)", 25D, cx, metadata);
+                ExecuteSqlTest("Int(decimal)", 19M, cx, metadata);
+
+                ExecuteSqlTest("Average(double1,double2,double3,double4)", 27500000006.665D, cx, metadata);
+                ExecuteSqlTest("Average(decimal,double2,decimal2,double4)", 25000000005.1854700000M, cx, metadata);
+                ExecuteSqlTest("Max(double1,double2,double3,double4)", 100000000000D, cx, metadata);
+                ExecuteSqlTest("Max(decimal,double2,decimal2,double4)", 100000000000.0000000000M, cx, metadata);
+                ExecuteSqlTest("Sum(double1,double2,double3,double4)", null, cx, metadata);
+                ExecuteSqlTest("Sum(decimal,double2,decimal2,double4)", null, cx, metadata);
+
+                // String functions
+                ExecuteSqlTest("Float(double1)", 25.63658D, cx, metadata);
+                ExecuteSqlTest("Float(decimal)", 19.69658D, cx, metadata);
+                ExecuteSqlTest("Decimal(double1)", 25.6365800000M, cx, metadata);
+
+                ExecuteSqlTest("Left(\"abcd\", double2)", "a", cx, metadata);
+                ExecuteSqlTest("Left(\"abcd\", double3)", null, cx, metadata);
+
+                ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", "ebcd", cx, metadata);
+                ExecuteSqlTest("Mid(\"abcd\", 1, double2)", "a", cx, metadata);
+                ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", "ebcd", cx, metadata);
+                
+            }
+        }
+
         public static TypeDetails GetIntegerHint()
         {
             return new TypeDetails
