@@ -1942,7 +1942,8 @@ END
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
-            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
+                ,dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
