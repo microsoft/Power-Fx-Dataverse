@@ -728,6 +728,22 @@ END
             result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are supported from IR
             Assert.True(result.IsSuccess);
+
+            // Floating Point feature disabled
+           
+            // Float function will be supported regardless of FCB IsFloatingPointEnabled because we can't add/remove this function from dictionary
+            // at run time in this static list, only thing is if FCB is disabled then Float will produce decimal, if it is enabled then it will produce float
+
+            engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
+            result = engine.Compile("Float(5)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
+
+            result = engine.Compile("Decimal(Float(25))", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
         }
 
         [Fact]

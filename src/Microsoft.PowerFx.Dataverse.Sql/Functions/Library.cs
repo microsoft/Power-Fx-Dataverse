@@ -52,7 +52,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
             { BuiltinFunctionsCore.Exp, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Exp(runner,node, context) : FunctionDisabled(runner, node, context)},
-            { BuiltinFunctionsCore.Float, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Value(runner,node, context) : FunctionDisabled(runner, node, context)},
+            
+            // Float function will be supported regardless of FCB IsFloatingPointEnabled because we can't add/remove this function from dictionary
+            // at run time in this static list, only thing is if FCB is disabled then Float will produce decimal, if it is enabled then it will produce float
+            { BuiltinFunctionsCore.Float, Value},
             //{ BuiltinFunctionsCore.Filter, FilterTable },
             //{ BuiltinFunctionsCore.Find, Find },
             //{ BuiltinFunctionsCore.First, First },
