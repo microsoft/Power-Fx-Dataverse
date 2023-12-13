@@ -116,15 +116,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(CallNode node, Context context)
         {
-            if (Library.TryLookup(node.Function, out var ptr))
-            {
-                return ptr(this, node, context);
-            }
-
-            // if floating point is disabled then float function will not present in library and need to map to Value to be in parity with old behavior
+            // if floating point Feature is disabled then float function will be present in library and would be suggested in intellisense but
+            // when user tries to use it, it will throw exception but internally we need to support it because IR will continue producing Float in node
+            // and we need to map it to Value function to be in parity with old behavior
             if (!context._dvFeatureControlBlock.IsFloatingPointEnabled && node.Function == BuiltinFunctionsCore.Float)
             {
                 return Library.Value(this, node, context);
+            }
+
+            if (Library.TryLookup(node.Function, out var ptr))
+            {
+                return ptr(this, node, context);
             }
 
             // Match against Coalesce(number, 0) for blank coercion            

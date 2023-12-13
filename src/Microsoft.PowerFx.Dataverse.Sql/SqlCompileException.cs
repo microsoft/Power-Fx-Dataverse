@@ -88,6 +88,11 @@ namespace Microsoft.PowerFx.Dataverse
         internal readonly static ErrorResourceKey FunctionNotSupported = DataverseStringResources.New("FormulaColumns_FunctionNotSupported");
 
         /// <summary>
+        /// The error resource key for use of a function that is not supported
+        /// </summary>
+        internal readonly static ErrorResourceKey FunctionSupportDisabled = DataverseStringResources.New("FormulaColumns_FunctionSupportDisabled");
+
+        /// <summary>
         /// The error resource key for use of an unsupported operation
         /// </summary>
         internal readonly static ErrorResourceKey OperationNotSupported = DataverseStringResources.New("FormulaColumns_OperationNotSupported");

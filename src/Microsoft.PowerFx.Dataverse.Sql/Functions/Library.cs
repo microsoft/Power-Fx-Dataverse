@@ -51,8 +51,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
-            { BuiltinFunctionsCore.Exp, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Exp(runner,node, context) : NotSupported(runner, node, context, BuiltinFunctionsCore.Exp.LocaleSpecificName)},
-            { BuiltinFunctionsCore.Float, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Value(runner,node, context) : NotSupported(runner, node, context, BuiltinFunctionsCore.Float.LocaleSpecificName)},
+            { BuiltinFunctionsCore.Exp, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Exp(runner,node, context) : FunctionDisabled(runner, node, context)},
+            { BuiltinFunctionsCore.Float, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Value(runner,node, context) : FunctionDisabled(runner, node, context)},
             //{ BuiltinFunctionsCore.Filter, FilterTable },
             //{ BuiltinFunctionsCore.Find, Find },
             //{ BuiltinFunctionsCore.First, First },
@@ -72,7 +72,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.LastN, LastN},
             { BuiltinFunctionsCore.Left, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context, "LEFT") },
             { BuiltinFunctionsCore.Len, Len },
-            { BuiltinFunctionsCore.Ln, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Ln(runner,node, context) : NotSupported(runner, node, context, BuiltinFunctionsCore.Ln.LocaleSpecificName)},
+            { BuiltinFunctionsCore.Ln, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Ln(runner,node, context) : FunctionDisabled(runner, node, context)},
             { BuiltinFunctionsCore.Lower, (SqlVisitor runner, CallNode node, Context context) => UpperLower(runner, node, context, "LOWER") },
             { BuiltinFunctionsCore.Max, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MAX") },
             { BuiltinFunctionsCore.Mid, Mid },
@@ -83,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Not, Not },
             { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTime) },
             { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
-            { BuiltinFunctionsCore.Power,  (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Power(runner,node, context) : NotSupported(runner, node, context, BuiltinFunctionsCore.Power.LocaleSpecificName)},
+            { BuiltinFunctionsCore.Power,  (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Power(runner,node, context) : FunctionDisabled(runner, node, context)},
             { BuiltinFunctionsCore.Replace, Replace },
             { BuiltinFunctionsCore.Right, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context,"RIGHT") },
             { BuiltinFunctionsCore.Round, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ROUND", 2) },
@@ -94,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.StartsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Prefix) },
             { BuiltinFunctionsCore.Sum, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "SUM") },
             //{ BuiltinFunctionsCore.SumT, SumTable },
-            { BuiltinFunctionsCore.Sqrt, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Sqrt(runner,node, context) : NotSupported(runner, node, context, BuiltinFunctionsCore.Sqrt.LocaleSpecificName)},
+            { BuiltinFunctionsCore.Sqrt, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Sqrt(runner,node, context) : FunctionDisabled(runner, node, context)},
             { BuiltinFunctionsCore.Substitute, Substitute },
             { BuiltinFunctionsCore.Switch, Switch },
             //{ BuiltinFunctionsCore.Table, Table },
@@ -122,6 +122,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal NotSupported(SqlVisitor runner, CallNode node, Context context, string suggestedFunction)
         {
             throw new SqlCompileException(SqlCompileException.FunctionNotSupported, node.IRContext.SourceContext, node.Function.LocaleSpecificName, suggestedFunction);
+        }
+
+        public static RetVal FunctionDisabled(SqlVisitor runner, CallNode node, Context context)
+        {
+            throw new SqlCompileException(SqlCompileException.FunctionSupportDisabled, node.IRContext.SourceContext, node.Function.LocaleSpecificName);
         }
 
         public static SqlCompileException BuildUnsupportedArgumentException(TexlFunction func, int argumentIndex, Span sourceContext = default)
