@@ -600,6 +600,16 @@ END
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
             Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("Power is not supported in formula columns.", errors[0].Message);
         }
 
         [Fact]
@@ -614,6 +624,16 @@ END
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
             Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("Sqrt is not supported in formula columns.", errors[0].Message);
         }
 
         [Fact]
@@ -628,6 +648,16 @@ END
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
             Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("Ln is not supported in formula columns.", errors[0].Message);
         }
 
         [Fact]
@@ -642,6 +672,16 @@ END
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
             Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("Exp is not supported in formula columns.", errors[0].Message);
         }
 
         public const string FloatFunctionUDF = @"CREATE FUNCTION fn_testUdf1(
