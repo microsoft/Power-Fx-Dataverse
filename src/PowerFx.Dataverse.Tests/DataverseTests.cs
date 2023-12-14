@@ -763,8 +763,9 @@ END
             CallEngineAndVerifyResult("Mod(Float(2),4)", FormulaType.Number, "Mod(Float(#$decimal$#), #$decimal$#)"); // producing float
             CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
 
-            CallEngineAndVerifyResult("Mod(Float(2),4)", FormulaType.Decimal, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false); // producing decimal if FCB disabled
-            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false); // producing decimal because first arg derives the return type of formula
+            // if floating point FCB is disabled then user can't use Float function directly in formula but internally from IR, it would be supported
+            CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false, isSuccess : false, errorMsg : "'Float' is an unknown or unsupported function."); // producing decimal if FCB disabled
+            CallEngineAndVerifyResult("Mod(4, Float(2))", null, "Mod(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); // producing decimal because first arg derives the return type of formula
         }
 
         [Fact]
@@ -787,14 +788,14 @@ END
 
 
             // FCB Floating Point disabled
-            CallEngineAndVerifyResult("Round(Float(132.133),2)", FormulaType.Decimal, "Round(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false); // producing decimal as FCB disabled
-            CallEngineAndVerifyResult("Round(4, Float(132.22))", FormulaType.Decimal, "Round(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false); 
+            CallEngineAndVerifyResult("Round(Float(132.133),2)", null, "Round(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); // producing decimal as FCB disabled
+            CallEngineAndVerifyResult("Round(4, Float(132.22))", null, "Round(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
 
-            CallEngineAndVerifyResult("RoundUp(Float(132.133),2)", FormulaType.Decimal, "RoundUp(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("RoundUp(4, Float(132.22))", FormulaType.Decimal, "RoundUp(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("RoundUp(Float(132.133),2)", null, "RoundUp(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("RoundUp(4, Float(132.22))", null, "RoundUp(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
 
-            CallEngineAndVerifyResult("RoundDown(Float(132.133),2)", FormulaType.Decimal, "RoundDown(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("RoundDown(4, Float(132.22))", FormulaType.Decimal, "RoundDown(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("RoundDown(Float(132.133),2)", null, "RoundDown(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("RoundDown(4, Float(132.22))", null, "RoundDown(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
 
         }
 
@@ -809,10 +810,10 @@ END
             CallEngineAndVerifyResult("Trunc(Float(132.22), Float(132.22))", FormulaType.Number, "Trunc(Float(#$decimal$#), Float(#$decimal$#))");
 
             // FCB Floating Point  disabled
-            CallEngineAndVerifyResult("Trunc(Float(132.133))", FormulaType.Decimal, "Trunc(Float(#$decimal$#))", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Trunc(4, Float(132.22))", FormulaType.Decimal, "Trunc(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Trunc(Float(132.22), 3)", FormulaType.Decimal, "Trunc(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Trunc(Float(132.22), Float(132.22))", FormulaType.Decimal, "Trunc(Float(#$decimal$#), Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Trunc(Float(132.133))", null, "Trunc(Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(4, Float(132.22))", null, "Trunc(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(Float(132.22), 3)", null, "Trunc(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(Float(132.22), Float(132.22))", null, "Trunc(Float(#$decimal$#), Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
 
         }
 
@@ -827,9 +828,9 @@ END
 
             // FCB Floating Point  disabled
             CallEngineAndVerifyResult("Left(\"abc\", 1)", FormulaType.String, "Left(#$string$#, #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Left(\"abc\", Float(1))", FormulaType.String, "Left(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Left(\"abc\", Float(1))", null, "Left(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
             CallEngineAndVerifyResult("Right(\"abc\", 1)", FormulaType.String, "Right(#$string$#, #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Right(\"abc\", Float(1))", FormulaType.String, "Right(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Right(\"abc\", Float(1))", null, "Right(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
         }
 
         [Fact]
@@ -842,9 +843,9 @@ END
 
             // FCB Floating Point disabled
             CallEngineAndVerifyResult("Replace(\"abc\", 1, 2, \"ae\")", FormulaType.String, "Replace(#$string$#, #$decimal$#, #$decimal$#, #$string$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Replace(\"abc\", Float(1), 2, \"ae\")", FormulaType.String, "Replace(#$string$#, Float(#$decimal$#), #$decimal$#, #$string$#)", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Replace(\"abc\", Float(1), 2, \"ae\")", null, "Replace(#$string$#, Float(#$decimal$#), #$decimal$#, #$string$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
             CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", 1)", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, #$decimal$#)", isFloatingPointEnabled: false);
-            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", Float(1))", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", Float(1))", null, "Substitute(#$string$#, #$string$#, #$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
         }
 
         [Fact]
@@ -854,7 +855,7 @@ END
             CallEngineAndVerifyResult("Abs(Float(-132.133))", FormulaType.Number, "Abs(Float(-#$decimal$#))"); // producing float  
 
             // FCB Floating Point  disabled
-            CallEngineAndVerifyResult("Abs(Float(-132.133))", FormulaType.Decimal, "Abs(Float(-#$decimal$#))", isFloatingPointEnabled:false); // producing decimal as fcb disabled  
+            CallEngineAndVerifyResult("Abs(Float(-132.133))", null, "Abs(Float(-#$decimal$#))", isFloatingPointEnabled:false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
         }
 
         [Fact]
@@ -865,22 +866,34 @@ END
             CallEngineAndVerifyResult("Max(1, Float(2),3,4)", FormulaType.Decimal, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)"); // producing decimal
 
             // FCB Floating Point  disabled
-            CallEngineAndVerifyResult("Max(Float(1),2,3,4)", FormulaType.Decimal, "Max(Float(#$decimal$#), #$decimal$#, #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false); // producing float
-            CallEngineAndVerifyResult("Max(1, Float(2),3,4)", FormulaType.Decimal, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false); // producing decimal
+            CallEngineAndVerifyResult("Max(Float(1),2,3,4)", null, "Max(Float(#$decimal$#), #$decimal$#, #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+            CallEngineAndVerifyResult("Max(1, Float(2),3,4)", null, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
         }
 
 
-        private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula, bool isFloatingPointEnabled = true)
+        private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula, bool isFloatingPointEnabled = true,
+            bool isSuccess = true, string errorMsg = null)
         {
             var engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = isFloatingPointEnabled });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
-            Assert.True(result.IsSuccess);
-            Assert.Empty(result.Errors);
-            Assert.Equal(returnType, result.ReturnType);
+            Assert.Equal(isSuccess, result.IsSuccess);
             Assert.Equal(sanitizedFormula, result.SanitizedFormula);
+
+            if (result.IsSuccess)
+            {
+                Assert.Empty(result.Errors);
+                Assert.Equal(returnType, result.ReturnType);
+            }
+            else
+            {
+                Assert.NotEmpty(result.Errors);
+                var errors = result.Errors.ToArray();
+                Assert.Equal(errorMsg, errors[0].Message);
+            }
         }
+
 
         [Fact]
         public void CheckSchemaBinding()
