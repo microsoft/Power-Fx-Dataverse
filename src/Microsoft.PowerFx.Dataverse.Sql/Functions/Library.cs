@@ -51,10 +51,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
-            { BuiltinFunctionsCore.Exp, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Exp(runner,node, context) : FunctionDisabled(runner, node, context)},
+            { BuiltinFunctionsCore.Exp, Exp },
             
-            // Float function will be supported regardless of FCB IsFloatingPointEnabled because we can't add/remove this function from dictionary
-            // at run time in this static list, only thing is if FCB is disabled then Float will produce decimal, if it is enabled then it will produce float
+            /* If Floating Point feature is disabled then
+                 a. Float functions would be internally supported from IR and it will produce decimal in that case to be in parity with GA behavior
+                 b. Float functions would not be suggested in intellisense
+                 c. If user tries to manually type Float function on intellisense it will show error
+               If Floating Point feature is enabled then
+                 a. Float functions would be internally supported from IR and it will produce float
+                 b. Float functions would be suggested in intellisense
+            */  
+            
             { BuiltinFunctionsCore.Float, Value},
             //{ BuiltinFunctionsCore.Filter, FilterTable },
             //{ BuiltinFunctionsCore.Find, Find },
@@ -75,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.LastN, LastN},
             { BuiltinFunctionsCore.Left, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context, "LEFT") },
             { BuiltinFunctionsCore.Len, Len },
-            { BuiltinFunctionsCore.Ln, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Ln(runner,node, context) : FunctionDisabled(runner, node, context)},
+            { BuiltinFunctionsCore.Ln, Ln },
             { BuiltinFunctionsCore.Lower, (SqlVisitor runner, CallNode node, Context context) => UpperLower(runner, node, context, "LOWER") },
             { BuiltinFunctionsCore.Max, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MAX") },
             { BuiltinFunctionsCore.Mid, Mid },
@@ -86,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Not, Not },
             { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTime) },
             { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
-            { BuiltinFunctionsCore.Power,  (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Power(runner,node, context) : FunctionDisabled(runner, node, context)},
+            { BuiltinFunctionsCore.Power, Power },
             { BuiltinFunctionsCore.Replace, Replace },
             { BuiltinFunctionsCore.Right, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context,"RIGHT") },
             { BuiltinFunctionsCore.Round, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ROUND", 2) },
@@ -97,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.StartsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Prefix) },
             { BuiltinFunctionsCore.Sum, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "SUM") },
             //{ BuiltinFunctionsCore.SumT, SumTable },
-            { BuiltinFunctionsCore.Sqrt, (SqlVisitor runner, CallNode node, Context context) => context._dvFeatureControlBlock.IsFloatingPointEnabled ? Sqrt(runner,node, context) : FunctionDisabled(runner, node, context)},
+            { BuiltinFunctionsCore.Sqrt, Sqrt },
             { BuiltinFunctionsCore.Substitute, Substitute },
             { BuiltinFunctionsCore.Switch, Switch },
             //{ BuiltinFunctionsCore.Table, Table },

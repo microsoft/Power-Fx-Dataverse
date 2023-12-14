@@ -857,7 +857,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 // String functions
                 ExecuteSqlTest("Float(double1)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Float(decimal)", 19.69658M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Float(decimal)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
                 ExecuteSqlTest("Decimal(double1)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
 
                 ExecuteSqlTest("Left(\"abcd\", double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);

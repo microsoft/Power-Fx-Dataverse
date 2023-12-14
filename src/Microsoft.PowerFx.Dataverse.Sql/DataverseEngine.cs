@@ -18,6 +18,10 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using System.Linq;
+using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
+using TexlFunction = Microsoft.PowerFx.Core.Functions.TexlFunction;
+
 
 
 namespace Microsoft.PowerFx.Dataverse
@@ -47,6 +51,15 @@ namespace Microsoft.PowerFx.Dataverse
         // the max supported expression length
         internal const int MaxExpressionLength = 1000;
 
+        internal static readonly TexlFunction[] FloatingPointFunctions = new[]
+        {
+            BuiltinFunctionsCore.Exp,
+            BuiltinFunctionsCore.Float,
+            BuiltinFunctionsCore.Power,
+            BuiltinFunctionsCore.Sqrt,
+            BuiltinFunctionsCore.Ln
+        };
+
         // $$$ - remove culture parameter and just get it from the config. 
         public DataverseEngine(
           EntityMetadata currentEntityMetadata,
@@ -71,6 +84,22 @@ namespace Microsoft.PowerFx.Dataverse
 
             _dvFeatureControlBlock = dvFeatureControlBlock ?? new DVFeatureControlBlock() { IsFloatingPointEnabled = false };
 
+            var functions = Library.FunctionList.ToList();
+
+            // If Floating Point Feature is disabled then don't recommend Floating Point functions on Intellisense
+            // but internal support for Float function would be there for IR nodes as we are not removing these functions from static library list
+            if (!_dvFeatureControlBlock.IsFloatingPointEnabled)
+            {
+                foreach(TexlFunction function in FloatingPointFunctions)
+                {
+                    if (functions.IndexOf(function) != -1)
+                    {
+                        functions.Remove(function);
+                    }
+                }
+            }
+
+            this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(functions);
         }
 
         #region Critical Virtuals

@@ -609,7 +609,7 @@ END
             Assert.NotEmpty(result.Errors);
             var errors = result.Errors.ToArray();
             Assert.Single(errors);
-            Assert.Equal("Power is not supported in formula columns.", errors[0].Message);
+            Assert.Equal("'Power' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
@@ -633,7 +633,7 @@ END
             Assert.NotEmpty(result.Errors);
             var errors = result.Errors.ToArray();
             Assert.Single(errors);
-            Assert.Equal("Sqrt is not supported in formula columns.", errors[0].Message);
+            Assert.Equal("'Sqrt' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
@@ -657,7 +657,7 @@ END
             Assert.NotEmpty(result.Errors);
             var errors = result.Errors.ToArray();
             Assert.Single(errors);
-            Assert.Equal("Ln is not supported in formula columns.", errors[0].Message);
+            Assert.Equal("'Ln' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
@@ -681,7 +681,7 @@ END
             Assert.NotEmpty(result.Errors);
             var errors = result.Errors.ToArray();
             Assert.Single(errors);
-            Assert.Equal("Exp is not supported in formula columns.", errors[0].Message);
+            Assert.Equal("'Exp' is an unknown or unsupported function.", errors[0].Message);
         }
 
         public const string FloatFunctionUDF = @"CREATE FUNCTION fn_testUdf1(
@@ -731,19 +731,28 @@ END
 
             // Floating Point feature disabled
            
-            // Float function will be supported regardless of FCB IsFloatingPointEnabled because we can't add/remove this function from dictionary
-            // at run time in this static list, only thing is if FCB is disabled then Float will produce decimal, if it is enabled then it will produce float
-
             engine = new PowerFx2SqlEngine(dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = false });
             result = engine.Compile("Float(5)", new SqlCompileOptions());
-            Assert.True(result.IsSuccess);
-            Assert.Empty(result.Errors);
-            Assert.Equal(FormulaType.Decimal, result.ReturnType);
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Float' is an unknown or unsupported function.", errors[0].Message);
 
             result = engine.Compile("Decimal(Float(25))", new SqlCompileOptions());
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            errors = result.Errors.ToArray();
+            Assert.Equal(2, errors.Length);
+            Assert.Equal("'Float' is an unknown or unsupported function.", errors[0].Message);
+
+            // Float functions is internally supported from IR even though Floating Point feature is disabled and it will produce decimal 
+            // in that case to be in parity with GA behavior
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); 
             Assert.True(result.IsSuccess);
-            Assert.Empty(result.Errors);
-            Assert.Equal(FormulaType.Decimal, result.ReturnType);
         }
 
         [Fact]
