@@ -764,8 +764,8 @@ END
             CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
 
             // if floating point FCB is disabled then user can't use Float function directly in formula but internally from IR, it would be supported
-            CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false, isSuccess : false, errorMsg : "'Float' is an unknown or unsupported function."); // producing decimal if FCB disabled
-            CallEngineAndVerifyResult("Mod(4, Float(2))", null, "Mod(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); // producing decimal because first arg derives the return type of formula
+            CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false, isSuccess : false, errorMsg : "'Float' is an unknown or unsupported function."); 
+            CallEngineAndVerifyResult("Mod(4, Float(2))", null, "Mod(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
         }
 
         [Fact]
@@ -788,7 +788,7 @@ END
 
 
             // FCB Floating Point disabled
-            CallEngineAndVerifyResult("Round(Float(132.133),2)", null, "Round(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); // producing decimal as FCB disabled
+            CallEngineAndVerifyResult("Round(Float(132.133),2)", null, "Round(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
             CallEngineAndVerifyResult("Round(4, Float(132.22))", null, "Round(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
 
             CallEngineAndVerifyResult("RoundUp(Float(132.133),2)", null, "RoundUp(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
