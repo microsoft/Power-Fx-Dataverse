@@ -20,9 +20,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     {
         // FAils if config.EnableAIFunctions() is not called.
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Missing(bool enable)
+        [InlineData(true, "AITranslate(\"yo soy John\")")]
+        [InlineData(false, "AITranslate(\"yo soy John\")")]
+        [InlineData(true, "AITranslate(\"yo soy John\", \"fr\")")]
+        [InlineData(false, "AITranslate(\"yo soy John\", \"fr\")")]
+        public void Missing(bool enable, string input)
         {
             var config = new PowerFxConfig();
             if (enable)
@@ -31,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             var engine = new RecalcEngine(config);
 
-            var result = engine.Check("AITranslate(\"yo soy John\")");
+            var result = engine.Check(input);
             Assert.Equal(enable, result.IsSuccess);
         }
 
@@ -69,7 +71,43 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public async Task Failure()
+        public async Task SuccessWithLanguage()
+        {
+            var config = new PowerFxConfig();
+            config.EnableAIFunctions();
+
+            var engine = new RecalcEngine(config);
+
+            var rc = new RuntimeConfig();
+
+            var client = new MockExecute();
+            rc.AddDataverseExecute(client);
+
+
+            client.Work = (req) =>
+            {
+                // Validate parameters
+                Assert.Equal("AITranslate", req.RequestName);
+                Assert.Equal("My name is John", req.Parameters["Text"]);
+                Assert.Equal("fr", req.Parameters["TargetLanguage"]);
+
+                var resp = new OrganizationResponse
+                {
+                    ResponseName = "AITranslate"
+                };
+                resp["TranslatedText"] = "Je m'appelle John";
+                return resp;
+            };
+
+            var result = await engine.EvalAsync("AITranslate(\"My name is John\", \"fr\")", default, runtimeConfig: rc);
+
+            Assert.Equal("Je m'appelle John", result.ToObject());
+        }
+
+        [Theory]
+        [InlineData("AITranslate(\"yo soy John\")")]
+        [InlineData("AITranslate(\"yo soy John\", \"fr\")")]
+        public async Task Failure(string input)
         {
             var config = new PowerFxConfig();
             config.EnableAIFunctions();
@@ -88,7 +126,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException(msg);
             };
 
-            var result = await engine.EvalAsync("AITranslate(\"yo soy John\")", default, runtimeConfig: rc);
+            var result = await engine.EvalAsync(input, default, runtimeConfig: rc);
 
             var errors = (ErrorValue)result;
             Assert.Equal(1, errors.Errors.Count);
