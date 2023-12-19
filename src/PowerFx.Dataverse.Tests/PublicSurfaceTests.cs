@@ -61,6 +61,8 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AIReplyFunction",
                 "Microsoft.PowerFx.Dataverse.AISentimentFunction",
                 "Microsoft.PowerFx.Dataverse.AITranslateFunction",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunctionBase",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunctionWithLanguage",
                 "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
                 "Microsoft.PowerFx.Dataverse.AIExtractFunction",
                 "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
