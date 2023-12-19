@@ -272,12 +272,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (refFieldCount > 0)
                 {
-                    var isMetadataCacheNull = _secondaryMetadataCache == null;
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " +
-                            $"[{(!isMetadataCacheNull && _secondaryMetadataCache.IsSchemaNameDifferentFromTableColumnName(field, out string tableColumName) ? tableColumName : field.Column.SchemaName)}]"; }));
+                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " + $"[{GetColumnSchemaName(field)}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
@@ -374,6 +372,16 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return tableSchemaName;
+        }
+
+        private string GetColumnSchemaName(VarDetails field)
+        {
+            if (_secondaryMetadataCache == null)
+            {
+                return field.Column.SchemaName;
+            }
+
+            return _secondaryMetadataCache.GetColumnNameOnPrimaryTable(field);
         }
 
         private void EmitReturn(StringWriter tw, string indent, SqlVisitor.Context context, SqlVisitor.RetVal result, FormulaType returnType, SqlCompileOptions options)

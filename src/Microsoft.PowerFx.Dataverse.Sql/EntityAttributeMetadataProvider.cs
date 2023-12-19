@@ -104,31 +104,27 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Returns true if TableColumnName and SchemaName of a field are different and returns TableColumnName, else returns false.
-        /// For an entity which is inherited from another entity and a dependent field is stored on primary table, there are cases where the schema name
-        /// of this field is different on the primary table. For e.g., Category field on Task entity has name as 'TaskCategory' on the primary table. 
-        /// So, we use TableColumnName property for referring such fields from primary table.
+        /// Returns TableColumnName if TableColumnName and SchemaName of a field are different, else returns SchemaName
+        /// For an inherited entity if dependent field is stored on primary table, there are cases where the schema name
+        /// of this field is different on the primary table. For e.g., Category field on Task entity has name as 'TaskCategory' 
+        /// on the primary table. So, we use TableColumnName property for referring such fields from primary table.
         /// </summary>
-        internal bool IsSchemaNameDifferentFromTableColumnName(SqlVisitor.Context.VarDetails varDetails, out string tableColumnName)
+        internal string GetColumnNameOnPrimaryTable(SqlVisitor.Context.VarDetails field)
         {
-            tableColumnName = null;
-            if (varDetails == null) { return false; }
-
-            var entityLogicalName = varDetails.Table;
-            var columnLogicalName = varDetails.Column.LogicalName;
-            var columnPhysicalName = varDetails.Column.SchemaName;
+            var entityLogicalName = field.Table;
+            var columnLogicalName = field.Column.LogicalName;
+            var columnPhysicalName = field.Column.SchemaName;
 
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {
                 if (!entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable && !string.IsNullOrEmpty(attributeMetadata.TableColumnName) &&
                     !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase))
                 {
-                    tableColumnName = attributeMetadata.TableColumnName;
-                    return true;
+                    return attributeMetadata.TableColumnName;
                 }
             }
 
-            return false;
+            return columnPhysicalName;
         }
     }
 
