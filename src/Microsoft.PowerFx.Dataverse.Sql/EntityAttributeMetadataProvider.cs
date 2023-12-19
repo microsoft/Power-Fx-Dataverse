@@ -69,9 +69,14 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        internal bool TryGetExtensionTableName(string logicalName, out string extensionTableName)
+        /// <summary>
+        /// Returns extensiontablename of an entity, if dependent field is from an inherited entity and are not stored on primary table.
+        /// For e.g., custom fields on Task Entity are not stored on BaseTable - ActivityPointerBase, they are stored on ExtensionTable - TaskBase.
+        /// </summary>
+        internal bool ShouldReferFieldFromExtensionTable(string entityLogicalName, string columnLogicalName, out string extensionTableName)
         {
-            if (TryGetEntityMetadata(logicalName, out var entityMetadata) && !string.IsNullOrEmpty(entityMetadata.ExtensionTableName))
+            if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata) && 
+                !entityMetadata.IsInheritsFromNull && !attributeMetadata.IsStoredOnPrimaryTable && !string.IsNullOrEmpty(entityMetadata.ExtensionTableName))
             {
                 extensionTableName = entityMetadata.ExtensionTableName;
                 return true;
@@ -82,18 +87,17 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Returns true if field from an inherited entity requires reference.
-        /// For current entity, we check if entity is inherited from another entity and if the dependent field is stored on primary table. If entity's 
-        /// inheritsFrom is not null(false) and if field is stored on primary table(true), even if this field is a simple/rollup field, it requires reference.
-        /// For related entity's field, as they anyways require reference and if entity's inheritsfrom is null, field's IsStoredOnPrimaryTable will always be true 
-        /// so, we only check if field is stored on primary table and refer the dependent field from extension table name if it is not stored on primary table 
-        /// else refer from base/primary table.
+        /// Returns true if dependent field from an inherited entity requires reference.
+        /// If dependent field is from an inherited entity and if the field is stored on primary table, even if the dependent field 
+        /// is a simple/rollup field, it requires reference and cannot be passed as a parameter to the UDF. 
+        /// For e.g., subject field on Task entity is a simple field, but when it is referred from current entity's formula field, it cannot be
+        /// passed as parameter to UDF, instead it should be referred from basetable - activitypointerbase.
         /// </summary>
-        internal bool IsFieldOnInheritedEntityRequiresReference(string entityLogicalName, string columnLogicalName, bool isRelatedEntityField)
+        internal bool IsReferenceFieldOnInheritedEntity(string entityLogicalName, string columnLogicalName)
         {
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {
-                return isRelatedEntityField ? !attributeMetadata.IsStoredOnPrimaryTable : entityMetadata.IsInheritsFromNull != attributeMetadata.IsStoredOnPrimaryTable;
+                return !entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable;
             }
 
             return false;
@@ -116,9 +120,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {
-                if (!entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable && 
-                    !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase) &&
-                    !string.IsNullOrEmpty(attributeMetadata.TableColumnName))
+                if (!entityMetadata.IsInheritsFromNull && attributeMetadata.IsStoredOnPrimaryTable && !string.IsNullOrEmpty(attributeMetadata.TableColumnName) &&
+                    !columnPhysicalName.Equals(attributeMetadata.TableColumnName, StringComparison.OrdinalIgnoreCase))
                 {
                     tableColumnName = attributeMetadata.TableColumnName;
                     return true;

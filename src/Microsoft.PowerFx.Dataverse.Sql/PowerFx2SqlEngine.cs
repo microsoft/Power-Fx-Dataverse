@@ -244,25 +244,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referencingPath = referencingPath.Append(new DName(referencing));
 
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
-                            var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
-
-                            // Table Schema name returns table view and we need to refer Base tables in UDF in case of non logical fields that are stored on primarytable
-                            // because logical fields can only be referred from view 
-                            // Referring current entity's calculated fields from view because there are cases where this field is from an inherited entity and field is not stored on 
-                            // primary table. so, basetablename will be different for such fields and can't be referred using basetablename for eg., Task entity - BaseTableName is ActivityPointerBase
-                            bool shouldReferColumnFromView = (field.Column.IsLogical || field.IsReferenceFieldOnInheritedEntity || (field.Column.IsCalculated && field.Navigation == null));
-                            if (!shouldReferColumnFromView)
-                            {
-                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
-                                    baseTableName : tableSchemaName + "Base";
-                            }
-                            // For related entity's dependent fields that are not stored on primary table, refer such fields using extensiontablename, because referring
-                            // from view will cause solution import failures as related entity's views may not be regenerated at the time of formula field UDF creation.
-                            else if (field.IsReferenceFieldOnInheritedEntity && field.Navigation != null)
-                            {
-                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetExtensionTableName(field.Table, out var extensionTableName) ?
-                                    extensionTableName : tableSchemaName + "Base";
-                            }
+                            var tableSchemaName = GetTableSchemaName(field);
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
                             var key = new Tuple<string, string, string>(tableSchemaName, referencingVar, referenced);
@@ -369,6 +351,29 @@ namespace Microsoft.PowerFx.Dataverse
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;
             }
+        }
+
+        private string GetTableSchemaName(VarDetails field)
+        {
+            var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
+
+            //  Table Schema name returns table view and logical fields can only be referred from view.
+            if (field.Column.IsLogical)
+            {
+                return tableSchemaName;
+            }
+
+            if(_secondaryMetadataCache != null && _secondaryMetadataCache.ShouldReferFieldFromExtensionTable(field.Table, field.Column.LogicalName, out var extensionTableName))
+            {
+                tableSchemaName = extensionTableName;
+            }
+            else
+            {
+                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ?
+                                    baseTableName : tableSchemaName + "Base";
+            }
+
+            return tableSchemaName;
         }
 
         private void EmitReturn(StringWriter tw, string indent, SqlVisitor.Context context, SqlVisitor.RetVal result, FormulaType returnType, SqlCompileOptions options)

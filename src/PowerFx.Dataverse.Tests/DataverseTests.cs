@@ -536,7 +536,7 @@ END
                     AttributeMetadataModel.NewGuid("accountid","accountid").SetSchemaName("AccountId"),
                     AttributeMetadataModel.NewDecimal("address1_latitude", "Latitude").SetLogical()
                 }
-        }.SetSchemaName("AccountEntity");
+        }.SetSchemaName("Account");
 
         public const string BaselineFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(23,10), -- new_CurrencyPrice
@@ -547,7 +547,8 @@ AS BEGIN
     DECLARE @v4 decimal(23,10)
     DECLARE @v3 decimal(23,10)
     DECLARE @v5 decimal(23,10)
-    SELECT TOP(1) @v1 = [new_Calc_Schema],@v4 = [address1_latitude] FROM [dbo].[AccountEntity] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v1 = [new_Calc_Schema] FROM [dbo].[AccountBase] WHERE[AccountId] = @v2
+    SELECT TOP(1) @v4 = [address1_latitude] FROM [dbo].[Account] WHERE[AccountId] = @v2
 
     -- expression body
     SET @v3 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
@@ -582,7 +583,7 @@ END
 
             Assert.Equal("accountid,address1_latitude,new_Calc,new_CurrencyPrice", ToStableString(result.TopLevelIdentifiers));
 
-            Assert.Equal(BaselineFunction, result.SqlFunction); // Current entity's calculated fields are referred from view
+            Assert.Equal(BaselineFunction, result.SqlFunction);
 
             Assert.Equal(BaselineCreateRow, result.SqlCreateRow);
             Assert.Equal(BaselineLogicalFormula, result.LogicalFormula);
@@ -1799,40 +1800,41 @@ END
         }
 
         public const string BaseTableNameTestUDF = @"CREATE FUNCTION test(
-    @v0 uniqueidentifier -- new_lookup
+    @v0 uniqueidentifier -- new_tasklookup
 ) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v1 decimal(23,10)
-    DECLARE @v2 decimal(23,10)
-    SELECT TOP(1) @v1 = [simplefield] FROM [dbo].[testentityTestBase] WHERE[testentityid] = @v0
+    DECLARE @v2 uniqueidentifier
+    DECLARE @v3 decimal(23,10)
+    SELECT TOP(1) @v1 = [subject],@v2 = [activitypointerid] FROM [dbo].[ActivityPointerBase] WHERE[activitypointerid] = @v0
 
     -- expression body
-    SET @v2 = @v1
+    SET @v3 = @v1
     -- end expression body
 
-    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v2, 10)
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
 END
 ";
         [Fact]
         public void BaseTableNameTest()
         {
-            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testentity") });
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
-            var result = engine.Compile("lookup.simplefield", new SqlCompileOptions() { UdfName = "test" });
+            var engine = new PowerFx2SqlEngine(MockModels.Account.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider)); 
+            var result = engine.Compile("tasklookup.subject", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(BaseTableNameTestUDF, result.SqlFunction);
         }
 
         public const string InheritsFromTestUDF = @"CREATE FUNCTION test(
-    @v1 uniqueidentifier -- testinheritedentityid
+    @v1 uniqueidentifier -- activitypointerid
 ) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v0 decimal(23,10)
     DECLARE @v2 decimal(23,10)
     DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v0 = [testsimplefield] FROM [dbo].[testinheritedentity] WHERE[TestinheritedentityId] = @v1
+    SELECT TOP(1) @v0 = [subject] FROM [dbo].[ActivityPointerBase] WHERE[activitypointerid] = @v1
 
     -- expression body
     SET @v2 = 1
@@ -1847,59 +1849,21 @@ END
         [Fact]
         public void InheritsFromTest()
         {
-            var model = new EntityMetadataModel
-            {
-                LogicalName = "testinheritedentity",
-                PrimaryIdAttribute = "testinheritedentityid",
-                Attributes = new AttributeMetadataModel[] {
-                    AttributeMetadataModel.NewDecimal("testsimplefield", "TestSimpleField", "testsimplefield"),
-                    AttributeMetadataModel.NewGuid("testinheritedentityid","testinheritedentityid").SetSchemaName("TestinheritedentityId"),
-                }
-            }.SetSchemaName("testinheritedentity");
-            var provider = new MockXrmMetadataProvider(model);
+            var provider = new MockXrmMetadataProvider(MockModels.Task);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
-            var engine = new PowerFx2SqlEngine(model.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
-            var result = engine.Compile("testsimplefield + 1", new SqlCompileOptions() { UdfName = "test" });
+            var engine = new PowerFx2SqlEngine(MockModels.Task.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+            var result = engine.Compile("subject + 1", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(InheritsFromTestUDF, result.SqlFunction); // current entity's simple field is not passed as parameter to UDF.
         }
 
         public const string ExtensionTableTestUDF = @"CREATE FUNCTION test(
-    @v0 uniqueidentifier -- new_lookup
-) RETURNS decimal(23,10)
-AS BEGIN
-    DECLARE @v1 decimal(23,10)
-    DECLARE @v2 uniqueidentifier
-    DECLARE @v3 decimal(23,10)
-    SELECT TOP(1) @v1 = [fieldnotstoredonprimarytable] FROM [dbo].[TestExtensionTableName] WHERE[testentityid] = @v0
-    SELECT TOP(1) @v2 = [testentityid] FROM [dbo].[testinheritedentityTestBase] WHERE[testentityid] = @v0
-
-    -- expression body
-    SET @v3 = @v1
-    -- end expression body
-
-    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v3, 10)
-END
-";
-        [Fact]
-        public void ExtensionTableTest()
-        {
-            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testinheritedentity") });
-            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
-            var result = engine.Compile("lookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
-            Assert.True(result.IsSuccess);
-            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
-        }
-
-        public const string TableColumnNameTestUDF = @"CREATE FUNCTION test(
-    @v0 uniqueidentifier -- new_lookup
+    @v0 uniqueidentifier -- new_tasklookup
 ) RETURNS decimal(23,10)
 AS BEGIN
     DECLARE @v1 decimal(23,10)
     DECLARE @v2 decimal(23,10)
-    SELECT TOP(1) @v1 = [testTableColumnName] FROM [dbo].[testinheritedentityTestBase] WHERE[testentityid] = @v0
+    SELECT TOP(1) @v1 = [fieldnotstoredonprimarytable] FROM [dbo].[taskExtensionTableName] WHERE[activitypointerid] = @v0
 
     -- expression body
     SET @v2 = @v1
@@ -1910,14 +1874,42 @@ AS BEGIN
 END
 ";
         [Fact]
+        public void ExtensionTableTest()
+        {
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.Account.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+            var result = engine.Compile("tasklookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
+        }
+
+        public const string TableColumnNameTestUDF = @"CREATE FUNCTION test(
+    @v0 uniqueidentifier -- new_tasklookup
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 uniqueidentifier
+    DECLARE @v3 decimal(23,10)
+    SELECT TOP(1) @v1 = [TaskCategory],@v2 = [activitypointerid] FROM [dbo].[ActivityPointerBase] WHERE[activitypointerid] = @v0
+
+    -- expression body
+    SET @v3 = @v1
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v3, 10)
+END
+";
+        [Fact]
         public void TableColumnNameTest()
         {
-            var provider = new MockXrmMetadataProvider(new EntityMetadataModel[] { MockModels.TestEntity1, MockModels.TestEntity.SetSchemaName("testinheritedentity") });
+            var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
-            var engine = new PowerFx2SqlEngine(MockModels.TestEntity1.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+            var engine = new PowerFx2SqlEngine(MockModels.Account.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
 
-            // 'testfield' has different TableColumnName and id from an entity is inherited from another entity. so, we use TableColumnName in UDF.
-            var result = engine.Compile("lookup.testfield", new SqlCompileOptions() { UdfName = "test" });
+            // 'category' has different TableColumnName and it is from an inherited entity. so, we use TableColumnName in UDF.
+            var result = engine.Compile("tasklookup.category", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(TableColumnNameTestUDF, result.SqlFunction); 
         }
@@ -2123,9 +2115,9 @@ END
             {
                 entity = new SecondaryEntityMetadata()
                 {
-                    BaseTableName = xrmEntity.SchemaName + (logicalName.Equals("testentity") ? "TestBase" : "Base"),
-                    ExtensionTableName = "TestExtensionTableName",
-                    IsInheritsFromNull = !xrmEntity.SchemaName.Equals("testinheritedentity")
+                    BaseTableName = logicalName.Equals("task") ? "ActivityPointerBase" : xrmEntity.SchemaName + "Base",
+                    ExtensionTableName = xrmEntity.SchemaName + "ExtensionTableName",
+                    IsInheritsFromNull = !xrmEntity.SchemaName.Equals("task")
                 };
                 return true;
             }
@@ -2139,7 +2131,7 @@ END
             attribute = new SecondaryAttributeMetadata()
             {
                 IsStoredOnPrimaryTable = !attributeLogicalName.Equals("fieldnotstoredonprimarytable"),
-                TableColumnName = attributeLogicalName.Equals("testfield") ? "testTableColumnName" : attributeLogicalName
+                TableColumnName = attributeLogicalName.Equals("category") ? "TaskCategory" : attributeLogicalName
             };
 
             return true;
