@@ -44,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var t2 = (DataverseTableValue)table;
                 if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                 {
-                    return amd.ToAttributeObject(value);
+                    return amd.ToAttributeObject(value, true);
                 }
 
                 throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
