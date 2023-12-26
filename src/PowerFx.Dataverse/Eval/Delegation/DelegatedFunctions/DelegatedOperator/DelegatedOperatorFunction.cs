@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
@@ -23,60 +24,33 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _binaryOpKind = binaryOpKind;
 
-            switch (_binaryOpKind)
+            if (DelegationIRVisitor.IsOpKindEqualityComparison(_binaryOpKind))
             {
-                case BinaryOpKind.EqNumbers:
-                case BinaryOpKind.EqBoolean:
-                case BinaryOpKind.EqText:
-                case BinaryOpKind.EqDate:
-                case BinaryOpKind.EqTime:
-                case BinaryOpKind.EqDateTime:
-                case BinaryOpKind.EqGuid:
-                case BinaryOpKind.EqDecimals:
-                case BinaryOpKind.EqCurrency:
-                    _op = ConditionOperator.Equal;
-                    break;
-                case BinaryOpKind.NeqNumbers:
-                case BinaryOpKind.NeqBoolean:
-                case BinaryOpKind.NeqText:
-                case BinaryOpKind.NeqDate:
-                case BinaryOpKind.NeqTime:
-                case BinaryOpKind.NeqDateTime:
-                case BinaryOpKind.NeqGuid:
-                case BinaryOpKind.NeqDecimals:
-                case BinaryOpKind.NeqCurrency:
-                    _op = ConditionOperator.NotEqual;
-                    break;
-                case BinaryOpKind.LtNumbers:
-                case BinaryOpKind.LtDecimals:
-                case BinaryOpKind.LtDateTime:
-                case BinaryOpKind.LtDate:
-                case BinaryOpKind.LtTime:
-                    _op = ConditionOperator.LessThan;
-                    break;
-                case BinaryOpKind.LeqNumbers:
-                case BinaryOpKind.LeqDecimals:
-                case BinaryOpKind.LeqDateTime:
-                case BinaryOpKind.LeqDate:
-                case BinaryOpKind.LeqTime:
-                    _op = ConditionOperator.LessEqual;
-                    break;
-                case BinaryOpKind.GtNumbers:
-                case BinaryOpKind.GtDecimals:
-                case BinaryOpKind.GtDateTime:
-                case BinaryOpKind.GtDate:
-                case BinaryOpKind.GtTime:
-                    _op = ConditionOperator.GreaterThan;
-                    break;
-                case BinaryOpKind.GeqNumbers:
-                case BinaryOpKind.GeqDecimals:
-                case BinaryOpKind.GeqDateTime:
-                case BinaryOpKind.GeqDate:
-                case BinaryOpKind.GeqTime:
-                    _op = ConditionOperator.GreaterEqual;
-                    break;
-                default:
-                    throw new NotSupportedException($"Unsupported operation {_op}");
+                _op = ConditionOperator.Equal;
+            }
+            else if (DelegationIRVisitor.IsOpKindInequalityComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.NotEqual;
+            }
+            else if (DelegationIRVisitor.IsOpKindLessThanComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.LessThan;
+            }
+            else if (DelegationIRVisitor.IsOpKindLessThanEqualComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.LessEqual;
+            }
+            else if (DelegationIRVisitor.IsOpKindGreaterThanComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.GreaterThan;
+            }
+            else if (DelegationIRVisitor.IsOpKindGreaterThanEqalComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.GreaterEqual;
+            }
+            else
+            {
+                throw new NotSupportedException($"Unsupported operation {_op}");
             }
         }
 

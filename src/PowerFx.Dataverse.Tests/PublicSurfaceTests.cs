@@ -61,9 +61,24 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AIReplyFunction",
                 "Microsoft.PowerFx.Dataverse.AISentimentFunction",
                 "Microsoft.PowerFx.Dataverse.AITranslateFunction",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunctionBase",
+                "Microsoft.PowerFx.Dataverse.AITranslateFunctionWithLanguage",
                 "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
                 "Microsoft.PowerFx.Dataverse.AIExtractFunction",
-                "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction"
+                "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
+
+                // Custom APIs 
+                "Microsoft.PowerFx.Dataverse.CustomApiLookupExtensions",
+                "Microsoft.PowerFx.Dataverse.CustomApiParameterMarshaller",                
+                "Microsoft.PowerFx.Dataverse.ICustomApiParameterMarshaller",
+                "Microsoft.PowerFx.Dataverse.CustomApiMarshaller",
+                "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
+                "Microsoft.PowerFx.Dataverse.CustomApiSignature",
+                "Microsoft.PowerFx.Dataverse.CustomApiEntity",
+                "Microsoft.PowerFx.Dataverse.CustomApiRequestParam",
+                "Microsoft.PowerFx.Dataverse.CustomApiResponse",
+                "Microsoft.PowerFx.Dataverse.IParameterType",
+                "Microsoft.PowerFx.Dataverse.CustomApiParamType"
             };
 
             Verify(allowed, asm);

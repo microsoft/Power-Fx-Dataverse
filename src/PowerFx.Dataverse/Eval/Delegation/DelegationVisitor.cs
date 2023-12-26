@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
-using Microsoft.Rest.TransientFaultHandling;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -64,6 +60,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
+            public bool hasColumnSet => _columnSet != null;
+
+            public readonly IEnumerable<IntermediateNode> _columnSet;
+
             public readonly DelegationHooks _hooks;
 
             // Original IR node for non-delegating path.
@@ -83,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly EntityMetadata _metadata;
 
-            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows)
+            public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows, IEnumerable<IntermediateNode> columnSet)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -94,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // topCount and filter are optional.
                 this._topCount = count;
                 this._filter = filter;
-
+                this._columnSet = columnSet;
                 var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
                 if (tableDS != null)
                 {
@@ -255,20 +255,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // If RetVal just represent a table, then ok. 
-        // If it's any other in-progress delegation, then it's a warning. 
-        private RetVal MaterializeTableOnly(RetVal ret)
-        {
-            // IsBlank(table) // ok
-            // IsBlank(Filter(table,true)) // warning
-
-            return new RetVal(ret._originalNode);
-        }
-
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount))
+            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasColumnSet))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -299,7 +289,7 @@ namespace Microsoft.PowerFx.Dataverse
                     bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
                     if (isRealTable)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows, columnSet: null);
                         return ret;
                     }
                 }
@@ -362,80 +352,113 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal ret;
 
-            // Money can't be delegated, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-            if (TryDisableMoneyComaprison(node, fieldName, context, out var result))
+            if (IsOpKindEqualityComparison(operation))
             {
-                return result;
+                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, eqNode);
+            }
+            else if (IsOpKindInequalityComparison(operation))
+            {
+                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, neqNode);
+            }
+            else if (IsOpKindLessThanComparison(operation))
+            {
+                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, ltNode);
+            }
+            else if (IsOpKindLessThanEqualComparison(operation))
+            {
+                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, leqNode);
+            }
+            else if (IsOpKindGreaterThanComparison(operation))
+            {
+                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, gtNode);
+            }
+            else if (IsOpKindGreaterThanEqalComparison(operation))
+            {
+                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, geqNode);
+            }
+            else
+            {
+                ret = new RetVal(node);
             }
 
-            switch (operation)
-            {
-                case BinaryOpKind.EqNumbers:
-                case BinaryOpKind.EqBoolean:
-                case BinaryOpKind.EqText:
-                case BinaryOpKind.EqDate:
-                case BinaryOpKind.EqTime:
-                case BinaryOpKind.EqDateTime:
-                case BinaryOpKind.EqGuid:
-                case BinaryOpKind.EqDecimals:
-                case BinaryOpKind.EqCurrency:
-                    var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, eqNode);
-                    return ret;
-                case BinaryOpKind.NeqNumbers:
-                case BinaryOpKind.NeqBoolean:
-                case BinaryOpKind.NeqText:
-                case BinaryOpKind.NeqDate:
-                case BinaryOpKind.NeqTime:
-                case BinaryOpKind.NeqDateTime:
-                case BinaryOpKind.NeqGuid:
-                case BinaryOpKind.NeqDecimals:
-                case BinaryOpKind.NeqCurrency:
-                    var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, neqNode);
-                    return ret;
-                case BinaryOpKind.LtNumbers:
-                case BinaryOpKind.LtDecimals:
-                case BinaryOpKind.LtDateTime:
-                case BinaryOpKind.LtDate:
-                case BinaryOpKind.LtTime:
-                    var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, ltNode);
-                    return ret;
-                case BinaryOpKind.LeqNumbers:
-                case BinaryOpKind.LeqDecimals:
-                case BinaryOpKind.LeqDateTime:
-                case BinaryOpKind.LeqDate:
-                case BinaryOpKind.LeqTime:
-                    var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, leqNode);
-                    return ret;
-                case BinaryOpKind.GtNumbers:
-                case BinaryOpKind.GtDecimals:
-                case BinaryOpKind.GtDateTime:
-                case BinaryOpKind.GtDate:
-                case BinaryOpKind.GtTime:
-                    var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, gtNode);
-                    return ret;
-                case BinaryOpKind.GeqNumbers:
-                case BinaryOpKind.GeqDecimals:
-                case BinaryOpKind.GeqDateTime:
-                case BinaryOpKind.GeqDate:
-                case BinaryOpKind.GeqTime:
-                    var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
-                    ret = CreateBinaryOpRetVal(context, node, geqNode);
-                    return ret;
-                default:
-                    return new RetVal(node);
-            }
+            return ret;
+        }
+
+        internal static bool IsOpKindEqualityComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.EqBoolean ||
+                op == BinaryOpKind.EqCurrency ||
+                op == BinaryOpKind.EqDate ||
+                op == BinaryOpKind.EqDateTime ||
+                op == BinaryOpKind.EqDecimals ||
+                op == BinaryOpKind.EqGuid ||
+                op == BinaryOpKind.EqNumbers ||
+                op == BinaryOpKind.EqText ||
+                op == BinaryOpKind.EqTime ||
+                op == BinaryOpKind.EqOptionSetValue;
+        }
+
+        internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.NeqBoolean ||
+                op == BinaryOpKind.NeqCurrency ||
+                op == BinaryOpKind.NeqDate ||
+                op == BinaryOpKind.NeqDateTime ||
+                op == BinaryOpKind.NeqDecimals ||
+                op == BinaryOpKind.NeqGuid ||
+                op == BinaryOpKind.NeqNumbers ||
+                op == BinaryOpKind.NeqText ||
+                op == BinaryOpKind.NeqTime ||
+                op == BinaryOpKind.NeqOptionSetValue;
+        }
+
+        internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.LtNumbers ||
+                op == BinaryOpKind.LtDecimals ||
+                op == BinaryOpKind.LtDateTime ||
+                op == BinaryOpKind.LtDate ||
+                op == BinaryOpKind.LtTime;
+        }
+
+        internal static bool IsOpKindLessThanEqualComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.LeqNumbers ||
+                op == BinaryOpKind.LeqDecimals ||
+                op == BinaryOpKind.LeqDateTime ||
+                op == BinaryOpKind.LeqDate ||
+                op == BinaryOpKind.LeqTime;
+        }
+
+        internal static bool IsOpKindGreaterThanComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.GtNumbers ||
+                op == BinaryOpKind.GtDecimals ||
+                op == BinaryOpKind.GtDateTime ||
+                op == BinaryOpKind.GtDate ||
+                op == BinaryOpKind.GtTime;
+        }
+
+        internal static bool IsOpKindGreaterThanEqalComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.GeqNumbers ||
+                op == BinaryOpKind.GeqDecimals ||
+                op == BinaryOpKind.GeqDateTime ||
+                op == BinaryOpKind.GeqDate ||
+                op == BinaryOpKind.GeqTime;
         }
 
         private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode eqNode)
         {
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, count: null, _maxRows);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, count: null, _maxRows, columnSet: null);
         }
 
         public override RetVal Visit(LazyEvalNode node, Context context)
@@ -452,8 +475,26 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
+                if (!ReferenceEquals(child._originalNode, node.Child))
+                {
+                    node = new LazyEvalNode(node.IRContext, child._originalNode);
+                }
+                
                 return Ret(node);
             }
+        }
+
+        public override RetVal Visit(SingleColumnTableAccessNode node, Context context)
+        {
+            var maybeDelegatedfrom = Materialize(node.From.Accept(this, context));
+
+            if (!ReferenceEquals(node.From, maybeDelegatedfrom))
+            {
+                var delegatedSCTANode = new SingleColumnTableAccessNode(node.IRContext, maybeDelegatedfrom, node.Field);
+                return Ret(delegatedSCTANode);
+            }
+
+            return Ret(node);
         }
 
         public override RetVal Visit(CallNode node, Context context)
@@ -468,6 +509,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ProcessOr(node, context);
             }
+            else if (func == BuiltinFunctionsCore.IsBlank.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessIsBlank(node, context);
+            }
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning. 
@@ -476,8 +521,6 @@ namespace Microsoft.PowerFx.Dataverse
                 func == "Patch" || func == "Collect")
             {
                 RetVal arg0c = node.Args[0].Accept(this, context);
-
-                arg0c = MaterializeTableOnly(arg0c);
                                 
                 return base.Visit(node, context, arg0c);
             }
@@ -524,12 +567,30 @@ namespace Microsoft.PowerFx.Dataverse
                 _ when func == BuiltinFunctionsCore.Filter.Name => ProcessFilter(node, tableArg, context),
                 _ when func == BuiltinFunctionsCore.FirstN.Name => ProcessFirstN(node, tableArg),
                 _ when func == BuiltinFunctionsCore.First.Name => ProcessFirst(node, tableArg),
+                _ when func == BuiltinFunctionsCore.ShowColumns.Name => ProcessShowColumn(node, tableArg),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
 
             // Other delegating functions, continue to compose...
             // - Sort   
             return ret;
+        }
+
+        private RetVal ProcessIsBlank(CallNode node, Context context)
+        {
+            if (TryGetFieldName(context, node, out var fieldName))
+            {
+                var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
+
+                // BinaryOpKind doesn't matter for IsBlank because all value will be compared to null, so just use EqText.
+                var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
+                var ret = CreateBinaryOpRetVal(context, node, eqNode);
+                return ret;
+            }
+
+            RetVal arg0c = node.Args[0].Accept(this, context);
+
+            return base.Visit(node, context, arg0c);
         }
 
         private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
@@ -540,11 +601,37 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
                 delegableArgs.AddRange(node.Args.Skip(1));
-                var delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                CallNode delegableCallNode;
+                if(node.Scope != null)
+                {
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                }
+                else
+                {
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, delegableArgs);
+                }
+
                 return Ret(delegableCallNode);
             }
 
             return CreateNotSupportedErrorAndReturn(node, tableArg);
+        }
+
+        private RetVal ProcessShowColumn(CallNode node, RetVal tableArg)
+        {
+            var filter = tableArg.hasFilter ? tableArg.Filter : null;
+            var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+
+            // change to original node to current node and appends columnSet.
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, count, _maxRows, node.Args.Skip(1));
+
+            if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
+            {
+                var guidCallWithColSet = _hooks.MakeRetrieveCall(resultingTable, maybeGuidCall.Args[1]);
+                return Ret(guidCallWithColSet);
+            }
+
+            return resultingTable;
         }
 
         private RetVal ProcessWith(CallNode node, Context context)
@@ -668,6 +755,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!pr.IsDelegating)
             {
+                // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
+                if (!ReferenceEquals(pr._originalNode, predicate))
+                {
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                }
+
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
@@ -675,7 +768,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
+                result = new RetVal(_hooks ,node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows, tableArg._columnSet);
             }
             else
             {
@@ -688,11 +781,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool IsTableArgLookUpDelegable(Context context, RetVal tableArg)
         {
-            if (tableArg._originalNode is ResolvedObjectNode ||
-                (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
-                && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
-                && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
-                && scopedNode._originalNode is ResolvedObjectNode))
+            if (tableArg._originalNode is ResolvedObjectNode 
+                || (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
+                    && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
+                    && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
+                    && scopedNode._originalNode is ResolvedObjectNode)
+                || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.ShowColumns.Name)
+                )
             {
                 return true;
             }
@@ -712,6 +807,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!pr.IsDelegating)
             {
+                // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
+                if(!ReferenceEquals(pr._originalNode, predicate))
+                {
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                }
+
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
@@ -726,7 +827,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, count: null, _maxRows, tableArg._columnSet);
             }
 
             return result;
@@ -736,7 +837,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
             var filter = tableArg.Filter;
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne, _maxRows);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, countOne, _maxRows, tableArg._columnSet);
             return res;
         }
 
@@ -755,7 +856,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Since table was delegating it potentially has filter attached to it, so also add that filter to the new node.
             var filter = tableArg.Filter;
             var topCount = node.Args[1];
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount, _maxRows);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, topCount, _maxRows, tableArg._columnSet);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)
@@ -807,29 +908,6 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
-
-
-        private RetVal CreateExpressionNotSupportedError(CallNode node)
-        {
-            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol)
-            {
-                var symbolName = scopedSymbol.Name;
-                var reason = new ExpressionError()
-                {
-                    MessageArgs = new object[] { symbolName, _maxRows },
-                    Span = node.Args[0].IRContext.SourceContext ?? new Span(1, 2),
-                    Severity = ErrorSeverity.Warning,
-                    ResourceKey = TexlStrings.WrnDelegationTableNotSupported
-                };
-
-                this.AddError(reason);
-            }
-
-            return Ret(node);
-        }
-
-
-
         private RetVal ProcessAndOr(CallNode node, Context context, Func<IList<IntermediateNode>, IntermediateNode> filterDelegate)
         {
             bool isDelegating = true;
@@ -877,49 +955,6 @@ namespace Microsoft.PowerFx.Dataverse
             return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(callerReturnType, delegatedChildren, node.Scope));
         }
 
-
-        // Used to stop Money delegation, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, Context context, out RetVal result)
-        {
-            var callerSourceTable = context.CallerTableNode;
-            var callerTableType = (TableType)callerSourceTable.IRContext.ResultType;
-            var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
-            EntityMetadata metadata;
-            if (tableDS != null)
-            {
-                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
-                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
-                {
-                    if (!m2.TryGetXrmEntityMetadata(tableLogicalName, out metadata))
-                    {
-                        throw new InvalidOperationException($"Meta-data not found for table: {tableLogicalName}");
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Meta-data provider should be CDS");
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException($"Table type should have data source");
-            }
-
-            if (!metadata.TryGetAttribute(fieldName, out var attributeMetadata))
-            {
-                throw new InvalidOperationException($"Meta-data not found for field: {fieldName}");
-            }
-
-            if (attributeMetadata.AttributeType == AttributeTypeCode.Money)
-            {
-                result = new RetVal(node);
-                return true;
-            }
-
-            result = default;
-            return false;
-        }
-
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
             if (TryGetFieldName(context, left, out var leftField) && !TryGetFieldName(context, right, out _))
@@ -949,16 +984,19 @@ namespace Microsoft.PowerFx.Dataverse
                 if (leftField2 == rightField2)
                 {
                     // Issue warning
-                    var min = left.IRContext.SourceContext.Lim;
-                    var lim = right.IRContext.SourceContext.Min;
-                    var span = new Span(min, lim);
-                    var reason = new ExpressionError()
+                    if (IsOpKindEqualityComparison(op))
                     {
-                        Span = span,
-                        Severity = ErrorSeverity.Warning,
-                        ResourceKey = TexlStrings.WrnDelegationPredicate
-                    };
-                    this.AddError(reason);
+                        var min = left.IRContext.SourceContext.Lim;
+                        var lim = right.IRContext.SourceContext.Min;
+                        var span = new Span(min, lim);
+                        var reason = new ExpressionError()
+                        {
+                            Span = span,
+                            Severity = ErrorSeverity.Warning,
+                            ResourceKey = TexlStrings.WrnDelegationPredicate
+                        };
+                        this.AddError(reason);
+                    }
 
                     opKind = op;
                     fieldName = default;
@@ -1048,7 +1086,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value))
+            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
             {
                 maybeScopeAccessNode = functionCall.Args[0];
             }

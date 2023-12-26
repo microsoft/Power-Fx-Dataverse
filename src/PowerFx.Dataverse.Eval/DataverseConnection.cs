@@ -53,7 +53,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         protected readonly ReadOnlySymbolTable _symbols;
 
-        public ReadOnlySymbolTable Symbols => _symbols;
+        private readonly SymbolTable _pluginFunctions = new SymbolTable { DebugName = "Plugins"};
+
+        public ReadOnlySymbolTable Symbols => ReadOnlySymbolTable.Compose(_symbols, _pluginFunctions);
 
         private readonly Policy _policy;
 
@@ -127,7 +129,7 @@ namespace Microsoft.PowerFx.Dataverse
             this._policy = policy ?? new MultiOrgPolicy(); 
 
             this._symbols = _policy.CreateSymbols(this, _metadataCache);
-            _symbolValues = this._symbols.CreateValues();
+            _symbolValues = this.Symbols.CreateValues();
 
             _maxRows = maxRows;
         }
@@ -208,6 +210,39 @@ namespace Microsoft.PowerFx.Dataverse
             return tableLogicalName;
         }
 
+        public async Task AddPluginAsync(string logicalName, CancellationToken cancel = default)
+        {
+            if (logicalName == null)
+            {
+                throw new ArgumentNullException(nameof(logicalName));
+            }
+            IDataverseReader reader = _dvServices;
+            var signature = await reader.GetApiSignatureAsync(logicalName, cancel)
+                .ConfigureAwait(false);
+
+            AddPlugin(signature);
+        }
+
+        /// <summary>
+        /// Import custom API with the given signature. 
+        /// API is invokable via the <see cref="IDataverseExecute"/> runtime service.
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddPlugin(CustomApiSignature signature)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            // IDataverseExecute invoker = this._dvServices;
+            var x = new CustomApiRestore(this._metadataCache);
+
+            var function = x.ToFunction(signature, this);
+            _pluginFunctions.AddFunction(function);
+        }
+
         /// <summary>
         /// Given an Entity, get a RecordValue for use in Fx expressions. 
         /// </summary>
@@ -239,14 +274,14 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns>DataverseRecordValue or ErrorValue in case of error</returns>
         /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
-        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, CancellationToken cancellationToken = default)
+        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             return response.HasError

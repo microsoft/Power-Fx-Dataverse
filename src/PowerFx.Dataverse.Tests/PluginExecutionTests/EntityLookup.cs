@@ -195,7 +195,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse());
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -237,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     IsCriteriaMatching(entity, qe.Criteria, metadata))
                 {
                     
-                    entityList.Add(Clone(entity, cancellationToken));
+                    entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
                     take--;
                     if (take == 0)
                     {
@@ -404,13 +404,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.DateTime:
                         return ((DateTime)x).CompareTo((DateTime)y);
 
+                    case AttributeTypeCode.Money:
                     case AttributeTypeCode.Decimal:
-                        return ((Decimal)x).CompareTo((Decimal)y);
+                        if (x is Xrm.Sdk.Money mx)
+                        {
+                            x = mx.Value;
+                        }
+                        if (y is Xrm.Sdk.Money my)
+                        {
+                            y = my.Value;
+                        }
+                        return ((decimal)x).CompareTo((decimal)y);
 
                     case AttributeTypeCode.Double:
-                        return ((Double)x).CompareTo((Double)y);
+                        return ((double)x).CompareTo((double)y);
 
+                    case AttributeTypeCode.Picklist:
+                    case AttributeTypeCode.Status:
                     case AttributeTypeCode.Integer:
+                        if(x is Xrm.Sdk.OptionSetValue osx)
+                        {
+                            x = osx.Value;
+                        }
+                        if (y is Xrm.Sdk.OptionSetValue osy)
+                        {
+                            y = osy.Value;
+                        }
+
                         return ((int)x).CompareTo((int)y);
 
                     case AttributeTypeCode.Memo:
@@ -421,8 +441,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         return ((Guid)x).CompareTo((Guid)y);
 
                     case AttributeTypeCode.Lookup:
-                    case AttributeTypeCode.Money:
-                    case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.BigInt:
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:
@@ -431,7 +449,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.ManagedProperty:
                     case AttributeTypeCode.PartyList:
                     case AttributeTypeCode.State:
-                    case AttributeTypeCode.Status:
                     default:
                         throw new NotImplementedException($"FieldType {_amd.AttributeType.Value} not supported");
                 }
@@ -474,6 +491,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var attr in entity.Attributes)
             {
                 newEntity.Attributes[attr.Key] = attr.Value;
+            }
+            return newEntity;
+        }
+
+        private Entity Clone(Entity entity, ColumnSet columnSet, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var columnFilter = columnSet.Columns.ToHashSet();
+
+            var newEntity = new Entity(entity.LogicalName, entity.Id);
+            foreach (var attr in entity.Attributes)
+            {
+                if(columnSet.AllColumns || columnFilter.Contains(attr.Key))
+                {
+                    newEntity.Attributes[attr.Key] = attr.Value;
+                }
             }
             return newEntity;
         }

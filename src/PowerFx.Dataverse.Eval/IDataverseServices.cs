@@ -7,6 +7,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,7 +30,15 @@ namespace Microsoft.PowerFx.Dataverse
 
     public interface IDataverseReader
     {
-        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        /// Retrieve a single entity by id and logical entity name.
+        /// </summary>
+        /// <param name="entityName"></param>
+        /// <param name="id"></param>
+        /// <param name="columns">column names to fetch, if kept null fetches all columns. </param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken));
         Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));        
     }
 
