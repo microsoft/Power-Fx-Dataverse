@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal bool TryGetAttributeMetadata(string entityLogicalName, string columnLogicalName, out SecondaryAttributeMetadata attributeMetadata)
         {
-            var key = entityLogicalName + "_" + columnLogicalName;
+            var key = entityLogicalName + "-" + columnLogicalName;
             if (_attributeMetadataCache.TryGetValue(key, out attributeMetadata))
             {
                 return true;
@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// For e.g., subject field on Task entity is a simple field, but when it is referred from current entity's formula field, it cannot be
         /// passed as parameter to UDF, instead it should be referred from basetable - activitypointerbase.
         /// </summary>
-        internal bool IsReferenceFieldOnInheritedEntity(string entityLogicalName, string columnLogicalName)
+        internal bool IsInheritedEntityFieldStoredOnPrimaryTable(string entityLogicalName, string columnLogicalName)
         {
             if (TryGetEntityMetadata(entityLogicalName, out var entityMetadata) && TryGetAttributeMetadata(entityLogicalName, columnLogicalName, out var attributeMetadata))
             {

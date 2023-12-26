@@ -1852,9 +1852,42 @@ END
             var provider = new MockXrmMetadataProvider(MockModels.Task);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(MockModels.Task.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+
+            // Current inherited entity's simple field that is stored on primary table is not passed as parameter to UDF.
             var result = engine.Compile("subject + 1", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
-            Assert.Equal(InheritsFromTestUDF, result.SqlFunction); // current entity's simple field is not passed as parameter to UDF.
+            Assert.Equal(InheritsFromTestUDF, result.SqlFunction);
+        }
+
+        public const string InheritedEntityFieldNotStoredOnPrimaryTableUDF = @"CREATE FUNCTION test(
+    @v0 decimal(23,10) -- fieldnotstoredonprimarytable
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 1
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) + ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 10)
+END
+";
+        [Fact]
+        public void InheritedEntityFieldNotStoredOnPrimaryTableTest()
+        {
+            var provider = new MockXrmMetadataProvider(MockModels.Task);
+            var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
+            var engine = new PowerFx2SqlEngine(MockModels.Task.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+
+            // Inherited entity's simple/rollup field that is not stored on primary table will be passed as parameter to UDF.
+            var result = engine.Compile("fieldnotstoredonprimarytable + 1", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InheritedEntityFieldNotStoredOnPrimaryTableUDF, result.SqlFunction);
         }
 
         public const string ExtensionTableTestUDF = @"CREATE FUNCTION test(
@@ -1879,9 +1912,11 @@ END
             var provider = new MockXrmMetadataProvider(MockModels.TestAllAttributeModels);
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(MockModels.Account.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
+
+            // Related entity field that is not stored on primary table, will be referred using extensiontablename.
             var result = engine.Compile("tasklookup.fieldnotstoredonprimarytable", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
-            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction); // related entity field that is not stored on primary table, will be referred using extensiontablename.
+            Assert.Equal(ExtensionTableTestUDF, result.SqlFunction);
         }
 
         public const string TableColumnNameTestUDF = @"CREATE FUNCTION test(
@@ -1908,7 +1943,7 @@ END
             var metadataProvider = new MockEntityAttributeMetadataProvider(provider);
             var engine = new PowerFx2SqlEngine(MockModels.Account.ToXrm(), new CdsEntityMetadataProvider(provider), entityAttributeMetadataProvider: new EntityAttributeMetadataProvider(metadataProvider));
 
-            // 'category' has different TableColumnName and it is from an inherited entity. so, we use TableColumnName in UDF.
+            // 'Category' has different TableColumnName and it is from an inherited entity. so, we use TableColumnName in UDF.
             var result = engine.Compile("tasklookup.category", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
             Assert.Equal(TableColumnNameTestUDF, result.SqlFunction); 

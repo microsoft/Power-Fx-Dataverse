@@ -230,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         else if (field.Column.RequiresReference() || field.IsReferenceFieldOnInheritedEntity)
                         {
-                            // for calculated or logical fields or fields not stored on primary table on the root scope, use the primary key for referencing and referenced
+                            // for calculated or logical fields on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
                             referencing = field.Scope.Type.CdsTableDefinition().PrimaryKeyColumn;
                             referenced = field.Scope.Type.CdsColumnDefinition(referencing).SchemaName;
