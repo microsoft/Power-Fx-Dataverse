@@ -178,6 +178,11 @@ namespace Microsoft.PowerFx.Dataverse
         // Return true if this error key is a SQL Not Supported case. 
         internal static bool IsError(string errorKey)
         {
+            if(errorKey == "ErrTextTooLarge")
+            {
+                return true;
+            }
+
             var fields = typeof(SqlCompileException).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             foreach (var field in fields)
             {

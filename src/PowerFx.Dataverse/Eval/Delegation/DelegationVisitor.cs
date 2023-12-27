@@ -352,12 +352,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal ret;
 
-            // Money can't be delegated, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-            if (TryDisableMoneyComaprison(node, fieldName, context, out var result))
-            {
-                return result;
-            }
-
             if (IsOpKindEqualityComparison(operation))
             {
                 var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
@@ -396,9 +390,7 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-
-
-        private bool IsOpKindEqualityComparison(BinaryOpKind op)
+        internal static bool IsOpKindEqualityComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.EqBoolean ||
                 op == BinaryOpKind.EqCurrency ||
@@ -408,10 +400,11 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqGuid ||
                 op == BinaryOpKind.EqNumbers ||
                 op == BinaryOpKind.EqText ||
-                op == BinaryOpKind.EqTime;
+                op == BinaryOpKind.EqTime ||
+                op == BinaryOpKind.EqOptionSetValue;
         }
 
-        private bool IsOpKindInequalityComparison(BinaryOpKind op)
+        internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.NeqBoolean ||
                 op == BinaryOpKind.NeqCurrency ||
@@ -421,10 +414,11 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.NeqGuid ||
                 op == BinaryOpKind.NeqNumbers ||
                 op == BinaryOpKind.NeqText ||
-                op == BinaryOpKind.NeqTime;
+                op == BinaryOpKind.NeqTime ||
+                op == BinaryOpKind.NeqOptionSetValue;
         }
 
-        private bool IsOpKindLessThanComparison(BinaryOpKind op)
+        internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.LtNumbers ||
                 op == BinaryOpKind.LtDecimals ||
@@ -433,7 +427,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.LtTime;
         }
 
-        private bool IsOpKindLessThanEqualComparison(BinaryOpKind op)
+        internal static bool IsOpKindLessThanEqualComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.LeqNumbers ||
                 op == BinaryOpKind.LeqDecimals ||
@@ -442,7 +436,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.LeqTime;
         }
 
-        private bool IsOpKindGreaterThanComparison(BinaryOpKind op)
+        internal static bool IsOpKindGreaterThanComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.GtNumbers ||
                 op == BinaryOpKind.GtDecimals ||
@@ -451,7 +445,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.GtTime;
         }
 
-        private bool IsOpKindGreaterThanEqalComparison(BinaryOpKind op)
+        internal static bool IsOpKindGreaterThanEqalComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.GeqNumbers ||
                 op == BinaryOpKind.GeqDecimals ||
@@ -607,7 +601,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
                 delegableArgs.AddRange(node.Args.Skip(1));
-                var delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                CallNode delegableCallNode;
+                if(node.Scope != null)
+                {
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                }
+                else
+                {
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, delegableArgs);
+                }
+
                 return Ret(delegableCallNode);
             }
 
@@ -950,49 +953,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var callerReturnType = context.CallerNode.IRContext.ResultType;
             return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(callerReturnType, delegatedChildren, node.Scope));
-        }
-
-
-        // Used to stop Money delegation, tracks the issue https://github.com/microsoft/Power-Fx-Dataverse/issues/238
-        private bool TryDisableMoneyComaprison(BinaryOpNode node, string fieldName, Context context, out RetVal result)
-        {
-            var callerSourceTable = context.CallerTableNode;
-            var callerTableType = (TableType)callerSourceTable.IRContext.ResultType;
-            var tableDS = callerTableType._type.AssociatedDataSources.FirstOrDefault();
-            EntityMetadata metadata;
-            if (tableDS != null)
-            {
-                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
-                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
-                {
-                    if (!m2.TryGetXrmEntityMetadata(tableLogicalName, out metadata))
-                    {
-                        throw new InvalidOperationException($"Meta-data not found for table: {tableLogicalName}");
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Meta-data provider should be CDS");
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException($"Table type should have data source");
-            }
-
-            if (!metadata.TryGetAttribute(fieldName, out var attributeMetadata))
-            {
-                throw new InvalidOperationException($"Meta-data not found for field: {fieldName}");
-            }
-
-            if (attributeMetadata.AttributeType == AttributeTypeCode.Money)
-            {
-                result = new RetVal(node);
-                return true;
-            }
-
-            result = default;
-            return false;
         }
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)

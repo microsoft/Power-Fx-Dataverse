@@ -2717,9 +2717,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity3 = new Entity("local", _g3);
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
             entity3.Attributes["old_price"] = null;
+            entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
+            entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
@@ -2743,12 +2745,53 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
+            var globalOptionSet = GetGlobalOptionSets(MockModels.RelationshipModels);
+
             CdsEntityMetadataProvider metadataCache = policy is SingleOrgPolicy policy2
-                ? new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables) { NumberIsFloat = numberIsFloat }
+                ? new CdsEntityMetadataProvider(
+                    xrmMetadataProvider, 
+                    new Dictionary<string, string>(policy2.AllTables.LogicalToDisplayPairs.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value.ToString())), 
+                    globalOptionSet) 
+                    { NumberIsFloat = numberIsFloat }
                 : new CdsEntityMetadataProvider(xrmMetadataProvider) { NumberIsFloat = numberIsFloat };
 
             var dvConnection = new DataverseConnection(policy, ds, metadataCache, maxRows: 999);
             return (dvConnection, ds, entityLookup);
+        }
+
+        private static List<OptionSetMetadata> GetGlobalOptionSets(EntityMetadataModel[] models)
+        {
+            var globalOptionSet = new List<OptionSetMetadata>();
+            foreach (var model in models)
+            {
+                foreach (var attribute in model.Attributes)
+                {
+                    if ((attribute.AttributeType == AttributeTypeCode.Picklist || attribute.AttributeType == AttributeTypeCode.Status) &&
+                        attribute.OptionSet.IsGlobal)
+                    {
+                        var mockOptions = attribute.OptionSet;
+
+                        var optionsList = new List<OptionMetadata>();
+
+                        foreach (var option in mockOptions.Options)
+                        {
+                            optionsList.Add(new OptionMetadata { Label = new Label(new LocalizedLabel(option.Label, 1033), new LocalizedLabel[0]), Value = option.Value });
+                        }
+
+                        var optionSet = new OptionSetMetadata(new OptionMetadataCollection(optionsList))
+                        {
+                            IsGlobal = mockOptions.IsGlobal,
+                            Name = attribute.LogicalName,
+                            DisplayName = new Label(new LocalizedLabel($"{attribute.DisplayName} ({model.DisplayCollectionName})", 1033), new LocalizedLabel[0])
+                        };
+
+                        globalOptionSet.Add(optionSet);
+
+                    }
+                }
+            }
+
+            return globalOptionSet;
         }
 
         private static readonly OptionSetValueCollection _listOptionSetValueCollection = new OptionSetValueCollection(            

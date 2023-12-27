@@ -30,6 +30,11 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns>object that can be assigned to Entity.Attributes.</returns>
         public static object ToAttributeObject(this AttributeMetadata amd, FormulaValue fxValue)
         {
+            return ToAttributeObject(amd, fxValue, false);
+        }
+
+        internal static object ToAttributeObject(this AttributeMetadata amd, FormulaValue fxValue, bool isUsedinQueryExpression)
+        {
             if (fxValue is BlankValue)
             {
                 return null;
@@ -94,21 +99,34 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return (long)((NumberValue)fxValue).Value;
                     }
-                    
+
                 case AttributeTypeCode.Uniqueidentifier:
                     return ((GuidValue)fxValue).Value;
 
                 case AttributeTypeCode.Picklist:
                 case AttributeTypeCode.Status:
+                    if (isUsedinQueryExpression)
+                    {
+                        return int.Parse(((FxOptionSetValue)fxValue).Option);
+                    }
+                    
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
 
                 case AttributeTypeCode.Money:
                     if (fxValue is DecimalValue dvm)
                     {
+                        if (isUsedinQueryExpression)
+                        {
+                            return dvm.Value;
+                        }
                         return new Money(dvm.Value);
                     }
                     else
                     {
+                        if(isUsedinQueryExpression)
+                        {
+                            return (decimal)((NumberValue)fxValue).Value;
+                        }
                         return new Money((decimal)((NumberValue)fxValue).Value);
                     }
 

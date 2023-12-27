@@ -1505,7 +1505,7 @@ END
         [InlineData("WeekNum(tziDateOnly)", true, typeof(DecimalType))]
         [InlineData("WeekNum(userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("WeekNum(userLocalDateTime)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [InlineData("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: The start_of_week argument is not supported for the WeekNum function in formula columns.")]
+        [InlineData("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: Invalid argument type (Decimal). Expecting a Enum (StartOfWeek) value instead.")]
         [InlineData("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]

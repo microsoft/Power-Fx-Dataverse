@@ -581,53 +581,45 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(new_currency,0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             true,
-            true,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtDecimals(new_currency,0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             false,
-            false,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(new_currency,Float(0))))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, Float(0)))).new_price",
             true,
-            false,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(Value(new_currency),0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             false,
-            true,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
 
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             true,
-            true,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtDecimals(new_currency,0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             false,
-            false,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,Float(0))))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, Float(0)))).new_price))",
             true,
-            false,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(Value(new_currency),0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             false,
-            true,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
 
         [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0,
@@ -1059,15 +1051,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtDecimals(new_currency,0)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,0)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,Float(0))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(Value(new_currency),0)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", false, false)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", true, true)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", true, false)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtDecimals(new_currency,0)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,0)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,Float(0))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(Value(new_currency),0)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", false, false)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", true, true)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", true, false)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", false, true)]
+
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", false, false)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", true, true)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, Float(0)), 999)", true, false)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, Float(0)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", false, true)]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"

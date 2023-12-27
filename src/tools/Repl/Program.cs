@@ -113,8 +113,9 @@ namespace Microsoft.PowerFx
             config.AddOptionSet(optionsSet);
 
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
-
-            return new RecalcEngine(config);
+            var eng = new RecalcEngine(config);
+            eng.EnableDelegation();
+            return eng;
         }
 
         public static void Main()
@@ -146,7 +147,7 @@ namespace Microsoft.PowerFx
                 InnerServices = innerServices
             };
             repl.EnableSampleUserObject();
-
+            repl.Engine.EnableDelegation();
             _repl = repl;
             return repl;
         }
@@ -248,7 +249,39 @@ namespace Microsoft.PowerFx
                 innerServices.AddService<IDataverseExecute>(clientExecute);
                 _repl.InnerServices = innerServices;
 
+                try
+                {
+                    AddCustomApisAsync(clientExecute).Wait();
+                }
+                catch(Exception e)
+                {
+                    // Non-fatal error 
+                    Console.WriteLine($"Failed to add APIs: {e.Message}");
+                }
+
                 return BooleanValue.New(true);
+            }
+
+            private async Task AddCustomApisAsync(DataverseService clientExecute)
+            {
+                List<CustomApiSignature> sigs = new List<CustomApiSignature>();
+
+                // Org can have 100s of plugins. We don't want to load them all.
+                // Add Low code plugins ...  Fewer, and more useful. 
+                Console.WriteLine("Loading Low Code Plugins:");
+                CustomApiEntity[] customApis = await clientExecute.GetLowCodeApiNamesAsync();
+
+                foreach (var customApi in customApis)
+                {
+                    var sig = await clientExecute.GetApiSignatureAsync(customApi);
+                    sigs.Add(sig);
+                }
+
+                foreach(var sig in sigs)
+                { 
+                    _dv.AddPlugin(sig);
+                    Console.WriteLine($"Added: Environment.{sig.Api.uniquename}(...)");
+                }
             }
 
             private void UpdateUserInfo(IOrganizationService svcClient)
