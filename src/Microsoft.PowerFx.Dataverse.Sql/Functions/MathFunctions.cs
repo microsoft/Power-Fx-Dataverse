@@ -107,7 +107,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
                 else
                 {
-                    args.Add($"({context.SetIntermediateVariable(FormulaType.Decimal, coercedArg)})");
+                    args.Add($"({context.SetIntermediateVariable(isFloatFlow ? FormulaType.Number : FormulaType.Decimal, coercedArg)})");
                 }
             }
             var finalExpression = $"(SELECT {function}(X) FROM (VALUES {string.Join(",", args)}) AS TEMP_{function}(X))";
