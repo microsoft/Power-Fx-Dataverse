@@ -1072,8 +1072,7 @@ END
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                supportedFeatureFlags: new() { SupportOptionSetsInFormulaColumns = true });
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -1732,8 +1731,7 @@ END
             Assert.Contains("Name isn't valid. 'Global2' isn't recognized", result.Errors.First().ToString());
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets), 
-                supportedFeatureFlags: new() { SupportOptionSetsInFormulaColumns = true });
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.False(result2.IsSuccess);
             Assert.Contains("Not supported in formula columns.", result2.Errors.First().ToString());
@@ -1754,14 +1752,7 @@ END
             var engine = new PowerFx2SqlEngine(xrmModel, provider);
             provider.TryGetOptionSet(new Core.Utils.DName("Picklist (All Attributes)"), out var optionSet);
             provider.TryGetOptionSet(new Core.Utils.DName("Status (All Attributes)"), out var optionSet2);
-
-            var result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Error 0-72: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", result.Errors.First().ToString());
-
-            engine = new PowerFx2SqlEngine(xrmModel, provider, supportedFeatureFlags: new() { SupportOptionSetsInFormulaColumns = true });
-
-            result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
+            var result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-97: OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
 

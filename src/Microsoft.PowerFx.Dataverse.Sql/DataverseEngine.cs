@@ -39,8 +39,6 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
-        internal SupportedFeatureFlags SupportedFeatureFlags { get; }
-
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length
@@ -52,8 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
           CultureInfo culture = null,
-          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-          SupportedFeatureFlags supportedFeatureFlags = null)
+          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -68,7 +65,6 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            SupportedFeatureFlags = supportedFeatureFlags ?? SupportedFeatureFlags.DefaultSupportedFeatureFlagValues;
         }
 
         #region Critical Virtuals
@@ -200,13 +196,13 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        internal bool SupportedReturnType(FormulaType type)
+        internal static bool SupportedReturnType(FormulaType type)
         {
             return
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                (type is OptionSetValueType && SupportedFeatureFlags.SupportOptionSetsInFormulaColumns) ||
+                type is OptionSetValueType ||
                 Library.IsDateTimeType(type);
         }
 
