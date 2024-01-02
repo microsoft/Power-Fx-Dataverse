@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -12,10 +13,10 @@
     Example:
     
     ... ado.net/XML headers & schema ...
-    <resheader name="DV_resmimetype">text/microsoft-resx</resheader>
-    <resheader name="DV_version">2.0</resheader>
-    <resheader name="DV_reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="DV_writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -217,7 +218,7 @@
     <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
-    <value>OptionSet '{0}' from related tables is not supported in formula columns.</value>
+    <value>The result type OptionSet '{0}' from related tables is not supported in formula columns.</value>
     <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
 </root>

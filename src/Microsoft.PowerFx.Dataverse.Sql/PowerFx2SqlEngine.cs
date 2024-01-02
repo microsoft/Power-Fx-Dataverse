@@ -320,20 +320,32 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
+                sqlResult.DependentOptionSetIds = ctx.GetDependentOptionSets(dependentFields, _metadataCache);
 
                 if (retType is OptionSetValueType)
                 {
                     _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
                     if (optionSet != null)
                     {
-                        // adding dependency for formula column to the option set used by formula field.
+                        // adding dependency for formula column to the option set returned by formula field.
                         sqlResult.OptionSetId = optionSet.OptionSetId;
+
+                        // Removing the option set returned by option set formula field from DependentOptionSetIds,
+                        // as this dependency will be handled when creating a optionset field.
+                        if (sqlResult.DependentOptionSetIds.Contains(optionSet.OptionSetId))
+                        {
+                            sqlResult.DependentOptionSetIds.Remove(optionSet.OptionSetId);
+                        }
+
                         if (!optionSet.IsGlobal)
                         {
                             // if optionset used by formula field is a local optionset from another field,
                             // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
 
+                            // Throwing error if related entity's local optionset is used because related entity's metadata will be processed later
+                            // by getting metadata through callback, only after any related entity's field is used. so, related entity's optionsets 
+                            // will not be suggested by intellisense initially and will be suggested only after using any related entity's field.
                             if (key != _currentEntityName)
                             {
                                 errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
@@ -352,7 +364,6 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
-                sqlResult.DependentOptionSetIds = ctx.GetDependentOptionSets(dependentFields, _metadataCache);
                 // The top-level identifiers are the logical names of fields on the main entity
                 sqlResult.ApplyDependencyAnalysis();
                 var topLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();
