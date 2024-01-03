@@ -228,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
 
                         }
-                        else if (field.Column.RequiresReference())
+                        else if (field.Column.RequiresReference() || field.IsReferenceFieldOnInheritedEntity)
                         {
                             // for calculated or logical fields on the root scope, use the primary key for referencing and referenced
                             // NOTE: the referencing needs to be the logical name, but the referenced needs to be the schema name
@@ -244,15 +244,7 @@ namespace Microsoft.PowerFx.Dataverse
                             referencingPath = referencingPath.Append(new DName(referencing));
 
                             var referencingVar = ctx.GetVarName(referencingPath, field.Scope, null, create: false, allowCurrencyFieldProcessing: true);
-                            var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
-
-                            // Table Schema name returns table view and we need to refer Base tables  in UDF in case of non logical fields hence Suffixing Base to the Schema Name
-                            // because logical fields can only be referred from view 
-                            if (!field.Column.IsLogical)
-                            {
-                                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ? 
-                                    baseTableName : tableSchemaName + "Base";
-                            }
+                            var tableSchemaName = GetTableSchemaName(field);
 
                             // the key should include the schema name of the table, the var name for the referencing field, and the schema name of the referenced field
                             var key = new Tuple<string, string, string>(tableSchemaName, referencingVar, referenced);
@@ -283,7 +275,7 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = [{field.Column.SchemaName}]"; }));
+                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " + $"[{GetColumnSchemaName(field)}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
@@ -359,6 +351,39 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        private string GetTableSchemaName(VarDetails field)
+        {
+            var tableSchemaName = _metadataCache.GetTableSchemaName(field.Table);
+
+            //  Table Schema name returns table view and logical fields can only be referred from view.
+            if (field.Column.IsLogical)
+            {
+                return tableSchemaName;
+            }
+
+            if(_secondaryMetadataCache != null && _secondaryMetadataCache.ShouldReferFieldFromExtensionTable(field.Table, field.Column.LogicalName, out var extensionTableName))
+            {
+                tableSchemaName = extensionTableName;
+            }
+            else
+            {
+                tableSchemaName = _secondaryMetadataCache != null && _secondaryMetadataCache.TryGetBaseTableName(field.Table, out var baseTableName) ?
+                                    baseTableName : tableSchemaName + "Base";
+            }
+
+            return tableSchemaName;
+        }
+
+        private string GetColumnSchemaName(VarDetails field)
+        {
+            if (_secondaryMetadataCache == null)
+            {
+                return field.Column.SchemaName;
+            }
+
+            return _secondaryMetadataCache.GetColumnNameOnPrimaryTable(field);
+        }
+
         private void EmitReturn(StringWriter tw, string indent, SqlVisitor.Context context, SqlVisitor.RetVal result, FormulaType returnType, SqlCompileOptions options)
         {
             // emit final range checks using the final type
@@ -399,7 +424,7 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
