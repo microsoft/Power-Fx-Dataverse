@@ -214,6 +214,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             expr = "Environment.apiNoInputs().out";
             check = engine.Check(expr, symbolTable: dvc.Symbols);
             Assert.True(check.IsSuccess);
+
+            // Now invoke it. 
+            var eval = check.GetEvaluator();
+
+            var mockExec = new MockExecute
+            {
+                Work = (req) =>
+                {
+                    Assert.Equal("apiNoInputs", req.RequestName);
+                    Assert.Empty(req.Parameters);
+                    
+                    var orgResp = new OrganizationResponse();
+                    orgResp["out"] = 38;
+
+                    return orgResp;
+                }
+            };
+
+            var rc = new RuntimeConfig(dvc.SymbolValues);
+            rc.AddDataverseExecute(mockExec);
+
+            var result = await eval.EvalAsync(default, rc);
+
+            Assert.Equal(38, result.ToDouble());
+
         }
 
 

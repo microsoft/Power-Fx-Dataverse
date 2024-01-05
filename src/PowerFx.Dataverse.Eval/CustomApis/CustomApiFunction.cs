@@ -15,7 +15,7 @@ namespace Microsoft.PowerFx.Dataverse
     // Input: single Record, each field is a parameter
     // Output: a scalar if API has 1 output, else a record of outputs. 
     // cr378_TestApi2({ cr378_Param1 : 1})
-    internal class CustomApiFunction : ReflectionFunction
+    internal class CustomApiFunctionBase : ReflectionFunction
     {
         private readonly string _name;
 
@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new FormulaType[1] { inputType };
         }
 
-        public CustomApiFunction(
+        public CustomApiFunctionBase(
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Callback invoked by Power Fx engine during expression execution. 
-        public async Task<FormulaValue> Execute(IDataverseExecute invoker, RecordValue namedArgs, CancellationToken cancel)
+        protected async Task<FormulaValue> ExecuteWorker(IDataverseExecute invoker, RecordValue namedArgs, CancellationToken cancel)
         {
             cancel.ThrowIfCancellationRequested();
 
@@ -89,6 +89,39 @@ namespace Microsoft.PowerFx.Dataverse
             var result = CustomApiMarshaller.Outputs2Fx(resp.Results, this._signature.Outputs, _dataverseConnection);
 
             return result;
+        }
+    }
+
+    internal class CustomApi0ArgFunction : CustomApiFunctionBase
+    {
+        public CustomApi0ArgFunction(
+            DataverseConnection dataverseConnection,
+            CustomApiSignature signature,
+            FormulaType returnType,
+            RecordType inputType
+            ) : base(dataverseConnection, signature, returnType, inputType)
+        {
+        }
+
+        public Task<FormulaValue> Execute(IDataverseExecute invoker, CancellationToken cancel)
+        {
+            return this.ExecuteWorker(invoker, RecordValue.Empty(), cancel);
+        }
+    }
+
+    internal class CustomApi1ArgFunction : CustomApiFunctionBase
+    {
+        public CustomApi1ArgFunction(
+            DataverseConnection dataverseConnection,
+            CustomApiSignature signature,
+            FormulaType returnType,
+            RecordType inputType) : base(dataverseConnection, signature, returnType, inputType)
+        {
+        }
+
+        public Task<FormulaValue> Execute(IDataverseExecute invoker, RecordValue namedArgs, CancellationToken cancel)
+        {
+            return this.ExecuteWorker(invoker, namedArgs, cancel);
         }
     }
 }

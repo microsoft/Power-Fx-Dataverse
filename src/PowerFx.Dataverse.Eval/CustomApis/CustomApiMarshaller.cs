@@ -30,6 +30,11 @@ namespace Microsoft.PowerFx.Dataverse
         // Get a record, with each field correspdonding to an input. Matched by name. 
         private static RecordType GetRecordType(IParameterType[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
+            if (parameterMarshaller == null)
+            {
+                parameterMarshaller = new CustomApiParameterMarshaller(null);
+            }
+
             // Inputs are always as a record. Enables named input parameters. 
             var inRecord = RecordType.Empty();
             foreach (var input in inputs)
@@ -157,6 +162,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static FormulaType GetOutputType(CustomApiResponse[] outputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
+            if (parameterMarshaller == null)
+            {
+                parameterMarshaller = new CustomApiParameterMarshaller(null);
+            }
+
             FormulaType outType;
             if (IsOutputTypeSingle(outputs))
             {
