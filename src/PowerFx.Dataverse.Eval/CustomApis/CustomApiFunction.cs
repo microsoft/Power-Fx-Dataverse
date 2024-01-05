@@ -29,11 +29,21 @@ namespace Microsoft.PowerFx.Dataverse
         // Custom APIs by default appear in "Environment" namespace. 
         public static DPath EnvironmentNamespace = DPath.Root.Append(new DName("Environment"));
 
+        // For 0-param cases, use signature Foo() instead of Foo({}).
+        private static FormulaType[] Norm(RecordType inputType)
+        {
+            if (!inputType.FieldNames.Any())
+            {
+                return new FormulaType[0];
+            }
+            return new FormulaType[1] { inputType };
+        }
+
         public CustomApiFunction(
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
-            RecordType inputType) : base(EnvironmentNamespace, signature.Api.uniquename, returnType, inputType)
+            RecordType inputType) : base(EnvironmentNamespace, signature.Api.uniquename, returnType, Norm(inputType))
         {
             // To invoke, use uniqueName
             // Also support display names: https://github.com/microsoft/Power-Fx-Dataverse/issues/389

@@ -39,7 +39,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new CustomApiRequestParam
             {
-                 name =name,
                  uniquename = name,
                  type = type
             };
@@ -49,7 +48,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             return new CustomApiResponse
             {
-                name = name,
                 uniquename = name,
                 type = type
             };
@@ -72,6 +70,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 NewSig("api1",
                 NewIn("p1", CustomApiParamType.Integer),
                 NewOut("out", CustomApiParamType.Integer));
+
+        // No inputs. 
+        public static readonly CustomApiSignature _apiNonputsSignature =
+            NewSig("apiNoInputs",
+            NewOut("out", CustomApiParamType.Integer));
 
         // Normal Check and Eval. 
         [Fact]
@@ -193,6 +196,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var actualMsg = ((ErrorValue)result).Errors[0].Message;
             Assert.Contains(msg, actualMsg);
         }
+
+        [Fact]
+        public async Task NoInputsSignature()
+        {
+            var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
+
+            // Plugins are imported into "Environment" namespace by default. 
+            dvc.AddPlugin(_apiNonputsSignature);
+
+            var engine = new RecalcEngine();
+
+            var expr = "Environment.apiNoInputs({p1:19}).out";
+            var check = engine.Check(expr, symbolTable: dvc.Symbols);
+            Assert.False(check.IsSuccess);
+
+            expr = "Environment.apiNoInputs().out";
+            check = engine.Check(expr, symbolTable: dvc.Symbols);
+            Assert.True(check.IsSuccess);
+        }
+
 
         public class MockExecute : IDataverseExecute
         {

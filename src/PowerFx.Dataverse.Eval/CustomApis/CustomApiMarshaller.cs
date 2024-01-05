@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             var inRecord = RecordType.Empty();
             foreach (var input in inputs)
             {
-                var name = input.name;
+                var name = input.uniquename;
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     throw new InvalidOperationException($"Bad name");
@@ -57,8 +57,8 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (var input in inputs)
             {
                 if (input.isoptional)
-                {
-                    throw new NotSupportedException($"Optional parameters are not supported. {input.name}");
+                {   
+                    throw new NotSupportedException($"Optional parameters are not supported. {input.uniquename}");
                 }
             }
 
@@ -134,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
             // So we need to know the target type. 
             foreach (var input in inputMetadata)
             {
-                string name = input.name;
+                string name = input.uniquename;
                 var fxValue = fxValues.GetField(name);
                 if (fxValue is not BlankValue)
                 {
@@ -356,7 +356,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return entity;
             }
             var fxOutputs = (IDictionary<string, object>)(fxOutputObject);
-            if (!fxOutputs.TryGetValue(paramType.name, out var outputValue))
+            if (!fxOutputs.TryGetValue(paramType.uniquename, out var outputValue))
             {
                 throw new InvalidPluginExecutionException($"Unable to extract value of output from pfx result");
             }
