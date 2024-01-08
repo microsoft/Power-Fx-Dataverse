@@ -31,10 +31,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             FilterExpression filter;
-
+            ISet<LinkEntity> relation;
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
                 filter = DelegationFormulaValue._value;
+                relation = DelegationFormulaValue._relation;
             }
             else
             {
@@ -57,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, filter, 1, columns, cancellationToken).ConfigureAwait(false);
+            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, cancellationToken).ConfigureAwait(false);
 
             var result = row.FirstOrDefault();
             if (result == null || result.IsBlank)

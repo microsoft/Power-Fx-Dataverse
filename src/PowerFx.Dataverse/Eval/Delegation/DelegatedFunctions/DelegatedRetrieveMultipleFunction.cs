@@ -31,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             int? topCount = null;
             FilterExpression filter;
-
+            ISet<LinkEntity> relation;
             if (args[2] is NumberValue count)
             {
                 topCount = (int)(count).Value;
@@ -50,6 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
                 filter = DelegationFormulaValue._value;
+                relation = DelegationFormulaValue._relation;
             }
             else
             {
@@ -72,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, filter, topCount, columns, cancellationToken).ConfigureAwait(false);
+            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, topCount, columns, cancellationToken).ConfigureAwait(false);
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
             return result;
         }
