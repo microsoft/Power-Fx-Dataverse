@@ -35,8 +35,9 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
-            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
+            DVFeatureControlBt dvFeatureControlBit = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dvFeatureControlBit)
         {
         }
 
@@ -320,7 +321,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
-                sqlResult.DependentOptionSetIds = ctx.GetDependentOptionSets(dependentFields, _metadataCache);
+                sqlResult.DependentOptionSetIds = _dvFeatureControlBit.IsOptionSetEnabled ? ctx.GetDependentOptionSets(dependentFields, _metadataCache) : new HashSet<Guid>();
 
                 if (retType is OptionSetValueType)
                 {
@@ -343,9 +344,9 @@ namespace Microsoft.PowerFx.Dataverse
                             // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
 
-                            // Throwing error if related entity's local optionset is used because related entity's metadata will be processed later
-                            // by getting metadata through callback, only after any related entity's field is used. so, related entity's optionsets 
-                            // will not be suggested by intellisense initially and will be suggested only after using any related entity's field.
+                            // Throwing error if related entity's local optionset is used because related entity's metadata will be processed later by
+                            // getting metadata through callback, only after any lookup field to related entity's field is used. so, related entity's
+                            // optionsets will not be suggested by intellisense initially and will be suggested only after using any related entity's field.
                             if (key != _currentEntityName)
                             {
                                 errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
