@@ -70,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             var field = ((StringValue)args[1]).Value;
             var value = MaybeReplaceBlank(args[2]);
 
-            if (!value.Type._type.IsPrimitive)
+            if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
             {
                 throw new InvalidOperationException("Unsupported type : expected Primitive");
             } 

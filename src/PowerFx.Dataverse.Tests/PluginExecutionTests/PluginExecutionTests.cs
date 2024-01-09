@@ -2718,10 +2718,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
             entity3.Attributes["old_price"] = null;
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            entity3.Attributes["new_polyfield"] = null;
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
             entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            entity4.Attributes["new_polyfield"] = null;
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
