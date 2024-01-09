@@ -709,6 +709,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            true,
+            true)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            false,
+            true)]
+
         public void LookUpDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
@@ -717,6 +738,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = 
                 PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
             var tableT1 = dv.AddTable(displayName, logicalName);
+            dv.AddTable("t2", "remote");
 
             var opts = parserNumberIsFloatOption ?
                 PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
@@ -1159,6 +1181,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", true, true)]
         [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", true, false)]
         [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", false, true)]
+
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, true)]
+
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, true)]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
