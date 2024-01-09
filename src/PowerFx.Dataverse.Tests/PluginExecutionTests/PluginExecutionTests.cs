@@ -2730,6 +2730,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_currency"] = new Money(100);
             entity1.Attributes["new_name"] = "row1";
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

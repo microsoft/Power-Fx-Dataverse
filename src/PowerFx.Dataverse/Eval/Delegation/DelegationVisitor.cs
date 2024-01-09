@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
@@ -7,6 +8,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -1101,9 +1103,32 @@ namespace Microsoft.PowerFx.Dataverse
                     relations.Add(fromField);
                     return true;
                 }
+                else if(fieldAccess.From is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.AsType.Name)
+                {
+                    if(TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out var sourceEntityName))
+                    {
+                        TryGetFieldName(context, callNode.Args[0], out fromField);
+                        AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
+                        relations.Add($"{logicalName}_{targetEntityName}_{sourceEntityName}");
+                        return true;
+                    }
+                }
             }
 
             fieldName = default;
+            return false;
+        }
+
+        private static bool TryGetEntityName(FormulaType type, out string entityName)
+        {
+            var ads = type._type.AssociatedDataSources.FirstOrDefault();
+            if (ads != null)
+            {
+                entityName = ads.EntityName.Value;
+                return true;
+            }
+
+            entityName = default;
             return false;
         }
 
