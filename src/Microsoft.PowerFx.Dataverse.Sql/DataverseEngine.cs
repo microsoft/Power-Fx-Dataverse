@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
-        protected readonly DVFeatureControlBt _dvFeatureControlBit;
+        protected readonly DVFeatureControlBit _dvFeatureControlBit;
 
         protected readonly CultureInfo _cultureInfo;
 
@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
           PowerFxConfig config,
           CultureInfo culture = null,
           EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-          DVFeatureControlBt dvFeatureControlBit = null)
+          DVFeatureControlBit dvFeatureControlBit = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            _dvFeatureControlBit = dvFeatureControlBit ?? new DVFeatureControlBt() { IsOptionSetEnabled = false };
+            _dvFeatureControlBit = dvFeatureControlBit ?? new DVFeatureControlBit() { IsOptionSetEnabled = false };
 
         }
 
@@ -201,7 +201,7 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBt dvFeatureControlBit)
+        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBit dvFeatureControlBit)
         {
             return
                 type is DecimalType ||

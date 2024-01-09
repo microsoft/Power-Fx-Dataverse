@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
             EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-            DVFeatureControlBt dvFeatureControlBit = null)
+            DVFeatureControlBit dvFeatureControlBit = null)
             : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dvFeatureControlBit)
         {
         }
