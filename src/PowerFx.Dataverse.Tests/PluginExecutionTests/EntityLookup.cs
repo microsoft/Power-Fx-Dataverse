@@ -495,6 +495,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         return (x == null ? default : (Guid)x).CompareTo(y == null ? default : (Guid)y);
 
                     case AttributeTypeCode.Lookup:
+                        return (x == null ? default : (x is Guid gx ? gx : ((EntityReference)x).Id)).CompareTo(y == null ? default : (y is Guid gy ? gy : ((EntityReference)y).Id));
                     case AttributeTypeCode.BigInt:
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:

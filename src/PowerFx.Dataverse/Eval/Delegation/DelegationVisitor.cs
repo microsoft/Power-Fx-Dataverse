@@ -407,7 +407,8 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqNumbers ||
                 op == BinaryOpKind.EqText ||
                 op == BinaryOpKind.EqTime ||
-                op == BinaryOpKind.EqOptionSetValue;
+                op == BinaryOpKind.EqOptionSetValue ||
+                op == BinaryOpKind.EqPolymorphic;
         }
 
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
@@ -421,7 +422,8 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.NeqNumbers ||
                 op == BinaryOpKind.NeqText ||
                 op == BinaryOpKind.NeqTime ||
-                op == BinaryOpKind.NeqOptionSetValue;
+                op == BinaryOpKind.NeqOptionSetValue ||
+                op == BinaryOpKind.NeqPolymorphic;
         }
 
         internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
