@@ -750,6 +750,12 @@ namespace Microsoft.PowerFx.Dataverse
                 /// The path to the field
                 /// </summary>
                 public DPath Path;
+
+                /// <summary>
+                /// True if the field is stored on Primary Table
+                /// False if the field is inherited from a different table
+                /// </summary>
+                public bool IsReferenceFieldOnInheritedEntity;
             }
 
             // Mapping of field names to details
@@ -778,12 +784,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
+            // Used during GetVarDetails to verify if a dependent field is stored on primary table or not to decide if field requires reference.
+            private readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
+
             /// <summary>
             /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -797,6 +806,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopes[rootScope.Id] = RootScope;
 
                 DoesDateDiffOverflowCheck = false;
+                _secondaryMetadataCache = secondaryMetadataCache;
             }
 
             public bool DoesDateDiffOverflowCheck { get; internal set; }
@@ -834,7 +844,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsReferenceField(VarDetails field)
             {
-                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null);
+                // For fields on inherited entity, if field is stored on primary table,
+                // field require reference and cannot be passed as a parameter to UDF 
+                return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsReferenceFieldOnInheritedEntity);
             }
 
             /// <summary>
@@ -971,13 +983,16 @@ namespace Microsoft.PowerFx.Dataverse
                     var varName = "@v" + idx;
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
-                    
+
+                    var isReferenceFieldOnInheritedEntity = !column.IsKey && _secondaryMetadataCache != null && 
+                        _secondaryMetadataCache.IsInheritedEntityFieldStoredOnPrimaryTable(table, column.LogicalName);
+
                     var varType = GetFormulaType(column, sourceContext);
-                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path };
+                    details = new VarDetails { Index = idx, VarName = varName, Column = column, VarType = varType, Navigation = navigation, Table = table, Scope = scope, Path = path, IsReferenceFieldOnInheritedEntity = isReferenceFieldOnInheritedEntity };
                     _vars.Add(varName, details);
                     _fields.Add(key, details);
 
-                    if (column.RequiresReference())
+                    if (column.RequiresReference() || isReferenceFieldOnInheritedEntity)
                     {
                         // the first time a calculated or logical field is referenced, add a var for the primary id for the table
                         var parentPath = path.Parent;

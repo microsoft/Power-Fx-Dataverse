@@ -39,6 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
+        internal EntityAttributeMetadataProvider SecondaryMetadataCache => _secondaryMetadataCache;
+
         protected readonly DVFeatureControlBlock _dvFeatureControlBlock;
 
         protected readonly CultureInfo _cultureInfo;

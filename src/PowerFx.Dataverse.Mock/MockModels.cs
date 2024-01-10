@@ -436,43 +436,45 @@ namespace Microsoft.Dataverse.EntityMock
         /// </summary>
         public static readonly EntityMetadataModel[] AllAttributeModels = new EntityMetadataModel[] { AllAttributeModel, TripleRemoteModel };
 
-        public static readonly EntityMetadataModel TestEntity1 = new EntityMetadataModel
+        public static readonly EntityMetadataModel Account = new EntityMetadataModel
         {
-            LogicalName = "testentity1",
-            DisplayCollectionName = "TestEntity1",
-            PrimaryIdAttribute = "testentity1id",
+            LogicalName = "account",
+            DisplayCollectionName = "Accounts",
+            PrimaryIdAttribute = "accountid",
             Attributes = new AttributeMetadataModel[]
             {
-                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new [] { "testentity" }),
-                AttributeMetadataModel.NewGuid("testentity1id", "Testentity1Id"),
+                AttributeMetadataModel.NewLookup("new_tasklookup", "TaskLookup", new [] { "task" }),
+                AttributeMetadataModel.NewGuid("accountid", "AccountId"),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
                 new OneToManyRelationshipMetadataModel
                 {
-                    ReferencedAttribute = "testentityid",
-                    ReferencedEntity = "testentity",
-                    ReferencingAttribute = "new_lookup",
-                    ReferencingEntity = "testentity1",
-                    ReferencedEntityNavigationPropertyName = "lookup_refd",
-                    ReferencingEntityNavigationPropertyName = "lookup",
-                    SchemaName = "testentity1_testentity"
+                    ReferencedAttribute = "activitypointerid",
+                    ReferencedEntity = "task",
+                    ReferencingAttribute = "new_tasklookup",
+                    ReferencingEntity = "account",
+                    ReferencedEntityNavigationPropertyName = "tasklookup_refd",
+                    ReferencingEntityNavigationPropertyName = "tasklookup",
+                    SchemaName = "account_task"
                 }
             }
         };
 
-        public static readonly EntityMetadataModel TestEntity = new EntityMetadataModel
+        public static readonly EntityMetadataModel Task = new EntityMetadataModel
         {
-            LogicalName = "testentity",
-            DisplayCollectionName = "TestEntity",
-            PrimaryIdAttribute = "testentityid",
+            LogicalName = "task",
+            DisplayCollectionName = "Tasks",
+            PrimaryIdAttribute = "activitypointerid",
             Attributes = new AttributeMetadataModel[]
             {
-                AttributeMetadataModel.NewDecimal("simplefield", "SimpleField"),
-                AttributeMetadataModel.NewGuid("testentityid", "Testentityid"),
+                AttributeMetadataModel.NewDecimal("subject", "Subject"),
+                AttributeMetadataModel.NewGuid("activitypointerid", "ActivitypointerId"),
+                AttributeMetadataModel.NewDecimal("fieldnotstoredonprimarytable", "FieldNotStoredOnPrimaryTable"),
+                AttributeMetadataModel.NewDecimal("category", "Category")
             }
         };
 
-        public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { TestEntity1, TestEntity };
+        public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { Account, Task};
     }
 }
