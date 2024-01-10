@@ -36,8 +36,8 @@ namespace Microsoft.PowerFx.Dataverse
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
             EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-            DVFeatureControlBit dvFeatureControlBit = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dvFeatureControlBit)
+            DVFeatureControlBlock dvFeatureControlBlock = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dvFeatureControlBlock)
         {
         }
 
@@ -321,7 +321,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
-                sqlResult.DependentOptionSetIds = _dvFeatureControlBit.IsOptionSetEnabled ? ctx.GetDependentOptionSets(dependentFields, _metadataCache) : new HashSet<Guid>();
+                sqlResult.DependentOptionSetIds = _dvFeatureControlBlock.IsOptionSetEnabled ? ctx.UpdateOptionSetRelatedDependencies(dependentFields, _metadataCache) : new HashSet<Guid>();
 
                 if (retType is OptionSetValueType)
                 {

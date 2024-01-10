@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
-        protected readonly DVFeatureControlBit _dvFeatureControlBit;
+        protected readonly DVFeatureControlBlock _dvFeatureControlBlock;
 
         protected readonly CultureInfo _cultureInfo;
 
@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
           PowerFxConfig config,
           CultureInfo culture = null,
           EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-          DVFeatureControlBit dvFeatureControlBit = null)
+          DVFeatureControlBlock dvFeatureControlBlock = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            _dvFeatureControlBit = dvFeatureControlBit ?? new DVFeatureControlBit() { IsOptionSetEnabled = false };
+            _dvFeatureControlBlock = dvFeatureControlBlock ?? new DVFeatureControlBlock() { IsOptionSetEnabled = false };
 
         }
 
@@ -160,7 +160,7 @@ namespace Microsoft.PowerFx.Dataverse
                 returnType = BuildReturnType(nodeType);
             }
 
-            if (!SupportedReturnType(returnType, _dvFeatureControlBit) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
+            if (!SupportedReturnType(returnType, _dvFeatureControlBlock) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
@@ -201,13 +201,13 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBit dvFeatureControlBit)
+        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
         {
             return
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                (type is OptionSetValueType && dvFeatureControlBit.IsOptionSetEnabled) ||
+                (type is OptionSetValueType && dvFeatureControlBlock.IsOptionSetEnabled) ||
                 Library.IsDateTimeType(type);
         }
 

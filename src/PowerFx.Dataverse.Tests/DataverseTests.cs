@@ -1073,7 +1073,7 @@ END
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                dvFeatureControlBit: new () { IsOptionSetEnabled = true });
+                dvFeatureControlBlock: new () { IsOptionSetEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -1733,7 +1733,7 @@ END
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
             var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets),
-                dvFeatureControlBit: new() { IsOptionSetEnabled = true });
+                dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
 
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.False(result2.IsSuccess);
@@ -1755,16 +1755,20 @@ END
             var engine = new PowerFx2SqlEngine(xrmModel, provider);
             provider.TryGetOptionSet(new Core.Utils.DName("Picklist (All Attributes)"), out var optionSet);
             provider.TryGetOptionSet(new Core.Utils.DName("Status (All Attributes)"), out var optionSet2);
+
+            // OptionSet returntype is not supported with FCB - "IsOptionSetEnabled" not enabled.
             var result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-72: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", result.Errors.First().ToString());
 
-            engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBit: new() { IsOptionSetEnabled = true });
+            engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
 
+            // Using related entity optionset in result value is not supported.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-97: The result type OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
 
+            // OptionSetToText operation is blocked as optionset labels are user locale-specific.
             result = engine.Compile("Text('Picklist (All Attributes)'.One)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.", result.Errors.First().ToString());
@@ -1776,6 +1780,7 @@ END
             Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
             Assert.NotEqual(Guid.Empty, result.OptionSetId);
 
+            // Dependent optionsets used in formula, other than in the result values are returned in SqlCompileResult.DependentOptionSetIds.
             result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, 'Status (All Attributes)'.Active = 'Status (All Attributes)'.Active, 2, 3)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
             Assert.Equal(2, result.TopLevelIdentifiers.Count);
@@ -1785,6 +1790,46 @@ END
             Assert.Equal(optionSet2.OptionSetId, result.DependentOptionSetIds.ElementAt(1));
             Assert.Equal(Guid.Empty, result.OptionSetId);
 
+        }
+
+        public const string OptionSetTestUDF = @"CREATE FUNCTION test(
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 int
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 bit
+    DECLARE @v4 int
+    DECLARE @v5 int
+
+    -- expression body
+    SET @v1 = 1
+    SET @v2 = 2
+    SET @v3 = IIF((ISNULL(@v1,0) > ISNULL(@v2,0)), 1, 0)
+    IF ((ISNULL(@v3,0)=1)) BEGIN
+        SET @v4 = 1
+        SET @v0 = @v4
+    END ELSE BEGIN
+        SET @v5 = 2
+        SET @v0 = @v5
+    END
+    -- end expression body
+
+    RETURN @v0
+END
+";
+        [Fact]
+        public void OptionSetUDFTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+
+            var result = engine.Compile("If(1 > 2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal(OptionSetTestUDF, result.SqlFunction);
         }
 
         [Fact]

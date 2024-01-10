@@ -447,7 +447,10 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         string name = fieldNode.Field.ToString();
 
-                        // blocking OptionSetToText operation if dataverse optionsetvalues are passed as args, as we can't return the labels which are locale-specific.
+                        // blocking OptionSetToText operation if dataverse optionsetvalues are passed as args, as we can't return the labels which are user locale-specific.
+                        // e.g., OptionSetValue Labels - [{label:"Yes", languagecode:"1033"(en-US)}, {label:"Ja", languagecode:"1031"(de-DE)}]
+                        // When formula saved by maker with en-US language, Formula - Text('OptionSet ()'.Yes), UDF created returns string 'Yes' which is fixed and 
+                        // users with en-US or de-DE language code will see the formula field value as 'Yes' and it is not localized based on user locale.
                         if (fieldNode.From is ResolvedObjectNode resolvedObjectNode && resolvedObjectNode.Value is DataverseOptionSet)
                         {
                             throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
@@ -864,7 +867,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return dependentFields;
             }
 
-            public HashSet<Guid> GetDependentOptionSets(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache)
+            public HashSet<Guid> UpdateOptionSetRelatedDependencies(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache)
             {
                 var dependentOptionSets = new HashSet<Guid>();
                 foreach (var optionSetName in _dependentOptionsets)
