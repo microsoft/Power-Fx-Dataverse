@@ -46,6 +46,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected readonly DVFeatureControlBlock _dvFeatureControlBlock;
 
+        internal EntityAttributeMetadataProvider SecondaryMetadataCache => _secondaryMetadataCache;
+
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length

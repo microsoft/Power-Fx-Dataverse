@@ -113,8 +113,9 @@ namespace Microsoft.PowerFx
             config.AddOptionSet(optionsSet);
 
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
-
-            return new RecalcEngine(config);
+            var eng = new RecalcEngine(config);
+            eng.EnableDelegation();
+            return eng;
         }
 
         public static void Main()
@@ -146,7 +147,7 @@ namespace Microsoft.PowerFx
                 InnerServices = innerServices
             };
             repl.EnableSampleUserObject();
-
+            repl.Engine.EnableDelegation();
             _repl = repl;
             return repl;
         }

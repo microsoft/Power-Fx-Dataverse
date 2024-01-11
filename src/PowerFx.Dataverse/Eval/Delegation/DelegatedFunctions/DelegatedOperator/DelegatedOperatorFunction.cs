@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
+using Newtonsoft.Json.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -23,60 +29,33 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _binaryOpKind = binaryOpKind;
 
-            switch (_binaryOpKind)
+            if (DelegationIRVisitor.IsOpKindEqualityComparison(_binaryOpKind))
             {
-                case BinaryOpKind.EqNumbers:
-                case BinaryOpKind.EqBoolean:
-                case BinaryOpKind.EqText:
-                case BinaryOpKind.EqDate:
-                case BinaryOpKind.EqTime:
-                case BinaryOpKind.EqDateTime:
-                case BinaryOpKind.EqGuid:
-                case BinaryOpKind.EqDecimals:
-                case BinaryOpKind.EqCurrency:
-                    _op = ConditionOperator.Equal;
-                    break;
-                case BinaryOpKind.NeqNumbers:
-                case BinaryOpKind.NeqBoolean:
-                case BinaryOpKind.NeqText:
-                case BinaryOpKind.NeqDate:
-                case BinaryOpKind.NeqTime:
-                case BinaryOpKind.NeqDateTime:
-                case BinaryOpKind.NeqGuid:
-                case BinaryOpKind.NeqDecimals:
-                case BinaryOpKind.NeqCurrency:
-                    _op = ConditionOperator.NotEqual;
-                    break;
-                case BinaryOpKind.LtNumbers:
-                case BinaryOpKind.LtDecimals:
-                case BinaryOpKind.LtDateTime:
-                case BinaryOpKind.LtDate:
-                case BinaryOpKind.LtTime:
-                    _op = ConditionOperator.LessThan;
-                    break;
-                case BinaryOpKind.LeqNumbers:
-                case BinaryOpKind.LeqDecimals:
-                case BinaryOpKind.LeqDateTime:
-                case BinaryOpKind.LeqDate:
-                case BinaryOpKind.LeqTime:
-                    _op = ConditionOperator.LessEqual;
-                    break;
-                case BinaryOpKind.GtNumbers:
-                case BinaryOpKind.GtDecimals:
-                case BinaryOpKind.GtDateTime:
-                case BinaryOpKind.GtDate:
-                case BinaryOpKind.GtTime:
-                    _op = ConditionOperator.GreaterThan;
-                    break;
-                case BinaryOpKind.GeqNumbers:
-                case BinaryOpKind.GeqDecimals:
-                case BinaryOpKind.GeqDateTime:
-                case BinaryOpKind.GeqDate:
-                case BinaryOpKind.GeqTime:
-                    _op = ConditionOperator.GreaterEqual;
-                    break;
-                default:
-                    throw new NotSupportedException($"Unsupported operation {_op}");
+                _op = ConditionOperator.Equal;
+            }
+            else if (DelegationIRVisitor.IsOpKindInequalityComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.NotEqual;
+            }
+            else if (DelegationIRVisitor.IsOpKindLessThanComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.LessThan;
+            }
+            else if (DelegationIRVisitor.IsOpKindLessThanEqualComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.LessEqual;
+            }
+            else if (DelegationIRVisitor.IsOpKindGreaterThanComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.GreaterThan;
+            }
+            else if (DelegationIRVisitor.IsOpKindGreaterThanEqalComparison(_binaryOpKind))
+            {
+                _op = ConditionOperator.GreaterEqual;
+            }
+            else
+            {
+                throw new NotSupportedException($"Unsupported operation {_op}");
             }
         }
 
@@ -91,38 +70,60 @@ namespace Microsoft.PowerFx.Dataverse
             var field = ((StringValue)args[1]).Value;
             var value = MaybeReplaceBlank(args[2]);
 
-            if (value.Type._type.IsPrimitive)
+            if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
             {
-                var dvValue = _hooks.RetrieveAttribute(table, field, value);
-                
-                var filter = new FilterExpression();
+                throw new InvalidOperationException("Unsupported type : expected Primitive");
+            } 
 
-                if(dvValue == null)
-                {
-                    switch (_op)
-                    {
-                        case ConditionOperator.Equal:
-                            filter.AddCondition(field, ConditionOperator.Null);
-                            break;
-                        case ConditionOperator.NotEqual:
-                            filter.AddCondition(field, ConditionOperator.NotNull);
-                            break;
-                        default:
-                            throw new InvalidOperationException($"Unsupported operator {_op} for null value");
-                    }
-                }
-                else
-                {
-                    filter.AddCondition(field, _op, dvValue);
-                }
+            IEnumerable<string> links = null;
+            LinkEntity relation = null;
+            object dvValue = null;
+            DelegationFormulaValue result = null;
+            if(args.Length > 3)
+            {
+                // If arguments have relation information, then we need to use that to generate the filter.
+                links = ((TableValue)args[3]).Rows.Select(row => ((StringValue)row.Value.GetField("Value")).Value);
+                relation = _hooks.RetreiveManyToOneRelation(table, links);
+                dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
+                var filter = GenerateFilterExpression(field, dvValue);
+                filter.Conditions[0].EntityName = relation.LinkToEntityName;
 
-                var result = new DelegationFormulaValue(filter);
-                return result;
+                result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation });
             }
             else
             {
-                throw new InvalidOperationException("Unsupported type");
+                dvValue = _hooks.RetrieveAttribute(table, field, value);
+                var filter = GenerateFilterExpression(field, dvValue);
+                result = new DelegationFormulaValue(filter, relation: null);
             }
+
+            return result;
+        }
+
+        private FilterExpression GenerateFilterExpression(string field, object dataverseValue)
+        {
+            var filter = new FilterExpression();
+
+            if (dataverseValue == null)
+            {
+                switch (_op)
+                {
+                    case ConditionOperator.Equal:
+                        filter.AddCondition(field, ConditionOperator.Null);
+                        break;
+                    case ConditionOperator.NotEqual:
+                        filter.AddCondition(field, ConditionOperator.NotNull);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unsupported operator {_op} for null value");
+                }
+            }
+            else
+            {
+                filter.AddCondition(field, _op, dataverseValue);
+            }
+
+            return filter;
         }
 
         private FormulaValue MaybeReplaceBlank(FormulaValue formulaValue)

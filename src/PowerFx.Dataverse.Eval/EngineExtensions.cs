@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -30,11 +31,10 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancellationToken)
             {
-                // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
-                var result = await t2.RetrieveMultipleAsync(filter, count, columnSet, cancel).ConfigureAwait(false);
+                var result = await t2.RetrieveMultipleAsync(filter, relation, count, columnSet, cancellationToken).ConfigureAwait(false);
                 return result;
             }
 
@@ -44,10 +44,22 @@ namespace Microsoft.PowerFx.Dataverse
                 var t2 = (DataverseTableValue)table;
                 if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                 {
-                    return amd.ToAttributeObject(value);
+                    return amd.ToAttributeObject(value, true);
                 }
 
                 throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
+            }
+
+            internal override object RetrieveRelationAttribute(TableValue table, LinkEntity relation, string field, FormulaValue value)
+            {
+                var t2 = (DataverseTableValue)table;
+                var metadata = t2.Connection.GetMetadataOrThrow(relation.LinkToEntityName);
+                if(metadata.TryGetAttribute(field, out var amd))
+                {
+                    return amd.ToAttributeObject(value, true);
+                }
+
+                throw new NotImplementedException();
             }
 
             public override bool IsDelegableSymbolTable(ReadOnlySymbolTable symbolTable)
@@ -57,6 +69,25 @@ namespace Microsoft.PowerFx.Dataverse
                     symbolTable.DebugName == DVSymbolTable.SymTableName;
 
                 return isRealTable;
+            }
+
+            internal override LinkEntity RetreiveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            {
+                var dvTable = (DataverseTableValue)table;
+
+                dvTable._entityMetadata.TryGetManyToOneRelationship(links.First(), out var relation);
+
+                var linkEntity = new LinkEntity()
+                {
+                    Columns = new ColumnSet(true),
+                    LinkFromEntityName = relation.ReferencingEntity,
+                    LinkToEntityName = relation.ReferencedEntity,
+                    LinkFromAttributeName = relation.ReferencingAttribute,
+                    LinkToAttributeName = relation.ReferencedAttribute,
+                    JoinOperator = JoinOperator.LeftOuter
+                };
+
+                return linkEntity;
             }
         }
 

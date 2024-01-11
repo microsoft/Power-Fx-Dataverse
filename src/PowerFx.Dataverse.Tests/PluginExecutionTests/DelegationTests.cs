@@ -142,7 +142,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(__retrieveGUID(t1, _g1)).new_price",
             true,
             true)]
-        
+
         // Date
         [InlineData("LookUp(t1, Date = Date(2023, 6, 1)).Price",
             100.0,
@@ -350,7 +350,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             "(LookUp(__retrieveMultiple(t1, __noFilter(), 1), (EqGuid(localid,_g1)))).new_price",
             true,
             true,
-            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")] 
+            "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData("With({r:t1}, LookUp(FirstN(r, 1), localid=_g1).Price)",
             100.0,
@@ -581,53 +581,45 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(new_currency,0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             true,
-            true,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtDecimals(new_currency,0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             false,
-            false,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(new_currency,Float(0))))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, Float(0)))).new_price",
             true,
-            false,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("LookUp(t1, Currency > 0).Price",
             100.0,
-            "(LookUp(t1, (GtNumbers(Value(new_currency),0)))).new_price",
+            "(__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price",
             false,
-            true,
-            "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
 
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             true,
-            true,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtDecimals(new_currency,0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             false,
-            false,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(new_currency,Float(0))))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, Float(0)))).new_price))",
             true,
-            false,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            false)]
         [InlineData("With({r:t1}, LookUp(r, Currency > 0).Price)",
             100.0,
-            "With({r:t1}, ((LookUp(r, (GtNumbers(Value(new_currency),0)))).new_price))",
+            "With({r:t1}, ((__retrieveSingle(t1, __gt(t1, new_currency, 0))).new_price))",
             false,
-            true,
-            "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+            true)]
 
         [InlineData("With({r : t1}, LookUp(r, LocalId=_g1).Price)",
             100.0,
@@ -635,11 +627,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
-        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)", 
-            100.0, 
-            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))", 
-            false, 
-            false, 
+        [InlineData("With({r : Filter(t1, Price < 120)}, LookUp(r, Price > 90).Price)",
+            100.0,
+            "With({r:__retrieveMultiple(t1, __lt(t1, new_price, 120), 999)}, ((LookUp(__retrieveMultiple(t1, __lt(t1, new_price, 120), 999), (GtDecimals(new_price,90)))).new_price))",
+            false,
+            false,
             "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData("With({r: t1} ,LookUp(r, localid=GUID(\"00000000-0000-0000-0000-000000000001\")).Price)",
@@ -648,6 +640,137 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             true,
             true)]
 
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            true,
+            true)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, vdata, Float(10), Table({Value:virtual})))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            false,
+            true)]
+
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            true,
+            true)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, vdata, Float(10), Table({Value:virtual})))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, vdata, 10, Table({Value:virtual})))).new_price",
+            false,
+            true)]
+
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
+            -10.0,
+            "(__retrieveSingle(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)))).new_price",
+            true,
+            true)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
+            -10.0,
+            "(__retrieveSingle(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
+            -10.0,
+            "(__retrieveSingle(t1, __and(__neq(t1, vdata, Float(10), Table({Value:virtual})), __neq(t1, new_price, Float(10))))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
+            -10.0,
+            "(__retrieveSingle(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)))).new_price",
+            false,
+            true)]
+
+        [InlineData("LookUp(t1, IsBlank(virtual.'Virtual Data')).Price",
+            10.0,
+            "(__retrieveSingle(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})))).new_price",
+            true,
+            true)]
+
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            true,
+            true)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})))).new_price",
+            false,
+            true)]
+
+        [InlineData("LookUp(t1, PolymorphicLookup = First(t2)).Price", 
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price", 
+            true, 
+            true)]
+        [InlineData("LookUp(t1, PolymorphicLookup = First(t2)).Price", 
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, PolymorphicLookup = First(t2)).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price", 
+            true, 
+            false)]
+        [InlineData("LookUp(t1, PolymorphicLookup = First(t2)).Price",
+            100.0,
+            "(__retrieveSingle(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price", 
+            false, 
+            true)]
+
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(t2)).Price", 
+            10.0, 
+            "(__retrieveSingle(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price", 
+            true, 
+            true)]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(t2)).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price",
+            false,
+            false)]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(t2)).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price",
+            true,
+            false)]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(t2)).Price",
+            10.0,
+            "(__retrieveSingle(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())))).new_price",
+            false,
+            true)]
         public void LookUpDelegation(string expr, object expected, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
@@ -656,6 +779,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = 
                 PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat);
             var tableT1 = dv.AddTable(displayName, logicalName);
+            dv.AddTable("t2", "remote");
 
             var opts = parserNumberIsFloatOption ?
                 PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
@@ -1059,15 +1183,65 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", true, false)]
         [InlineData("Filter(t1, Price <> Blank())", 3, "__retrieveMultiple(t1, __neq(t1, new_price, Blank()), 999)", false, true)]
 
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtDecimals(new_currency,0)))", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,0)))", true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(new_currency,Float(0))))", true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("Filter(t1, Currency > 0)", 1, "Filter(t1, (GtNumbers(Value(new_currency),0)))", false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", false, false)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", true, true)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", true, false)]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", 1, "__retrieveMultiple(t1, __neq(t1, rating, (local_rating_optionSet).1), 999)", false, true)]
 
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtDecimals(new_currency,0)))))", false, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,0)))))", true, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(new_currency,Float(0))))))", true, false, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (Filter(r, (GtNumbers(Value(new_currency),0)))))", false, true, "Warning 8-10: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", false, false)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", true, true)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", true, false)]
+        [InlineData("Filter(t1, Rating = 'Rating (Locals)'.Hot)", 2, "__retrieveMultiple(t1, __eq(t1, rating, (local_rating_optionSet).1), 999)", false, true)]
+
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", false, false)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", true, true)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, Float(0)), 999)", true, false)]
+        [InlineData("Filter(t1, Currency > 0)", 1, "__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)", false, true)]
+
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", false, false)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", true, true)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, Float(0)), 999)))", true, false)]
+        [InlineData("With({r:t1}, Filter(r, Currency > 0))", 1, "With({r:t1}, (__retrieveMultiple(t1, __gt(t1, new_currency, 0), 999)))", false, true)]
+
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(t1, __eq(t1, vdata, 10, Table({Value:virtual})), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(t1, __eq(t1, vdata, 10, Table({Value:virtual})), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(t1, __eq(t1, vdata, Float(10), Table({Value:virtual})), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(t1, __eq(t1, vdata, 10, Table({Value:virtual})), 999)", false, true)]
+
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(t1, __neq(t1, vdata, 10, Table({Value:virtual})), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(t1, __neq(t1, vdata, 10, Table({Value:virtual})), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(t1, __neq(t1, vdata, Float(10), Table({Value:virtual})), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(t1, __neq(t1, vdata, 10, Table({Value:virtual})), 999)", false, true)]
+
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(t1, __and(__neq(t1, vdata, Float(10), Table({Value:virtual})), __neq(t1, new_price, Float(10))), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(t1, __and(__neq(t1, vdata, 10, Table({Value:virtual})), __neq(t1, new_price, 10)), 999)", false, true)]
+
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", false, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", true, true)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", true, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(t1, __eq(t1, vdata, Blank(), Table({Value:virtual})), 999)", false, true)]
+
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(t1, __eq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, true)]
+
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, Float(200), Table({Value:new_polyfield_t2_t1})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(t1, __neq(t1, data, 200, Table({Value:new_polyfield_t2_t1})), 999)", false, true)]
+
+        [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", true, true)]
+        [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", false, false)]
+        [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", true, false)]
+        [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(t1, __eq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", false, true)]
+
+        [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, "__retrieveMultiple(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", true, true)]
+        [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, "__retrieveMultiple(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", false, false)]
+        [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, "__retrieveMultiple(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", true, false)]
+        [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, "__retrieveMultiple(t1, __neq(t1, _new_polyfield_value, __retrieveSingle(t2, __noFilter())), 999)", false, true)]
         public void FilterDelegation(string expr, int expectedRows, string expectedIr, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             // create table "local"
