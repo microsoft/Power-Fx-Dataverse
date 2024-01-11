@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor.Context;
 
 
@@ -114,6 +115,7 @@ namespace Microsoft.PowerFx.Dataverse
             // attempt to produce a sanitized formula, success or failure, for reporting
             var sanitizedFormula = StructuralPrint.Print(binding.Top, binding, new NameSanitizer(binding));
 
+            sqlResult._typeHints = options?.TypeHints;
             sqlResult.ApplyErrors(); // will invoke post-check hook
 
             if (!sqlResult.IsSuccess)
@@ -400,7 +402,11 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, dvFeatureControlBlock : dvFeatureControlBlock);
+
+            SqlCompileResult sqlCheck = check as SqlCompileResult;
+            TypeDetails typeHints = sqlCheck?._typeHints;
+
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, typeHints: typeHints, dvFeatureControlBlock : dvFeatureControlBlock);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);

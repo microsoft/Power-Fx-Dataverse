@@ -7,6 +7,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Errors;
+using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -75,6 +77,8 @@ namespace Microsoft.PowerFx.Dataverse
         ///    "account" => { "account_primary_contact" }
         /// </example>
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
+
+        internal TypeDetails _typeHints;
     }
 
     // Additional info computed by the SQL comilation work
@@ -84,4 +88,5 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal SqlVisitor.Context _ctx;
     }
+
 }

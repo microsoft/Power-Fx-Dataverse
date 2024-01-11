@@ -17,6 +17,7 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using Span = Microsoft.PowerFx.Syntax.Span;
+using TypeDetails = Microsoft.PowerFx.Dataverse.SqlCompileOptions.TypeDetails;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -791,7 +792,9 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, DVFeatureControlBlock dvFeatureControlBlock = null)
+            private readonly TypeDetails _typeHints;
+
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, TypeDetails typeHints = null, DVFeatureControlBlock dvFeatureControlBlock = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -806,7 +809,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 DoesDateDiffOverflowCheck = false;
 
+                _typeHints = typeHints;
                 _dvFeatureControlBlock = dvFeatureControlBlock;
+
             }
 
             public bool DoesDateDiffOverflowCheck { get; internal set; }
@@ -1335,7 +1340,16 @@ namespace Microsoft.PowerFx.Dataverse
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    if (IsNumericType(result))
+                    // in case of float, if compiler gets min and max value from client then will entertain those values 
+                    // else use default values same as decimal if not provided by client
+                    if(_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
+                    {
+                        string minValue  = _typeHints != null ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
+                        string maxValue = _typeHints != null ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+
+                        PerformOverflowCheck(result, minValue, maxValue, postCheck);
+                    }
+                    else if (IsNumericType(result))
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
 
@@ -1356,7 +1370,19 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                        // in case of float, if compiler gets min and max value from client then will entertain those values 
+                        // else use default values same as decimal if not provided by client
+                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
+                        {
+                            string minValue = _typeHints != null ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
+                            string maxValue = _typeHints != null ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+
+                            PerformOverflowCheck(result, minValue, maxValue, postCheck);
+                        }
+                        else
+                        {
+                            PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                        } 
                     }    
                 }
             }

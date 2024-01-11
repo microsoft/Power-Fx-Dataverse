@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                      {
                          LogicalName= "new_field",
                          DisplayName = "field",
-                         AttributeType = AttributeTypeCode.Decimal
+                         AttributeType = AttributeTypeCode.Double
                      },
                 }
             };
@@ -57,6 +57,121 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
+        }
+
+        public const string FloatMinMaxUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float, -- new_field
+    @v1 float -- new_field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 float
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 float
+    DECLARE @v5 float
+
+    -- expression body
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS FLOAT)
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    IF(@v2<2 OR @v2>10) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = @v3
+    SET @v5 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v4,0)) AS FLOAT)
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<2 OR @v5>10) BEGIN RETURN NULL END
+    RETURN @v5
+END
+";
+
+        public const string FloatDefaultMinMaxUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float, -- new_field
+    @v1 float -- new_field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 float
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 float
+    DECLARE @v5 float
+
+    -- expression body
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS FLOAT)
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = @v3
+    SET @v5 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v4,0)) AS FLOAT)
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN @v5
+END
+";
+
+        [Fact]
+        public void CheckCompileFloatWithMinMaxValues()
+        {
+            var expr = "field*field1*2.0";
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Double
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Double
+                     },
+                }
+            };
+
+            var metadata = model.ToXrm();
+
+            var engine = new PowerFx2SqlEngine(metadata, dvFeatureControlBlock: new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
+
+            SqlCompileOptions options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
+
+            // in case client is supplying min and max values for float, then passing type hint as float is mandatory
+            options.TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = 2, MaxValue = 10 };
+            
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.Equal(FloatMinMaxUDF, result.SqlFunction);
+            Assert.True(result.ReturnType is NumberType);
+            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field*new_field1*2.0", result.LogicalFormula);
+
+            // in case min max values not supplied, then it uses default min max values same as decimal 
+            options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
+            result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.Equal(FloatDefaultMinMaxUDF, result.SqlFunction);
+            Assert.True(result.ReturnType is NumberType);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field*new_field1*2.0", result.LogicalFormula);
         }
 
         public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
