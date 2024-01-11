@@ -1359,8 +1359,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // else use default values same as decimal if not provided by client
                     if(_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
                     {
-                        string minValue  = _typeHints != null ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
-                        string maxValue = _typeHints != null ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+                        string minValue  = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
+                        string maxValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
 
                         PerformOverflowCheck(result, minValue, maxValue, postCheck);
                     }
@@ -1389,8 +1389,8 @@ namespace Microsoft.PowerFx.Dataverse
                         // else use default values same as decimal if not provided by client
                         if (_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
                         {
-                            string minValue = _typeHints != null ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
-                            string maxValue = _typeHints != null ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+                            string minValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
+                            string maxValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
 
                             PerformOverflowCheck(result, minValue, maxValue, postCheck);
                         }

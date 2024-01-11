@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                      {
                          LogicalName= "new_field",
                          DisplayName = "field",
-                         AttributeType = AttributeTypeCode.Double
+                         AttributeType = AttributeTypeCode.Decimal
                      },
                 }
             };
@@ -655,7 +655,7 @@ END
 
             options = new SqlCompileOptions
             {
-                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double },
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = SqlStatementFormat.DecimalTypeMinValue, MaxValue = SqlStatementFormat.DecimalTypeMaxValue },
                 UdfName = "fn_testUdf1"
             };
 
