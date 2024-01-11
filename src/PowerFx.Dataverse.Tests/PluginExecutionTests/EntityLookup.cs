@@ -234,7 +234,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var metadata = LookupMetadata(entity.LogicalName, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
                 if (entity.LogicalName == qe.EntityName &&
-                    IsCriteriaMatching(entity, qe.Criteria, metadata))
+                    IsCriteriaMatching(entity, qe.Criteria, qe.LinkEntities, metadata))
                 {
                     
                     entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
@@ -248,14 +248,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return entityList;
         }
 
-        private bool IsCriteriaMatching(Entity entity, FilterExpression criteria, EntityMetadata metadata)
+        private bool IsCriteriaMatching(Entity entity, FilterExpression criteria, DataCollection<LinkEntity> linkEntities, EntityMetadata metadata)
         {
+            if (linkEntities != null && linkEntities.Count > 0)
+            {
+                entity = AttachRelationship(entity, linkEntities);
+                linkEntities = null;
+            }
+
             switch (criteria.FilterOperator)
             {
                 case LogicalOperator.Or:
                     foreach (var filter in criteria.Filters)
                     {
-                        if (IsCriteriaMatching(entity, filter, metadata))
+                        if (IsCriteriaMatching(entity, filter, linkEntities, metadata))
                         {
                             return true;
                         }
@@ -274,7 +280,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case LogicalOperator.And:
                     foreach (var filter in criteria.Filters)
                     {
-                        if (!IsCriteriaMatching(entity, filter, metadata))
+                        if (!IsCriteriaMatching(entity, filter, linkEntities, metadata))
                         {
                             return false;
                         }
@@ -295,11 +301,59 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        private Entity AttachRelationship(Entity currentEntity, DataCollection<LinkEntity> linkEntities)
+        {
+            if(linkEntities == null)
+            {
+                return currentEntity;
+            }
+
+            if(linkEntities.Count > 1)
+            {
+                throw new NotImplementedException("Multiple LinkEntities not supported");
+            }
+
+            var linkEntity = linkEntities[0];
+            var linkEntityMetadata = LookupMetadata(linkEntity.LinkToEntityName, CancellationToken.None);
+
+            foreach(var attribute in linkEntityMetadata.Attributes)
+            {
+                currentEntity.Attributes["_" + linkEntity.LinkToEntityName + "_" + attribute.LogicalName] = null;
+            }
+
+            var fromAttribute = linkEntity.LinkFromAttributeName;
+            currentEntity.Attributes.TryGetValue(fromAttribute, out var fromValue);
+            
+            if(fromValue == null)
+            {
+                currentEntity.Attributes["_" + linkEntity.LinkToEntityName + "_" + fromAttribute] = null;
+                return currentEntity;
+            }
+
+            var foreignEntity = LookupRef((EntityReference)fromValue, CancellationToken.None);
+
+            foreach(var attribute in foreignEntity.Attributes)
+            {
+                currentEntity.Attributes["_" + foreignEntity.LogicalName + "_" + attribute.Key] = attribute.Value;
+            }
+
+            return currentEntity;
+
+        }
+
         public bool isSatisfyingCondition(ConditionExpression condition, Entity entity, EntityMetadata metadata)
         {
+            // this means condition was on relationship.
+            if(condition.EntityName != null && condition.EntityName != entity.LogicalName)
+            {
+                _rawProvider.TryGetEntityMetadata(condition.EntityName, out metadata);
+            }
+
             metadata.TryGetAttribute(condition.AttributeName, out var amd);
             var comparer = new AttributeComparer(amd);
-            if (!TryGetAttributeOrPrimaryId(entity, metadata, condition.AttributeName, out var value))
+
+            var fieldName = condition.EntityName != null ? "_" + condition.EntityName + "_" + condition.AttributeName : condition.AttributeName;
+            if (!TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value))
             {
                 return false;
             }
@@ -399,10 +453,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 switch (_amd.AttributeType.Value)
                 {
                     case AttributeTypeCode.Boolean:
-                        return ((bool)x).CompareTo((bool)y);
+                        return (x == null ? default : (bool)x).CompareTo(y == null ? default : (bool)y);
 
                     case AttributeTypeCode.DateTime:
-                        return ((DateTime)x).CompareTo((DateTime)y);
+                        return (x == null ? default : (DateTime)x).CompareTo(y == null ? default : (DateTime)y);
 
                     case AttributeTypeCode.Money:
                     case AttributeTypeCode.Decimal:
@@ -414,10 +468,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             y = my.Value;
                         }
-                        return ((decimal)x).CompareTo((decimal)y);
+                        return (x == null ? default : (decimal)x).CompareTo(y == null ? default : (decimal)y);
 
                     case AttributeTypeCode.Double:
-                        return ((double)x).CompareTo((double)y);
+                        return (x == null ? default : (double)x).CompareTo(y == null ? default : (double)y);
 
                     case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.Status:
@@ -431,16 +485,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             y = osy.Value;
                         }
 
-                        return ((int)x).CompareTo((int)y);
+                        return (x == null ? default : (int)x).CompareTo(y == null ? default : (int)y);
 
                     case AttributeTypeCode.Memo:
                     case AttributeTypeCode.String:
-                        return ((string)x).CompareTo((string)y);
+                        return (x == null ? default : (string)x).CompareTo(y == null ? default : (string)y);
 
                     case AttributeTypeCode.Uniqueidentifier:
-                        return ((Guid)x).CompareTo((Guid)y);
+                        return (x == null ? default : (Guid)x).CompareTo(y == null ? default : (Guid)y);
 
                     case AttributeTypeCode.Lookup:
+                        return (x == null ? default : (x is Guid gx ? gx : ((EntityReference)x).Id)).CompareTo(y == null ? default : (y is Guid gy ? gy : ((EntityReference)y).Id));
                     case AttributeTypeCode.BigInt:
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:
