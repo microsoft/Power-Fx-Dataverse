@@ -1354,20 +1354,22 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
-                {
-                    // in case of float, if compiler gets min and max value from client then will entertain those values 
-                    // else use default values same as decimal if not provided by client
-                    if(_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
-                    {
-                        string minValue  = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
-                        string maxValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+                { 
+                   if (IsNumericType(result))
+                   {
+                        string minValue = SqlStatementFormat.DecimalTypeMin;
+                        string maxValue = SqlStatementFormat.DecimalTypeMax;
+
+                        // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
+                        // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
+                        // else will use default values same as decimal if not provided by client
+                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
+                        {
+                            minValue = _typeHints.MinValue.ToString();
+                            maxValue = _typeHints.MaxValue.ToString();
+                        }
 
                         PerformOverflowCheck(result, minValue, maxValue, postCheck);
-                    }
-                    else if (IsNumericType(result))
-                    {
-                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-
                     }
                     // TODO: other range checks?
                 }
@@ -1385,19 +1387,19 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        // in case of float, if compiler gets min and max value from client then will entertain those values 
-                        // else use default values same as decimal if not provided by client
-                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && result.type is NumberType)
-                        {
-                            string minValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MinValue.ToString() : SqlStatementFormat.DecimalTypeMin;
-                            string maxValue = (_typeHints != null && _typeHints.TypeHint == AttributeTypeCode.Double) ? _typeHints.MaxValue.ToString() : SqlStatementFormat.DecimalTypeMax;
+                        string minValue = SqlStatementFormat.DecimalTypeMin;
+                        string maxValue = SqlStatementFormat.DecimalTypeMax;
 
-                            PerformOverflowCheck(result, minValue, maxValue, postCheck);
-                        }
-                        else
+                        // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
+                        // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
+                        // else will use default values same as decimal if not provided by client
+                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
                         {
-                            PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-                        } 
+                            minValue = _typeHints.MinValue.ToString();
+                            maxValue = _typeHints.MaxValue.ToString();
+                        }
+
+                        PerformOverflowCheck(result, minValue, maxValue, postCheck);  
                     }    
                 }
             }
