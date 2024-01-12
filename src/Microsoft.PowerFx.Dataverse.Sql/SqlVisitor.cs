@@ -459,6 +459,13 @@ namespace Microsoft.PowerFx.Dataverse
                         // supporting OptionSetToText operation for enum cases like Text(TimeUnit.Days).
                         return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
                     }
+
+                    // throwing error as Text(optionsetField) gives numeric Value of the option.
+                    if (node.Child is ScopeAccessNode)
+                    {
+                        throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
+                    }
+
                     goto default;
 
                 // TODO: other coorcions as new type support is added

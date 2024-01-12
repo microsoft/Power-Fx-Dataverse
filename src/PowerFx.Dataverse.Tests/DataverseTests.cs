@@ -1763,15 +1763,9 @@ END
 
             engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
 
-            // Using related entity optionset in result value is not supported.
+            // Related entity field's local optionset can be used as result value.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Error 0-97: The result type OptionSet 'Optionset Field (Triple Remotes)' from related tables is not supported in formula columns.", result.Errors.First().ToString());
-
-            // OptionSetToText operation is blocked as optionset labels are user locale-specific.
-            result = engine.Compile("Text('Picklist (All Attributes)'.One)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.", result.Errors.First().ToString());
+            Assert.True(result.IsSuccess);
 
             result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
@@ -1786,10 +1780,29 @@ END
             Assert.Equal(2, result.TopLevelIdentifiers.Count);
             Assert.Equal("picklist,statuscode", ToStableString(result.TopLevelIdentifiers));
             Assert.Equal(2, result.DependentOptionSetIds.Count);
-            Assert.Equal(optionSet.OptionSetId, result.DependentOptionSetIds.First());
-            Assert.Equal(optionSet2.OptionSetId, result.DependentOptionSetIds.ElementAt(1));
+            Assert.True(result.DependentOptionSetIds.Contains(optionSet.OptionSetId));
+            Assert.True(result.DependentOptionSetIds.Contains(optionSet2.OptionSetId));
             Assert.Equal(Guid.Empty, result.OptionSetId);
+        }
 
+        [Theory]
+        [InlineData("Text('Picklist (All Attributes)'.One)", false, "Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(picklist)", false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(TimeUnit.Days)", true)]
+        public void OptionSetToTextOperationTest(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(error, result.Errors.First().ToString());
+            }
         }
 
         public const string OptionSetTestUDF = @"CREATE FUNCTION test(

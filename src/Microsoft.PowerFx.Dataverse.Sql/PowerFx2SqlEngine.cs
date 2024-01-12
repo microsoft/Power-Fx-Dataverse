@@ -315,9 +315,9 @@ namespace Microsoft.PowerFx.Dataverse
                 var dependentFields = ctx.GetDependentFields();
                 sqlResult.DependentOptionSetIds = _dvFeatureControlBlock.IsOptionSetEnabled ? ctx.UpdateOptionSetRelatedDependencies(dependentFields, _metadataCache) : new HashSet<Guid>();
 
-                if (retType is OptionSetValueType)
+                if (retType is OptionSetValueType optionSetRetType)
                 {
-                    _metadataCache.TryGetOptionSet((retType as OptionSetValueType).OptionSetName, out var optionSet);
+                    _metadataCache.TryGetOptionSet(optionSetRetType.OptionSetName, out var optionSet);
                     if (optionSet != null)
                     {
                         // adding dependency for formula column to the option set returned by formula field.
@@ -336,17 +336,6 @@ namespace Microsoft.PowerFx.Dataverse
                             // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
 
-                            // Throwing error if related entity's local optionset is used because related entity's metadata will be processed later by
-                            // getting metadata through callback, only after any lookup field to related entity's field is used. so, related entity's
-                            // optionsets will not be suggested by intellisense initially and will be suggested only after using any related entity's field.
-                            if (key != _currentEntityName)
-                            {
-                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
-                                var errorResult = new SqlCompileResult(errors);
-                                errorResult.SanitizedFormula = sanitizedFormula;
-                                return errorResult;
-                            }
-
                             if (!dependentFields.ContainsKey(key))
                             {
                                 dependentFields[key] = new HashSet<string>();
@@ -354,6 +343,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                             dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
                         }
+                    }
+                    else
+                    {
+                        errors = new SqlCompileException(SqlCompileException.InvalidOptionSet, irNode.IRContext.SourceContext, optionSetRetType.OptionSetName).GetErrors(irNode.IRContext.SourceContext);
+                        var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
+                        return errorResult;
                     }
                 }
 

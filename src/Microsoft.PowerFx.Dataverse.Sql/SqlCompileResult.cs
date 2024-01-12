@@ -51,7 +51,8 @@ namespace Microsoft.PowerFx.Dataverse
         public bool IsHintApplied { get; set; }
 
         /// <summary>
-        /// OptionsetId of the optionset returned by formula fields of type optionset
+        /// OptionsetId of the optionset returned by formula fields of type optionset.
+        /// Value is Guid.Empty for non-optionset fields.
         /// </summary>
         /// /// <example>
         /// expression: "If( 'Option1' = 'Option1 (Table)'.Choice1, 'Option2 (Table)'.Choice1, 'Option2 (Table)'.Choice2)"

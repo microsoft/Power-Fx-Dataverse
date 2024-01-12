@@ -162,7 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
                 returnType = BuildReturnType(nodeType);
             }
 
-            if (!SupportedReturnType(returnType, _dvFeatureControlBlock) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
+            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
@@ -203,13 +203,13 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        internal static bool SupportedReturnType(FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
+        internal bool SupportedReturnType(FormulaType type)
         {
             return
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                (type is OptionSetValueType && dvFeatureControlBlock.IsOptionSetEnabled) ||
+                (type is OptionSetValueType && _dvFeatureControlBlock.IsOptionSetEnabled) ||
                 Library.IsDateTimeType(type);
         }
 
