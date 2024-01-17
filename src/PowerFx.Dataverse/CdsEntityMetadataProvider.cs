@@ -57,13 +57,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
 
-        private enum AttributeSourceTypes
-        {
-            Persistent,
-            Calculated,
-            Rollup,
-            Formula
-        }
+        // SourceType property value for a formula field.
+        private const int FormulaFieldSourceType = 3;
 
         internal IExternalDocument Document => _document;
 
@@ -297,7 +292,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     // Formula Fields doesn't have their own local optionset, they use either global optionset or other optionset field
                     // hence skipping RegisterDataverseOptionSet for formula fields.
-                    var dataverseOptionSet = (attribute.SourceType == (int)AttributeSourceTypes.Formula && attribute.AttributeType.Value == AttributeTypeCode.Picklist) 
+                    var dataverseOptionSet = (attribute.SourceType == FormulaFieldSourceType && attribute.AttributeType.Value == AttributeTypeCode.Picklist) 
                         ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }

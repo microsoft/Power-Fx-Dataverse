@@ -1073,7 +1073,7 @@ END
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                dvFeatureControlBlock: new () { IsOptionSetEnabled = true });
+                dataverseFeatures: new () { IsOptionSetEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -1694,35 +1694,6 @@ END
         public void CheckGlobalOptionSets()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
-            var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
-                new OptionMetadata[]
-                {
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
-                }
-            )))
-            {
-                IsGlobal = true,
-                Name = "global1",
-                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
-            };
-
-            var optionSet2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
-                new OptionMetadata[]
-                {
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 3 },
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 4 },
-                }
-            )))
-            {
-                IsGlobal = true,
-                Name = "global2",
-                DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0])
-            };
-
-            globalOptionSets.Add(optionSet1);
-            globalOptionSets.Add(optionSet2);
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
 
             // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
@@ -1732,8 +1703,8 @@ END
             Assert.Contains("Name isn't valid. 'Global2' isn't recognized", result.Errors.First().ToString());
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets),
-                dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: MockModels.GlobalOptionSets),
+                dataverseFeatures: new() { IsOptionSetEnabled = true });
 
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.False(result2.IsSuccess);
@@ -1751,17 +1722,17 @@ END
         public void OptionSetsTests()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
             var engine = new PowerFx2SqlEngine(xrmModel, provider);
             provider.TryGetOptionSet(new Core.Utils.DName("Picklist (All Attributes)"), out var optionSet);
-            provider.TryGetOptionSet(new Core.Utils.DName("Status (All Attributes)"), out var optionSet2);
+            provider.TryGetOptionSet(new Core.Utils.DName("Global2"), out var globalOptionSet);
 
             // OptionSet returntype is not supported with FCB - "IsOptionSetEnabled" not enabled.
             var result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-72: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", result.Errors.First().ToString());
 
-            engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+            engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
 
             // Related entity field's local optionset can be used as result value.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
@@ -1771,17 +1742,17 @@ END
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
-            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
             Assert.NotEqual(Guid.Empty, result.OptionSetId);
+            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
 
             // Dependent optionsets used in formula, other than in the result values are returned in SqlCompileResult.DependentOptionSetIds.
-            result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, 'Status (All Attributes)'.Active = 'Status (All Attributes)'.Active, 2, 3)", new SqlCompileOptions());
+            result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, Global2.Three = Global2.Four, 2, 3)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
-            Assert.Equal(2, result.TopLevelIdentifiers.Count);
-            Assert.Equal("picklist,statuscode", ToStableString(result.TopLevelIdentifiers));
-            Assert.Equal(2, result.DependentOptionSetIds.Count);
-            Assert.True(result.DependentOptionSetIds.Contains(optionSet.OptionSetId));
-            Assert.True(result.DependentOptionSetIds.Contains(optionSet2.OptionSetId));
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", ToStableString(result.TopLevelIdentifiers));
+            Assert.Single(result.DependentGlobalOptionSetIds);
+            Assert.NotEqual(Guid.Empty, globalOptionSet.OptionSetId);
+            Assert.Contains(globalOptionSet.OptionSetId, result.DependentGlobalOptionSetIds);
             Assert.Equal(Guid.Empty, result.OptionSetId);
         }
 
@@ -1793,7 +1764,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.Equal(success, result.IsSuccess);
@@ -1837,7 +1808,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dvFeatureControlBlock: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
 
             var result = engine.Compile("If(1 > 2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);

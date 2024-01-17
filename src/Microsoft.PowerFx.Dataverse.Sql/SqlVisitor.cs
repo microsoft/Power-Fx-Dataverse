@@ -888,12 +888,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             public HashSet<Guid> UpdateOptionSetRelatedDependencies(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache)
             {
-                var dependentOptionSets = new HashSet<Guid>();
+                var dependentGlobalOptionSets = new HashSet<Guid>();
                 foreach (var optionSetName in _dependentOptionsets)
                 {
                     metadataCache.TryGetOptionSet(optionSetName, out var optionSet);
                     if (optionSet != null)
                     {
+                        // For local optionset, adding only dependency with attribute that the local optionset is bound to, as dependency between attribute and optionset
+                        // already exists - attribute being the required component for the optionset and local optionset gets deleted only when it's optionset field is deleted. 
+                        // Taking only dependent global optionsetids as global optionsets are not bound to any attribute.
                         if (!optionSet.IsGlobal)
                         {
                             var key = optionSet.RelatedEntityName;
@@ -904,11 +907,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                             dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
                         }
-                        
-                        dependentOptionSets.Add(optionSet.OptionSetId);
+                        else
+                        {
+                            dependentGlobalOptionSets.Add(optionSet.OptionSetId);
+                        }
                     }
                 }
-                return dependentOptionSets;
+                return dependentGlobalOptionSets;
             }
 
             public Dictionary<string, HashSet<string>> GetDependentRelationships()

@@ -87,13 +87,13 @@ namespace Microsoft.PowerFx.Dataverse
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
 
         /// <summary>
-        /// Hashset of optionsetids of optionsets used by formula fields
+        /// Hashset of dependent global optionsetids of optionsets used by formula fields
         /// </summary>
         /// <example>
-        /// expression: "If( 'Option1 (Table)'.Choice1 = 'Option1 (Table)'.Choice1, 100, 'Option2 (Table)'.Choice1 = 'Option2 (Table)'.Choice1, 200, 300)"
-        /// OptionsetIds of Optionsets => {'Option1 (Table)', 'Option2 (Table)'}
+        /// expression: "If( 'GlobalOptionSet1 (Table)'.Choice1 = 'GlobalOptionSet1 (Table)'.Choice1, 100, 'GlobalOptionSet2 (Table)'.Choice1 = 'GlobalOptionSet2 (Table)'.Choice1, 200, 300)"
+        /// OptionsetIds of Optionsets => {'GlobalOptionSet1 (Table)', 'GlobalOptionSet2 (Table)'}
         /// </example>
-        public HashSet<Guid> DependentOptionSetIds { get; set; }
+        public HashSet<Guid> DependentGlobalOptionSetIds { get; set; }
     }
 
     // Additional info computed by the SQL comilation work

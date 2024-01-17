@@ -36,8 +36,8 @@ namespace Microsoft.PowerFx.Dataverse
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
             EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-            DVFeatureControlBlock dvFeatureControlBlock = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dvFeatureControlBlock)
+            DataverseFeatures dataverseFeatures = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dataverseFeatures)
         {
         }
 
@@ -313,7 +313,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
-                sqlResult.DependentOptionSetIds = _dvFeatureControlBlock.IsOptionSetEnabled ? ctx.UpdateOptionSetRelatedDependencies(dependentFields, _metadataCache) : new HashSet<Guid>();
+                sqlResult.DependentGlobalOptionSetIds = _dataverseFeatures.IsOptionSetEnabled ? ctx.UpdateOptionSetRelatedDependencies(dependentFields, _metadataCache) : new HashSet<Guid>();
 
                 if (retType is OptionSetValueType optionSetRetType)
                 {
@@ -325,9 +325,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                         // Removing the option set returned by option set formula field from DependentOptionSetIds,
                         // as this dependency will be handled when creating a optionset field.
-                        if (sqlResult.DependentOptionSetIds.Contains(optionSet.OptionSetId))
+                        if (sqlResult.DependentGlobalOptionSetIds.Contains(optionSet.OptionSetId))
                         {
-                            sqlResult.DependentOptionSetIds.Remove(optionSet.OptionSetId);
+                            sqlResult.DependentGlobalOptionSetIds.Remove(optionSet.OptionSetId);
                         }
 
                         if (!optionSet.IsGlobal)

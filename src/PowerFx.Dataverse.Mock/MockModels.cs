@@ -5,6 +5,8 @@
 //------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.Dataverse.EntityMock
@@ -476,5 +478,35 @@ namespace Microsoft.Dataverse.EntityMock
         };
 
         public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { Account, Task};
+
+        public static readonly List<OptionSetMetadata> GlobalOptionSets = new()
+        {
+            new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global1",
+                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0]),
+                MetadataId = Guid.NewGuid()
+            },
+            new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
+                new OptionMetadata[]
+                {
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 1 },
+                    new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 2 },
+                }
+            )))
+            {
+                IsGlobal = true,
+                Name = "global2",
+                DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0]),
+                MetadataId = Guid.NewGuid()
+            }
+        };
     }
 }

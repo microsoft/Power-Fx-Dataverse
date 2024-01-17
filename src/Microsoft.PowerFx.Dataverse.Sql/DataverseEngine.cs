@@ -41,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal EntityAttributeMetadataProvider SecondaryMetadataCache => _secondaryMetadataCache;
 
-        protected readonly DVFeatureControlBlock _dvFeatureControlBlock;
+        protected readonly DataverseFeatures _dataverseFeatures;
 
         protected readonly CultureInfo _cultureInfo;
 
@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
           PowerFxConfig config,
           CultureInfo culture = null,
           EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
-          DVFeatureControlBlock dvFeatureControlBlock = null)
+          DataverseFeatures dataverseFeatures = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -70,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            _dvFeatureControlBlock = dvFeatureControlBlock ?? new DVFeatureControlBlock() { IsOptionSetEnabled = false };
+            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() { IsOptionSetEnabled = false };
 
         }
 
@@ -209,7 +209,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                (type is OptionSetValueType && _dvFeatureControlBlock.IsOptionSetEnabled) ||
+                (type is OptionSetValueType && _dataverseFeatures.IsOptionSetEnabled) ||
                 Library.IsDateTimeType(type);
         }
 
