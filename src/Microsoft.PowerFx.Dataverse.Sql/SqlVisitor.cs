@@ -912,6 +912,10 @@ namespace Microsoft.PowerFx.Dataverse
                             dependentGlobalOptionSets.Add(optionSet.OptionSetId);
                         }
                     }
+                    else
+                    {
+                        throw new SqlCompileException(SqlCompileException.InvalidOptionSet, RootNode.IRContext.SourceContext, optionSetName);
+                    }
                 }
                 return dependentGlobalOptionSets;
             }

@@ -370,6 +370,11 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult._unsupportedWarnings = ctx._unsupportedWarnings;
                 return sqlResult;
             }
+            catch (SqlCompileException ex)
+            {
+                var errorResult = new SqlCompileResult(ex.GetErrors(binding.Top.GetTextSpan())) { SanitizedFormula = sanitizedFormula };
+                return errorResult;
+            }
             catch (NotImplementedException)
             {
                 var errorResult = new SqlCompileResult(
