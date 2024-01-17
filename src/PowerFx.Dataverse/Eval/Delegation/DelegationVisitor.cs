@@ -412,7 +412,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqText ||
                 op == BinaryOpKind.EqTime ||
                 op == BinaryOpKind.EqOptionSetValue ||
-                op == BinaryOpKind.EqPolymorphic; ;
+                op == BinaryOpKind.EqPolymorphic;
         }
 
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
@@ -427,7 +427,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.NeqText ||
                 op == BinaryOpKind.NeqTime ||
                 op == BinaryOpKind.NeqOptionSetValue ||
-                op == BinaryOpKind.NeqPolymorphic; ;
+                op == BinaryOpKind.NeqPolymorphic;
         }
 
         internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
@@ -1129,22 +1129,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             fieldName = default;
             return false;
-        }
-
-        public class RelationMetadata
-        {
-            public string FieldName { get;}
-
-            public bool isPolymorphic { get; }
-
-            public string TargetEntityName { get; }
-
-            public RelationMetadata(string fieldName, bool isPolymorphic, string targetEntityName)
-            {
-                FieldName = fieldName;
-                this.isPolymorphic = isPolymorphic;
-                TargetEntityName = targetEntityName;
-            }
         }
 
         private static bool TryGetEntityName(FormulaType type, out string entityName)
