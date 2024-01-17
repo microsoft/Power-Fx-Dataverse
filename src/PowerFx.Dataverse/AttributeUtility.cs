@@ -103,6 +103,29 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
+        public static bool TryGetManyToOneRelationship(this EntityMetadata entityMetadata, string fieldName, string targetEntityName, out OneToManyRelationshipMetadata relation)
+        {
+            if (entityMetadata == null)
+            {
+                throw new ArgumentNullException(nameof(entityMetadata));
+            }
+
+            if (entityMetadata.ManyToOneRelationships != null)
+            {
+                foreach (var relationship in entityMetadata.ManyToOneRelationships)
+                {
+                    if (relationship.ReferencingAttribute == fieldName && relationship.ReferencedEntity == targetEntityName && relationship.ReferencingEntity == entityMetadata.LogicalName)
+                    {
+                        relation = relationship;
+                        return true;
+                    }
+                }
+            }
+
+            relation = default;
+            return false;
+        }
+
         // OData polymorphic case. fieldname is mangled by convention, and not reflected in metadata. 
         // The IR is passing the Odata name (not logical name), and we need to extract the logical name from it. 
         // The odata name is: $"_{logicalName}_value"

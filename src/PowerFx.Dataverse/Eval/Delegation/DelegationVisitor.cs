@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -45,6 +47,8 @@ namespace Microsoft.PowerFx.Dataverse
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
         }
+
+        internal static readonly JsonSerializerOptions _options = new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
         // Return Value passed through at each phase of the walk. 
         public class RetVal
@@ -408,7 +412,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqText ||
                 op == BinaryOpKind.EqTime ||
                 op == BinaryOpKind.EqOptionSetValue ||
-                op == BinaryOpKind.EqPolymorphic;
+                op == BinaryOpKind.EqPolymorphic; ;
         }
 
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
@@ -423,7 +427,7 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.NeqText ||
                 op == BinaryOpKind.NeqTime ||
                 op == BinaryOpKind.NeqOptionSetValue ||
-                op == BinaryOpKind.NeqPolymorphic;
+                op == BinaryOpKind.NeqPolymorphic; ;
         }
 
         internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
@@ -1102,7 +1106,10 @@ namespace Microsoft.PowerFx.Dataverse
                 fieldName = fieldAccess.Field;
                 if (TryGetFieldName(context, fieldAccess.From, out var fromField))
                 {
-                    relations.Add(fromField);
+                    var relationMetadata = new RelationMetadata(fromField, false, null);
+
+                    var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                    relations.Add(serializedRelationMetadata);
                     return true;
                 }
                 else if(fieldAccess.From is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.AsType.Name)
@@ -1111,7 +1118,10 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         TryGetFieldName(context, callNode.Args[0], out fromField);
                         AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
-                        relations.Add($"{logicalName}_{targetEntityName}_{sourceEntityName}");
+                        var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
+
+                        var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                        relations.Add(serializedRelationMetadata);
                         return true;
                     }
                 }
@@ -1119,6 +1129,22 @@ namespace Microsoft.PowerFx.Dataverse
 
             fieldName = default;
             return false;
+        }
+
+        public class RelationMetadata
+        {
+            public string FieldName { get;}
+
+            public bool isPolymorphic { get; }
+
+            public string TargetEntityName { get; }
+
+            public RelationMetadata(string fieldName, bool isPolymorphic, string targetEntityName)
+            {
+                FieldName = fieldName;
+                this.isPolymorphic = isPolymorphic;
+                TargetEntityName = targetEntityName;
+            }
         }
 
         private static bool TryGetEntityName(FormulaType type, out string entityName)
