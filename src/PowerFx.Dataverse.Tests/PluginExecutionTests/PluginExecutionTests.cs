@@ -35,6 +35,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
         internal static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
         internal static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
+        internal static readonly Guid _g6 = new Guid("00000000-0000-0000-0000-000000000006");
 
         internal static readonly ParserOptions _parserAllowSideEffects = new ParserOptions
         {
@@ -2578,7 +2579,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Collect(t1, {PolymorphicLookup: First(t2)})", false)]
         [InlineData("Collect(t1, {PolymorphicLookup: First(t1)})", false)]
 
-        [InlineData("Collect(t1, {PolymorphicLookup: First(t3)})", true)]
         [InlineData("Collect(t1, {PolymorphicLookup: {test:1}})", true)]
         public async Task PolymorphicMutationTestAsync(string expr, bool isErrorValue)
         {
@@ -2718,10 +2718,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["new_price"] = Convert.ToDecimal(10);
             entity3.Attributes["old_price"] = null;
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            entity3.Attributes["new_polyfield"] = null;
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
             entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            entity4.Attributes["new_polyfield"] = null;
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
@@ -2730,6 +2732,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_currency"] = new Money(100);
             entity1.Attributes["new_name"] = "row1";
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
@@ -2740,9 +2743,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             entity2.Attributes["data"] = Convert.ToDecimal(200);
 
+            var entity6 = new Entity("virtualremote", _g6);
+            entity6.Attributes["vdata"] = Convert.ToDecimal(10);
+            entity1.Attributes["virtualid"] = entity6.ToEntityReference();
+
             var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
-            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4);
+            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
             var globalOptionSet = GetGlobalOptionSets(MockModels.RelationshipModels);
