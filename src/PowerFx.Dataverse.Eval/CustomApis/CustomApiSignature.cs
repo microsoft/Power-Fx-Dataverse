@@ -67,6 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
 
     [DebuggerDisplay("CustomApi: {uniquename}")]
     [DataverseEntity(TableName)]
+    [DataverseEntityPrimaryId(nameof(customapiid))]
     public class CustomApiEntity
     {
         public const string TableName = "customapi";
