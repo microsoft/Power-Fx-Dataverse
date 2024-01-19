@@ -2,6 +2,8 @@
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
@@ -17,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Only Dataverse Eval should use this.  
         // Nested class to decrease visibility. 
-        public class DelegationHooks
+        internal class DelegationHooks
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
@@ -26,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? topCount, IEnumerable<string> columns, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }
@@ -40,6 +42,11 @@ namespace Microsoft.PowerFx.Dataverse
             /// <returns>converted object</returns>
             /// <exception cref="NotImplementedException"></exception>
             public virtual object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal virtual object RetrieveRelationAttribute(TableValue table, LinkEntity relation, string field, FormulaValue value)
             {
                 throw new NotImplementedException();
             }
@@ -100,11 +107,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
+            internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IEnumerable<string> relations, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
             {
                 var field = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
 
                 var args = new List<IntermediateNode> { callerSourceTable, field, value };
+                if (relations != null)
+                {
+                    args.Add(MakeStringSingleColumnTable(relations));
+                }
+
                 var node = MakeCallNode(func, tableType, args, scope);
                 return node;
             }
@@ -129,45 +141,45 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedEq(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedNeq(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGt(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGeq(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLt(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLeq(this, operation);
-                var node = MakeCallNode(func, tableType, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
@@ -209,6 +221,28 @@ namespace Microsoft.PowerFx.Dataverse
 
                 return node;
             }
+
+            internal virtual LinkEntity RetreiveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            {
+                throw new NotImplementedException();
+            }
+
+            private static CallNode MakeStringSingleColumnTable(IEnumerable<string> fields)
+            {
+                var recordNodes = new List<IntermediateNode>();
+                var recordType = RecordType.Empty().Add("Value", FormulaType.String);
+                foreach (var field in fields)
+                {
+                    var fieldNode = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), field);
+                    var recordNode = new RecordNode(IRContext.NotInSource(recordType), new Dictionary<DName, IntermediateNode> { { new DName("Value"), fieldNode } });
+                    recordNodes.Add(recordNode);
+                }
+
+                var tableType = recordType.ToTable();
+                var tableNode = new CallNode(IRContext.NotInSource(tableType), BuiltinFunctionsCore.Table, recordNodes);
+
+                return tableNode;
+            }
         }
 
         private class DelegationIRTransform : IRTransform
@@ -235,7 +269,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Called by extensions in Dataverse.Eval, which will pass in retrieveSingle.
-        public static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
+        internal static void EnableDelegationCore(this Engine engine, DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
         {
             IRTransform t = new DelegationIRTransform(hooks, maxRows);
 

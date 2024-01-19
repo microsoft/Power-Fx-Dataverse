@@ -1,14 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -41,6 +47,8 @@ namespace Microsoft.PowerFx.Dataverse
             _errors = errors ?? throw new ArgumentNullException(nameof(errors));
             _maxRows = maxRow;
         }
+
+        internal static readonly JsonSerializerOptions _options = new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
         // Return Value passed through at each phase of the walk. 
         public class RetVal
@@ -322,8 +330,10 @@ namespace Microsoft.PowerFx.Dataverse
                 tableType = (TableType)callerReturnType;
             }
 
+            IList<string> relations = null;
             // Either left or right is field (not both)
-            if (!TryGetFieldName(context, node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation))
+            if (!TryGetFieldName(context, node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation)
+                && !TryGetRelationField(context, node.Left, node.Right, node.Op, out fieldName, out relations, out rightNode, out operation))
             {
                 return new RetVal(node);
             }
@@ -354,32 +364,32 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (IsOpKindEqualityComparison(operation))
             {
-                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, eqNode);
             }
             else if (IsOpKindInequalityComparison(operation))
             {
-                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, neqNode);
             }
             else if (IsOpKindLessThanComparison(operation))
             {
-                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, relations,fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, ltNode);
             }
             else if (IsOpKindLessThanEqualComparison(operation))
             {
-                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, leqNode);
             }
             else if (IsOpKindGreaterThanComparison(operation))
             {
-                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, gtNode);
             }
             else if (IsOpKindGreaterThanEqalComparison(operation))
             {
-                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, fieldName, operation, rightNode, callerScope);
+                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, geqNode);
             }
             else
@@ -401,7 +411,8 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqNumbers ||
                 op == BinaryOpKind.EqText ||
                 op == BinaryOpKind.EqTime ||
-                op == BinaryOpKind.EqOptionSetValue;
+                op == BinaryOpKind.EqOptionSetValue ||
+                op == BinaryOpKind.EqPolymorphic;
         }
 
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
@@ -415,7 +426,8 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.NeqNumbers ||
                 op == BinaryOpKind.NeqText ||
                 op == BinaryOpKind.NeqTime ||
-                op == BinaryOpKind.NeqOptionSetValue;
+                op == BinaryOpKind.NeqOptionSetValue ||
+                op == BinaryOpKind.NeqPolymorphic;
         }
 
         internal static bool IsOpKindLessThanComparison(BinaryOpKind op)
@@ -578,12 +590,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessIsBlank(CallNode node, Context context)
         {
-            if (TryGetFieldName(context, node, out var fieldName))
+            IList<string> relations = null;
+            if (TryGetFieldName(context, node, out var fieldName) 
+                || TryGetRelationField(context, node, out fieldName, out relations))
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 
                 // BinaryOpKind doesn't matter for IsBlank because all value will be compared to null, so just use EqText.
-                var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
+                var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, relations, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
                 var ret = CreateBinaryOpRetVal(context, node, eqNode);
                 return ret;
             }
@@ -1008,6 +1022,125 @@ namespace Microsoft.PowerFx.Dataverse
             opKind = op;
             node = default;
             fieldName = default;
+            return false;
+        }
+
+        private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind)
+        {
+            if (TryGetRelationField(context, left, out var leftField, out var leftRelation) && !TryGetFieldName(context, right, out _))
+            {
+                fieldName = leftField;
+                relations = leftRelation;
+                node = right;
+                opKind = op;
+                return true;
+            }
+            else if (TryGetRelationField(context, right, out var rightField, out var rightRelation) && !TryGetFieldName(context, left, out _))
+            {
+                fieldName = rightField;
+                relations = rightRelation;
+                node = left;
+                if (TryInvertLeftRight(op, out var invertedOp))
+                {
+                    opKind = invertedOp;
+                    return true;
+                }
+                else
+                {
+                    opKind = default;
+                    return false;
+                }
+            }
+            else if (TryGetRelationField(context, left, out var leftField2, out var leftRelation2) && TryGetRelationField(context, right, out var rightField2, out var rightRelation2))
+            {
+                if (leftField2 == rightField2)
+                {
+                    // Issue warning
+                    if (IsOpKindEqualityComparison(op))
+                    {
+                        var min = left.IRContext.SourceContext.Lim;
+                        var lim = right.IRContext.SourceContext.Min;
+                        var span = new Span(min, lim);
+                        var reason = new ExpressionError()
+                        {
+                            Span = span,
+                            Severity = ErrorSeverity.Warning,
+                            ResourceKey = TexlStrings.WrnDelegationPredicate
+                        };
+                        this.AddError(reason);
+                    }
+
+                    opKind = op;
+                    fieldName = default;
+                    relations = default;
+                    node = default;
+                    return false;
+                }
+            }
+
+            opKind = op;
+            node = default;
+            fieldName = default;
+            relations = default;
+            return false;
+        }
+
+        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations)
+        {
+            relations = new List<string>();
+
+            IntermediateNode maybeFieldAccessNode;
+
+            // If the node had injected float coercion, then we need to pull field access node from it.
+            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
+            {
+                maybeFieldAccessNode = functionCall.Args[0];
+            }
+            else
+            {
+                maybeFieldAccessNode = node;
+            }
+
+            if (maybeFieldAccessNode is RecordFieldAccessNode fieldAccess)
+            {
+                fieldName = fieldAccess.Field;
+                if (TryGetFieldName(context, fieldAccess.From, out var fromField))
+                {
+                    var relationMetadata = new RelationMetadata(fromField, false, null);
+
+                    var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                    relations.Add(serializedRelationMetadata);
+                    return true;
+                }
+                else if(fieldAccess.From is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.AsType.Name)
+                {
+                    if(TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out var sourceEntityName))
+                    {
+                        TryGetFieldName(context, callNode.Args[0], out fromField);
+                        AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
+                        var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
+
+                        var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                        relations.Add(serializedRelationMetadata);
+                        return true;
+                    }
+                }
+            }
+
+            fieldName = default;
+            return false;
+        }
+
+        private static bool TryGetEntityName(FormulaType type, out string entityName)
+        {
+            var ads = type._type.AssociatedDataSources.FirstOrDefault();
+            if (ads != null)
+            {
+                entityName = ads.EntityName.Value;
+                return true;
+            }
+
+            entityName = default;
             return false;
         }
 

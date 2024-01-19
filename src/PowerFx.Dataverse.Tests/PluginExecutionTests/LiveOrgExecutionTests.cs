@@ -105,15 +105,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DataverseConnection dvc = SingleOrgPolicy.New(client);
 
             // Environment.crbcd_lucgen1({x:Value,y:Value})
-            await dvc.AddPluginAsync("crbcd_lucgen1");
+            await dvc.AddPluginAsync("msdyn_aibdptsimplepromptbf91800eeefd4fba9822bae28f9e250e");
 
             var engine = new RecalcEngine();
 
             var rc = new RuntimeConfig(dvc.SymbolValues);
             rc.AddDataverseExecute(client);
 
-            var expr = "crbcd_lucgen1({x:\"str\", y:19}).z";
-            var result = await engine.EvalAsync(expr, default, runtimeConfig: rc);
+            var expr = "Environment.msdyn_aibdptsimplepromptbf91800eeefd4fba9822bae28f9e250e({'sentence' : \"Puppies are adorable creatures\"}).text";
+
+            var check = new CheckResult(engine)
+                .SetText(expr)
+                .SetBindingInfo(dvc.Symbols);
+
+            var eval = check.GetEvaluator();
+
+            var result = eval.Eval(rc);
+
+            // var result = await engine.EvalAsync(expr, default, runtimeConfig: rc);
 
         }
 
