@@ -73,6 +73,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.ICustomApiParameterMarshaller",
                 "Microsoft.PowerFx.Dataverse.CustomApiMarshaller",
                 "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
+                "Microsoft.PowerFx.Dataverse.DataverseEntityPrimaryIdAttribute",
                 "Microsoft.PowerFx.Dataverse.CustomApiSignature",
                 "Microsoft.PowerFx.Dataverse.CustomApiEntity",
                 "Microsoft.PowerFx.Dataverse.CustomApiRequestParam",
