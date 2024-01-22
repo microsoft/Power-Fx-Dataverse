@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var param in parameters)
                 {
                     sb.Append(dil);
-                    sb.Append(param.name);
+                    sb.Append(param.uniquename);
                     sb.Append(":");
 
                     var typeName = Enum.GetName(typeof(CustomApiParamType), param.type);
@@ -67,6 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
 
     [DebuggerDisplay("CustomApi: {uniquename}")]
     [DataverseEntity(TableName)]
+    [DataverseEntityPrimaryId(nameof(customapiid))]
     public class CustomApiEntity
     {
         public const string TableName = "customapi";
@@ -124,6 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IParameterType
     {
         public string name { get; set; }
+        public string uniquename { get; set; }
         public string displayname { get; set; }
         CustomApiParamType type { get; }
         string logicalentityname { get; }

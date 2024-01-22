@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,12 +22,12 @@ namespace Microsoft.PowerFx.Dataverse
             _metadataCache = metadataCache;
         }
 
-        public CustomApiFunction ToFunction(CustomApiSignature model, DataverseConnection dataverseConnection)
+        public CustomApiFunctionBase ToFunction(CustomApiSignature model, DataverseConnection dataverseConnection)
         {
             return ToFunction(model, _metadataCache, dataverseConnection);
         }
 
-        public static CustomApiFunction ToFunction(CustomApiSignature model, CdsEntityMetadataProvider metadataCache, DataverseConnection dataverseConnection)
+        public static CustomApiFunctionBase ToFunction(CustomApiSignature model, CdsEntityMetadataProvider metadataCache, DataverseConnection dataverseConnection)
         {
             var marshaller = new CustomApiParameterMarshaller(metadataCache);
 
@@ -36,13 +37,26 @@ namespace Microsoft.PowerFx.Dataverse
             // If multiple return types, then use a record. 
             FormulaType outType = CustomApiMarshaller.GetOutputType(model.Outputs, marshaller);
 
-            var apiFunc = new CustomApiFunction(
-                dataverseConnection,
-                model,
-                outType,
-                inRecord);
+            if (inRecord.FieldNames.Any())
+            {
+                var apiFunc = new CustomApi1ArgFunction(
+                    dataverseConnection,
+                    model,
+                    outType,
+                    inRecord);
 
-            return apiFunc;
+                return apiFunc;
+            }
+            else
+            {
+                var apiFunc = new CustomApi0ArgFunction(
+                    dataverseConnection,
+                    model,
+                    outType,
+                    inRecord);
+
+                return apiFunc;
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Core
@@ -22,11 +24,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         /// </summary>
         internal readonly int? _top;
 
-        internal DelegationFormulaValue(FilterExpression value, int? top = null)
+        internal readonly ISet<LinkEntity> _relation;
+
+        internal DelegationFormulaValue(FilterExpression value, ISet<LinkEntity> relation, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
-            _value = value;
+            _value = value ?? new FilterExpression();
             _top = top;
+            _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
         }
 
         public override void Visit(IValueVisitor visitor)

@@ -118,7 +118,7 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencingAttribute = "new_polyfield",
                     ReferencingEntity = "local",
                     ReferencedEntityNavigationPropertyName = "logical_refd",
-                    ReferencingEntityNavigationPropertyName = "logical",
+                    ReferencingEntityNavigationPropertyName = "new_polyfield_t2_t1", /* ideally instead of t2_t1, it should be local names of it */
                     SchemaName = "logical"
                 },
                 new OneToManyRelationshipMetadataModel
@@ -128,7 +128,7 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencingAttribute = "new_polyfield",
                     ReferencingEntity = "local",
                     ReferencedEntityNavigationPropertyName = "logical_refd",
-                    ReferencingEntityNavigationPropertyName = "logical",
+                    ReferencingEntityNavigationPropertyName = "new_polyfield_t1_t1",
                     SchemaName = "logical"
                 }
             },

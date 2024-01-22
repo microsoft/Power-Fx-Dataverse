@@ -28,6 +28,8 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly IConnectionValueContext _connection;
         private RecordType _recordType;
 
+        internal IConnectionValueContext Connection => _connection;
+
         private Lazy<Task<List<DValue<RecordValue>>>> _lazyTaskRows;
 
         private Lazy<Task<List<DValue<RecordValue>>>> NewLazyTaskRowsInstance => new Lazy<Task<List<DValue<RecordValue>>>>(() => GetRowsAsync());
@@ -88,18 +90,24 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
         {
             var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
+
             var query = new QueryExpression(_entityMetadata.LogicalName)
             {
                 ColumnSet = columns,
-                Criteria = filter ?? new FilterExpression()
+                Criteria = filter ?? new FilterExpression(),
             };
 
             if (count != null)
             {
                 query.TopCount = count;
+            }
+
+            if (relation != null && relation.Count > 0)
+            {
+                query.LinkEntities.AddRange(relation);
             }
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
