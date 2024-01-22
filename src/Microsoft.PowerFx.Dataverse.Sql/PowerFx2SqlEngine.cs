@@ -370,11 +370,6 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult._unsupportedWarnings = ctx._unsupportedWarnings;
                 return sqlResult;
             }
-            catch (SqlCompileException ex)
-            {
-                var errorResult = new SqlCompileResult(ex.GetErrors(binding.Top.GetTextSpan())) { SanitizedFormula = sanitizedFormula };
-                return errorResult;
-            }
             catch (NotImplementedException)
             {
                 var errorResult = new SqlCompileResult(
@@ -390,6 +385,16 @@ namespace Microsoft.PowerFx.Dataverse
                         new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
                     }
                 );
+
+                if (ex is SqlCompileException sqlCompileException)
+                {
+                    var errors = sqlCompileException.GetErrors(binding.Top.GetTextSpan());
+                    if (errors.Count() == 1 && errors.First().MessageKey.Equals("FormulaColumns_InvalidOptionSet"))
+                    {
+                        errorResult = new SqlCompileResult(errors);
+                    }
+                }
+
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;
             }
