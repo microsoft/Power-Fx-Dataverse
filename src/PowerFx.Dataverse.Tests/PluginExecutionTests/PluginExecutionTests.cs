@@ -764,6 +764,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expected, result.ToObject());
         }
 
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {boolean:true,email:\"dummy@email.com\"});First(t1).email")]
+        [InlineData("With({before: First(t1).boolean}, Patch(t1, First(t1), {boolean:true});If(First(t1).boolean <> before, \"good\", \"bad\"))")]
+        [InlineData("Collect(t1, {boolean:true,email:\"dummy1@email.com\"});LookUp(t1, email = \"dummy1@email.com\").email")]
+        [InlineData("Collect(t1, {boolean:true,email:\"dummy2@email.com\"});If(LookUp(t1, email = \"dummy2@email.com\").boolean, \"Affirmitive\", \"Nope\")")]
+        public void BooleanOptionSetCoercionNotAllowedTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            Assert.False(check.IsSuccess);
+        }
+
         // https://github.com/microsoft/Power-Fx-Dataverse/issues/102
         [Theory]
         [InlineData("Collect(t1, {Price:111, Other: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))});Text(Last(t1).Price)", "111")]
@@ -2643,8 +2669,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
-        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
         [InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
         public void UDF(string script, string expr)
         {
@@ -2662,6 +2686,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = check.GetEvaluator().Eval(dv.SymbolValues);
 
             Assert.IsNotType<ErrorValue>(result);
+        }
+
+        [Theory]
+        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
+        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
+        public void UDFWithRestrictedTypesTest(string script, string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            // Decimal is a restricted type in UDF.
+            // https://github.com/microsoft/Power-Fx/pull/2141
+            Assert.Throws<InvalidOperationException>(() => engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols));
         }
 
         [Theory]
