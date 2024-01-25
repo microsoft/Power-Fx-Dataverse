@@ -163,6 +163,11 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.Lookup: // EntityReference
                     if (fxValue is DataverseRecordValue dv)
                     {
+                        if (isUsedinQueryExpression)
+                        {
+                            return dv.EntityReference.Id;
+                        }
+
                         return dv.EntityReference;
                     }
                     goto default;

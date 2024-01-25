@@ -94,6 +94,25 @@ namespace Microsoft.PowerFx.Dataverse
             throw new InvalidOperationException($"Type {type} does not have a {nameof(DataverseEntityAttribute)}");
         }
 
+        private static string GetEntityPrimeryIdFieldName(this ICustomAttributeProvider type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(DataverseEntityPrimaryIdAttribute), true);
+
+            // All entity does not need to populate their primary id field name.
+            if(attrs.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            if (attrs.Length == 1)
+            {
+                return ((DataverseEntityPrimaryIdAttribute)attrs[0]).PrimeryIdFieldName;
+            }
+
+            // This is a bug, since only calls here are determined at compile time.  
+            throw new InvalidOperationException($"Type {type} does not have a {nameof(DataverseEntityAttribute)}");
+        }
+
         public static T ToObject<T>(this Entity entity)
             where T : class, new()
         {
@@ -106,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var prop in targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (entity.Attributes.TryGetValue(prop.Name, out object val))
+                if (entity.Attributes.TryGetValue(prop.Name, out object val) || TryGetPrimaryIdField(prop, targetType, entity, out val))
                 {
                     object val2 = Translate(val, prop.PropertyType);
 
@@ -118,6 +137,22 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return obj;
+        }
+
+        private static bool TryGetPrimaryIdField(PropertyInfo prop, Type entityType, Entity entity, out object val)
+        {
+            if (prop.PropertyType == typeof(Guid))
+            {
+                string primaryIdFieldName = entityType.GetEntityPrimeryIdFieldName();
+                if(primaryIdFieldName == prop.Name)
+                {
+                    val = entity.Id;
+                    return true;
+                }
+            }
+
+            val = null;
+            return false;
         }
 
         public static T[] ToArray<T>(this EntityCollection entityCollection)

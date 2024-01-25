@@ -30,11 +30,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Get a record, with each field correspdonding to an input. Matched by name. 
         private static RecordType GetRecordType(IParameterType[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
+            if (parameterMarshaller == null)
+            {
+                parameterMarshaller = new CustomApiParameterMarshaller(null);
+            }
+
             // Inputs are always as a record. Enables named input parameters. 
             var inRecord = RecordType.Empty();
             foreach (var input in inputs)
             {
-                var name = input.name;
+                var name = input.uniquename;
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     throw new InvalidOperationException($"Bad name");
@@ -57,8 +62,8 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (var input in inputs)
             {
                 if (input.isoptional)
-                {
-                    throw new NotSupportedException($"Optional parameters are not supported. {input.name}");
+                {   
+                    throw new NotSupportedException($"Optional parameters are not supported. {input.uniquename}");
                 }
             }
 
@@ -134,7 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
             // So we need to know the target type. 
             foreach (var input in inputMetadata)
             {
-                string name = input.name;
+                string name = input.uniquename;
                 var fxValue = fxValues.GetField(name);
                 if (fxValue is not BlankValue)
                 {
@@ -157,6 +162,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static FormulaType GetOutputType(CustomApiResponse[] outputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
+            if (parameterMarshaller == null)
+            {
+                parameterMarshaller = new CustomApiParameterMarshaller(null);
+            }
+
             FormulaType outType;
             if (IsOutputTypeSingle(outputs))
             {
@@ -356,7 +366,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return entity;
             }
             var fxOutputs = (IDictionary<string, object>)(fxOutputObject);
-            if (!fxOutputs.TryGetValue(paramType.name, out var outputValue))
+            if (!fxOutputs.TryGetValue(paramType.uniquename, out var outputValue))
             {
                 throw new InvalidPluginExecutionException($"Unable to extract value of output from pfx result");
             }
