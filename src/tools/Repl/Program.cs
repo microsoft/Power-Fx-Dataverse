@@ -18,6 +18,7 @@ using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Repl;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -139,7 +140,7 @@ namespace Microsoft.PowerFx
             var innerServices = new BasicServiceProvider();
             innerServices.AddService<IDataverseExecute>(new DataverseNotPresent());
 
-            var repl = new PowerFxREPL
+            var repl = new Repl2
             {
                 Engine = ReplRecalcEngine(),
                 ValueFormatter = new StandardFormatter(),
@@ -147,9 +148,29 @@ namespace Microsoft.PowerFx
                 InnerServices = innerServices
             };
             repl.EnableSampleUserObject();
-            repl.Engine.EnableDelegation();
+            // Configure engine in ReplRecalcEngine()
+            repl.AddPseudoFunction(new IRPseudoFunction());
             _repl = repl;
             return repl;
+        }
+
+        // Wrap repl so that we can invoke extra things on check. 
+        private class Repl2 : PowerFxREPL
+        {
+            public override async Task<ReplResult> HandleCommandAsync(string expression, CancellationToken cancel = default, uint? lineNumber = null)
+            {
+                var result = await base.HandleCommandAsync(expression, cancel, lineNumber);
+
+                var check = result.CheckResult;
+
+                if (_dv != null)
+                {
+                    // Simulate running all dependencies. 
+                    var scan = DependencyInfo.Scan(check, _dv.MetadataCache);
+                }
+
+                return result;
+            }
         }
 
         public static void ProcessAutoexec(PowerFxREPL repl)
@@ -194,6 +215,8 @@ namespace Microsoft.PowerFx
                 _reset = false;
             }
         }
+
+        
 
         private class ResetFunction : ReflectionFunction
         {

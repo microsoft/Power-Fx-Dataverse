@@ -33,6 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.Functions
 
             var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.True(check.IsSuccess);
+            var scan = DependencyInfo.Scan(check, dv.MetadataCache);
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
