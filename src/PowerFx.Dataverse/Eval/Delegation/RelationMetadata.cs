@@ -9,17 +9,17 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
     /// </summary>
     internal class RelationMetadata
     {
-        public string FieldName { get; }
+        public string ReferencingFieldName { get; }
 
         public bool isPolymorphic { get; }
 
-        public string TargetEntityName { get; }
+        public string ReferencedEntityName { get; }
 
-        public RelationMetadata(string fieldName, bool isPolymorphic, string targetEntityName)
+        public RelationMetadata(string referencingFieldName, bool isPolymorphic, string referencedEntityName)
         {
-            FieldName = fieldName;
+            ReferencingFieldName = referencingFieldName;
             this.isPolymorphic = isPolymorphic;
-            TargetEntityName = targetEntityName;
+            ReferencedEntityName = referencedEntityName;
         }
     }
 }

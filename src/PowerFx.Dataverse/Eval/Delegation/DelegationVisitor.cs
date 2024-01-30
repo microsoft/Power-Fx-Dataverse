@@ -1108,7 +1108,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var relationMetadata = new RelationMetadata(fromField, false, null);
 
-                    var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                    var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);
                     relations.Add(serializedRelationMetadata);
                     return true;
                 }
@@ -1120,7 +1120,7 @@ namespace Microsoft.PowerFx.Dataverse
                         AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
                         var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
 
-                        var serializedRelationMetadata = JsonSerializer.Serialize<RelationMetadata>(relationMetadata, _options);
+                        var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);
                         relations.Add(serializedRelationMetadata);
                         return true;
                     }
