@@ -643,91 +643,91 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             true,
             true)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             false,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             true,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' = 10).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             false,
             true)]
 
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
             10.0,
-            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             true,
             true)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
             10.0,
-            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             false,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
             10.0,
-            "(__retrieveSingle(local, __neq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __neq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             true,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10).Price",
             10.0,
-            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             false,
             true)]
 
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
             -10.0,
-            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
+            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
             true,
             true)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
             -10.0,
-            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
+            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
             false,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
             -10.0,
-            "(__retrieveSingle(local, __and(__neq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, Float(10))))).new_price",
+            "(__retrieveSingle(local, __and(__neq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, Float(10))))).new_price",
             true,
             false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price",
             -10.0,
-            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
+            "(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)))).new_price",
             false,
             true)]
 
         [InlineData("LookUp(t1, IsBlank(virtual.'Virtual Data')).Price",
             10.0,
-            "(__retrieveSingle(local, __eq(local, vdata, Blank(), Table({Value:{\"FieldName\":\"virtual\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, vdata, Blank(), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})))).new_price",
             true,
             true)]
 
         [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})))).new_price",
             true,
             true)]
         [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})))).new_price",
             false,
             false)]
         [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, data, Float(200), Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, data, Float(200), Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})))).new_price",
             true,
             false)]
         [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price",
             100.0,
-            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})))).new_price",
+            "(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})))).new_price",
             false,
             true)]
 
@@ -831,6 +831,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
+
+                var scan = check.ScanDependencies(dv.MetadataCache);
 
                 // Can still run and verify results. 
                 var run = check.GetEvaluator();
@@ -1210,35 +1212,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({r: t1}, Filter(r, Currency > 0))", 1, "With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, Float(0)), 999)))", true, false)]
         [InlineData("With({r: t1}, Filter(r, Currency > 0))", 1, "With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), 999)))", false, true)]
 
-        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, true)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", 1, "__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, true)]
 
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, true)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10)", 2, "__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, true)]
 
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", false, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", true, true)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, Float(10), Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, Float(10))), 999)", true, false)]
-        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"FieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", false, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", false, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", true, true)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, Float(10), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, Float(10))), 999)", true, false)]
+        [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, "__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), __neq(local, new_price, 10)), 999)", false, true)]
 
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, false)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, true)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", true, false)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"FieldName\":\"virtual\"}})), 999)", false, true)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, true)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", true, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, "__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{\"ReferencingFieldName\":\"virtual\"}})), 999)", false, true)]
 
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", true, true)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", false, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, Float(200), Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", true, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", false, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, Float(200), Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, "__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", false, true)]
 
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", true, true)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", false, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, Float(200), Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", true, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"FieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"TargetEntityName\":\"remote\"}})), 999)", false, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", true, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", false, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, Float(200), Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", true, false)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, "__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{\"ReferencingFieldName\":\"new_polyfield\",\"isPolymorphic\":true,\"ReferencedEntityName\":\"remote\"}})), 999)", false, true)]
 
         [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter())), 999)", true, true)]
         [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, "__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter())), 999)", false, false)]
@@ -1278,6 +1280,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
                 Assert.True(check.IsSuccess);
+
+                var scam = check.ScanDependencies(dv.MetadataCache);
 
                 // compare IR to verify the delegations are happening exactly where we expect 
                 var irNode = check.ApplyIR();
@@ -1368,6 +1372,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
                 Assert.True(check.IsSuccess);
+
+                var scam = check.ScanDependencies(dv.MetadataCache);
 
                 // compare IR to verify the delegations are happening exactly where we expect 
                 var irNode = check.ApplyIR();
@@ -1601,6 +1607,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.True(check.IsSuccess);
 
+            var scam = check.ScanDependencies(dv.MetadataCache);
+
             // compare IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
             var actualIr = check.GetCompactIRString();
@@ -1685,6 +1693,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.True(check.IsSuccess);
+
+            var scam = check.ScanDependencies(dv.MetadataCache);
 
             // compare IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();
@@ -1808,6 +1818,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return;
             }
 
+            var scam = check.ScanDependencies(dv.MetadataCache);
+
             Assert.True(check.IsSuccess);
 
             // compare IR to verify the delegations are happening exactly where we expect 
@@ -1870,6 +1882,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
 
             Assert.True(check.IsSuccess);
+
+            var scam = check.ScanDependencies(dv.MetadataCache);
 
             // compare IR to verify the delegations are happening exactly where we expect 
             var irNode = check.ApplyIR();

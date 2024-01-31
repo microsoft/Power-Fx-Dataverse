@@ -1012,6 +1012,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         [InlineData("Remove(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         [InlineData("ClearCollect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+
+        // polymorphic comparisons.
+        [InlineData("Filter(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(Remote)}); AsType(Last(t1).PolymorphicLookup, Remote)", "Read remote: ; Read local: new_polyfield; Write local: new_polyfield;")]
+        [InlineData("AsType(LookUp(t1, false).PolymorphicLookup, Remote).Data", "Read local: new_polyfield; Read remote: data;")]
+
+        // 1:N relationships, 1 Degree drilled.
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
+
+        // Inside with.
+        [InlineData("With({r: t1}, Filter(r, Currency > 0))", "Read local: new_currency;")]
+        [InlineData("With({r: t1}, LookUp(r, Currency > 0))", "Read local: new_currency;")]
+
+        // Option set.
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
+        [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1021,6 +1041,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.Add("local", "t1");
             map.Add("remote", "Remote");
             map.Add("doubleremote", "Remote2");
+            map.Add("virtualremote", "VRemote");
             var policy = new SingleOrgPolicy(map);
 
             var config = new PowerFxConfig();

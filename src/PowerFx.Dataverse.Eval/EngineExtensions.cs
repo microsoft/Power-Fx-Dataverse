@@ -79,16 +79,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dvTable = (DataverseTableValue)table;
 
-                var relationMetadata = JsonSerializer.Deserialize<RelationMetadata>(links.First(), DelegationIRVisitor._options);
+                var relationMetadata = DelegationUtility.DeserializeRelatioMetadata(links.First());
 
                 OneToManyRelationshipMetadata relation;
                 if (relationMetadata.isPolymorphic)
                 {
-                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.FieldName, relationMetadata.TargetEntityName, out relation);
+                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, relationMetadata.ReferencedEntityName, out relation);
                 }
                 else
                 {
-                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.FieldName, out relation);
+                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, out relation);
                 }
 
                 var linkEntity = new LinkEntity()
