@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Texl.Builtins;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -165,13 +168,56 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have first argument an aggregate type");
                 }
 
-                if (node.Args[1] is TextLiteralNode field)
+                // Relationship case
+                if(node.Args.Count > 3)
                 {
-                    AddFieldRead(tableLogicalName, field.LiteralValue);
+                    if (node.Args[3] is CallNode maybeTableArg && maybeTableArg.Function is TableFunction tableArg && maybeTableArg.Args.Count == 1)
+                    {
+                        var arg0 = (RecordNode)maybeTableArg.Args[0];
+                        if(arg0.Fields.TryGetValue(new Core.Utils.DName("Value"), out var valueNode) && valueNode is TextLiteralNode textNode)
+                        {
+                            var relationshipObj = DelegationUtility.DeserializeRelatioMetadata(textNode.LiteralValue);
+                            AddFieldRead(tableLogicalName, relationshipObj.ReferencingFieldName);
+
+                            var referencedEntityName = relationshipObj.ReferencedEntityName;
+
+                            // referencedEntityName is null for non polymorphic relationships.
+                            if(referencedEntityName == null)
+                            {
+                                if(_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata) && 
+                                    entityMetadata.TryGetManyToOneRelationship(relationshipObj.ReferencingFieldName, out var relation))
+                                {
+                                    referencedEntityName = relation.ReferencedEntity;
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException(referencedEntityName + " is null and can't be resolved");
+                                }
+                            }
+
+                            // Arg1 is the field which is being compared on the target entity.
+                            AddFieldRead(referencedEntityName, ((TextLiteralNode)node.Args[1]).LiteralValue);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have fourth argument a table function with a single argument of type record with a field named Value");
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have fourth argument a table function");
+                    }
                 }
                 else
                 {
-                    throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a text literal");
+                    if (node.Args[1] is TextLiteralNode field)
+                    {
+                        AddFieldRead(tableLogicalName, field.LiteralValue);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a text literal");
+                    }
                 }
             }
 
