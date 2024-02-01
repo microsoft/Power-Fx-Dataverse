@@ -72,7 +72,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 context.AppendRoundMaxMinConditions(retValList[1]);
             }
 
-            context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type, context._dvFeatureControlBlock)})");
+            context.SetIntermediateVariable(result, $"TRY_CAST({function}({string.Join(",", args)}) AS {ToSqlType(result.type, context._dataverseFeatures)})");
             return result;
         }
 
@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             ValidateNumericArgument(node.Args[1]);
             var exponent = node.Args[1].Accept(visitor, context);
             context.PowerOverflowCheck(number, exponent, isFloatFlow: true);
-            context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type, context._dvFeatureControlBlock)},{CoerceNullToNumberType(exponent, result.type, context._dvFeatureControlBlock)}) AS {ToSqlType(result.type, context._dvFeatureControlBlock)})");
+            context.SetIntermediateVariable(result, $"TRY_CAST(POWER({CoerceNumberToType(number.ToString(), result.type, context._dataverseFeatures)},{CoerceNullToNumberType(exponent, result.type, context._dataverseFeatures)}) AS {ToSqlType(result.type, context._dataverseFeatures)})");
             context.PerformRangeChecks(result, node);
             return result;
         }
@@ -192,7 +192,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var digits = context.TryCastToDecimal(RoundDownNullToInt(rawDigits));
             context.PowerOverflowCheck(RetVal.FromSQL("10", FormulaType.Decimal), digits, isFloatFlow: false);
             var factor = context.GetTempVar(FormulaType.Decimal);
-            var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type, context._dvFeatureControlBlock)}),{digits})";
+            var factorExpression = $"POWER(CAST(10 as {ToSqlType(factor.type, context._dataverseFeatures)}),{digits})";
             context.TryCastToDecimal(factorExpression, factor);
             context.DivideByZeroCheck(factor);
 
@@ -282,16 +282,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             return $"ISNULL({retVal},0)";
         }
 
-        public static string CoerceNullToNumberType(RetVal retVal, FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
+        public static string CoerceNullToNumberType(RetVal retVal, FormulaType type, DataverseFeatures dataverseFeatures)
         {
             Contracts.Assert(type is DecimalType || type is NumberType);
-            return CoerceNumberToType(CoerceNullToInt(retVal), type, dvFeatureControlBlock);
+            return CoerceNumberToType(CoerceNullToInt(retVal), type, dataverseFeatures);
         }
 
-        public static string CoerceNumberToType(string value, FormulaType type, DVFeatureControlBlock dvFeatureControlBlock)
+        public static string CoerceNumberToType(string value, FormulaType type, DataverseFeatures dataverseFeatures)
         {
             Contracts.Assert(type is DecimalType || type is NumberType);
-            return $"CAST({value} AS {ToSqlType(type, dvFeatureControlBlock)})";
+            return $"CAST({value} AS {ToSqlType(type, dataverseFeatures)})";
         }
 
         public static void ValidateNumericArgument(IntermediateNode node)

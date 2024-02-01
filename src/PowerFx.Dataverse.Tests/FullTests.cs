@@ -681,70 +681,70 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "money2", "9999999999999" }
                 });
 
-                DVFeatureControlBlock dVFeatureControlBlock = new DVFeatureControlBlock() { IsFloatingPointEnabled = true };
+                DataverseFeatures dataverseFeatures = new DataverseFeatures() { IsFloatingPointEnabled = true };
 
                 // arithmetic
-                ExecuteSqlTest("double1+double2", 26.66D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock); // 26.66D means 26.66 of type double and 26.66M means 26.66 of type decimal
-                ExecuteSqlTest("double1-double2", 24.613159999999997D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1*double2", 26.236988703599998D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1/double2", 25.049911082449043D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1+decimal2", 25.658459999999998D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1-decimal2", 25.6147D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1*decimal2", 0.5609283704D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1/decimal2", 1171.6901279707495D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1%", 0.2563658D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("int+double1", 45.636579999999995D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("double1+double2", 26.66D, cx, metadata, dataverseFeatures: dataverseFeatures); // 26.66D means 26.66 of type double and 26.66M means 26.66 of type decimal
+                ExecuteSqlTest("double1-double2", 24.613159999999997D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1*double2", 26.236988703599998D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1/double2", 25.049911082449043D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1+decimal2", 25.658459999999998D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1-decimal2", 25.6147D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1*decimal2", 0.5609283704D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1/decimal2", 1171.6901279707495D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1%", 0.2563658D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("int+double1", 45.636579999999995D, cx, metadata, dataverseFeatures: dataverseFeatures);
 
                 // overflow
-                ExecuteSqlTest("double4+1", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double5-1", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double4+int", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("big_decimal+double1", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("double4+1", null, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double5-1", null, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double4+int", null, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("big_decimal+double1", null, cx, metadata, dataverseFeatures: dataverseFeatures);
 
                 // math functions
-                ExecuteSqlTest("Mod(double1,decimal)", 5.94D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(double1,double2)", 0.05108D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Mod(double1,decimal)", 5.94D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(double1,double2)", 0.05108D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Round(double1,2)", 25.64D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Round(double1,double2)", 25.6D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Round(decimal,double2)", 19.7000000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Round(double1,2)", 25.64D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Round(double1,double2)", 25.6D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Round(decimal,double2)", 19.7000000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("RoundUp(double1,2)", 25.64D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundUp(double1,double2)", 25.7D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundUp(decimal,double2)", 19.7000000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("RoundUp(double1,2)", 25.64D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundUp(double1,double2)", 25.7D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundUp(decimal,double2)", 19.7000000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("RoundDown(double1,2)", 25.63D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundDown(double1,double2)", 25.6D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundDown(decimal,double2)", 19.6000000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("RoundDown(double1,2)", 25.63D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundDown(double1,double2)", 25.6D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundDown(decimal,double2)", 19.6000000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Trunc(double1,2)", 25.63D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Trunc(double1,double2)", 25.6D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Trunc(decimal,double2)", 19.6000000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Trunc(double1,2)", 25.63D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Trunc(double1,double2)", 25.6D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Trunc(decimal,double2)", 19.6000000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Abs(double6)", 1343.2233D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Int(double1)", 25D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Int(decimal)", 19M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Abs(double6)", 1343.2233D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Int(double1)", 25D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Int(decimal)", 19M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Average(double1,double2,double3,double4)", 27500000006.665D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Average(decimal,double2,decimal2,double4)", 25000000005.1854700000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Max(double1,double2,double3,double4)", 100000000000D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Max(decimal,double2,decimal2,double4)", 100000000000.0000000000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Sum(double1,double2,double3,double4)", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Sum(decimal,double2,decimal2,double4)", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Average(double1,double2,double3,double4)", 27500000006.665D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Average(decimal,double2,decimal2,double4)", 25000000005.1854700000M, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Max(double1,double2,double3,double4)", 100000000000D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Max(decimal,double2,decimal2,double4)", 100000000000.0000000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Sum(double1,double2,double3,double4)", null, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Sum(decimal,double2,decimal2,double4)", null, cx, metadata, dataverseFeatures: dataverseFeatures);
 
                 // String functions
-                ExecuteSqlTest("Float(double1)", 25.63658D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Float(decimal)", 19.69658D, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Decimal(double1)", 25.6365800000M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Float(double1)", 25.63658D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Float(decimal)", 19.69658D, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Decimal(double1)", 25.6365800000M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Left(\"abcd\", double2)", "a", cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Left(\"abcd\", double3)", null, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Left(\"abcd\", double2)", "a", cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Left(\"abcd\", double3)", null, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", "ebcd", cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mid(\"abcd\", 1, double2)", "a", cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", "ebcd", cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", "ebcd", cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mid(\"abcd\", 1, double2)", "a", cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", "ebcd", cx, metadata, dataverseFeatures: dataverseFeatures);
                 
             }
         }
@@ -802,70 +802,70 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "money2", "9999999999999" }
                 });
 
-                DVFeatureControlBlock dVFeatureControlBlock = new DVFeatureControlBlock() { IsFloatingPointEnabled = false };
+                DataverseFeatures dataverseFeatures = new DataverseFeatures() { IsFloatingPointEnabled = false };
 
                 // arithmetic
-                ExecuteSqlTest("double1+double2", null, cx, metadata, success : false, dvFeatureControlBlock: dVFeatureControlBlock); 
-                ExecuteSqlTest("double1-double2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1*double2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1/double2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1+decimal2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1-decimal2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1*decimal2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1/decimal2", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double1%", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("int+double1", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("double1+double2", null, cx, metadata, success : false, dataverseFeatures: dataverseFeatures); 
+                ExecuteSqlTest("double1-double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1*double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1/double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1+decimal2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1-decimal2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1*decimal2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1/decimal2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double1%", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("int+double1", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
                 // overflow
-                ExecuteSqlTest("double4+1", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double5-1", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("double4+int", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("big_decimal+double1", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("double4+1", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double5-1", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("double4+int", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("big_decimal+double1", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
                 // math functions
-                ExecuteSqlTest("Mod(double1,decimal)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(double1,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mod(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Mod(double1,decimal)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(double1,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Round(double1,2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Round(double1,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Round(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Round(double1,2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Round(double1,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Round(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("RoundUp(double1,2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundUp(double1,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundUp(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("RoundUp(double1,2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundUp(double1,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundUp(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("RoundDown(double1,2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundDown(double1,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("RoundDown(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("RoundDown(double1,2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundDown(double1,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("RoundDown(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Trunc(double1,2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Trunc(double1,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Trunc(decimal,double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Trunc(double1,2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Trunc(double1,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Trunc(decimal,double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Abs(double6)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Int(double1)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Int(decimal)", 19M, cx, metadata, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Abs(double6)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Int(double1)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Int(decimal)", 19M, cx, metadata, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Average(double1,double2,double3,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Average(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Max(double1,double2,double3,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Max(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Sum(double1,double2,double3,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Sum(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Average(double1,double2,double3,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Average(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Max(double1,double2,double3,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Max(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Sum(double1,double2,double3,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Sum(decimal,double2,decimal2,double4)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
                 // String functions
-                ExecuteSqlTest("Float(double1)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Float(decimal)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Decimal(double1)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Float(double1)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Float(decimal)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Decimal(double1)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Left(\"abcd\", double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Left(\"abcd\", double3)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Left(\"abcd\", double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Left(\"abcd\", double3)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
-                ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Mid(\"abcd\", 1, double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
-                ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", null, cx, metadata, success: false, dvFeatureControlBlock: dVFeatureControlBlock);
+                ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mid(\"abcd\", 1, double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
 
             }
         }
@@ -897,14 +897,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return connection;
         }
 
-        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null, DVFeatureControlBlock dvFeatureControlBlock = null)
+        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null, DataverseFeatures dataverseFeatures = null)
         {
             if (metadata == null)
             {
                 metadata = new EntityMetadataModel[] { new EntityMetadataModel() };
             }
 
-            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets, dvFeatureControlBlock);
+            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets, dataverseFeatures);
             Assert.Equal(success, compileResult.IsSuccess); // $"Compilation failed for formula: '{formula}'"
 
             if (compileResult.IsSuccess)
@@ -955,13 +955,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return compileResult;
         }
 
-        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null, DVFeatureControlBlock dvFeatureControlBlock = null)
+        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null, DataverseFeatures dataverseFeatures = null)
         {
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
                 new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                dvFeatureControlBlock : dvFeatureControlBlock);
+                dataverseFeatures : dataverseFeatures);
 
             var options = new SqlCompileOptions
             {
@@ -1062,7 +1062,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     }
 
                     // always create table with right data type which it suppose to be so float should be created with float and not with any other data type despite of its flag
-                    var attrType = sqlType ?? SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType(), new DVFeatureControlBlock() { IsFloatingPointEnabled = true });
+                    var attrType = sqlType ?? SqlVisitor.ToSqlType(attr.AttributeType.Value.FormulaType(), new DataverseFeatures() { IsFloatingPointEnabled = true });
                     type = $"{attrType} NULL";
                 }
 

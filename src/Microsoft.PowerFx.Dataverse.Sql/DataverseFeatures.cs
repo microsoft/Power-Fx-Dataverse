@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.PowerFx.Dataverse
 {
-    public sealed class DVFeatureControlBlock
+    public sealed class DataverseFeatures
     {
         // This FCB is to enable/disable Floating Point Feature, when this flag is enabled, Power Fx Core Number Data type will be treated as Double/Float and
         // Formula Columns will be able to produce/consume float data type columns

@@ -639,11 +639,11 @@ namespace Microsoft.PowerFx.Dataverse
             return RetVal.FromSQL($"(ISNULL(FORMAT({result},N'0'),''))", FormulaType.String);
         }
 
-        public static string ToSqlType(FormulaType t, DVFeatureControlBlock dvFeatureControlBlock)
+        public static string ToSqlType(FormulaType t, DataverseFeatures dataverseFeatures)
         {
             if (t is NumberType)
             {
-                if (dvFeatureControlBlock.IsFloatingPointEnabled)
+                if (dataverseFeatures.IsFloatingPointEnabled)
                 {
                     return SqlStatementFormat.SqlFloatType;
                 }
@@ -791,7 +791,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
-            internal readonly DVFeatureControlBlock _dvFeatureControlBlock;
+            internal readonly DataverseFeatures _dataverseFeatures;
 
             // Used during GetVarDetails to verify if a dependent field is stored on primary table or not to decide if field requires reference.
             private readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
@@ -803,7 +803,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly TypeDetails _typeHints;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null, TypeDetails typeHints = null, DVFeatureControlBlock dvFeatureControlBlock = null)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null, TypeDetails typeHints = null, DataverseFeatures dataverseFeatures = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -819,7 +819,7 @@ namespace Microsoft.PowerFx.Dataverse
                 DoesDateDiffOverflowCheck = false;
 
                 _typeHints = typeHints;
-                _dvFeatureControlBlock = dvFeatureControlBlock;
+                _dataverseFeatures = dataverseFeatures;
 
                 _secondaryMetadataCache = secondaryMetadataCache;
             }
@@ -998,7 +998,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dkind = column.TypeDefinition.DKind;
 
-                if(_dvFeatureControlBlock.IsFloatingPointEnabled && dkind == DKind.Number)
+                if(_dataverseFeatures.IsFloatingPointEnabled && dkind == DKind.Number)
                 {
                     return FormulaType.Number;
                 }
@@ -1061,7 +1061,7 @@ namespace Microsoft.PowerFx.Dataverse
                             throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                         }
 
-                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType(), _dvFeatureControlBlock);
+                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType(), _dataverseFeatures);
 
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
@@ -1082,7 +1082,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // otherwise, translate existing binding node type to SQL
-                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType, _dvFeatureControlBlock);
+                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType, _dataverseFeatures);
             }
 
             public Scope GetScope(ScopeSymbol symbol)
@@ -1155,7 +1155,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = false)
             {
-                if(_dvFeatureControlBlock.IsFloatingPointEnabled && castToFloat)
+                if(_dataverseFeatures.IsFloatingPointEnabled && castToFloat)
                 {
                     return TryCastToFloat(expression, retVal);
                 }
@@ -1181,7 +1181,7 @@ namespace Microsoft.PowerFx.Dataverse
             internal RetVal TryCastToFloat(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 // If Floating point is disabled then route the value to decimal
-                if(!_dvFeatureControlBlock.IsFloatingPointEnabled)
+                if(!_dataverseFeatures.IsFloatingPointEnabled)
                 {
                     return TryCastToDecimal(expression, retVal, applyNullCheck);
                 }
@@ -1363,7 +1363,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
                         // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
                         // else will use default values same as decimal if not provided by client
-                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
+                        if (_dataverseFeatures.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
                         {
                             minValue = _typeHints.MinValue.ToString();
                             maxValue = _typeHints.MaxValue.ToString();
@@ -1393,7 +1393,7 @@ namespace Microsoft.PowerFx.Dataverse
                         // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
                         // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
                         // else will use default values same as decimal if not provided by client
-                        if (_dvFeatureControlBlock.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
+                        if (_dataverseFeatures.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
                         {
                             minValue = _typeHints.MinValue.ToString();
                             maxValue = _typeHints.MaxValue.ToString();
