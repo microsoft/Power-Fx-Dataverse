@@ -275,5 +275,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             engine.IRTransformList.Add(t);
         }
+
+        public static DependencyInfo ScanDependencies(this CheckResult result, CdsEntityMetadataProvider metadataCache)
+        {
+            var scan = DependencyInfo.Scan(result, metadataCache);
+            return scan;
+        }
     }
 }

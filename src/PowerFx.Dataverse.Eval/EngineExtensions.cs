@@ -4,14 +4,18 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
+using static Microsoft.PowerFx.Dataverse.DelegationIRVisitor;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -75,7 +79,17 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dvTable = (DataverseTableValue)table;
 
-                dvTable._entityMetadata.TryGetManyToOneRelationship(links.First(), out var relation);
+                var relationMetadata = DelegationUtility.DeserializeRelatioMetadata(links.First());
+
+                OneToManyRelationshipMetadata relation;
+                if (relationMetadata.isPolymorphic)
+                {
+                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, relationMetadata.ReferencedEntityName, out relation);
+                }
+                else
+                {
+                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, out relation);
+                }
 
                 var linkEntity = new LinkEntity()
                 {

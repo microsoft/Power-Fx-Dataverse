@@ -20,10 +20,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.Functions
         [InlineData("AsType(LookUp(t1, false).PolymorphicLookup, t3)", null)]
         public async Task AsTypeFunctionAsync(string expr, bool? isErrorValue)
         {
-            (DataverseConnection dv, _) = PluginExecutionTests.CreateMemoryForRelationshipModels();
-            dv.AddTable("t1", "local");
-            dv.AddTable("t2", "remote");
-            dv.AddTable("t3", "doubleremote");
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "t1");
+            map.Add("remote", "t2");
+            map.Add("virtualremote", "t3");
+
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, _) = PluginExecutionTests.CreateMemoryForRelationshipModels(policy: policy);
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
@@ -33,6 +37,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.Functions
 
             var check = engine.Check(expr, options: opts, symbolTable: dv.Symbols);
             Assert.True(check.IsSuccess);
+
+            var scan = check.ScanDependencies(dv.MetadataCache);
 
             var run = check.GetEvaluator();
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
