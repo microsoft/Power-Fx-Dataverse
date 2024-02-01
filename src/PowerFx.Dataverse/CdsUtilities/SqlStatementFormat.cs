@@ -174,6 +174,7 @@ ELSE
 
         public const string SqlFloatType = "float";
 
+        // Sql Float Data Type for Float columns
         public const string Float = "Float";
 
         /// <summary>
