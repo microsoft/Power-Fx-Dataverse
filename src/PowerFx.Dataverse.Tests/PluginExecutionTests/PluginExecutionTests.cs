@@ -2783,11 +2783,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["old_price"] = null;
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity3.Attributes["new_polyfield"] = null;
+            entity3.Attributes["new_quantity"] = Convert.ToDecimal(20);
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
             entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity4.Attributes["new_polyfield"] = null;
+            entity4.Attributes["new_quantity"] = Convert.ToDecimal(10);
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
@@ -2797,6 +2799,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_name"] = "row1";
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
+            entity1.Attributes["new_quantity"] = Convert.ToDecimal(20);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

@@ -35,10 +35,10 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? count, IEnumerable<string> columnSet, CancellationToken cancellationToken)
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancellationToken)
             {
                 var t2 = (DataverseTableValue)table;
-                var result = await t2.RetrieveMultipleAsync(filter, relation, count, columnSet, cancellationToken).ConfigureAwait(false);
+                var result = await t2.RetrieveMultipleAsync(filter, relation, count, columnSet, isDistinct, cancellationToken).ConfigureAwait(false);
                 return result;
             }
 

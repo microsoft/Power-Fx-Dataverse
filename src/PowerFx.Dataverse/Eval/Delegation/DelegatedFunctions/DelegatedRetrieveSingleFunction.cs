@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, cancellationToken).ConfigureAwait(false);
+            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, isDistinct: false ,cancellationToken).ConfigureAwait(false);
 
             var result = row.FirstOrDefault();
             if (result == null || result.IsBlank)

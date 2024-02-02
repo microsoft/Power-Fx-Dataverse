@@ -10,6 +10,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -221,6 +222,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             var entityList = ProcessEntity(data, qe, take, cancellationToken);
+
+            if(qe.Distinct)
+            {
+                entityList = entityList.Distinct(new EntityComparer(qe.ColumnSet)).ToList();
+            }
 
             return new DataverseResponse<EntityCollection>(new EntityCollection(entityList));
         }
@@ -439,7 +445,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return false;
         }
 
-        class AttributeComparer : IComparer<object>
+        internal class AttributeComparer : IComparer<object>
         {
             private readonly AttributeMetadata _amd;
 
@@ -507,6 +513,42 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     default:
                         throw new NotImplementedException($"FieldType {_amd.AttributeType.Value} not supported");
                 }
+            }
+        }
+
+        internal class EntityComparer : IEqualityComparer<Entity>
+        {
+            private readonly string _column;
+
+            public EntityComparer(ColumnSet columnSet)
+            {
+                if(columnSet.Columns.Count == 1)
+                {
+                    _column = columnSet.Columns[0];
+                    return;
+                }
+
+                throw new NotImplementedException();
+            }
+
+            public bool Equals(Entity x, Entity y)
+            {
+                if(x.Attributes.TryGetValue(_column, out var xValue) && y.Attributes.TryGetValue(_column, out var yValue))
+                {
+                    return xValue.Equals(yValue);
+                }
+
+                return false;
+            }
+
+            public int GetHashCode([DisallowNull] Entity obj)
+            {
+                if(obj.Attributes.TryGetValue(_column, out var value))
+                {
+                    return value.GetHashCode();
+                }
+
+                throw new NotImplementedException();
             }
         }
 

@@ -9,8 +9,9 @@ using Xunit;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Dataverse;
 
-namespace Microsoft.PowerFx.Dataverse.Tests
+namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class DelegationTests
     {
@@ -781,10 +782,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.Add("virtualremote", "t3");
             var policy = new SingleOrgPolicy(map);
 
-            (DataverseConnection dv, EntityLookup el) = 
+            (DataverseConnection dv, EntityLookup el) =
                 PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);
             var tableT1Type = dv.GetRecordType("local");
-            
+
             var opts = parserNumberIsFloatOption ?
                 PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
                 PluginExecutionTests._parserAllowSideEffects;
@@ -807,7 +808,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var inputs = TransformForWithFunction(expr, expectedIr, expectedWarnings?.Count() ?? 0);
 
-            foreach(var input in inputs)
+            foreach (var input in inputs)
             {
                 expr = input.Item1;
                 expectedIr = input.Item2;
@@ -827,7 +828,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
                 Assert.Equal(expectedWarnings.Length, errorList.Length);
-                for (int i = 0; i < errorList.Length; i++)
+                for (var i = 0; i < errorList.Length; i++)
                 {
                     Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
@@ -840,7 +841,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Place a reference to tableT1 in the fakeT1 symbol values and compose in
                 var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
                 fakeSymbolValues.Set(fakeSlot, fakeTableValue);
-                var allValues = SymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+                var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
 
                 var result = run.EvalAsync(CancellationToken.None, allValues).Result;
 
@@ -855,12 +856,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
                 else
                 {
-                    if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                        (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                    if (cdsNumberIsFloat && parserNumberIsFloatOption ||
+                        cdsNumberIsFloat && !parserNumberIsFloatOption)
                     {
                         Assert.Equal(expected, result.ToObject());
                     }
-                    else if(cdsNumberIsFloat && !parserNumberIsFloatOption)
+                    else if (cdsNumberIsFloat && !parserNumberIsFloatOption)
                     {
                         Assert.Equal(expected, result.ToObject());
                     }
@@ -871,7 +872,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
         }
-        
+
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -922,9 +923,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Blank is treated as 0.
         [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), Float(If(LtDecimals(1,0), (1))))", false, false)]
-        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), If(LtNumbers(1,0), (1)))", true,  true)]
-        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), Float(If(LtDecimals(1,0), (1))))", true,  false)]
-        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), If(LtNumbers(1,0), (1)))", false,  true)]
+        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), If(LtNumbers(1,0), (1)))", true, true)]
+        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), Float(If(LtDecimals(1,0), (1))))", true, false)]
+        [InlineData("FirstN(t1, If(1<0, 1))", 0, "__retrieveMultiple(local, __noFilter(), If(LtNumbers(1,0), (1)))", false, true)]
 
         //Inserts default second arg.
         [InlineData("FirstN(t1)", 1, "__retrieveMultiple(local, __noFilter(), 1)", false, false)]
@@ -939,7 +940,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.Add("virtualremote", "t3");
             var policy = new SingleOrgPolicy(map);
 
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy); 
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);
 
             var opts = parserNumberIsFloatOption ?
                 PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
@@ -974,7 +975,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
                 Assert.Equal(expectedWarnings.Length, errorList.Length);
-                for (int i = 0; i < errorList.Length; i++)
+                for (var i = 0; i < errorList.Length; i++)
                 {
                     Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
@@ -1295,7 +1296,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
                 Assert.Equal(expectedWarnings.Length, errorList.Length);
-                for (int i = 0; i < errorList.Length; i++)
+                for (var i = 0; i < errorList.Length; i++)
                 {
                     Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
@@ -1387,7 +1388,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
                 Assert.Equal(expectedWarnings.Length, errorList.Length);
-                for (int i = 0; i < errorList.Length; i++)
+                for (var i = 0; i < errorList.Length; i++)
                 {
                     Assert.Equal(expectedWarnings[i], errorList[i]);
                 }
@@ -1396,8 +1397,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-                if ((cdsNumberIsFloat && parserNumberIsFloatOption) ||
-                    (cdsNumberIsFloat && !parserNumberIsFloatOption))
+                if (cdsNumberIsFloat && parserNumberIsFloatOption ||
+                    cdsNumberIsFloat && !parserNumberIsFloatOption)
                 {
                     Assert.Equal(expected, result.ToObject());
                 }
@@ -1443,7 +1444,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors_pt_br.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            for (var i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
             }
@@ -1621,7 +1622,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            for (var i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
             }
@@ -1708,7 +1709,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            for (var i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
             }
@@ -1834,7 +1835,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            for (var i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
             }
@@ -1843,12 +1844,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
 
-            int columnCount = 0;
+            var columnCount = 0;
             if (result is TableValue tv)
             {
                 columnCount = tv.Type.FieldNames.Count();
-            } 
-            else if(result is RecordValue rv)
+            }
+            else if (result is RecordValue rv)
             {
                 columnCount = rv.Type.FieldNames.Count();
             }
@@ -1897,7 +1898,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
 
             Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (int i = 0; i < errorList.Length; i++)
+            for (var i = 0; i < errorList.Length; i++)
             {
                 Assert.Equal(expectedWarnings[i], errorList[i]);
             }
@@ -1909,7 +1910,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expected, ((BooleanValue)result).Value);
         }
 
-        private static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)
+        internal static IList<(string, string)> TransformForWithFunction(string expr, string expectedIr, int warningCount)
         {
             var inputs = new List<(string, string)> { (expr, expectedIr) };
 
