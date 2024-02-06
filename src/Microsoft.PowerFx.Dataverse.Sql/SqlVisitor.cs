@@ -1354,24 +1354,26 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
-                { 
-                   if (IsNumericType(result))
-                   {
-                        string minValue = SqlStatementFormat.DecimalTypeMin;
-                        string maxValue = SqlStatementFormat.DecimalTypeMax;
-
-                        // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
-                        // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
-                        // else will use default values same as decimal if not provided by client
-                        if (_dataverseFeatures.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
-                        {
-                            minValue = _typeHints.MinValue.ToString();
-                            maxValue = _typeHints.MaxValue.ToString();
-                        }
-
-                        PerformOverflowCheck(result, minValue, maxValue, postCheck);
+                {
+                    if (result.type is DecimalType)
+                    {
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                     }
-                    // TODO: other range checks?
+                    else if (result.type is NumberType) // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata
+                    {
+                        if(_dataverseFeatures.IsFloatingPointEnabled)
+                        {
+                            double minValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MinSupportedValue;
+                            double maxValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MaxSupportedValue;
+
+                            PerformOverflowCheck(result, minValue.ToString(), maxValue.ToString(), postCheck);
+                        }
+                        else
+                        {
+                            // For backward compatibility, in case float feature is off, number type is considered as decimal type itself
+                            PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                        }
+                    }
                 }
             }
 
@@ -1379,28 +1381,31 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_checkOnly) return;
 
-                if (IsNumericType(result))
+                if (result.type is DecimalType)
                 {
-                    if(sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                    if (sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
                     }
                     else
                     {
-                        string minValue = SqlStatementFormat.DecimalTypeMin;
-                        string maxValue = SqlStatementFormat.DecimalTypeMax;
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                    }
+                }
+                else if (result.type is NumberType)
+                {
+                    if (_dataverseFeatures.IsFloatingPointEnabled)
+                    {
+                        double minValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MinSupportedValue;
+                        double maxValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MaxSupportedValue;
 
-                        // Irrespective of if internal fields used in expression is decimal or float, if formula is producing float then use same float min
-                        // and max conditions for all internal computations and for final range so in case of float, we will always honor min and max value from client
-                        // else will use default values same as decimal if not provided by client
-                        if (_dataverseFeatures.IsFloatingPointEnabled && _typeHints?.TypeHint == AttributeTypeCode.Double)
-                        {
-                            minValue = _typeHints.MinValue.ToString();
-                            maxValue = _typeHints.MaxValue.ToString();
-                        }
-
-                        PerformOverflowCheck(result, minValue, maxValue, postCheck);  
-                    }    
+                        PerformOverflowCheck(result, minValue.ToString(), maxValue.ToString(), postCheck);
+                    }
+                    else
+                    {
+                        // For backward compatibility, in case float feature is off, number type is considered as decimal type itself
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                    }
                 }
             }
 

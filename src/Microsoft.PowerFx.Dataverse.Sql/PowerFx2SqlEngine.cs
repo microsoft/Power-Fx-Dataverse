@@ -399,14 +399,21 @@ namespace Microsoft.PowerFx.Dataverse
             if (result.type is DecimalType)
             {
                 int precision = options.TypeHints?.Precision ?? DefaultPrecision;
-                
+
                 // In case type hint is coming as integer, internal computations are done in FX types only (number/decimal)
                 // but on the way out UDF is returning integer so rounding off the value to 0 at end
-                if(options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                if (options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                 {
                     precision = 0;
                 }
 
+                tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
+            }
+            else if (result.type is NumberType && null != options.TypeHints) 
+            {
+                // In case of float result type, if client is supplying min and max values for float in type hints, those values will not be honored
+                // and default float metadata min max values will be entertained, compiler will only entertain precision coming in type hints
+                int precision = options.TypeHints.Precision;
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
             else

@@ -73,15 +73,15 @@ AS BEGIN
     -- expression body
     SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS FLOAT)
     IF(@v2 IS NULL) BEGIN RETURN NULL END
-    IF(@v2<2 OR @v2>10) BEGIN RETURN NULL END
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
     SET @v3 = 2.0
     SET @v4 = @v3
     SET @v5 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v4,0)) AS FLOAT)
     IF(@v5 IS NULL) BEGIN RETURN NULL END
     -- end expression body
 
-    IF(@v5<2 OR @v5>10) BEGIN RETURN NULL END
-    RETURN @v5
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 3)
 END
 ";
 
@@ -112,7 +112,7 @@ END
 ";
 
         [Fact]
-        public void CheckCompileFloatWithMinMaxValues()
+        public void ValidateCompileFloatMinMaxPrecisionBehavior()
         {
             var expr = "field*field1*2.0";
             var model = new EntityMetadataModel
@@ -140,8 +140,9 @@ END
 
             SqlCompileOptions options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
 
-            // in case client is supplying min and max values for float, then passing type hint as float is mandatory
-            options.TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = 2, MaxValue = 10 };
+            // in case client is supplying min and max values for float, those values will not be honored and default float min max values will be entertained
+            // it will only entertain precision coming in type hints and will do round off based on that precision
+            options.TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = 2, MaxValue = 10, Precision = 3 };
             
             var result = engine.Compile(expr, options);
 
@@ -157,7 +158,8 @@ END
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("new_field*new_field1*2.0", result.LogicalFormula);
 
-            // in case min max values not supplied, then it uses default min max values same as decimal 
+            // in case no type hints are coming, then it uses default metadata min max values for float and will do round off at end,
+            // compiler will not assume any precision by itself
             options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
             result = engine.Compile(expr, options);
 
@@ -596,7 +598,7 @@ AS BEGIN
     -- end expression body
 
     IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
-    RETURN @v2
+    RETURN ROUND(@v2, 5)
 END
 ";
 
@@ -655,7 +657,7 @@ END
 
             options = new SqlCompileOptions
             {
-                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = SqlStatementFormat.DecimalTypeMinValue, MaxValue = SqlStatementFormat.DecimalTypeMaxValue },
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, Precision = 5 },
                 UdfName = "fn_testUdf1"
             };
 

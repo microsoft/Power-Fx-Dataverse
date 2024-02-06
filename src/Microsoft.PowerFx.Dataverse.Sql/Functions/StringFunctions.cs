@@ -14,6 +14,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
@@ -30,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             RetVal arg = null;
 
             // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
-            if (node.Args.Count == 1 && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
+            if (node.Args.Count == 1 && node.Function != BuiltinFunctionsCore.Float && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
             {
                 var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
                 arg = RetVal.FromVar(varDetails.VarName, context.GetReturnType(scopeAccessNode, varDetails.VarType));
