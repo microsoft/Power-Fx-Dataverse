@@ -1032,6 +1032,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Option set.
         [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
         [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
+
+        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
+        [InlineData("Distinct(t1, Price)", "Read local: ;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1376,7 +1379,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Row Scope
         [InlineData("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names
-        [InlineData("new_price + new_quantity", 100.0)] // new_quantity is blank. 
+        [InlineData("new_price + new_quantity", 120.0)] // new_quantity is 20. 
 
         [InlineData("Price + 10", 110.0, true)] //using Display name for Price
         [InlineData("ThisRecord.Other.Data", 200.0)] // Relationship 
@@ -2783,7 +2786,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["old_price"] = null;
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity3.Attributes["new_polyfield"] = null;
-            entity3.Attributes["new_quantity"] = Convert.ToDecimal(20);
+            entity3.Attributes["new_quantity"] = Convert.ToDecimal(10);
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);

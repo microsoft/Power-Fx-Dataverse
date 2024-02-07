@@ -42,23 +42,33 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg should alway be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
+            bool isDistinct = false;
+            if (args[2] is BooleanValue bv)
+            {
+                isDistinct = bv.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args3 should alway be of type {nameof(BooleanValue)} : found {args[3]}");
+            }
+
             // column names to fetch.
             IEnumerable<string> columns = null;
-            if (args.Length > 2)
+            if (args.Length > 3)
             {
-                columns = args.Skip(2).Select(x => {
+                columns = args.Skip(3).Select(x => {
                     if (x is StringValue stringValue)
                     {
                         return stringValue.Value;
                     }
                     else
                     {
-                        throw new InvalidOperationException($"From Args2 onwards, all all args should have been String Value");
+                        throw new InvalidOperationException($"From Args3 onwards, all args should have been String Value");
                     }
                 });
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, isDistinct: false ,cancellationToken).ConfigureAwait(false);
+            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, isDistinct: isDistinct ,cancellationToken).ConfigureAwait(false);
 
             var result = row.FirstOrDefault();
             if (result == null || result.IsBlank)
@@ -72,7 +82,21 @@ namespace Microsoft.PowerFx.Dataverse
             else
             {
                 // Adjust type, as function like ShowColumn() can manipulate it.
-                var resultRecord =  CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
+                RecordValue resultRecord;
+                if (isDistinct)
+                {
+                    if (columns == null || !columns.Any() || columns.Count() > 1)
+                    {
+                        throw new InvalidOperationException("Distinct requires single column to be specified");
+                    }
+
+                    resultRecord = DelegatedRetrieveMultipleFunction.ToValueColumn(result, columns.First()).Value;
+                }
+                else
+                {
+                    resultRecord = CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
+                }
+
                 return resultRecord;
             }
         }

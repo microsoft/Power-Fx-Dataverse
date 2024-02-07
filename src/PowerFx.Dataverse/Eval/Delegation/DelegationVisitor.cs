@@ -599,13 +599,13 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var filter = tableArg.hasFilter ? tableArg.Filter : null;
 
-            // $$$ Don't distinct if top count is there.
             var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            if (count != null ||
-                !TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName))
+            if (count != null 
+                || !TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName)
+                || !IsDistinctReturnTypePrimitive(node.IRContext.ResultType))
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
@@ -623,6 +623,21 @@ namespace Microsoft.PowerFx.Dataverse
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, count, _maxRows, new[] {fieldTextNode}, isDistinct: true);
 
             return resultingTable;
+        }
+
+        // $$$ We should block this at Authoring time.
+        private static bool IsDistinctReturnTypePrimitive(FormulaType returnType)
+        {
+            if (returnType is TableType tableType)
+            {
+                var column = tableType.FieldNames.First();
+                if (tableType.GetFieldType(column)._type.IsPrimitive)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private RetVal ProcessIsBlank(CallNode node, Context context)
@@ -837,7 +852,9 @@ namespace Microsoft.PowerFx.Dataverse
                     && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
                     && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
                     && scopedNode._originalNode is ResolvedObjectNode)
-                || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.ShowColumns.Name)
+                || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode 
+                    && (callNode.Function.Name == BuiltinFunctionsCore.ShowColumns.Name || callNode.Function.Name == "Distinct")
+                   )
                 )
             {
                 return true;

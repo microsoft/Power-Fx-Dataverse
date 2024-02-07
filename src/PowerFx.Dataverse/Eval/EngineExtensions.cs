@@ -82,15 +82,15 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
-
-                    var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
-                    args.Add(isDistinctArg);
                     returnType = tableReturnType;
                 }
                 else
                 {
                     throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
+
+                var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
+                args.Add(isDistinctArg);
 
                 if (query.hasColumnSet)
                 {

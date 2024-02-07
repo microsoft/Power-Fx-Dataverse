@@ -100,14 +100,19 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        private static IEnumerable<DValue<RecordValue>> ToValueColumn(IEnumerable<DValue<RecordValue>> records, string column)
+        internal static IEnumerable<DValue<RecordValue>> ToValueColumn(IEnumerable<DValue<RecordValue>> records, string column)
         {
             foreach (var record in records)
             {
-                var columnValue = record.Value.GetField(column);
-                var valueRecord = FormulaValue.NewRecordFromFields(new NamedValue("Value", columnValue));
-                yield return DValue<RecordValue>.Of(valueRecord);
+                yield return ToValueColumn(record, column);
             }
+        }
+
+        internal static DValue<RecordValue> ToValueColumn(DValue<RecordValue> record, string column)
+        {
+            var columnValue = record.Value.GetField(column);
+            var valueRecord = FormulaValue.NewRecordFromFields(new NamedValue("Value", columnValue));
+            return DValue<RecordValue>.Of(valueRecord);
         }
     }
 }
