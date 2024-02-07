@@ -82,9 +82,6 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
-
-                    var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
-                    args.Add(isDistinctArg);
                     returnType = tableReturnType;
                 }
                 else
