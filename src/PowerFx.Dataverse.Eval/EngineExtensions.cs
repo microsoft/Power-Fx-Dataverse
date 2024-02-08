@@ -84,11 +84,17 @@ namespace Microsoft.PowerFx.Dataverse
                 OneToManyRelationshipMetadata relation;
                 if (relationMetadata.isPolymorphic)
                 {
-                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, relationMetadata.ReferencedEntityName, out relation);
+                    if(!dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, relationMetadata.ReferencedEntityName, out relation))
+                    {
+                        throw new InvalidOperationException($"Polymorphic Relation {relationMetadata.ReferencingFieldName} not found on table {dvTable._entityMetadata.DisplayName}");
+                    }
                 }
                 else
                 {
-                    dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, out relation);
+                    if(!dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, out relation))
+                    {
+                        throw new InvalidOperationException($"Relation {relationMetadata.ReferencingFieldName} not found on table {dvTable._entityMetadata.DisplayName}");
+                    }
                 }
 
                 var linkEntity = new LinkEntity()
