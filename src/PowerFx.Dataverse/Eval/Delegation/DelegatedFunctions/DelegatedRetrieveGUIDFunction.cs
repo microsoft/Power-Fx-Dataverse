@@ -23,6 +23,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
             }
 
+            if (args[1] is BlankValue)
+            {
+                return FormulaValue.NewBlank(this.ReturnFormulaType);
+            }
+
             var guid = ((GuidValue)args[1]).Value;
 
             // column names to fetch.

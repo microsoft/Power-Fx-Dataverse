@@ -793,6 +793,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             false,
             true)]
 
+        // Blank handling for retrieveGUID.
+        [InlineData("LookUp(t1, localid= If(1<0, GUID(\"00000000-0000-0000-0000-000000000001\"))).Price",
+            null,
+            130,
+            true,
+            true)]
+
+        // Error Handling.
+        [InlineData("LookUp(t1, localid= If(1/0, GUID(\"00000000-0000-0000-0000-000000000001\"))).Price",
+            typeof(ErrorValue),
+            131,
+            true,
+            true)]
+
         public async Task LookUpDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
