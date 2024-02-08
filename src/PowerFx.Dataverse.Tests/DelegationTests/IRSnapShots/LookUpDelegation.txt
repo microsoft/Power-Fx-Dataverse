@@ -127,3 +127,5 @@ With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-00000000000
 (__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
 (__retrieveSingle(local, __lt(local, new_quantity, Float(20)), True, new_quantity)).Value
 (__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
+(__retrieveGUID(local, If(LtNumbers(1,0), (GUID(00000000-0000-0000-0000-000000000001))))).new_price
+(__retrieveGUID(local, If(NumberToBoolean(DivNumbers(1,0)), (GUID(00000000-0000-0000-0000-000000000001))))).new_price
