@@ -20,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         /// <summary>
         /// Set this to true, if you need to regenerate the snapshot files.
         /// </summary>
-        private const bool _regenerate = true;
+        private const bool _regenerate = false;
 
         internal static IList<string> TransformForWithFunction(string expr, int warningCount)
         {

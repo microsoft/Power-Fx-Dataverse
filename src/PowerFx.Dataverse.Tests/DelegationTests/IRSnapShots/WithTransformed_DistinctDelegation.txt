@@ -6,3 +6,4 @@ With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_quantity, 30), 
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_quantity, 20), 999, True, new_quantity)))
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_quantity, 20), 999, True, new_quantity)))
 With({r:local}, (Distinct(local, (_new_polyfield_value))))
+With({r:local}, (Distinct(local, (refg))))

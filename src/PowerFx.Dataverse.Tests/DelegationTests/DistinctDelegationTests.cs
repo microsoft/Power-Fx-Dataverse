@@ -21,7 +21,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Distinct(Filter(t1, Quantity < 30 And Price < 120), Quantity)", 5, 2)]
         [InlineData("Distinct(Filter(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity < 20), new_quantity)", 6, 1)]
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", 7, 1)]
+        // non primitive types are non delegable.
         [InlineData("Distinct(t1, PolymorphicLookup)", 8, -1)]
+        // Other is a lookup field, hence not delegable.
+        [InlineData("Distinct(t1, Other)", 9, -1)]
         public async Task DistinctDelegationAsync(string expr, int id, int expectedRows, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
