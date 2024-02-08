@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, CancellationToken cancel)
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
             var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
 
@@ -98,6 +98,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 ColumnSet = columns,
                 Criteria = filter ?? new FilterExpression(),
+                Distinct = isDistinct
             };
 
             if (count != null)

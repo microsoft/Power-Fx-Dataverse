@@ -72,4 +72,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content  Include="DelegationTests\IRSnapShots\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content >
+  </ItemGroup>
+
 </Project>

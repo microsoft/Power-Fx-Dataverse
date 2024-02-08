@@ -57,25 +57,62 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args1 should alway be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
             }
 
+            bool isDistinct = false;
+            if (args[3] is BooleanValue bv)
+            {
+                isDistinct = bv.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args3 should alway be of type {nameof(BooleanValue)} : found {args[3]}");
+            }
+
             // column names to fetch. if kept null, fetches all columns.
             IEnumerable<string> columns = null;
-            if(args.Length > 3)
+            if(args.Length > 4)
             {
-                columns = args.Skip(3).Select(x => {
+                columns = args.Skip(4).Select(x => {
                     if (x is StringValue stringValue)
                     {
                         return stringValue.Value;
                     }
                     else
                     {
-                        throw new InvalidOperationException($"From Args3 onwards, all args should have been String Value");
+                        throw new InvalidOperationException($"From Args3 onwards, all args should have been type {nameof(StringValue)} : found {args[4]}");
                     }
                 });
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, topCount, columns, cancellationToken).ConfigureAwait(false);
+            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, topCount, columns, isDistinct, cancellationToken).ConfigureAwait(false);
+
+            // Distinct outputs always in default single column table.
+            if (isDistinct)
+            {
+                if(columns == null || !columns.Any() || columns.Count() > 1)
+                {
+                    throw new InvalidOperationException("Distinct requires single column to be specified");
+                }
+
+                rows = ToValueColumn(rows, columns.First());
+            }
+
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
             return result;
+        }
+
+        internal static IEnumerable<DValue<RecordValue>> ToValueColumn(IEnumerable<DValue<RecordValue>> records, string column)
+        {
+            foreach (var record in records)
+            {
+                yield return ToValueColumn(record, column);
+            }
+        }
+
+        internal static DValue<RecordValue> ToValueColumn(DValue<RecordValue> record, string column)
+        {
+            var columnValue = record.Value.GetField(column);
+            var valueRecord = FormulaValue.NewRecordFromFields(new NamedValue("Value", columnValue));
+            return DValue<RecordValue>.Of(valueRecord);
         }
     }
 }
