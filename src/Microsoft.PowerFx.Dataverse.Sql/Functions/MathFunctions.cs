@@ -45,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         // Blank coercion was already handled by IR. 
         public static RetVal MathNaryFunction(SqlVisitor visitor, CallNode node, Context context, string function, int arity)
         {
-            bool isFloatFlow = node.IRContext.ResultType is NumberType; ;
+            bool isFloatFlow = node.IRContext.ResultType is NumberType;
 
             if (node.Args.Count != arity)
             {
@@ -125,7 +125,6 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             context.PerformRangeChecks(result, node);
             return result;
         }
-
        
         public static RetVal Exp(SqlVisitor visitor, CallNode node, Context context)
         {

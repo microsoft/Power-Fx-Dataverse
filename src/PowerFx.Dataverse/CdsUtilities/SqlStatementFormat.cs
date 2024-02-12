@@ -152,8 +152,14 @@ ELSE
         /// </summary>
         public const string SetEmptyValueForNull = "IF({0} IS NULL) BEGIN SET {0} = N'' END";
 
+        /// <summary>
+        /// Set 1st param as 2nd param if 1st param is less than 2nd param
+        /// </summary>
         public const string SetValueIfLessThanValue = "IF({0} < {1}) BEGIN SET {0} = {1} END";
 
+        /// <summary>
+        /// Set 1st param as 2nd param if 1st param is greater than 2nd param
+        /// </summary>
         public const string SetValueIfGreaterThanValue = "IF({0} > {1}) BEGIN SET {0} = {1} END";
 
 

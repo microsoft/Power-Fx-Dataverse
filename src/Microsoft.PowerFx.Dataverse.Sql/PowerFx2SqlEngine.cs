@@ -115,7 +115,6 @@ namespace Microsoft.PowerFx.Dataverse
             // attempt to produce a sanitized formula, success or failure, for reporting
             var sanitizedFormula = StructuralPrint.Print(binding.Top, binding, new NameSanitizer(binding));
 
-            sqlResult._typeHints = options?.TypeHints;
             sqlResult.ApplyErrors(); // will invoke post-check hook
 
             if (!sqlResult.IsSuccess)
@@ -411,8 +410,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (result.type is NumberType && null != options.TypeHints) 
             {
-                // In case of float result type, if client is supplying min and max values for float in type hints, those values will not be honored
-                // and default float metadata min max values will be entertained, compiler will only entertain precision coming in type hints
+                // In case of float result type, no rounding will be done if the type hint precision is not specified
                 int precision = options.TypeHints.Precision;
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
@@ -436,9 +434,8 @@ namespace Microsoft.PowerFx.Dataverse
             var v = new SqlVisitor();
 
             SqlCompileResult sqlCheck = check as SqlCompileResult;
-            TypeDetails typeHints = sqlCheck?._typeHints;
 
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache, typeHints: typeHints, dataverseFeatures: dataverseFeatures);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache, dataverseFeatures: dataverseFeatures);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);

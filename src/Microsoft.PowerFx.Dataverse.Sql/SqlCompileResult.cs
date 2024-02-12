@@ -78,7 +78,6 @@ namespace Microsoft.PowerFx.Dataverse
         /// </example>
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
 
-        internal TypeDetails _typeHints;
     }
 
     // Additional info computed by the SQL comilation work

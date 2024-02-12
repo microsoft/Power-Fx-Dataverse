@@ -17,7 +17,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using Span = Microsoft.PowerFx.Syntax.Span;
-using TypeDetails = Microsoft.PowerFx.Dataverse.SqlCompileOptions.TypeDetails;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -369,14 +368,11 @@ namespace Microsoft.PowerFx.Dataverse
             switch (node.Op)
             {
                 case UnaryOpKind.Negate:
-                    Library.ValidateNumericArgument(node.Child);
-                    arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(FormulaType.Number, $"(-{Library.CoerceNullToInt(arg)})");
-
                 case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(FormulaType.Decimal, $"(-{Library.CoerceNullToInt(arg)})");
+                    var type = node.Op == UnaryOpKind.Negate ? FormulaType.Number : FormulaType.Decimal;
+                    return context.SetIntermediateVariable(type, $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
                     arg = node.Child.Accept(this, context);
@@ -801,9 +797,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             private bool _checkOnly;
 
-            private readonly TypeDetails _typeHints;
-
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null, TypeDetails typeHints = null, DataverseFeatures dataverseFeatures = null)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null, DataverseFeatures dataverseFeatures = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -818,7 +812,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                 DoesDateDiffOverflowCheck = false;
 
-                _typeHints = typeHints;
                 _dataverseFeatures = dataverseFeatures;
 
                 _secondaryMetadataCache = secondaryMetadataCache;
@@ -1359,7 +1352,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                     }
-                    else if (result.type is NumberType) // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata
+                    else if (result.type is NumberType) // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata, type hints min and max values are not entertained
                     {
                         if(_dataverseFeatures.IsFloatingPointEnabled)
                         {

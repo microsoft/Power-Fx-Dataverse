@@ -226,7 +226,8 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
 
-                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, returnType._type.GetKindString() == FormulaType.Number.ToString() ? SqlStatementFormat.Float : returnType._type.GetKindString()).GetErrors(sourceContext);
+                var displayType = returnType._type.GetKindString() == FormulaType.Number.ToString() ? SqlStatementFormat.Float : returnType._type.GetKindString();
+                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, displayType).GetErrors(sourceContext);
                 return false;
             }
 
@@ -240,7 +241,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type) ||
-                (_dataverseFeatures.IsFloatingPointEnabled && type is NumberType); // if Floating Point enabled, only then number type supported
+                (_dataverseFeatures.IsFloatingPointEnabled && type is NumberType); // Number is only supported if floating point is enabled
         }
 
         internal static FormulaType BuildReturnType(DType type, DataverseFeatures dataverseFeatures)
