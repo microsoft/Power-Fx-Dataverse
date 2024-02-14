@@ -4,6 +4,8 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using Microsoft.AppMagic.Authoring.Importers.DataDescription;
+using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
@@ -17,6 +19,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var result = context.GetTempVar(context.GetReturnType(node));
             var resultCoerced = false;
+            string optionSetName = null;
 
             using (var indenter = context.NewIfIndenter())
             {
@@ -45,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         using (indenter.EmitIfCondition(conditionClause, isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i + 1].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1], context, ref optionSetName);
                         }
                     }
                     else
@@ -54,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         using (indenter.EmitElse(isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg,  node.Args[i].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i], context, ref optionSetName);
                         }
                     }
                 }
@@ -70,6 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var result = context.GetTempVar(context.GetReturnType(node));
             var resultCoerced = false;
             var condition = node.Args[0].Accept(visitor, context);
+            string optionSetName = null;
 
             using (var indenter = context.NewIfIndenter())
             {
@@ -96,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         using (indenter.EmitIfCondition(EqualityCheckCondition(condition, val), isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i + 1].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1], context, ref optionSetName);
                         }
                     }
                     else
@@ -105,7 +109,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         using (indenter.EmitElse(isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i], context, ref optionSetName);
                         }
                     }
                 }
@@ -151,12 +155,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             RetVal result = context.GetTempVar(context.GetReturnType(node));
             var resultCoerced = false;
+            string optionSetName = null;
 
             using (var indenter = context.NewIfIndenter())
             {
                 var elseEmitted = false;
                 RetVal lastSuccess = null;
                 Span lastSuccessContext = default;
+                IntermediateNode lastSuccessNode = null;
 
                 // iterate over the children in pairs, to process the error and replacement
                 for (int i = 0; i < node.Args.Count; i += 2)
@@ -175,12 +181,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                             lastSuccess = node.Args[i].Accept(visitor, context);
                             lastSuccessContext = node.Args[i].IRContext.SourceContext;
                             errorCode = error.Code;
+                            lastSuccessNode = node.Args[i];
                         }
 
                         using (indenter.EmitIfCondition($"{errorCode} <> 0", isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i + 1].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i + 1], context, ref optionSetName);
                         }
                     }
                     else
@@ -189,7 +196,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         using (indenter.EmitElse(isMakerDefinedCondition: true))
                         {
                             var resultArg = node.Args[i].Accept(visitor, context);
-                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i].IRContext.SourceContext, context);
+                            SetIntermediateVariableForBranchResult(result, ref resultCoerced, resultArg, node.Args[i], context, ref optionSetName);
                         }
                     }
                 }
@@ -198,15 +205,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     using (indenter.EmitElse(isMakerDefinedCondition: true))
                     {
-                        SetIntermediateVariableForBranchResult(result, ref resultCoerced, lastSuccess, lastSuccessContext, context);
+                        SetIntermediateVariableForBranchResult(result, ref resultCoerced, lastSuccess, lastSuccessNode, context, ref optionSetName);
                     }
                 }
             }
             return result;
         }
 
-        private static RetVal SetIntermediateVariableForBranchResult(RetVal result, ref bool resultCoerced, RetVal retVal, Span sourceContext, Context context)
+        private static RetVal SetIntermediateVariableForBranchResult(RetVal result, ref bool resultCoerced, RetVal retVal, IntermediateNode node, Context context, ref string optionSetName)
         {
+            var sourceContext = node.IRContext.SourceContext;
             // if the branch type is more specific than the overall binding type, update it
             if (retVal.type != result.type && IsDateTimeType(retVal.type))
             {
@@ -221,8 +229,38 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
+            if (context._dataverseFeatures.IsOptionSetEnabled)
+            {
+                var columnDefinition = context.GetVarDetails(retVal.varName)?.Column;
+                ValidateOptionSetResultArgument(node, columnDefinition, ref optionSetName);
+            }
+
             resultCoerced = true;
             return context.SetIntermediateVariable(result, fromRetVal: retVal);
+        }
+
+        private static void ValidateOptionSetResultArgument(IntermediateNode node, CdsColumnDefinition columnDefinition, ref string optionSetName)
+        {
+            string currentResultArgOptionSetName = null;
+
+            if (node is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordFieldAccessNode fieldNode && 
+                fieldNode.From is ResolvedObjectNode resolvedNode && resolvedNode.Value is DataverseOptionSet optionSet)
+            {
+                currentResultArgOptionSetName = optionSet.InvariantName;
+            }
+            else if (columnDefinition != null && columnDefinition.IsOptionSet && columnDefinition.TypeDefinition is CdsOptionSetTypeDefinition optionSetTypeDefinition)
+            {
+                currentResultArgOptionSetName = optionSetTypeDefinition.Title;
+            }
+
+            if (optionSetName == null)
+            {
+                optionSetName = currentResultArgOptionSetName;
+            }
+            else if (!optionSetName.Equals(currentResultArgOptionSetName))
+            {
+                throw new SqlCompileException(SqlCompileException.ResultFromMultipleOptionSetsNotSupported, node.IRContext.SourceContext);
+            }
         }
     }
 }

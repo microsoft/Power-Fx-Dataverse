@@ -451,7 +451,8 @@ namespace Microsoft.PowerFx.Dataverse
                         // e.g., OptionSetValue Labels - [{label:"Yes", languagecode:"1033"(en-US)}, {label:"Ja", languagecode:"1031"(de-DE)}]
                         // When formula saved by maker with en-US language, Formula - Text('OptionSet ()'.Yes), UDF created returns string 'Yes' which is fixed and 
                         // users with en-US or de-DE language code will see the formula field value as 'Yes' and it is not localized based on user locale.
-                        if (fieldNode.From is ResolvedObjectNode resolvedObjectNode && resolvedObjectNode.Value is DataverseOptionSet)
+                        if (context._dataverseFeatures.IsOptionSetEnabled && fieldNode.From is ResolvedObjectNode resolvedObjectNode && 
+                            resolvedObjectNode.Value is DataverseOptionSet)
                         {
                             throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
                         }
@@ -791,6 +792,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal readonly Scope RootScope;
 
+            internal readonly DataverseFeatures _dataverseFeatures;
+
             // Used during GetVarDetails to verify if a dependent field is stored on primary table or not to decide if field requires reference.
             private readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
@@ -799,7 +802,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             private bool _checkOnly;
 
-            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null)
+            public Context(IntermediateNode rootNode, ScopeSymbol rootScope, DType rootType, bool checkOnly = false, EntityAttributeMetadataProvider secondaryMetadataCache = null, DataverseFeatures dataverseFeatures = null)
             {
                 RootNode = rootNode;
                 _checkOnly = checkOnly;
@@ -813,6 +816,9 @@ namespace Microsoft.PowerFx.Dataverse
                 _scopes[rootScope.Id] = RootScope;
 
                 DoesDateDiffOverflowCheck = false;
+
+                _dataverseFeatures = dataverseFeatures;
+
                 _secondaryMetadataCache = secondaryMetadataCache;
             }
 

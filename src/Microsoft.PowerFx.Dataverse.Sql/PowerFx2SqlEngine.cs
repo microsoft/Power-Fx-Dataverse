@@ -61,7 +61,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var returnType = BuildReturnType(binding.ResultType);
 
                     // SQL visitor will throw errors for SQL-specific constraints.
-                    var sqlInfo = result.ApplySqlCompiler();
+                    var sqlInfo = result.ApplySqlCompiler(_dataverseFeatures);
                     var res = sqlInfo._retVal;
 
                     var errors = new List<IDocumentError>();
@@ -139,7 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             try
             {
-                var sqlInfo = sqlResult.ApplySqlCompiler();
+                var sqlInfo = sqlResult.ApplySqlCompiler(_dataverseFeatures);
                 var ctx = sqlInfo._ctx;
                 var result = sqlInfo._retVal;
                 var irNode = sqlResult.ApplyIR().TopNode;
@@ -464,7 +464,7 @@ namespace Microsoft.PowerFx.Dataverse
 
     internal static class CheckResultExtensions
     {
-        private static SqlCompileInfo SqlCompilerWorker(this CheckResult check)
+        private static SqlCompileInfo SqlCompilerWorker(this CheckResult check, DataverseFeatures dataverseFeatures)
         {
             var binding = check.ApplyBindingInternal();
 
@@ -473,7 +473,7 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache);
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache, dataverseFeatures: dataverseFeatures);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
@@ -494,7 +494,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         /// <exception cref="SqlCompileException">Throw if we hit Power Fx restrictions that 
         /// aren't supported by the SQL backend.</exception>
-        internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check)
+        internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check, DataverseFeatures dataverseFeatures)
         {
             // If this is a SqlCompileResult, then we can cache it. 
             // Else, just recompute. 
@@ -506,7 +506,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return info;
             }
 
-            info = check.SqlCompilerWorker();
+            info = check.SqlCompilerWorker(dataverseFeatures);
 
             if (sqlCheck != null)
             {

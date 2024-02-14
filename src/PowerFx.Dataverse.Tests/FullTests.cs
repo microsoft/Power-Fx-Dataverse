@@ -272,13 +272,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         })
                     }
                 };
+                var entityMetadata = new EntityMetadataModel[] { metadata };
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "rating", "2" } });
 
-                ExecuteSqlTest("Rating = 'Rating (Thises)'.Hot", false, cx, new EntityMetadataModel[] { metadata });
-                ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, new EntityMetadataModel[] { metadata });
-                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, new EntityMetadataModel[] { metadata });
-                ExecuteSqlTest("Lower(Text(TimeUnit.Days))", "days", cx, new EntityMetadataModel[] { metadata });
+                ExecuteSqlTest("Rating = 'Rating (Thises)'.Hot", false, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                ExecuteSqlTest("Lower(Text(TimeUnit.Days))", "days", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+
+                // OptionSetToText operation is supported with FCB disabled.
+                ExecuteSqlTest("Text('Rating (Thises)'.Hot)", "1", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = false });
             }
         }
 
@@ -657,14 +661,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return connection;
         }
 
-        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null)
+        private static SqlCompileResult ExecuteSqlTest(string formula, object expectedResult, SqlConnection connection, EntityMetadataModel[] metadata, bool commit = false, bool verbose = false, string udfName = null, TypeDetails typeHints = null, bool success = true, Guid? rowid = null, List<OptionSetMetadata> globalOptionSets = null, DataverseFeatures dataverseFeatures = null)
         {
             if (metadata == null)
             {
                 metadata = new EntityMetadataModel[] { new EntityMetadataModel() };
             }
 
-            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets);
+            var compileResult = CompileToSql(formula, metadata, verbose, udfName, typeHints, globalOptionSets, dataverseFeatures);
             Assert.Equal(success, compileResult.IsSuccess); // $"Compilation failed for formula: '{formula}'"
 
             if (compileResult.IsSuccess)
@@ -715,13 +719,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return compileResult;
         }
 
-        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null)
+        private static SqlCompileResult CompileToSql(string formula, EntityMetadataModel[] metadata, bool verbose = true, string udfName = null, TypeDetails typeHints = null, List<OptionSetMetadata> globalOptionSets = null, DataverseFeatures dataverseFeatures = null)
         {
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
                 new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                dataverseFeatures: new() { IsOptionSetEnabled = true });
+                dataverseFeatures: dataverseFeatures);
 
             var options = new SqlCompileOptions
             {

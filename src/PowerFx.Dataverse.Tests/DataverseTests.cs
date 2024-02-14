@@ -1757,13 +1757,38 @@ END
         }
 
         [Theory]
-        [InlineData("Text('Picklist (All Attributes)'.One)", false, "Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.")]
-        [InlineData("Text(picklist)", false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
-        [InlineData("Text(TimeUnit.Days)", true)]
-        public void OptionSetToTextOperationTest(string expr, bool success, string error = null)
+        [InlineData("Text('Picklist (All Attributes)'.One)", true, false, "Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text('Picklist (All Attributes)'.One)", false, true)]
+        [InlineData("Text(picklist)", true, false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(picklist)", false, false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(TimeUnit.Days)", true, true)]
+        [InlineData("Text(TimeUnit.Days)", false, true)]
+        public void OptionSetToTextOperationTest(string expr, bool isOptionSetEnabled, bool success, string error = null)
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = isOptionSetEnabled });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(error, result.Errors.First().ToString());
+            }
+        }
+
+        [Theory]
+        [InlineData("If(lookup.data3>1,'Picklist (All Attributes)'.One, 'Optionset Field (Triple Remotes)'.One)", false, "Error 85-89: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("If(2>1,'Picklist (All Attributes)'.One, Global2.Three)", false, "Error 47-53: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("Switch(1,1,picklist,2,Global2.Four)", false, "Error 29-34: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("IfError('Picklist (All Attributes)'.One, Global2.Four)", false, "Error 35-39: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("If(3>1,'Picklist (All Attributes)'.One, picklist)", true)]
+        public void MultipleOptionSetsUsedInFormula(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
             var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
