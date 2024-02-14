@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? topCount, IEnumerable<string> columns, CancellationToken cancellationToken)
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? topCount, IEnumerable<string> columns, bool isDistinct, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }
@@ -74,6 +74,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if(query._originalNode.IRContext.ResultType is RecordType recordReturnType)
                 {
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
+                    // $$$ Change args to single record, instead of list of separate args.
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter };
                     returnType = recordReturnType;
                 }
@@ -87,6 +88,9 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
+
+                var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
+                args.Add(isDistinctArg);
 
                 if (query.hasColumnSet)
                 {

@@ -1,0 +1,131 @@
+(__retrieveSingle(local, __eq(local, new_price, 255), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, 255), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Float(255)), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, 255), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Blank()), False)).new_price
+(LookUp(local, (IsBlank(MulNumbers(new_price,new_price))))).new_price
+(LookUp(local, (IsBlank(__retrieveSingle(local, __eq(local, new_price, Blank()), False))))).new_price
+(__retrieveSingle(local, __eq(local, new_int, 255), False)).new_price
+(__retrieveSingle(local, __eq(local, new_int, 255), False)).new_price
+(__retrieveSingle(local, __eq(local, new_int, Float(255)), False)).new_price
+(__retrieveSingle(local, __eq(local, new_int, 255), False)).new_price
+(__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001))).new_price
+(__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), False)).new_price
+(__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), False)).new_price
+(__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
+(__retrieveGUID(local, _g1)).new_price
+(__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), False)).new_price
+(__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), False)).new_price
+(__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), False)).new_price
+(__retrieveGUID(local, _g1)).new_price
+(__retrieveGUID(local, _g1)).new_price
+(__retrieveGUID(local, _g1)).new_price
+(LookUp(local, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price
+(LookUp(local, (EqGuid(localid,If(GtDecimals(new_price,50), (_g1), (_gMissing)))))).new_price
+(LookUp(local, (EqGuid(localid,If(GtNumbers(new_price,Float(50)), (_g1), (_gMissing)))))).new_price
+(LookUp(local, (EqGuid(localid,If(GtNumbers(Value(new_price),50), (_g1), (_gMissing)))))).new_price
+With({r:local}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price))
+With({r:local}, ((LookUp(r, (EqGuid(localid,If(GtDecimals(new_price,50), (_g1), (_gMissing)))))).new_price))
+With({r:local}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(new_price,Float(50)), (_g1), (_gMissing)))))).new_price))
+With({r:local}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(Value(new_price),50), (_g1), (_gMissing)))))).new_price))
+(__retrieveSingle(local, __gt(local, new_price, 50), False)).new_price
+(__retrieveSingle(local, __gt(local, new_price, 50), False)).new_price
+(__retrieveSingle(local, __gt(local, new_price, Float(50)), False)).new_price
+(__retrieveSingle(local, __gt(local, new_price, 50), False)).new_price
+(__retrieveGUID(local, If(True, (_g1), (_gMissing)))).new_price
+(__retrieveGUID(local, (__retrieveGUID(local, _g1)).localid)).new_price
+(LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price
+(LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price
+(LookUp(__retrieveMultiple(local, __eq(local, new_price, Float(100)), 999, False), (EqGuid(localid,_g1)))).new_price
+(LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price
+With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price))
+With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price))
+With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, Float(100)), 999, False), (EqGuid(localid,_g1)))).new_price))
+With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price))
+(LookUp(__retrieveMultiple(local, __noFilter(), 1, False), (EqGuid(localid,_g1)))).new_price
+With({r:local}, ((LookUp(__retrieveMultiple(local, __noFilter(), 1, False), (EqGuid(localid,_g1)))).new_price))
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, Float(50)), False)).localid)).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
+(__retrieveGUID(local, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price
+(Last(local)).new_price
+CountRows(local)
+IsBlank(local)
+IsBlank(Filter(local, (EqNumbers(1,1))))
+IsBlank(Filter(local, (EqDecimals(1,1))))
+IsBlank(Filter(local, (EqDecimals(1,1))))
+IsBlank(Filter(local, (EqNumbers(1,1))))
+(Collect((local), {new_price:200})).new_price
+(Collect((local), {new_price:200})).new_price
+(Collect((local), RecordToRecord([new_price:Float(new_price)],({new_price:200}))).new_price
+(Collect((local), RecordToRecord([new_price:Decimal(new_price)],({new_price:200}))).new_price
+IsError(__retrieveGUID(local, If(False, (_g1), (_gMissing))))
+(LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price
+(LookUp(local, (EqGuid(localid,localid)))).new_price
+With({r:local}, ((LookUp(r, (EqGuid(localid,localid)))).new_price))
+(__retrieveSingle(local, __eq(local, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, If(DecimalToBoolean(DivDecimals(1,0)), (255))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Float(If(DecimalToBoolean(DivDecimals(1,0)), (255)))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __eq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __neq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __neq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __neq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __neq(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, Blank()), False)).new_price
+(__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price
+(__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price
+(__retrieveSingle(local, __gt(local, new_currency, Float(0)), False)).new_price
+(__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price))
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price))
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, Float(0)), False)).new_price))
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price))
+With({r:local}, ((__retrieveGUID(local, _g1)).new_price))
+With({r:__retrieveMultiple(local, __lt(local, new_price, 120), 999, False)}, ((LookUp(__retrieveMultiple(local, __lt(local, new_price, 120), 999, False), (GtDecimals(new_price,90)))).new_price))
+With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001))).new_price))
+(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), False)).new_price
+(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), False)).new_price
+(__retrieveSingle(local, __and(__neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, Float(10))), False)).new_price
+(__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), False)).new_price
+(__retrieveSingle(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), False)).new_price
+(__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), False)).new_price
+(__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
+(__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
+(__retrieveSingle(local, __lt(local, new_quantity, Float(20)), True, new_quantity)).Value
+(__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
+(__retrieveGUID(local, If(LtNumbers(1,0), (GUID(00000000-0000-0000-0000-000000000001))))).new_price
+(__retrieveGUID(local, If(NumberToBoolean(DivNumbers(1,0)), (GUID(00000000-0000-0000-0000-000000000001))))).new_price

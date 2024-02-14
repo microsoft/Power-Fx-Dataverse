@@ -1,0 +1,4 @@
+IsBlank(__retrieveMultiple(local, __noFilter(), Float(1), False))
+IsBlank(__retrieveMultiple(local, __lt(local, new_price, 120), 999, False, new_price))
+IsBlank(__retrieveSingle(local, __lt(local, new_price, NegateDecimal(100)), False))
+IsBlank(__retrieveMultiple(local, __noFilter(), 999, True, new_price))
