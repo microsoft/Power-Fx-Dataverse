@@ -17,6 +17,11 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using System.Linq;
+using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
+using TexlFunction = Microsoft.PowerFx.Core.Functions.TexlFunction;
+
 
 
 namespace Microsoft.PowerFx.Dataverse
@@ -39,6 +44,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
         protected readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
+        protected readonly DataverseFeatures _dataverseFeatures;
+
         internal EntityAttributeMetadataProvider SecondaryMetadataCache => _secondaryMetadataCache;
 
         protected readonly CultureInfo _cultureInfo;
@@ -46,13 +53,23 @@ namespace Microsoft.PowerFx.Dataverse
         // the max supported expression length
         internal const int MaxExpressionLength = 1000;
 
+        internal static readonly TexlFunction[] FloatingPointFunctions = new[]
+        {
+            BuiltinFunctionsCore.Exp,
+            BuiltinFunctionsCore.Float,
+            BuiltinFunctionsCore.Power,
+            BuiltinFunctionsCore.Sqrt,
+            BuiltinFunctionsCore.Ln
+        };
+
         // $$$ - remove culture parameter and just get it from the config. 
         public DataverseEngine(
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
           PowerFxConfig config,
           CultureInfo culture = null,
-          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
+          EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
+          DataverseFeatures dataverseFeatures = null)
             : base(config)
         {
             var xrmEntity = currentEntityMetadata ?? Empty();
@@ -67,6 +84,24 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
+            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() { IsFloatingPointEnabled = false };
+
+            var functions = Library.FunctionList.ToList();
+
+            // If Floating Point Feature is disabled then don't recommend Floating Point functions on Intellisense
+            // but internal support for Float function would be there for IR nodes as we are not removing these functions from static library list
+            if (!_dataverseFeatures.IsFloatingPointEnabled)
+            {
+                foreach(TexlFunction function in FloatingPointFunctions)
+                {
+                    if (functions.IndexOf(function) != -1)
+                    {
+                        functions.Remove(function);
+                    }
+                }
+            }
+
+            this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(functions);
         }
 
         #region Critical Virtuals
@@ -150,11 +185,12 @@ namespace Microsoft.PowerFx.Dataverse
             // so in that case, we need to return decimal
             if (nodeType._type.Kind == DKind.Currency)
             {
-                returnType = BuildReturnType(FormulaType.Decimal);
+                returnType = BuildReturnType(FormulaType.Decimal, _dataverseFeatures);
             }
             else 
             {
-                returnType = BuildReturnType(nodeType);
+                // if Floating Point Feature is disabled this method will never return Number but it will return decimal in its place
+                returnType = BuildReturnType(nodeType, _dataverseFeatures);
             }
 
             if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
@@ -166,9 +202,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
 
-                if (SqlVisitor.Context.IsNumericType(returnType))
+                if (returnType is DecimalType)
                 {
-                    // TODO: better type validation
                     if (SqlVisitor.Context.IsNumericType(hintType))
                     {
                         returnType = hintType;
@@ -191,50 +226,50 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
 
-                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, returnType._type.GetKindString()).GetErrors(sourceContext);
+                var displayType = returnType._type.GetKindString() == FormulaType.Number.ToString() ? SqlStatementFormat.Float : returnType._type.GetKindString();
+                errors = new SqlCompileException(SqlCompileException.ResultTypeMustMatch, sourceContext, options.TypeHints.TypeHint, displayType).GetErrors(sourceContext);
                 return false;
             }
 
             return true;
         }
 
-        internal static bool SupportedReturnType(FormulaType type)
+        internal bool SupportedReturnType(FormulaType type)
         {
             return
                 type is DecimalType ||
                 type is BooleanType ||
                 type is StringType ||
-                Library.IsDateTimeType(type);
+                Library.IsDateTimeType(type) ||
+                (_dataverseFeatures.IsFloatingPointEnabled && type is NumberType); // Number is only supported if floating point is enabled
         }
 
-        internal static FormulaType BuildReturnType(DType type)
+        internal static FormulaType BuildReturnType(DType type, DataverseFeatures dataverseFeatures)
         {
-            // Even if NumberIsFloat=false, Number can be returned from IR and we have to support it so mapping Number
-            // to Core decimal type so SQL Compiler always returns decimal even if Number is coming from IR
-            if (type.Kind == DKind.Number)
+            // if floating point feature is disabled then run on legacy functionality ie mapping number to decimal
+            if (!dataverseFeatures.IsFloatingPointEnabled && type.Kind == DKind.Number)
             {
                 return FormulaType.Decimal;
             }
-            else
+
+            try
             {
-                try
+                var fxType = FormulaType.Build(type);
+                if (fxType == FormulaType.Unknown)
                 {
-                    var fxType = FormulaType.Build(type);
-                    if (fxType == FormulaType.Unknown)
-                    {
-                        throw new NotImplementedException();
-                    }
-                    return fxType;
+                    throw new NotImplementedException();
                 }
-                catch (NotImplementedException)
-                {
-                    // if the return type is not supported, report it as a failure
-                    throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, null, type.GetKindString());
-                }
+                return fxType;
             }
+            catch (NotImplementedException)
+            {
+                // if the return type is not supported, report it as a failure
+                throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, null, type.GetKindString());
+            }
+            
         }
 
-        internal static FormulaType BuildReturnType(FormulaType type)
+        internal static FormulaType BuildReturnType(FormulaType type, DataverseFeatures dataverseFeatures)
         {
             // if the type is TZI pass it along
             if (type == FormulaType.DateTimeNoTimeZone)
@@ -243,7 +278,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // otherwise, use the internal DType to produce the final return type
-            return BuildReturnType(type._type);
+            return BuildReturnType(type._type, dataverseFeatures);
         }
     }
 }

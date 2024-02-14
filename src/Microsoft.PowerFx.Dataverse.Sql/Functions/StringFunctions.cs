@@ -14,6 +14,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
@@ -30,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             RetVal arg = null;
 
             // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
-            if (node.Args.Count == 1 && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
+            if (node.Args.Count == 1 && node.Function != BuiltinFunctionsCore.Float && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
             {
                 var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
                 arg = RetVal.FromVar(varDetails.VarName, context.GetReturnType(scopeAccessNode, varDetails.VarType));
@@ -52,10 +53,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
                 var result = context.GetTempVar(context.GetReturnType(node));
-                var numberType = ToSqlType(result.type);
+                var numberType = ToSqlType(result.type, context._dataverseFeatures);
 
-                // only allow whole numbers to be parsed
-                context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
+                if (context._dataverseFeatures.IsFloatingPointEnabled && result.type is NumberType)
+                {
+                    context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS FLOAT)");
+                }
+                else
+                {
+                    // only allow whole numbers to be parsed
+                    context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS decimal(23,10))");
+                }
+
                 context.ErrorCheck($"LEN({CoerceNullToString(arg)}+N'x') <> 1 AND (CHARINDEX(N'.',{arg}) > 0 OR CHARINDEX(N',',{arg}) > 0 OR {result} IS NULL)", Context.ValidationErrorCode, postValidation: true);
                 context.PerformRangeChecks(result, node);
                 return result;
@@ -67,8 +76,16 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     var result = context.GetTempVar(context.GetReturnType(node));
 
-                    // only allow whole numbers to be parsed
-                    context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    if (result.type is NumberType)
+                    {
+                        context.TryCastToFloat($"{CoerceNullToInt(arg)}", result);
+                    }
+                    else
+                    {
+                        // only allow whole numbers to be parsed
+                        context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
+                    }
+                        
                     context.PerformRangeChecks(result, node);
                     return result;
                 }
@@ -288,7 +305,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var offset = node.Args[1].Accept(visitor, context);
+            
             context.NegativeNumberCheck(offset);
+            //Left Right functions doesn't support offset more than int range
+            context.ErrorCheck($"{offset} > {SqlStatementFormat.IntTypeMaxValue}", Context.ValidationErrorCode, postValidation: true);
+
             // zero offsets are not considered errors, and return empty string
             return context.SetIntermediateVariable(node, CoerceNullToString(RetVal.FromSQL($"{function}({strArg},{offset})", FormulaType.String)));
         }
@@ -401,10 +422,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var start = node.Args[1].Accept(visitor, context);
             // the start value must be 1 or larger
             context.NonPositiveNumberCheck(start);
+            start = context.TryCastToInteger($"{start}", applyNullCheck : true);
             ValidateNumericArgument(node.Args[2]);
             var count = node.Args[2].Accept(visitor, context);
             // the count value must be 0 or larger
             context.NegativeNumberCheck(count);
+            count = context.TryCastToInteger($"{count}", applyNullCheck: true);
             var newStr = node.Args[3].Accept(visitor, context);
             var coercedNewStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(newStr));
             // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case

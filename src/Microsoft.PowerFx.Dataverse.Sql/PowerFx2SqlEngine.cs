@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor.Context;
 
 
@@ -35,8 +36,9 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata currentEntityMetadata = null,
             CdsEntityMetadataProvider metadataProvider = null,
             CultureInfo culture = null,
-            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null)
-            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider)
+            EntityAttributeMetadataProvider entityAttributeMetadataProvider = null,
+            DataverseFeatures dataverseFeatures = null)
+            : base(currentEntityMetadata, metadataProvider, new PowerFxConfig(DefaultFeatures), culture, entityAttributeMetadataProvider, dataverseFeatures)
         {
         }
 
@@ -57,10 +59,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 try
                 {
-                    var returnType = BuildReturnType(binding.ResultType);
+                    var returnType = BuildReturnType(binding.ResultType, _dataverseFeatures);
 
                     // SQL visitor will throw errors for SQL-specific constraints.
-                    var sqlInfo = result.ApplySqlCompiler();
+                    var sqlInfo = result.ApplySqlCompiler(_dataverseFeatures);
                     var res = sqlInfo._retVal;
 
                     var errors = new List<IDocumentError>();
@@ -138,7 +140,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             try
             {
-                var sqlInfo = sqlResult.ApplySqlCompiler();
+                var sqlInfo = sqlResult.ApplySqlCompiler(_dataverseFeatures);
                 var ctx = sqlInfo._ctx;
                 var result = sqlInfo._retVal;
                 var irNode = sqlResult.ApplyIR().TopNode;
@@ -182,13 +184,13 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else 
                     {
-                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlBigType : SqlVisitor.ToSqlType(parameters[i].Item2);
+                        typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlBigType : SqlVisitor.ToSqlType(parameters[i].Item2, _dataverseFeatures);
                     }
 
                     tw.WriteLine($"    {varName} {typeName}{del} -- {fieldName}");
                 }
 
-                var returnType = SqlVisitor.ToSqlType(retType);
+                var returnType = SqlVisitor.ToSqlType(retType, _dataverseFeatures);
 
                 // if the return type is numeric and type hint is of type integer then it is assignable, only in that 
                 // case use integer in UDF, actual return type of compiler will be decimal only
@@ -217,7 +219,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Declare and prepare to initialize any reference fields, by organizing them by table and relationship fields
                     foreach (var field in ctx.GetReferenceFields())
                     {
-                        var sqlType = field.Column.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlBigType : SqlVisitor.ToSqlType(field.VarType);
+                        var sqlType = field.Column.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlBigType : SqlVisitor.ToSqlType(field.VarType, _dataverseFeatures);
                         tw.WriteLine($"{indent}DECLARE {field.VarName} {sqlType}");
                         string referencing = null;
                         string referenced = null;
@@ -261,7 +263,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Declare temps 
                 foreach (var temp in ctx.GetTemps())
                 {
-                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2);
+                    string tempVariableType = SqlVisitor.ToSqlType(temp.Item2, _dataverseFeatures);
                     tw.WriteLine($"{indent}DECLARE {temp.Item1} {tempVariableType}");
                 }
 
@@ -393,17 +395,23 @@ namespace Microsoft.PowerFx.Dataverse
             context.PerformFinalRangeChecks(result, options, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (context.IsNumericType(result))
+            if (result.type is DecimalType)
             {
                 int precision = options.TypeHints?.Precision ?? DefaultPrecision;
-                
+
                 // In case type hint is coming as integer, internal computations are done in FX types only (number/decimal)
                 // but on the way out UDF is returning integer so rounding off the value to 0 at end
-                if(options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                if (options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                 {
                     precision = 0;
                 }
 
+                tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
+            }
+            else if (result.type is NumberType && null != options.TypeHints) 
+            {
+                // In case of float result type, no rounding will be done if the type hint precision is not specified
+                int precision = options.TypeHints.Precision;
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
             else
@@ -415,7 +423,7 @@ namespace Microsoft.PowerFx.Dataverse
 
     internal static class CheckResultExtensions
     {
-        private static SqlCompileInfo SqlCompilerWorker(this CheckResult check)
+        private static SqlCompileInfo SqlCompilerWorker(this CheckResult check, DataverseFeatures dataverseFeatures)
         {
             var binding = check.ApplyBindingInternal();
 
@@ -424,7 +432,10 @@ namespace Microsoft.PowerFx.Dataverse
             var scopeSymbol = irResult.RuleScopeSymbol;
 
             var v = new SqlVisitor();
-            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache);
+
+            SqlCompileResult sqlCheck = check as SqlCompileResult;
+
+            var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache, dataverseFeatures: dataverseFeatures);
             
             // This visitor will throw exceptions on SQL errors. 
             var result = irNode.Accept(v, ctx);
@@ -445,7 +456,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         /// <exception cref="SqlCompileException">Throw if we hit Power Fx restrictions that 
         /// aren't supported by the SQL backend.</exception>
-        internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check)
+        internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check, DataverseFeatures dataverseFeatures)
         {
             // If this is a SqlCompileResult, then we can cache it. 
             // Else, just recompute. 
@@ -457,7 +468,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return info;
             }
 
-            info = check.SqlCompilerWorker();
+            info = check.SqlCompilerWorker(dataverseFeatures);
 
             if (sqlCheck != null)
             {

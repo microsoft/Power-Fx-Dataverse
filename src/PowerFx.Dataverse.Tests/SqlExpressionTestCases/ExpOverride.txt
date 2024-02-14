@@ -1,0 +1,5 @@
+﻿#override: Exp.txt
+
+// Power Overflow Check 
+>> Exp(66)
+Error({Kind:ErrorKind.Numeric})

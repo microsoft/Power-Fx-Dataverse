@@ -59,6 +59,123 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal("\t\t\nnew_field    *\n2.0\t", result.LogicalFormula);
         }
 
+        public const string FloatMinMaxUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float, -- new_field
+    @v1 float -- new_field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 float
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 float
+    DECLARE @v5 float
+
+    -- expression body
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS FLOAT)
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = @v3
+    SET @v5 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v4,0)) AS FLOAT)
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 3)
+END
+";
+
+        public const string FloatDefaultMinMaxUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float, -- new_field
+    @v1 float -- new_field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v2 float
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 float
+    DECLARE @v5 float
+
+    -- expression body
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS FLOAT)
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    SET @v3 = 2.0
+    SET @v4 = @v3
+    SET @v5 = TRY_CAST((ISNULL(@v2,0) * ISNULL(@v4,0)) AS FLOAT)
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<-100000000000 OR @v5>100000000000) BEGIN RETURN NULL END
+    RETURN @v5
+END
+";
+
+        [Fact]
+        public void ValidateCompileFloatMinMaxPrecisionBehavior()
+        {
+            var expr = "field*field1*2.0";
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field",
+                         DisplayName = "field",
+                         AttributeType = AttributeTypeCode.Double
+                     },
+                    new AttributeMetadataModel
+                     {
+                         LogicalName= "new_field1",
+                         DisplayName = "field1",
+                         AttributeType = AttributeTypeCode.Double
+                     },
+                }
+            };
+
+            var metadata = model.ToXrm();
+
+            var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+
+            SqlCompileOptions options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
+
+            // in case client is supplying min and max values for float, those values will not be honored and default float min max values will be entertained
+            // it will only entertain precision coming in type hints and will do round off based on that precision
+            options.TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, MinValue = 2, MaxValue = 10, Precision = 3 };
+            
+            var result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.Equal(FloatMinMaxUDF, result.SqlFunction);
+            Assert.True(result.ReturnType is NumberType);
+            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field*new_field1*2.0", result.LogicalFormula);
+
+            // in case no type hints are coming, then it uses default metadata min max values for float and will do round off at end,
+            // compiler will not assume any precision by itself
+            options = new SqlCompileOptions() { CreateMode = SqlCompileOptions.Mode.Create, UdfName = "fn_testUdf1" };
+            result = engine.Compile(expr, options);
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.SqlFunction);
+            Assert.NotNull(result.SqlCreateRow);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+
+            Assert.Equal(FloatDefaultMinMaxUDF, result.SqlFunction);
+            Assert.True(result.ReturnType is NumberType);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
+            Assert.Equal("new_field", result.TopLevelIdentifiers.First());
+            Assert.Equal("new_field*new_field1*2.0", result.LogicalFormula);
+        }
+
         public const string BaselineCurrencyFunction = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(23,10), -- new_field
     @v1 decimal(38,10) -- new_field1
@@ -125,12 +242,12 @@ END
             Assert.NotNull(result.SqlCreateRow);
 
             Assert.Equal(BaselineCurrencyFunction, result.SqlFunction);
-            
+
             Assert.True(result.IsSuccess);
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(2,result.TopLevelIdentifiers.Count);
+            Assert.Equal(2, result.TopLevelIdentifiers.Count);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("\t\t\nnew_field*Decimal(new_field1)*\n2.0\t", result.LogicalFormula);
         }
@@ -382,6 +499,175 @@ END
 
         }
 
+        public const string FloatingPointArithmeticOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 float -- field
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 float
+    DECLARE @v3 float
+
+    -- expression body
+    SET @v1 = 2
+    SET @v2 = @v1
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS FLOAT)
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    RETURN @v3
+END
+";
+
+        [Fact]
+        public void CheckArithmeticOperationsFloatingPoint()
+        {
+            var expr = "field*2";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field",
+                         AttributeType = AttributeTypeCode.Double
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field1",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures : new DataverseFeatures() { IsFloatingPointEnabled = true});
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "fn_testUdf1" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(FloatingPointArithmeticOperationsUDF, result.SqlFunction);
+
+            expr = "field*field1*2";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            expr = "field/field1";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            expr = "field+field1";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            expr = "field1-field";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal("#$FieldDecimal$# + -#$FieldDouble$#", result.SanitizedFormula);
+
+            expr = "field%";
+
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal("#$FieldDouble$#%", result.SanitizedFormula);
+
+        }
+
+        public const string DecimalFormulaProducingFloatUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- field1
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 2
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-100000000000 OR @v2>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 5)
+END
+";
+
+
+        [Theory]
+        [InlineData("Error 5-6: The result type for this formula is expected to be Decimal, but the actual result type is Float. The result type of a formula column cannot be changed.")] 
+        public void CheckFloatingPointWithHint(string errorMessage)
+        {
+            /*
+            * Formula Producing Float don't honor hints because Float is approximate data type and is unassignable to other data type
+            * like whole no/decimal/currency
+            */
+            var expr = "field*2";
+
+            var model = new EntityMetadataModel
+            {
+                Attributes = new AttributeMetadataModel[]
+                {
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field",
+                         AttributeType = AttributeTypeCode.Double
+                    },
+                    new AttributeMetadataModel
+                    {
+                         LogicalName= "field1",
+                         AttributeType = AttributeTypeCode.Decimal
+                    }
+                }
+            };
+
+            var metadata = model.ToXrm();
+            var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+
+            var options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Decimal }
+            };
+
+            var result = engine.Compile(expr, options);
+            
+            Assert.False(result.IsSuccess);
+            
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal(errorMessage, errors[0].ToString());
+
+            Assert.False(result.IsHintApplied);
+
+            /*
+            * Formula Producing decimal can be converted to Float if Float is coming in hint then it will honor hint and will produce float
+            * because decimal is accurate data type and is assignable to approximate data type like real/float
+            */
+            expr = "field1*2";
+
+            options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { TypeHint = AttributeTypeCode.Double, Precision = 5 },
+                UdfName = "fn_testUdf1"
+            };
+
+            result = engine.Compile(expr, options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(DecimalFormulaProducingFloatUDF, result.SqlFunction);
+        }
+
         public const string PercentIntermediateOperationsUDF = @"CREATE FUNCTION fn_testUdf1(
 ) RETURNS decimal(23,10)
   WITH SCHEMABINDING
@@ -424,72 +710,307 @@ END
         {
             var expr = "Power(2,5)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
             Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Power' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Power' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
-        public void SqrtFunctionBlockedTest()
+        public void SqrtFunctionTest()
         {
             var expr = "Sqrt(16)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
             Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Sqrt' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Sqrt' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
-        public void LnFunctionBlockedTest()
+        public void LnFunctionTest()
         {
             var expr = "Ln(20)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
             Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Ln' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Ln' is an unknown or unsupported function.", errors[0].Message);
         }
 
         [Fact]
-        public void ExpFunctionBlockedTest()
+        public void ExpFunctionTest()
         {
             var expr = "Exp(10)";
 
-            var engine = new PowerFx2SqlEngine();
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.Empty(result.Errors);
+            Assert.True(result.ReturnType is NumberType);
+
+            engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = false });
+            result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
             Assert.False(result.IsSuccess);
-            Assert.Single(result.Errors);
-            Assert.Contains("'Exp' is an unknown or unsupported function.", result.Errors.First().ToString());
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Exp' is an unknown or unsupported function.", errors[0].Message);
         }
+
+        public const string FloatFunctionUDF = @"CREATE FUNCTION fn_testUdf1(
+) RETURNS float
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v1 float
+
+    -- expression body
+    SET @v0 = 5
+    SET @v1 = @v0
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN @v1
+END
+";
 
         [Fact]
         public void CheckDecimalFloatFunctions()
         {
-            var engine = new PowerFx2SqlEngine();
-            var result = engine.Compile("Float(5)", new SqlCompileOptions());
-            Assert.False(result.IsSuccess);
-            Assert.Contains("'Float' is an unknown or unsupported function.", result.Errors.First().ToString()); // Float function can't be used in the formula.
-
-            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); // Decimal function is not suggested by intellisense but can be used by manually typing.
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+            var result = engine.Compile("Float(5)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
             Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+            Assert.Equal(FloatFunctionUDF, result.SqlFunction);
+
+            result = engine.Compile("Float(Decimal(5))", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Number, result.ReturnType);
+
+            result = engine.Compile("Decimal(5)", new SqlCompileOptions()); 
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("Decimal(Ln(20))", new SqlCompileOptions()); 
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
+
+            result = engine.Compile("Decimal(Float(25))", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Equal(FormulaType.Decimal, result.ReturnType);
 
             result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions() { UdfName = "fn_testUdf1" });
-            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are internally supported from IR
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); // Decimal and Float functions are supported from IR
+            Assert.True(result.IsSuccess);
+
+            // Floating Point feature disabled
+           
+            engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = false });
+            result = engine.Compile("Float(5)", new SqlCompileOptions());
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            var errors = result.Errors.ToArray();
+            Assert.Single(errors);
+            Assert.Equal("'Float' is an unknown or unsupported function.", errors[0].Message);
+
+            result = engine.Compile("Decimal(Float(25))", new SqlCompileOptions());
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.NotEmpty(result.Errors);
+            errors = result.Errors.ToArray();
+            Assert.Equal(2, errors.Length);
+            Assert.Equal("'Float' is an unknown or unsupported function.", errors[0].Message);
+
+            // Float functions is internally supported from IR even though Floating Point feature is disabled and it will produce decimal 
+            // in that case to be in parity with GA behavior
+            result = engine.Compile("RoundUp(1.15,1)", new SqlCompileOptions());
+            Assert.Equal("RoundUp:w(1.15:w, Coalesce:n(Float:n(1:w), 0:n))", result.ApplyIR().TopNode.ToString()); 
             Assert.True(result.IsSuccess);
         }
+
+        [Fact]
+        public void CheckOverloadedModFunction()
+        {
+            // Mod function is overloaded to produce Decimal or Float based on the expression passed
+            CallEngineAndVerifyResult("Mod(2,4)", FormulaType.Decimal, "Mod(#$decimal$#, #$decimal$#)"); // producing decimal
+            CallEngineAndVerifyResult("Mod(Float(2),4)", FormulaType.Number, "Mod(Float(#$decimal$#), #$decimal$#)"); // producing float
+            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
+
+            // if floating point FCB is disabled then user can't use Float function directly in formula but internally from IR, it would be supported
+            CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false, isSuccess : false, errorMsg : "'Float' is an unknown or unsupported function."); 
+            CallEngineAndVerifyResult("Mod(4, Float(2))", null, "Mod(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+        }
+
+        [Fact]
+        public void CheckOverloadedRoundFunction()
+        {
+            // Round function is overloaded to produce Decimal or Float based on the expression passed
+            CallEngineAndVerifyResult("Round(132.133,2)", FormulaType.Decimal, "Round(#$decimal$#, #$decimal$#)"); // producing decimal
+            CallEngineAndVerifyResult("Round(Float(132.133),2)", FormulaType.Number, "Round(Float(#$decimal$#), #$decimal$#)"); // producing float
+            CallEngineAndVerifyResult("Round(4, Float(132.22))", FormulaType.Decimal, "Round(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
+
+            // RoundUp function is overloaded to produce Decimal or Float based on the expression passed
+            CallEngineAndVerifyResult("RoundUp(132.133,2)", FormulaType.Decimal, "RoundUp(#$decimal$#, #$decimal$#)");
+            CallEngineAndVerifyResult("RoundUp(Float(132.133),2)", FormulaType.Number, "RoundUp(Float(#$decimal$#), #$decimal$#)"); 
+            CallEngineAndVerifyResult("RoundUp(4, Float(132.22))", FormulaType.Decimal, "RoundUp(#$decimal$#, Float(#$decimal$#))");
+
+            // RoundDown function is overloaded to produce Decimal or Float based on the expression passed
+            CallEngineAndVerifyResult("RoundDown(132.133,2)", FormulaType.Decimal, "RoundDown(#$decimal$#, #$decimal$#)");
+            CallEngineAndVerifyResult("RoundDown(Float(132.133),2)", FormulaType.Number, "RoundDown(Float(#$decimal$#), #$decimal$#)");
+            CallEngineAndVerifyResult("RoundDown(4, Float(132.22))", FormulaType.Decimal, "RoundDown(#$decimal$#, Float(#$decimal$#))");
+
+
+            // FCB Floating Point disabled
+            CallEngineAndVerifyResult("Round(Float(132.133),2)", null, "Round(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Round(4, Float(132.22))", null, "Round(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+
+            CallEngineAndVerifyResult("RoundUp(Float(132.133),2)", null, "RoundUp(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("RoundUp(4, Float(132.22))", null, "RoundUp(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+
+            CallEngineAndVerifyResult("RoundDown(Float(132.133),2)", null, "RoundDown(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("RoundDown(4, Float(132.22))", null, "RoundDown(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+
+        }
+
+        [Fact]
+        public void CheckOverloadedTruncFunction()
+        {
+            // Trunc function is overloaded to produce Decimal or Float based on the expression passed
+            CallEngineAndVerifyResult("Trunc(132.133)", FormulaType.Decimal, "Trunc(#$decimal$#)"); 
+            CallEngineAndVerifyResult("Trunc(Float(132.133))", FormulaType.Number, "Trunc(Float(#$decimal$#))"); 
+            CallEngineAndVerifyResult("Trunc(4, Float(132.22))", FormulaType.Decimal, "Trunc(#$decimal$#, Float(#$decimal$#))");
+            CallEngineAndVerifyResult("Trunc(Float(132.22), 3)", FormulaType.Number, "Trunc(Float(#$decimal$#), #$decimal$#)"); 
+            CallEngineAndVerifyResult("Trunc(Float(132.22), Float(132.22))", FormulaType.Number, "Trunc(Float(#$decimal$#), Float(#$decimal$#))");
+
+            // FCB Floating Point  disabled
+            CallEngineAndVerifyResult("Trunc(Float(132.133))", null, "Trunc(Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(4, Float(132.22))", null, "Trunc(#$decimal$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(Float(132.22), 3)", null, "Trunc(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Trunc(Float(132.22), Float(132.22))", null, "Trunc(Float(#$decimal$#), Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+
+        }
+
+        [Fact]
+        public void CheckLeftRightOverloadedFunction()
+        {
+            // Left n Right function treats 2nd arg as float even if literal value is given
+            CallEngineAndVerifyResult("Left(\"abc\", 1)", FormulaType.String, "Left(#$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Left(\"abc\", Float(1))", FormulaType.String, "Left(#$string$#, Float(#$decimal$#))");
+            CallEngineAndVerifyResult("Right(\"abc\", 1)", FormulaType.String, "Right(#$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Right(\"abc\", Float(1))", FormulaType.String, "Right(#$string$#, Float(#$decimal$#))");
+
+            // FCB Floating Point  disabled
+            CallEngineAndVerifyResult("Left(\"abc\", 1)", FormulaType.String, "Left(#$string$#, #$decimal$#)", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Left(\"abc\", Float(1))", null, "Left(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Right(\"abc\", 1)", FormulaType.String, "Right(#$string$#, #$decimal$#)", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Right(\"abc\", Float(1))", null, "Right(#$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+        }
+
+        [Fact]
+        public void CheckSubstituteAndReplaceOverloadedFunction()
+        {
+            CallEngineAndVerifyResult("Replace(\"abc\", 1, 2, \"ae\")", FormulaType.String, "Replace(#$string$#, #$decimal$#, #$decimal$#, #$string$#)");
+            CallEngineAndVerifyResult("Replace(\"abc\", Float(1), 2, \"ae\")", FormulaType.String, "Replace(#$string$#, Float(#$decimal$#), #$decimal$#, #$string$#)");
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", 1)", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, #$decimal$#)");
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", Float(1))", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, Float(#$decimal$#))");
+
+            // FCB Floating Point disabled
+            CallEngineAndVerifyResult("Replace(\"abc\", 1, 2, \"ae\")", FormulaType.String, "Replace(#$string$#, #$decimal$#, #$decimal$#, #$string$#)", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Replace(\"abc\", Float(1), 2, \"ae\")", null, "Replace(#$string$#, Float(#$decimal$#), #$decimal$#, #$string$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", 1)", FormulaType.String, "Substitute(#$string$#, #$string$#, #$string$#, #$decimal$#)", isFloatingPointEnabled: false);
+            CallEngineAndVerifyResult("Substitute(\"abc\", \"a\", \"e\", Float(1))", null, "Substitute(#$string$#, #$string$#, #$string$#, Float(#$decimal$#))", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
+        }
+
+        [Fact]
+        public void CheckOverloadedAbsFunction()
+        {
+            CallEngineAndVerifyResult("Abs(-132)", FormulaType.Decimal, "Abs(-#$decimal$#)"); // producing decimal
+            CallEngineAndVerifyResult("Abs(Float(-132.133))", FormulaType.Number, "Abs(Float(-#$decimal$#))"); // producing float  
+
+            // FCB Floating Point  disabled
+            CallEngineAndVerifyResult("Abs(Float(-132.133))", null, "Abs(Float(-#$decimal$#))", isFloatingPointEnabled:false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+        }
+
+        [Fact]
+        public void CheckOverloadedMaxFunction()
+        {
+            CallEngineAndVerifyResult("Max(1,2,3,4)", FormulaType.Decimal, "Max(#$decimal$#, #$decimal$#, #$decimal$#, #$decimal$#)"); // producing decimal
+            CallEngineAndVerifyResult("Max(Float(1),2,3,4)", FormulaType.Number, "Max(Float(#$decimal$#), #$decimal$#, #$decimal$#, #$decimal$#)"); // producing float
+            CallEngineAndVerifyResult("Max(1, Float(2),3,4)", FormulaType.Decimal, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)"); // producing decimal
+
+            // FCB Floating Point  disabled
+            CallEngineAndVerifyResult("Max(Float(1),2,3,4)", null, "Max(Float(#$decimal$#), #$decimal$#, #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+            CallEngineAndVerifyResult("Max(1, Float(2),3,4)", null, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function."); 
+        }
+
+
+        private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula, bool isFloatingPointEnabled = true,
+            bool isSuccess = true, string errorMsg = null)
+        {
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = isFloatingPointEnabled });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.NotNull(result);
+            Assert.Equal(isSuccess, result.IsSuccess);
+            Assert.Equal(sanitizedFormula, result.SanitizedFormula);
+
+            if (result.IsSuccess)
+            {
+                Assert.Empty(result.Errors);
+                Assert.Equal(returnType, result.ReturnType);
+            }
+            else
+            {
+                Assert.NotEmpty(result.Errors);
+                var errors = result.Errors.ToArray();
+                Assert.Equal(errorMsg, errors[0].Message);
+            }
+        }
+
 
         [Fact]
         public void CheckSchemaBinding()
@@ -1048,7 +1569,6 @@ END
             // mapping of field's logicalName --> fragment of Error received when trying to consume the type. 
             var unsupportedConsumer = new Dictionary<string, string>
             {
-                { "double", "Columns of type Double are not supported in formula columns." },
                 { "multiSelect", "Columns of type Virtual are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
                 { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },
@@ -1081,7 +1601,8 @@ END
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
+                    , dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -1642,20 +2163,21 @@ END
                 }
             };
 
-            var engine = new PowerFx2SqlEngine(localModel.ToXrm());
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var result = engine.Check("'Picklist (global1)' = [@Picklist].'Eeny (1)' || 'Picklist (global2)' = [@Picklist].'Eeny (3)'");
 
             Assert.True(result.IsSuccess);
         }
 
         [Theory]
-        [InlineData("Float", false, "Error 0-5: Columns of type Double are not supported in formula columns.")] // "Local Float"
+        [InlineData("Float", true)] // "Local Float"
         [InlineData("Other.Float", true)] // "Remote non-float with name collision"
-        [InlineData("Other.'Actual Float'", false, "Error 5-20: Columns of type Double are not supported in formula columns.")] // "Remote float"
+        [InlineData("Other.'Actual Float'", true)] // "Remote float"
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
-            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat });
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
+                ,dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
