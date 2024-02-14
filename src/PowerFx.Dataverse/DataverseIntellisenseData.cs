@@ -115,8 +115,6 @@ namespace Microsoft.PowerFx.Dataverse
                         var attributeType = column.TypeCode;
                         switch (attributeType)
                         {
-                            case AttributeTypeCode.Double:
-                                return false;
                             case AttributeTypeCode.Integer:
                                 return column.FormatName == IntegerFormat.None.ToString();
                             case AttributeTypeCode.String:

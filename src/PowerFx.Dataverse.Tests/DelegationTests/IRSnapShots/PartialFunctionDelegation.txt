@@ -1,0 +1,4 @@
+Concat(__retrieveMultiple(local, __lt(local, new_price, 120), 999, False), (Concatenate(DecimalToText(new_price), ,)))
+Concat(__retrieveMultiple(local, __noFilter(), Float(2), False), (Concatenate(DecimalToText(new_price), ,)))
+Concat(__retrieveMultiple(local, __noFilter(), 999, False, new_price), (Concatenate(DecimalToText(new_price), ,)))
+Concat(local, (Concatenate(DecimalToText(new_price), ,)))

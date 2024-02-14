@@ -121,11 +121,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return ptr(this, node, context);
             }
 
-            if (node.Function == BuiltinFunctionsCore.Float)
-            {
-                return Library.Value(this, node, context);
-            }
-
             // Match against Coalesce(number, 0) for blank coercion            
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
@@ -146,6 +141,8 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.DivDecimals:
                 case BinaryOpKind.MulDecimals:
                     {
+                        RetVal result;
+
                         var op = node.Op switch
                         {
                             BinaryOpKind.AddNumbers => "+",
@@ -169,8 +166,16 @@ namespace Microsoft.PowerFx.Dataverse
                             context.DivideByZeroCheck(right);
                         }
 
+                        if (node.Op == BinaryOpKind.AddNumbers || node.Op == BinaryOpKind.DivNumbers || node.Op == BinaryOpKind.MulNumbers)
+                        {
+                            result = context.TryCastToFloat($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
+                        }
+                        else
+                        {
+                            result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
+                        }
+
                         // TryCast returns null if the cast fails, so a null indicates an overflow error
-                        var result = context.TryCastToDecimal($"{Library.CoerceNullToInt(left)} {op} {Library.CoerceNullToInt(right)}");
                         context.PerformRangeChecks(result, node);
 
                         return result;
@@ -301,7 +306,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal EqualityCheck(IntermediateNode left, IntermediateNode right, BinaryOpKind op, FormulaType type, Context context, Span sourceContext = default, bool equals = true)
         {
             // Don't do any null coercions for not equals checks, but check for date to number coercion
-            if (op == BinaryOpKind.EqNumbers || op == BinaryOpKind.NeqNumbers)
+            if (op == BinaryOpKind.EqNumbers || op == BinaryOpKind.NeqNumbers || op == BinaryOpKind.EqDecimals || op == BinaryOpKind.NeqDecimals)
             {
                 Library.ValidateNumericArgument(left);
                 Library.ValidateNumericArgument(right);
@@ -366,9 +371,15 @@ namespace Microsoft.PowerFx.Dataverse
                 case UnaryOpKind.NegateDecimal:
                     Library.ValidateNumericArgument(node.Child);
                     arg = node.Child.Accept(this, context);
-                    return context.SetIntermediateVariable(FormulaType.Decimal, $"(-{Library.CoerceNullToInt(arg)})");
+                    var type = node.Op == UnaryOpKind.Negate ? FormulaType.Number : FormulaType.Decimal;
+                    return context.SetIntermediateVariable(type, $"(-{Library.CoerceNullToInt(arg)})");
 
                 case UnaryOpKind.Percent:
+                    arg = node.Child.Accept(this, context);
+                    var res = context.SetIntermediateVariable(FormulaType.Number, $"({Library.CoerceNullToInt(arg)}/100.0)");
+                    context.PerformRangeChecks(res, node);
+                    return res;
+
                 case UnaryOpKind.PercentDecimal:
                     arg = node.Child.Accept(this, context);
                     var result = context.SetIntermediateVariable(FormulaType.Decimal, $"({Library.CoerceNullToInt(arg)}/100.0)");
@@ -644,11 +655,18 @@ namespace Microsoft.PowerFx.Dataverse
             return RetVal.FromSQL($"(ISNULL(FORMAT({result},N'0'),''))", FormulaType.String);
         }
 
-        public static string ToSqlType(FormulaType t)
+        public static string ToSqlType(FormulaType t, DataverseFeatures dataverseFeatures)
         {
             if (t is NumberType)
             {
-                return SqlStatementFormat.SqlDecimalType;
+                if (dataverseFeatures.IsFloatingPointEnabled)
+                {
+                    return SqlStatementFormat.SqlFloatType;
+                }
+                else
+                {
+                    return SqlStatementFormat.SqlDecimalType;
+                }
             }
             else if (t is DecimalType)
             {
@@ -1029,6 +1047,12 @@ namespace Microsoft.PowerFx.Dataverse
             public FormulaType GetFormulaType(CdsColumnDefinition column, Span sourceContext)
             {
                 var dkind = column.TypeDefinition.DKind;
+
+                if(_dataverseFeatures.IsFloatingPointEnabled && dkind == DKind.Number)
+                {
+                    return FormulaType.Number;
+                }
+
                 switch (dkind)
                 {
                     case DKind.Number:
@@ -1087,7 +1111,7 @@ namespace Microsoft.PowerFx.Dataverse
                             throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                         }
 
-                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType());
+                        var type = PowerFx2SqlEngine.BuildReturnType(column.DType.Value.ToDType(), _dataverseFeatures);
 
                         // formatted string types are not supported
                         if ((type == FormulaType.String && column.TypeCode == AttributeTypeCode.String && column.FormatName != StringFormat.Text.ToString()) ||
@@ -1108,7 +1132,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // otherwise, translate existing binding node type to SQL
-                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType);
+                return PowerFx2SqlEngine.BuildReturnType(node.IRContext.ResultType, _dataverseFeatures);
             }
 
             public Scope GetScope(ScopeSymbol symbol)
@@ -1179,12 +1203,69 @@ namespace Microsoft.PowerFx.Dataverse
                 return type is NumberType or DecimalType;
             }
 
-            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null)
+            internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = false)
+            {
+                if(_dataverseFeatures.IsFloatingPointEnabled && castToFloat)
+                {
+                    return TryCastToFloat(expression, retVal);
+                }
+                else
+                {
+                    return TryCastToDecimal(expression, retVal);
+                }
+            }
+
+            internal RetVal TryCastToDecimal(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
-                NullCheck(retVal, postValidation: true);
+                
+                if(applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+                
                 return retVal;
+            }
+
+            internal RetVal TryCastToFloat(string expression, RetVal retVal = null, bool applyNullCheck = true)
+            {
+                // If Floating point is disabled then route the value to decimal
+                if(!_dataverseFeatures.IsFloatingPointEnabled)
+                {
+                    return TryCastToDecimal(expression, retVal, applyNullCheck);
+                }
+
+                expression = $"TRY_CAST(({expression}) AS FLOAT)";
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Number, expression);
+
+                if (applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+
+                return retVal;
+            }
+
+            internal RetVal TryCastToInteger(string expression, RetVal retVal = null, bool applyNullCheck = true)
+            {
+                expression = $"TRY_CAST(({expression}) AS INT)";
+                retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
+
+                if (applyNullCheck)
+                {
+                    NullCheck(retVal, postValidation: true);
+                }
+                    
+                return retVal;
+            }
+
+            internal void AppendRoundMaxMinConditions(RetVal retVal)
+            {
+                var inlineSql = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueIfLessThanValue, retVal, SqlStatementFormat.RoundArgMinLength);
+                AppendContentLine(inlineSql);
+                inlineSql = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueIfGreaterThanValue, retVal, SqlStatementFormat.RoundArgMaxLength);
+                AppendContentLine(inlineSql);
             }
 
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
@@ -1273,13 +1354,13 @@ namespace Microsoft.PowerFx.Dataverse
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
             }
 
-            internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false)
+            internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false, bool isFloatFlow = false)
             {
                 if (_checkOnly) return;
 
                 // compute approximate power to determine if there will be an overflow
                 var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
-                var power = TryCastToDecimal(expression);
+                var power = TryCast(expression, castToFloat : isFloatFlow);
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1324,12 +1405,25 @@ namespace Microsoft.PowerFx.Dataverse
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    if (IsNumericType(result))
+                    if (result.type is DecimalType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-
                     }
-                    // TODO: other range checks?
+                    else if (result.type is NumberType) // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata, type hints min and max values are not entertained
+                    {
+                        if(_dataverseFeatures.IsFloatingPointEnabled)
+                        {
+                            double minValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MinSupportedValue;
+                            double maxValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MaxSupportedValue;
+
+                            PerformOverflowCheck(result, minValue.ToString(), maxValue.ToString(), postCheck);
+                        }
+                        else
+                        {
+                            // For backward compatibility, in case float feature is off, number type is considered as decimal type itself
+                            PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                        }
+                    }
                 }
             }
 
@@ -1337,16 +1431,31 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_checkOnly) return;
 
-                if (IsNumericType(result))
+                if (result.type is DecimalType)
                 {
-                    if(sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
+                    if (sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
                     }
                     else
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
-                    }    
+                    }
+                }
+                else if (result.type is NumberType)
+                {
+                    if (_dataverseFeatures.IsFloatingPointEnabled)
+                    {
+                        double minValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MinSupportedValue;
+                        double maxValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MaxSupportedValue;
+
+                        PerformOverflowCheck(result, minValue.ToString(), maxValue.ToString(), postCheck);
+                    }
+                    else
+                    {
+                        // For backward compatibility, in case float feature is off, number type is considered as decimal type itself
+                        PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
+                    }
                 }
             }
 

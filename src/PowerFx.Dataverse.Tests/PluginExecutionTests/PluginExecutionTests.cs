@@ -764,6 +764,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expected, result.ToObject());
         }
 
+        [Theory]
+        [InlineData("Patch(t1, First(t1), {boolean:true,email:\"dummy@email.com\"});First(t1).email")]
+        [InlineData("With({before: First(t1).boolean}, Patch(t1, First(t1), {boolean:true});If(First(t1).boolean <> before, \"good\", \"bad\"))")]
+        [InlineData("Collect(t1, {boolean:true,email:\"dummy1@email.com\"});LookUp(t1, email = \"dummy1@email.com\").email")]
+        [InlineData("Collect(t1, {boolean:true,email:\"dummy2@email.com\"});If(LookUp(t1, email = \"dummy2@email.com\").boolean, \"Affirmitive\", \"Nope\")")]
+        public void BooleanOptionSetCoercionNotAllowedTest(string expr)
+        {
+            // create table "local"
+            var logicalName = "allattributes";
+            var displayName = "t1";
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            // Create new org (symbols) with both tables 
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
+            dv.AddTable(displayName, logicalName);
+
+            engine.Config.SymbolTable.EnableMutationFunctions();
+
+            var opts = _parserAllowSideEffects;
+            var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
+
+            Assert.False(check.IsSuccess);
+        }
+
         // https://github.com/microsoft/Power-Fx-Dataverse/issues/102
         [Theory]
         [InlineData("Collect(t1, {Price:111, Other: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))});Text(Last(t1).Price)", "111")]
@@ -986,6 +1012,29 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         [InlineData("Remove(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
         [InlineData("ClearCollect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+
+        // polymorphic comparisons.
+        [InlineData("Filter(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(Remote)}); AsType(Last(t1).PolymorphicLookup, Remote)", "Read remote: ; Read local: new_polyfield; Write local: new_polyfield;")]
+        [InlineData("AsType(LookUp(t1, false).PolymorphicLookup, Remote).Data", "Read local: new_polyfield; Read remote: data;")]
+
+        // 1:N relationships, 1 Degree drilled.
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
+
+        // Inside with.
+        [InlineData("With({r: t1}, Filter(r, Currency > 0))", "Read local: new_currency;")]
+        [InlineData("With({r: t1}, LookUp(r, Currency > 0))", "Read local: new_currency;")]
+
+        // Option set.
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
+        [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
+
+        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
+        [InlineData("Distinct(t1, Price)", "Read local: ;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -995,6 +1044,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.Add("local", "t1");
             map.Add("remote", "Remote");
             map.Add("doubleremote", "Remote2");
+            map.Add("virtualremote", "VRemote");
             var policy = new SingleOrgPolicy(map);
 
             var config = new PowerFxConfig();
@@ -1329,7 +1379,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Row Scope
         [InlineData("new_price + 10", 110.0)] // Basic field lookup (RowScope) w/ logical names
-        [InlineData("new_price + new_quantity", 100.0)] // new_quantity is blank. 
+        [InlineData("new_price + new_quantity", 120.0)] // new_quantity is 20. 
 
         [InlineData("Price + 10", 110.0, true)] //using Display name for Price
         [InlineData("ThisRecord.Other.Data", 200.0)] // Relationship 
@@ -2643,8 +2693,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
-        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
         [InlineData("WhoAmI():GUID = First(t1).localid;", "WhoAmI()")]
         public void UDF(string script, string expr)
         {
@@ -2662,6 +2710,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = check.GetEvaluator().Eval(dv.SymbolValues);
 
             Assert.IsNotType<ErrorValue>(result);
+        }
+
+        [Theory]
+        [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
+        [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
+        public void UDFWithRestrictedTypesTest(string script, string expr)
+        {
+            // create table "local"
+            var logicalName = "local";
+            var displayName = "t1";
+
+            (DataverseConnection dv, EntityLookup el) = CreateMemoryForRelationshipModels();
+            dv.AddTable(displayName, logicalName);
+
+            var engine = new RecalcEngine(new PowerFxConfig());
+
+            // Decimal is a restricted type in UDF.
+            // https://github.com/microsoft/Power-Fx/pull/2141
+            Assert.Throws<InvalidOperationException>(() => engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols));
         }
 
         [Theory]
@@ -2719,11 +2786,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["old_price"] = null;
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity3.Attributes["new_polyfield"] = null;
+            entity3.Attributes["new_quantity"] = Convert.ToDecimal(10);
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
             entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity4.Attributes["new_polyfield"] = null;
+            entity4.Attributes["new_quantity"] = Convert.ToDecimal(10);
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
@@ -2733,6 +2802,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_name"] = "row1";
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
+            entity1.Attributes["new_quantity"] = Convert.ToDecimal(20);
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.

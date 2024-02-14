@@ -7,6 +7,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Errors;
+using Microsoft.Xrm.Sdk.Metadata;
+using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -103,4 +105,5 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal SqlVisitor.Context _ctx;
     }
+
 }

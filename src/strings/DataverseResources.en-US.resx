@@ -164,6 +164,10 @@
     <value>{0} is not supported in formula columns, use {1} instead.</value>
     <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} is not supported in formula columns.</value>
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>This operation cannot be performed on type {0} in formula columns.</value>
     <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>

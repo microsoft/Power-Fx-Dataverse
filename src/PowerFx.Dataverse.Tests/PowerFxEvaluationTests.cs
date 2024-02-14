@@ -218,7 +218,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var metadata = PowerFx2SqlEngine.Empty();
                 // run unit tests with time zone conversions on
-                var engine = new PowerFx2SqlEngine(metadata);
+                // instantiate engine with floating point feature as on
+                var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures : new DataverseFeatures() { IsFloatingPointEnabled = true});
                 var compileResult = engine.Compile(expr, options);
 
                 if (!compileResult.IsSuccess)

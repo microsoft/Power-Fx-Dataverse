@@ -1,0 +1,16 @@
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, 100), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, 100), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, Float(100)), False)).new_price
+(__retrieveSingle(local, __lt(local, new_price, 100), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), False)).new_price
+(__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
+(__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
+(__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
+(__retrieveSingle(local, __noFilter(), True, new_quantity)).Value

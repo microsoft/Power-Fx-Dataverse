@@ -51,7 +51,18 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Decimal, Value },
             { BuiltinFunctionsCore.EndsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Suffix) },
             { BuiltinFunctionsCore.Error, Error },
-          //  { BuiltinFunctionsCore.Exp, Exp },
+            { BuiltinFunctionsCore.Exp, Exp },
+            
+            /* If Floating Point feature is disabled then
+                 a. Float functions would be internally supported from IR and it will produce decimal in that case to be in parity with GA behavior
+                 b. Float functions would not be suggested in intellisense
+                 c. If user tries to manually type Float function on intellisense it will show error
+               If Floating Point feature is enabled then
+                 a. Float functions would be internally supported from IR and it will produce float
+                 b. Float functions would be suggested in intellisense
+            */  
+            
+            { BuiltinFunctionsCore.Float, Value},
             //{ BuiltinFunctionsCore.Filter, FilterTable },
             //{ BuiltinFunctionsCore.Find, Find },
             //{ BuiltinFunctionsCore.First, First },
@@ -71,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             //{ BuiltinFunctionsCore.LastN, LastN},
             { BuiltinFunctionsCore.Left, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context, "LEFT") },
             { BuiltinFunctionsCore.Len, Len },
-         //   { BuiltinFunctionsCore.Ln, Ln },
+            { BuiltinFunctionsCore.Ln, Ln },
             { BuiltinFunctionsCore.Lower, (SqlVisitor runner, CallNode node, Context context) => UpperLower(runner, node, context, "LOWER") },
             { BuiltinFunctionsCore.Max, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "MAX") },
             { BuiltinFunctionsCore.Mid, Mid },
@@ -82,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.Not, Not },
             { BuiltinFunctionsCore.Now, (SqlVisitor runner, CallNode node, Context context) => NowUTCNow(runner, node, context, FormulaType.DateTime) },
             { BuiltinFunctionsCore.Or, (SqlVisitor runner, CallNode node, Context context) => LogicalSetFunction(runner, node, context, "OR", true) },
-           // { BuiltinFunctionsCore.Power, Power },
+            { BuiltinFunctionsCore.Power, Power },
             { BuiltinFunctionsCore.Replace, Replace },
             { BuiltinFunctionsCore.Right, (SqlVisitor runner, CallNode node, Context context) => LeftRight(runner, node, context,"RIGHT") },
             { BuiltinFunctionsCore.Round, (SqlVisitor runner, CallNode node, Context context) => MathNaryFunction(runner, node, context, "ROUND", 2) },
@@ -93,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             { BuiltinFunctionsCore.StartsWith, (SqlVisitor runner, CallNode node, Context context) => StartsEndsWith(runner, node, context, MatchType.Prefix) },
             { BuiltinFunctionsCore.Sum, (SqlVisitor runner, CallNode node, Context context) => MathScalarSetFunction(runner, node, context, "SUM") },
             //{ BuiltinFunctionsCore.SumT, SumTable },
-          //  { BuiltinFunctionsCore.Sqrt, Sqrt },
+            { BuiltinFunctionsCore.Sqrt, Sqrt },
             { BuiltinFunctionsCore.Substitute, Substitute },
             { BuiltinFunctionsCore.Switch, Switch },
             //{ BuiltinFunctionsCore.Table, Table },
@@ -121,6 +132,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal NotSupported(SqlVisitor runner, CallNode node, Context context, string suggestedFunction)
         {
             throw new SqlCompileException(SqlCompileException.FunctionNotSupported, node.IRContext.SourceContext, node.Function.LocaleSpecificName, suggestedFunction);
+        }
+
+        public static RetVal FunctionDisabled(SqlVisitor runner, CallNode node, Context context)
+        {
+            throw new SqlCompileException(SqlCompileException.FunctionSupportDisabled, node.IRContext.SourceContext, node.Function.LocaleSpecificName);
         }
 
         public static SqlCompileException BuildUnsupportedArgumentException(TexlFunction func, int argumentIndex, Span sourceContext = default)
@@ -166,7 +182,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                             var argString = Library.CoerceNullToInt(arg);
 
-                            var result = context.GetTempVar(FormulaType.Decimal);
+                            bool isFloatFlow = node.Args[0].IRContext.ResultType is NumberType;
+
+                            var result = context.GetTempVar(isFloatFlow ? FormulaType.Number : FormulaType.Decimal);
                             context.SetIntermediateVariable(result, argString);
 
                             ret = result;
