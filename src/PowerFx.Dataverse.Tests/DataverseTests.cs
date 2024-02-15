@@ -1818,10 +1818,10 @@ END
         {
             // Max length is determined by engine. 
             var opts = new PowerFx2SqlEngine().GetDefaultParserOptionsCopy();
-            Assert.Equal(1000, opts.MaxExpressionLength);
+            Assert.Equal(2000, opts.MaxExpressionLength);
 
-            var expr = new string('a', 1001);
-            var error = "Error 0-1001: Expression can't be more than 1000 characters. The expression is 1001 characters.";
+            var expr = new string('a', 2001);
+            var error = "Error 0-2001: Expression can't be more than 2000 characters. The expression is 2001 characters.";
 
             var engine = new PowerFx2SqlEngine();            
 
