@@ -51,7 +51,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length
-        internal const int MaxExpressionLength = 1000;
+        internal const int MaxExpressionLength = 2000;
 
         internal static readonly TexlFunction[] FloatingPointFunctions = new[]
         {
