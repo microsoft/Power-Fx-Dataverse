@@ -6,6 +6,6 @@
         // Formula Columns will be able to produce/consume float data type columns
         // when this flag is disabled, Number Data type will act as Power Fx Core Decimal Data type and all Number Expressions would be treated as decimal 
         // and Formula columns will not be able to produce/consumer float type columns
-        internal bool IsFloatingPointEnabled { get; set;  }
+        public bool IsFloatingPointEnabled { get; set;  }
     }
 }
