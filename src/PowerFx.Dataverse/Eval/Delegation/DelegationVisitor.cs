@@ -106,19 +106,10 @@ namespace Microsoft.PowerFx.Dataverse
                 this._filter = filter;
                 this._columnSet = columnSet;
                 this._isDistinct = isDistinct;
-                var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
-                if (tableDS != null)
+                if (!DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata))
                 {
-                    var tableLogicalName = tableDS.TableMetadata.Name; // logical name
-                    if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
-                    {
-                        if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
-                        {
-                            this._metadata = metadata;
-                        }
-                    }
+                    throw new InvalidOperationException($"Could not get metadata for table {tableType.TableSymbolName}");
                 }
-
             }
 
             // Non-delegating path 
@@ -344,6 +335,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return new RetVal(node);
             }
 
+           
+            if(!IsRelationDelegationAllowed(tableType, relations))
+            {
+                return new RetVal(node);
+            }
+
             var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(caller, rightNode);
             if (findThisRecord != null)
             {
@@ -404,6 +401,20 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return ret;
+        }
+
+        private bool IsRelationDelegationAllowed(TableType tableType, IList<string> relations)
+        {
+            // Assume we can delegate if we can't find the metadata. It is possible if the table was the output of ShowColumns().
+            var result = true;
+
+            // For Elastic tables, we can delegate only if the field is a direct field of the table and NOT if it is a relation. As elastic table currently doesn't support relations in delegation.
+            if (DelegationUtility.TryGetEntityMetadata(tableType, out var metadata))
+            {
+                result = !(metadata.IsElasticTable() && relations != null && relations.Count > 0);
+            }
+
+            return result;
         }
 
         internal static bool IsOpKindEqualityComparison(BinaryOpKind op)
@@ -603,9 +614,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
+            // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
             if (count != null 
                 || !TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName)
-                || !IsDistinctReturnTypePrimitive(node.IRContext.ResultType))
+                || !IsDistinctReturnTypePrimitive(node.IRContext.ResultType)
+                || DelegationUtility.IsElasticTable(tableArg._tableType))
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
@@ -770,36 +783,66 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var predicate = node.Args[1];
+            var predicteContext = context.GetContextForPredicateEval(node, tableArg);
 
             // Pattern match to see if predicate is GUID delegable.
-            if (predicate is LazyEvalNode arg1b && 
-                arg1b.Child is BinaryOpNode binOp &&
-                binOp.Op == BinaryOpKind.EqGuid &&
-                TryMatchPrimaryId(binOp.Left, binOp.Right, out _, out var guidValue, tableArg))
+            if (predicate is LazyEvalNode arg1b)
             {
-                CheckForNopLookup(node);
-
-                // Pattern match to see if predicate is delegable.
-                //  Lookup(Table, Id=Guid) 
-                var retVal2 = guidValue.Accept(this, context);
-                var right = Materialize(retVal2);
-
-                var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
-                if (findThisRecord == null)
+                if (arg1b.Child is BinaryOpNode binOp &&
+                    binOp.Op == BinaryOpKind.EqGuid &&
+                    TryMatchPrimaryId(binOp.Left, binOp.Right, out _, out var guidValue, tableArg))
                 {
-                    var findBehaviorFunc = BehaviorIRVisitor.Find(right);
-                    if (findBehaviorFunc != null)
+                    CheckForNopLookup(node);
+
+                    // Pattern match to see if predicate is delegable.
+                    //  Lookup(Table, Id=Guid) 
+                    var retVal2 = guidValue.Accept(this, context);
+                    var right = Materialize(retVal2);
+
+                    var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(node, right);
+                    if (findThisRecord == null)
                     {
-                        CreateBehaviorErrorAndReturn(node, findBehaviorFunc);
+                        var findBehaviorFunc = BehaviorIRVisitor.Find(right);
+                        if (findBehaviorFunc != null)
+                        {
+                            CreateBehaviorErrorAndReturn(node, findBehaviorFunc);
+                        }
+                        else
+                        {
+                            // We can successfully delegate this call. 
+                            // __retrieveGUID(table, guid);
+
+                            if (IsTableArgLookUpDelegable(context, tableArg))
+                            {
+                                var newNode = _hooks.MakeRetrieveCall(tableArg, right);
+                                return Ret(newNode);
+                            }
+                            else
+                            {
+                                // if tableArg was another delegation (e.g. Filter()), then we need to Materialize the call and can't delegate lookup.
+                                return MaterializeTableAndAddWarning(tableArg, node);
+                            }
+                        }
                     }
                     else
                     {
-                        // We can successfully delegate this call. 
-                        // __retrieveGUID(table, guid);
-
+                        return CreateThisRecordErrorAndReturn(node, findThisRecord);
+                    }
+                }
+                else if (arg1b.Child is CallNode arg1MaybeAnd && arg1MaybeAnd.Function.Name == BuiltinFunctionsCore.And.Name && arg1MaybeAnd.Args.Count == 2)
+                {
+                    // If LookUp predicate only has primary key comparison and partition id and table is elastic table, then we can delegate the call.
+                    var arg1OfAnd = arg1MaybeAnd.Args[0];
+                    var arg2OfAnd = ((LazyEvalNode)arg1MaybeAnd.Args[1]).Child;
+                    if (TryMatchElasticIds(predicteContext, arg1OfAnd, arg2OfAnd, out var guidArg, out var partitionIdArg)) 
+                    {
+                        var guidRetVal = guidArg.Accept(this, context);
+                        var partitionIdRetVal = partitionIdArg.Accept(this, context);
+                        var materializedGuid = Materialize(guidRetVal);
+                        var materializedPartitionId = Materialize(partitionIdRetVal);
                         if (IsTableArgLookUpDelegable(context, tableArg))
                         {
-                            var newNode = _hooks.MakeRetrieveCall(tableArg, right);
+                            var newNode = _hooks.MakeElasticRetrieveCall(tableArg, materializedGuid, materializedPartitionId);
                             return Ret(newNode);
                         }
                         else
@@ -809,14 +852,9 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
                 }
-                else
-                {
-                    return CreateThisRecordErrorAndReturn(node, findThisRecord);
-                }
             }
 
             // Pattern match to see if predicate is delegable when field is non primary key.
-            var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
 
             if (!pr.IsDelegating)
@@ -843,6 +881,42 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// If predicate is comparing primary key and partition id, and table is elastic table, then we can delegate the call to a faster api.
+        /// </summary>
+        /// <param name="predicteContext"></param>
+        /// <param name="arg1OfAnd"></param>
+        /// <param name="arg2OfAnd"></param>
+        /// <param name="guidArg"></param>
+        /// <param name="partitionIdArg"></param>
+        /// <returns></returns>
+        private bool TryMatchElasticIds(Context predicteContext, IntermediateNode arg1OfAnd, IntermediateNode arg2OfAnd, out IntermediateNode guidArg, out IntermediateNode partitionIdArg)
+        {
+            if (predicteContext.CallerTableRetVal._metadata.IsElasticTable() && arg1OfAnd is BinaryOpNode arg1b && arg2OfAnd is BinaryOpNode arg2b )
+            {
+                if (TryMatchPrimaryId(arg1b.Left, arg1b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
+                    && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var fieldName, out var maybePartitionId, out var opKind)
+                    && fieldName == "partitionid"
+                    && IsOpKindEqualityComparison(opKind))
+                {
+                    partitionIdArg = maybePartitionId;
+                    return true;
+                }
+                else if (TryMatchPrimaryId(arg2b.Left, arg2b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
+                    && TryGetFieldName(predicteContext, arg1b.Left, arg1b.Right, arg1b.Op, out fieldName, out maybePartitionId, out opKind)
+                    && fieldName == "partitionid"
+                    && IsOpKindEqualityComparison(opKind))
+                {
+                    partitionIdArg = maybePartitionId;
+                    return true;
+                }
+            }
+
+            guidArg = null;
+            partitionIdArg = null;
+            return false;
         }
 
         private bool IsTableArgLookUpDelegable(Context context, RetVal tableArg)

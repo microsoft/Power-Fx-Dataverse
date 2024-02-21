@@ -7,6 +7,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,12 +24,12 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
-            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, IEnumerable<string> columns, CancellationToken cancel)
+            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, int? topCount, IEnumerable<string> columns, bool isDistinct, CancellationToken cancellationToken)
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, string partitionId, int? topCount, IEnumerable<string> columns, bool isDistinct, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }
@@ -205,7 +206,34 @@ namespace Microsoft.PowerFx.Dataverse
             internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
             {
                 var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
-                var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid };
+                var blankNode = new CallNode(IRContext.NotInSource(FormulaType.String), BuiltinFunctionsCore.Blank);
+
+                // last arg is blank, as we don't need partition id for retrieve in non elastic table.
+                var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, blankNode };
+                var returnType = query._originalNode.IRContext.ResultType;
+                if (query.hasColumnSet)
+                {
+                    args.AddRange(query._columnSet);
+                }
+
+                CallNode node;
+                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                {
+                    var scopeSymbol = originalCallNode.Scope;
+                    node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
+                }
+                else
+                {
+                    node = new CallNode(IRContext.NotInSource(returnType), func, args);
+                }
+
+                return node;
+            }
+
+            internal CallNode MakeElasticRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid, IntermediateNode partitionId)
+            {
+                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
+                var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, partitionId };
                 var returnType = query._originalNode.IRContext.ResultType;
                 if (query.hasColumnSet)
                 {

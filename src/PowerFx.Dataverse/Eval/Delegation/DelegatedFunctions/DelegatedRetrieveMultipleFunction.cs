@@ -32,6 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             int? topCount = null;
             FilterExpression filter;
             ISet<LinkEntity> relation;
+            string partitionId = null;
             if (args[2] is NumberValue count)
             {
                 topCount = (int)(count).Value;
@@ -49,8 +50,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._value;
+                filter = DelegationFormulaValue._filter;
                 relation = DelegationFormulaValue._relation;
+                partitionId = DelegationFormulaValue._partitionId;
             }
             else
             {
@@ -83,7 +85,7 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, topCount, columns, isDistinct, cancellationToken).ConfigureAwait(false);
+            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, partitionId, topCount, columns, isDistinct, cancellationToken).ConfigureAwait(false);
 
             // Distinct outputs always in default single column table.
             if (isDistinct)

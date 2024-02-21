@@ -43,12 +43,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 14, true, true)]
         [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 15, true, false)]
         [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 16, false, true)]
+
+        [InlineData("First(et).Field1", 200.0, 17, false, false)]
+        [InlineData("First(et).Field1", 200.0, 18, true, true)]
+        [InlineData("First(et).Field1", 200.0, 19, true, false)]
+        [InlineData("First(et).Field1", 200.0, 20, false, true)]
         public async Task FirstDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);

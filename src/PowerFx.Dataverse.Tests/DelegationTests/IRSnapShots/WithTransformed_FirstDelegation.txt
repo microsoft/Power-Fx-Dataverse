@@ -14,3 +14,7 @@ With({r:local}, ((__retrieveSingle(local, __noFilter(), True, new_quantity)).Val
 With({r:local}, ((__retrieveSingle(local, __noFilter(), True, new_quantity)).Value))
 With({r:local}, ((__retrieveSingle(local, __noFilter(), True, new_quantity)).Value))
 With({r:local}, ((__retrieveSingle(local, __noFilter(), True, new_quantity)).Value))
+With({r:local}, ((__retrieveSingle(elastictable, __noFilter(), False)).field1))
+With({r:local}, ((__retrieveSingle(elastictable, __noFilter(), False)).field1))
+With({r:local}, ((__retrieveSingle(elastictable, __noFilter(), False)).field1))
+With({r:local}, ((__retrieveSingle(elastictable, __noFilter(), False)).field1))

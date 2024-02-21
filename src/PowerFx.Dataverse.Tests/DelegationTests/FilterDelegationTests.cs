@@ -267,12 +267,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 178, false, false)]
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 179, true, false)]
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 180, false, true)]
+
+        [InlineData("Filter(et, Field1 = 200)", 2, 182, true, true)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 183, false, false)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 184, true, false)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 185, false, true)]
+
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 186, true, true)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 187, false, false)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 188, true, false)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 189, false, true)]
         public async Task FilterDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);

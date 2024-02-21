@@ -807,12 +807,63 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             true,
             true)]
 
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 132, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 133, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 134, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 135, false, true)]
+
+        [InlineData("LookUp(et, etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p1\").Field1", 200.0, 136, true, true)]
+        [InlineData("LookUp(et, etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p1\").Field1", 200.0, 137, false, false)]
+        [InlineData("LookUp(et, etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p1\").Field1", 200.0, 138, true, false)]
+        [InlineData("LookUp(et, etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p1\").Field1", 200.0, 139, false, true)]
+
+        // This delegates to retrieve single(slower api) because we only do point delegation when partionId is in equality.
+        [InlineData("LookUp(et, 'Partition Id' <> \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", null, 140, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' <> \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", null, 141, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' <> \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", null, 142, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' <> \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", null, 143, false, true)]
+
+        // This delegates to retrieve single(slower api) because we only do point delegation when partionId is present.
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And Field1 > 199).Field1", 200.0, 144, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And Field1 > 199).Field1", 200.0, 145, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And Field1 > 199).Field1", 200.0, 146, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And Field1 > 199).Field1", 200.0, 147, false, true)]
+
+        // This delegates to retrieve single(slower api) because we only do point delegation when only partionId and primary id is in equality.
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And Field1 > 199).Field1", 200.0, 148, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And Field1 > 199).Field1", 200.0, 149, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And Field1 > 199).Field1", 200.0, 150, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And Field1 > 199).Field1", 200.0, 151, false, true)]
+
+        // This delegates to retrieve single(slower api) because we only do point delegation when partionId is in equality only once.
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p2\").Field1", null, 152, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p2\").Field1", null, 153, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p2\").Field1", null, 154, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" And etid = GUID(\"00000000-0000-0000-0000-000000000007\") And 'Partition Id' = \"p2\").Field1", null, 155, false, true)]
+
+        // This delegates to retrieve single(slower api) because we only do point delegation when partionId is in "And" condition only.
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" Or etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 156, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" Or etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 157, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" Or etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 158, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = \"p1\" Or etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 159, false, true)]
+
+        // successful point delegation with complex expression.
+        [InlineData("LookUp(et, 'Partition Id' = If(1<0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 160, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 161, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 162, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 163, false, true)]
+
+        [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 164, true, true)]
+        [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 165, false, false)]
+        [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 166, true, false)]
+        [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 167, false, true)]
         public async Task LookUpDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) =

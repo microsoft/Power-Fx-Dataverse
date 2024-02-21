@@ -9,6 +9,7 @@ using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
@@ -90,7 +91,70 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var entityReference = new EntityReference(this._entityMetadata.LogicalName, id);
+
+            var request = new RetrieveRequest
+            {
+                ColumnSet = columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray()),
+                Target = entityReference,
+                ["partitionId"] = partitionId
+            };
+
+            var result = await _connection.Services.ExecuteAsync(request, cancellationToken);
+
+            if (result.HasError)
+            {
+                return result.DValueError("Retrieve");
+            }
+
+            var entity = ((RetrieveResponse)result.Response).Entity;
+
+            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+
+            return DValue<RecordValue>.Of(row);
+        }
+
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
+        {
+            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+
+            var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
+
+            if (entities.HasError)
+            {
+                return new List<DValue<RecordValue>>() { entities.DValueError("RetrieveMultiple") };
+            }
+
+            var result = EntityCollectionToRecordValues(entities);
+
+            return result;
+        }
+
+        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
+        {
+            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+
+            var request = new RetrieveMultipleRequest
+            {
+                Query = query,
+                // Important that below is camel cased.
+                ["partitionId"] = partitionId
+            };
+
+            var response = await _connection.Services.ExecuteAsync(request);
+
+            if (response.HasError)
+            {
+                return new List<DValue<RecordValue>>() { response.DValueError("RetrieveMultiple") };
+            }
+
+            var entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
+            return EntityCollectionToRecordValues(entities);
+        }
+
+        private QueryExpression CreateQueryExpression(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct)
         {
             var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
 
@@ -111,17 +175,9 @@ namespace Microsoft.PowerFx.Dataverse
                 query.LinkEntities.AddRange(relation);
             }
 
-            var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
-
-            if (entities.HasError)
-            {
-                return new List<DValue<RecordValue>>() { entities.DValueError("RetrieveMultiple") };
-            }
-
-            var result = EntityCollectionToRecordValues(entities);
-
-            return result;
+            return query;
         }
+
 
         public override async Task<DValue<RecordValue>> AppendAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -266,6 +322,30 @@ namespace Microsoft.PowerFx.Dataverse
             List<DValue<RecordValue>> list = new ();
 
             foreach (Entity entity in entityCollection.Response.Entities)
+            {
+                var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+                list.Add(DValue<RecordValue>.Of(row));
+            }
+
+            if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)
+            {
+                list.Remove(list.Last());
+                list.Add(DataverseExtensions.DataverseError<RecordValue>($"Too many entities in table {_entityMetadata.LogicalName}, more than {_connection.MaxRows} rows", nameof(GetRowsAsync)));
+            }
+
+            return list;
+        }
+
+        private List<DValue<RecordValue>> EntityCollectionToRecordValues(EntityCollection entityCollection)
+        {
+            if (entityCollection == null)
+            {
+                throw new ArgumentNullException(nameof(entityCollection));
+            }
+
+            List<DValue<RecordValue>> list = new();
+
+            foreach (Entity entity in entityCollection.Entities)
             {
                 var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
                 list.Add(DValue<RecordValue>.Of(row));

@@ -9,7 +9,7 @@
 (__retrieveSingle(local, __eq(local, new_int, 255), False)).new_price
 (__retrieveSingle(local, __eq(local, new_int, Float(255)), False)).new_price
 (__retrieveSingle(local, __eq(local, new_int, 255), False)).new_price
-(__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001))).new_price
+(__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank())).new_price
 (__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
 (__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
 (__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), False)).new_price
@@ -18,15 +18,15 @@
 (__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
 (__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), False)).new_price
 (__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), False)).new_price
-(__retrieveGUID(local, _g1)).new_price
+(__retrieveGUID(local, _g1, Blank())).new_price
 (__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), False)).new_price
 (__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), False)).new_price
 (__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), False)).new_price
 (__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), False)).new_price
 (__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), False)).new_price
-(__retrieveGUID(local, _g1)).new_price
-(__retrieveGUID(local, _g1)).new_price
-(__retrieveGUID(local, _g1)).new_price
+(__retrieveGUID(local, _g1, Blank())).new_price
+(__retrieveGUID(local, _g1, Blank())).new_price
+(__retrieveGUID(local, _g1, Blank())).new_price
 (LookUp(local, (EqGuid(localid,If(GtNumbers(new_price,50), (_g1), (_gMissing)))))).new_price
 (LookUp(local, (EqGuid(localid,If(GtDecimals(new_price,50), (_g1), (_gMissing)))))).new_price
 (LookUp(local, (EqGuid(localid,If(GtNumbers(new_price,Float(50)), (_g1), (_gMissing)))))).new_price
@@ -39,8 +39,8 @@ With({r:local}, ((LookUp(r, (EqGuid(localid,If(GtNumbers(Value(new_price),50), (
 (__retrieveSingle(local, __gt(local, new_price, 50), False)).new_price
 (__retrieveSingle(local, __gt(local, new_price, Float(50)), False)).new_price
 (__retrieveSingle(local, __gt(local, new_price, 50), False)).new_price
-(__retrieveGUID(local, If(True, (_g1), (_gMissing)))).new_price
-(__retrieveGUID(local, (__retrieveGUID(local, _g1)).localid)).new_price
+(__retrieveGUID(local, If(True, (_g1), (_gMissing)), Blank())).new_price
+(__retrieveGUID(local, (__retrieveGUID(local, _g1, Blank())).localid, Blank())).new_price
 (LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price
 (LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price
 (LookUp(__retrieveMultiple(local, __eq(local, new_price, Float(100)), 999, False), (EqGuid(localid,_g1)))).new_price
@@ -51,11 +51,11 @@ With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, Float(
 With({r:local}, ((LookUp(__retrieveMultiple(local, __eq(local, new_price, 100), 999, False), (EqGuid(localid,_g1)))).new_price))
 (LookUp(__retrieveMultiple(local, __noFilter(), 1, False), (EqGuid(localid,_g1)))).new_price
 With({r:local}, ((LookUp(__retrieveMultiple(local, __noFilter(), 1, False), (EqGuid(localid,_g1)))).new_price))
-(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
-(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
-(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, Float(50)), False)).localid)).new_price
-(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid)).new_price
-(__retrieveGUID(local, (First(Table({Value:_g1}, {Value:_gMissing}))).Value)).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid, Blank())).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid, Blank())).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, Float(50)), False)).localid, Blank())).new_price
+(__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), False)).localid, Blank())).new_price
+(__retrieveGUID(local, (First(Table({Value:_g1}, {Value:_gMissing}))).Value, Blank())).new_price
 (Last(local)).new_price
 CountRows(local)
 IsBlank(local)
@@ -67,7 +67,7 @@ IsBlank(Filter(local, (EqNumbers(1,1))))
 (Collect((local), {new_price:200})).new_price
 (Collect((local), RecordToRecord([new_price:Float(new_price)],({new_price:200}))).new_price
 (Collect((local), RecordToRecord([new_price:Decimal(new_price)],({new_price:200}))).new_price
-IsError(__retrieveGUID(local, If(False, (_g1), (_gMissing))))
+IsError(__retrieveGUID(local, If(False, (_g1), (_gMissing)), Blank()))
 (LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price
 (LookUp(local, (EqGuid(localid,localid)))).new_price
 With({r:local}, ((LookUp(r, (EqGuid(localid,localid)))).new_price))
@@ -95,9 +95,9 @@ With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).
 With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price))
 With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, Float(0)), False)).new_price))
 With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), False)).new_price))
-With({r:local}, ((__retrieveGUID(local, _g1)).new_price))
+With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 With({r:__retrieveMultiple(local, __lt(local, new_price, 120), 999, False)}, ((LookUp(__retrieveMultiple(local, __lt(local, new_price, 120), 999, False), (GtDecimals(new_price,90)))).new_price))
-With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001))).new_price))
+With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank())).new_price))
 (__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
 (__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
 (__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), False)).new_price
@@ -127,5 +127,41 @@ With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-00000000000
 (__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
 (__retrieveSingle(local, __lt(local, new_quantity, Float(20)), True, new_quantity)).Value
 (__retrieveSingle(local, __lt(local, new_quantity, 20), True, new_quantity)).Value
-(__retrieveGUID(local, If(LtNumbers(1,0), (GUID(00000000-0000-0000-0000-000000000001))))).new_price
-(__retrieveGUID(local, If(NumberToBoolean(DivNumbers(1,0)), (GUID(00000000-0000-0000-0000-000000000001))))).new_price
+(__retrieveGUID(local, If(LtNumbers(1,0), (GUID(00000000-0000-0000-0000-000000000001))), Blank())).new_price
+(__retrieveGUID(local, If(NumberToBoolean(DivNumbers(1,0)), (GUID(00000000-0000-0000-0000-000000000001))), Blank())).new_price
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1
+(__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, Float(199))), False)).field1
+(__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, Float(199))), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), False)).field1
+(__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), False)).field1
+(__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), False)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtNumbers(1,0), (p1)))).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtDecimals(1,0), (p1)))).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtDecimals(1,0), (p1)))).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtNumbers(1,0), (p1)))).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
+(__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
