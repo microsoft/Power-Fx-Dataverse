@@ -6,6 +6,7 @@
 
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
@@ -601,7 +602,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {
-                if(columnSet.AllColumns || columnFilter.Contains(attr.Key))
+                if(columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
                 {
                     newEntity.Attributes[attr.Key] = attr.Value;
                 }
@@ -611,6 +612,54 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual void Refresh(string logicalTableName)
         {            
+        }
+
+        public async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            if (!request.Parameters.TryGetValue("partitionId", out var partitionId))
+            {
+                throw new InvalidOperationException("PartitionId not found in the request.");
+            }
+
+            if(request is RetrieveMultipleRequest rmr)
+            {
+                var result = await RetrieveMultipleAsync(rmr.Query, cancellationToken);
+                var paramCollection = new ParameterCollection
+                {
+                    ["EntityCollection"] = new EntityCollection(result.Response.Entities.Select(e => e.Attributes.TryGetValue("partitionid", out var value) && (partitionId == null || value.Equals(partitionId)) ? e : null).Where(e => e != null).ToList())
+                };
+
+                return new DataverseResponse<OrganizationResponse>(new RetrieveMultipleResponse () { Results = paramCollection });
+            }
+            else if(request is RetrieveRequest rr)
+            {
+                this._rawProvider.TryGetEntityMetadata(rr.Target.LogicalName, out var metadata);
+                var filter = new FilterExpression(LogicalOperator.And);
+                filter.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, rr.Target.Id);
+
+                if (partitionId != null)
+                {
+                    filter.AddCondition("partitionid", ConditionOperator.Equal, partitionId);
+                }
+                var query = new QueryExpression(rr.Target.LogicalName)
+                {
+                    ColumnSet = new ColumnSet(true),
+                    Criteria = filter
+                };
+
+                var result = await RetrieveMultipleAsync(query, cancellationToken);
+                var entity = result.Response.Entities.FirstOrDefault();
+
+                if(entity == null)
+                {
+                    return new DataverseResponse<OrganizationResponse>(new RetrieveResponse() { Results = new ParameterCollection() });
+                }
+
+                return new DataverseResponse<OrganizationResponse>(new RetrieveResponse() { Results = new ParameterCollection { ["Entity"] = entity } });
+                
+            }
+
+            throw new NotImplementedException();
         }
     }
 }

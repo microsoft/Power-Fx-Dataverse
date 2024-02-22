@@ -2,6 +2,7 @@
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,15 +24,36 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var filter = new FilterExpression(LogicalOperator.And);
             var relations = new HashSet<LinkEntity>(new LinkEntityComparer());
+            string partitionId = null;
+            bool appendPartitionIdFilter = false;
             foreach ( var arg in args)
             {
-                var siblingFilter = ((DelegationFormulaValue)arg)._value;
+                var siblingFilter = ((DelegationFormulaValue)arg)._filter;
                 var siblingRelation = ((DelegationFormulaValue)arg)._relation;
+                var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
+                if (siblingPartitionId != null)
+                {
+                    if (partitionId != null && partitionId != siblingPartitionId)
+                    {
+                        siblingFilter = DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, siblingPartitionId);
+                        appendPartitionIdFilter = true;
+                    }
+                    else
+                    {
+                        partitionId = ((DelegationFormulaValue)arg)._partitionId;
+                    }
+                }
+
                 filter.AddFilter(siblingFilter);
                 relations.UnionWith(siblingRelation);
             }
 
-            return new DelegationFormulaValue(filter, relations);
+            if(appendPartitionIdFilter)
+            {
+                filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
+            }
+
+            return new DelegationFormulaValue(filter, relations, partitionId: partitionId);
         }
     }
 }

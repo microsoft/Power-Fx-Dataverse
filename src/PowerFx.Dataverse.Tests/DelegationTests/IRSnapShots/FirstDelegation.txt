@@ -14,3 +14,7 @@
 (__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
 (__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
 (__retrieveSingle(local, __noFilter(), True, new_quantity)).Value
+(__retrieveSingle(elastictable, __noFilter(), False)).field1
+(__retrieveSingle(elastictable, __noFilter(), False)).field1
+(__retrieveSingle(elastictable, __noFilter(), False)).field1
+(__retrieveSingle(elastictable, __noFilter(), False)).field1

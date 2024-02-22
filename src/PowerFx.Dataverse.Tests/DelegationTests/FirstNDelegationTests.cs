@@ -71,12 +71,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("FirstN(t1)", 1, 30, true, true)]
         [InlineData("FirstN(t1)", 1, 31, true, false)]
         [InlineData("FirstN(t1)", 1, 32, false, true)]
+
+        [InlineData("FirstN(et, 2)", 2, 33, false, false)]
+        [InlineData("FirstN(et, 2)", 2, 34, true, true)]
+        [InlineData("FirstN(et, 2)", 2, 35, true, false)]
+        [InlineData("FirstN(et, 2)", 2, 36, false, true)]
         public async Task FirstNDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);

@@ -1313,5 +1313,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void Refresh(string logicalTableName)
         {
         }
+
+        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

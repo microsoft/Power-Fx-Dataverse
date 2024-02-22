@@ -178,3 +178,12 @@ With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __
 With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), 999, False)))
 With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), 999, False)))
 With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noFilter(), False)), 999, False)))
+
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), 999, False)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False, field1)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False, field1)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), 999, False, field1)))
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), 999, False, field1)))

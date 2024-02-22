@@ -245,9 +245,44 @@ namespace Microsoft.Dataverse.EntityMock
         };
 
         /// <summary>
+        ///  Simple model used to simulate a lookup column.
+        /// </summary>
+        public static readonly EntityMetadataModel ElasticTableModel = new EntityMetadataModel
+        {
+            LogicalName = "elastictable",
+            DisplayCollectionName = "Elastic Table",
+            PrimaryIdAttribute = "etid",
+
+            // below makes this metadata elastic table.
+            DataProviderId = Guid.Parse("1d9bde74-9ebd-4da9-8ff5-aa74945b9f74"),
+
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewGuid("etid", "etid"),
+                AttributeMetadataModel.NewDecimal("field1", "Field1"),
+
+                // Below is a key attribute in elastic table.
+                AttributeMetadataModel.NewString("partitionid", "Partition Id"),
+            },
+            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
+            {
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "localid",
+                    ReferencedEntity = "local",
+                    ReferencingAttribute = "selfid",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "self_refd",
+                    ReferencingEntityNavigationPropertyName = "self",
+                    SchemaName = "self"
+                },
+            }
+        };
+
+        /// <summary>
         ///  Array with multiple models pre-loaded.
         /// </summary>
-        public static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel };
+        public static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel, ElasticTableModel };
 
         /// <summary>
         /// Idealy contains all columns types.

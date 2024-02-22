@@ -25,12 +25,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Distinct(t1, PolymorphicLookup)", 8, -1)]
         // Other is a lookup field, hence not delegable.
         [InlineData("Distinct(t1, Other)", 9, -1)]
+        [InlineData("Distinct(et, Field1)", 10, 2)]
         public async Task DistinctDelegationAsync(string expr, int id, int expectedRows, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: true, policy: policy);

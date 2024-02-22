@@ -32,10 +32,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             FilterExpression filter;
             ISet<LinkEntity> relation;
+            string partitionId;
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._value;
+                filter = DelegationFormulaValue._filter;
                 relation = DelegationFormulaValue._relation;
+                partitionId = DelegationFormulaValue._partitionId;
             }
             else
             {
@@ -68,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, 1, columns, isDistinct: isDistinct ,cancellationToken).ConfigureAwait(false);
+            var row = await _hooks.RetrieveMultipleAsync(table, relation, filter, partitionId, 1, columns, isDistinct: isDistinct ,cancellationToken).ConfigureAwait(false);
 
             var result = row.FirstOrDefault();
             if (result == null || result.IsBlank)
