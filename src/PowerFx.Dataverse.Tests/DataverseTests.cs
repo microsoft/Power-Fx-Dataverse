@@ -1407,6 +1407,7 @@ END
         [InlineData("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.")] // "Image"
         [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] // "Image in IsBlank"
         [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] // "File not added to entity"
+        [InlineData("MultiSelect", "Error 0-11: Columns of type Virtual are not supported in formula columns.")] // "Multi Select Picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
@@ -1588,7 +1589,8 @@ END
             {
                 { "guid", "The result type Guid is not supported in formula columns." },
                 { "allid", "The result type Guid is not supported in formula columns." },
-                { "ownerid", "The result type Record is not supported in formula columns." }
+                { "ownerid", "The result type Record is not supported in formula columns." },
+                { "multiSelect", "Columns of type Virtual are not supported in formula columns." }
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
@@ -2266,6 +2268,13 @@ END
             Assert.NotEqual(Guid.Empty, result.OptionSetId);
             Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
 
+            result = engine.Compile("picklist", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.NotEqual(Guid.Empty, result.OptionSetId);
+            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
+
             // Dependent optionsets used in formula, other than in the result values are returned in SqlCompileResult.DependentOptionSetIds.
             result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, Global2.Three = Global2.Four, 2, 3)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
@@ -2319,6 +2328,65 @@ END
                 Assert.NotNull(result.Errors);
                 Assert.Single(result.Errors);
                 Assert.Equal(error, result.Errors.First().ToString());
+            }
+        }
+
+        public const string OptionSetWithValueFnUDF1 = @"CREATE FUNCTION test(
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 int
+    DECLARE @v1 decimal(23,10)
+
+    -- expression body
+    SET @v0 = 1
+    SET @v1 = 1
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 10)
+END
+";
+        public const string OptionSetWithValueFnUDF2 = @"CREATE FUNCTION test(
+    @v0 int -- picklist
+) RETURNS decimal(23,10)
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+
+    -- expression body
+    SET @v1 = @v0
+    -- end expression body
+
+    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v1, 10)
+END
+";
+        [Theory]
+        [InlineData("Value('Picklist (All Attributes)'.One)", true, true, OptionSetWithValueFnUDF1)]
+        [InlineData("Value(picklist)", true, true, OptionSetWithValueFnUDF2)]
+        [InlineData("Value('Picklist (All Attributes)'.One)", false, false, "", "The function 'Value' has some invalid arguments")]
+        [InlineData("Value(picklist)", false, false, "", "The function 'Value' has some invalid arguments")]
+        [InlineData("Value(TimeUnit.Days)", false, false, "", "The function 'Value' has some invalid arguments")]
+        [InlineData("Value(TimeUnit.Days)", true, false, "", "The function 'Value' has some invalid arguments")]
+        public void OptionSetWithValueFnTests(string expr, bool shouldUseNumericBackingKindForOptionsets, bool success, string udf, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets,
+                shouldUseNumericBackingKindForOptionSetsInFormulaFields: shouldUseNumericBackingKindForOptionsets);
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "test" });
+
+            Assert.Equal(success, result.IsSuccess);
+            if (success)
+            {
+                Assert.NotNull(result.SqlFunction);
+                Assert.Equal(udf, result.SqlFunction);
+            }
+            else
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Contains(result.Errors, err => err.Message.Contains(error));
             }
         }
 

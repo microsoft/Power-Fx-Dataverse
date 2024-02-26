@@ -280,6 +280,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
                 ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
                 ExecuteSqlTest("Lower(Text(TimeUnit.Days))", "days", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                ExecuteSqlTest("Value('Rating (Thises)'.Hot)", 1M, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                ExecuteSqlTest("Value(rating)", 2M, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
 
                 // OptionSetToText operation is supported with FCB disabled.
                 ExecuteSqlTest("Text('Rating (Thises)'.Hot)", "1", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = false });
@@ -966,7 +968,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat },
+                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets, shouldUseNumericBackingKindForOptionSetsInFormulaFields: true) { NumberIsFloat = DataverseEngine.NumberIsFloat },
                 dataverseFeatures : dataverseFeatures);
 
             var options = new SqlCompileOptions

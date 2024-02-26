@@ -47,7 +47,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         IExternalOptionSet IExternalOptionSetDocument.RegisterOrRefreshOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued, List<OptionSetInfoMapping> optionSetInfoMappings)
         {
-            return new DataverseOptionSet(invariantName, datasetName, entityName, columnName, metadataId, optionSetName, optionSetId, optionSetMetadataName, attributeTypeName, optionSetValues, isGlobal, isBooleanValued);
+            bool shouldUseNumericBackingKindForOptionSets = (_globalScope is CdsEntityMetadataProvider mp) && mp._shouldUseNumericBackingKindForOptionSetsInFormulaFields;
+            return new DataverseOptionSet(invariantName, datasetName, entityName, columnName, metadataId, optionSetName, optionSetId, optionSetMetadataName, attributeTypeName, optionSetValues, isGlobal, isBooleanValued, shouldUseNumericBackingKindForOptionSets);
         }
     }
 }

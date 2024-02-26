@@ -1081,7 +1081,9 @@ namespace Microsoft.PowerFx.Dataverse
                         return new GuidType();
 
                     case DKind.OptionSet:
-                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean : FormulaType.OptionSetValue;
+                        var optionSetInfo = (column.TypeDefinition as CdsOptionSetTypeDefinition)?.DType?.OptionSetInfo;
+                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean : 
+                            ((_dataverseFeatures.IsOptionSetEnabled && optionSetInfo != null) ? new OptionSetValueType(optionSetInfo) : FormulaType.OptionSetValue);
 
                     case DKind.DateTimeNoTimeZone:
                     case DKind.DateTime:
