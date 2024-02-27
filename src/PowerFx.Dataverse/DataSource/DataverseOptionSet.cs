@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DType Type => _invariantType;
 
-        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.String;
+        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.Number;
 
         bool IExternalOptionSet.IsConvertingDisplayNameMapping => false;
 
