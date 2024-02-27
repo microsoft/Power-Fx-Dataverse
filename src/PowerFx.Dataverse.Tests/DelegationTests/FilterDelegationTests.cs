@@ -277,6 +277,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 187, false, false)]
         [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 188, true, false)]
         [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 189, false, true)]
+
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 190, true, true)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 191, false, false)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 192, true, false)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 193, false, true)]
+
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 194, true, true)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 195, false, false)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 196, true, false)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 197, false, true)]
         public async Task FilterDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();

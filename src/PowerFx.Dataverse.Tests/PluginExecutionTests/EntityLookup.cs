@@ -483,7 +483,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.Status:
                     case AttributeTypeCode.Integer:
-                        if(x is Xrm.Sdk.OptionSetValue osx)
+                    case AttributeTypeCode.State:
+                        if (x is Xrm.Sdk.OptionSetValue osx)
                         {
                             x = osx.Value;
                         }
@@ -510,7 +511,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Virtual:
                     case AttributeTypeCode.ManagedProperty:
                     case AttributeTypeCode.PartyList:
-                    case AttributeTypeCode.State:
                     default:
                         throw new NotImplementedException($"FieldType {_amd.AttributeType.Value} not supported");
                 }
