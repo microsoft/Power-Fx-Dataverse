@@ -12,8 +12,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Functions;
+using Microsoft.PowerFx.Dataverse.Tests.DelegationTests;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -2631,6 +2633,38 @@ END
             {
                 Assert.True(sqlCheck.Errors.Select(err => err.Message.Contains(message)).Any());
             }
+        }
+
+        [Fact]
+        public async Task OptionSetComparisonTest()
+        {
+            string expr = "If(ThisRecord.Rating = 'Rating (Locals)'.Hot, true, false)";
+            var map = new AllTablesDisplayNameProvider();
+            map.Add("local", "Locals");
+            var policy = new SingleOrgPolicy(map);
+
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: true, policy: policy);
+
+            var opts = PluginExecutionTests._parserAllowSideEffects_NumberIsFloat;
+            var config = new PowerFxConfig(); // Pass in per engine
+            config.SymbolTable.EnableMutationFunctions();
+            var engine1 = new RecalcEngine(config);
+            engine1.EnableDelegation(dv.MaxRows);
+
+            var rowscope = SymbolTableOverRecordType.NewFromRecord(dv.GetRecordType("local"), allowThisRecord: true);
+            var symbols = SymbolTable.Compose(rowscope, dv.Symbols);
+            var check = engine1.Check(expr, options: opts, symbolTable: symbols);
+            Assert.True(check.IsSuccess);
+
+            Assert.True(dv.MetadataCache.TryGetOptionSet(new Core.Utils.DName("Rating (Locals)"), out var optionSet));
+
+            // Simulates IExternalOptionSetDocument.RegisterOrRefreshOptionSet
+            var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", "", "Rating", "", "", "", new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
+            Assert.NotSame(refreshedOptionSet, optionSet);
+            dv.MetadataCache.RegisterOptionSet("Rating (Locals)", refreshedOptionSet);
+
+            check = engine1.Check(expr, options: opts, symbolTable: symbols);
+            Assert.True(check.IsSuccess);
         }
     }
 
