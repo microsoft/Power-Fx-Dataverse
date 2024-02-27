@@ -1388,7 +1388,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("ThisRecord.Other.Data", 200.0)] // Relationship 
         [InlineData("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
         [InlineData("ThisRecord.Price + 10", 110.0, true)] // Basic field lookup (RowScope)
-        [InlineData("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets                 
+        [InlineData("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets
+        [InlineData("ThisRecord.Rating = 1", false, true)]
+        [InlineData("ThisRecord.Rating = 2", true, true)]
 
         // Single Global record
         [InlineData("First(t1).new_price", 100.0, false)]
@@ -1397,8 +1399,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Aggregates
         [InlineData("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
         [InlineData("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
-        [InlineData("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias  
-
+        [InlineData("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias 
         public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
