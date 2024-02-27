@@ -165,3 +165,11 @@ With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-00000000000
 (__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
 (__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
 (__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), False)).new_name)).field1
+(__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), False)).new_price
+(__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), False)).new_price
