@@ -164,6 +164,10 @@
     <value>{0} není ve sloupcích vzorců podporován, použijte místo toho {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Funkce {0} není ve sloupcích vzorců podporována.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Tuto operaci nelze provést u typu {0} ve sloupcích vzorců.</value>
     

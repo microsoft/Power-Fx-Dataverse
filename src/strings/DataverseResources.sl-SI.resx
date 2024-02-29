@@ -164,6 +164,10 @@
     <value>Funkcija {0} ni podprta v stolpcih s formulo, uporabite raje {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Naslednje ni podprto v stolpcih s formulo: {0}.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Tega postopka ni mogoče izvesti za vrsto {0} v stolpcih s formulami.</value>
     

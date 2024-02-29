@@ -164,6 +164,10 @@
     <value>計算式列は {0} をサポートしていません。代わりに {1} を使用します。</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} は、計算式列に対応していません。</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>計算式列では、この操作を {0} 型で実行できません。</value>
     

@@ -164,6 +164,10 @@
     <value>Funkcija {0} netiek atbalstīta formulu kolonnās, tā vietā izmantojiet funkciju {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Funkcija {0} netiek atbalstīta formulu kolonnās.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Formulu kolonnās šo darbību nevar veikt tipam {0}.</value>
     

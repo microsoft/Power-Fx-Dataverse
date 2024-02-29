@@ -164,6 +164,10 @@
     <value>{0} δεν υποστηρίζεται σε στήλες τύπου, χρησιμοποιήστε {1} αντ' αυτού.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Το {0} δεν υποστηρίζεται σε στήλες τύπου.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Αυτή η λειτουργία δεν μπορεί να εκτελεστεί σε τύπο {0} σε στήλες τύπου.</value>
     

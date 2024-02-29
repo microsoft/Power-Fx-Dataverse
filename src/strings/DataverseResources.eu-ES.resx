@@ -164,6 +164,10 @@
     <value>{0} ez da onartzen formula-zutabeetan; horren ordez, erabili {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} ez da onartzen formula-zutabeetan.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Eragiketa ezin da egin formula-zutabeetako {0} motan.</value>
     

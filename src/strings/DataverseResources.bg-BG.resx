@@ -164,6 +164,10 @@
     <value>{0} не се поддържа в колони за формули, вместо това използвайте {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} не се поддържа за колони за формули.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Тази операция не може да се извърши спрямо тип {0} в колони за формули.</value>
     

@@ -164,6 +164,10 @@
     <value>A(z) {0} nem támogatott a képletoszlopokban. Használja inkább a következőt: {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>A(z) {0} nem használható képletoszlopokban.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Ez a művelet nem hajtható végre {0} típusú képletoszlopokban.</value>
     

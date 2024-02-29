@@ -164,6 +164,10 @@
     <value>Kohdetta {0} ei tueta kaavasarakkeissa. Käytä sen sijaan kohdetta {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Funktiota {0} ei tueta kaavasarakkeissa.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Tätä toimintoa ei voi suorittaa tyypille {0} kaavasarakkeissa.</value>
     

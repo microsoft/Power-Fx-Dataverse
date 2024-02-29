@@ -164,6 +164,10 @@
     <value>{0} não é suportado em colunas de fórmula. Utilize {1} em vez disso.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} não é suportado em colunas de fórmula.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Não é possível efetuar esta operação no tipo {0} em colunas de fórmula.</value>
     

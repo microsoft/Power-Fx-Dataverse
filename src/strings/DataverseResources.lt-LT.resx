@@ -164,6 +164,10 @@
     <value>Funkcija {0} formulės stulpeliuose nepalaikoma, vietoj jos naudokite {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} tipo stulpeliai formulės stulpeliuose nepalaikomi.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Šios operacijos negalima atlikti formulės stulpelių tipe {0}.</value>
     
