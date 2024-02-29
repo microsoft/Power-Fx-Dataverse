@@ -2118,7 +2118,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // OptionSets. 
             var opt = val1.GetField("rating");
 
-            Assert.Equal("Warm", opt.ToObject());
+            Assert.Equal(2.0, opt.ToObject());
             Assert.Equal("OptionSetValue (2=Warm)", opt.ToString());
         }
 
@@ -2154,7 +2154,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // OptionSets. 
             var opt = val1.GetField("rating");
 
-            Assert.Equal("Warm", opt.ToObject());
+            Assert.Equal(2.0, opt.ToObject());
             Assert.Equal("OptionSetValue (2=Warm)", opt.ToString());
         }
 
@@ -2548,6 +2548,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("Concat(First(t1).multiSelect, Value)", "EightNine")]
         [InlineData("First(First(t1).multiSelect).Value & \" options\"", "Eight options")]
+        [InlineData("'MultiSelect (All Attributes)'.'Eight' & \" options\"", "Eight options")]
+        [InlineData("Text('MultiSelect (All Attributes)'.'Eight' = First(First(t1).multiSelect).Value)", "true")]
+        [InlineData("Text(Text('MultiSelect (All Attributes)'.'Eight') = Text(First(First(t1).multiSelect).Value))", "true")]
         [InlineData("If(First(First(t1).multiSelect).Value =  'MultiSelect (All Attributes)'.'Eight', \"Worked\")", "Worked")]
         public async Task MultiSelectFieldTest(string expression, string expected)
         {
