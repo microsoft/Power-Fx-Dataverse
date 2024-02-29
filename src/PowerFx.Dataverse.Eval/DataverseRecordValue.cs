@@ -33,12 +33,15 @@ namespace Microsoft.PowerFx.Dataverse
         // Used to resolve entity relationships (dot operators). 
         private readonly IConnectionValueContext _connection;
 
+        private readonly EntityReferenceResolver _resolver;
+
         internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection)
             : base(recordType)
         {
             _entity = entity ?? throw new ArgumentNullException(nameof(entity));
             _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _resolver = new EntityReferenceResolver(connection);
 
             if (_entity.LogicalName != _metadata.LogicalName)
             {
@@ -258,24 +261,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, IEnumerable<string> columns, CancellationToken cancellationToken)
         {
-            FormulaValue result;
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, columns, cancellationToken).ConfigureAwait(false);
-
-            if (newEntity.HasError)
-            {
-                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync)).ToFormulaValue();
-            }
-
-            var newMetadata = _connection.GetMetadataOrThrow(newEntity.Response.LogicalName);
-
-            if (fieldType is not RecordType)
-            {
-                // Polymorphic case. 
-                fieldType = RecordType.Polymorphic();
-            }
-
-            result = new DataverseRecordValue(newEntity.Response, newMetadata, (RecordType)fieldType, _connection);
-            return result;
+            var result = await _resolver.ResolveEntityReferenceAsync(reference, fieldType, columns, cancellationToken);
+            return result.ToFormulaValue();
         }
 
         // Called by DataverseRecordValue, which wont internal entity attributes.
@@ -300,16 +287,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, columns:null, cancellationToken).ConfigureAwait(false);
+            var resolver = new EntityReferenceResolver(connection);
 
-            if (newEntity.HasError)
-            {
-                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
-            }
+            var refreshed = await resolver.ResolveEntityReferenceAsync(new EntityReference(leanEntity.LogicalName, leanEntity.Id), type, columns: null, cancellationToken).ConfigureAwait(false);
 
-            var refreshed = new DataverseRecordValue(newEntity.Response, metadata, type, connection);
-
-            return DValue<RecordValue>.Of(refreshed);
+            return refreshed;
         }
 
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))

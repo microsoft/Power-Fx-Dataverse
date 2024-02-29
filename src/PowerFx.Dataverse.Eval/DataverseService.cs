@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     public class DataverseService : IDataverseServices, IDataverseRefresh
     {        
-        private IOrganizationService _organizationService { get; }
+        internal IOrganizationService _organizationService { get; }
 
         public DataverseService(IOrganizationService service)
         {

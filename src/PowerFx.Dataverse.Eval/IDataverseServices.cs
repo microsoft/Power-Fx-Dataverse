@@ -39,7 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken));
-        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));        
+
+        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));         
     }
 
     // Optional interface to enable clearing any caches.

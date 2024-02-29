@@ -27,6 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseTableValue : TableValue, IRefreshable
     {
         private readonly IConnectionValueContext _connection;
+        private readonly EntityReferenceResolver _entityRefResolver;
         private RecordType _recordType;
 
         internal IConnectionValueContext Connection => _connection;
@@ -47,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _entityMetadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _lazyTaskRows = NewLazyTaskRowsInstance;
+            _entityRefResolver = new EntityReferenceResolver(connection);
         }
 
         public override object ToObject()
@@ -78,17 +80,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
-
-            if (result.HasError)
-            {
-                return result.DValueError("Retrieve");
-            }
-
-            Entity entity = result.Response;
-            var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
-
-            return DValue<RecordValue>.Of(row);
+            var row = await _entityRefResolver.ResolveEntityReferenceAsync(new EntityReference(_entityMetadata.LogicalName, id), Type.ToRecord(), columns, cancellationToken);
+            return row;
         }
 
         public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
@@ -118,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
-            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+            var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
 
@@ -134,7 +127,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
-            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+            var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 
             var request = new RetrieveMultipleRequest
             {
@@ -154,11 +147,11 @@ namespace Microsoft.PowerFx.Dataverse
             return EntityCollectionToRecordValues(entities);
         }
 
-        private QueryExpression CreateQueryExpression(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct)
+        internal static QueryExpression CreateQueryExpression(string entityName, FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct)
         {
             var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
 
-            var query = new QueryExpression(_entityMetadata.LogicalName)
+            var query = new QueryExpression(entityName)
             {
                 ColumnSet = columns,
                 Criteria = filter ?? new FilterExpression(),
@@ -200,15 +193,12 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columns:null, cancellationToken).ConfigureAwait(false);
-
-            if (newEntity.HasError)
-                return newEntity.DValueError(nameof(IDataverseReader.RetrieveAsync));
+            var refreshed = await _entityRefResolver.ResolveEntityReferenceAsync(new EntityReference(_entityMetadata.LogicalName, response.Response), Type.ToRecord(), columns: null, cancellationToken: cancellationToken);
 
             // After mutation, lazily refresh Rows from server.
             Refresh();
 
-            return DValue<RecordValue>.Of(new DataverseRecordValue(newEntity.Response, _entityMetadata, Type.ToRecord(), _connection));
+            return refreshed;
         }
 
         protected override async Task<DValue<RecordValue>> PatchCoreAsync(RecordValue baseRecord, RecordValue record, CancellationToken cancellationToken = default(CancellationToken))

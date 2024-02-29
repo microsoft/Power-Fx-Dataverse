@@ -277,16 +277,14 @@ namespace Microsoft.PowerFx.Dataverse
         public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
-
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
-            return response.HasError
-                ? response.GetErrorValue(type)
-                : new DataverseRecordValue(response.Response, metadata, type, this);
+            var resolver = new EntityReferenceResolver(this);
+            var result =  await resolver.ResolveEntityReferenceAsync(new EntityReference(logicalName, id), type, columns, cancellationToken);
+
+            return result.ToFormulaValue();
         }
 
         /// <summary>
