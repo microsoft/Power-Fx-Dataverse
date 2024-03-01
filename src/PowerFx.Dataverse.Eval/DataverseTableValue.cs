@@ -27,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseTableValue : TableValue, IRefreshable
     {
         private readonly IConnectionValueContext _connection;
-        private RecordType _recordType;
+        private readonly RecordType _recordType;
 
         internal IConnectionValueContext Connection => _connection;
 
@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
-            var services = _connection.Services;
+            var services = _connection.Services.dataverseServices;
             if (services is IDataverseRefresh serviceRefresh)
             {
                 serviceRefresh.Refresh(_entityMetadata.LogicalName);
@@ -83,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (result.HasError)
             {
                 return result.DValueError("Retrieve");
-            }
+        }
 
             Entity entity = result.Response;
             var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
@@ -118,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
-            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+            var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 
             var entities = await _connection.Services.RetrieveMultipleAsync(query, cancel).ConfigureAwait(false);
 
@@ -134,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
-            var query = CreateQueryExpression(filter, relation, count, columnSet, isDistinct);
+            var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 
             var request = new RetrieveMultipleRequest
             {
@@ -154,11 +154,11 @@ namespace Microsoft.PowerFx.Dataverse
             return EntityCollectionToRecordValues(entities);
         }
 
-        private QueryExpression CreateQueryExpression(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct)
+        internal static QueryExpression CreateQueryExpression(string entityName, FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct)
         {
             var columns = columnSet != null ? new ColumnSet(columnSet.ToArray()) : new ColumnSet(true);
 
-            var query = new QueryExpression(_entityMetadata.LogicalName)
+            var query = new QueryExpression(entityName)
             {
                 ColumnSet = columns,
                 Criteria = filter ?? new FilterExpression(),

@@ -201,6 +201,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (!_rawProvider.TryGetEntityMetadata(entityName, out var md))
+            {
+                throw new InvalidOperationException($"Entity metadata for : {entityName} not found.");
+            }
+
+            if (md.IsElasticTable())
+            {
+                throw new InvalidOperationException("Elastic tables not supported. It should use Retreive Multiple API");
+            }
+
             if (_getCustomErrorMessage != null)
             {
                 return Task.FromResult(DataverseResponse<Entity>.NewError(_getCustomErrorMessage()));

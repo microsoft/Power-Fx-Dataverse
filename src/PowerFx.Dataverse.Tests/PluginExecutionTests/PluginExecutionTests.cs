@@ -2825,6 +2825,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity7 = new Entity("elastictable", _g7);
             entity7.Attributes["field1"] = Convert.ToDecimal(200);
             entity7.Attributes["partitionid"] = "p1";
+            entity1.Attributes["elastic_ref"] = entity7.ToEntityReference();
 
             var entity8 = new Entity("elastictable", _g8);
             entity8.Attributes["field1"] = Convert.ToDecimal(200);
