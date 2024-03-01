@@ -63,6 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                         {
                             await sw.WriteLineAsync("");
                         }
+
                         await sw.WriteLineAsync(inputString);
                     }
                 }
@@ -89,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             {
                 // Compare the specified line with the input string, considering new lines as empty
                 var targetLine = index < allLines.Length ? allLines[index] : "";
-                    Assert.Equal(targetLine, inputString);
+                Assert.Equal(targetLine, inputString);
             }
         }
 

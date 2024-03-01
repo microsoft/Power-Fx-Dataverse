@@ -152,6 +152,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqDateTime:
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqCurrency:
+                case BinaryOpKind.EqOptionSetValue:
                 case BinaryOpKind.NeqNumbers:
                 case BinaryOpKind.NeqBoolean:
                 case BinaryOpKind.NeqText:
@@ -161,6 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.NeqGuid:
                 case BinaryOpKind.NeqDecimals:
                 case BinaryOpKind.NeqCurrency:
+                case BinaryOpKind.NeqOptionSetValue:
                     return formulaValue;
 
                 // Other Operations returns Default value.
