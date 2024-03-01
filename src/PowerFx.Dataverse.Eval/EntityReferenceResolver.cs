@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public EntityReferenceResolver(IConnectionValueContext connection)
         {
-            _connection = connection;
+            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
         public async Task<DValue<RecordValue>> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, IEnumerable<string> columns, CancellationToken cancellationToken)

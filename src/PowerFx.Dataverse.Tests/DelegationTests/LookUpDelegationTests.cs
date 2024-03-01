@@ -867,6 +867,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 173, false, false)]
         [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 174, true, false)]
         [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 175, false, true)]
+
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 176, true, true)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 177, false, false)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 178, true, false)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 179, false, true)]
         public async Task LookUpDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
