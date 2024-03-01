@@ -164,6 +164,10 @@
     <value>{0} không được hỗ trợ trong cột công thức, hãy sử dụng {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Không hỗ trợ {0} trong cột công thức.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Không thực hiện được thao tác này đối với loại {0} trong cột công thức.</value>
     

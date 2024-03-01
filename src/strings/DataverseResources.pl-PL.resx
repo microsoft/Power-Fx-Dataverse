@@ -164,6 +164,10 @@
     <value>Funkcja {0} nie jest obsługiwana w kolumnach formuł. Użyj zamiast niej funkcji {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Funkcja {0} nie jest obsługiwana w kolumnach formuł.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Tej operacji nie można wykonywać na typie {0} w kolumnach formuł.</value>
     

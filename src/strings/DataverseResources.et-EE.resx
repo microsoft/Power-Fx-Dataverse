@@ -164,6 +164,10 @@
     <value>Funktsiooni {0} ei toetata valemiveergudes, kasutage selle asemel funktsiooni {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} pole valemiveergudes toetatud.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Seda toimingut ei saa valemiveergudes teha tüübiga {0}.</value>
     

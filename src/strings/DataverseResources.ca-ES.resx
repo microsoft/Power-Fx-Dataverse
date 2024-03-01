@@ -164,6 +164,10 @@
     <value>La funció {0} no està admesa a les columnes de fórmula, utilitzeu la funció {1} en el seu lloc.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} no s'admet en les columnes de fórmules.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Aquesta operació no es pot dur a terme al tipus {0} de les columnes de fórmules.</value>
     

@@ -164,6 +164,10 @@
     <value>公式欄不支援 {0}，請改用 {1}。</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>公式欄不支援 {0}。</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>無法對公式資料行中的類型 {0} 執行此作業。</value>
     

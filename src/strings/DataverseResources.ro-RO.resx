@@ -164,6 +164,10 @@
     <value>{0} nu este acceptată în coloanele de formule, utilizați în schimb {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} nu este acceptat în coloanele de formule.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Această operațiune nu poate fi efectuată pe tipul {0} în coloanele de formule.</value>
     
