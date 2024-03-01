@@ -173,3 +173,7 @@ With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), False)).new_price))
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), False)).new_price))
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), False)).new_price))
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), False)).elastic_ref_local_et).field1))
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), False)).elastic_ref_local_et).field1))
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), False)).elastic_ref_local_et).field1))
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), False)).elastic_ref_local_et).field1))
