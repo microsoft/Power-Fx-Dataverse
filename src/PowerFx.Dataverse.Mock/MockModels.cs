@@ -34,6 +34,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewMoney("new_currency", "Currency"),
                 AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
                 AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
+                AttributeMetadataModel.NewLookup("elastic_ref", "Elastic Ref", new string[] { "elastictable" }),
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),
                 AttributeMetadataModel.NewLookup("virtualid", "Virtual Lookup", new string[] { "virtualremote" }),
                 AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
@@ -65,7 +66,13 @@ namespace Microsoft.Dataverse.EntityMock
                     new OptionMetadataModel { Label = "Resolved", Value = 3 }
                 },
                 attributeType: AttributeTypeCode.Status,
-                isGlobal: true)
+                isGlobal: true),
+                AttributeMetadataModel.NewPicklist("new_state", "State", new OptionMetadataModel[]
+                {
+                    new OptionMetadataModel { Label = "In Active", Value = 0 },
+                    new OptionMetadataModel { Label = "Active", Value = 1 }
+                },
+                attributeType: AttributeTypeCode.State),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
@@ -127,6 +134,16 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencingEntity = "local",
                     ReferencedEntityNavigationPropertyName = "logical_refd",
                     ReferencingEntityNavigationPropertyName = "new_polyfield_t1_t1",
+                    SchemaName = "logical"
+                },
+                 new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "etid",
+                    ReferencedEntity = "elastictable",
+                    ReferencingAttribute = "elastic_ref",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "logical_refd",
+                    ReferencingEntityNavigationPropertyName = "elastic_ref_local_et",
                     SchemaName = "logical"
                 }
             },

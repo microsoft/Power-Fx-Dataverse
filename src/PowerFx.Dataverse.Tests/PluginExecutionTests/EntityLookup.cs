@@ -201,6 +201,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (!_rawProvider.TryGetEntityMetadata(entityName, out var md))
+            {
+                throw new InvalidOperationException($"Entity metadata for : {entityName} not found.");
+            }
+
+            if (md.IsElasticTable())
+            {
+                throw new InvalidOperationException("Elastic tables not supported. It should use Retreive Multiple API");
+            }
+
             if (_getCustomErrorMessage != null)
             {
                 return Task.FromResult(DataverseResponse<Entity>.NewError(_getCustomErrorMessage()));
@@ -483,7 +493,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Picklist:
                     case AttributeTypeCode.Status:
                     case AttributeTypeCode.Integer:
-                        if(x is Xrm.Sdk.OptionSetValue osx)
+                    case AttributeTypeCode.State:
+                        if (x is Xrm.Sdk.OptionSetValue osx)
                         {
                             x = osx.Value;
                         }
@@ -510,7 +521,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     case AttributeTypeCode.Virtual:
                     case AttributeTypeCode.ManagedProperty:
                     case AttributeTypeCode.PartyList:
-                    case AttributeTypeCode.State:
                     default:
                         throw new NotImplementedException($"FieldType {_amd.AttributeType.Value} not supported");
                 }

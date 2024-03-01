@@ -2747,9 +2747,9 @@ END
         }
     }
 
-    public class FakeConnectionValueContext : IConnectionValueContext
+    internal class FakeConnectionValueContext : IConnectionValueContext
     {
-        public IDataverseServices Services => throw new NotImplementedException();
+        public ElasticTableAwareDVServices Services => throw new NotImplementedException();
 
         public int MaxRows => throw new NotImplementedException();
 

@@ -857,6 +857,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 165, false, false)]
         [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 166, true, false)]
         [InlineData("LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, 167, false, true)]
+
+        [InlineData("LookUp(t1, State = 'State (Locals)'.Active).Price", 100.0, 168, true, true)]
+        [InlineData("LookUp(t1, State = 'State (Locals)'.Active).Price", 100.0, 169, false, false)]
+        [InlineData("LookUp(t1, State = 'State (Locals)'.Active).Price", 100.0, 170, true, false)]
+        [InlineData("LookUp(t1, State = 'State (Locals)'.Active).Price", 100.0, 171, false, true)]
+
+        [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 172, true, true)]
+        [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 173, false, false)]
+        [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 174, true, false)]
+        [InlineData("LookUp(t1, State = If(1<0, 'State (Locals)'.Active)).Price", null, 175, false, true)]
+
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 176, true, true)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 177, false, false)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 178, true, false)]
+        [InlineData("LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, 179, false, true)]
         public async Task LookUpDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();

@@ -13,7 +13,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class QueryExtensions
     { 
-        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this IDataverseReader reader, string tableName, int maxRows, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this ElasticTableAwareDVServices reader, string tableName, int maxRows, CancellationToken cancellationToken = default(CancellationToken))
         {            
             QueryExpression query = new(tableName);
             query.ColumnSet.AllColumns = true;

@@ -2807,6 +2807,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
             entity1.Attributes["new_quantity"] = Convert.ToDecimal(20);
+            entity1.Attributes["new_state"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
@@ -2824,6 +2825,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entity7 = new Entity("elastictable", _g7);
             entity7.Attributes["field1"] = Convert.ToDecimal(200);
             entity7.Attributes["partitionid"] = "p1";
+            entity1.Attributes["elastic_ref"] = entity7.ToEntityReference();
 
             var entity8 = new Entity("elastictable", _g8);
             entity8.Attributes["field1"] = Convert.ToDecimal(200);
