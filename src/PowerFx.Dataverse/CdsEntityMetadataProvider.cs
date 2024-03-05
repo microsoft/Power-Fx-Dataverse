@@ -57,13 +57,6 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
 
-        /// <summary>
-        /// In DV, optionsets are backed by numeric value. for eg., [{Label:"Yes", Value: 10000000}].
-        /// Passing this FCB value as true during CdsEntityMetadataProvider object creation only for formula fields, 
-        /// so that for optionsets, BackingKind will be set to numeric. Default value is false everywhere.
-        /// </summary>
-        internal readonly bool _shouldUseNumericBackingKindForOptionSetsInFormulaFields = false;
-
         // SourceType property value for a formula field.
         private const int FormulaFieldSourceType = 3;
 
@@ -82,12 +75,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool NumberIsFloat { get; init; } = false;
 
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null, bool shouldUseNumericBackingKindForOptionSetsInFormulaFields = false)
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
             : this()
         {
             _innerProvider = provider;
-            _shouldUseNumericBackingKindForOptionSetsInFormulaFields = shouldUseNumericBackingKindForOptionSetsInFormulaFields;
-
             if(globalOptionSets != null)
             {
                 _globalOptionSets = globalOptionSets;

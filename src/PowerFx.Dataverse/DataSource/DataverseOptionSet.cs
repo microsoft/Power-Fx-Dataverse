@@ -22,9 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
         private string _relatedEntityName;
         private List<DName> _optionNames;
         private DType _invariantType = DType.Invalid;
-        private readonly DKind? _optionSetBackingKind = null;
 
-        public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued, bool shouldUseNumericBackingKindForOptionSetsInFormulaFields = false)
+        public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)
         {
             Name = optionSetName;
             OptionSetId = string.IsNullOrEmpty(optionSetId) ? Guid.Empty : new Guid(optionSetId);
@@ -37,7 +36,6 @@ namespace Microsoft.PowerFx.Dataverse
             DisplayNameProvider = options;
             InvariantName = invariantName;
             _invariantType = DType.CreateOptionSetType(this);
-            _optionSetBackingKind = shouldUseNumericBackingKindForOptionSetsInFormulaFields ? DKind.Number : DKind.String;
         }
 
         /// <summary>
@@ -74,7 +72,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DType Type => _invariantType;
 
-        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : (_optionSetBackingKind ?? DKind.String);
+        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.Number;
 
         bool IExternalOptionSet.IsConvertingDisplayNameMapping => false;
 

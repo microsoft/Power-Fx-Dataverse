@@ -968,7 +968,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var provider = new MockXrmMetadataProvider(metadata);
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
-                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets, shouldUseNumericBackingKindForOptionSetsInFormulaFields: true) { NumberIsFloat = DataverseEngine.NumberIsFloat },
+                new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat },
                 dataverseFeatures : dataverseFeatures);
 
             var options = new SqlCompileOptions

@@ -2384,17 +2384,13 @@ AS BEGIN
 END
 ";
         [Theory]
-        [InlineData("Value('Picklist (All Attributes)'.One)", true, true, OptionSetWithValueFnUDF1)]
-        [InlineData("Value(picklist)", true, true, OptionSetWithValueFnUDF2)]
-        [InlineData("Value('Picklist (All Attributes)'.One)", false, false, "", "The function 'Value' has some invalid arguments")]
-        [InlineData("Value(picklist)", false, false, "", "The function 'Value' has some invalid arguments")]
-        [InlineData("Value(TimeUnit.Days)", false, false, "", "The function 'Value' has some invalid arguments")]
-        [InlineData("Value(TimeUnit.Days)", true, false, "", "The function 'Value' has some invalid arguments")]
-        public void OptionSetWithValueFnTests(string expr, bool shouldUseNumericBackingKindForOptionsets, bool success, string udf, string error = null)
+        [InlineData("Value('Picklist (All Attributes)'.One)", true, OptionSetWithValueFnUDF1)]
+        [InlineData("Value(picklist)", true, OptionSetWithValueFnUDF2)]
+        [InlineData("Value(TimeUnit.Days)", false, "", "The function 'Value' has some invalid arguments")]
+        public void OptionSetWithValueFnTests(string expr, bool success, string udf, string error = null)
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets,
-                shouldUseNumericBackingKindForOptionSetsInFormulaFields: shouldUseNumericBackingKindForOptionsets);
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
             var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "test" });
 
