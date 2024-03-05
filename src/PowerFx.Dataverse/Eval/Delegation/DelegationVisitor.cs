@@ -715,30 +715,38 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessWith(CallNode node, Context context)
         {
-            var arg0 = (RecordNode)node.Args[0];
+            IntermediateNode arg0Intermediate;
+            IntermediateNode arg1Intermediate;
             var arg1 = (LazyEvalNode)node.Args[1];
 
-            var withScope = RecordNodeToDictionary(arg0, context);
-            var maybeDelegatedArg0 = new RecordNode(arg0.IRContext, withScope.ToDictionary(kv => new DName(kv.Key), kv => Materialize(kv.Value)));
-
-            context.PushWithScope(withScope);
-            var arg1MaybeDelegable = Materialize(arg1.Child.Accept(this, context));
-            var poppedWithScope = context.PopWithScope();
-            
-            if(withScope != poppedWithScope)
+            if (node.Args[0] is RecordNode arg0)
             {
-                throw new InvalidOperationException("With scope stack is corrupted");
-            }
+                var withScope = RecordNodeToDictionary(arg0, context);
+                arg0Intermediate = new RecordNode(arg0.IRContext, withScope.ToDictionary(kv => new DName(kv.Key), kv => Materialize(kv.Value)));
 
-            if (!ReferenceEquals(arg1MaybeDelegable,arg1.Child))
-            {
-                var lazyArg1 = new LazyEvalNode(arg1.Child.IRContext, arg1MaybeDelegable);
-                var delegatedWith = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { maybeDelegatedArg0, lazyArg1 });
-                return Ret(delegatedWith);
+                context.PushWithScope(withScope);
+                arg1Intermediate = Materialize(arg1.Child.Accept(this, context));
+                var poppedWithScope = context.PopWithScope();
+
+                if (withScope != poppedWithScope)
+                {
+                    throw new InvalidOperationException("With scope stack is corrupted");
+                }
             }
             else
             {
-                return Ret(new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { maybeDelegatedArg0, arg1 }));
+                arg0Intermediate = Materialize(node.Args[0].Accept(this, context));
+                arg1Intermediate = Materialize(arg1.Child.Accept(this, context));
+            }
+
+            if (!ReferenceEquals(arg1Intermediate, arg1.Child))
+            {
+                var lazyArg1 = new LazyEvalNode(arg1.Child.IRContext, arg1Intermediate);
+                return Ret(new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { arg0Intermediate, lazyArg1 }));
+            }
+            else
+            {
+                return Ret(new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { arg0Intermediate, arg1 }));
             }
         }
 
