@@ -631,7 +631,9 @@ namespace Microsoft.PowerFx.Dataverse
         internal RetVal CoerceBooleanToOp(IntermediateNode node, RetVal result, Context context)
         {
             // SQL does not allow boolean literals or boolean variables as a logical operation
-            if (node is BooleanLiteralNode || (node as LazyEvalNode)?.Child is BooleanLiteralNode)
+            if (node is BooleanLiteralNode || ((node as LazyEvalNode)?.Child is BooleanLiteralNode) ||
+                (node is UnaryOpNode opNode && opNode.Child is RecordFieldAccessNode fieldNode && fieldNode.From is ResolvedObjectNode resolvedNode && 
+                resolvedNode.Value is DataverseOptionSet optionSet && optionSet.BackingKind == DKind.Boolean))
             {
                 return RetVal.FromSQL($"({result}=1)", FormulaType.Boolean);
             }

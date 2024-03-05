@@ -336,6 +336,15 @@ namespace Microsoft.PowerFx.Dataverse
                             // if optionset used by formula field is a local optionset from another field,
                             // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
+ 
+                            // Currently blocking related entity's field's local optionset to be used as result type in formula columns due to solution
+                            // import challenges when related entity optionset field and formula field are getting created as part of same solution.
+                            if (key != _currentEntityName)
+                            {
+                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
+                                var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
+                                return errorResult;
+                            }
 
                             if (!dependentFields.ContainsKey(key))
                             {

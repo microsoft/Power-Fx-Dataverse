@@ -2257,9 +2257,10 @@ END
 
             engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
 
-            // Related entity field's local optionset can be used as result value.
+            // Using related entity optionset in result value is not supported.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
-            Assert.True(result.IsSuccess);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-97: The result type OptionSet 'Optionset Field (Triple Remotes)' from related tables is not currently supported in formula columns.", result.Errors.First().ToString());
 
             result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
@@ -2328,6 +2329,26 @@ END
                 Assert.NotNull(result.Errors);
                 Assert.Single(result.Errors);
                 Assert.Equal(error, result.Errors.First().ToString());
+            }
+        }
+
+        [Theory]
+        [InlineData("If(boolean, 1, 2)", true)]
+        [InlineData("If('Boolean (All Attributes)'.Yes, 1, 2)", true)]
+        [InlineData("If(picklist, 1, 2)", false, "Invalid argument type (OptionSetValue (allattributes_picklist_optionSet)). Expecting a Boolean value instead.")] // non-boolean backed optionset
+        [InlineData("If('Picklist (All Attributes)'.One, 1, 2)", false, "Invalid argument type (OptionSetValue (allattributes_picklist_optionSet)). Expecting a Boolean value instead.")] // non-boolean backed optionset
+        public void BooleanOptionSetTests(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Contains(result.Errors, err => err.Message.Contains(error));
             }
         }
 
