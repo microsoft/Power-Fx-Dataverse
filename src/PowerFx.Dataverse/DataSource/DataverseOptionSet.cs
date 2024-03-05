@@ -97,5 +97,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is DataverseOptionSet other)
+            {
+                return this.RelatedEntityName == other.RelatedEntityName && this._invariantType == other._invariantType;
+            }
+
+            return false;
+        }
     }
 }

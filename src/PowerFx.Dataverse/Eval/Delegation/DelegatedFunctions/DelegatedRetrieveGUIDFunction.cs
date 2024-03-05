@@ -30,14 +30,24 @@ namespace Microsoft.PowerFx.Dataverse
 
             var guid = ((GuidValue)args[1]).Value;
 
-            // column names to fetch.
-            IEnumerable<string> columns = null;
-            if (args.Length > 2)
+            string partitionId;
+            if (args[2] is BlankValue)
             {
-                columns = args.Skip(2).Select(x => ((StringValue)x).Value);
+                partitionId = null;
+            }
+            else
+            {
+                partitionId = ((StringValue)args[2]).Value;
             }
 
-            var result = await _hooks.RetrieveAsync(table, guid, columns, cancellationToken).ConfigureAwait(false);
+            // column names to fetch.
+            IEnumerable<string> columns = null;
+            if (args.Length > 3)
+            {
+                columns = args.Skip(3).Select(x => ((StringValue)x).Value);
+            }
+
+            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columns, cancellationToken).ConfigureAwait(false);
 
             if (result == null || result.IsBlank)
             {

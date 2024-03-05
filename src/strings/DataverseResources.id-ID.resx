@@ -164,6 +164,10 @@
     <value>{0} tidak didukung di kolom rumus, gunakan {1} sebagai gantinya.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} tidak didukung dalam kolom formula.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Operasi ini tidak dapat dilakukan pada tipe {0} di kolom rumus.</value>
     

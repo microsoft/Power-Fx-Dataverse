@@ -36,6 +36,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewMoney("new_currency", "Currency"),
                 AttributeMetadataModel.NewDecimal("new_quantity", "Quantity"),
                 AttributeMetadataModel.NewLookup("otherid", "Other", new string[] { "remote" }),
+                AttributeMetadataModel.NewLookup("elastic_ref", "Elastic Ref", new string[] { "elastictable" }),
                 AttributeMetadataModel.NewLookup("selfid", "Self Reference", new string[] { "local" }),
                 AttributeMetadataModel.NewLookup("virtualid", "Virtual Lookup", new string[] { "virtualremote" }),
                 AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
@@ -67,7 +68,13 @@ namespace Microsoft.Dataverse.EntityMock
                     new OptionMetadataModel { Label = "Resolved", Value = 3 }
                 },
                 attributeType: AttributeTypeCode.Status,
-                isGlobal: true)
+                isGlobal: true),
+                AttributeMetadataModel.NewPicklist("new_state", "State", new OptionMetadataModel[]
+                {
+                    new OptionMetadataModel { Label = "In Active", Value = 0 },
+                    new OptionMetadataModel { Label = "Active", Value = 1 }
+                },
+                attributeType: AttributeTypeCode.State),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
@@ -129,6 +136,16 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencingEntity = "local",
                     ReferencedEntityNavigationPropertyName = "logical_refd",
                     ReferencingEntityNavigationPropertyName = "new_polyfield_t1_t1",
+                    SchemaName = "logical"
+                },
+                 new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "etid",
+                    ReferencedEntity = "elastictable",
+                    ReferencingAttribute = "elastic_ref",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "logical_refd",
+                    ReferencingEntityNavigationPropertyName = "elastic_ref_local_et",
                     SchemaName = "logical"
                 }
             },
@@ -252,9 +269,44 @@ namespace Microsoft.Dataverse.EntityMock
         };
 
         /// <summary>
+        ///  Simple model used to simulate a lookup column.
+        /// </summary>
+        public static readonly EntityMetadataModel ElasticTableModel = new EntityMetadataModel
+        {
+            LogicalName = "elastictable",
+            DisplayCollectionName = "Elastic Table",
+            PrimaryIdAttribute = "etid",
+
+            // below makes this metadata elastic table.
+            DataProviderId = Guid.Parse("1d9bde74-9ebd-4da9-8ff5-aa74945b9f74"),
+
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewGuid("etid", "etid"),
+                AttributeMetadataModel.NewDecimal("field1", "Field1"),
+
+                // Below is a key attribute in elastic table.
+                AttributeMetadataModel.NewString("partitionid", "Partition Id"),
+            },
+            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
+            {
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "localid",
+                    ReferencedEntity = "local",
+                    ReferencingAttribute = "selfid",
+                    ReferencingEntity = "local",
+                    ReferencedEntityNavigationPropertyName = "self_refd",
+                    ReferencingEntityNavigationPropertyName = "self",
+                    SchemaName = "self"
+                },
+            }
+        };
+
+        /// <summary>
         ///  Array with multiple models pre-loaded.
         /// </summary>
-        public static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel };
+        public static readonly EntityMetadataModel[] RelationshipModels = new EntityMetadataModel[] { LocalModel, RemoteModel, DoubleRemoteModel, TripleRemoteModel, VirtualRemoteModel, ElasticTableModel };
 
         /// <summary>
         /// Idealy contains all columns types.

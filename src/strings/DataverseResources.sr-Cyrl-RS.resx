@@ -164,6 +164,10 @@
     <value>Функција {0} није подржана у колонама формула, користите {1} уместо ње.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>Функција {0} није подржана у колонама са формулама.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Није могуће извршити ову операцију на типу {0} у колонама формуле.</value>
     

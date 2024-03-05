@@ -164,6 +164,10 @@
     <value>Non se admite a función {0} nas columnas de fórmula, use {1} no seu lugar.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>A función {0} non se admite nas columnas de fórmula.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Esta operación non se pode realizar no tipo {0} nas columnas de fórmula.</value>
     

@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json.Linq;
@@ -85,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                 links = ((TableValue)args[3]).Rows.Select(row => ((StringValue)row.Value.GetField("Value")).Value);
                 relation = _hooks.RetreiveManyToOneRelation(table, links);
                 dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
-                var filter = GenerateFilterExpression(field, dvValue);
+                var filter = GenerateFilterExpression(field, _op, dvValue);
                 filter.Conditions[0].EntityName = relation.LinkToEntityName;
 
                 result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation });
@@ -93,20 +94,27 @@ namespace Microsoft.PowerFx.Dataverse
             else
             {
                 dvValue = _hooks.RetrieveAttribute(table, field, value);
-                var filter = GenerateFilterExpression(field, dvValue);
-                result = new DelegationFormulaValue(filter, relation: null);
+                if(DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == ConditionOperator.Equal)
+                {
+                    result = new DelegationFormulaValue(filter: null, relation: null, partitionId: (string)dvValue);
+                }
+                else
+                {
+                    var filter = GenerateFilterExpression(field, _op, dvValue);
+                    result = new DelegationFormulaValue(filter, relation: null);
+                }
             }
 
             return result;
         }
 
-        private FilterExpression GenerateFilterExpression(string field, object dataverseValue)
+        internal static FilterExpression GenerateFilterExpression(string field, ConditionOperator op,  object dataverseValue)
         {
             var filter = new FilterExpression();
 
             if (dataverseValue == null)
             {
-                switch (_op)
+                switch (op)
                 {
                     case ConditionOperator.Equal:
                         filter.AddCondition(field, ConditionOperator.Null);
@@ -115,12 +123,12 @@ namespace Microsoft.PowerFx.Dataverse
                         filter.AddCondition(field, ConditionOperator.NotNull);
                         break;
                     default:
-                        throw new InvalidOperationException($"Unsupported operator {_op} for null value");
+                        throw new InvalidOperationException($"Unsupported operator {op} for null value");
                 }
             }
             else
             {
-                filter.AddCondition(field, _op, dataverseValue);
+                filter.AddCondition(field, op, dataverseValue);
             }
 
             return filter;
@@ -144,6 +152,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.EqDateTime:
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqCurrency:
+                case BinaryOpKind.EqOptionSetValue:
                 case BinaryOpKind.NeqNumbers:
                 case BinaryOpKind.NeqBoolean:
                 case BinaryOpKind.NeqText:
@@ -153,6 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.NeqGuid:
                 case BinaryOpKind.NeqDecimals:
                 case BinaryOpKind.NeqCurrency:
+                case BinaryOpKind.NeqOptionSetValue:
                     return formulaValue;
 
                 // Other Operations returns Default value.

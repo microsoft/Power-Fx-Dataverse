@@ -164,6 +164,10 @@
     <value>{0}, formül sütunlarında desteklenmiyor, bunun yerine {1} kullanın.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0}, formül sütunlarında desteklenmiyor.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Bu işlem, formül sütunlarında {0} türü üzerinde gerçekleştirilemez.</value>
     

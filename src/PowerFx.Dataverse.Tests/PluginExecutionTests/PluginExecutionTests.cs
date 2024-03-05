@@ -36,6 +36,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
         internal static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
         internal static readonly Guid _g6 = new Guid("00000000-0000-0000-0000-000000000006");
+        internal static readonly Guid _g7 = new Guid("00000000-0000-0000-0000-000000000007");
+        internal static readonly Guid _g8 = new Guid("00000000-0000-0000-0000-000000000008");
+        internal static readonly Guid _g9 = new Guid("00000000-0000-0000-0000-000000000009");
 
         internal static readonly ParserOptions _parserAllowSideEffects = new ParserOptions
         {
@@ -2787,6 +2790,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity3.Attributes["new_polyfield"] = null;
             entity3.Attributes["new_quantity"] = Convert.ToDecimal(10);
+            entity3.Attributes["new_name"] = "p1";
 
             var entity4 = new Entity("local", _g4);
             entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
@@ -2803,6 +2807,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
             entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
             entity1.Attributes["new_quantity"] = Convert.ToDecimal(20);
+            entity1.Attributes["new_state"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
@@ -2817,9 +2822,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity6.Attributes["vdata"] = Convert.ToDecimal(10);
             entity1.Attributes["virtualid"] = entity6.ToEntityReference();
 
+            var entity7 = new Entity("elastictable", _g7);
+            entity7.Attributes["field1"] = Convert.ToDecimal(200);
+            entity7.Attributes["partitionid"] = "p1";
+            entity1.Attributes["elastic_ref"] = entity7.ToEntityReference();
+
+            var entity8 = new Entity("elastictable", _g8);
+            entity8.Attributes["field1"] = Convert.ToDecimal(200);
+            entity8.Attributes["partitionid"] = "p2";
+
+            var entity9 = new Entity("elastictable", _g9);
+            entity9.Attributes["field1"] = Convert.ToDecimal(100);
+            entity9.Attributes["partitionid"] = null;
+
             var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
-            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6);
+            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6, entity7, entity8, entity9);
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
             var globalOptionSet = GetGlobalOptionSets(MockModels.RelationshipModels);

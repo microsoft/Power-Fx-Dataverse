@@ -164,6 +164,10 @@
     <value>{0} stöds inte i formelkolumner. Använd {1} i stället.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} stöds inte i formelkolumner.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Den här åtgärden kan inte utföras på typen {0} i formelkolumner.</value>
     

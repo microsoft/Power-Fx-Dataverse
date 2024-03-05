@@ -7,3 +7,4 @@ __retrieveMultiple(local, __lt(local, new_quantity, 20), 999, True, new_quantity
 __retrieveMultiple(local, __lt(local, new_quantity, 20), 999, True, new_quantity)
 Distinct(local, (_new_polyfield_value))
 Distinct(local, (refg))
+Distinct(elastictable, (field1))

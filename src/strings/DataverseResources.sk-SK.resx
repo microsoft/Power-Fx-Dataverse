@@ -164,6 +164,10 @@
     <value>Funkcia {0} nie je podporovaná v stĺpcoch vzorcov, použite namiesto toho funkciu {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} sa nepodporuje v stĺpcoch vzorcov.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Túto operáciu nie je možné vykonať na type {0} v stĺpcoch vzorcov.</value>
     

@@ -164,6 +164,10 @@
     <value>Funkcija {0} nije podržana u stupcima formula, umjesto toga upotrijebite {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} – nije podržano u stupcima formula.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Ova se operacija ne može izvršiti na vrsti {0} u stupcima formule.</value>
     

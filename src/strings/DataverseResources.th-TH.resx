@@ -164,6 +164,10 @@
     <value>{0} ไม่ได้รับการสนับสนุนในคอลัมน์สูตร ให้ใช้ {1} แทน</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} ไม่ได้รับการสนับสนุนในคอลัมน์สูตร</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>ไม่สามารถดำเนินการนี้กับชนิด {0} ในคอลัมน์สูตร</value>
     

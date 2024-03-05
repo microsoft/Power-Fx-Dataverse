@@ -105,6 +105,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case AttributeTypeCode.Picklist:
                 case AttributeTypeCode.Status:
+                case AttributeTypeCode.State:
                     if (isUsedinQueryExpression)
                     {
                         return int.Parse(((FxOptionSetValue)fxValue).Option);
@@ -177,7 +178,6 @@ namespace Microsoft.PowerFx.Dataverse
                 case AttributeTypeCode.EntityName:
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.PartyList:
-                case AttributeTypeCode.State:
                 default:
                     throw new NotImplementedException($"FieldType {amd.AttributeType.Value} not supported");
             }

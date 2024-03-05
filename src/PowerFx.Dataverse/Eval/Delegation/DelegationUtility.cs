@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.PowerFx.Syntax;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
@@ -19,6 +22,35 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         {
             var serializedMetadata = JsonSerializer.Serialize(metadata, DelegationIRVisitor._options);
             return serializedMetadata;
+        }
+
+        public static bool TryGetEntityMetadata(TableType tableType, out EntityMetadata entityMetadata)
+        {
+            var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
+            if (tableDS != null)
+            {
+                var tableLogicalName = tableDS.TableMetadata.Name; // logical name
+                if (tableDS.DataEntityMetadataProvider is CdsEntityMetadataProvider m2)
+                {
+                    if (m2.TryGetXrmEntityMetadata(tableLogicalName, out var metadata))
+                    {
+                        entityMetadata = metadata;
+                        return true;
+                    }
+                }
+            }
+
+            entityMetadata = null;
+            return false;
+        }
+
+        public static bool IsElasticTable(TableType tableType)
+        {
+            if (TryGetEntityMetadata(tableType, out var entityMetadata))
+            {
+                return entityMetadata.IsElasticTable();
+            }
+            return false;
         }
     }
 }

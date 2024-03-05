@@ -164,6 +164,10 @@
     <value>{0} tidak disokong dalam lajur formula, gunakan {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} tidak disokong dalam lajur formula.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Operasi ini tidak boleh dilakukan pada jenis {0} dalam lajur formula.</value>
     

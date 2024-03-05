@@ -164,6 +164,10 @@
     <value>फॉर्मूला कॉलमों में {0} समर्थित नहीं है, इसकी जगह {1} उपयोग करें.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>फ़ॉर्मूला कॉलम में {0} समर्थित नहीं है.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>यह संचालन सूत्र स्तंभों में प्रकार {0} पर नहीं किया जा सकता है.</value>
     

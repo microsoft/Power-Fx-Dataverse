@@ -164,6 +164,10 @@
     <value>{0} не підтримується у стовпцях формул. Натомість використовуйте {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>"{0}" не підтримується у стовпцях формул.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Цю операцію не можна виконати як тип {0} у стовпцях формул.</value>
     

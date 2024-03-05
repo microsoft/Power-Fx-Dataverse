@@ -164,6 +164,10 @@
     <value>{0} wird in Formelspalten nicht unterstützt. Verwenden Sie stattdessen {1}.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} wird in Formelspalten nicht unterstützt.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Dieser Vorgang kann nicht für Typ {0} in Formelspalten ausgeführt werden.</value>
     

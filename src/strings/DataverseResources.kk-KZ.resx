@@ -164,6 +164,10 @@
     <value>{0} формула бағандарында қолданылмайды, оның орнына {1} пайдаланыңыз.</value>
     
   </data>
+  <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
+    <value>{0} формула бағандарында қолданылмайды.</value>
+    
+  </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Бұл әрекет формула бағандарында {0} түрінде орындалмауы мүмкін.</value>
     

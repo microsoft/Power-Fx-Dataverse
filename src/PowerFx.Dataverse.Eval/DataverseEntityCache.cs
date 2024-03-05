@@ -224,5 +224,10 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
         }
+
+        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            return _innerService.ExecuteAsync(request, cancellationToken);
+        }
     }
 }

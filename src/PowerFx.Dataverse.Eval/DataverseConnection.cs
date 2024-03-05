@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal interface IConnectionValueContext
     {
-        IDataverseServices Services { get; }
+        ElasticTableAwareDVServices Services { get; }
 
         int MaxRows { get; }
 
@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         internal readonly CdsEntityMetadataProvider _metadataCache;
 
-        private readonly IDataverseServices _dvServices;
+        private readonly ElasticTableAwareDVServices _dvServices;
 
         /// <summary>
         /// Globals populated by calling <see cref="AddTable(string, string)"/>.
@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly ReadOnlySymbolValues _symbolValues;
 
-        IDataverseServices IConnectionValueContext.Services => _dvServices;
+        ElasticTableAwareDVServices IConnectionValueContext.Services => _dvServices;
 
         public Policy Policy => _policy;
 
@@ -123,7 +123,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DataverseConnection(Policy policy, IDataverseServices dvServices, CdsEntityMetadataProvider cdsEntityMetadataProvider, int maxRows = DefaultMaxRows)
         {
-            _dvServices = dvServices;
+            Func<string, EntityMetadata> getMetadata =
+                (logicalName) =>
+                {
+                    if (cdsEntityMetadataProvider.TryGetXrmEntityMetadata(logicalName, out var entityMetadata))
+                    {
+                        return entityMetadata;
+                    }
+                    return null;
+                };
+
+            _dvServices = new ElasticTableAwareDVServices(dvServices, getMetadata) ;
             _metadataCache = cdsEntityMetadataProvider;
 
             this._policy = policy ?? new MultiOrgPolicy(); 
@@ -216,7 +226,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new ArgumentNullException(nameof(logicalName));
             }
-            IDataverseReader reader = _dvServices;
+            IDataverseReader reader = _dvServices.dataverseServices;
             var signature = await reader.GetApiSignatureAsync(logicalName, cancel)
                 .ConfigureAwait(false);
 
@@ -397,7 +407,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _policy.RefreshCache();
 
-            if (_dvServices is IDataverseEntityCacheCleaner decc)
+            if (_dvServices.dataverseServices is IDataverseEntityCacheCleaner decc)
             {
                 decc.ClearCache();
             }

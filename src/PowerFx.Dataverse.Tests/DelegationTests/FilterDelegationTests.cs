@@ -267,12 +267,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 178, false, false)]
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 179, true, false)]
         [InlineData("Filter(t1, PolymorphicLookup <> First(t2))", 2, 180, false, true)]
+
+        [InlineData("Filter(et, Field1 = 200)", 2, 182, true, true)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 183, false, false)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 184, true, false)]
+        [InlineData("Filter(et, Field1 = 200)", 2, 185, false, true)]
+
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 186, true, true)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 187, false, false)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 188, true, false)]
+        [InlineData("ShowColumns(Filter(et, Field1 = 200), Field1)", 2, 189, false, true)]
+
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 190, true, true)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 191, false, false)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 192, true, false)]
+        [InlineData("Filter(t1, State = 'State (Locals)'.Active)", 1, 193, false, true)]
+
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 194, true, true)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 195, false, false)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 196, true, false)]
+        [InlineData("Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, 197, false, true)]
         public async Task FilterDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
             map.Add("virtualremote", "t3");
+            map.Add("elastictable", "et");
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);
