@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                optionSetValue = new OptionSetValue(fieldName.Value, osft);
+                optionSetValue = new OptionSetValue(fieldName.Value, osft, double.Parse(fieldName.Value));
                 return true;
             }
         }
