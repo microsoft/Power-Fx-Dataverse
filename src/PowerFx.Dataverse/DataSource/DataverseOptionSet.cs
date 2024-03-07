@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public DType Type => _invariantType;
 
-        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.String;
+        public DKind BackingKind => IsBooleanValued ? DKind.Boolean : DKind.Number;
 
         bool IExternalOptionSet.IsConvertingDisplayNameMapping => false;
 
@@ -89,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                optionSetValue = new OptionSetValue(fieldName.Value, osft);
+                optionSetValue = new OptionSetValue(fieldName.Value, osft, double.Parse(fieldName.Value));
                 return true;
             }
         }

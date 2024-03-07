@@ -177,8 +177,21 @@ namespace Microsoft.PowerFx.Dataverse
         public static FxOptionSetValue ConvertXrmOptionSetValueToFormulaValue(TableType type, XrmOptionSetValue optionSetValue)
         {
             var fxOptionSetValueType = FormulaType.Build(type.SingleColumnFieldType._type) as OptionSetValueType;
-            
-            return new FxOptionSetValue(optionSetValue.Value.ToString(), fxOptionSetValueType);
+
+            if (fxOptionSetValueType._type.IsOptionSetBackedByBoolean)
+            {
+                // Dataverse registers boolean option sets with "1" and "0" as the field names for true and false values
+                return new FxOptionSetValue(optionSetValue.Value.ToString(), fxOptionSetValueType, optionSetValue.Value == 1);
+            }
+            else if (fxOptionSetValueType._type.IsOptionSetBackedByNumber)
+            {
+
+                return new FxOptionSetValue(optionSetValue.Value.ToString(), fxOptionSetValueType, (double)optionSetValue.Value);
+            }
+            else
+            {
+                throw new InvalidOperationException("Attempted to construct DV option set backed by neither boolean nor number");
+            }
         }
     }
 }
