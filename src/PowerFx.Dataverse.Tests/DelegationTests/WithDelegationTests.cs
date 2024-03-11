@@ -142,6 +142,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             true,
             "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        // With's first arg is not a record node directly, but still a record type.
+        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
+            1,
+            25,
+            false,
+            false)]
+        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
+            1,
+            26,
+            true,
+            true)]
+        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
+            1,
+            27,
+            true,
+            false)]
+        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
+            1,
+            28,
+            false,
+            true)]
+
         public async Task WithDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
