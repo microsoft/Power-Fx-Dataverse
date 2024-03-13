@@ -36,7 +36,11 @@ namespace Microsoft.PowerFx.Dataverse
             symbolTable.AddFunction(new AITranslateFunctionWithLanguage());
             symbolTable.AddFunction(new AIClassifyFunction());
             symbolTable.AddFunction(new AIExtractFunction());
+#if false
+            // this function should take a Power Fx record as an argument, not a table logical name and GUID
+            // until this has been changed, do not enable this function
             symbolTable.AddFunction(new AISummarizeRecordFunction());
+#endif
         }
 
         public static void AddDataverseExecute(this RuntimeConfig config, IOrganizationService client)

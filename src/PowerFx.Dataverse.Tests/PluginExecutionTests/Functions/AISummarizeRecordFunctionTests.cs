@@ -13,6 +13,9 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Xunit;
 
+#if false
+// AISummarizeRecord function is disabled until the funciton signature is better aligned with Power Fx
+
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
 
@@ -140,3 +143,4 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
     }
 }
+#endif
