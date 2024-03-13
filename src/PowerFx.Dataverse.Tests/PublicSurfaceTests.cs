@@ -65,7 +65,10 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.AITranslateFunctionWithLanguage",
                 "Microsoft.PowerFx.Dataverse.AIClassifyFunction",
                 "Microsoft.PowerFx.Dataverse.AIExtractFunction",
+#if false
+// AISummarizeRecord function is disabled until the funciton signature is better aligned with Power Fx
                 "Microsoft.PowerFx.Dataverse.AISummarizeRecordFunction",
+#endif
 
                 // Custom APIs 
                 "Microsoft.PowerFx.Dataverse.CustomApiLookupExtensions",
