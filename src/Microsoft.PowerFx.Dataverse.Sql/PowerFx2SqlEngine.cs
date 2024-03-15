@@ -319,7 +319,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (retType is OptionSetValueType optionSetRetType)
                 {
                     _metadataCache.TryGetOptionSet(optionSetRetType.OptionSetName, out var optionSet);
-                    if (optionSet != null)
+                    if (optionSet != null && optionSet.OptionSetId != Guid.Empty)
                     {
                         // adding dependency for formula column to the option set returned by formula field.
                         sqlResult.OptionSetId = optionSet.OptionSetId;
