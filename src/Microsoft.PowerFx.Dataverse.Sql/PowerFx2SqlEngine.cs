@@ -314,7 +314,10 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
-                sqlResult.DependentGlobalOptionSetIds = _dataverseFeatures.IsOptionSetEnabled ? ctx.UpdateOptionSetRelatedDependencies(dependentFields, _metadataCache) : new HashSet<Guid>();
+                if (!ctx.TryUpdateOptionSetRelatedDependencies(dependentFields, _metadataCache, ref sqlResult))
+                {
+                    return sqlResult;
+                }
 
                 if (retType is OptionSetValueType optionSetRetType)
                 {
@@ -341,7 +344,7 @@ namespace Microsoft.PowerFx.Dataverse
                             // import challenges when related entity optionset field and formula field are getting created as part of same solution.
                             if (key != _currentEntityName)
                             {
-                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, optionSet.DisplayName).GetErrors(irNode.IRContext.SourceContext);
+                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, "'" + optionSet.DisplayName + "'").GetErrors(irNode.IRContext.SourceContext);
                                 var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
                                 return errorResult;
                             }
@@ -395,15 +398,6 @@ namespace Microsoft.PowerFx.Dataverse
                         new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
                     }
                 );
-
-                if (ex is SqlCompileException sqlCompileException)
-                {
-                    var errors = sqlCompileException.GetErrors(binding.Top.GetTextSpan());
-                    if (errors.Count() == 1 && errors.First().MessageKey.Equals("FormulaColumns_InvalidOptionSet"))
-                    {
-                        errorResult = new SqlCompileResult(errors);
-                    }
-                }
 
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;

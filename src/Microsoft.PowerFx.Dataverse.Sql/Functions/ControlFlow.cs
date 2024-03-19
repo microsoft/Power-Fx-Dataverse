@@ -240,9 +240,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         }
 
         /// <summary>
-		///     Validates if all optionsetvalue result arguments are using same optionset.
-        ///     e.g., If(1>2, 'localPicklist1'.A, 'localPicklist2'.A) - here localPicklist1, localPicklist2 are two different optionsets and 
-        ///     two different optionsets cannot be used as result type, hence should throw error.
+		/// Validates if all optionsetvalue result arguments are using same optionset.
+        /// e.g., If(1>2, 'localPicklist1'.A, 'localPicklist2'.A) - here localPicklist1, localPicklist2 are two different optionsets and 
+        /// two different optionsets cannot be used as result type, hence should throw error.
 		/// </summary>
         private static void ValidateOptionSetResultArgument(IntermediateNode node, CdsColumnDefinition columnDefinition, ref string optionSetName)
         {

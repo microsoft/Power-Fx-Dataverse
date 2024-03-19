@@ -89,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
 
         /// <summary>
-        /// Hashset of dependent global optionsetids of optionsets used by formula fields
+        /// A hashset of optionsetids of global option sets.
         /// </summary>
         /// <example>
         /// expression: "If( 'GlobalOptionSet1 (Table)'.Choice1 = 'GlobalOptionSet1 (Table)'.Choice1, 100, 'GlobalOptionSet2 (Table)'.Choice1 = 'GlobalOptionSet2 (Table)'.Choice1, 200, 300)"

@@ -245,7 +245,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type) ||
-                (type is OptionSetValueType && _dataverseFeatures.IsOptionSetEnabled) ||
+                (_dataverseFeatures.IsOptionSetEnabled && type is OptionSetValueType) ||
                 (_dataverseFeatures.IsFloatingPointEnabled && type is NumberType); // Number is only supported if floating point is enabled
         }
 

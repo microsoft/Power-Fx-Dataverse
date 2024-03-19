@@ -912,9 +912,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return dependentFields;
             }
 
-            public HashSet<Guid> UpdateOptionSetRelatedDependencies(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache)
+            public bool TryUpdateOptionSetRelatedDependencies(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache, ref SqlCompileResult sqlCompileResult)
             {
                 var dependentGlobalOptionSets = new HashSet<Guid>();
+
+                if (!_dataverseFeatures.IsOptionSetEnabled)
+                {
+                    sqlCompileResult.DependentGlobalOptionSetIds = dependentGlobalOptionSets;
+                    return true;
+                }
+
                 foreach (var optionSetName in _dependentOptionsets)
                 {
                     metadataCache.TryGetOptionSet(optionSetName, out var optionSet);
@@ -940,10 +947,14 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        throw new SqlCompileException(SqlCompileException.InvalidOptionSet, RootNode.IRContext.SourceContext, optionSetName);
+                        var errors = new SqlCompileException(SqlCompileException.InvalidOptionSet, RootNode.IRContext.SourceContext, optionSetName).GetErrors(RootNode.IRContext.SourceContext);
+                        sqlCompileResult = new SqlCompileResult(errors) { SanitizedFormula = sqlCompileResult.SanitizedFormula };
+                        return false;
                     }
                 }
-                return dependentGlobalOptionSets;
+
+                sqlCompileResult.DependentGlobalOptionSetIds = dependentGlobalOptionSets;
+                return true;
             }
 
             public Dictionary<string, HashSet<string>> GetDependentRelationships()

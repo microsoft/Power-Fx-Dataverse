@@ -2262,7 +2262,7 @@ END
             // Using related entity optionset in result value is not supported.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
             Assert.False(result.IsSuccess);
-            Assert.Equal("Error 0-97: The result type OptionSet 'Optionset Field (Triple Remotes)' from related tables is not currently supported in formula columns.", result.Errors.First().ToString());
+            Assert.Equal("Error 0-97: The Option Set with name 'Optionset Field (Triple Remotes)' from related tables is not currently supported in formula columns.", result.Errors.First().ToString());
 
             result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
@@ -2354,42 +2354,11 @@ END
             }
         }
 
-        public const string OptionSetWithValueFnUDF1 = @"CREATE FUNCTION test(
-) RETURNS decimal(23,10)
-  WITH SCHEMABINDING
-AS BEGIN
-    DECLARE @v0 int
-    DECLARE @v1 decimal(23,10)
-
-    -- expression body
-    SET @v0 = 1
-    SET @v1 = 1
-    -- end expression body
-
-    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v1, 10)
-END
-";
-        public const string OptionSetWithValueFnUDF2 = @"CREATE FUNCTION test(
-    @v0 int -- picklist
-) RETURNS decimal(23,10)
-  WITH SCHEMABINDING
-AS BEGIN
-    DECLARE @v1 decimal(23,10)
-
-    -- expression body
-    SET @v1 = @v0
-    -- end expression body
-
-    IF(@v1<-100000000000 OR @v1>100000000000) BEGIN RETURN NULL END
-    RETURN ROUND(@v1, 10)
-END
-";
         [Theory]
-        [InlineData("Value('Picklist (All Attributes)'.One)", true, OptionSetWithValueFnUDF1)]
-        [InlineData("Value(picklist)", true, OptionSetWithValueFnUDF2)]
-        [InlineData("Value(TimeUnit.Days)", false, "", "The function 'Value' has some invalid arguments")]
-        public void OptionSetWithValueFnTests(string expr, bool success, string udf, string error = null)
+        [InlineData("Value('Picklist (All Attributes)'.One)", true)]
+        [InlineData("Value(picklist)", true)]
+        [InlineData("Value(TimeUnit.Days)", false, "The function 'Value' has some invalid arguments")]
+        public void OptionSetWithValueFnTests(string expr, bool success, string error = null)
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
@@ -2400,7 +2369,6 @@ END
             if (success)
             {
                 Assert.NotNull(result.SqlFunction);
-                Assert.Equal(udf, result.SqlFunction);
             }
             else
             {

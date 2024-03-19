@@ -276,12 +276,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "rating", "2" } });
 
-                ExecuteSqlTest("Rating = 'Rating (Thises)'.Hot", false, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
-                ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
-                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
-                ExecuteSqlTest("Lower(Text(TimeUnit.Days))", "days", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
-                ExecuteSqlTest("Value('Rating (Thises)'.Hot)", 1M, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
-                ExecuteSqlTest("Value(rating)", 2M, cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = true });
+                var dataverseFeatures = new DataverseFeatures() { IsOptionSetEnabled = true };
+
+                ExecuteSqlTest("Rating = 'Rating (Thises)'.Hot", false, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Rating <> 'Rating (Thises)'.Hot", true, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("If(1 > 2, 'Rating (Thises)'.Hot, 'Rating (Thises)'.Warm)", 2, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Lower(Text(TimeUnit.Days))", "days", cx, entityMetadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Value('Rating (Thises)'.Hot)", 1M, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Value(rating)", 2M, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
 
                 // OptionSetToText operation is supported with FCB disabled.
                 ExecuteSqlTest("Text('Rating (Thises)'.Hot)", "1", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = false });
