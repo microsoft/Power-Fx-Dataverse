@@ -1409,7 +1409,7 @@ END
         [InlineData("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.")] // "Image"
         [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] // "Image in IsBlank"
         [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] // "File not added to entity"
-        [InlineData("MultiSelect", "Error 0-11: Columns of type Virtual are not supported in formula columns.")] // "Multi Select Picklist"
+        [InlineData("MultiSelect", "Error 0-11: Columns of type Multi-Select Option Set are not supported in formula columns.")] // "Multi Select Picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
@@ -1568,7 +1568,7 @@ END
             // mapping of field's logicalName --> fragment of Error received when trying to consume the type. 
             var unsupportedConsumer = new Dictionary<string, string>
             {
-                { "multiSelect", "Columns of type Virtual are not supported in formula columns." },
+                { "multiSelect", "Columns of type Multi-Select Option Set are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
                 { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },
                 { "selfid", "Name isn't valid. 'selfid' isn't recognized." },
@@ -1592,7 +1592,7 @@ END
                 { "guid", "The result type Guid is not supported in formula columns." },
                 { "allid", "The result type Guid is not supported in formula columns." },
                 { "ownerid", "The result type Record is not supported in formula columns." },
-                { "multiSelect", "Columns of type Virtual are not supported in formula columns." }
+                { "multiSelect", "Columns of type Multi-Select Option Set are not supported in formula columns." }
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);

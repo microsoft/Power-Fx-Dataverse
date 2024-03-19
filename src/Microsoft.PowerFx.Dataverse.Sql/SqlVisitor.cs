@@ -1123,6 +1123,11 @@ namespace Microsoft.PowerFx.Dataverse
                     default:
                         if (!column.DType.HasValue)
                         {
+                            if (column.TypeCode == AttributeTypeCode.Virtual && column.TypeDefinition is CdsArrayOptionSetTypeDefinition)
+                            {
+                                throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, "Multi-Select Option Set");
+                            }
+
                             throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                         }
 
