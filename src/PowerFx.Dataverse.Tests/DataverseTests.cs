@@ -1409,10 +1409,7 @@ END
         [InlineData("Image", "Error 0-5: Columns of type Virtual are not supported in formula columns.")] // "Image"
         [InlineData("IsBlank(Image)", "Error 8-13: Columns of type Virtual are not supported in formula columns.")] // "Image in IsBlank"
         [InlineData("File", "Error 0-4: Name isn't valid. 'File' isn't recognized.")] // "File not added to entity"
-        [InlineData("Picklist", "Error 0-8: The result type OptionSetValue is not supported in formula columns.")] // "Picklist"
-        [InlineData("MultiSelect", "Error 0-11: Columns of type Virtual are not supported in formula columns.")] // "Multi Select Picklist"
-        [InlineData("If(IsBlank(String), 'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", "Error 0-85: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.")] // "Built picklist"
-        [InlineData("If(IsBlank(String), 'MultiSelect (All Attributes)'.Eight, 'MultiSelect (All Attributes)'.Ten)", "Error 0-93: The result type OptionSetValue (allattributes_multiSelect_optionSet) is not supported in formula columns.")] // "Built hybrid picklist"
+        [InlineData("MultiSelect", "Error 0-11: Columns of type Multi-Select Option Set are not supported in formula columns.")] // "Multi Select Picklist"
         public void CompileInvalidTypes(string expr, string error)
         {
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
@@ -1571,7 +1568,7 @@ END
             // mapping of field's logicalName --> fragment of Error received when trying to consume the type. 
             var unsupportedConsumer = new Dictionary<string, string>
             {
-                { "multiSelect", "Columns of type Virtual are not supported in formula columns." },
+                { "multiSelect", "Columns of type Multi-Select Option Set are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
                 { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },
                 { "selfid", "Name isn't valid. 'selfid' isn't recognized." },
@@ -1590,21 +1587,17 @@ END
                 { "image", "Columns of type Virtual are not supported in formula columns."}
             };
 
-            const string errCantProduceOptionSets = "The result type OptionSetValue is not supported in formula columns.";
             var unsupportedProducer = new Dictionary<string, string>
             {
                 { "guid", "The result type Guid is not supported in formula columns." },
                 { "allid", "The result type Guid is not supported in formula columns." },
                 { "ownerid", "The result type Record is not supported in formula columns." },
-                { "statecode", errCantProduceOptionSets },
-                { "statuscode", errCantProduceOptionSets },
-                { "picklist", errCantProduceOptionSets },
-                { "multiSelect", errCantProduceOptionSets }
+                { "multiSelect", "Columns of type Multi-Select Option Set are not supported in formula columns." }
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
             var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
-                    , dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+                    , dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true, IsOptionSetEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
@@ -2226,35 +2219,6 @@ END
         public void CheckGlobalOptionSets()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
-            List<OptionSetMetadata> globalOptionSets = new List<OptionSetMetadata>();
-            var optionSet1 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
-                new OptionMetadata[]
-                {
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
-                }
-            )))
-            {
-                IsGlobal = true,
-                Name = "global1",
-                DisplayName = new Label(new LocalizedLabel("Global1", 1033), new LocalizedLabel[0])
-            };
-
-            var optionSet2 = new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
-                new OptionMetadata[]
-                {
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 3 },
-                    new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 4 },
-                }
-            )))
-            {
-                IsGlobal = true,
-                Name = "global2",
-                DisplayName = new Label(new LocalizedLabel("Global2", 1033), new LocalizedLabel[0])
-            };
-
-            globalOptionSets.Add(optionSet1);
-            globalOptionSets.Add(optionSet2);
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
 
             // Global optionsets - 'global1', 'global2' are not used by any attribute of the entity, so will not be present in the metadatacache optionsets
@@ -2264,13 +2228,193 @@ END
             Assert.Contains("Name isn't valid. 'Global2' isn't recognized", result.Errors.First().ToString());
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets));
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: MockModels.GlobalOptionSets),
+                dataverseFeatures: new() { IsOptionSetEnabled = true });
+
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.False(result2.IsSuccess);
             Assert.Contains("Not supported in formula columns.", result2.Errors.First().ToString());
 
             result2 = engine2.Compile("(Global2.Three = Global2.Four)", new SqlCompileOptions());
             Assert.True(result2.IsSuccess);
+
+            result2 = engine2.Compile("If(1 > 2, Global2.Three, Global2.Four)", new SqlCompileOptions());
+            Assert.True(result2.IsSuccess);
+            Assert.True(result2.ReturnType is OptionSetValueType);
+        }
+
+        [Fact]
+        public void OptionSetsTests()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
+            var engine = new PowerFx2SqlEngine(xrmModel, provider);
+            provider.TryGetOptionSet(new Core.Utils.DName("Picklist (All Attributes)"), out var optionSet);
+            provider.TryGetOptionSet(new Core.Utils.DName("Global2"), out var globalOptionSet);
+
+            // OptionSet returntype is not supported with FCB - "IsOptionSetEnabled" not enabled.
+            var result = engine.Compile("If(1>2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-72: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", result.Errors.First().ToString());
+
+            engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+
+            // Using related entity optionset in result value is not supported.
+            result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error 0-97: The Option Set with name 'Optionset Field (Triple Remotes)' from related tables is not currently supported in formula columns.", result.Errors.First().ToString());
+
+            result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.NotEqual(Guid.Empty, result.OptionSetId);
+            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
+
+            result = engine.Compile("picklist", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", result.TopLevelIdentifiers.ElementAt(0));
+            Assert.NotEqual(Guid.Empty, result.OptionSetId);
+            Assert.Equal(optionSet.OptionSetId, result.OptionSetId);
+
+            // Dependent optionsets used in formula, other than in the result values are returned in SqlCompileResult.DependentOptionSetIds.
+            result = engine.Compile("If('Picklist (All Attributes)'.One = 'Picklist (All Attributes)'.Two, 1, Global2.Three = Global2.Four, 2, 3)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal("picklist", ToStableString(result.TopLevelIdentifiers));
+            Assert.Single(result.DependentGlobalOptionSetIds);
+            Assert.NotEqual(Guid.Empty, globalOptionSet.OptionSetId);
+            Assert.Contains(globalOptionSet.OptionSetId, result.DependentGlobalOptionSetIds);
+            Assert.Equal(Guid.Empty, result.OptionSetId);
+        }
+
+        [Theory]
+        [InlineData("Text('Picklist (All Attributes)'.One)", true, false, "Error 32-36: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text('Picklist (All Attributes)'.One)", false, true)]
+        [InlineData("Text(picklist)", true, false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(picklist)", false, false, "Error 5-13: This argument cannot be passed as type OptionSetValueType in formula columns.")]
+        [InlineData("Text(TimeUnit.Days)", true, true)]
+        [InlineData("Text(TimeUnit.Days)", false, true)]
+        public void OptionSetToTextOperationTest(string expr, bool isOptionSetEnabled, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = isOptionSetEnabled });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(error, result.Errors.First().ToString());
+            }
+        }
+
+        [Theory]
+        [InlineData("If(lookup.data3>1,'Picklist (All Attributes)'.One, 'Optionset Field (Triple Remotes)'.One)", false, "Error 85-89: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("If(2>1,'Picklist (All Attributes)'.One, Global2.Three)", false, "Error 47-53: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("Switch(1,1,picklist,2,Global2.Four)", false, "Error 29-34: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("IfError('Picklist (All Attributes)'.One, Global2.Four)", false, "Error 35-39: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("If(3>1,'Picklist (All Attributes)'.One, picklist)", true)]
+        public void MultipleOptionSetsUsedInFormula(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Single(result.Errors);
+                Assert.Equal(error, result.Errors.First().ToString());
+            }
+        }
+
+        [Theory]
+        [InlineData("If(boolean, 1, 2)", true)]
+        [InlineData("If('Boolean (All Attributes)'.Yes, 1, 2)", true)]
+        [InlineData("If(picklist, 1, 2)", false, "Invalid argument type (OptionSetValue (allattributes_picklist_optionSet)). Expecting a Boolean value instead.")] // non-boolean backed optionset
+        [InlineData("If('Picklist (All Attributes)'.One, 1, 2)", false, "Invalid argument type (OptionSetValue (allattributes_picklist_optionSet)). Expecting a Boolean value instead.")] // non-boolean backed optionset
+        public void BooleanOptionSetTests(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions());
+
+            Assert.Equal(success, result.IsSuccess);
+            if (!success)
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Contains(result.Errors, err => err.Message.Contains(error));
+            }
+        }
+
+        [Theory]
+        [InlineData("Value('Picklist (All Attributes)'.One)", true)]
+        [InlineData("Value(picklist)", true)]
+        [InlineData("Value(TimeUnit.Days)", false, "The function 'Value' has some invalid arguments")]
+        public void OptionSetWithValueFnTests(string expr, bool success, string error = null)
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "test" });
+
+            Assert.Equal(success, result.IsSuccess);
+            if (success)
+            {
+                Assert.NotNull(result.SqlFunction);
+            }
+            else
+            {
+                Assert.NotNull(result.Errors);
+                Assert.Contains(result.Errors, err => err.Message.Contains(error));
+            }
+        }
+
+        public const string OptionSetTestUDF = @"CREATE FUNCTION test(
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 int
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 bit
+    DECLARE @v4 int
+    DECLARE @v5 int
+
+    -- expression body
+    SET @v1 = 1
+    SET @v2 = 2
+    SET @v3 = IIF((ISNULL(@v1,0) > ISNULL(@v2,0)), 1, 0)
+    IF ((ISNULL(@v3,0)=1)) BEGIN
+        SET @v4 = 1
+        SET @v0 = @v4
+    END ELSE BEGIN
+        SET @v5 = 2
+        SET @v0 = @v5
+    END
+    -- end expression body
+
+    RETURN @v0
+END
+";
+        [Fact]
+        public void OptionSetUDFTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+
+            var result = engine.Compile("If(1 > 2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.TopLevelIdentifiers);
+            Assert.Equal(OptionSetTestUDF, result.SqlFunction);
         }
 
         [Fact]

@@ -84,7 +84,11 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() { IsFloatingPointEnabled = false };
+            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() 
+            {
+                IsFloatingPointEnabled = false,
+                IsOptionSetEnabled = false
+            };
 
             var functions = Library.FunctionList.ToList();
 
@@ -241,6 +245,7 @@ namespace Microsoft.PowerFx.Dataverse
                 type is BooleanType ||
                 type is StringType ||
                 Library.IsDateTimeType(type) ||
+                (_dataverseFeatures.IsOptionSetEnabled && type is OptionSetValueType) ||
                 (_dataverseFeatures.IsFloatingPointEnabled && type is NumberType); // Number is only supported if floating point is enabled
         }
 

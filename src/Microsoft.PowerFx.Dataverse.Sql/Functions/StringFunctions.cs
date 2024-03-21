@@ -93,6 +93,22 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
+            else if (context._dataverseFeatures.IsOptionSetEnabled && arg.type is OptionSetValueType)
+            {
+                if (node.Args[0] is RecordFieldAccessNode fieldNode)
+                {
+                    string optionSetValue = fieldNode.Field.ToString();
+                    return context.SetIntermediateVariable(node, optionSetValue);
+                }
+
+                if (node.Args[0] is ScopeAccessNode)
+                {
+                    return context.SetIntermediateVariable(node, arg.ToString());
+                }
+
+                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), arg0.IRContext.SourceContext);
+
+            }
             else if (arg.type is BlankType)
             {
                 return context.SetIntermediateVariable(node, "NULL");

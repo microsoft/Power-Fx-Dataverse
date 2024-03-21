@@ -57,6 +57,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
 
+        // SourceType property value for a formula field.
+        private const int FormulaFieldSourceType = 3;
+
         internal IExternalDocument Document => _document;
 
         // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
@@ -287,7 +290,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (parsed) 
                 {
-                    var dataverseOptionSet = RegisterDataverseOptionSet(entity, optionSet);
+                    // Formula Fields doesn't have their own local optionset, they use either global optionset or other optionset field
+                    // hence skipping RegisterDataverseOptionSet for formula fields.
+                    var dataverseOptionSet = (attribute.SourceType == FormulaFieldSourceType && attribute.AttributeType.Value == AttributeTypeCode.Picklist) 
+                        ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
             }

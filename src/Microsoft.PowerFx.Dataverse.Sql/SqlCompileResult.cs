@@ -52,6 +52,16 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         public bool IsHintApplied { get; set; }
 
+        /// <summary>
+        /// OptionsetId of the optionset returned by formula fields of type optionset.
+        /// Value is Guid.Empty for non-optionset fields.
+        /// </summary>
+        /// /// <example>
+        /// expression: "If( 'Option1' = 'Option1 (Table)'.Choice1, 'Option2 (Table)'.Choice1, 'Option2 (Table)'.Choice2)"
+        /// OptionsetId of the Optionset - 'Option2 (Table)'
+        /// </example>
+        public Guid OptionSetId { get; set; }
+
         // Test harness can use to inspect exceptions.
         internal List<string> _unsupportedWarnings;
 
@@ -78,6 +88,14 @@ namespace Microsoft.PowerFx.Dataverse
         /// </example>
         public Dictionary<string, HashSet<string>> DependentRelationships { get; set; }
 
+        /// <summary>
+        /// A hashset of optionsetids of global option sets.
+        /// </summary>
+        /// <example>
+        /// expression: "If( 'GlobalOptionSet1 (Table)'.Choice1 = 'GlobalOptionSet1 (Table)'.Choice1, 100, 'GlobalOptionSet2 (Table)'.Choice1 = 'GlobalOptionSet2 (Table)'.Choice1, 200, 300)"
+        /// OptionsetIds of Optionsets => {'GlobalOptionSet1 (Table)', 'GlobalOptionSet2 (Table)'}
+        /// </example>
+        public HashSet<Guid> DependentGlobalOptionSetIds { get; set; }
     }
 
     // Additional info computed by the SQL comilation work

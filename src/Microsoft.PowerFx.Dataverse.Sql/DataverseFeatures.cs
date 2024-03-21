@@ -7,5 +7,9 @@
         // when this flag is disabled, Number Data type will act as Power Fx Core Decimal Data type and all Number Expressions would be treated as decimal 
         // and Formula columns will not be able to produce/consumer float type columns
         public bool IsFloatingPointEnabled { get; set;  }
+
+        // This FCB is to enable/disable Option Set Feature.
+        // When this flag is enabled, Formula Field of type Options Set are supported.
+        public bool IsOptionSetEnabled { get; set; }
     }
 }

@@ -157,6 +157,22 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         internal readonly static ErrorResourceKey DirectCurrencyNotSupported = DataverseStringResources.New("FormulaColumns_DirectCurrencyNotSupported");
 
+        // <summary>
+        /// The error resource key for a formula column that uses OptionSet from related entity.
+        /// </summary>
+        internal readonly static ErrorResourceKey RelatedEntityOptionSetNotSupported = DataverseStringResources.New("FormulaColumns_RelatedEntityOptionSetNotSupported");
+
+        /// <summary>
+        /// The error resource key for a formula when optionset info for an optionsetName is not found.
+        /// </summary>
+        internal readonly static ErrorResourceKey InvalidOptionSet = DataverseStringResources.New("FormulaColumns_InvalidOptionSet");
+
+        /// <summary>
+        /// The error resource key for a formula when multiple optionsets are used as result.
+        /// </summary>
+        internal readonly static ErrorResourceKey ResultFromMultipleOptionSetsNotSupported = DataverseStringResources.New("FormulaColumns_ResultFromMultipleOptionSetsNotSupported");
+
+
 
         internal SqlCompileException(ErrorResourceKey key, Span context, params object[] args) : base()
         {

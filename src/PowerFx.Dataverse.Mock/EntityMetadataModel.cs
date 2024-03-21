@@ -253,7 +253,8 @@ namespace Microsoft.Dataverse.EntityMock
                     IsGlobal = isGlobal,
                     DisplayName = displayName,
                     Name = logicalName + "_optionSet",
-                    Options = options
+                    Options = options,
+                    MetadataId = Guid.NewGuid()
                 }
             };
         }
@@ -338,5 +339,6 @@ namespace Microsoft.Dataverse.EntityMock
         public OptionMetadataModel[] Options { get; set; }
         public OptionMetadataModel TrueOption { get; set; }
         public OptionMetadataModel FalseOption { get; set; }
+        public Guid MetadataId { get; set; }
     }
 }

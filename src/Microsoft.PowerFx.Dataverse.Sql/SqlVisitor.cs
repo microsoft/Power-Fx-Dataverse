@@ -457,8 +457,27 @@ namespace Microsoft.PowerFx.Dataverse
                     if (node.Child is RecordFieldAccessNode fieldNode)
                     {
                         string name = fieldNode.Field.ToString();
+
+                        // blocking OptionSetToText operation if dataverse optionsetvalues are passed as args, as we can't return the labels which are user locale-specific.
+                        // e.g., OptionSetValue Labels - [{label:"Yes", languagecode:"1033"(en-US)}, {label:"Ja", languagecode:"1031"(de-DE)}]
+                        // When formula saved by maker with en-US language, Formula - Text('OptionSet ()'.Yes), UDF created returns string 'Yes' which is fixed and 
+                        // users with en-US or de-DE language code will see the formula field value as 'Yes' and it is not localized based on user locale.
+                        if (context._dataverseFeatures.IsOptionSetEnabled && fieldNode.From is ResolvedObjectNode resolvedObjectNode && 
+                            resolvedObjectNode.Value is DataverseOptionSet)
+                        {
+                            throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
+                        }
+
+                        // supporting OptionSetToText operation for enum cases like Text(TimeUnit.Days).
                         return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
                     }
+
+                    // throwing error as Text(optionsetField) gives numeric Value of the option.
+                    if (node.Child is ScopeAccessNode)
+                    {
+                        throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
+                    }
+
                     goto default;
 
                 // TODO: other coorcions as new type support is added
@@ -535,10 +554,11 @@ namespace Microsoft.PowerFx.Dataverse
                     return RetVal.FromVar(varName, context.GetReturnType(node));
                 }
             }
-            else if (node.From is ResolvedObjectNode resolvedObjectNode1 && resolvedObjectNode1.Value is DataverseOptionSet)
+            else if (node.From is ResolvedObjectNode resolvedObjectNode1 && resolvedObjectNode1.Value is DataverseOptionSet dataverseOptionSet)
             {
                 // This is an option set, which is treated as a record access
                 // the node Field will be a DName of the option set value
+                context._dependentOptionsets.Add(new DName(dataverseOptionSet.EntityName));
                 return context.SetIntermediateVariable(node, node.Field.Value);
             }
 
@@ -611,7 +631,9 @@ namespace Microsoft.PowerFx.Dataverse
         internal RetVal CoerceBooleanToOp(IntermediateNode node, RetVal result, Context context)
         {
             // SQL does not allow boolean literals or boolean variables as a logical operation
-            if (node is BooleanLiteralNode || (node as LazyEvalNode)?.Child is BooleanLiteralNode)
+            if (node is BooleanLiteralNode || ((node as LazyEvalNode)?.Child is BooleanLiteralNode) ||
+                (node is UnaryOpNode opNode && opNode.Child is RecordFieldAccessNode fieldNode && fieldNode.From is ResolvedObjectNode resolvedNode && 
+                resolvedNode.Value is DataverseOptionSet optionSet && optionSet.BackingKind == DKind.Boolean))
             {
                 return RetVal.FromSQL($"({result}=1)", FormulaType.Boolean);
             }
@@ -770,6 +792,9 @@ namespace Microsoft.PowerFx.Dataverse
             // Mapping of var names to details
             private Dictionary<string, VarDetails> _vars = new Dictionary<string, VarDetails>();
 
+            // OptionsetIds of optionsets used by formula fields
+            internal HashSet<DName> _dependentOptionsets = new HashSet<DName>();
+
             internal class Scope : DataverseType
             {
                 /// <summary>
@@ -885,6 +910,51 @@ namespace Microsoft.PowerFx.Dataverse
                     dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
                 }
                 return dependentFields;
+            }
+
+            public bool TryUpdateOptionSetRelatedDependencies(Dictionary<string, HashSet<string>> dependentFields, CdsEntityMetadataProvider metadataCache, ref SqlCompileResult sqlCompileResult)
+            {
+                var dependentGlobalOptionSets = new HashSet<Guid>();
+
+                if (!_dataverseFeatures.IsOptionSetEnabled)
+                {
+                    sqlCompileResult.DependentGlobalOptionSetIds = dependentGlobalOptionSets;
+                    return true;
+                }
+
+                foreach (var optionSetName in _dependentOptionsets)
+                {
+                    metadataCache.TryGetOptionSet(optionSetName, out var optionSet);
+                    if (optionSet != null)
+                    {
+                        // For local optionset, adding only dependency with attribute that the local optionset is bound to, as dependency between attribute and optionset
+                        // already exists - attribute being the required component for the optionset and local optionset gets deleted only when it's optionset field is deleted. 
+                        // Taking only dependent global optionsetids as global optionsets are not bound to any attribute.
+                        if (!optionSet.IsGlobal)
+                        {
+                            var key = optionSet.RelatedEntityName;
+                            if (!dependentFields.ContainsKey(key))
+                            {
+                                dependentFields[key] = new HashSet<string>();
+                            }
+
+                            dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
+                        }
+                        else
+                        {
+                            dependentGlobalOptionSets.Add(optionSet.OptionSetId);
+                        }
+                    }
+                    else
+                    {
+                        var errors = new SqlCompileException(SqlCompileException.InvalidOptionSet, RootNode.IRContext.SourceContext, optionSetName).GetErrors(RootNode.IRContext.SourceContext);
+                        sqlCompileResult = new SqlCompileResult(errors) { SanitizedFormula = sqlCompileResult.SanitizedFormula };
+                        return false;
+                    }
+                }
+
+                sqlCompileResult.DependentGlobalOptionSetIds = dependentGlobalOptionSets;
+                return true;
             }
 
             public Dictionary<string, HashSet<string>> GetDependentRelationships()
@@ -1024,7 +1094,9 @@ namespace Microsoft.PowerFx.Dataverse
                         return new GuidType();
 
                     case DKind.OptionSet:
-                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean : FormulaType.OptionSetValue;
+                        var optionSetInfo = (column.TypeDefinition as CdsOptionSetTypeDefinition)?.DType?.OptionSetInfo;
+                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean : 
+                            ((_dataverseFeatures.IsOptionSetEnabled && optionSetInfo != null) ? new OptionSetValueType(optionSetInfo) : FormulaType.OptionSetValue);
 
                     case DKind.DateTimeNoTimeZone:
                     case DKind.DateTime:
@@ -1051,6 +1123,11 @@ namespace Microsoft.PowerFx.Dataverse
                     default:
                         if (!column.DType.HasValue)
                         {
+                            if (column.TypeCode == AttributeTypeCode.Virtual && column.TypeDefinition is CdsArrayOptionSetTypeDefinition)
+                            {
+                                throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, "Multi-Select Option Set");
+                            }
+
                             throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
                         }
 

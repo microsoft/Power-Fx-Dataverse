@@ -220,4 +220,16 @@
     <value>Direct use of currency fields is not yet supported. Use Decimal(CurrencyField) as a workaround but note that decimal has a smaller range than currency.</value>
     <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>The Option Set with name {0} from related tables is not currently supported in formula columns.</value>
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>The metadata for the Option Set with name {0} was not found.</value>
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.</value>
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
+  </data>
 </root>

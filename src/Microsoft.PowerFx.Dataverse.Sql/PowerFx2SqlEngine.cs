@@ -314,6 +314,56 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
+                if (!ctx.TryUpdateOptionSetRelatedDependencies(dependentFields, _metadataCache, ref sqlResult))
+                {
+                    return sqlResult;
+                }
+
+                if (retType is OptionSetValueType optionSetRetType)
+                {
+                    _metadataCache.TryGetOptionSet(optionSetRetType.OptionSetName, out var optionSet);
+                    if (optionSet != null && optionSet.OptionSetId != Guid.Empty)
+                    {
+                        // adding dependency for formula column to the option set returned by formula field.
+                        sqlResult.OptionSetId = optionSet.OptionSetId;
+
+                        // Removing the option set returned by option set formula field from DependentOptionSetIds,
+                        // as this dependency will be handled when creating a optionset field.
+                        if (sqlResult.DependentGlobalOptionSetIds.Contains(optionSet.OptionSetId))
+                        {
+                            sqlResult.DependentGlobalOptionSetIds.Remove(optionSet.OptionSetId);
+                        }
+
+                        if (!optionSet.IsGlobal)
+                        {
+                            // if optionset used by formula field is a local optionset from another field,
+                            // add dependency between formula field and optionset field.
+                            var key = optionSet.RelatedEntityName;
+ 
+                            // Currently blocking related entity's field's local optionset to be used as result type in formula columns due to solution
+                            // import challenges when related entity optionset field and formula field are getting created as part of same solution.
+                            if (key != _currentEntityName)
+                            {
+                                errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, "'" + optionSet.DisplayName + "'").GetErrors(irNode.IRContext.SourceContext);
+                                var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
+                                return errorResult;
+                            }
+
+                            if (!dependentFields.ContainsKey(key))
+                            {
+                                dependentFields[key] = new HashSet<string>();
+                            }
+
+                            dependentFields[key].Add(optionSet.RelatedColumnInvariantName);
+                        }
+                    }
+                    else
+                    {
+                        errors = new SqlCompileException(SqlCompileException.InvalidOptionSet, irNode.IRContext.SourceContext, optionSetRetType.OptionSetName).GetErrors(irNode.IRContext.SourceContext);
+                        var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
+                        return errorResult;
+                    }
+                }
 
                 // The top-level identifiers are the logical names of fields on the main entity
                 sqlResult.ApplyDependencyAnalysis();
@@ -348,6 +398,7 @@ namespace Microsoft.PowerFx.Dataverse
                         new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
                     }
                 );
+
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;
             }
