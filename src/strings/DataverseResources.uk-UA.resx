@@ -220,4 +220,16 @@
     <value>Пряме використання полів грошових одиниць наразі не підтримується. Використовуйте Decimal(CurrencyField) в якості обхідного рішення, але зауважте, що функція десяткового значення має менший діапазон, ніж функція грошових одиниць.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Набір параметрів з іменем {0} із пов’язаних таблиць наразі не підтримується в стовпцях формул.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Метадані для набору параметрів з іменем {0} не знайдено.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Операцію не можна виконати з кількома наборами параметрів. Використовуйте один набір параметрів як тип результату.</value>
+    
+  </data>
 </root>

@@ -220,4 +220,16 @@
     <value>Izravna uporaba polja valuta još nije podržana. Upotrijebite Decimal(CurrencyField) kao zamjensko rješenje, ali imajte na umu da decimalni broj ima manji raspon od valute.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Skup mogućnosti s nazivom {0} iz povezanih tablica trenutno nije podržan u stupcima formule.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metapodaci skupa mogućnosti s nazivom {0} nisu pronađeni.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operacija se ne može izvršiti na više skupova mogućnosti. Kao vrstu rezultata upotrijebite jedan skup mogućnosti.</value>
+    
+  </data>
 </root>

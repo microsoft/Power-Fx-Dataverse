@@ -220,4 +220,16 @@
     <value>Valūtas lauku tieša izmantošana vēl netiek atbalstīta. Izmantojiet Decimal(CurrencyField) kā risinājumu, taču ņemiet vērā, ka decimāldaļskaitļa diapazons ir mazāks nekā valūtas diapazons.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Opciju kopa ar nosaukumu {0} no saistītajām tabulām pašlaik netiek atbalstīta formulu kolonnās.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Opciju kopai ar {0} nosaukumu nav atrasti metadati.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Darbību nevar veikt vairākām opciju kopām. Lūdzu, izmantojiet vienu opciju kopu kā rezultāta tipu.</value>
+    
+  </data>
 </root>

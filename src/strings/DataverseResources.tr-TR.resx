@@ -220,4 +220,16 @@
     <value>Para birimi alanlarının doğrudan kullanımı henüz desteklenmiyor. Geçici bir çözüm olarak Decimal(CurrencyField) alanını kullanın ancak ondalık aralığının para biriminden daha küçük olduğunu unutmayın.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>İlgili tablolardan {0} adlı seçenek kümesi şu anda formül sütunlarında desteklenmemektedir.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>{0} adlı seçenek kümesi için meta veriler bulunamadı.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>İşlem birden fazla seçenek kümesinde gerçekleştirilemez. Lütfen sonuç türü olarak tek bir seçenek kümesi kullanın.</value>
+    
+  </data>
 </root>

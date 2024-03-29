@@ -220,4 +220,16 @@
     <value>Die direkte Verwendung von Währungsfeldern wird noch nicht unterstützt. Verwenden Sie Decimal(CurrencyField) als Problemumgehung, beachten Sie jedoch, dass die Dezimalzahl einen kleineren Bereich als die Währung umfasst.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Der Optionssatz mit dem Namen {0} aus verknüpften Tabellen wird derzeit in Formelspalten nicht unterstützt.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Die Metadaten für den Optionssatz mit dem Namen {0} wurden nicht gefunden.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Der Vorgang kann nicht an mehreren Optionssätzen ausgeführt werden. Verwenden Sie einen einzelnen Optionssatz als Ergebnistyp.</value>
+    
+  </data>
 </root>

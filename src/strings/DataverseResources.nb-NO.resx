@@ -220,4 +220,16 @@
     <value>Direkte bruk av valutafelt støttes ennå ikke. Bruk Decimal(CurrencyField) som en løsning, men vær oppmerksom på at desimal har et mindre område enn valuta.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Alternativsettet med navnet {0} fra relaterte tabeller, støttes for øyeblikket ikke i formelkolonner.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Finner ikke metadataene for alternativsettet med navnet {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operasjonen kan ikke utføres på flere alternativsett. Bruk ett alternativsett som resultattype.</value>
+    
+  </data>
 </root>

@@ -220,4 +220,16 @@
     <value>Η άμεση χρήση πεδίων νομισματικής μονάδας δεν υποστηρίζεται ακόμα. Χρησιμοποιήστε το στοιχείο Decimal(CurrencyField) ως λύση, αλλά λάβετε υπόψη ότι τα δεκαδικά ψηφία έχουν μικρότερο εύρος από τη νομισματική μονάδα.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Το Σύνολο επιλογών με όνομα {0} από σχετικούς πίνακες δεν υποστηρίζεται αυτήν τη στιγμή σε στήλες τύπου.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Τα μετα-δεδομένα για το Σύνολο επιλογών με όνομα {0} δεν βρέθηκαν.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Η λειτουργία δεν είναι δυνατό να εκτελεστεί σε πολλά σύνολα επιλογών. Χρησιμοποιήστε ένα μόνο σύνολο επιλογών ως τύπο αποτελέσματος.</value>
+    
+  </data>
 </root>

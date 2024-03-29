@@ -220,4 +220,16 @@
     <value>Valuutaväljade otse kasutamist veel ei toetata. Kasutage lahendusena väärtust Decimal(CurrencyField), kuid pange tähele, et kümnendkohal on väiksem vahemik kui valuutal.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Nimega {0} suvandikomplekt pole seotud tabelitest praegu valemiveergudes toetatud.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Nimega {0} suvandikomplekti metaandmeid ei leitud.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Toimingut ei saa teha mitme suvandikomplektiga. Kasutage tulemi tüübina ühte suvandikomplekti.</value>
+    
+  </data>
 </root>

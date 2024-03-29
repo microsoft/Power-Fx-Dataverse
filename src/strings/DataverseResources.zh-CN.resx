@@ -220,4 +220,16 @@
     <value>尚不支持直接使用货币字段。请使用小数(CurrencyField)作为一种解决方法，但请注意，小数的范围小于货币的范围。</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>目前，公式列中不支持相关表中名称为 {0} 的选项集。</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>未找到名称为 {0} 的选项集的元数据。</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>无法对多个选项集执行该操作。请使用单个选项集作为结果类型。</value>
+    
+  </data>
 </root>

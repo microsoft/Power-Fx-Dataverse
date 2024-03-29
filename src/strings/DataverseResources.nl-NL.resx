@@ -220,4 +220,16 @@
     <value>Direct gebruik van valutavelden wordt nog niet ondersteund. Gebruik Decimal(CurrencyField) als tijdelijke oplossing, maar houd er rekening mee dat decimaal een kleiner bereik heeft dan valuta.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>De optieset met de naam {0} uit gerelateerde tabellen wordt momenteel niet ondersteund in formulekolommen.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>De metagegevens van de optieset met de naam {0} zijn niet gevonden.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>De bewerking kan niet worden uitgevoerd op meerdere optiesets. Gebruik één optieset als resultaattype.</value>
+    
+  </data>
 </root>

@@ -220,4 +220,16 @@
     <value>A pénznemmezők közvetlen használata még nem támogatott. Megoldásként használja a Decimal(CurrencyField) lehetőséget, de felhívjuk figyelmét, hogy a decimális érték kisebb tartománnyal rendelkezik a pénznemnél.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>A kapcsolódó táblázatokból származó {0} nevű értékkészlet jelenleg nem támogatott a képletoszlopokban.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>A(z) {0} nevű érték készlet metaadatai nem találhatók.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>A műveletet nem lehet több értékkészleten végrehajtani. Csak egy értékkészletet használjon eredménytípusként.</value>
+    
+  </data>
 </root>

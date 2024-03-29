@@ -220,4 +220,16 @@
     <value>ยังไม่รองรับการใช้ฟิลด์สกุลเงินโดยตรง โปรดใช้ Decimal(CurrencyField) เป็นวิธีการแก้ไขไปก่อน แต่โปรดทราบว่าทศนิยมนั้นมีช่วงที่แคบกว่าสกุลเงิน</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>ชุดตัวเลือกที่มีชื่อ {0} จากตารางที่เกี่ยวข้องไม่ได้รับการสนับสนุนในคอลัมน์สูตรในขณะนี้</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>ไม่พบเมตาดาต้าสำหรับชุดตัวเลือกที่มีชื่อ {0}</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>ไม่สามารถดำเนินการกับชุดตัวเลือกหลายชุดได้ โปรดใช้ชุดตัวเลือกเดียวเป็นชนิดผลลัพธ์</value>
+    
+  </data>
 </root>

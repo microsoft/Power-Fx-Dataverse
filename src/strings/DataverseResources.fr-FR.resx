@@ -220,4 +220,16 @@
     <value>L’utilisation directe des champs de devises n’est pas encore prise en charge. Utilisez Décimale (CurrencyField) comme solution de contournement, mais notez que la plage de décimales est plus petite que la devise.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Le groupe d’options avec le nom {0} provenant des tables associées n’est actuellement pas pris en charge dans les colonnes de formules.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Les métadonnées du groupe d’options avec le nom {0} sont introuvables.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>L’opération ne peut pas être effectuée sur plusieurs groupes d’options. Utilisez un seul groupe d’options comme type de résultat.</value>
+    
+  </data>
 </root>

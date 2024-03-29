@@ -220,4 +220,16 @@
     <value>Encara no s'admet l'ús directe dels camps de moneda. Utilitzeu Decimal(camp de moneda) com a solució alternativa, però tingueu en compte que Decimal té un interval més petit que Moneda.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>El conjunt d'opcions amb el nom {0} de les taules relacionades no s'admet actualment a les columnes de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>No s'han trobat les metadades del conjunt d'opcions amb el nom {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>L'operació no es pot dur a terme en diversos conjunts d'opcions. Utilitzeu un únic conjunt d'opcions com a tipus de resultat.</value>
+    
+  </data>
 </root>

@@ -220,4 +220,16 @@
     <value>Валюталық өрістерді тікелей пайдалануға әлі қолдау көрсетілмейді. Ондық таңбаны (CurrencyField) айналып өту жолы ретінде пайдаланыңыз, бірақ ондық таңбаның валютаға қарағанда ауқымы аз екенін ескеріңіз.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Қатысты кестелердегі {0} атты параметрлер жиынына қазіргі уақытта формула бағандарында қолдау көрсетілмейді.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>{0} атты параметрлер жиынының метадеректері табылмады.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Бұл әрекетті бірнеше параметрлер жиынында орындау мүмкін емес. Нәтиже түрі ретінде жеке параметрлер жиынын пайдаланыңыз.</value>
+    
+  </data>
 </root>

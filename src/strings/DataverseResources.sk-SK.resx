@@ -220,4 +220,16 @@
     <value>Priame použitie polí meny zatiaľ nie je podporované. Ako alternatívne riešenie použite Decimal(CurrencyField), ale upozorňujeme, že desatinné číslo má menší rozsah ako mena.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Množina možností s názvom {0} zo súvisiacich tabuliek sa momentálne nepodporuje v stĺpcoch vzorcov.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metaúdaje pre množinu možností s názvom {0} sa nenašli.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operáciu nemožno vykonať s viacerými množinami možností. Ako typ výsledku použite jednu množinu možností.</value>
+    
+  </data>
 </root>

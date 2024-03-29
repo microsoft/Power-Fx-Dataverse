@@ -220,4 +220,16 @@
     <value>O uso directo dos campos de moeda aínda non se admite. Use Decimal(CurrencyField) como solución alternativa, pero teña en conta que o decimal ten un intervalo menor que a moeda.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Actualmente, o conxunto de opcións denominado {0} da táboas relacionadas non é compatible coas columnas de fórmulas.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Non se atoparon os metadatos para o conxunto de opcións denominado {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>A operación non se pode realizar en múltiples conxuntos de opcións. Use un único conxunto de opcións como tipo de resultado.</value>
+    
+  </data>
 </root>

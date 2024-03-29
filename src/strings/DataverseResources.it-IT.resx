@@ -220,4 +220,16 @@
     <value>Uso diretto dei campi di valuta non ancora supportato. Usa Decimal(CurrencyField) per risolvere il problema, ma tieni presente che l'intervallo dei decimali è inferiore a quello della valuta.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Il set di opzioni con nome {0} dalle tabelle correlate non è al momento supportato nelle colonne della formula.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Impossibile trovare i metadati per il set di opzioni con nome {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Impossibile eseguire l'operazione su più set di opzioni. Utilizza un set di opzioni singolo come tipo di risultato.</value>
+    
+  </data>
 </root>

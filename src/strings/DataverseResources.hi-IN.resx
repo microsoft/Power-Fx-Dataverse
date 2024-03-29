@@ -220,4 +220,16 @@
     <value>मुद्रा फ़ील्ड का प्रत्यक्ष उपयोग अभी तक समर्थित नहीं है. दशमलव (CurrencyField) का वैकल्पिक हल के रूप में उपयोग करें लेकिन ध्यान रहे कि दशमलव में मुद्रा की तुलना में एक छोटी सीमा है.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>संबंधित तालिकाओं से {0} नाम वाला विकल्प सेट फ़ार्मूला कॉलम में फ़िलहाल समर्थित नहीं है.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>नाम {0} के साथ विकल्प सेट के लिए मेटाडेटा नहीं मिला.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>संचालन कई विकल्प सेट पर नहीं किया जा सकता. कृपया परिणाम प्रकार के रूप में एकल विकल्प सेट का इस्तेमाल करें.</value>
+    
+  </data>
 </root>

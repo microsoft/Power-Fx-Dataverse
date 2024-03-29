@@ -220,4 +220,16 @@
     <value>Neposredna uporaba denarnih polj še ni podprta. Kot rešitev uporabite polje Decimal(CurrencyField), vendar upoštevajte, da ima decimalno polje manjši obseg kot denarno.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Nabor možnosti z imenom {0} iz povezanih tabel trenutno ni podprt v stolpcih s formulami.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metapodatkov za nabor možnosti z imenom {0} ni bilo mogoče najti.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operacije ni mogoče izvesti na več naborih možnosti. Kot vrsto rezultat uporabite en nabor možnosti.</value>
+    
+  </data>
 </root>

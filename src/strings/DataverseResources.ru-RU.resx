@@ -220,4 +220,16 @@
     <value>Прямое использование полей валют пока не поддерживается. Используйте десятичное поле CurrencyField в качестве обходного пути, но обратите внимание, что у десятичных полей диапазон меньше, чем у полей валюты.</value>
     
   </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Набор параметров с именем {0} из связанных таблиц в настоящий момент не поддерживается в столбцах формул.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Метаданные для набора параметров с именем {0} не найдены.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Нельзя выполнить операцию для нескольких наборов параметров. Используйте один набор параметров в качестве типа результатов.</value>
+    
+  </data>
 </root>
