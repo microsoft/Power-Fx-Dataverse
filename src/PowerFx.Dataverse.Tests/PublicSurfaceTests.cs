@@ -46,6 +46,7 @@ namespace Microsoft.PowerFx.Tests
 
                 // Optional services / Mocks.
                 "Microsoft.PowerFx.Dataverse.DataverseService",
+                "Microsoft.PowerFx.Dataverse.DataverseNotPresent",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse`1",
                 "Microsoft.PowerFx.Dataverse.DataverseResponse",
                 "Microsoft.PowerFx.Dataverse.IDataverseServices",
