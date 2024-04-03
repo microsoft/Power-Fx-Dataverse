@@ -4,19 +4,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
@@ -516,14 +510,6 @@ namespace Microsoft.PowerFx
                     Message = $"Invalid option name: {option.Value}."
                 });
             }
-        }
-    }
-
-    public class DataverseNotPresent : IDataverseExecute
-    {
-        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
-        {
-            throw new Exception("AI functions require a connection to Dataverse. Use DVConnect() to connect first.");
         }
     }
 }

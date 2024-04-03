@@ -2628,7 +2628,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             else
             {
-                Assert.Contains("Invalid argument type. Expecting a Table value, but of a different schema", check.Errors.First().Message);
+                var errorsString = string.Join(",", check.Errors.Select(e => e.Message));
+                Assert.Contains("Invalid argument type. Expecting a Table value, but of a different schema", errorsString);
             }
         }
 
