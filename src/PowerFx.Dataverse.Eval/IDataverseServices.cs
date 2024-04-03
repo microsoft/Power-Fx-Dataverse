@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
         Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
     }
 
-    internal class DataverseNotPresent : IDataverseExecute
+    public class DataverseNotPresent : IDataverseExecute
     {
         public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
         {
