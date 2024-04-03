@@ -38,5 +38,36 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
         }
+
+        /// <summary>
+        /// Returns true if the field is a polymorphic lookup field.
+        /// </summary>
+        /// <param name="fieldName">Logical name of the field.</param>
+        /// <returns></returns>
+        public static bool IsFieldPolymorphic(this EntityMetadata entityMetadata, string fieldName)
+        {
+            if (entityMetadata.TryGetAttribute(fieldName, out var fieldMetadata) ||
+                (AttributeUtility.TryGetLogicalNameFromOdataName(fieldName, out var realFieldName) && entityMetadata.TryGetAttribute(realFieldName, out fieldMetadata)))
+            {
+                return fieldMetadata.IsFieldPolymorphic();
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the field is a polymorphic lookup field.
+        /// </summary>
+        /// <param name="fieldName">Logical name of the field.</param>
+        /// <returns></returns>
+        public static bool IsFieldPolymorphic(this AttributeMetadata attributeMetadata)
+        {
+            if (attributeMetadata is LookupAttributeMetadata lookupAttributeMetadata && lookupAttributeMetadata.Targets.Length > 1)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
