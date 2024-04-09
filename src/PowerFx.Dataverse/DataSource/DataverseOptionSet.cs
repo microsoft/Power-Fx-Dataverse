@@ -23,6 +23,12 @@ namespace Microsoft.PowerFx.Dataverse
         private List<DName> _optionNames;
         private DType _invariantType = DType.Invalid;
 
+        public bool CanCoerceFromBackingKind { get; }
+        public bool CanCoerceToBackingKind { get; }
+
+        public bool CanConcatenateStronglyTyped => false;
+        public bool CanCompareNumeric => false;
+
         public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)
         {
             Name = optionSetName;
@@ -31,6 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
             _relatedEntityName = entityName;
             RelatedColumnInvariantName = columnName;
             IsGlobal = isGlobal;
+            CanCoerceToBackingKind = isBooleanValued;
             var options = DisplayNameUtility.MakeUnique(optionSetValues.Select(kvp => new KeyValuePair<string, string>(kvp.Key.ToString(), kvp.Value)));
             _optionNames = options.LogicalToDisplayPairs.Select(kvp => kvp.Key).ToList();
             DisplayNameProvider = options;

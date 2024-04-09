@@ -94,6 +94,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     units = unitsEnum.inlineSQL.ToLowerInvariant();
                 }
             }
+            else if (unitsNode is RecordFieldAccessNode fieldNode)
+            {
+                units = fieldNode.Field.ToString().ToLowerInvariant();
+            }
 
             if (units != null)
             {
