@@ -1455,7 +1455,18 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                     {
-                        PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
+                        var minValue = SqlStatementFormat.IntTypeMin;
+                        var maxValue = SqlStatementFormat.IntTypeMax;
+
+                        var intMinValuePassedInHints = sqlCompileOptions?.TypeHints?.MinValue ?? 0;
+                        var intMaxValuePassedInHints = sqlCompileOptions?.TypeHints?.MaxValue ?? 0;
+                        if (intMaxValuePassedInHints != 0 || intMinValuePassedInHints != 0)
+                        {
+                            minValue = intMinValuePassedInHints.ToString();
+                            maxValue = intMaxValuePassedInHints.ToString();
+                        }
+
+                        PerformOverflowCheck(result, minValue, maxValue, postCheck);
                     }
                     else
                     {

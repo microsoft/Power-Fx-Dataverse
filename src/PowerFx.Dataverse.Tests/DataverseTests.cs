@@ -1364,6 +1364,46 @@ END
             Assert.True(result.ReturnType is DecimalType);
         }
 
+        public const string MinMaxHintsUDF = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 100
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-1500 OR @v2>1500) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+        [Fact]
+        public void CompileIntegerTypeHintMinMaxRangeTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider);
+            var options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { 
+                    TypeHint = AttributeTypeCode.Integer,
+                    MinValue = -1500,
+                    MaxValue = 1500
+                },
+                UdfName = "fn_testUdf1",
+            };
+
+            var result = engine.Compile("field * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(MinMaxHintsUDF, result.SqlFunction);
+        }
+
         [Fact]
         public void CompilePassthruTypeHint()
         {
