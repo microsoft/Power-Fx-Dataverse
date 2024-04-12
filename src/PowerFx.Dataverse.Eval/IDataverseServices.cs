@@ -4,12 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -57,5 +58,13 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseDeleter
     {
         Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
+    }
+
+    public class DataverseNotPresent : IDataverseExecute
+    {
+        public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
+        {
+            throw new CustomFunctionErrorException("AI functions require a connection to Dataverse. Connect and try again.", ErrorKind.ServiceUnavailable);
+        }
     }
 }
