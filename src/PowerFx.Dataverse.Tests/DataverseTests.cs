@@ -2428,6 +2428,20 @@ END
             Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
+        [Fact]
+        public void LookupFieldIRTest()
+        {
+            var TestAttributeModel = new EntityMetadataModel[] { MockModels.TestAttributeModel, MockModels.TripleRemoteModel };
+            var xrmModel = MockModels.TestAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(TestAttributeModel);
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+
+            // IR - {If:w(IsBlank:b(ScopeAccess(Scope 0, testLookupNavName)), Lazy(FieldAccess(ScopeAccess(Scope 0, testLookupNavName), data3)), Lazy(ScopeAccess(Scope 0, new_field)))}
+            // for lookup field - TestLookup, NavigationPropertyName - 'testLookupNavName' is considered instead of schema/logical name - 'new_testlookup'.
+            var result = engine.Compile("If(IsBlank(TestLookup), TestLookup.'Data Three', field)", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+        }
+
         public const string guidTestUDF = @"CREATE FUNCTION test(
     @v0 uniqueidentifier -- guid
 ) RETURNS nvarchar(4000)

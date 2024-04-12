@@ -485,6 +485,31 @@ namespace Microsoft.Dataverse.EntityMock
             }
         };
 
+        public static readonly EntityMetadataModel TestAttributeModel = new EntityMetadataModel
+        {
+            LogicalName = "allattributes",
+            DisplayCollectionName = "All Attributes",
+            PrimaryIdAttribute = "allid",
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewDecimal("new_field", "field"),
+                AttributeMetadataModel.NewLookup("new_testlookup", "TestLookup", new [] { "tripleremote" })
+            },
+            ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
+            {
+                new OneToManyRelationshipMetadataModel
+                {
+                    ReferencedAttribute = "tripleremoteid",
+                    ReferencedEntity = "tripleremote",
+                    ReferencingAttribute = "new_testlookup",
+                    ReferencingEntity = "allattributes",
+                    ReferencedEntityNavigationPropertyName = "lookup_refd",
+                    ReferencingEntityNavigationPropertyName = "testLookupNavName",
+                    SchemaName = "all_tripleremote"
+                }
+            }
+        };
+
         /// <summary>
         /// Array with multiple models pre-loaded.
         /// </summary>
