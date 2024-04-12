@@ -27,7 +27,6 @@ namespace Microsoft.PowerFx.Dataverse
         // Boolean From: Likewise, Boolean values can be used to replace a Boolean backed option set (From), for example Patch( ..., .... { IsOpen: true } )
         // Number To: Number based option sets can get at the underlying number (To) by using the Value function
         // Number From: There is currently no option set constructor or other way to translate directly from a number backed option set to a number (From), but one can use Select( Value, 1, OptionSet.Value1, ... ) as a workaround
-        // CanCompareNumeric and CanConcatenateStronglyTyped may be used with V1 semantics when those are implemented
         // *** This logic should match Canvas OptionSetInfo.cs ***
         public bool CanCoerceFromBackingKind => IsBooleanValued;
         public bool CanCoerceToBackingKind => IsBooleanValued;
