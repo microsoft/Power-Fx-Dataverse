@@ -1392,8 +1392,7 @@ END
             {
                 TypeHints = new SqlCompileOptions.TypeDetails { 
                     TypeHint = AttributeTypeCode.Integer,
-                    MinValue = -1500,
-                    MaxValue = 1500
+                    IntegerFormatValue = IntegerFormat.TimeZone
                 },
                 UdfName = "fn_testUdf1",
             };
