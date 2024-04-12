@@ -890,19 +890,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        private const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string FxTestSQLToken = "FxTestSQLToken";
 
         private static SqlConnection GetSql()
         {
             // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+            var jwtToken = Environment.GetEnvironmentVariable(FxTestSQLToken);
 
-            if (string.IsNullOrEmpty(cx))
+            if (string.IsNullOrEmpty(jwtToken))
             {
                 // Throws
-                Skip.If(true, $"Test skipped - No SQL database configured. Set the {ConnectionStringVariable} env var to a connection string.");
+                Skip.If(true, $"Test skipped - No SQL token configured. Set the {FxTestSQLToken} env var to a connection string.");
             }
-            var connection = new SqlConnection(cx);
+
+            var connection = new SqlConnection("Server=tcp:pfxdev-sql.database.windows.net,1433;Initial Catalog=pfxdev;Encrypt=True;")
+            {
+                AccessToken = jwtToken
+            };
+
             connection.Open();
             return connection;
         }
