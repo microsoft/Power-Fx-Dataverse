@@ -29,7 +29,6 @@ namespace Microsoft.PowerFx.Dataverse
         // Number From: There is currently no option set constructor or other way to translate directly from a number backed option set to a number (From), but one can use Select( Value, 1, OptionSet.Value1, ... ) as a workaround
         // CanCompareNumeric and CanConcatenateStronglyTyped may be used with V1 semantics when those are implemented
         // *** This logic should match Canvas OptionSetInfo.cs ***
-
         public bool CanCoerceFromBackingKind => IsBooleanValued;
         public bool CanCoerceToBackingKind => IsBooleanValued;
         public bool CanConcatenateStronglyTyped => false;
