@@ -29,6 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
             public int Precision;
             public double MinValue;
             public double MaxValue;
+            public IntegerFormat IntegerFormatValue;
         }
     }
 }

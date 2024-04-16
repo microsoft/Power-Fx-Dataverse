@@ -1364,6 +1364,76 @@ END
             Assert.True(result.ReturnType is DecimalType);
         }
 
+        public const string WholeNumUDFForTimeZoneFormat = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 100
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-1500 OR @v2>1500) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+        public const string WholeNumUDFForLanguageFormat = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10), -- new_field
+    @v1 uniqueidentifier -- new_lookup
+) RETURNS int
+AS BEGIN
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
+    SELECT TOP(1) @v2 = [data3] FROM [dbo].[tripleremoteBase] WHERE[tripleremoteid] = @v1
+
+    -- expression body
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v4 = 100
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) * ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<0 OR @v5>2147483647) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 0)
+END
+";
+        [Fact]
+        public void CompileIntegerTypeHintMinMaxRangeTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider);
+            var options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { 
+                    TypeHint = AttributeTypeCode.Integer,
+                    IntegerFormatValue = IntegerFormat.TimeZone
+                },
+                UdfName = "fn_testUdf1",
+            };
+
+            var result = engine.Compile("field * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(WholeNumUDFForTimeZoneFormat, result.SqlFunction);
+
+            options.TypeHints.IntegerFormatValue = IntegerFormat.Language;
+
+            result = engine.Compile("field * lookup.data3 * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(WholeNumUDFForLanguageFormat, result.SqlFunction);
+        }
+
         [Fact]
         public void CompilePassthruTypeHint()
         {
