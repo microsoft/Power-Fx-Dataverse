@@ -1364,7 +1364,7 @@ END
             Assert.True(result.ReturnType is DecimalType);
         }
 
-        public const string MinMaxHintsUDF = @"CREATE FUNCTION fn_testUdf1(
+        public const string WholeNumUDFForTimeZoneFormat = @"CREATE FUNCTION fn_testUdf1(
     @v0 decimal(23,10) -- new_field
 ) RETURNS int
   WITH SCHEMABINDING
@@ -1379,6 +1379,24 @@ AS BEGIN
     -- end expression body
 
     IF(@v2<-1500 OR @v2>1500) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+        public const string WholeNumUDFForLanguageFormat = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 100
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<0 OR @v2>2147483647) BEGIN RETURN NULL END
     RETURN ROUND(@v2, 0)
 END
 ";
@@ -1400,7 +1418,14 @@ END
             var result = engine.Compile("field * 100", options);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(MinMaxHintsUDF, result.SqlFunction);
+            Assert.Equal(WholeNumUDFForTimeZoneFormat, result.SqlFunction);
+
+            options.TypeHints.IntegerFormatValue = IntegerFormat.Language;
+
+            result = engine.Compile("field * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(WholeNumUDFForLanguageFormat, result.SqlFunction);
         }
 
         [Fact]
