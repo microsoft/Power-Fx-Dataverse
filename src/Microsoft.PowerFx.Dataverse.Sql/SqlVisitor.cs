@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -1455,7 +1456,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                     {
-                        PerformOverflowCheck(result, SqlStatementFormat.IntTypeMin, SqlStatementFormat.IntTypeMax, postCheck);
+                        var format = sqlCompileOptions?.TypeHints?.IntegerFormatValue ?? 0;
+                        GetMinMaxRangeValuesForWholeNumberField(format, out var minValue, out var maxValue);
+
+                        PerformOverflowCheck(result, minValue, maxValue, postCheck);
                     }
                     else
                     {
@@ -1476,6 +1480,30 @@ namespace Microsoft.PowerFx.Dataverse
                         // For backward compatibility, in case float feature is off, number type is considered as decimal type itself
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                     }
+                }
+            }
+
+            private void GetMinMaxRangeValuesForWholeNumberField(IntegerFormat format, out string minValue, out string maxValue)
+            {
+                minValue = SqlStatementFormat.IntTypeMin;
+                maxValue = SqlStatementFormat.IntTypeMax;
+
+                switch (format)
+                {
+                    case IntegerFormat.Duration:
+                        minValue = SqlStatementFormat.IntTypeMinForDurationFormat;
+                        maxValue = SqlStatementFormat.IntTypeMaxForDurationFormat;
+                        break;
+
+                    case IntegerFormat.Language:
+                        minValue = SqlStatementFormat.IntTypeMinForLanguageFormat;
+                        maxValue = SqlStatementFormat.IntTypeMaxForLanguageFormat;
+                        break;
+
+                    case IntegerFormat.TimeZone:
+                        minValue = SqlStatementFormat.IntTypeMinForTimeZoneFormat;
+                        maxValue = SqlStatementFormat.IntTypeMaxForTimeZoneFormat;
+                        break;
                 }
             }
 
