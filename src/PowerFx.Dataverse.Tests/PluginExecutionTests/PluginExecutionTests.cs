@@ -1389,8 +1389,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
         [InlineData("ThisRecord.Price + 10", 110.0, true)] // Basic field lookup (RowScope)
         [InlineData("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets
-        [InlineData("ThisRecord.Rating = 1", false, true)]
-        [InlineData("ThisRecord.Rating = 2", true, true)]
+        [InlineData("Value(ThisRecord.Rating) = 1", false, true)]
+        [InlineData("Value(ThisRecord.Rating) = 2", true, true)]
 
         // Single Global record
         [InlineData("First(t1).new_price", 100.0, false)]
