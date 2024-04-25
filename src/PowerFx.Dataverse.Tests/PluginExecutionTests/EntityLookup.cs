@@ -363,13 +363,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // this means condition was on relationship.
             if(condition.EntityName != null && condition.EntityName != entity.LogicalName)
             {
-                _rawProvider.TryGetEntityMetadata(condition.EntityName, out metadata);
+                _rawProvider.TryGetEntityMetadata(condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")), out metadata);
             }
 
             metadata.TryGetAttribute(condition.AttributeName, out var amd);
             var comparer = new AttributeComparer(amd);
 
-            var fieldName = condition.EntityName != null ? "_" + condition.EntityName + "_" + condition.AttributeName : condition.AttributeName;
+            var fieldName = condition.EntityName != null ? "_" + condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")) + "_" + condition.AttributeName : condition.AttributeName;
             if (!TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value))
             {
                 return false;
