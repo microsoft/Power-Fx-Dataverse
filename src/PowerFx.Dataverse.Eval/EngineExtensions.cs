@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
                     LinkToAttributeName = relation.ReferencedAttribute,
 
                     // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
-                    EntityAlias = relation.ReferencedEntity + "_" + new Random().Next(),
+                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N"),
                     JoinOperator = JoinOperator.LeftOuter
                 };
 
