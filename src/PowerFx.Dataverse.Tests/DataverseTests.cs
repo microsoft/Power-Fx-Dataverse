@@ -2047,6 +2047,49 @@ END
             }
         }
 
+        public const string InOperatorTestUDF1 = @"CREATE FUNCTION test(
+) RETURNS bit
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 nvarchar(4000)
+    DECLARE @v1 bit
+
+    -- expression body
+    SET @v0 = N'testa_a'
+    SET @v1 = IIF((ISNULL(@v0,N'') LIKE N'%a[_]a%'), 1, 0)
+    -- end expression body
+
+    RETURN @v1
+END
+";
+        public const string InOperatorTestUDF2 = @"CREATE FUNCTION test(
+) RETURNS bit
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 nvarchar(4000)
+    DECLARE @v1 bit
+
+    -- expression body
+    SET @v0 = N'100%'
+    SET @v1 = IIF((ISNULL(@v0,N'') LIKE N'%0[%]%'), 1, 0)
+    -- end expression body
+
+    RETURN @v1
+END
+";
+        [Fact]
+        public void InOperatorTests()
+        {
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile("(\"a_a\" in \"testa_a\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InOperatorTestUDF1, result.SqlFunction);
+
+            result = engine.Compile("(\"0%\" in \"100%\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InOperatorTestUDF2, result.SqlFunction);
+        }
+
         [Theory]
         [InlineData("UTCNow()", true, typeof(DateTimeNoTimeZoneType))] // "UTCNow"
         [InlineData("UTCToday()", true, typeof(DateTimeNoTimeZoneType))] // "UTCToday"

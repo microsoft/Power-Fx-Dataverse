@@ -605,8 +605,8 @@ namespace Microsoft.PowerFx.Dataverse
                     var match = arg.ToString();
 
                     // encode SQL placeholders and quotes
-                    match = match.Replace("_", "[_]");
                     match = match.Replace("[", "[[]");
+                    match = match.Replace("_", "[_]");
                     match = match.Replace("%", "[%]");
                     match = match.Replace("'", "''");
 
