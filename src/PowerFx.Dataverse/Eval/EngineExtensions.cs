@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, string partitionId, int? topCount, IEnumerable<string> columns, bool isDistinct, CancellationToken cancellationToken)
+            public virtual async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }

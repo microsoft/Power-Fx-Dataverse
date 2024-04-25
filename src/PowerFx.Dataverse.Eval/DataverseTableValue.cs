@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Wrap a live Dataverse Table. 
     /// </summary>
-    internal class DataverseTableValue : TableValue, IRefreshable
+    internal class DataverseTableValue : TableValue, IRefreshable, IDelegatableTableValue
     {
         private readonly IConnectionValueContext _connection;
         private readonly RecordType _recordType;
@@ -116,7 +116,27 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
+        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            var x = (XrmDelegationParameters)parameters;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            if (this._entityMetadata.IsElasticTable())
+            {
+                var rows = await this.RetrieveMultipleAsync(x.Filter, x._relation, x._partitionId, x.Top, x._columnSet, x._isDistinct, cancel).ConfigureAwait(false);
+
+                return rows;
+            }
+            else
+            {
+                var rows = await this.RetrieveMultipleAsync(x.Filter, x._relation, x.Top, x._columnSet, x._isDistinct, cancel).ConfigureAwait(false);
+
+                return rows;
+            }
+        }
+
+        internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
             var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 
@@ -132,7 +152,7 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        internal async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
+        internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(FilterExpression filter, ISet<LinkEntity> relation, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancel)
         {
             var query = CreateQueryExpression(_entityMetadata.LogicalName, filter, relation, count, columnSet, isDistinct);
 

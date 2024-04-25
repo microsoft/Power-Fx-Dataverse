@@ -24,6 +24,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Sql", "Microsoft.PowerFx.Dataverse.Sql\Microsoft.PowerFx.Dataverse.Sql.csproj", "{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.PowerFx.AzureStorage", "Microsoft.PowerFx.AzureStorage\Microsoft.PowerFx.AzureStorage.csproj", "{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,10 @@ Global
 		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
