@@ -1321,6 +1321,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("First(t1).Price", "local")]
         [InlineData("First(Remote)", "remote")]
         [InlineData("First(t1).Price & IsBlank(First(Remote))", "local,remote")]
+        [InlineData("EntityRef.Price", "local")]
+        [InlineData("entityRef.Price", "local")]
         public void TableDependencyFinder(string expression, string listTables)
         {
             var logicalName = "local";
@@ -1335,7 +1337,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             {
                 var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
-                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+                var parametersRecord = RecordType.Empty().Add("entityRef", dv.GetRecordType("local"), "EntityRef");
+                var parametersSymbols = ReadOnlySymbolTable.NewFromRecord(parametersRecord);
+                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parametersSymbols);
 
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();

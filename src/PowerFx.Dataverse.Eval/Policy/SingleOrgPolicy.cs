@@ -179,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse
             public override void Visit(FirstNameNode node)
             {
                 var type = _check.GetNodeType(node);
-                if (type is TableType t)
+                if (type is AggregateType t)
                 {
                     var name = t.TableSymbolName;
                     if (name != null)
