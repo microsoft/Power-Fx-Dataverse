@@ -880,6 +880,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableFact]
+        public void SqlInOperatorTests()
+        {
+            using (var cx = GetSql())
+            {
+                ExecuteSqlTest("(\"a_a\" in \"testa_a\")", true, cx, null);
+                ExecuteSqlTest("(\"0%\" in \"100%\")", true, cx, null);
+                ExecuteSqlTest("(\"t't\" in \"test'test\")", true, cx, null);
+                ExecuteSqlTest("(\"[_t]\" in \"tes[_t]test\")", true, cx, null);
+            }
+        }
+
         public static TypeDetails GetIntegerHint()
         {
             return new TypeDetails
