@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//------------------------------------------------------------------------------
+
 using System.Linq;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -22,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [Theory]
 
-        //Basic case 
+        //Basic case
         [InlineData("Filter(t1, Price < 100)", 2, 1, false, false)]
         [InlineData("Filter(t1, Price < 100)", 2, 2, true, true)]
         [InlineData("Filter(t1, Price < 100)", 2, 3, true, false)]
@@ -88,13 +91,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, 0 > Price)", 1, 47, true, false)]
         [InlineData("Filter(t1, 0 > Price)", 1, 48, false, true)]
 
-        // Variable as arg 
+        // Variable as arg
         [InlineData("Filter(t1, Price > _count)", 0, 49, false, false)]
         [InlineData("Filter(t1, Price > _count)", 0, 50, true, true)]
         [InlineData("Filter(t1, Price > _count)", 0, 51, true, false)]
         [InlineData("Filter(t1, Price > _count)", 0, 52, false, true)]
 
-        // Function as arg 
+        // Function as arg
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, 53, false, false)]
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, 54, true, true)]
         [InlineData("Filter(t1, Price > If(1<0,_count, 1))", 2, 55, true, false)]
@@ -118,8 +121,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, 67, true, false)]
         [InlineData("Filter(t1, Price < 0 Or Price > 90)", 2, 68, false, true)]
 
-
-        // Delegation Not Allowed 
+        // Delegation Not Allowed
 
         // predicate that uses function that is not delegable.
         [InlineData("Filter(t1, IsBlank(Price))", 0, 69, false, false)]
@@ -170,7 +172,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("With({r: t1}, Filter(r, Price < Old_Price))", 2, 103, true, false, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("With({r: t1}, Filter(r, Price < Old_Price))", 2, 104, false, true, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-
         // Not All binary op are supported.
         [InlineData("Filter(t1, \"row1\" in Name)", 1, 105, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData("Filter(t1, \"row1\" in Name)", 1, 106, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -187,6 +188,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, Price < 1/0)", -1, 114, true, true)]
         [InlineData("Filter(t1, Price < 1/0)", -1, 115, true, false)]
         [InlineData("Filter(t1, Price < 1/0)", -1, 116, false, true)]
+
         // Blank handling
         [InlineData("Filter(t1, Price < Blank())", 1, 117, false, false)]
         [InlineData("Filter(t1, Price < Blank())", 1, 118, true, true)]
@@ -243,20 +245,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, 159, true, false)]
         [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, 160, false, true)]
 
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 161, false, false)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 162, true, true)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 163, true, false)]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 164, false, true)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 161, false, false,
+            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 162, true, true,
+            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 163, true, false,
+            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 164, false, true,
+            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
 
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 165, true, true)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 166, false, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 167, true, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 168, false, true)]
-
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 169, true, true)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 170, false, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 171, true, false)]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 172, false, true)]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 165, true, true,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-47: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 166, false, false,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-47: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 167, true, false,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-47: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 168, false, true,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-47: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+       
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 169, true, true,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-48: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 170, false, false,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-48: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 171, true, false,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-48: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data <> 200)", 2, 172, false, true,
+            @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
+            @"Warning 46-48: Delegation warning. The ""Filter"" part of this formula might not work correctly on large data sets.")]
 
         [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, 173, true, true)]
         [InlineData("Filter(t1, PolymorphicLookup = First(t2))", 1, 174, false, false)]
@@ -310,7 +332,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
 
-            for(var i = 0; i < inputs.Count(); i++)
+            for (var i = 0; i < inputs.Count(); i++)
             {
                 expr = inputs[i];
 
@@ -319,14 +341,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 var scam = check.ScanDependencies(dv.MetadataCache);
 
-                // compare IR to verify the delegations are happening exactly where we expect 
+                // compare IR to verify the delegations are happening exactly where we expect
                 var irNode = check.ApplyIR();
                 var actualIr = check.GetCompactIRString();
 
                 await DelegationTestUtility.CompareSnapShotAsync("FilterDelegation.txt", actualIr, id, i == 1);
 
                 // Validate delegation warnings.
-                // error.ToString() will capture warning status, message, and source span. 
+                // error.ToString() will capture warning status, message, and source span.
                 var errors = check.ApplyErrors();
 
                 var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();

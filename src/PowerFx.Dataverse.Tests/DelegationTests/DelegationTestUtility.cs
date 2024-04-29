@@ -1,17 +1,15 @@
-﻿using System;
+﻿//------------------------------------------------------------------------------
+// <copyright company="Microsoft Corporation">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
-using System.Threading;
-using Xunit;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.PowerFx.Dataverse;
-using System.Threading.Tasks;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -32,7 +30,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
 
             // transforms input expression without with, to wrap inside with.
-            // e.g. LookUp(t1, Price = 255).Price -> With({r:local}, LookUp(r, Price = 255).Price)
+            // e.g.                 LookUp(t1, Price = 255).Price
+            //   -> With({r:local}, LookUp(r, Price = 255).Price)
             var withExpr = new StringBuilder("With({r:local},");
             withExpr.Append(expr.Replace("(t1,", "(r,"));
             withExpr.Append(")");
