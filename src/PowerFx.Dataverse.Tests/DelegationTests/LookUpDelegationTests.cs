@@ -247,8 +247,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price", -10.0, 111, true, false)]
         [InlineData("LookUp(t1, virtual.'Virtual Data' <> 10 And Price <> 10).Price", -10.0, 112, false, true)]
 
-        [InlineData("LookUp(t1, IsBlank(virtual.'Virtual Data')).Price", 10.0, 113, true, true, 
-            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("LookUp(t1, IsBlank(virtual.'Virtual Data')).Price", 10.0, 113, true, true)]
 
         [InlineData("LookUp(t1, AsType(PolymorphicLookup, t2).Data = 200).Price", 100.0, 114, true, true,
             @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",

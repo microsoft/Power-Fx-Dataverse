@@ -245,14 +245,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, 159, true, false)]
         [InlineData("Filter(t1, virtual.'Virtual Data' <> 10 And Price <> 10)", 1, 160, false, true)]
 
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 161, false, false,
-            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 162, true, true,
-            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 163, true, false,
-            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
-        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 164, false, true,
-            @"Warning 11-42: Delegation warning. The ""IsBlank"" part of this formula might not work correctly on large data sets.")]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 161, false, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 162, true, true)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 163, true, false)]
+        [InlineData("Filter(t1, IsBlank(virtual.'Virtual Data'))", 2, 164, false, true)]
 
         [InlineData("Filter(t1, AsType(PolymorphicLookup, t2).Data = 200)", 1, 165, true, true,
             @"Warning 40-45: Delegation warning. The highlighted part of this formula might not work correctly with column ""AsType.data"" on large data sets.",
