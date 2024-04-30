@@ -1,9 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -22,43 +18,46 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private enum BlackListEntities
         {
-            TopicModel = 9944,
+            Owner = 7,
+            ActivityParty = 135,
             UserMapping = 2016,
+            ProcessTrigger = 4712,
+            // ProcessStage = 4724, // Removing from blacklist due to customer ask
+            MobileOfflineProfile = 9866,
             MobileOfflineProfileItem = 9867,
             MobileOfflineProfileItemAssociation = 9868,
-            AdvancedSimilarityRule = 9949,
-            TopicModelConfiguration = 9942,
-            KnowledgeSearchModel = 9947,
-            ProcessTrigger = 4712,
-            SimilarityRule = 9951,
-            MobileOfflineProfile = 9866,
-            // ProcessStage = 4724, // Removing from blacklist due to customer ask
-            TextAnalyticsEntityMapping = 9945,
             RecommendationModel = 9933,
             RecommendationModelMapping = 9934,
             RecommendationModelVersion = 9935,
-            Owner = 7,
-            ActivityParty = 135
-        }
-
-        internal static int[] BlackListedEntities()
-        {
-            return Enum.GetValues(typeof(BlackListEntities)) as int[];
+            TopicModelConfiguration = 9942,
+            TopicModel = 9944,
+            TextAnalyticsEntityMapping = 9945,
+            KnowledgeSearchModel = 9947,
+            AdvancedSimilarityRule = 9949,
+            SimilarityRule = 9951
         }
 
         internal static bool IsValid(this EntityMetadata entityMetadata)
         {
-            var isIntersect = entityMetadata.IsIntersect ?? false;
-            var isLogicalEntity = entityMetadata.IsLogicalEntity ?? false;
+            var isValidIntersect = (entityMetadata.IsIntersect ?? false) == false;
+            var isValueLogicalEntity = (entityMetadata.IsLogicalEntity ?? false) == false;
+            var isValidPrimaryNameAttribute = !string.IsNullOrEmpty(entityMetadata.PrimaryNameAttribute);
+
+            //// PA filters out some entities by a pre-defined lists of entities.
+            //// Pre-defined lists: BlackListEntities SalesEntity (not implemented), ServiceEntity (not implemented), MarketingEntity (not implemented).
+            //// PA returns a total of ~ 501 entities. PFx Dataverse is returning ~517 due to the not implemented lists.
             var objectTypeCode = entityMetadata.ObjectTypeCode ?? 0;
-            var isPrivate = entityMetadata.IsPrivate ?? false;
+            var isValueObjectTypeCode = objectTypeCode > 0 && Enum.IsDefined(typeof(BlackListEntities), objectTypeCode) == false;
 
-            // PA filters out some entities by a pre-defined lists of entities.
-            // Pre-defined lists: BlackListEntities SalesEntity (not implemented), ServiceEntity (not implemented), MarketingEntity (not implemented).
-            // PA returns a total of ~ 501 entities. PFx Dataverse is returning ~517 due to the not implemented lists.
-            var isInvalidEntity = Array.IndexOf(array: XrmUtility.BlackListedEntities(), objectTypeCode) != -1;
+            var isValidCustomizable = (entityMetadata.IsCustomizable?.Value ?? false) == false;
+            var isValidManaged = (entityMetadata.IsManaged ?? false) == false;
+            var isValidMappable = (entityMetadata.IsMappable?.Value ?? false) == false;
+            var isValidRenameable = (entityMetadata.IsRenameable?.Value ?? false) == false;
+            var isValidPrivate = (entityMetadata.IsPrivate ?? false) == false;
+            var isValidCustomEntity = (entityMetadata.IsCustomEntity ?? false) == false;
 
-            return !(isIntersect || isLogicalEntity || isPrivate || objectTypeCode == 0 || isInvalidEntity);
+            return isValidIntersect && isValueLogicalEntity && isValidPrimaryNameAttribute && isValueObjectTypeCode && isValidPrivate &&
+                   isValidCustomizable && isValidManaged && isValidMappable && isValidRenameable && isValidCustomEntity;
         }
 
         public static IEnumerable<EntityMetadata> GetAllValidEntityMetadata(this IOrganizationService client, EntityFilters entityFilters = EntityFilters.Entity)
@@ -68,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
                 EntityFilters = entityFilters
             };
 
-            var resp = (RetrieveAllEntitiesResponse) client.Execute(req);
+            var resp = (RetrieveAllEntitiesResponse)client.Execute(req);
 
             foreach (var entity in resp.EntityMetadata.Where(entity => entity.IsValid()))
             {
