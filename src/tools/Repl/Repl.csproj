@@ -13,12 +13,13 @@
   <Import Project="..\..\Build.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
-    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
-    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.60" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.PowerFx.Interpreter" Version="$(PowerFxVersion)" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.0.9" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" /> <!-- CVE-2022-26907 -->
-    <PackageReference Include="Microsoft.PowerFx.Repl" Version="$(PowerFxVersion)" NoWarn="NU1605"/>
+    <PackageReference Include="Microsoft.PowerFx.Repl" Version="$(PowerFxVersion)" NoWarn="NU1605" />
   </ItemGroup>
 
   <PropertyGroup>

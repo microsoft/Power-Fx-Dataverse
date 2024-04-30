@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -53,6 +54,8 @@ namespace Microsoft.PowerFx
         private static bool _reset;
 
         private static readonly Features _features = Features.PowerFxV1;
+
+        private static string _token = string.Empty;
 
         private static RecalcEngine ReplRecalcEngine()
         {
@@ -218,12 +221,104 @@ namespace Microsoft.PowerFx
 
         private class DVConnectFunction2Arg : ReflectionFunction
         {
+            private X509Certificate2 GetCertFromUserStore(string thumbprint)
+            {
+                X509Certificate2 certificate;
+                X509Certificate2Collection certs;
+
+                using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                {
+                    store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+
+                    // Find valid certificates by subject name (case-insensitive contains match).
+                    certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+
+                    store.Close();
+                }
+
+                // Throw meaningful exception if no certificate was found from the specified thumbprint.
+                if (certs == null || certs.Count == 0)
+                {
+                    throw new ArgumentException($"A valid certificate matching the specified thumbprint '{thumbprint}' could not be found in the {StoreLocation.CurrentUser}/{StoreName.My} store.", nameof(thumbprint));
+                }
+
+                // If more than one certificate is found, select the one with the longest time to expiration.
+                if (certs.Count > 1)
+                {
+                    certificate = certs.OfType<X509Certificate2>().OrderByDescending(c => c.NotAfter).FirstOrDefault();
+                }
+                else
+                {
+                    certificate = certs[0];
+                }
+
+                return certificate;
+            }
+
+            private async Task<string> GetToken(string voidStr)
+            {
+                return await Task.FromResult(_token);
+            }
+
+            private async Task<string> GetTokenUsingCBA(string resource, string username, string tenant, string thumbprint)
+            {                
+                var redirectUri = "https://localhost";
+                var aadAuthority = $"https://login.microsoftonline.com/{tenant}";
+                var clientId = "51f81489-12ee-4a9e-aaae-a2591f45987d";
+
+                var userCertificate = GetCertFromUserStore(thumbprint);
+
+                // Remove any trailing port from the resource before token acquisition
+                resource = Regex.Replace(resource, @":\d+\/*$", string.Empty);
+
+                var scope = $"{resource}/user_impersonation";
+                string[] scopes = { scope };
+                string token = null;
+
+                if (userCertificate != null)
+                {
+                    using var BrowserBasedNonInteractiveCba = new BrowserBasedNonInteractiveCba();
+
+                    token = await Task.Run<string>(async () => await BrowserBasedNonInteractiveCba
+                        .GetTokenWithCertificateSilentlyAsync(
+                            authority: aadAuthority,
+                            clientId: clientId,
+                            scope: string.Join(" ", scopes), // https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow
+                            redirectUri: redirectUri,
+                            tenantId: tenant,
+                            username: username,
+                            certificate: userCertificate))
+                        .ConfigureAwait(false);
+                }
+                if (token != null)
+                {
+                    //Console.WriteLine($"Successfully fetch AccessToken for user {username}");
+                    return token;
+                }
+                else
+                {
+                    throw new Exception($"Error occurred while fetching access token using cert based authentication for {username} user");
+                }
+            }
+
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
                 IOrganizationService svcClient;
 
-                var connectionString = connectionSV.Value;
-                svcClient = new ServiceClient(connectionString) { UseWebApi = false };
+                var settings = connectionSV.Value.Split(",");
+
+                if (settings.Length != 4)
+                {
+                    throw new ArgumentException("Connection string must have 4 comma-separated values: resource, username, tenant, thumbprint");
+                }
+
+                var resource = settings[0];
+                var username = settings[1];
+                var tenant = settings[2];
+                var thumbprint = settings[3];
+
+                _token = Task.Run<string>(async () => await GetTokenUsingCBA(resource, username, tenant, thumbprint).ConfigureAwait(false)).Result;
+                svcClient = new ServiceClient(instanceUrl: new Uri(resource), tokenProviderFunction: GetToken) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
