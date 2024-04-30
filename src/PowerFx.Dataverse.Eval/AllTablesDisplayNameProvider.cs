@@ -4,13 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Utils;
-using System.Collections.Generic;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Display name provider for all all tables in ann org. 
+    // Display name provider for all tables in an org.
     internal class AllTablesDisplayNameProvider : DisplayNameProvider
     {
         private readonly Dictionary<string, string> _display2logical = new Dictionary<string, string>();
