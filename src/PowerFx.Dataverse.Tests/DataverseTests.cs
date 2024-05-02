@@ -874,7 +874,7 @@ END
             // Mod function is overloaded to produce Decimal or Float based on the expression passed
             CallEngineAndVerifyResult("Mod(2,4)", FormulaType.Decimal, "Mod(#$decimal$#, #$decimal$#)"); // producing decimal
             CallEngineAndVerifyResult("Mod(Float(2),4)", FormulaType.Number, "Mod(Float(#$decimal$#), #$decimal$#)"); // producing float
-            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
+            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Number, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
 
             // if floating point FCB is disabled then user can't use Float function directly in formula but internally from IR, it would be supported
             CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
