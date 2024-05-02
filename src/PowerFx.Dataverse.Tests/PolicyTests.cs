@@ -33,8 +33,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.AddField(new DName("a"), new DName("b"));
             map.AddField(new DName("b"), new DName("a"));
 
-            NameCollisionException nce = Assert.Throws<NameCollisionException>(() => new SingleOrgPolicy(map));
-            Assert.Equal("Name b has a collision with another display or logical name", nce.Message);
+            var policy = new SingleOrgPolicy(map);
+
+            Assert.NotNull(policy);
+            Assert.NotNull(policy.AllTables);
+
+            Assert.Equal("b (a)", policy.AllTables.TryGetDisplayName(new DName("a"), out var d1) ? d1.Value : "noValue");
+            Assert.Equal("a (b)", policy.AllTables.TryGetDisplayName(new DName("b"), out var d2) ? d2.Value : "noValue");
         }
 
         [Fact]
@@ -44,9 +49,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.AddField(new DName("a"), new DName("b"));
             map.AddField(new DName("b"), new DName("a1"));
 
-            NameCollisionException nce = Assert.Throws<NameCollisionException>(() => new SingleOrgPolicy(map));
-            Assert.Equal("Name b has a collision with another display or logical name", nce.Message);
+            var policy = new SingleOrgPolicy(map);
+
+            Assert.NotNull(policy);
+            Assert.NotNull(policy.AllTables);
+
+            Assert.Equal("b (a)", policy.AllTables.TryGetDisplayName(new DName("a"), out var d1) ? d1.Value : "noValue");
+            Assert.Equal("a1", policy.AllTables.TryGetDisplayName(new DName("b"), out var d2) ? d2.Value : "noValue");
         }
+
 
         [Fact]
         public void TestPolicy4()
@@ -55,8 +66,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             map.AddField(new DName("a"), new DName("x"));
             map.AddField(new DName("b"), new DName("x"));
 
-            NameCollisionException nce = Assert.Throws<NameCollisionException>(() => new SingleOrgPolicy(map));
-            Assert.Equal("Name b has a collision with another display or logical name", nce.Message);
+            var policy = new SingleOrgPolicy(map);
+
+            Assert.NotNull(policy);
+            Assert.NotNull(policy.AllTables);
+
+            Assert.Equal("x (a)", policy.AllTables.TryGetDisplayName(new DName("a"), out var d1) ? d1.Value : "noValue");
+            Assert.Equal("x (b)", policy.AllTables.TryGetDisplayName(new DName("b"), out var d2) ? d2.Value : "noValue");
+        }
+
+        [Fact]
+        public void TestPolicy5()
+        {
+            var map = new MyDisplayNameProvider();
+            map.AddField(new DName("a"), new DName("a"));
+            map.AddField(new DName("c"), new DName("b"));
+            map.AddField(new DName("b"), new DName("d"));
+            map.AddField(new DName("d"), new DName("c"));
+
+            var policy = new SingleOrgPolicy(map);
+
+            Assert.NotNull(policy);
+            Assert.NotNull(policy.AllTables);
+
+            Assert.Equal("a", policy.AllTables.TryGetDisplayName(new DName("a"), out var d1) ? d1.Value : "noValue");
+            Assert.Equal("d (b)", policy.AllTables.TryGetDisplayName(new DName("b"), out var d2) ? d2.Value : "noValue");
+            Assert.Equal("b (c)", policy.AllTables.TryGetDisplayName(new DName("c"), out var d3) ? d3.Value : "noValue");
+            Assert.Equal("c (d)", policy.AllTables.TryGetDisplayName(new DName("d"), out var d4) ? d4.Value : "noValue");
+            Assert.Equal("noValue", policy.AllTables.TryGetDisplayName(new DName("e"), out var d5) ? d5.Value : "noValue");
         }
     }
 

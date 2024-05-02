@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
@@ -34,7 +35,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public SingleOrgPolicy(DisplayNameProvider displayNameLookup)
         {
-            AllTables = displayNameLookup.GetSingleSourceDisplayNameProvider();
+            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));                
         }
 
         // HElper to create a DV connection over the given service client. 
