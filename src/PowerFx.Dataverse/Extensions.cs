@@ -15,10 +15,5 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return entityMetadata.DataProviderId == System.Guid.Parse("1d9bde74-9ebd-4da9-8ff5-aa74945b9f74");
         }
-
-        internal static DisplayNameProvider GetSingleSourceDisplayNameProvider(this DisplayNameProvider originalDisplayNameProvider)
-        {
-            return new SingleSourceDisplayNameProvider(originalDisplayNameProvider.LogicalToDisplayPairs);
-        }
     }
 }

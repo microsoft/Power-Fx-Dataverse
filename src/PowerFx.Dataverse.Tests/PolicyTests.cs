@@ -27,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void TestPolicy2()
+        public void TestPolicyFullConflict()
         {
             var map = new MyDisplayNameProvider();
             map.AddField(new DName("a"), new DName("b"));
@@ -43,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void TestPolicy3()
+        public void TestPolicyDisplayNameEqualsLogicalName()
         {
             var map = new MyDisplayNameProvider();
             map.AddField(new DName("a"), new DName("b"));
@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
 
         [Fact]
-        public void TestPolicy4()
+        public void TestPolicyDuplicateDisplayNames()
         {
             var map = new MyDisplayNameProvider();
             map.AddField(new DName("a"), new DName("x"));
@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void TestPolicy5()
+        public void TestPolicyCircular()
         {
             var map = new MyDisplayNameProvider();
             map.AddField(new DName("a"), new DName("a"));
