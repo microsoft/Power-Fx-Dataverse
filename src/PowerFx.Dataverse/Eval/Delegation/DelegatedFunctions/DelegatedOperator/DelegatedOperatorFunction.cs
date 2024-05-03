@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        protected override async Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             // propagate args[0] if it's not a table (e.g. Blank/Error)
             if (args[0] is not TableValue table)

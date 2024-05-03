@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>Microsoft.PowerFx.AzureStorage</RootNamespace>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>1702;1998;NU5104;NU1701;NU1605</NoWarn>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <!-- Nuget Properties -->
+  <PropertyGroup>
+    <PackageId>Microsoft.PowerFx.AzureStorage</PackageId>
+    <Title>Microsoft Power Fx Azure Storage Integration</Title>
+    <Description>Azure Stroage Power Fx interpreter</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Company>Microsoft</Company>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Authors>Microsoft</Authors>
+  </PropertyGroup>
+
+  <Import Project="..\Build.props" />
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="6.0.8" />
+    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
+    <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" NoWarn="NU1605" />
+
+    <PackageReference Include="Azure.Data.Tables" Version="12.8.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PowerFx.Dataverse.Eval\Microsoft.PowerFx.Dataverse.Eval.csproj" />
+    <ProjectReference Include="..\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
+  </ItemGroup>
+
+</Project>

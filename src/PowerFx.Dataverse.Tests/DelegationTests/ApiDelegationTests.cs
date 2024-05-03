@@ -1,0 +1,127 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Types;
+using System.Threading;
+using Xunit;
+using System.Threading.Tasks;
+using Xunit.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using System.IO;
+using Azure.Data.Tables;
+using Microsoft.PowerFx.AzureStorage;
+using System.Text.Json;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Readers;
+using Microsoft.PowerFx.Connectors;
+using System.Net.Http;
+using Microsoft.PowerFx.Connectors.Tabular;
+
+namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
+{
+    public class ApiDelegationTests
+    {
+        // Delegation using direct API. 
+        [Theory]
+        [InlineData(
+            "Filter(t1, Price < 120 And 90 < Price)",
+            "((Price le 120) and (Price ge 90))",
+            1000, // default fetch size
+            "Table({Price:Float(100)})")]
+
+        [InlineData(
+            "First(t1).Price",
+            null,
+            1,
+            "Float(100)")]
+        public void TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
+        {
+            var recordType = RecordType.Empty().Add("Price", FormulaType.Number);
+
+            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[]
+            {
+                new NamedValue("Price", FormulaValue.New(100f))
+            });
+
+            var t1 = new MyTable(recordType);
+
+            var st = new SymbolValues("Delegable_1");
+            st.Add("t1", t1);
+
+            Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
+
+            var engine = new RecalcEngine();
+            engine.EnableDelegation();
+
+            var check = new CheckResult(engine)
+                .SetText(expr)
+                .SetBindingInfo(st.SymbolTable);
+
+            var errors = check.ApplyErrors().ToArray();
+
+            var ir = check.GetCompactIRString();
+
+            var eval = check.GetEvaluator();
+
+            var rc = new RuntimeConfig(st);
+            var myService = new MyService()
+                .SetResult(recordValue); // all queries expect just 1 row returned. 
+            
+            rc.AddService(myService);
+
+            var result = eval.EvalAsync(CancellationToken.None, rc).Result;
+            var resultStr = result.ToExpression();
+            Assert.Equal(expectedStr, resultStr);
+
+            Assert.NotNull(myService._parameters);
+
+            string actualODataFilter = myService._parameters.GetOdataFilter();
+            Assert.Equal(odataFilter, actualODataFilter);
+            Assert.Equal(top, myService._parameters.Top);
+        }
+    }
+
+    // Test that we can pass services through the IServiceProvider to the table. 
+    // also used for test infra.
+    internal class MyService
+    {
+        public IReadOnlyCollection<DValue<RecordValue>> _result;
+
+        public MyService SetResult(RecordValue row1)
+        {
+            _result = new DValue<RecordValue>[] { DValue<RecordValue>.Of(row1) };
+            return this;
+        }
+
+        public DelegationParameters _parameters;
+    }
+
+    // An example class that implements IDelegatingTableValue
+    public class MyTable : TableValue, IDelegatableTableValue
+    {
+        public MyTable(RecordType recordType) : base(recordType)
+        {
+        }
+
+        // should never get called since we're delegating 
+        public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
+
+        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            // Esnure service was plumbed through...
+            var myService = (MyService) services.GetService(typeof(MyService));
+            Assert.NotNull(myService);
+
+            myService._parameters = parameters;
+
+            return myService._result;
+        }
+
+        public override string ToString()
+        {
+            return "MyTable";
+        }
+    }
+}
