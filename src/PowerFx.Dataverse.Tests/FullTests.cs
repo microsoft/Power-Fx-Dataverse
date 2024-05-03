@@ -714,8 +714,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // math functions
                 ExecuteSqlTest("Mod(double1,decimal)", 5.94D, cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Mod(double1,double2)", 0.05108D, cx, metadata, dataverseFeatures: dataverseFeatures);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516, cx, metadata, dataverseFeatures: dataverseFeatures);
 
                 ExecuteSqlTest("Round(double1,2)", 25.64D, cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Round(double1,double2)", 25.6D, cx, metadata, dataverseFeatures: dataverseFeatures);
