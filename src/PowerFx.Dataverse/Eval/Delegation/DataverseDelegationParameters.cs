@@ -9,7 +9,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     // DelegationParameters implemented using Xrm filter classes. 
     [Obsolete("Preview")]
-    public class XrmDelegationParameters : DelegationParameters
+    public class DataverseDelegationParameters : DelegationParameters
     {
         // Systems cna get the filter expression directrly and translate. 
         public FilterExpression Filter { get; init; }

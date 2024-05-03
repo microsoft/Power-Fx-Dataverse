@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new XrmDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters
             {
                 _relation = relation,
                 Filter = filter,

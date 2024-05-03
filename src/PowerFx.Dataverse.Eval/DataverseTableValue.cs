@@ -119,7 +119,7 @@ namespace Microsoft.PowerFx.Dataverse
         public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            var x = (XrmDelegationParameters)parameters;
+            var x = (DataverseDelegationParameters)parameters;
 #pragma warning restore CS0618 // Type or member is obsolete
 
             if (this._entityMetadata.IsElasticTable())
