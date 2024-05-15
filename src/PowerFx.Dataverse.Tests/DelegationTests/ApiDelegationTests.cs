@@ -18,6 +18,7 @@ using Microsoft.OpenApi.Readers;
 using Microsoft.PowerFx.Connectors;
 using System.Net.Http;
 using Microsoft.PowerFx.Connectors.Tabular;
+using Microsoft.PowerFx.Core;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -29,16 +30,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             "Filter(t1, Price < 120 And 90 < Price)",
             "((Price le 120) and (Price ge 90))",
             1000, // default fetch size
-            "Table({Price:Float(100)})")]
-
+            "Table({Price:100,opt:Blank()})")]
         [InlineData(
             "First(t1).Price",
             null,
             1,
-            "Float(100)")]
+            "100")]
+        [InlineData(
+            "Filter(t1, ThisRecord.opt = Opt.display2)",
+            "(opt eq 'logical2')",
+            1000, // default fetch size
+            "Table({Price:100,opt:Blank()})")]
+
         public void TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
         {
-            var recordType = RecordType.Empty().Add("Price", FormulaType.Number);
+            var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
+            {
+                { "logical1", "display1" },
+                { "logical2", "display2" }
+            });
+            var optionSet = new OptionSet("Opt", dnp);
+
+            var recordType = RecordType.Empty()
+                .Add("Price", FormulaType.Number)
+                .Add("opt", optionSet.FormulaType);
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[]
             {
@@ -52,7 +67,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
 
-            var engine = new RecalcEngine();
+            var config = new PowerFxConfig();
+            config.AddOptionSet(optionSet);
+            var engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
             var check = new CheckResult(engine)
@@ -72,14 +89,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             rc.AddService(myService);
 
             var result = eval.EvalAsync(CancellationToken.None, rc).Result;
-            var resultStr = result.ToExpression();
-            Assert.Equal(expectedStr, resultStr);
-
-            Assert.NotNull(myService._parameters);
 
             string actualODataFilter = myService._parameters.GetOdataFilter();
             Assert.Equal(odataFilter, actualODataFilter);
             Assert.Equal(top, myService._parameters.Top);
+
+            var sb = new StringBuilder();
+            result.ToExpression(sb, new FormulaValueSerializerSettings {  UseCompactRepresentation = true});
+            var resultStr = sb.ToString();
+            Assert.Equal(expectedStr, resultStr);
+
+            Assert.NotNull(myService._parameters);            
         }
     }
 
