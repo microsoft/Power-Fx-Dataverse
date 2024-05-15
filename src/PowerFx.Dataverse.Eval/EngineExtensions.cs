@@ -94,6 +94,14 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // We don't have any strong type information. 
+                if (value is OptionSetValue osv)
+                {
+                    // Workaround for https://github.com/microsoft/Power-Fx/issues/2403
+                    // For delegation, Option set should return execution value. 
+                    // ToObject() / TryGetPrimitiveValue() will return display name. 
+                    return osv.Option;
+                }
+
                 if (value.TryGetPrimitiveValue(out var primitiveValue))
                 {
                     return primitiveValue;
