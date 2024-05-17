@@ -233,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("1.2", "en-US")] // success case 
         [InlineData("1,2", "fr-FR")] // success case 
-        [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;Utilisation non valide de « . »")] // error - no dups, all French
+        [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;L’opérateur « . » ne peut pas être utilisé sur les...")] // error - no dups, all French
         [InlineData("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
         [InlineData("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding         
         [InlineData("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
