@@ -1276,8 +1276,21 @@ namespace Microsoft.PowerFx.Dataverse
             if (maybeFieldAccessNode is RecordFieldAccessNode fieldAccess)
             {
                 fieldName = fieldAccess.Field;
+                                
                 if (TryGetFieldName(context, fieldAccess.From, out var fromField))
                 {
+                    // If it's a relationship on a primary key, then it's not really a relationship.
+                    //   Filter(table, assigned_to.primaryKey = value) is  
+                    var recordType = ((AggregateType)fieldAccess.From.IRContext.ResultType);
+                    string primaryKeyName = "sys_id"; // $$$ How to get primary key name...
+
+                    if (fieldName == primaryKeyName)
+                    {
+                        fieldName = fromField;
+                        relations = null;
+                        return true; // handled 
+                    }
+
                     var relationMetadata = new RelationMetadata(fromField, false, null);
 
                     var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);
