@@ -213,6 +213,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool IsWritable => throw new NotImplementedException();
 
+        public bool IsClearable => throw new NotImplementedException();
+
         void IDataEntityMetadata.LoadClientSemantics(bool isPrimaryTable)
         {
             throw new NotImplementedException();
