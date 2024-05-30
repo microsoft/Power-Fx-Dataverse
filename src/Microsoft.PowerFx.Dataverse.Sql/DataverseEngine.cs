@@ -53,6 +53,11 @@ namespace Microsoft.PowerFx.Dataverse
         // the max supported expression length
         internal const int MaxExpressionLength = 1000;
 
+        // During solution import or during validation checks, we pass invariant expression which is stored in db, with cultureInfo as null. This Invariant
+        // expression length could be sometimes greater than display expression length and allowed MaxExpressionLength. so, compiling formula will fail for
+        // this invariant expression, which had once passed when compiled as display expression. So for invariant expressions, setting extra 500 buffer.
+        internal const int MaxInvariantExpressionLength = 1500;
+
         internal static readonly TexlFunction[] FloatingPointFunctions = new[]
         {
             BuiltinFunctionsCore.Exp,
@@ -87,7 +92,8 @@ namespace Microsoft.PowerFx.Dataverse
             _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() 
             {
                 IsFloatingPointEnabled = false,
-                IsOptionSetEnabled = false
+                IsOptionSetEnabled = false,
+                UseMaxInvariantExpressionLength = false
             };
 
             var functions = Library.FunctionList.ToList();
@@ -116,8 +122,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return new ParserOptions
             {
-                 Culture = _cultureInfo,
-                 MaxExpressionLength =  MaxExpressionLength,
+                Culture = _cultureInfo,
+                MaxExpressionLength = (_dataverseFeatures.UseMaxInvariantExpressionLength && _cultureInfo == CultureInfo.InvariantCulture)
+                                      ? MaxInvariantExpressionLength : MaxExpressionLength,
                  NumberIsFloat = NumberIsFloat
             };
         }

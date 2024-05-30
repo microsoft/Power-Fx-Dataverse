@@ -1265,6 +1265,25 @@ END
             Assert.Equal(key, errors[0].MessageKey);
         }
 
+        [Fact]
+        public void InvariantFormulaTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var expr = "Concatenate(\"" + (new string('a', 977)) + "\", new_test)";
+            Assert.True(expr.Length > DataverseEngine.MaxExpressionLength);
+            Assert.True(expr.Length < DataverseEngine.MaxInvariantExpressionLength);
+
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Expression can't be more than 1000 characters", result.Errors.First().ToString());
+
+            engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new DataverseFeatures() { UseMaxInvariantExpressionLength = true });
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+        }
+
         [Theory]
         [InlineData("Value(currency)", true)]
         [InlineData("Decimal(currency)", true)]
