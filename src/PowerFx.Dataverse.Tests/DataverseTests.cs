@@ -1282,6 +1282,18 @@ END
             engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new DataverseFeatures() { UseMaxInvariantExpressionLength = true });
             result = engine.Compile(expr, new SqlCompileOptions());
             Assert.True(result.IsSuccess);
+
+            var displayExp = "Concatenate(\"" + (new string('a', 977)) + "\", Test)";
+            Assert.True(displayExp.Length < DataverseEngine.MaxExpressionLength);
+
+            result = engine.Compile(displayExp, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            var invariantExp = result.LogicalFormula;
+            Assert.True(invariantExp.Length > DataverseEngine.MaxExpressionLength);
+
+            result = engine.Compile(invariantExp, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
         }
 
         [Theory]
