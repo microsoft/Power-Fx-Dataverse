@@ -11,5 +11,9 @@
         // This FCB is to enable/disable Option Set Feature.
         // When this flag is enabled, Formula Field of type Options Set are supported.
         public bool IsOptionSetEnabled { get; set; }
+
+        // This flag when enabled, we use DataverseEngine.MaxInvariantExpressionLength = 1500 as max expression length
+        // allowed for invariant formulas during compile, else we use DataverseEngine.MaxExpressionLength = 1000.
+        public bool UseMaxInvariantExpressionLength { get; set; }
     }
 }
