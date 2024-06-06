@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <TargetFramework>net7.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <RootNamespace>Microsoft.PowerFx.Dataverse.Tests</RootNamespace>
   </PropertyGroup>
