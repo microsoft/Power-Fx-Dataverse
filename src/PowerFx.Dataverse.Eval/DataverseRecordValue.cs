@@ -27,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseRecordValue : RecordValue
     {
         // The underlying entity (= table row)
-        private readonly Entity _entity;
+        private Entity _entity;
         private readonly EntityMetadata _metadata;
 
         // Used to resolve entity relationships (dot operators). 
@@ -387,6 +387,18 @@ namespace Microsoft.PowerFx.Dataverse
         public override string GetPrimaryKeyName()
         {
             return _metadata.PrimaryIdAttribute;
+        }
+
+        public override void ShallowCopyFieldInPlace(string fieldName)
+        {
+            var clonedEntity = new Entity(Entity.LogicalName, Entity.Id);
+
+            foreach (var attr in Entity.Attributes)
+            {
+                clonedEntity[attr.Key] = attr.Value;
+            }
+
+            _entity = clonedEntity;
         }
     }
 }
