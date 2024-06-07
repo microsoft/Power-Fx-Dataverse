@@ -223,7 +223,12 @@ namespace Microsoft.PowerFx
                 IOrganizationService svcClient;
 
                 var connectionString = connectionSV.Value;
-                svcClient = new ServiceClient(connectionString) { UseWebApi = false };
+                var userName = "aurorauser01@auroraprojopsintegration01.onmicrosoft.com";
+                var url = "https://aurorabapenvb295a.crm10.dynamics.com/";
+                var localTokenCache = @"c:\MyTokenCache\toks.dat";
+                var cx = $"AuthType=OAuth;Username={userName};redirectUri=http://localhost;Url={url};TokenCacheStorePath={localTokenCache};LoginPrompt=Auto";
+
+                svcClient = new ServiceClient(cx) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
@@ -234,6 +239,8 @@ namespace Microsoft.PowerFx
                     _dv = SingleOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
                 _repl.ExtraSymbolValues = _dv.SymbolValues;
+
+                _repl.Engine.UpdateVariable("NewRecord", _dv.RetrieveAsync("account", new Guid("edd496fd-6c24-ef11-840b-000d3a3015c1"), null).Result, newVarProps: new SymbolProperties { CanMutate = false, CanSet = true, CanSetMutate = true});
 
                 UpdateUserInfo(svcClient);
 
