@@ -1038,6 +1038,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
+        [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")
+            ]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1060,6 +1062,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Simulate a parameter
             var parameterSymbols = new SymbolTable { DebugName = "Parameters " };
             parameterSymbols.AddVariable("ParamLocal1", dv.GetRecordType("local"), mutable: true);
+            parameterSymbols.AddVariable("NewRecord", dv.GetRecordType("local"), new SymbolProperties() { CanMutate = false, CanSet = false, CanSetMutate = true});
 
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);

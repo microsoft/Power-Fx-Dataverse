@@ -248,6 +248,23 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
                 }
+                else if(arg0 is RecordFieldAccessNode recordFieldAccessNode)
+                {
+                    recordFieldAccessNode.From.Accept(this, context);
+                    var ltype = recordFieldAccessNode.From.IRContext.ResultType;
+                    if (ltype is RecordType ltypeRecord)
+                    {
+                        // Logical name of the table on left side. 
+                        // This will be null for non-dataverse records
+                        var tableLogicalName = ltypeRecord.TableSymbolName;
+
+                        if (tableLogicalName != null)
+                        {
+                            var fieldLogicalName = recordFieldAccessNode.Field.Value;
+                            AddFieldWrite(tableLogicalName, fieldLogicalName);
+                        }
+                    }
+                }
             }
 
             int argRecordWrite = 0;
