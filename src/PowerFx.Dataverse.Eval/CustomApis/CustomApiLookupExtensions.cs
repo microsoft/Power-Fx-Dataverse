@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -93,6 +95,38 @@ namespace Microsoft.PowerFx.Dataverse
                                filter, cancellationToken).ConfigureAwait(false);
 
             return results;
+        }
+
+        public static (CultureInfo, TimeZoneInfo) GetUserLocaleTimeZoneSettings(this IDataverseReader reader)
+        {
+            var query = new QueryExpression(UserSettingsEntity.TableName)
+            {
+                ColumnSet = new ColumnSet(nameof(UserSettingsEntity.localeid), nameof(UserSettingsEntity.timezonecode)),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                            new ConditionExpression("systemuserid", ConditionOperator.EqualUserId)
+                    }
+                }
+            };
+
+            var currentUserSettings = reader.RetrieveMultipleAsync(query, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult().Response.Entities.First().ToObject<UserSettingsEntity>();
+
+            var localeId = currentUserSettings.localeid;
+            var culture = new CultureInfo(localeId);
+
+            var timeZoneCode = currentUserSettings.timezonecode;
+            var timezoneQuery = new QueryExpression("timezonedefinition")
+            {
+                ColumnSet = new ColumnSet("standardname")
+            };
+            timezoneQuery.Criteria.AddCondition("timezonecode", ConditionOperator.Equal, timeZoneCode);
+            var timeZoneDef = reader.RetrieveMultipleAsync(query).ConfigureAwait(false).GetAwaiter().GetResult().Response;
+            var windowsTimeZoneId = timeZoneDef.Entities[0].Attributes["standardname"].ToString();
+            var timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
+
+            return (culture, timeZoneInfo);
         }
     }
 }

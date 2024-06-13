@@ -246,6 +246,11 @@ namespace Microsoft.PowerFx
 
                 // used by the AI functions and now we have a valid service to work with
                 var clientExecute = new DataverseService(svcClient);
+
+                (var locale, var tz) = clientExecute.GetUserLocaleTimeZoneSettings();
+
+                Console.WriteLine($"Current User's Locale is {locale.Name} , and TimeZone is {tz.DisplayName}");
+
                 var innerServices = new BasicServiceProvider();
                 innerServices.AddService<IDataverseExecute>(clientExecute);
                 _repl.InnerServices = innerServices;

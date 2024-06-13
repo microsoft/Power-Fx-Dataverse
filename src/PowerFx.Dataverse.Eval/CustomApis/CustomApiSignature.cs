@@ -87,6 +87,17 @@ namespace Microsoft.PowerFx.Dataverse
         public EntityReference fxexpressionid { get; set; }
     }
 
+    [DebuggerDisplay("CustomApi: {uniquename}")]
+    [DataverseEntity(TableName)]
+    internal class UserSettingsEntity
+    {
+        public const string TableName = "usersettings";
+
+        public int localeid { get; set; }
+
+        public int timezonecode { get; set; }
+    }
+
 
     [DataverseEntity(TableName)]
     public class CustomApiRequestParam : IParameterType
