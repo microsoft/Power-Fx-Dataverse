@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -93,6 +95,74 @@ namespace Microsoft.PowerFx.Dataverse
                                filter, cancellationToken).ConfigureAwait(false);
 
             return results;
+        }
+
+        /// <summary>
+        /// Retrieve the locale and timezone settings for the current user. If settings are not found, returns null.
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static async Task<(CultureInfo, TimeZoneInfo)> GetUserLocaleTimeZoneSettingsAsync(this IDataverseReader reader, CancellationToken cancellationToken = default)
+        {
+            var query = new QueryExpression(UserSettingsEntity.TableName)
+            {
+                ColumnSet = new ColumnSet(nameof(UserSettingsEntity.localeid), nameof(UserSettingsEntity.timezonecode)),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                            new ConditionExpression("systemuserid", ConditionOperator.EqualUserId)
+                    }
+                }
+            };
+
+            var currentUserSettingsResponse = await reader.RetrieveMultipleAsync(query, cancellationToken);
+
+            if(currentUserSettingsResponse.Response.Entities.Count == 0)
+            {
+                return (null, null);
+            }
+            else if(currentUserSettingsResponse.Response.Entities.Count > 1)
+            {
+                throw new InvalidOperationException("More than one User settings found, please report a bug");
+            }
+
+            var currentUserSettings = currentUserSettingsResponse.Response.Entities.First().ToObject<UserSettingsEntity>();
+
+            var localeId = currentUserSettings.localeid;
+            var culture = new CultureInfo(localeId);
+
+            var timeZoneCode = currentUserSettings.timezonecode;
+            var timeZoneInfo = await reader.GetUserTimeZoneInfoAsync(timeZoneCode);
+
+            return (culture, timeZoneInfo);
+        }
+
+        private static async Task<TimeZoneInfo> GetUserTimeZoneInfoAsync(this IDataverseReader reader, int timeZoneCode, CancellationToken cancellationToken = default)
+        {
+            var timezoneQuery = new QueryExpression("timezonedefinition")
+            {
+                ColumnSet = new ColumnSet("standardname")
+            };
+
+            timezoneQuery.Criteria.AddCondition("timezonecode", ConditionOperator.Equal, timeZoneCode);
+
+            var timeZoneDefResponse = await reader.RetrieveMultipleAsync(timezoneQuery, cancellationToken);
+
+            if(timeZoneDefResponse.Response.Entities.Count == 0)
+            {
+                return null;
+            }
+            else if(timeZoneDefResponse.Response.Entities.Count > 1)
+            {
+                throw new InvalidOperationException("More than one timezone definition found, please report a bug");
+            }
+
+            var timeZoneDef = timeZoneDefResponse.Response.Entities.First();
+            var windowsTimeZoneId = timeZoneDef.Attributes["standardname"].ToString();
+            return TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
         }
     }
 }
