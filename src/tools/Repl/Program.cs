@@ -223,12 +223,7 @@ namespace Microsoft.PowerFx
                 IOrganizationService svcClient;
 
                 var connectionString = connectionSV.Value;
-                var userName = "aurorauser01@auroraprojopsintegration01.onmicrosoft.com";
-                var url = "https://aurorabapenvb295a.crm10.dynamics.com/";
-                var localTokenCache = @"c:\MyTokenCache\toks.dat";
-                var cx = $"AuthType=OAuth;Username={userName};redirectUri=http://localhost;Url={url};TokenCacheStorePath={localTokenCache};LoginPrompt=Auto";
-
-                svcClient = new ServiceClient(cx) { UseWebApi = false };
+                svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
                 {
@@ -240,17 +235,10 @@ namespace Microsoft.PowerFx
                 }
                 _repl.ExtraSymbolValues = _dv.SymbolValues;
 
-                _repl.Engine.UpdateVariable("NewRecord", _dv.RetrieveAsync("account", new Guid("edd496fd-6c24-ef11-840b-000d3a3015c1"), null).Result, newVarProps: new SymbolProperties { CanMutate = false, CanSet = true, CanSetMutate = true});
-
                 UpdateUserInfo(svcClient);
 
                 // used by the AI functions and now we have a valid service to work with
                 var clientExecute = new DataverseService(svcClient);
-
-                (var locale, var tz) = clientExecute.GetUserLocaleTimeZoneSettings();
-
-                Console.WriteLine($"Current User's Locale is {locale.Name} , and TimeZone is {tz.DisplayName}");
-
                 var innerServices = new BasicServiceProvider();
                 innerServices.AddService<IDataverseExecute>(clientExecute);
                 _repl.InnerServices = innerServices;
@@ -259,7 +247,7 @@ namespace Microsoft.PowerFx
                 {
                     AddCustomApisAsync(clientExecute).Wait();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     // Non-fatal error 
                     Console.WriteLine($"Failed to add APIs: {e.Message}");
