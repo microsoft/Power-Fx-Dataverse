@@ -2,23 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
-using Xunit.Sdk;
-using Microsoft.Xrm.Sdk.Query;
-using System.IO;
-using Azure.Data.Tables;
-using Microsoft.PowerFx.AzureStorage;
-using System.Text.Json;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Readers;
-using Microsoft.PowerFx.Connectors;
-using System.Net.Http;
-using Microsoft.PowerFx.Connectors.Tabular;
-using Microsoft.PowerFx.Core;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {

@@ -2335,7 +2335,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.False(check.IsSuccess);
-            Assert.Contains("The specified column 'DoesNotExist' does not exist.", check.Errors.First().Message);
+            Assert.Contains("The specified column 'DoesNotExist' does not exist.", check.Errors.Last().Message);
         }
 
         [Theory]
