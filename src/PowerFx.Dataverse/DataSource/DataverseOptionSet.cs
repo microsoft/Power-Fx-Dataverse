@@ -23,6 +23,16 @@ namespace Microsoft.PowerFx.Dataverse
         private List<DName> _optionNames;
         private DType _invariantType = DType.Invalid;
 
+        // Boolean To: For ease of use, Boolean backed option sets can be used as Boolean values directly (To), for example If( Record.IsOpen And Record.IsValid, ... )
+        // Boolean From: Likewise, Boolean values can be used to replace a Boolean backed option set (From), for example Patch( ..., .... { IsOpen: true } )
+        // Number To: Number based option sets can get at the underlying number (To) by using the Value function
+        // Number From: There is currently no option set constructor or other way to translate directly from a number backed option set to a number (From), but one can use Select( Value, 1, OptionSet.Value1, ... ) as a workaround
+        // *** This logic should match Canvas OptionSetInfo.cs ***
+        public bool CanCoerceFromBackingKind => IsBooleanValued;
+        public bool CanCoerceToBackingKind => IsBooleanValued;
+        public bool CanConcatenateStronglyTyped => false;
+        public bool CanCompareNumeric => false;
+
         public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)
         {
             Name = optionSetName;

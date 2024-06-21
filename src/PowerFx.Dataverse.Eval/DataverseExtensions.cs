@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             error = null;
 
-            foreach (NamedValue field in record.Fields)
+            foreach (NamedValue field in record.OriginalFields)
             {
                 if (field.Value is ErrorValue ev)
                 {

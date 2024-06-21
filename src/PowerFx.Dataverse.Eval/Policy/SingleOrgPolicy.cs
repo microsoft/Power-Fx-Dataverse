@@ -4,15 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -24,20 +25,17 @@ namespace Microsoft.PowerFx.Dataverse
     public class SingleOrgPolicy : Policy
     {
         internal const string SymTableName = "DataverseLazyGlobals";
-
-        private readonly DisplayNameProvider _displayNameLookup;
-
         private ReadOnlySymbolTable _symbols;
 
         // Mapping of Table logical names to values. 
         // Since this is a single-org case, the "Variable Name" is just the display name.
         private protected readonly Dictionary<string, DataverseTableValue> _tablesLogical2Value = new Dictionary<string, DataverseTableValue>();
 
-        public DisplayNameProvider AllTables => _displayNameLookup;
+        public DisplayNameProvider AllTables { get; }
 
         public SingleOrgPolicy(DisplayNameProvider displayNameLookup)
         {
-            _displayNameLookup = displayNameLookup;
+            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));                
         }
 
         // HElper to create a DV connection over the given service client. 
@@ -57,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool TryGetVariableName(string logicalName, out string variableName)
         {
-            if (_displayNameLookup.TryGetDisplayName(new DName(logicalName), out var variable))
+            if (AllTables.TryGetDisplayName(new DName(logicalName), out var variable))
             {
                 // For whole-org, we don't have fixed-name variables. (aren't converted to invariant)
                 // We use display namaes, which are converted to their logical name.  
@@ -86,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
-            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(_displayNameLookup, LazyAddTable, TableType.Empty(), SymTableName);
+            _allEntitieSymbols = ReadOnlySymbolTable.NewFromDeferred(AllTables, LazyAddTable, TableType.Empty(), SymTableName);
 
             var optionSetSymbols = new DVSymbolTable(metadataCache);
 
@@ -179,7 +177,7 @@ namespace Microsoft.PowerFx.Dataverse
             public override void Visit(FirstNameNode node)
             {
                 var type = _check.GetNodeType(node);
-                if (type is TableType t)
+                if (type is AggregateType t)
                 {
                     var name = t.TableSymbolName;
                     if (name != null)

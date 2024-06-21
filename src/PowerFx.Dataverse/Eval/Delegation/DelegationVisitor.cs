@@ -50,6 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static readonly JsonSerializerOptions _options = new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
+
         // Return Value passed through at each phase of the walk. 
         public class RetVal
         {
@@ -81,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly IntermediateNode _originalNode;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
-            public bool IsDelegating => _metadata != null;
+            public bool IsDelegating { get; init; }
                         
             
             // IR node that will resolve to the TableValue at runtime. 
@@ -91,7 +92,33 @@ namespace Microsoft.PowerFx.Dataverse
             // Table type  and original metadata for table that we're delegating to. 
             public readonly TableType _tableType;
 
-            public readonly EntityMetadata _metadata;
+            // Null if not dataverse
+            private readonly EntityMetadata _metadata;
+
+            public bool TryGetPrimaryIdFieldName(out string primaryId)
+            {
+                if (_metadata == null)
+                {
+                    primaryId = null;
+                    return false;
+                }
+                primaryId = _metadata.PrimaryIdAttribute;
+                return true;
+            }
+
+            public bool TryGetLogicalName(out string logicalName)
+            {
+                if (_metadata != null)
+                {
+                    logicalName = _metadata.LogicalName;
+                    return true;
+                }
+
+                logicalName = null;
+                return false;
+            }
+
+            public bool IsElasticTable => _metadata?.IsElasticTable() ?? false;
 
             public RetVal(DelegationHooks hooks , IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode count, int _maxRows, IEnumerable<IntermediateNode> columnSet, bool isDistinct = false)
             {
@@ -106,9 +133,11 @@ namespace Microsoft.PowerFx.Dataverse
                 this._filter = filter;
                 this._columnSet = columnSet;
                 this._isDistinct = isDistinct;
+                this.IsDelegating = true;
+                                
                 if (!DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata))
                 {
-                    throw new InvalidOperationException($"Could not get metadata for table {tableType.TableSymbolName}");
+                    // Ok, just means this datasource is not dataverse...
                 }
             }
 
@@ -190,7 +219,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (left1.Value is ScopeAccessSymbol s)
                 {
                     var fieldName = s.Name;
-                    if (fieldName == tableArg._metadata.PrimaryIdAttribute)
+                    if (tableArg.TryGetPrimaryIdFieldName(out var primaryId) && (fieldName == primaryId))
                     {
                         return true;
                     }
@@ -292,6 +321,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // We need to tell the difference between a direct table, 
                     // and another global variable that has that table's type (such as global := Filter(table, true). 
                     bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
+
                     if (isRealTable)
                     {
                         var ret = new RetVal(_hooks, node, node, aggType, filter: null, count: null, _maxRows, columnSet: null, isDistinct: false);
@@ -902,7 +932,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         private bool TryMatchElasticIds(Context predicteContext, IntermediateNode arg1OfAnd, IntermediateNode arg2OfAnd, out IntermediateNode guidArg, out IntermediateNode partitionIdArg)
         {
-            if (predicteContext.CallerTableRetVal._metadata.IsElasticTable() && arg1OfAnd is BinaryOpNode arg1b && arg2OfAnd is BinaryOpNode arg2b )
+            if (predicteContext.CallerTableRetVal.IsElasticTable && arg1OfAnd is BinaryOpNode arg1b && arg2OfAnd is BinaryOpNode arg2b )
             {
                 if (TryMatchPrimaryId(arg1b.Left, arg1b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
                     && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var fieldName, out var maybePartitionId, out var opKind)
@@ -1020,9 +1050,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
         {
+            if (tableArg == null || !tableArg.TryGetLogicalName(out var tableName))
+            {
+                tableName = "table"; // some default
+            }
+            
             var reason = new ExpressionError()
             {
-                MessageArgs = new object[] { tableArg?._metadata.LogicalName ?? "table", _maxRows },
+                MessageArgs = new object[] { tableName, _maxRows },
                 Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
                 Severity = ErrorSeverity.Warning,
                 ResourceKey = TexlStrings.WrnDelegationTableNotSupported

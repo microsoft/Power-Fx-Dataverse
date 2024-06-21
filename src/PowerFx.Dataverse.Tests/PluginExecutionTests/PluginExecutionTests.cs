@@ -1038,6 +1038,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
+        [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")
+            ]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1060,6 +1062,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Simulate a parameter
             var parameterSymbols = new SymbolTable { DebugName = "Parameters " };
             parameterSymbols.AddVariable("ParamLocal1", dv.GetRecordType("local"), mutable: true);
+            parameterSymbols.AddVariable("NewRecord", dv.GetRecordType("local"), new SymbolProperties() { CanMutate = false, CanSet = false, CanSetMutate = true});
 
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);
@@ -1321,6 +1324,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("First(t1).Price", "local")]
         [InlineData("First(Remote)", "remote")]
         [InlineData("First(t1).Price & IsBlank(First(Remote))", "local,remote")]
+        [InlineData("EntityRef.Price", "local")]
+        [InlineData("entityRef.Price", "local")]
         public void TableDependencyFinder(string expression, string listTables)
         {
             var logicalName = "local";
@@ -1335,7 +1340,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             {
                 var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
-                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
+                var parametersRecord = RecordType.Empty().Add("entityRef", dv.GetRecordType("local"), "EntityRef");
+                var parametersSymbols = ReadOnlySymbolTable.NewFromRecord(parametersRecord);
+                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parametersSymbols);
 
                 var config = new PowerFxConfig();
                 config.EnableSetFunction();
@@ -1389,8 +1396,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship 
         [InlineData("ThisRecord.Price + 10", 110.0, true)] // Basic field lookup (RowScope)
         [InlineData("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets
-        [InlineData("ThisRecord.Rating = 1", false, true)]
-        [InlineData("ThisRecord.Rating = 2", true, true)]
+        [InlineData("Value(ThisRecord.Rating) = 1", false, true)]
+        [InlineData("Value(ThisRecord.Rating) = 2", true, true)]
 
         // Single Global record
         [InlineData("First(t1).new_price", 100.0, false)]
@@ -2328,7 +2335,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             Assert.False(check.IsSuccess);
-            Assert.Contains("The specified column 'DoesNotExist' does not exist.", check.Errors.First().Message);
+            Assert.Contains("The specified column 'DoesNotExist' does not exist.", check.Errors.Last().Message);
         }
 
         [Theory]

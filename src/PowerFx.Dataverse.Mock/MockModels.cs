@@ -327,6 +327,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewGuid("guid", "Guid"),
                 AttributeMetadataModel.NewGuid("allid", "AllId"),
                 AttributeMetadataModel.NewString("string", "String"),
+                AttributeMetadataModel.NewString("new_test", "Test"),
                 AttributeMetadataModel.NewString("hyperlink", "Hyperlink", StringFormat.Url),
                 AttributeMetadataModel.NewString("email", "Email", StringFormat.Email),
                 AttributeMetadataModel.NewString("ticker", "Ticker", StringFormat.TickerSymbol),

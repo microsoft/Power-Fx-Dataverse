@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        protected override async Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             // propagate args[0] if it's not a table (e.g. Blank/Error)
             if (args[0] is not TableValue table)
@@ -87,7 +87,7 @@ namespace Microsoft.PowerFx.Dataverse
                 relation = _hooks.RetreiveManyToOneRelation(table, links);
                 dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
                 var filter = GenerateFilterExpression(field, _op, dvValue);
-                filter.Conditions[0].EntityName = relation.LinkToEntityName;
+                filter.Conditions[0].EntityName = relation.EntityAlias;
 
                 result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation });
             }

@@ -4,6 +4,7 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -148,15 +149,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Rat|", "Rating", "'Rating (Locals)'")] // "Picklist name with no conflict"
+        [InlineData("Rat|", "'Rating (Locals)'", "Rating")] // "Picklist name with no conflict"
         [InlineData("'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Disambiguated picklist values with no conflict"
         [InlineData("Other.Rating + Rating|", "Rating", "'Rating (Locals)'", "'Rating (Remotes)'")] // "Picklist with conflict"
         [InlineData("Other.Rating + 'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Explicit Picklist one values with conflict"
         [InlineData("Other.Rating + 'Rating (Remotes)'.|", "Large", "Medium", "Small")] // "Explicit Picklist two values with conflict"
-        [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] // "Global picklist"
         [InlineData("[@'Global Picklist'].|", "High", "Low", "Medium")] // "Global picklist values"
         public void CheckOptionSetSuggestions(string expression, params string[] expectedSuggestions)
         {
+            Array.Sort(expectedSuggestions, StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
+            var intellisense = Suggest(expression);
+            var actualSuggestions = ToArray(intellisense);
+            Assert.Equal(expectedSuggestions, actualSuggestions);
+        }
+
+        [Theory]
+        [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] // "Global picklist"
+        public void CheckOptionSetSuggestions2(string expression, params string[] expectedSuggestions)
+        {
+            // don't reorder suggestions. 
             var intellisense = Suggest(expression);
             var actualSuggestions = ToArray(intellisense);
             Assert.Equal(expectedSuggestions, actualSuggestions);
@@ -171,6 +182,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = _engine;
 
             List<string> expected = new List<string> { "Rating", "'Rating (Locals)'" };
+            expected.Sort(StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
             Assert.Equal(2, expected.Count);
 
             var intellisense = Suggest("Rat|", engine);
@@ -181,6 +193,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Suggestion to cache in more metadata from another table. This will bring in "'Rating (Remotes)'"            
             Suggest("Other.Rating|", engine);
             expected.Add("'Rating (Remotes)'");
+            expected.Sort(StringComparer.Ordinal);
 
             // Now repeating the original request will get more suggestions. 
             intellisense = Suggest("Rat|", engine);
@@ -202,6 +215,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'")] // "MultiSelect suggested"
         public void CheckUnsupportedTypeSuggestions(string expression, params string[] expectedSuggestions)
         {
+            Array.Sort(expectedSuggestions, StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
             var intellisense = Suggest(expression, _allAttributesEngine);
             var actualSuggestions = ToArray(intellisense);
             Assert.Equal(expectedSuggestions, actualSuggestions);

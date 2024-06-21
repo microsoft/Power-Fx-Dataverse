@@ -714,8 +714,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // math functions
                 ExecuteSqlTest("Mod(double1,decimal)", 5.94D, cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Mod(double1,double2)", 0.05108D, cx, metadata, dataverseFeatures: dataverseFeatures);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
-                ExecuteSqlTest("Mod(decimal,double2)", 0.2516000000M, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516, cx, metadata, dataverseFeatures: dataverseFeatures);
+                ExecuteSqlTest("Mod(decimal,double2)", 0.2516, cx, metadata, dataverseFeatures: dataverseFeatures);
 
                 ExecuteSqlTest("Round(double1,2)", 25.64D, cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Round(double1,double2)", 25.6D, cx, metadata, dataverseFeatures: dataverseFeatures);
@@ -880,6 +880,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
+        [SkippableFact]
+        public void SqlInOperatorTests()
+        {
+            using (var cx = GetSql())
+            {
+                ExecuteSqlTest("(\"a_a\" in \"testa_a\")", true, cx, null);
+                ExecuteSqlTest("(\"0%\" in \"100%\")", true, cx, null);
+                ExecuteSqlTest("(\"t't\" in \"test'test\")", true, cx, null);
+                ExecuteSqlTest("(\"[_t]\" in \"tes[_t]test\")", true, cx, null);
+            }
+        }
+
         public static TypeDetails GetIntegerHint()
         {
             return new TypeDetails
@@ -890,19 +902,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         #region Full Test infra
 
-        private const string ConnectionStringVariable = "FxTestSQLDatabase";
+        private const string FxTestSQLToken = "FxTestSQLToken";
 
         private static SqlConnection GetSql()
         {
             // "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
-            var cx = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+            var jwtToken = Environment.GetEnvironmentVariable(FxTestSQLToken);
 
-            if (string.IsNullOrEmpty(cx))
+            if (string.IsNullOrEmpty(jwtToken))
             {
                 // Throws
-                Skip.If(true, $"Test skipped - No SQL database configured. Set the {ConnectionStringVariable} env var to a connection string.");
+                Skip.If(true, $"Test skipped - No SQL token configured. Set the {FxTestSQLToken} env var to a connection string.");
             }
-            var connection = new SqlConnection(cx);
+
+            var connection = new SqlConnection("Server=tcp:pfxdev-sql.database.windows.net,1433;Initial Catalog=pfxdev;Encrypt=True;")
+            {
+                AccessToken = jwtToken
+            };
+
             connection.Open();
             return connection;
         }

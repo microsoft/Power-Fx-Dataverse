@@ -71,35 +71,44 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="isDistinct">Decides if Distinct needs be applied</param>
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
-            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(TableValue table, ISet<LinkEntity> relation, FilterExpression filter, string partitionId, int? count, IEnumerable<string> columnSet, bool isDistinct, CancellationToken cancellationToken)
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
-                var t2 = (DataverseTableValue)table;
-
-                IEnumerable<DValue<RecordValue>> result;
-
-                // Elastic tables need to be handled differently.
-                if (t2._entityMetadata.IsElasticTable())
-                {
-                    result = await t2.RetrieveMultipleAsync(filter, relation, partitionId, count, columnSet, isDistinct, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    result = await t2.RetrieveMultipleAsync(filter, relation, count, columnSet, isDistinct, cancellationToken).ConfigureAwait(false);
-                } 
-
+                var result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                
                 return result;
             }
 
+            // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {
                 // Binder should have enforced that this always succeeds.
-                var t2 = (DataverseTableValue)table;
-                if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
+                var t2 = table as DataverseTableValue;
+                if (t2 != null)
                 {
-                    return amd.ToAttributeObject(value, true);
+                    if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
+                    {
+                        return amd.ToAttributeObject(value, true);
+                    }
+
+                    throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
                 }
 
-                throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
+                // We don't have any strong type information. 
+                if (value is OptionSetValue osv)
+                {
+                    // Workaround for https://github.com/microsoft/Power-Fx/issues/2403
+                    // For delegation, Option set should return execution value. 
+                    // ToObject() / TryGetPrimitiveValue() will return display name. 
+                    return osv.Option;
+                }
+
+                if (value.TryGetPrimitiveValue(out var primitiveValue))
+                {
+                    return primitiveValue;
+                }
+
+                // Binder should ensure we never get here. 
+                throw new Exception($"Expected primitive for field {fieldName}, type={value.Type}.");
             }
 
             internal override object RetrieveRelationAttribute(TableValue table, LinkEntity relation, string field, FormulaValue value)
@@ -118,7 +127,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 bool isRealTable =
                     symbolTable.DebugName == SingleOrgPolicy.SymTableName ||
-                    symbolTable.DebugName == DVSymbolTable.SymTableName;
+                    symbolTable.DebugName == DVSymbolTable.SymTableName ||
+
+                    // https://github.com/microsoft/Power-Fx-Dataverse/issues/478
+                    symbolTable.DebugName.StartsWith("Delegable_");
 
                 return isRealTable;
             }
@@ -146,6 +158,9 @@ namespace Microsoft.PowerFx.Dataverse
                     LinkToEntityName = relation.ReferencedEntity,
                     LinkFromAttributeName = relation.ReferencingAttribute,
                     LinkToAttributeName = relation.ReferencedAttribute,
+
+                    // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
+                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N"),
                     JoinOperator = JoinOperator.LeftOuter
                 };
 

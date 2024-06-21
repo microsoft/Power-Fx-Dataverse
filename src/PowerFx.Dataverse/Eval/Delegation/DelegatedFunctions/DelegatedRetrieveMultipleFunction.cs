@@ -22,9 +22,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        protected override async Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
-            if (args[0] is not TableValue table)
+            if (args[0] is not IDelegatableTableValue table)
             {
                 throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
             }
@@ -85,7 +85,19 @@ namespace Microsoft.PowerFx.Dataverse
                 });
             }
 
-            var rows = await _hooks.RetrieveMultipleAsync(table, relation, filter, partitionId, topCount, columns, isDistinct, cancellationToken).ConfigureAwait(false);
+#pragma warning disable CS0618 // Type or member is obsolete
+            var delegationParameters = new DataverseDelegationParameters
+            {
+                _relation = relation,
+                Filter = filter,
+                _partitionId = partitionId,
+                Top = topCount,
+                _columnSet = columns,
+                _isDistinct = isDistinct
+            };
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            var rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
 
             // Distinct outputs always in default single column table.
             if (isDistinct)

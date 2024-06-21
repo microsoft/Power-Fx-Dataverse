@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
     // This means injecting new runtime helper functions into the IR.
     // As runtime helpers, they can't be referenced by binder and don't show in intellisense or source. 
     // As such, the actual function name doesn't matter and is just used for diagnostics. 
-    internal abstract class DelegateFunction : TexlFunction, IAsyncTexlFunction
+    internal abstract class DelegateFunction : TexlFunction, IAsyncTexlFunction5
     {
         protected readonly DelegationHooks _hooks;
 
@@ -48,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse
             yield return new TexlStrings.StringGetter[0];
         }
 
-        public Task<FormulaValue> InvokeAsync(FormulaValue[] args, CancellationToken cancellationToken)
+        public Task<FormulaValue> InvokeAsync(IServiceProvider services, FormulaType irContext, FormulaValue[] args, CancellationToken cancellationToken)
         {
             // If any of the args are errors, return the first one
             List<ErrorValue> errors = new List<ErrorValue>();
@@ -65,9 +65,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return  Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));
             }
 
-            return ExecuteAsync(args, cancellationToken);
+            return ExecuteAsync(services, args, cancellationToken);
         }
 
-        protected abstract Task<FormulaValue> ExecuteAsync(FormulaValue[] args, CancellationToken cancellationToken);
+        protected abstract Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken);
     }
 }

@@ -247,7 +247,7 @@ namespace Microsoft.PowerFx
                 {
                     AddCustomApisAsync(clientExecute).Wait();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     // Non-fatal error 
                     Console.WriteLine($"Failed to add APIs: {e.Message}");

@@ -197,6 +197,15 @@ ELSE
         public const double IntTypeMinValue = -2147483648;
         public const double IntTypeMaxValue = 2147483647;
 
+        public const string IntTypeMinForLanguageFormat = "0";
+        public const string IntTypeMaxForLanguageFormat = "2147483647";
+
+        public const string IntTypeMinForTimeZoneFormat = "-1500";
+        public const string IntTypeMaxForTimeZoneFormat = "1500";
+
+        public const string IntTypeMinForDurationFormat = "0";
+        public const string IntTypeMaxForDurationFormat = "2147483647";
+
         // Changing the min and max for decimals to match with
         // CRM supported min and max for decimals. 
         public const string DecimalTypeMin = "-100000000000";

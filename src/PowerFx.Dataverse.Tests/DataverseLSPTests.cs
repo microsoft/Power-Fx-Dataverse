@@ -58,7 +58,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             string expression = "Ab"; // expect "Abs"
 
+#pragma warning disable CS0618
             _testServer.OnDataReceived(JsonSerializer.Serialize(new
+#pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
                 id = "123456",
@@ -116,7 +118,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var _scopeFactory = new PowerFxScopeFactory();
             var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
 
+#pragma warning disable CS0618
             _testServer.OnDataReceived(JsonSerializer.Serialize(new
+#pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
                 method = "textDocument/didChange",
@@ -151,7 +155,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private void SendFixup(LanguageServer server, string localeName, string expression)
         {
             // This will call engine's IPowerFxScopeDisplayName.TranslateToDisplayName
+#pragma warning disable CS0618
             server.OnDataReceived(JsonSerializer.Serialize(new
+#pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
                 id = "123456",
@@ -227,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("1.2", "en-US")] // success case 
         [InlineData("1,2", "fr-FR")] // success case 
-        [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;Utilisation non valide de « . »")] // error - no dups, all French
+        [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;L’opérateur « . » ne peut pas être utilisé sur les...")] // error - no dups, all French
         [InlineData("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
         [InlineData("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding         
         [InlineData("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
@@ -280,8 +286,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var _scopeFactory = new PowerFxScopeFactory();
             var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
 
-
+#pragma warning disable CS0618
             _testServer.OnDataReceived(JsonSerializer.Serialize(new
+#pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
                 id = "123456",
@@ -307,7 +314,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var _scopeFactory = new PowerFxScopeFactory();
             var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
 
+#pragma warning disable CS0618
             _testServer.OnDataReceived(JsonSerializer.Serialize(new
+#pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
                 id = "123456",
@@ -437,8 +446,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             public List<string> _sendToClientData = new List<string>();
 
+#pragma warning disable CS0618
             public TestLanguageServer(SendToClient sendToClient, IPowerFxScopeFactory scopeFactory)
                 : base(sendToClient, scopeFactory)
+#pragma warning restore CS0618
             {
             }
 

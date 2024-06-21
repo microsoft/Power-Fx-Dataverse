@@ -880,7 +880,7 @@ END
             // Mod function is overloaded to produce Decimal or Float based on the expression passed
             CallEngineAndVerifyResult("Mod(2,4)", FormulaType.Decimal, "Mod(#$decimal$#, #$decimal$#)"); // producing decimal
             CallEngineAndVerifyResult("Mod(Float(2),4)", FormulaType.Number, "Mod(Float(#$decimal$#), #$decimal$#)"); // producing float
-            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Decimal, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
+            CallEngineAndVerifyResult("Mod(4, Float(2))", FormulaType.Number, "Mod(#$decimal$#, Float(#$decimal$#))"); // producing decimal because first arg derives the return type of formula
 
             // if floating point FCB is disabled then user can't use Float function directly in formula but internally from IR, it would be supported
             CallEngineAndVerifyResult("Mod(Float(2),4)", null, "Mod(Float(#$decimal$#), #$decimal$#)", isFloatingPointEnabled : false, isSuccess : false, errorMsg : "'Float' is an unknown or unsupported function."); 
@@ -1265,6 +1265,37 @@ END
             Assert.Equal(key, errors[0].MessageKey);
         }
 
+        [Fact]
+        public void InvariantFormulaTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
+            var expr = "Concatenate(\"" + (new string('a', 977)) + "\", new_test)";
+            Assert.True(expr.Length > DataverseEngine.MaxExpressionLength);
+            Assert.True(expr.Length < DataverseEngine.MaxInvariantExpressionLength);
+
+            var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
+            var result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Expression can't be more than 1000 characters", result.Errors.First().ToString());
+
+            engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new DataverseFeatures() { UseMaxInvariantExpressionLength = true });
+            result = engine.Compile(expr, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            var displayExp = "Concatenate(\"" + (new string('a', 977)) + "\", Test)";
+            Assert.True(displayExp.Length < DataverseEngine.MaxExpressionLength);
+
+            result = engine.Compile(displayExp, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            var invariantExp = result.LogicalFormula;
+            Assert.True(invariantExp.Length > DataverseEngine.MaxExpressionLength);
+
+            result = engine.Compile(invariantExp, new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+        }
+
         [Theory]
         [InlineData("Value(currency)", true)]
         [InlineData("Decimal(currency)", true)]
@@ -1362,6 +1393,76 @@ END
 
             Assert.Equal(IntegerFunction, result.SqlFunction);
             Assert.True(result.ReturnType is DecimalType);
+        }
+
+        public const string WholeNumUDFForTimeZoneFormat = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10) -- new_field
+) RETURNS int
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v1 decimal(23,10)
+    DECLARE @v2 decimal(23,10)
+
+    -- expression body
+    SET @v1 = 100
+    SET @v2 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v1,0)) AS decimal(23,10))
+    IF(@v2 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v2<-1500 OR @v2>1500) BEGIN RETURN NULL END
+    RETURN ROUND(@v2, 0)
+END
+";
+        public const string WholeNumUDFForLanguageFormat = @"CREATE FUNCTION fn_testUdf1(
+    @v0 decimal(23,10), -- new_field
+    @v1 uniqueidentifier -- new_lookup
+) RETURNS int
+AS BEGIN
+    DECLARE @v2 decimal(23,10)
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v5 decimal(23,10)
+    SELECT TOP(1) @v2 = [data3] FROM [dbo].[tripleremoteBase] WHERE[tripleremoteid] = @v1
+
+    -- expression body
+    SET @v3 = TRY_CAST((ISNULL(@v0,0) * ISNULL(@v2,0)) AS decimal(23,10))
+    IF(@v3 IS NULL) BEGIN RETURN NULL END
+    IF(@v3<-100000000000 OR @v3>100000000000) BEGIN RETURN NULL END
+    SET @v4 = 100
+    SET @v5 = TRY_CAST((ISNULL(@v3,0) * ISNULL(@v4,0)) AS decimal(23,10))
+    IF(@v5 IS NULL) BEGIN RETURN NULL END
+    -- end expression body
+
+    IF(@v5<0 OR @v5>2147483647) BEGIN RETURN NULL END
+    RETURN ROUND(@v5, 0)
+END
+";
+        [Fact]
+        public void CompileIntegerTypeHintMinMaxRangeTest()
+        {
+            var xrmModel = MockModels.AllAttributeModel.ToXrm();
+            var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
+            var engine = new PowerFx2SqlEngine(xrmModel, provider);
+            var options = new SqlCompileOptions
+            {
+                TypeHints = new SqlCompileOptions.TypeDetails { 
+                    TypeHint = AttributeTypeCode.Integer,
+                    IntegerFormatValue = IntegerFormat.TimeZone
+                },
+                UdfName = "fn_testUdf1",
+            };
+
+            var result = engine.Compile("field * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(WholeNumUDFForTimeZoneFormat, result.SqlFunction);
+
+            options.TypeHints.IntegerFormatValue = IntegerFormat.Language;
+
+            result = engine.Compile("field * lookup.data3 * 100", options);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(WholeNumUDFForLanguageFormat, result.SqlFunction);
         }
 
         [Fact]
@@ -1975,6 +2076,49 @@ END
             {
                 Assert.True(result.Errors.Select(err => err.Message.Contains(message)).Any());
             }
+        }
+
+        public const string InOperatorTestUDF1 = @"CREATE FUNCTION test(
+) RETURNS bit
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 nvarchar(4000)
+    DECLARE @v1 bit
+
+    -- expression body
+    SET @v0 = N'testa_a'
+    SET @v1 = IIF((ISNULL(@v0,N'') LIKE N'%a[_]a%'), 1, 0)
+    -- end expression body
+
+    RETURN @v1
+END
+";
+        public const string InOperatorTestUDF2 = @"CREATE FUNCTION test(
+) RETURNS bit
+  WITH SCHEMABINDING
+AS BEGIN
+    DECLARE @v0 nvarchar(4000)
+    DECLARE @v1 bit
+
+    -- expression body
+    SET @v0 = N'100%'
+    SET @v1 = IIF((ISNULL(@v0,N'') LIKE N'%0[%]%'), 1, 0)
+    -- end expression body
+
+    RETURN @v1
+END
+";
+        [Fact]
+        public void InOperatorTests()
+        {
+            var engine = new PowerFx2SqlEngine();
+            var result = engine.Compile("(\"a_a\" in \"testa_a\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InOperatorTestUDF1, result.SqlFunction);
+
+            result = engine.Compile("(\"0%\" in \"100%\")", new SqlCompileOptions() { UdfName = "test" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(InOperatorTestUDF2, result.SqlFunction);
         }
 
         [Theory]
