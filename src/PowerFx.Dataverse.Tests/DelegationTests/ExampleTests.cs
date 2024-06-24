@@ -9,57 +9,43 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class ExampleTests
     {
-        // Return map of FileName --> Expression contents. 
-        private static Dictionary<string, string> GetExpressionTests()
+        private  static string ReadFile(string shortFilename)
         {
-            var baseDirectory = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "ExpressionExamples");
+            var file = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "ExpressionExamples", shortFilename);
 
-            var files = Directory.GetFiles(baseDirectory, "*.txt", SearchOption.AllDirectories);
-
-            var tests = new Dictionary<string, string>();
-            foreach(var file in files)
-            {
-                string expr = File.ReadAllText(file); 
-
-                string shortFilename = Path.GetFileName(file);
-                tests[shortFilename] = expr;
-            }
-
-            return tests;
+            string expr = File.ReadAllText(file);
+            return expr;
         }
 
-        [Fact]
-        public void BasicCompile()
+        [Theory]
+        [InlineData("FilterLiteralWithDateTimeValue.txt")]
+        [InlineData("FilterLiteralWithGuid.txt")]
+        [InlineData("FilterLiteralWithInteger.txt")]
+        [InlineData("FilterLiteralWithString.txt")]
+        [InlineData("ProposalIssuerApproverRelatedPartyFilter.txt")]
+        [InlineData("ProposalIssuerRelatedPartyFilter.txt")]
+        [InlineData("ProposalMultipleFiltersWithLiteral.txt")]
+        [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt")]
+        [InlineData("ProposalNoFilter.txt")]
+        [InlineData("ProposalSingleFilter.txt")]
+        public void BasicCompile(string shortFilename)
         {
-            // var expr = File.ReadAllText(@"C:\dev\power-fx-dataverse\src\PowerFx.Dataverse.Tests\DelegationTests\Examples\FilterLiteralWithString.txt");
-
             var symbols = GetSymbols();
 
-            var tests = GetExpressionTests();
+            string expr = ReadFile(shortFilename);
 
-            int pass = 0;
-            foreach (var kv in tests)
+            var engine = new RecalcEngine();
+            var check = new CheckResult(engine)
+                .SetText(expr, new ParserOptions { MaxExpressionLength = 5000 })
+                .SetBindingInfo(symbols);
+
+            var errors = check.ApplyErrors();
+
+            // $$$ check for delegation warnings. 
+            if (errors.Count() > 0)
             {
-                string shortName = kv.Key;
-                string expr = kv.Value;
-
-                var engine = new RecalcEngine();
-                var check = new CheckResult(engine)
-                    .SetText(expr, new ParserOptions { MaxExpressionLength = 5000 })
-                    .SetBindingInfo(symbols);
-
-                var errors = check.ApplyErrors();
-
-                // $$$ check for delegation warnings. 
-                if (errors.Count() > 0)
-                {
-                    string msg = string.Join(";", errors.Select(e => e.Message));
-                    Assert.Fail($"{shortName} failed with {errors.Count()} errors: {msg}");
-                } 
-                else
-                {
-                    pass++;
-                }        
+                string msg = string.Join(";", errors.Select(e => e.Message));
+                Assert.Fail($"Basic compile failed with {errors.Count()} errors: {msg}");
             }
         }
 
