@@ -74,7 +74,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public string aib_name { get; set; }
             public string aib_status { get; set; }
             public double aib_agreementdurationamount { get; set; }
-            public string aib_agreementdurationunits { get; set; }
+            public DateTime  aib_agreementdurationunits { get; set; }
 
             public AibIssuer aib_Issuer { get; set; }
             public AibIssuer aib_Approver { get; set; }
