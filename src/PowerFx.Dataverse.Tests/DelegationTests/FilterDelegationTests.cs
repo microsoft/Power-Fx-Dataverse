@@ -365,6 +365,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             CheckResult checkResult = engine.Check("Filter(MyTable, ThisRecord.Date < DateAdd(Now(), 30, TimeUnit.Days))", new ParserOptions() { AllowsSideEffects = true }, st);
 
             Assert.Empty(checkResult.Errors);
+            var actualIr = checkResult.GetCompactIRString();
+
+            Assert.Equal("_retrieveMultiple(MyTable, __lt(MyTable, Date, DateAdd(Now(), Float(30), (TimeUnit).Days)), 1000, False)", actualIr);
         }       
     }
 }

@@ -1062,7 +1062,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Simulate a parameter
             var parameterSymbols = new SymbolTable { DebugName = "Parameters " };
             parameterSymbols.AddVariable("ParamLocal1", dv.GetRecordType("local"), mutable: true);
-            parameterSymbols.AddVariable("NewRecord", dv.GetRecordType("local"), new SymbolProperties() { CanMutate = false, CanSet = false, CanSetMutate = true });
+            parameterSymbols.AddVariable("NewRecord", dv.GetRecordType("local"), new SymbolProperties() { CanMutate = false, CanSet = false, CanSetMutate = true});
 
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);
@@ -2364,7 +2364,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
-            var entity = el.RetrieveAsync("allattributes", _g1, columns: null).Result.Response;
+            var entity = el.RetrieveAsync("allattributes", _g1, columns:null).Result.Response;
 
             var expectedErrors = new List<string>()
             {
@@ -2498,7 +2498,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.Equal(expected, logging);
         }
-
+      
         [Fact]
         public void SerializeEntity()
         {
@@ -2856,10 +2856,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             CdsEntityMetadataProvider metadataCache = policy is SingleOrgPolicy policy2
                 ? new CdsEntityMetadataProvider(
-                    xrmMetadataProvider,
-                    new Dictionary<string, string>(policy2.AllTables.LogicalToDisplayPairs.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value.ToString())),
-                    globalOptionSet)
-                { NumberIsFloat = numberIsFloat }
+                    xrmMetadataProvider, 
+                    new Dictionary<string, string>(policy2.AllTables.LogicalToDisplayPairs.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value.ToString())), 
+                    globalOptionSet) 
+                    { NumberIsFloat = numberIsFloat }
                 : new CdsEntityMetadataProvider(xrmMetadataProvider) { NumberIsFloat = numberIsFloat };
 
             var dvConnection = new DataverseConnection(policy, ds, metadataCache, maxRows: 999);
@@ -2901,8 +2901,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return globalOptionSet;
         }
 
-        private static readonly OptionSetValueCollection _listOptionSetValueCollection = new OptionSetValueCollection(
-            new List<Xrm.Sdk.OptionSetValue>() { new Xrm.Sdk.OptionSetValue(value: 8), new Xrm.Sdk.OptionSetValue(value: 9) });
+        private static readonly OptionSetValueCollection _listOptionSetValueCollection = new OptionSetValueCollection(            
+            new List<Xrm.Sdk.OptionSetValue>() { new Xrm.Sdk.OptionSetValue(value: 8), new Xrm.Sdk.OptionSetValue(value: 9)});
 
         // Create Entity objects to match DataverseTests.AllAttributeModel;
         private (DataverseConnection, EntityLookup) CreateMemoryForAllAttributeModel(Policy policy = null, bool metadataNumberIsFloat = true)
