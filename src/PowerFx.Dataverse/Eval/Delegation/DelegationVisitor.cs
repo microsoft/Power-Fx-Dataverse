@@ -1,24 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using Span = Microsoft.PowerFx.Syntax.Span;
 using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
+using Span = Microsoft.PowerFx.Syntax.Span;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -1383,18 +1387,6 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
             }
         }
-
-        private static bool AllowedCoercions(UnaryOpNode unaryOp) =>
-            unaryOp.Op switch
-            {
-                UnaryOpKind.DateTimeToTime => true,
-                UnaryOpKind.DateToTime => true,
-                UnaryOpKind.TimeToDate => true,
-                UnaryOpKind.DateTimeToDate => true,
-                UnaryOpKind.TimeToDateTime => true,
-                UnaryOpKind.DateToDateTime => true,
-                _ => false
-            };
 
         public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName)
         {
