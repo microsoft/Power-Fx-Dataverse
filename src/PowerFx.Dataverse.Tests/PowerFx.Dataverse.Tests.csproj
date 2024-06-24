@@ -74,9 +74,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content  Include="DelegationTests\IRSnapShots\**">
+    <Content Include="DelegationTests\IRSnapShots\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content >
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="DelegationTests\ExpressionExamples\*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
