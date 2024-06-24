@@ -21,8 +21,8 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
+using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -1387,6 +1387,18 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
             }
         }
+
+        private static bool AllowedCoercions(UnaryOpNode unaryOp) =>
+            unaryOp.Op switch
+            {
+                UnaryOpKind.DateTimeToTime => true,
+                UnaryOpKind.DateToTime => true,
+                UnaryOpKind.TimeToDate => true,
+                UnaryOpKind.DateTimeToDate => true,
+                UnaryOpKind.TimeToDateTime => true,
+                UnaryOpKind.DateToDateTime => true,
+                _ => false
+            };
 
         public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName)
         {
