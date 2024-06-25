@@ -353,5 +353,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 }
             }
         }
+
+        [Fact]
+        public void Delegation_DateTest()
+        {         
+            SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
+            st.AddVariable("MyTable", TableType.Empty().Add("Date", FormulaType.Date));
+            Engine engine = new Engine(new PowerFxConfig());
+            engine.EnableDelegation();
+            
+            CheckResult checkResult = engine.Check("Filter(MyTable, ThisRecord.Date < DateAdd(Now(), 30, TimeUnit.Days))", new ParserOptions() { AllowsSideEffects = true }, st);
+
+            Assert.Empty(checkResult.Errors);
+            var actualIr = checkResult.GetCompactIRString();
+
+            Assert.Equal("__retrieveMultiple(MyTable, __lt(MyTable, Date, DateAdd(Now(), Float(30), (TimeUnit).Days)), 1000, False)", actualIr);
+        }       
     }
 }
