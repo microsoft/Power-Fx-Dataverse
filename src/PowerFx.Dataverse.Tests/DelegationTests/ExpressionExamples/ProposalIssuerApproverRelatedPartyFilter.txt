@@ -1,6 +1,6 @@
 {
 result : 
-With ( { tempPrimaryEntities : FirstN(Sort(Filter(aib_proposal, Lower(ThisRecord.aib_name) = Lower(inputName)),modifiedon),1000)},
+With ( { tempPrimaryEntities : FirstN(Sort(Filter(aib_proposal, (ThisRecord.aib_name) = (inputName)),modifiedon),1000)},
 With(
 {
 finalJsonData : ( 

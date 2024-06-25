@@ -1,6 +1,6 @@
 {
 result : 
-With ( { tempPrimaryEntities : FirstN(Sort(Filter(aib_proposal, ThisRecord.aib_proposalid = GUID("00000000-0000-0000-0000-000000000000") && Lower(ThisRecord.aib_name) = Lower(inputName)),modifiedon),1000)},
+With ( { tempPrimaryEntities : FirstN(Sort(Filter(aib_proposal, ThisRecord.aib_proposalid = GUID("00000000-0000-0000-0000-000000000000") && (ThisRecord.aib_name) = (inputName)),modifiedon),1000)},
 With(
 {
 finalJsonData : ( 

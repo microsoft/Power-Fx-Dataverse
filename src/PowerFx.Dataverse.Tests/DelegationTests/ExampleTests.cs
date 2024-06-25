@@ -22,13 +22,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("FilterLiteralWithDateTimeValue.txt")]
         [InlineData("FilterLiteralWithGuid.txt")]
         [InlineData("FilterLiteralWithInteger.txt")]
-        [InlineData("FilterLiteralWithString.txt", true)]
-        [InlineData("ProposalIssuerApproverRelatedPartyFilter.txt", true)]
-        [InlineData("ProposalIssuerRelatedPartyFilter.txt", true)]
-        [InlineData("ProposalMultipleFiltersWithLiteral.txt", true)]
-        [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt", true)]
+        [InlineData("FilterLiteralWithString.txt")]
+        [InlineData("ProposalIssuerApproverRelatedPartyFilter.txt")]
+        [InlineData("ProposalIssuerRelatedPartyFilter.txt")]
+        [InlineData("ProposalMultipleFiltersWithLiteral.txt")]
+        [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt")]
+        [InlineData("ProposalSingleFilter.txt")]
+
+        // $$$ Sort doesn't delegate: https://github.com/microsoft/Power-Fx-Dataverse/issues/510
         [InlineData("ProposalNoFilter.txt", true)]
-        [InlineData("ProposalSingleFilter.txt", true)]
+        
+        // $$$ C# mocks don't support polymorphism
         //[InlineData("ProposalIssuerRelatedPartyNoFilterPolymorphic.txt", true)] // polymorphism
         public void BasicCompile(string shortFilename, bool expectDelegationFailures = false)
         {
