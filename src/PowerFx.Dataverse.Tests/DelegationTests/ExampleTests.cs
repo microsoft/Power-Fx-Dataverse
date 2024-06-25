@@ -9,6 +9,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class ExampleTests
     {
+        // Return expression contents from file \DelegationTests\ExpressionExamples\{shortFilename}
         private static string ReadFile(string shortFilename)
         {
             var file = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "ExpressionExamples", shortFilename);
@@ -42,6 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string expr = ReadFile(shortFilename);
 
             // First do a basic sanity-check compilation without delegation. 
+            // This should always pass. 
             {
                 var engine = new RecalcEngine();
                 var check = new CheckResult(engine)
