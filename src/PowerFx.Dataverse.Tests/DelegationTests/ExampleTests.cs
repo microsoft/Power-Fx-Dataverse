@@ -9,7 +9,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class ExampleTests
     {
-        private  static string ReadFile(string shortFilename)
+        private static string ReadFile(string shortFilename)
         {
             var file = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "ExpressionExamples", shortFilename);
 
@@ -17,36 +17,66 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return expr;
         }
 
+        // $$$ Ensure expectDelegationFailures=false in all cases. 
         [Theory]
         [InlineData("FilterLiteralWithDateTimeValue.txt")]
         [InlineData("FilterLiteralWithGuid.txt")]
         [InlineData("FilterLiteralWithInteger.txt")]
-        [InlineData("FilterLiteralWithString.txt")]
-        [InlineData("ProposalIssuerApproverRelatedPartyFilter.txt")]
-        [InlineData("ProposalIssuerRelatedPartyFilter.txt")]
-        [InlineData("ProposalMultipleFiltersWithLiteral.txt")]
-        [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt")]
-        [InlineData("ProposalNoFilter.txt")]
-        [InlineData("ProposalSingleFilter.txt")]
-        public void BasicCompile(string shortFilename)
+        [InlineData("FilterLiteralWithString.txt", true)]
+        [InlineData("ProposalIssuerApproverRelatedPartyFilter.txt", true)]
+        [InlineData("ProposalIssuerRelatedPartyFilter.txt", true)]
+        [InlineData("ProposalMultipleFiltersWithLiteral.txt", true)]
+        [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt", true)]
+        [InlineData("ProposalNoFilter.txt", true)]
+        [InlineData("ProposalSingleFilter.txt", true)]
+        //[InlineData("ProposalIssuerRelatedPartyNoFilterPolymorphic.txt", true)] // polymorphism
+        public void BasicCompile(string shortFilename, bool expectDelegationFailures = false)
         {
             var symbols = GetSymbols();
+            var opts = new ParserOptions { MaxExpressionLength = 5000 };
 
             string expr = ReadFile(shortFilename);
 
-            var engine = new RecalcEngine();
-            var check = new CheckResult(engine)
-                .SetText(expr, new ParserOptions { MaxExpressionLength = 5000 })
-                .SetBindingInfo(symbols);
-
-            var errors = check.ApplyErrors();
-
-            // $$$ check for delegation warnings. 
-            if (errors.Count() > 0)
+            // First do a basic sanity-check compilation without delegation. 
             {
-                string msg = string.Join(";", errors.Select(e => e.Message));
-                Assert.Fail($"Basic compile failed with {errors.Count()} errors: {msg}");
+                var engine = new RecalcEngine();
+                var check = new CheckResult(engine)
+                    .SetText(expr, opts)
+                    .SetBindingInfo(symbols);
+
+                var errors = check.ApplyErrors();
+
+                if (errors.Count() > 0)
+                {
+                    string msg = string.Join(";", errors.Select(e => e.Message));
+                    Assert.Fail($"Basic compile failed with {errors.Count()} errors: {msg}");
+                }
             }
+
+            // Now compile with delegation and verify there are no delegation warnings.
+            {
+                var engine = new RecalcEngine();
+
+                engine.EnableDelegation(); // Important!!
+
+                var check = new CheckResult(engine)
+                    .SetText(expr, opts)
+                    .SetBindingInfo(symbols);
+
+                var errors = check.ApplyErrors();
+
+                // $$$ check for delegation warnings. 
+                var delegationWarnings = errors.Where(e => e.MessageKey == "WrnDelegationTableNotSupported").ToArray();
+
+                if (delegationWarnings.Length > 0)
+                {
+                    Assert.True(expectDelegationFailures);
+                }
+                else
+                {
+                    Assert.False(expectDelegationFailures);
+                }
+            }           
         }
 
         #region Schema
@@ -95,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         public ReadOnlySymbolTable GetSymbols()
         {
-            var st = new SymbolTable { DebugName = "PromptBuilder" };
+            var st = new SymbolTable { DebugName = "Delegable_1" }; // name allows delegation
 
             AddTable<AibProposal>(st, "aib_proposal");
             AddTable<AibIssuer>(st, "aib_issuer");
