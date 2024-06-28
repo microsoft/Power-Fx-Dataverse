@@ -15,5 +15,7 @@
         // This flag when enabled, we use DataverseEngine.MaxInvariantExpressionLength = 1500 as max expression length
         // allowed for invariant formulas during compile, else we use DataverseEngine.MaxExpressionLength = 1000.
         public bool UseMaxInvariantExpressionLength { get; set; }
+
+        public bool UseLookupFieldNameWhenNavPropNameIsDiff { get; set; }
     }
 }

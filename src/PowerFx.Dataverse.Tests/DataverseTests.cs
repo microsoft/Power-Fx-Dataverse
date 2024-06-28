@@ -2572,6 +2572,53 @@ END
             Assert.Equal("Error 46-60: Calculations with currency columns in related tables are not currently supported in formula columns.", result.Errors.First().ToString());
         }
 
+        public const string TestUDF1 = @"CREATE FUNCTION testUDF(
+    @v3 uniqueidentifier, -- new_testlookup
+    @v3 uniqueidentifier, -- new_testlookup
+    @v5 decimal(23,10) -- new_field
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v4 decimal(23,10)
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v2 bit
+    SELECT TOP(1) @v4 = [data3] FROM [dbo].[tripleremoteBase] WHERE[tripleremoteid] = @v3
+
+    -- expression body
+    SET @v2 = IIF((@v1 IS NULL), 1, 0)
+    IF ((ISNULL(@v2,0)=1)) BEGIN
+        SET @v0 = @v4
+    END ELSE BEGIN
+        SET @v0 = @v5
+    END
+    -- end expression body
+
+    IF(@v0<-100000000000 OR @v0>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v0, 10)
+END
+";
+        public const string TestUDF2 = @"CREATE FUNCTION testUDF(
+    @v1 uniqueidentifier, -- new_testlookup
+    @v4 decimal(23,10) -- new_field
+) RETURNS decimal(23,10)
+AS BEGIN
+    DECLARE @v3 decimal(23,10)
+    DECLARE @v0 decimal(23,10)
+    DECLARE @v2 bit
+    SELECT TOP(1) @v3 = [data3] FROM [dbo].[tripleremoteBase] WHERE[tripleremoteid] = @v1
+
+    -- expression body
+    SET @v2 = IIF((@v1 IS NULL), 1, 0)
+    IF ((ISNULL(@v2,0)=1)) BEGIN
+        SET @v0 = @v3
+    END ELSE BEGIN
+        SET @v0 = @v4
+    END
+    -- end expression body
+
+    IF(@v0<-100000000000 OR @v0>100000000000) BEGIN RETURN NULL END
+    RETURN ROUND(@v0, 10)
+END
+";
         [Fact]
         public void LookupFieldIRTest()
         {
@@ -2582,8 +2629,19 @@ END
 
             // IR - {If:w(IsBlank:b(ScopeAccess(Scope 0, testLookupNavName)), Lazy(FieldAccess(ScopeAccess(Scope 0, testLookupNavName), data3)), Lazy(ScopeAccess(Scope 0, new_field)))}
             // for lookup field - TestLookup, NavigationPropertyName - 'testLookupNavName' is considered instead of schema/logical name - 'new_testlookup'.
-            var result = engine.Compile("If(IsBlank(TestLookup), TestLookup.'Data Three', field)", new SqlCompileOptions());
+            var result = engine.Compile("If(IsBlank(TestLookup), TestLookup.'Data Three', field)", new SqlCompileOptions() { UdfName = "testUDF" });
             Assert.True(result.IsSuccess);
+
+            // UDF has @v3 variable declared twice in parameters - because, during "IsBlank(TestLookup)" when we are accessing lookup field directly, we pass NavPropName of the relationship
+            // instead of field name and during "TestLookup.'Data Three'", when lookup field is used to refer related entity's field, we pass the lookup field's name. So, we are creating
+            // two different variables for same lookup. When we try to get all parameters, we call GetVarDetails method using lookup field's name for above two scenarios, so, it returns
+            // @v3 for both scenarios and variable @v1 from first scenario is not declared in the UDF. So, UDF creation fails as @v3 is declared twice and @v1 is not defined.
+            Assert.Equal(TestUDF1, result.SqlFunction);
+
+            engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new() { UseLookupFieldNameWhenNavPropNameIsDiff = true });
+            result = engine.Compile("If(IsBlank(TestLookup), TestLookup.'Data Three', field)", new SqlCompileOptions() { UdfName = "testUDF" });
+            Assert.True(result.IsSuccess);
+            Assert.Equal(TestUDF2, result.SqlFunction);
         }
 
         public const string guidTestUDF = @"CREATE FUNCTION test(
