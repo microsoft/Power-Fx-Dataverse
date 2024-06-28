@@ -1,0 +1,66 @@
+{
+result : 
+With ( { tempPrimaryEntities : FirstN(Sort(Filter(aib_proposal, (ThisRecord.aib_name) = (inputName)),modifiedon),1000)},
+With(
+{
+finalJsonData : ( 
+" [
+"&
+Concat(tempPrimaryEntities As P1, 
+
+With ( { _aib_proposal_aib_issuer_aib_issuer: Filter(aib_issuer, ThisRecord.aib_issuerid = P1.aib_Issuer.aib_issuerid)},
+With ( { _aib_proposal_approver_aib_issuer: Filter(aib_issuer, ThisRecord.aib_issuerid = P1.aib_Approver.aib_issuerid)},
+With ( { _aib_relatedparty_aib_proposal_aib_proposa: Filter(aib_relatedparty, ThisRecord.aib_Proposal.aib_proposalid = P1.aib_proposalid)},
+With ( { tempTextPromptHere: (
+"{
+""Proposal"" : {
+""aib_proposalid"": """ & P1.aib_proposalid & """,
+""aib_name"": """ & P1.aib_name & """,
+""aib_status"": """ & P1.aib_status & """,
+""aib_agreementdurationamount"": """ & P1.aib_agreementdurationamount & """,
+""aib_agreementdurationunits"": """ & P1.aib_agreementdurationunits & """,
+""recordLink"": ""https://org.com//main.aspx?cmdbar=false&navbar=off&newWindow=true&pagetype=entityrecord&etn=aib_proposal&id=" & P1.aib_proposalid & """ ,
+""issuer (issuer)"": [
+"&
+Concat(_aib_proposal_aib_issuer_aib_issuer, " {
+""aib_issuerid"" : """ & ThisRecord.aib_issuerid & """,
+""aib_name"" : """ & ThisRecord.aib_name & """,
+""aib_title"" : """ & ThisRecord.aib_title & """,
+""recordLink"": ""https://org.com//main.aspx?cmdbar=false&navbar=off&newWindow=true&pagetype=entityrecord&etn=aib_issuer&id=" & ThisRecord.aib_issuerid & """  
+},")
+&"]
+" & ",
+""issuer (approver)"": [
+"&
+Concat(_aib_proposal_approver_aib_issuer, " {
+""aib_issuerid"" : """ & ThisRecord.aib_issuerid & """,
+""aib_title"" : """ & ThisRecord.aib_title & """,
+""recordLink"": ""https://org.com//main.aspx?cmdbar=false&navbar=off&newWindow=true&pagetype=entityrecord&etn=aib_issuer&id=" & ThisRecord.aib_issuerid & """  
+},")
+&"]
+" & ",
+""related party(related party)"": [
+"&
+Concat(_aib_relatedparty_aib_proposal_aib_proposa, " {
+""aib_relatedpartyid"" : """ & ThisRecord.aib_relatedpartyid & """,
+""aib_name"" : """ & ThisRecord.aib_name & """,
+""aib_referredtype"" : """ & ThisRecord.aib_referredtype & """,
+""recordLink"": ""https://org.com//main.aspx?cmdbar=false&navbar=off&newWindow=true&pagetype=entityrecord&etn=aib_relatedparty&id=" & ThisRecord.aib_relatedpartyid & """  
+},")
+&"]
+}
+},
+"
+)},
+tempTextPromptHere)
+ ) ) ))
+&
+"
+] "
+
+)
+}, finalJsonData
+)
+)
+
+ }
