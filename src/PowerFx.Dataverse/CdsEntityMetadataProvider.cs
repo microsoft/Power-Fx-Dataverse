@@ -214,12 +214,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         internal void RegisterOptionSet(string name, DataverseOptionSet optionSet)
-        {
-            if (!(!_optionSets.ContainsKey(name) || optionSet.IsGlobal))
-            {
-                throw new Exception();
-            }
-
+        {            
             // register the option set.  Global option sets may be added multiple times
             Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal);
             _optionSets[name] = optionSet;
