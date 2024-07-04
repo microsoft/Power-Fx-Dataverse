@@ -362,7 +362,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             // Test the serializer! 
             var serialized = result.ToExpression();
@@ -370,7 +370,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
         }
 
         [Theory]
@@ -390,7 +390,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             // Test the serializer! 
             var serialized = result.ToExpression();
@@ -398,7 +398,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expectedSerialized, serialized);
 
             // Deserialize. 
-            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result2 = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
         }
 
         [Fact]
@@ -424,7 +424,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.NotNull(entity); // such as if Lookup() failed and we got blank
@@ -446,7 +446,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id), columns: null).ConfigureAwait(false) as RecordValue;
+            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id), columns: null) as RecordValue;
 
             // Test the serializer! 
             var expr = record.ToExpression();
@@ -457,7 +457,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.NotNull(entity); // such as if Lookup() failed and we got blank
@@ -479,7 +479,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }).ConfigureAwait(false))[0] as RecordValue;
+            RecordValue record = (await dv.RetrieveMultipleAsync(logicalName, new[] { Guid.Parse(id) }))[0] as RecordValue;
 
             // Test the serializer! 
             var expr = record.ToExpression();
@@ -490,7 +490,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.NotNull(entity); // such as if Lookup() failed and we got blank
@@ -521,7 +521,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
             Assert.Null(entity); // 
@@ -547,7 +547,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Deserialize 
             var engine = new RecalcEngine();
             engine.EnableDelegation();
-            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             Assert.IsType<DataverseTableValue>(result);
         }
@@ -658,7 +658,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({x:First(t1).money, y:First(t1)}, x + y.money)", 246.0)]
         [InlineData("With({x:Collect(t1,{money:40})}, x.money + First(t1).money)", 163.0)]
         [InlineData("Patch(t1, First(t1), {money:321});First(t1).money", 321.0)]
-        public void ExtractPrimitiveValueTest(string expr, object expected)
+        public async Task ExtractPrimitiveValueTest(string expr, object expected)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -677,7 +677,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(expected, result.ToDouble());
         }
@@ -709,7 +709,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("Patch(t1, First(t1), {Memo:\"LOREM\nIPSUM\nDOLOR\nSIT\nAMET\"})")]
         [InlineData("First(t1).Memo")]
-        public void SupportAllColumnTypesTest(string expr)
+        public async Task SupportAllColumnTypesTest(string expr)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -728,7 +728,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsNotType<ErrorValue>(result);
         }
@@ -743,7 +743,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({before: First(t1).boolean}, Patch(t1, First(t1), {boolean:'Boolean (All Attributes)'.'0'});If(First(t1).boolean <> before, \"good\", \"bad\"))", "good")]
         [InlineData("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy1@email.com\"});LookUp(t1, email = \"dummy1@email.com\").email", "dummy1@email.com")]
         [InlineData("Collect(t1, {boolean:allattributes_boolean_optionSet.'1',email:\"dummy2@email.com\"});If(LookUp(t1, email = \"dummy2@email.com\").boolean, \"Affirmitive\", \"Nope\")", "Affirmitive")]
-        public void BooleanOptionSetCoercionTest(string expr, string expected)
+        public async Task BooleanOptionSetCoercionTest(string expr, string expected)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -762,7 +762,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(expected, result.ToObject());
         }
@@ -799,7 +799,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({remote: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))}, Collect(t1, {Price:111, Other: remote});Text(Last(t1).Price))", "111")]
         [InlineData("Patch(t1, LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")), {Other: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\")), Price: 222});Text(LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")).Price)", "222")]
         [InlineData("With({local: LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")), remote: LookUp(Remote, RemoteId = GUID(\"00000000-0000-0000-0000-000000000002\"))}, Patch(t1, local, {Other: remote, Price: 222});Text(LookUp(t1, LocalId = GUID(\"00000000-0000-0000-0000-000000000001\")).Price))", "222")]
-        public void CardsRegressionRelationshipModelsTest(string expr, string expected)
+        public async Task CardsRegressionRelationshipModelsTest(string expr, string expected)
         {
             var engine = new RecalcEngine();
             engine.EnableDelegation();
@@ -815,7 +815,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(expected, result.ToObject());
         }
@@ -824,7 +824,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("First(t1).hyperlink")]
         [InlineData("With({x:First(t1)}, x.hyperlink)")]
-        public void HyperlinkIsString(string expr)
+        public async Task HyperlinkIsString(string expr)
         {
             // create table "local"
             var logicalName = "allattributes";
@@ -843,7 +843,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<StringValue>(result);
             Assert.Equal(FormulaType.String, result.Type);
@@ -908,7 +908,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Ensure lazy loaded symbols are available on first use. 
         [Fact]
-        public void SingleOrgPolicyLazyEval()
+        public async Task SingleOrgPolicyLazyEval()
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -920,11 +920,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new RecalcEngine();
 
             // Ensure first call gets correct answer. 
-            var result = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            var result = await engine.EvalAsync("CountRows(local)", default, dv.SymbolValues);
             Assert.Equal(3.0, result.ToDouble());
 
             // 2nd call better be correct. 
-            var result2 = engine.EvalAsync("CountRows(local)", default, dv.SymbolValues).Result;
+            var result2 = await engine.EvalAsync("CountRows(local)", default, dv.SymbolValues);
             Assert.Equal(3.0, result2.ToDouble());
         }
 
@@ -1079,7 +1079,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void RefreshDataverseConnectionSingleOrgPolicyTest()
+        public async Task RefreshDataverseConnectionSingleOrgPolicyTest()
         {
             var logicalName = "local";
 
@@ -1107,14 +1107,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check1.IsSuccess);
 
             var run1 = check1.GetEvaluator();
-            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result1 = await run1.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(100m, result1.ToObject());
 
             // Simulates a row being deleted by an external user
-            el.DeleteAsync(logicalName, _g1);
-            el.DeleteAsync(logicalName, _g3);
-            el.DeleteAsync(logicalName, _g4);
+            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g3);
+            await el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -1123,7 +1123,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check2.IsSuccess);
 
             var run2 = check2.GetEvaluator();
-            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result2 = await run2.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.NotEqual(0, result2.ToObject());
 
@@ -1137,13 +1137,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check3.IsSuccess);
 
             var run3 = check3.GetEvaluator();
-            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result3 = await run3.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<BlankValue>(result3);
         }
 
         [Fact]
-        public void RefreshDataverseConnectionSingleOrgPolicyTestFloat()
+        public async Task RefreshDataverseConnectionSingleOrgPolicyTestFloat()
         {
             var logicalName = "local";
 
@@ -1171,14 +1171,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check1.IsSuccess);
 
             var run1 = check1.GetEvaluator();
-            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result1 = await run1.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(100.0, result1.ToObject());
 
             // Simulates a row being deleted by an external user
-            el.DeleteAsync(logicalName, _g1);
-            el.DeleteAsync(logicalName, _g3);
-            el.DeleteAsync(logicalName, _g4);
+            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g3);
+            await el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -1187,7 +1187,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check2.IsSuccess);
 
             var run2 = check2.GetEvaluator();
-            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result2 = await run2.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.NotEqual(0, result2.ToObject());
 
@@ -1201,13 +1201,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check3.IsSuccess);
 
             var run3 = check3.GetEvaluator();
-            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result3 = await run3.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<BlankValue>(result3);
         }
 
         [Fact]
-        public void RefreshDataverseConnectionMultiOrgPolicyTest()
+        public async Task RefreshDataverseConnectionMultiOrgPolicyTest()
         {
             var logicalName = "local";
             var displayName = "t1";
@@ -1227,14 +1227,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check1.IsSuccess);
 
             var run1 = check1.GetEvaluator();
-            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result1 = await run1.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(100m, result1.ToObject());
 
             // Simulates a row being deleted by an external force
-            el.DeleteAsync(logicalName, _g1);
-            el.DeleteAsync(logicalName, _g3);
-            el.DeleteAsync(logicalName, _g4);
+            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g3);
+            await el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -1243,7 +1243,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check2.IsSuccess);
 
             var run2 = check2.GetEvaluator();
-            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result2 = await run2.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.NotEqual(0, result2.ToObject());
 
@@ -1257,13 +1257,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check3.IsSuccess);
 
             var run3 = check3.GetEvaluator();
-            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result3 = await run3.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<BlankValue>(result3);
         }
 
         [Fact]
-        public void RefreshDataverseConnectionMultiOrgPolicyTestFloat()
+        public async Task RefreshDataverseConnectionMultiOrgPolicyTestFloat()
         {
             var logicalName = "local";
             var displayName = "t1";
@@ -1283,14 +1283,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check1.IsSuccess);
 
             var run1 = check1.GetEvaluator();
-            var result1 = run1.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result1 = await run1.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(100.0, result1.ToObject());
 
             // Simulates a row being deleted by an external force
-            el.DeleteAsync(logicalName, _g1);
-            el.DeleteAsync(logicalName, _g3);
-            el.DeleteAsync(logicalName, _g4);
+            await el.DeleteAsync(logicalName, _g1);
+            await el.DeleteAsync(logicalName, _g3);
+            await el.DeleteAsync(logicalName, _g4);
 
             // Evals the same expression by a new engine. Should return a wrong result.
             var engine2 = new RecalcEngine(config);
@@ -1299,7 +1299,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check2.IsSuccess);
 
             var run2 = check2.GetEvaluator();
-            var result2 = run2.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result2 = await run2.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.NotEqual(0, result2.ToObject());
 
@@ -1313,7 +1313,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check3.IsSuccess);
 
             var run3 = check3.GetEvaluator();
-            var result3 = run3.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result3 = await run3.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<BlankValue>(result3);
         }
@@ -1407,7 +1407,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("CountRows(Filter(t1, ThisRecord.Price > 50))", 1.0, false)] // Filter
         [InlineData("Sum(Filter(t1, ThisRecord.Price > 50), ThisRecord.Price)", 100.0, false)] // Filter
         [InlineData("Sum(Filter(t1, ThisRecord.Price > 50) As X, X.Price)", 100.0, false)] // with Alias 
-        public void ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
+        public async Task ExecuteViaInterpreter2(string expr, object expected, bool rowScope = true)
         {
             // create table "local"
             var logicalName = "local";
@@ -1436,7 +1436,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
 
                 var run = check.GetEvaluator();
-                var result = run.EvalAsync(CancellationToken.None, runtimeConfig).Result;
+                var result = await run.EvalAsync(CancellationToken.None, runtimeConfig);
 
                 Assert.Equal(expected, result.ToDoubleOrObject());
             }
@@ -1445,7 +1445,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [Theory]
         [InlineData("Set(Price, 200); Price", 200.0)]
-        public void LocalSet(string expr, object expected)
+        public async Task LocalSet(string expr, object expected)
         {
             // create table "local"
             var logicalName = "local";
@@ -1475,9 +1475,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
             var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
 
-            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, allValues);
 
-            Assert.Equal(new Decimal((double)expected), result.ToObject());
+            Assert.Equal(new decimal((double)expected), result.ToObject());
 
             // Extra validation that recordValue is updated .
             if (expr.StartsWith("Set(Price, 200)"))
@@ -1495,7 +1495,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Set() function against entity fields in RowScope
         [Theory]
         [InlineData("Set(Price, 200); Price", 200.0)]
-        public void LocalSetFloat(string expr, object expected)
+        public async Task LocalSetFloat(string expr, object expected)
         {
             // create table "local"
             var logicalName = "local";
@@ -1525,7 +1525,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var rowScopeValues = ReadOnlySymbolValues.NewFromRecord(rowScopeSymbols, record);
             var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
 
-            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, allValues);
 
             Assert.Equal(expected, result.ToObject());
 
@@ -1534,11 +1534,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 Assert.Equal(200.0, record.GetField("new_price").ToObject());
 
-                Assert.Equal(new Decimal(200.0), entity.Attributes["new_price"]);
+                Assert.Equal(200m, entity.Attributes["new_price"]);
 
                 // verify on entity 
                 var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
-                Assert.Equal(new Decimal(200.0), e2.Attributes["new_price"]);
+                Assert.Equal(200m, e2.Attributes["new_price"]);
             }
         }
 
@@ -1554,7 +1554,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Patch(t1, First(t1), { Price : Blank()}); First(t1).Price", null)] // Set to blank will clear it out
         [InlineData("Patch(t1, {localid:GUID(\"00000000-0000-0000-0000-000000000001\")}, { Price : 200}).Price", 200.0)]
 
-        public void PatchFunctionFloat(string expr, double? expected)
+        public async Task PatchFunctionFloat(string expr, double? expected)
         {
             // create table "local"
             var logicalName = "local";
@@ -1581,7 +1581,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var run = check.GetEvaluator();
 
-                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
                 if (numberIsFloat)
                 {
@@ -1595,13 +1595,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // verify on entity - this should always be updated 
                 if (expr.Contains("Patch("))
                 {
-                    var r2 = engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+                    var r2 = await engine1.EvalAsync("First(t1)", CancellationToken.None, runtimeConfig: dv.SymbolValues);
                     var entity = (Entity)r2.ToObject();
                     var e2 = el.LookupRef(entity.ToEntityReference(), CancellationToken.None);
                     var actualValue = e2.Attributes["new_price"];
                     if (expected.HasValue)
                     {
-                        Assert.Equal(new Decimal(200.0), actualValue);
+                        Assert.Equal(200m, actualValue);
                     }
                     else
                     {
@@ -1617,7 +1617,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Collect(t1,{Price:110});CountRows(t1)", 4.0)]
         [InlineData("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 4.0)]
         [InlineData("With({x:Collect(t1,{Price:77}), y:Collect(t1,{Price:88})}, Remove(t1,x);Remove(t1,y);CountRows(t1))", 3.0)]
-        public void CacheBug(string expr, double expected)
+        public async Task CacheBug(string expr, double expected)
         {
             var logicalName = "local";
             var displayName = "t1";
@@ -1635,7 +1635,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(new decimal(expected), result.ToObject());
         }
@@ -1646,7 +1646,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Collect(t1,{Price:110});CountRows(t1)", 4.0)]
         [InlineData("With({x:Collect(t1,{Price:77})}, Patch(t1,Last(t1),{Price:x.Price + 3});CountRows(t1))", 4.0)]
         [InlineData("With({x:Collect(t1,{Price:77}), y:Collect(t1,{Price:88})}, Remove(t1,x);Remove(t1,y);CountRows(t1))", 3.0)]
-        public void CacheBugFloat(string expr, double expected)
+        public async Task CacheBugFloat(string expr, double expected)
         {
             var logicalName = "local";
             var displayName = "t1";
@@ -1664,14 +1664,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(expected, result.ToObject());
         }
 
         [Theory]
         [InlineData("Patch(t1, First(t1), {Price:200})")]
-        public void PatchFunctionLean(string expr)
+        public async Task PatchFunctionLean(string expr)
         {
             // create table "local"
             var logicalName = "local";
@@ -1692,7 +1692,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsNotType<ErrorValue>(result);
         }
@@ -1702,7 +1702,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Test case left as reference to future change. It should also fail.
         //[InlineData("Set(Price, 200); Price")]
-        public void PatchWithUpdateInvalidFieldError(string expr)
+        public async Task PatchWithUpdateInvalidFieldError(string expr)
         {
             // create table "local"
             var logicalName = "local";
@@ -1733,7 +1733,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var allValues = allSymbols.CreateValues(rowScopeValues, dv.SymbolValues);
 
 
-            var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, allValues);
 
             Assert.IsType<ErrorValue>(result);
         }
@@ -1741,7 +1741,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("Patch(t1, First(t1), {Price:1000})", false)]
         [InlineData("Patch(t1, First(t1), {Price:50})", true)]
-        public void PatchWithNumberOutOfRangeError(string expr, bool succeeds)
+        public async Task PatchWithNumberOutOfRangeError(string expr, bool succeeds)
         {
             // create table "local"
             var logicalName = "local";
@@ -1777,7 +1777,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             if (succeeds)
             {
@@ -1793,7 +1793,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("Remove(t1, LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")) )", false)]
         [InlineData("Remove(t1, First(t1))", true)]
-        public void RemoveFunction(string expr, bool injectError)
+        public async Task RemoveFunction(string expr, bool injectError)
         {
             // create table "local"
             var logicalName = "local";
@@ -1818,7 +1818,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             if (injectError)
             {
@@ -1856,7 +1856,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Test blank references.
         [Theory]
         [InlineData("ThisRecord.Other.Data")] // Relationship 
-        public void RecordBlank(string expr)
+        public async Task RecordBlank(string expr)
         {
             // create table "local"
             var logicalName = "local";
@@ -1877,7 +1877,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var record = el.ConvertEntityToRecordValue(logicalName, dv, CancellationToken.None); // any record
             var runtimeConfig = ReadOnlySymbolValues.NewFromRecord(symbols, record);
 
-            var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
+            var result = await engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig);
             Assert.True(result is BlankValue);
         }
 
@@ -1887,7 +1887,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // - "Hard" failures - these are bugs in our code and their exceptions aborts the execution.  Eg: NullRef, StackOveflow, etc 
         [Theory]
         [InlineData("ThisRecord.Other.Data")] // Relationship 
-        public void NetworkErrors(string expr)
+        public async Task NetworkErrors(string expr)
         {
             // create table "local"
             var logicalName = "local";
@@ -1906,7 +1906,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Case 1: Succeed 
             el._onLookupRef = null;
-            var result2 = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
+            var result2 = await engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig);
             Assert.Equal(200m, result2.ToObject());
 
             // Case 2: Soft error:
@@ -1914,24 +1914,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Most exceptions from the IOrganizationService will get caught and converted to ErrorValue. 
             // IOrganizationService doesn't actually specify which exceptions it produces on failure. 
             var exceptionMessage = "Inject test failure";
-            el._onLookupRef = (er) =>
-                throw new FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault(),
-                    new FaultReason(exceptionMessage));
+            el._onLookupRef = (er) => throw new FaultException<OrganizationServiceFault>(new OrganizationServiceFault(), new FaultReason(exceptionMessage));
 
-            var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
+            var result = await engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig);
             Assert.True(result is ErrorValue);
             var error = (ErrorValue)result;
             var errorList = error.Errors;
-            Assert.Equal(1, errorList.Count);
+            Assert.Single(errorList);
             Assert.Contains(exceptionMessage, errorList[0].Message);
 
             // Case 3: Hard error:
             // "Fatal" errors can propagated exception up.
             el._onLookupRef = (er) => throw new NullReferenceException("Fake nullref");
 
-            Assert.ThrowsAsync<NullReferenceException>(
-                () => engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig)).Wait();
+            await Assert.ThrowsAsync<NullReferenceException>(() => engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig));
         }
 
         // Calls to Dataverse have 3 possible outcomes:
@@ -1940,7 +1936,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // - "Hard" failures - these are bugs in our code and their exceptions aborts the execution.  Eg: NullRef, StackOveflow, etc 
         [Theory]
         [InlineData("ThisRecord.Other.Data")] // Relationship 
-        public void NetworkErrorsFloat(string expr)
+        public async Task NetworkErrorsFloat(string expr)
         {
             // create table "local"
             var logicalName = "local";
@@ -1959,7 +1955,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Case 1: Succeed 
             el._onLookupRef = null;
-            var result2 = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
+            var result2 = await engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig);
             Assert.Equal(200.0, result2.ToObject());
 
             // Case 2: Soft error:
@@ -1967,24 +1963,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Most exceptions from the IOrganizationService will get caught and converted to ErrorValue. 
             // IOrganizationService doesn't actually specify which exceptions it produces on failure. 
             var exceptionMessage = "Inject test failure";
-            el._onLookupRef = (er) =>
-                throw new FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault(),
-                    new FaultReason(exceptionMessage));
+            el._onLookupRef = (er) => throw new FaultException<OrganizationServiceFault>(new OrganizationServiceFault(), new FaultReason(exceptionMessage));
 
-            var result = engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig).Result;
+            var result = await engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig);
             Assert.True(result is ErrorValue);
             var error = (ErrorValue)result;
             var errorList = error.Errors;
-            Assert.Equal(1, errorList.Count);
+            Assert.Single(errorList);
             Assert.Contains(exceptionMessage, errorList[0].Message);
 
             // Case 3: Hard error:
             // "Fatal" errors can propagated exception up.
             el._onLookupRef = (er) => throw new NullReferenceException("Fake nullref");
 
-            Assert.ThrowsAsync<NullReferenceException>(
-                () => engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig)).Wait();
+            await Assert.ThrowsAsync<NullReferenceException>(() => engine1.EvalAsync(expr, CancellationToken.None, runtimeConfig: runtimeConfig));
         }
 
         [Fact]
@@ -2066,7 +2058,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 
-            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12).ConfigureAwait(false);
+            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
             Assert.Equal(100 * 1000 + 200m, result.ToObject());
         }
 
@@ -2088,7 +2080,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 
-            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12).ConfigureAwait(false);
+            var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
 
             Assert.Equal(100 * 1000 + 200.0, result.ToObject());
         }
@@ -2223,17 +2215,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
-            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.Equal(100m, result1.ToObject());
 
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
-            await el.DeleteAsync(logicalName, _g1).ConfigureAwait(false);
+            await el.DeleteAsync(logicalName, _g1);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
             engine4.EnableDelegation(dv.MaxRows);
-            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.Equal(100m, result4.ToObject());
 
             // Refresh connection cache.
@@ -2242,7 +2234,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
-            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.IsType<ErrorValue>(result7);
 
             ErrorValue ev7 = (ErrorValue)result7;
@@ -2265,17 +2257,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // New engines to simulate how Cards eval all expressions
             var engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
-            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result1 = await engine1.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.Equal(100.0, result1.ToObject());
 
             // Simulates a row being deleted by an external user
             // This will delete the inner entity, without impacting DataverseEntityCache's cache
-            await el.DeleteAsync(logicalName, _g1).ConfigureAwait(false);
+            await el.DeleteAsync(logicalName, _g1);
 
             // Evals the same expression by a new engine. As DataverseEntityCache's cache is intact, we'll return the cached value.
             var engine4 = new RecalcEngine(config);
             engine4.EnableDelegation(dv.MaxRows);
-            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result4 = await engine4.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.Equal(100.0, result4.ToObject());
 
             // Refresh connection cache.
@@ -2284,7 +2276,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             // Evals the same expression by a new engine. Sum should now return the refreshed value.
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
-            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues).ConfigureAwait(false);
+            var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
             Assert.IsType<ErrorValue>(result7);
 
             ErrorValue ev7 = (ErrorValue)result7;
@@ -2349,7 +2341,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var opts = _parserAllowSideEffects;
             var check = engine.Check(expr, symbolTable: dv.Symbols, options: opts);
-            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             // Failed lookup is blank
             Assert.NotNull(result as BlankValue);
@@ -2364,7 +2356,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
-            var entity = el.RetrieveAsync("allattributes", _g1, columns:null).Result.Response;
+            var entity = (await el.RetrieveAsync("allattributes", _g1, columns: null)).Response;
 
             var expectedErrors = new List<string>()
             {
@@ -2377,7 +2369,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 foreach (var attr in entity.Attributes)
                 {
                     var expr = string.Format(baseExpr, attr.Key);
-                    var result = engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues).Result;
+                    var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
                     if (result is ErrorValue errorValue)
                     {
@@ -2391,12 +2383,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
             catch (Exception ex)
             {
-                Assert.True(false, ex.Message);
+                Assert.Fail(ex.Message);
             }
         }
 
         [Fact]
-        public void RetrieveAsyncErrorTst()
+        public async Task RetrieveAsyncErrorTst()
         {
             // create table "local"
             var logicalName = "local";
@@ -2420,7 +2412,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Contains(errorMessage, ((ErrorValue)result).Errors.First().Message);
         }
@@ -2569,7 +2561,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             var check = engine.Check(expression, symbolTable: dv.Symbols);
-            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<StringValue>(result);
             Assert.Equal(expected, ((StringValue)result).Value);
@@ -2601,7 +2593,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var opt = new ParserOptions() { AllowsSideEffects = true };
             var engine = new RecalcEngine(powerFxConfig);
             var check = engine.Check(expression, options: opt, symbolTable: dv.Symbols);
-            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+            var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.IsType<DecimalValue>(result);
             Assert.Equal(counter, ((DecimalValue)result).Value);
@@ -2630,7 +2622,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             if (check.IsSuccess)
             {
-                var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues).ConfigureAwait(false);
+                var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, dv.SymbolValues);
                 Assert.IsType<ErrorValue>(result);
             }
             else
@@ -2665,7 +2657,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             if (isErrorValue)
             {
@@ -2675,13 +2667,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
 
-            var updatedPolyField = Assert.IsAssignableFrom<RecordValue>(resultRecord.GetFieldAsync("_new_polyfield_value", CancellationToken.None).Result);
+            var updatedPolyField = Assert.IsAssignableFrom<RecordValue>(await resultRecord.GetFieldAsync("_new_polyfield_value", CancellationToken.None));
 
             Assert.NotNull(updatedPolyField);
         }
 
         [Fact]
-        public void StatusTypeOptionSetTest()
+        public async Task StatusTypeOptionSetTest()
         {
             var logicalName = "local";
             var displayName = "t1";
@@ -2701,7 +2693,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(check.IsSuccess);
 
             var run = check.GetEvaluator();
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
             Assert.Equal(_g1, ((GuidValue)resultRecord.GetField("localid")).Value);
@@ -2730,7 +2722,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
         [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
-        public void UDFWithRestrictedTypesTest(string script, string expr)
+        public void UDFWithRestrictedTypesTest(string script, string _)
         {
             // create table "local"
             var logicalName = "local";

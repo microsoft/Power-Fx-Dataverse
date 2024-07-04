@@ -33,10 +33,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void RunSuccess()
+        public async Task RunSuccess()
         {
-            var resp = DataverseResponse<FakeMessage>.RunAsync(
-                async () => new FakeMessage { Value = "ok" }, "op").Result;
+            var resp = await  DataverseResponse<FakeMessage>.RunAsync(static async () => new FakeMessage { Value = "ok" }, "op");
 
             Assert.False(resp.HasError);
             Assert.NotNull(resp.Response);
@@ -45,15 +44,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Fact]
-        public void RunSoftError()
+        public async Task RunSoftError()
         {
             var exceptionMessage = "Inject test failure";
             var opMessage = "my op";
 
-            var resp = DataverseResponse<FakeMessage>.RunAsync(
-                async () => throw new FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault(),
-                    new FaultReason(exceptionMessage)), opMessage).Result;
+            var resp = await DataverseResponse<FakeMessage>.RunAsync(async () => throw new FaultException<OrganizationServiceFault>(new OrganizationServiceFault(), new FaultReason(exceptionMessage)), opMessage);
 
             Assert.True(resp.HasError);
             Assert.Null(resp.Response);
@@ -66,14 +62,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public async Task RunHardError1()
         {
-            await Assert.ThrowsAsync<MyException>(async () => await DataverseResponse<FakeMessage>.RunAsync(() => throw new MyException("unknown ex"), "op").ConfigureAwait(false)).ConfigureAwait(false);
+            await Assert.ThrowsAsync<MyException>(static async () => await DataverseResponse<FakeMessage>.RunAsync(static () => throw new MyException("unknown ex"), "op"));
         }
 
         // Async callback
         [Fact]
         public async Task RunHardError2()
         {
-            await Assert.ThrowsAsync<MyException>(async () =>await DataverseResponse<FakeMessage>.RunAsync(async () => throw new MyException("unknown ex"), "op").ConfigureAwait(false)).ConfigureAwait(false);
+            await Assert.ThrowsAsync<MyException>(static async () => await DataverseResponse<FakeMessage>.RunAsync(static async () => throw new MyException("unknown ex"), "op"));
         }
 
         // Not a dataverse exception

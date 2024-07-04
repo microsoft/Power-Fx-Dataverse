@@ -1,27 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
-using System.Threading;
-using Xunit;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.PowerFx.Dataverse;
-using System.Threading.Tasks;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class DelegationTestUtility
     {
-        /// <summary>
-        /// Set this to true, if you need to regenerate the snapshot files.
-        /// </summary>
-        private const bool _regenerate = false;
-
         internal static IList<string> TransformForWithFunction(string expr, int warningCount)
         {
             var inputs = new List<string> { expr };
@@ -46,28 +33,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             var baseDirectory = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "IRSnapShots", $"{(isWithTransform ? "WithTransformed_" : string.Empty)}{fileName}");
 
-            string path = _regenerate ?
-            baseDirectory
-            .Replace(Path.Join("bin", "Debug", "netcoreapp3.1", "win-x64"), string.Empty)
-            .Replace(Path.Join("bin", "Release", "netcoreapp3.1", "win-x64"), string.Empty) :
-            baseDirectory;
+            string path =
 
+                 // Set this if you need to regenerate the snapshot files.
+#if REGENERATE
+                 baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0", "win-x64"), string.Empty)
+                              .Replace(Path.Join("bin", "Release", "net7.0", "win-x64"), string.Empty) 
+#else
+                 baseDirectory;
+#endif
+
+#if REGENERATE
             if (!File.Exists(path))
-            {
-                // If file doesn't exist and operation is regenerate, create the file with necessary padding
-                if (_regenerate)
+            {                
+                using (var sw = new StreamWriter(path))
                 {
-                    using (var sw = new StreamWriter(path))
+                    for (int i = 1; i < lineNumber; i++)
                     {
-                        for (int i = 1; i < lineNumber; i++)
-                        {
-                            await sw.WriteLineAsync("");
-                        }
-
-                        await sw.WriteLineAsync(inputString);
+                        await sw.WriteLineAsync("");
                     }
-                }
+
+                    await sw.WriteLineAsync(inputString);
+                }                
             }
+#endif
 
             string[] allLines = await File.ReadAllLinesAsync(path);
 
@@ -80,24 +69,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Array.Resize(ref allLines, index + 1);
             }
 
-            if (_regenerate)
-            {
-                // Update or add the specified line with the input string
-                allLines[index] = inputString;
-                await File.WriteAllLinesAsync(path, allLines);
-            }
-            else
-            {
-                // Compare the specified line with the input string, considering new lines as empty
-                var targetLine = index < allLines.Length ? allLines[index] : "";
-                Assert.Equal(targetLine, inputString);
-            }
-        }
-
-        [Fact]
-        public void RegenerateShouldBeFalse()
-        {
-            Assert.False(_regenerate);
+#if REGENERATE
+            
+            // Update or add the specified line with the input string
+            allLines[index] = inputString;
+            await File.WriteAllLinesAsync(path, allLines);
+#else
+            // Compare the specified line with the input string, considering new lines as empty
+            var targetLine = index < allLines.Length ? allLines[index] : "";
+            Assert.Equal(targetLine, inputString);
+#endif            
         }
     }
 }

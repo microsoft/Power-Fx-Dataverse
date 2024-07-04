@@ -449,7 +449,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                 var ev5 = obj5 as ErrorValue;
 
-                Assert.Equal(1, ev5.Errors.Count);
+                Assert.Single(ev5.Errors);
                 Assert.Equal("Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
                                 "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
                                 "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'", ev5.Errors.First().Message);
@@ -608,7 +608,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.Equal(1, err.Errors.Count);
+                Assert.Single(err.Errors);
 
                 string errMsg = "Error in UpdateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
                                 "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
@@ -821,7 +821,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.Equal(1, err.Errors.Count);
+                Assert.Single(err.Errors);
 
                 string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
                 Assert.Equal(errMsg, err.Errors.First().Message);
@@ -848,7 +848,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.IsType<ErrorValue>(result);
 
                 var err = result as ErrorValue;
-                Assert.Equal(1, err.Errors.Count);
+                Assert.Single(err.Errors);
 
                 string errMsg = "Error in RetrieveAsync: [FaultException<OrganizationServiceFault>] crcef2_table2 With Id = b8e7086e-ffff-ffff-ffff-0022482aea8f Does Not Exist";
                 Assert.Equal(errMsg, err.Errors.First().Message);
