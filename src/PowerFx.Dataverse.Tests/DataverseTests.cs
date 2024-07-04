@@ -309,7 +309,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
@@ -375,7 +375,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
@@ -1389,7 +1389,7 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
-            Assert.Equal(true, result.IsHintApplied);
+            Assert.True(result.IsHintApplied);
 
             Assert.Equal(IntegerFunction, result.SqlFunction);
             Assert.True(result.ReturnType is DecimalType);
@@ -2881,7 +2881,7 @@ END
             DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
             RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
 
-            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None).ConfigureAwait(false);
+            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Null(result.Value);

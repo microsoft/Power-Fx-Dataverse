@@ -47,20 +47,12 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (filter.Filters?.Count > 0)
             {
-                string op;
-                switch (filter.FilterOperator)
+                var op = filter.FilterOperator switch
                 {
-                    case LogicalOperator.And:
-                        op = "and";
-                        break;
-
-                    case LogicalOperator.Or:
-                        op = "or";
-                        break;
-
-                    default:
-                        throw new NotSupportedException($"Unsupported filter operator: {filter.FilterOperator}");
-                }
+                    LogicalOperator.And => "and",
+                    LogicalOperator.Or => "or",
+                    _ => throw new NotSupportedException($"Unsupported filter operator: {filter.FilterOperator}"),
+                };
 
                 StringBuilder sb = new StringBuilder();
 
@@ -89,44 +81,22 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var condition in filter.Conditions)
                 {
                     var fieldName = condition.AttributeName;
-
                     var value = condition.Values.FirstOrDefault();
 
                     // https://learn.microsoft.com/en-us/rest/api/storageservices/querying-tables-and-entities#supported-comparison-operators
 
-                    string op;
-                    switch (condition.Operator)
+                    var op = condition.Operator switch
                     {
-                        case ConditionOperator.GreaterEqual:
-                            op = "gt";
-                            break;
-
-                        case ConditionOperator.GreaterThan:
-                            op = "ge";
-                            break;
-
-                        case ConditionOperator.LessEqual:
-                            op = "lt";
-                            break;
-
-                        case ConditionOperator.LessThan:
-                            op = "le";
-                            break;
-
-                        case ConditionOperator.Equal:
-                            op = "eq";
-                            break;
-
-                        case ConditionOperator.NotEqual:
-                            op = "ne";
-                            break;
-
-                        default:
-                            throw new NotImplementedException($"AzureTable can't delegate: {condition.Operator}");
-                    }
+                        ConditionOperator.GreaterEqual => "gt",
+                        ConditionOperator.GreaterThan => "ge",
+                        ConditionOperator.LessEqual => "lt",
+                        ConditionOperator.LessThan => "le",
+                        ConditionOperator.Equal => "eq",
+                        ConditionOperator.NotEqual => "ne",
+                        _ => throw new NotImplementedException($"AzureTable can't delegate: {condition.Operator}"),
+                    };
 
                     string odValue = EscapeOdata(value);
-
                     string odFilter = $"({fieldName} {op} {odValue})";
 
                     return odFilter;
@@ -135,7 +105,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             return null;
         }
-        
+
         private static string EscapeOdata(object obj)
         {
             if (obj is string str)
@@ -145,11 +115,11 @@ namespace Microsoft.PowerFx.Dataverse
             else if (obj is DateTime dt)
             {
                 return EscapeOdata(dt);
-            } 
-            else if ( obj is float f)
+            }
+            else if (obj is float f)
             {
                 return f.ToString();
-            } 
+            }
             else if (obj is decimal d)
             {
                 return d.ToString();
@@ -162,11 +132,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return i.ToString();
             }
-            
+
             throw new NotImplementedException($"OData type: {obj.GetType()}");
         }
 
-        
+
 
         private static string EscapeOdata(string str)
         {

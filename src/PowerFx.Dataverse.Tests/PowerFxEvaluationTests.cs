@@ -64,23 +64,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     break;
 
                 case TestResult.Fail:
-                    Assert.True(false, prefix + message);
+                    Assert.Fail(prefix + message);
                     break;
 
                 case TestResult.Skip:
                     if (!SkippedTestsReporting.Report.TryAdd($"{prefix} {testCase.Input}", message))
                     {
-                          Assert.True(false, $"CONFLICT when adding test to report: {prefix + message}");
+                          Assert.Fail($"CONFLICT when adding test to report: {prefix + message}");
                     }
                     Skip.If(true, prefix + message);
                     break;
             }
         }
-
-        // Enable to run a single test . 
-#if false
-        [Fact]
-#endif
+        
+        [Fact(Skip = "Enable to run a single test")]
         public void RunOneTest()
         {
             // You can point to the local path of interest.
@@ -308,7 +305,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     this.Console.WriteLine($"Failed SQL for {expr}");
                     Console.WriteLine(compileResult.SqlFunction);
                     Console.WriteLine(e.Message);
-                    Assert.True(false, $"Failed SQL for {expr}");
+                    Assert.Fail($"Failed SQL for {expr}");
                     throw;
                 }                
             }

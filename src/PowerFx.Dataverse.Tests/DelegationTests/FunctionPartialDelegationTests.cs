@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             Assert.Equal(expected, result.ToObject());
         }

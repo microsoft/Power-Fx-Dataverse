@@ -942,7 +942,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 fakeSymbolValues.Set(fakeSlot, fakeTableValue);
                 var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
 
-                var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+                var result = await run.EvalAsync(CancellationToken.None, allValues);
 
                 if (expected is null)
                 {

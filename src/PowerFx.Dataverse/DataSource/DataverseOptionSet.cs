@@ -5,23 +5,27 @@
 //------------------------------------------------------------------------------
 
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
-using System.Collections.Generic;
-using System.Linq;
-using System;
+
 
 namespace Microsoft.PowerFx.Dataverse
 {
+
+#pragma warning disable CS0659 // 'DataverseOptionSet' overrides Object.Equals(object o) but does not override Object.GetHashCode()
+
     internal class DataverseOptionSet : ICdsOptionSetInfo
     {
-        private string _relatedEntityName;
-        private List<DName> _optionNames;
-        private DType _invariantType = DType.Invalid;
+        private readonly string _relatedEntityName;
+        private readonly List<DName> _optionNames;
+        private readonly DType _invariantType = DType.Invalid;
 
         // Boolean To: For ease of use, Boolean backed option sets can be used as Boolean values directly (To), for example If( Record.IsOpen And Record.IsValid, ... )
         // Boolean From: Likewise, Boolean values can be used to replace a Boolean backed option set (From), for example Patch( ..., .... { IsOpen: true } )

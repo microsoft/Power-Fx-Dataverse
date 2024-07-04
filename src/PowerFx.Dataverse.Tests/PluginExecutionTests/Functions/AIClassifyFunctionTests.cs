@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await engine.EvalAsync("AIClassify(\"very long string\", [\"string\", \"int\"])", default, runtimeConfig: rc);
 
             var errors = (ErrorValue)result;
-            Assert.Equal(1, errors.Errors.Count);
+            Assert.Single(errors.Errors);
             var error = errors.Errors[0];
             Assert.Contains(msg, error.Message);
             Assert.Equal(ErrorSeverity.Severe, error.Severity);
