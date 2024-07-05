@@ -2,27 +2,15 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
-using Microsoft.PowerFx.Types;
 using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class DistinctDelegationTests
+    public class SortDelegationTests
     {
         [Theory]
-        [InlineData("Distinct(t1, Price)", 1, 3)]
-        [InlineData("Distinct(t1, Quantity)", 2, 2)]
-        [InlineData("Distinct(FirstN(t1, 2), Quantity)", 3, 2)]
-        [InlineData("FirstN(Distinct(t1, Quantity), 2)", 4, 2)]
-        [InlineData("Distinct(Filter(t1, Quantity < 30 And Price < 120), Quantity)", 5, 2)]
-        [InlineData("Distinct(Filter(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity < 20), new_quantity)", 6, 1)]
-        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", 7, 1)]
-        // non primitive types are non delegable.
-        [InlineData("Distinct(t1, PolymorphicLookup)", 8, -1)]
-        // Other is a lookup field, hence not delegable.
-        [InlineData("Distinct(t1, Other)", 9, -1)]
-        [InlineData("Distinct(et, Field1)", 10, 2)]
-        public async Task DistinctDelegationAsync(string expr, int id, int expectedRows, params string[] expectedWarnings)
+        [InlineData("Sort(t1, Price)", 1)]        
+        public async Task SortDelegationAsync(string expr, int id, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -54,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 var irNode = check.ApplyIR();
                 var actualIr = check.GetCompactIRString();
 
-                await DelegationTestUtility.CompareSnapShotAsync("DistinctDelegation.txt", actualIr, id, i == 1);
+                await DelegationTestUtility.CompareSnapShotAsync("SortDelegation.txt", actualIr, id, i == 1);
 
                 // Validate delegation warnings.
                 // error.ToString() will capture warning status, message, and source span. 
@@ -69,19 +57,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 }
 
                 var run = check.GetEvaluator();
-
                 var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
-                // To check error cases.
-                if (expectedRows < 0)
-                {
-                    Assert.IsType<ErrorValue>(result);
-                }
-                else
-                {
-                    Assert.IsAssignableFrom<TableValue>(result);
-                    Assert.Equal(expectedRows, ((TableValue)result).Rows.Count());
-                }
+                
             }
         }
     }

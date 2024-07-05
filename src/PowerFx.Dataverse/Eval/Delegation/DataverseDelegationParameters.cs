@@ -7,29 +7,42 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // DelegationParameters implemented using Xrm filter classes. 
+    // DelegationParameters implemented using Xrm filter classes.
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
-        // Systems cna get the filter expression directrly and translate. 
+        // Systems cna get the filter expression directrly and translate.
         public FilterExpression Filter { get; init; }
+
+        public IList<OrderExpression> OrderBy { get; init; }
 
         internal ISet<LinkEntity> _relation { get; init; }
 
-        // Top is count. 
+        // Top is count.
 
         internal IEnumerable<string> _columnSet { get; init; }
         internal bool _isDistinct { get; init; }
+        //internal bool _isOrderBy { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        public override DelegationParameterFeatures Features => DelegationParameterFeatures.Filter | DelegationParameterFeatures.Top | DelegationParameterFeatures.Columns;
+        public override DelegationParameterFeatures Features =>
+            DelegationParameterFeatures.Columns |
+            DelegationParameterFeatures.Filter |
+            DelegationParameterFeatures.OrderBy |
+            DelegationParameterFeatures.Top;
 
         public override string GetOdataFilter()
         {
             var odata = ToOdataFilter(Filter);
             return odata;
+        }
+
+        public override string GetOrderBy()
+        {
+            // $$$ To be implemented
+            return null;
         }
 
         public override IReadOnlyCollection<string> GetColumns()
@@ -42,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
             return columns.Length == 0 ? null : columns;
         }
 
-        // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488 
+        // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FilterExpression filter)
         {
             if (filter.Filters?.Count > 0)
@@ -136,12 +149,10 @@ namespace Microsoft.PowerFx.Dataverse
             throw new NotImplementedException($"OData type: {obj.GetType()}");
         }
 
-
-
         private static string EscapeOdata(string str)
         {
             // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
-            // ecaped single quote as 2 single quotes. 
+            // ecaped single quote as 2 single quotes.
             return "'" + str.Replace("'", "''") + "'";
         }
 

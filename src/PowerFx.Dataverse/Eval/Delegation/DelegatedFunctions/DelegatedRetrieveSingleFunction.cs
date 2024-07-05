@@ -1,13 +1,11 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -25,66 +23,60 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (args[0] is not IDelegatableTableValue table)
             {
-                throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
+                throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} : found {args[0]}");
             }
 
             FilterExpression filter;
+            IList<OrderExpression> orderBy;
             ISet<LinkEntity> relation;
             string partitionId;
+
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
                 filter = DelegationFormulaValue._filter;
+                orderBy = DelegationFormulaValue._orderBy;
                 relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;
+                partitionId = DelegationFormulaValue._partitionId;               
             }
             else
             {
-                throw new InvalidOperationException($"Input arg should alway be of type {nameof(DelegationFormulaValue)}"); ;
+                throw new InvalidOperationException($"Input arg should always be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
-            bool isDistinct = false;
-            if (args[2] is BooleanValue bv)
-            {
-                isDistinct = bv.Value;
-            }
-            else
-            {
-                throw new InvalidOperationException($"args3 should alway be of type {nameof(BooleanValue)} : found {args[3]}");
-            }
+            var isDistinct = args[3] is BooleanValue bv
+                ? bv.Value
+                : throw new InvalidOperationException($"args3 should always be of type {nameof(BooleanValue)} : found {args[3]}");
 
             // column names to fetch.
             IEnumerable<string> columns = null;
-            if (args.Length > 3)
+            if (args.Length > 4)
             {
-                columns = args.Skip(3).Select(x => {
-                    if (x is StringValue stringValue)
-                    {
-                        return stringValue.Value;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"From Args3 onwards, all args should have been String Value");
-                    }
-                });
+                columns = args.Skip(4).Select(x => x is StringValue stringValue
+                                                        ? stringValue.Value
+                                                        : throw new InvalidOperationException($"From Args4 onwards, all args should have been String Value"));                
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters
             {
-                _relation = relation,
                 Filter = filter,
-                _partitionId = partitionId,
+                OrderBy = orderBy,
                 Top = 1,
+
                 _columnSet = columns,
-                _isDistinct = isDistinct
+                _isDistinct = isDistinct,
+                _partitionId = partitionId,
+                _relation = relation,                
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var row = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
-
             var result = row.FirstOrDefault();
+
             if (result == null || result.IsBlank)
             {
                 return FormulaValue.NewBlank(this.ReturnFormulaType);

@@ -1,11 +1,11 @@
-﻿using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Query;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -22,15 +22,20 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var filter = new FilterExpression(LogicalOperator.And);
             var relations = new HashSet<LinkEntity>(new LinkEntityComparer());
             string partitionId = null;
             bool appendPartitionIdFilter = false;
-            foreach ( var arg in args)
+
+            foreach (var arg in args)
             {
                 var siblingFilter = ((DelegationFormulaValue)arg)._filter;
+                var siblingOrderBy = ((DelegationFormulaValue)arg)._orderBy;
                 var siblingRelation = ((DelegationFormulaValue)arg)._relation;
                 var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
+
                 if (siblingPartitionId != null)
                 {
                     if (partitionId != null && partitionId != siblingPartitionId)
@@ -48,12 +53,12 @@ namespace Microsoft.PowerFx.Dataverse
                 relations.UnionWith(siblingRelation);
             }
 
-            if(appendPartitionIdFilter)
+            if (appendPartitionIdFilter)
             {
                 filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
             }
 
-            return new DelegationFormulaValue(filter, relations, partitionId: partitionId);
+            return new DelegationFormulaValue(filter, relations, orderBy: null, partitionId: partitionId);
         }
     }
 }

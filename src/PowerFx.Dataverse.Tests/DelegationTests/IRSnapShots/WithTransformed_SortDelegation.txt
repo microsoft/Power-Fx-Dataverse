@@ -1,0 +1,1 @@
+With({r:local}, (__retrieveMultiple(local, __noop(), __orderBy(r, new_price, True), 999, False)))

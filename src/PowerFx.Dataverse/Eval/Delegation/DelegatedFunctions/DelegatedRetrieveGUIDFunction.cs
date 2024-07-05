@@ -1,9 +1,9 @@
-﻿using Microsoft.PowerFx.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -18,9 +18,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (args[0] is not TableValue table)
             {
-                throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
+                throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} : found {args[0]}");
             }
 
             if (args[1] is BlankValue)
