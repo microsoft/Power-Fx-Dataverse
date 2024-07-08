@@ -85,7 +85,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         private static string ShowDifference(string target, string input)
         {
-            string common = string.Concat(target.TakeWhile((c, i) => c == input[i]));
+            target ??= string.Empty;
+            input ??= string.Empty;
+            string common = string.Concat(target.TakeWhile((c, i) => i < input.Length && c == input[i]));
             string spc = new string(' ', common.Length + 10);
             return $"{spc}\u2193 Pos={common.Length}\r\nExpected: {target}\r\nActual: {input}";
         }

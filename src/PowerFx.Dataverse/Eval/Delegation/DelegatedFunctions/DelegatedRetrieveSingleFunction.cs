@@ -21,6 +21,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
+        // arg0: table
+        // arg1: filter
+        // arg2: orderby
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -37,10 +40,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;
-                orderBy = DelegationFormulaValue._orderBy;
+                filter = DelegationFormulaValue._filter;                
                 relation = DelegationFormulaValue._relation;
                 partitionId = DelegationFormulaValue._partitionId;               
+            }
+            else
+            {
+                throw new InvalidOperationException($"Input arg should always be of type {nameof(DelegationFormulaValue)}"); ;
+            }
+
+            if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
+            {                
+                orderBy = DelegationFormulaValue2._orderBy;                
             }
             else
             {

@@ -11,7 +11,7 @@ namespace Microsoft.PowerFx.Dataverse
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
-        // Systems cna get the filter expression directrly and translate.
+        // Systems can get the filter expression directrly and translate.
         public FilterExpression Filter { get; init; }
 
         public IList<OrderExpression> OrderBy { get; init; }
@@ -22,7 +22,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal IEnumerable<string> _columnSet { get; init; }
         internal bool _isDistinct { get; init; }
-        //internal bool _isOrderBy { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -34,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
             DelegationParameterFeatures.Top;
 
         public override string GetOdataFilter()
-        {
+        {            
             var odata = ToOdataFilter(Filter);
             return odata;
         }

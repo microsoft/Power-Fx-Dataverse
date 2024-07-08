@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -630,8 +631,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "First" => ProcessFirst(node, tableArg),
                 "FirstN" => ProcessFirstN(node, tableArg),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
-                "Sort" => ProcessSort(node, tableArg, context, false),
-                "SortByColumns" => ProcessSort(node, tableArg, context, true),
+                "Sort" or "SortByColumns" => ProcessSort(node, tableArg, context),                
                 "ShowColumns" => ProcessShowColumn(node, tableArg),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
@@ -985,7 +985,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            var predicate = node.Args[1];
+            IntermediateNode predicate = node.Args[1];
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
 
@@ -1011,43 +1013,91 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: null, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
             }
 
             return result;
         }
 
-        private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context, bool sortByColumns)
+        private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
         {
-            var filter = tableArg.hasFilter ? tableArg.Filter : null;
-            var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            bool canTransform = true;            
+            
+            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
+            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+
+            List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            // If FirstN is used, we can't delegate
-            if (count != null
-                || !TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName)
-                || DelegationUtility.IsElasticTable(tableArg._tableType))
+            // If existing First[N] or Sort[ByColumns], we can't delegate
+            if (tableArg.hasTopCount || tableArg.hasOrderBy)
+            {
+                canTransform = false;
+            }
+
+            if (canTransform)
+            {                                
+                int i = 1;                
+
+                while (i < node.Args.Count)
+                {
+                    string fieldName;
+
+                    if (node.Args[i] is TextLiteralNode tln)
+                    {
+                        fieldName = tln.LiteralValue;
+                    }
+                    else if (!TryGetFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
+                    {
+                        canTransform = false;
+                        break;
+                    }
+
+                    arguments.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
+
+                    i++;
+                    bool isAscending = true;
+
+                    if (i < node.Args.Count)
+                    {
+                        if (node.Args[i] is RecordFieldAccessNode rfan && rfan.From is ResolvedObjectNode ron && ron.Value is EnumSymbol es && es.EntityName.Value == "SortOrder")
+                        {
+                            isAscending = rfan.Field.Value.Equals("Ascending", StringComparison.Ordinal);
+                            i++;
+                        }
+                        else
+                        {
+                            canTransform = false;
+                            break;
+                        }
+                    }
+
+                    if (canTransform)
+                    {
+                        arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
+                    }                    
+                }
+            }
+
+            if (!canTransform)
             {
                 IntermediateNode materializeTable = Materialize(tableArg);
 
                 if (!ReferenceEquals(node.Args[0], materializeTable))
                 {
-                    CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { materializeTable, node.Args[1] });
+                    arguments = new List<IntermediateNode>() { materializeTable };
+                    arguments.AddRange(node.Args.Skip(1));
+
+                    CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, arguments);
                     return Ret(delegatedSort);
                 }
 
                 return Ret(node);
-            }
-
-            // $$$ Only 1 column for now
-            IntermediateNode columnNameNode = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
-
-            // $$$ Only ascending for now
-            IntermediateNode orderingNode = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), true);
-
+            }                     
+           
             var sortFunc = new DelegatedSort(_hooks);
-            IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, new[] { node.Args[0], columnNameNode, orderingNode /* next columns & ordering here */ });
+            IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);                
                         
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderByNode, count, _maxRows, null);
 
@@ -1056,14 +1106,18 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessFirst(CallNode node, RetVal tableArg)
         {
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
             var filter = tableArg.Filter;
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: null, countOne, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, countOne, _maxRows, tableArg._columnSet, tableArg._isDistinct);
             return res;
         }
 
         private RetVal ProcessFirstN(CallNode node, RetVal tableArg)
         {
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+
             // Add default count of 1 if not specified.
             if (node.Args.Count == 1)
             {
@@ -1078,7 +1132,7 @@ namespace Microsoft.PowerFx.Dataverse
             var filter = tableArg.Filter;
             var topCount = node.Args[1];
 
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: null, topCount, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, topCount, _maxRows, tableArg._columnSet, tableArg._isDistinct);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)

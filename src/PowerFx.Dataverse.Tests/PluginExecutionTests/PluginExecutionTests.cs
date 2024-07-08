@@ -2767,22 +2767,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
-        static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
+        private static readonly EntityReference _eRef1 = new EntityReference("local", _g1);
 
         private (DataverseConnection, DataverseEntityCache, EntityLookup) CreateMemoryForRelationshipModelsWithCache(Policy policy = null, bool numberIsFloat = false)
         {
             (DataverseConnection dv, IDataverseServices ds, EntityLookup el) = CreateMemoryForRelationshipModelsInternal(policy, true, numberIsFloat: numberIsFloat);
-            return (dv, ((DataverseEntityCache)ds), el);
+            return (dv, (DataverseEntityCache)ds, el);
         }
 
-        internal static (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels(Policy policy = null, bool numberIsFloat = false)
+        internal static (DataverseConnection, EntityLookup) CreateMemoryForRelationshipModels(Policy policy = null, bool numberIsFloat = false, bool withExtraEntity = false)
         {
-            (DataverseConnection dv, IDataverseServices _, EntityLookup el) = CreateMemoryForRelationshipModelsInternal(policy, numberIsFloat: numberIsFloat);
+            (DataverseConnection dv, IDataverseServices _, EntityLookup el) = CreateMemoryForRelationshipModelsInternal(policy, numberIsFloat: numberIsFloat, withExtraEntity: withExtraEntity);
             return (dv, el);
         }
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
-        internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false)
+        internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false, bool withExtraEntity = false)
         {
             var entity1 = new Entity("local", _g1);
             var entity2 = new Entity("remote", _g2);
@@ -2801,6 +2801,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             entity4.Attributes["new_polyfield"] = null;
             entity4.Attributes["new_quantity"] = Convert.ToDecimal(10);
+
+            var entity4a = new Entity("local", _g5);
+            entity4a.Attributes["new_price"] = Convert.ToDecimal(10);
+            entity4a.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            entity4a.Attributes["new_polyfield"] = null;
+            entity4a.Attributes["new_quantity"] = Convert.ToDecimal(12);
 
             entity1.Attributes["new_price"] = Convert.ToDecimal(100);
             entity1.Attributes["old_price"] = Convert.ToDecimal(200);
@@ -2841,7 +2847,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
-            entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6, entity7, entity8, entity9);
+            
+            if (withExtraEntity)
+            {
+                entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity4a, entity5, entity6, entity7, entity8, entity9);
+            }
+            else
+            {
+                entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6, entity7, entity8, entity9);
+            }
+
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;
 
             var globalOptionSet = GetGlobalOptionSets(MockModels.RelationshipModels);
