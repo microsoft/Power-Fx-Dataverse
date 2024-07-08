@@ -29,19 +29,13 @@ namespace Microsoft.PowerFx.Dataverse
         public override DelegationParameterFeatures Features =>
             DelegationParameterFeatures.Columns |
             DelegationParameterFeatures.Filter |
-            DelegationParameterFeatures.OrderBy |
+            DelegationParameterFeatures.Sort | // $$$ Should be renamed OrderBy
             DelegationParameterFeatures.Top;
 
         public override string GetOdataFilter()
         {            
             var odata = ToOdataFilter(Filter);
             return odata;
-        }
-
-        public override string GetOrderBy()
-        {
-            // $$$ To be implemented
-            return null;
         }
 
         public override IReadOnlyCollection<string> GetColumns()
