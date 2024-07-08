@@ -1532,12 +1532,6 @@ namespace Microsoft.PowerFx.Dataverse
                             fieldName = ((TextLiteralNode)context.CallerTableRetVal._columnSet.First()).LiteralValue;
                         }
 
-                        if (fieldName == "Value" && context.CallerTableRetVal.OrderBy != null)
-                        {
-                            // $$$ Unsure
-                            throw new NotImplementedException();
-                        }
-
                         return true;
                     }
                 }
