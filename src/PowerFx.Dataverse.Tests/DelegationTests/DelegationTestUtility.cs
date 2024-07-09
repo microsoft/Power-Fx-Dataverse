@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -31,7 +32,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static async Task CompareSnapShotAsync(string fileName, string inputString, int lineNumber, bool isWithTransform)
         {
-            var baseDirectory = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "IRSnapShots", $"{(isWithTransform ? "WithTransformed_" : string.Empty)}{fileName}");
+            var fileName2 = $"{(isWithTransform ? "WithTransformed_" : string.Empty)}{fileName}";
+            var baseDirectory = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "IRSnapShots", fileName2);
 
             string path =
 
@@ -77,8 +79,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 #else
             // Compare the specified line with the input string, considering new lines as empty
             var targetLine = index < allLines.Length ? allLines[index] : "";
-            Assert.Equal(targetLine, inputString);
+            Assert.True(targetLine == inputString, $"File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
 #endif            
+        }
+
+        private static string ShowDifference(string target, string input)
+        {
+            target ??= string.Empty;
+            input ??= string.Empty;
+            string common = string.Concat(target.TakeWhile((c, i) => i < input.Length && c == input[i]));
+            string spc = new string(' ', common.Length + 10);
+            return $"{spc}\u2193 Pos={common.Length}\r\nExpected: {target}\r\nActual: {input}";
         }
     }
 }

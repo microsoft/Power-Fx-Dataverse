@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.PowerFx.Types;
@@ -29,10 +28,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("ProposalMultipleFiltersWithLiteral.txt")]
         [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt")]
         [InlineData("ProposalSingleFilter.txt")]
+        [InlineData("ProposalNoFilter.txt")]
 
-        // $$$ Sort doesn't delegate: https://github.com/microsoft/Power-Fx-Dataverse/issues/510
-        [InlineData("ProposalNoFilter.txt", true)]
-        
         // $$$ C# mocks don't support polymorphism
         //[InlineData("ProposalIssuerRelatedPartyNoFilterPolymorphic.txt", true)] // polymorphism
         public void BasicCompile(string shortFilename, bool expectDelegationFailures = false)
@@ -76,13 +73,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 if (delegationWarnings.Length > 0)
                 {
-                    Assert.True(expectDelegationFailures);
+                    Assert.True(expectDelegationFailures, string.Join(", ", delegationWarnings.Select(w => w.Message)));
                 }
                 else
                 {
                     Assert.False(expectDelegationFailures);
                 }
-            }           
+            }
         }
 
         #region Schema
@@ -96,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public string aib_name { get; set; }
             public string aib_status { get; set; }
             public double aib_agreementdurationamount { get; set; }
-            public DateTime  aib_agreementdurationunits { get; set; }
+            public DateTime aib_agreementdurationunits { get; set; }
 
             public AibIssuer aib_Issuer { get; set; }
             public AibIssuer aib_Approver { get; set; }
@@ -126,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var marshaller = _typeCache.GetMarshaller(typeof(T));
             var tableType = ((RecordType)marshaller.Type).ToTable();
 
-            symbolTable.AddVariable(tableName, tableType);            
+            symbolTable.AddVariable(tableName, tableType);
         }
 
         public ReadOnlySymbolTable GetSymbols()

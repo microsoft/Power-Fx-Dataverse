@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -308,7 +305,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             engine1.EnableDelegation(dv.MaxRows);
             engine1.UpdateVariable("_count", FormulaValue.New(100m));
 
-            var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
+            var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Length ?? 0);
 
             for(var i = 0; i < inputs.Count(); i++)
             {
@@ -367,7 +364,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.Empty(checkResult.Errors);
             var actualIr = checkResult.GetCompactIRString();
 
-            Assert.Equal("__retrieveMultiple(MyTable, __lt(MyTable, Date, DateAdd(Now(), Float(30), (TimeUnit).Days)), 1000, False)", actualIr);
-        }       
+            Assert.Equal<object>("__retrieveMultiple(MyTable, __lt(MyTable, Date, DateAdd(Now(), Float(30), (TimeUnit).Days)), __noop(), 1000, False)", actualIr);            
+        }
     }
 }

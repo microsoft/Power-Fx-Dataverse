@@ -2949,6 +2949,8 @@ END
             // Simulates IExternalOptionSetDocument.RegisterOrRefreshOptionSet
             var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", "", "Rating", "", "", "", new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
             Assert.NotSame(refreshedOptionSet, optionSet);
+
+            // $$$ This call will fail in DEBUG mode as 'Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal)' will throw
             dv.MetadataCache.RegisterOptionSet("Rating (Locals)", refreshedOptionSet);
 
             check = engine1.Check(expr, options: opts, symbolTable: symbols);

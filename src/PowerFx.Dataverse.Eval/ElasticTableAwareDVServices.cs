@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Syntax;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -13,7 +10,7 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// This wraps the IDataverseServices and provides additional functionality for elastic tables. 
+    /// This wraps the IDataverseServices and provides additional functionality for elastic tables.
     /// Based on metadata, it will decide whether to use the elastic table API or the regular table API for <see cref="RetrieveAsync"/>.
     /// </summary>
     internal class ElasticTableAwareDVServices
@@ -49,10 +46,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var entityMetadata = _metadataResolver(entityName);
 
-            if(entityMetadata.IsElasticTable())
+            if (entityMetadata.IsElasticTable())
             {
                 return RetrieveEntityFromElasticTableAsync(entityName, id, columns, cancellationToken);
-
             }
             else
             {
@@ -65,10 +61,10 @@ namespace Microsoft.PowerFx.Dataverse
             var reference = new EntityReference(entityName, id);
             var filter = new FilterExpression();
             filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, ConditionOperator.Equal, reference.Id);
-            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, filter, null, 1, columns, false);
+            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, filter, null, null, 1, columns, false);
             var rows = await _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
-            
-            if(rows.HasError)
+
+            if (rows.HasError)
             {
                 return DataverseResponse<Entity>.NewError(rows.Error);
             }

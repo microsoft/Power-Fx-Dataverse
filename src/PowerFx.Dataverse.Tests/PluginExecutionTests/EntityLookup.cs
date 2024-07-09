@@ -126,10 +126,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Modifying this entity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
         {
-            if (_onLookupRef != null)
-            {
-                _onLookupRef(entityRef);
-            }
+            _onLookupRef?.Invoke(entityRef);
 
             foreach (var entity in _list)
             {
@@ -153,7 +150,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return false;
         }
 
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             Add(cancellationToken, entity);
@@ -161,13 +158,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return new DataverseResponse<Guid>(entity.Id);
         }
 
-        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> LookupReferenceAsync(EntityReference reference, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return await DataverseResponse<Entity>.RunAsync(() => Task.FromResult(LookupRef(reference, cancellationToken)), "Entity lookup").ConfigureAwait(false);
         }
 
-        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -197,7 +194,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return Task.FromResult(new DataverseResponse());
         }
 
-        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -219,7 +216,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return LookupReferenceAsync(new EntityReference(entityName, id));
         }
 
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
             IEnumerable<Entity> data = _list;
 
@@ -244,24 +241,44 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private IList<Entity> ProcessEntity(IEnumerable<Entity> data, QueryExpression qe, int take, CancellationToken cancellationToken)
         {
-            var entityList = new List<Entity>();
+            List<Entity> entityList = new List<Entity>();
 
-            foreach (var entity in data)
+            foreach (Entity entity in data)
             {
-                var metadata = LookupMetadata(entity.LogicalName, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-                if (entity.LogicalName == qe.EntityName &&
-                    IsCriteriaMatching(entity, qe.Criteria, qe.LinkEntities, metadata))
-                {
-                    
+                EntityMetadata metadata = LookupMetadata(entity.LogicalName, cancellationToken);
+                
+                if (entity.LogicalName == qe.EntityName && IsCriteriaMatching(entity, qe.Criteria, qe.LinkEntities, metadata))
+                {                    
                     entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
-                    take--;
-                    if (take == 0)
+                    
+                    if (--take == 0)
                     {
                         break;
                     }
                 }
             }
+
+            if (qe.Orders != null && qe.Orders.Any())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                OrderExpression oe = qe.Orders.First();
+
+                IOrderedEnumerable<Entity> entities = oe.OrderType == OrderType.Ascending
+                    ? entityList.OrderBy(e => e.Attributes[oe.AttributeName])
+                    : entityList.OrderByDescending(e => e.Attributes[oe.AttributeName]);
+
+                foreach (OrderExpression nextOe in qe.Orders.Skip(1))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    entities = nextOe.OrderType == OrderType.Ascending
+                        ? entities.ThenBy(e => e.Attributes[nextOe.AttributeName])
+                        : entities.ThenByDescending(e => e.Attributes[nextOe.AttributeName]);
+                }
+
+                return entities.ToList();
+            }
+
             return entityList;
         }
 
