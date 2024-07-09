@@ -1031,9 +1031,10 @@ namespace Microsoft.PowerFx.Dataverse
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // If existing First[N] or Sort[ByColumns], we can't delegate
+            // When multiple Sort would occur, we cannot reliably group OrderBy commands
             if (tableArg.hasTopCount || tableArg.hasOrderBy)
             {
-                return NoSortTransform(node, tableArg, ref arguments);
+                return NoSortTransform(node, tableArg);
             }
 
             int i = 1;
@@ -1048,7 +1049,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (!TryGetFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
                 {
-                    return NoSortTransform(node, tableArg, ref arguments);
+                    return NoSortTransform(node, tableArg);
                 }
 
                 arguments.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
@@ -1066,7 +1067,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        return NoSortTransform(node, tableArg, ref arguments);
+                        return NoSortTransform(node, tableArg);
                     }
                 }
 
@@ -1081,13 +1082,13 @@ namespace Microsoft.PowerFx.Dataverse
             return resultingTable;
         }
 
-        private RetVal NoSortTransform(CallNode node, RetVal tableArg, ref List<IntermediateNode> arguments)
+        private RetVal NoSortTransform(CallNode node, RetVal tableArg)
         {
             IntermediateNode materializeTable = Materialize(tableArg);
 
             if (!ReferenceEquals(node.Args[0], materializeTable))
             {
-                arguments = new List<IntermediateNode>() { materializeTable };
+                List<IntermediateNode>  arguments = new List<IntermediateNode>() { materializeTable };
                 arguments.AddRange(node.Args.Skip(1));
 
                 CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, arguments);
