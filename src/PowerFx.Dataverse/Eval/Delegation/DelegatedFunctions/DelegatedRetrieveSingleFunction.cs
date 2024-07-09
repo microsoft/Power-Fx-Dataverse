@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"Input arg should always be of type {nameof(DelegationFormulaValue)}"); ;
+                throw new InvalidOperationException($"Input arg1 should always be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
             if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"Input arg should always be of type {nameof(DelegationFormulaValue)}"); ;
+                throw new InvalidOperationException($"Input arg2 should always be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
             var isDistinct = args[3] is BooleanValue bv
