@@ -31,8 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var arg in args)
             {
-                var siblingFilter = ((DelegationFormulaValue)arg)._filter;
-                var siblingOrderBy = ((DelegationFormulaValue)arg)._orderBy;
+                var siblingFilter = ((DelegationFormulaValue)arg)._filter;                
                 var siblingRelation = ((DelegationFormulaValue)arg)._relation;
                 var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
 
@@ -58,6 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
                 filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
             }
 
+            // OrderBy makes no sense here
             return new DelegationFormulaValue(filter, relations, orderBy: null, partitionId: partitionId);
         }
     }

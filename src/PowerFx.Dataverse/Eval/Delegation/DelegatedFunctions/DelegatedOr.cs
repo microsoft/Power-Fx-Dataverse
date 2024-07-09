@@ -52,7 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
                 filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
             }
 
-            return new DelegationFormulaValue(filter, relations, null);
+            // OrderBy makes no sense here
+            return new DelegationFormulaValue(filter, relations, orderBy: null);
         }
     }
 }

@@ -57,19 +57,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Delegable fully
         [InlineData(21, "FirstN(Sort(Filter(t1, Price <= 100), Quantity), 2)", 2, "0003, 0001")]
         [InlineData(22, "FirstN(Filter(Sort(t1, Quantity), Price <= 100), 2)", 2, "0003, 0001")]
-        public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds)
+
+        // Non-delegable
+        [InlineData(23, @"Sort(t1, ""Price"")", 4, "0001, 0003, 0004, 0005")]
+        [InlineData(24, @"Sort(t1, ""new_price"")", 4, "0001, 0003, 0004, 0005")]        
+        [InlineData(25, @"Sort(t1, ""XXXXX"")", 4, "0001, 0003, 0004, 0005")]
+
+        // Delegable
+        // Excluding this test for now due to DV issue 515
+        // [InlineData(26, @"SortByColumns(t1, ""Price"")", 4, "0004, 0003, 0005, 0001")]
+        [InlineData(27, @"SortByColumns(t1, ""new_price"")", 4, "0004, 0003, 0005, 0001")]
+
+        // Can't delegate two SortByColumns
+        [InlineData(28, "SortByColumns(SortByColumns(t1, Price, SortOrder.Descending), Quantity, SortOrder.Descending)", 4, "0001, 0005, 0003, 0004")]
+
+        // Not a delegable table
+        [InlineData(29, @"Sort([30, 10, 20], Value)", 3, "10, 20, 30", true)]
+
+        [InlineData(30, @"Distinct(Sort(t1, Price), Price)", 3, "-10, 10, 100", true)]        
+        [InlineData(31, "LookUp(Sort(t1, Quantity), Price <= 100)", 1, "0001")]
+        public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds, bool useValue = false)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
-            map.Add("local", "t1");
-            //map.Add("remote", "t2");
-            //map.Add("virtualremote", "t3");
-            //map.Add("elastictable", "et");
+            map.Add("local", "t1");            
 
             SingleOrgPolicy policy = new SingleOrgPolicy(map);
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: true, policy: policy, withExtraEntity: true);
             ParserOptions opts = PluginExecutionTests._parserAllowSideEffects_NumberIsFloat;
             PowerFxConfig config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
+
             RecalcEngine engine1 = new RecalcEngine(config);
             engine1.EnableDelegation(dv.MaxRows);
 
@@ -103,7 +120,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 if (result is TableValue tv)
                 {
                     Assert.Equal(expectedRows, tv.Rows.Count());
-                    ids = string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..]));
+                    ids = useValue
+                        ? string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "Value").Value as NumberValue).Value.ToString()))
+                        : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..]));
                 }
                 else if (result is RecordValue rv)
                 {

@@ -20,4 +20,12 @@ __retrieveMultiple(local, __noop(), __orderBy(local, new_price, False, new_quant
 Sort(__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 2, False), (new_quantity))
 __retrieveMultiple(local, __lte(local, new_price, 100), __orderBy(__lte(local, new_price, 100), new_quantity, True), 2, False)
 __retrieveMultiple(local, __lte(local, new_price, 100), __orderBy(local, new_quantity, True), 2, False)
+Sort(local, (Price))
+Sort(local, (new_price))
+Sort(local, (XXXXX))
 
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, False)
+SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), 999, False), new_quantity, (SortOrder).Descending)
+Sort(Table({Value:30}, {Value:10}, {Value:20}), (Value))
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, True, new_price)
+__retrieveSingle(local, __lte(local, new_price, 100), __orderBy(local, new_quantity, True), False)

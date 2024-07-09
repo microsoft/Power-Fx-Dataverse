@@ -26,11 +26,31 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        public override DelegationParameterFeatures Features =>
-            DelegationParameterFeatures.Columns |
-            DelegationParameterFeatures.Filter |
-            DelegationParameterFeatures.Sort | // $$$ Should be renamed OrderBy
-            DelegationParameterFeatures.Top;
+        public override DelegationParameterFeatures Features
+        {
+            get
+            {
+                DelegationParameterFeatures features = 0;
+                
+                if (Filter != null) 
+                {
+                    features |= DelegationParameterFeatures.Filter | DelegationParameterFeatures.Columns;
+                }
+                
+                if (OrderBy != null) 
+                { 
+                    features |= DelegationParameterFeatures.Sort;  // $$$ Should be renamed OrderBy
+                }
+                
+                if (Top > 0) 
+                { 
+                    features |= DelegationParameterFeatures.Top; 
+                }
+
+                return features;
+
+            }
+        }
 
         public override string GetOdataFilter()
         {            

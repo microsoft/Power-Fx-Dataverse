@@ -27,17 +27,17 @@ namespace Microsoft.PowerFx.Dataverse
     // Rewrite the tree to inject delegation.
     // If we encounter a dataverse table (something that should be delegated) during the walk, we either:
     // - successfully delegate, which means rewriting to a call an efficient DelegatedFunction,
-    // - leave IR unchanged (don't delegate), but issue a warning. 
+    // - leave IR unchanged (don't delegate), but issue a warning.
     internal class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
-        // Ideally, this would just be in Dataverse.Eval nuget, but 
-        // Only Dataverse nuget has InternalsVisisble access to implement an IR walker. 
-        // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed. 
+        // Ideally, this would just be in Dataverse.Eval nuget, but
+        // Only Dataverse nuget has InternalsVisisble access to implement an IR walker.
+        // So implement the walker in lower layer, and have callbacks into Dataverse.Eval layer as needed.
         private readonly DelegationHooks _hooks;
 
         private readonly int _maxRows;
 
-        // For reporting delegation Warnings. 
+        // For reporting delegation Warnings.
         private readonly ICollection<ExpressionError> _errors;
 
         public DelegationIRVisitor(DelegationHooks hooks, ICollection<ExpressionError> errors, int maxRow)
@@ -49,11 +49,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static readonly JsonSerializerOptions _options = new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault };
 
-
-        // Return Value passed through at each phase of the walk. 
+        // Return Value passed through at each phase of the walk.
         public class RetVal
         {
-
             private readonly IntermediateNode _filter;
 
             private readonly IntermediateNode _orderBy;
@@ -79,22 +77,21 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly IEnumerable<IntermediateNode> _columnSet;
 
             public readonly bool _isDistinct;
-            //public readonly bool _isOrderBy;
 
             public readonly DelegationHooks _hooks;
 
             // Original IR node for non-delegating path.
-            // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation. 
+            // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation.
             public readonly IntermediateNode _originalNode;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating { get; init; }
 
-            // IR node that will resolve to the TableValue at runtime. 
+            // IR node that will resolve to the TableValue at runtime.
             // From here, we can downcast at get the services. Ideally would be either Scope node or ResolvedObjectNode
             public readonly DelegableIntermediateNode _sourceTableIRNode;
 
-            // Table type  and original metadata for table that we're delegating to. 
+            // Table type  and original metadata for table that we're delegating to.
             public readonly TableType _tableType;
 
             // Null if not dataverse
@@ -144,7 +141,7 @@ namespace Microsoft.PowerFx.Dataverse
                 _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
             }
 
-            // Non-delegating path 
+            // Non-delegating path
             public RetVal(IntermediateNode node)
             {
                 _originalNode = node;
@@ -207,7 +204,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // If an attempted delegation can't be complete, then fail it. 
+        // If an attempted delegation can't be complete, then fail it.
         private void AddError(ExpressionError error)
         {
             _errors.Add(error);
@@ -310,7 +307,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // ResolvedObject is a symbol injected by the host.
-        // All Table references start as resolved objects. 
+        // All Table references start as resolved objects.
         public override RetVal Visit(ResolvedObjectNode node, Context context)
         {
             if (!context._ignoreDelegation && node.IRContext.ResultType is TableType aggType)
@@ -321,8 +318,8 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var symbolTable = nameSym.Owner;
 
-                    // We need to tell the difference between a direct table, 
-                    // and another global variable that has that table's type (such as global := Filter(table, true). 
+                    // We need to tell the difference between a direct table,
+                    // and another global variable that has that table's type (such as global := Filter(table, true).
                     bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
 
                     if (isRealTable)
@@ -333,7 +330,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Just a regular variable, don't bother delegating. 
+            // Just a regular variable, don't bother delegating.
             return Ret(node);
         }
 
@@ -367,7 +364,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return new RetVal(node);
             }
-
 
             if (!IsRelationDelegationAllowed(tableType, relations))
             {
@@ -577,7 +573,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Some functions don't require delegation.
-            // Using a table diretly as arg0 here doesn't generate a warning. 
+            // Using a table diretly as arg0 here doesn't generate a warning.
             if (funcName == BuiltinFunctionsCore.IsBlank.Name ||
                 funcName == BuiltinFunctionsCore.IsError.Name ||
                 funcName == "Patch" || funcName == "Collect")
@@ -589,7 +585,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (node.Args.Count == 0)
             {
-                // Delegated functions require arg0 is the table. 
+                // Delegated functions require arg0 is the table.
                 // So a 0-length args can't delegate.
                 return base.Visit(node, context);
             }
@@ -631,7 +627,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "First" => ProcessFirst(node, tableArg),
                 "FirstN" => ProcessFirstN(node, tableArg),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
-                "Sort" or "SortByColumns" => ProcessSort(node, tableArg, context),                
+                "Sort" or "SortByColumns" => ProcessSort(node, tableArg, context),
                 "ShowColumns" => ProcessShowColumn(node, tableArg),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
@@ -641,9 +637,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessDistinct(CallNode node, RetVal tableArg, Context context)
         {
-            var filter = tableArg.hasFilter ? tableArg.Filter : null;
-
-            var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
@@ -666,7 +662,7 @@ namespace Microsoft.PowerFx.Dataverse
             var fieldTextNode = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: null, count, _maxRows, new[] { fieldTextNode }, isDistinct: true);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, new[] { fieldTextNode }, isDistinct: true);
 
             return resultingTable;
         }
@@ -731,11 +727,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessShowColumn(CallNode node, RetVal tableArg)
         {
-            var filter = tableArg.hasFilter ? tableArg.Filter : null;
-            var count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
             // change to original node to current node and appends columnSet.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: null, count, _maxRows, node.Args.Skip(1), tableArg._isDistinct);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, node.Args.Skip(1), tableArg._isDistinct);
 
             if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
             {
@@ -823,6 +820,8 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+
             var predicate = node.Args[1];
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
 
@@ -836,7 +835,7 @@ namespace Microsoft.PowerFx.Dataverse
                     CheckForNopLookup(node);
 
                     // Pattern match to see if predicate is delegable.
-                    //  Lookup(Table, Id=Guid) 
+                    //  Lookup(Table, Id=Guid)
                     var retVal2 = guidValue.Accept(this, context);
                     var right = Materialize(retVal2);
 
@@ -850,7 +849,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         else
                         {
-                            // We can successfully delegate this call. 
+                            // We can successfully delegate this call.
                             // __retrieveGUID(table, guid);
 
                             if (IsTableArgLookUpDelegable(context, tableArg))
@@ -913,7 +912,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: null, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
             }
             else
             {
@@ -968,7 +967,10 @@ namespace Microsoft.PowerFx.Dataverse
                     && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
                     && scopedNode._originalNode is ResolvedObjectNode)
                 || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode
-                    && (callNode.Function.Name == BuiltinFunctionsCore.ShowColumns.Name || callNode.Function.Name == "Distinct")
+                    && (callNode.Function.Name == "ShowColumns" || 
+                        callNode.Function.Name == "Distinct" || 
+                        callNode.Function.Name == "Sort" ||
+                        callNode.Function.Name == "SortByColumns")
                    )
                 )
             {
@@ -1021,8 +1023,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
         {
-            bool canTransform = true;            
-            
             IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
             IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
@@ -1033,75 +1033,80 @@ namespace Microsoft.PowerFx.Dataverse
             // If existing First[N] or Sort[ByColumns], we can't delegate
             if (tableArg.hasTopCount || tableArg.hasOrderBy)
             {
-                canTransform = false;
+                return NoSortTransform(node, tableArg, ref arguments);
             }
 
-            if (canTransform)
-            {                                
-                int i = 1;                
+            int i = 1;
 
-                while (i < node.Args.Count)
-                {
-                    string fieldName;
-
-                    if (node.Args[i] is TextLiteralNode tln)
-                    {
-                        fieldName = tln.LiteralValue;
-                    }
-                    else if (!TryGetFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
-                    {
-                        canTransform = false;
-                        break;
-                    }
-
-                    arguments.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
-
-                    i++;
-                    bool isAscending = true;
-
-                    if (i < node.Args.Count)
-                    {
-                        if (node.Args[i] is RecordFieldAccessNode rfan && rfan.From is ResolvedObjectNode ron && ron.Value is EnumSymbol es && es.EntityName.Value == "SortOrder")
-                        {
-                            isAscending = rfan.Field.Value.Equals("Ascending", StringComparison.Ordinal);
-                            i++;
-                        }
-                        else
-                        {
-                            canTransform = false;
-                            break;
-                        }
-                    }
-
-                    if (canTransform)
-                    {
-                        arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
-                    }                    
-                }
-            }
-
-            if (!canTransform)
+            while (i < node.Args.Count)
             {
-                IntermediateNode materializeTable = Materialize(tableArg);
+                string fieldName;
 
-                if (!ReferenceEquals(node.Args[0], materializeTable))
+                if (node.Args[i] is TextLiteralNode tln)
                 {
-                    arguments = new List<IntermediateNode>() { materializeTable };
-                    arguments.AddRange(node.Args.Skip(1));
-
-                    CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, arguments);
-                    return Ret(delegatedSort);
+                    fieldName = tln.LiteralValue;
+                }
+                else if (!TryGetFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
+                {
+                    return NoSortTransform(node, tableArg, ref arguments);
                 }
 
-                return Ret(node);
-            }                     
-           
+                arguments.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
+
+                i++;
+                bool isAscending = true;
+
+                // this argument is optional and will default to Ascending if not provided
+                if (i < node.Args.Count)
+                {
+                    if (TryGetEnumValue(node.Args[i], "SortOrder", out string sortOrder))
+                    {
+                        isAscending = sortOrder.Equals("Ascending", StringComparison.Ordinal);
+                        i++;
+                    }
+                    else
+                    {
+                        return NoSortTransform(node, tableArg, ref arguments);
+                    }
+                }
+
+                arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
+            }
+
             var sortFunc = new DelegatedSort(_hooks);
-            IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);                
-                        
+            IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
+
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderByNode, count, _maxRows, null);
 
             return resultingTable;
+        }
+
+        private RetVal NoSortTransform(CallNode node, RetVal tableArg, ref List<IntermediateNode> arguments)
+        {
+            IntermediateNode materializeTable = Materialize(tableArg);
+
+            if (!ReferenceEquals(node.Args[0], materializeTable))
+            {
+                arguments = new List<IntermediateNode>() { materializeTable };
+                arguments.AddRange(node.Args.Skip(1));
+
+                CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, arguments);
+                return Ret(delegatedSort);
+            }
+
+            return Ret(node);
+        }
+
+        private bool TryGetEnumValue(IntermediateNode arg, string enumName, out string val)
+        {
+            if (arg is RecordFieldAccessNode rfan && rfan.From is ResolvedObjectNode ron && ron.Value is EnumSymbol es && es.EntityName.Value == enumName)
+            {
+                val = rfan.Field.Value;
+                return true;
+            }
+
+            val = null;
+            return false;
         }
 
         private RetVal ProcessFirst(CallNode node, RetVal tableArg)
@@ -1419,63 +1424,83 @@ namespace Microsoft.PowerFx.Dataverse
                 case BinaryOpKind.LtNumbers:
                     invertedOp = BinaryOpKind.GtNumbers;
                     return true;
+
                 case BinaryOpKind.LtDecimals:
                     invertedOp = BinaryOpKind.GtDecimals;
                     return true;
+
                 case BinaryOpKind.LtDateTime:
                     invertedOp = BinaryOpKind.GtDateTime;
                     return true;
+
                 case BinaryOpKind.LtDate:
                     invertedOp = BinaryOpKind.GtDate;
                     return true;
+
                 case BinaryOpKind.LtTime:
                     invertedOp = BinaryOpKind.GtTime;
                     return true;
+
                 case BinaryOpKind.LeqNumbers:
                     invertedOp = BinaryOpKind.GeqNumbers;
                     return true;
+
                 case BinaryOpKind.LeqDecimals:
                     invertedOp = BinaryOpKind.GeqDecimals;
                     return true;
+
                 case BinaryOpKind.LeqDateTime:
                     invertedOp = BinaryOpKind.GeqDateTime;
                     return true;
+
                 case BinaryOpKind.LeqDate:
                     invertedOp = BinaryOpKind.GeqDate;
                     return true;
+
                 case BinaryOpKind.LeqTime:
                     invertedOp = BinaryOpKind.GeqTime;
                     return true;
+
                 case BinaryOpKind.GtNumbers:
                     invertedOp = BinaryOpKind.LtNumbers;
                     return true;
+
                 case BinaryOpKind.GtDecimals:
                     invertedOp = BinaryOpKind.LtDecimals;
                     return true;
+
                 case BinaryOpKind.GtDateTime:
                     invertedOp = BinaryOpKind.LtDateTime;
                     return true;
+
                 case BinaryOpKind.GtDate:
                     invertedOp = BinaryOpKind.LtDate;
                     return true;
+
                 case BinaryOpKind.GtTime:
                     invertedOp = BinaryOpKind.LtTime;
                     return true;
+
                 case BinaryOpKind.GeqNumbers:
                     invertedOp = BinaryOpKind.LeqNumbers;
                     return true;
+
                 case BinaryOpKind.GeqDecimals:
                     invertedOp = BinaryOpKind.LeqDecimals;
                     return true;
+
                 case BinaryOpKind.GeqDateTime:
                     invertedOp = BinaryOpKind.LeqDateTime;
                     return true;
+
                 case BinaryOpKind.GeqDate:
                     invertedOp = BinaryOpKind.LeqDate;
                     return true;
+
                 case BinaryOpKind.GeqTime:
                     invertedOp = BinaryOpKind.LeqTime;
                     return true;
+
                 default:
                     invertedOp = default;
                     return false;
