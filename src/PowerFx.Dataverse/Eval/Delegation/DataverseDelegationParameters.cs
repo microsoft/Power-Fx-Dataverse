@@ -173,5 +173,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return dt.ToLongDateString();
         }
+
+        public override IReadOnlyCollection<(string, bool)> GetOrderBy()
+        {
+            return OrderBy?.Select(oe => (oe.AttributeName, oe.OrderType == OrderType.Ascending)).ToList();
+        }
     }
 }
