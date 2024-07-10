@@ -76,6 +76,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [InlineData(30, @"Distinct(Sort(t1, Price), Price)", 3, "-10, 10, 100", true)]        
         [InlineData(31, "LookUp(Sort(t1, Quantity), Price <= 100)", 1, "0001")]
+        [InlineData(32, @"Sort(Distinct(t1, Price), Value)", 3, "-10, 10, 100", true)]
+        [InlineData(33, "ShowColumns(Sort(t1, Price), 'new_quantity', 'new_price', 'localid')", 4, "0004, 0003, 0005, 0001")]
+        [InlineData(34, "Sort(ShowColumns(t1, 'new_quantity', 'new_price', 'localid'), new_price)", 4, "0004, 0003, 0005, 0001")]
+        [InlineData(35, "Sort(Sort(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
+        [InlineData(36, "Sort(SortByColumns(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
         public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds, bool useValue = false)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
@@ -121,7 +126,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 {
                     Assert.Equal(expectedRows, tv.Rows.Count());
                     ids = useValue
-                        ? string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "Value").Value as NumberValue).Value.ToString()))
+                        ? string.Join(", ", tv.Rows.Select(drv => GetString(drv.Value.Fields.First(nv => nv.Name == "Value").Value)))
                         : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..]));
                 }
                 else if (result is RecordValue rv)
@@ -137,5 +142,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Assert.Equal<object>(expectedIds, ids);
             }
         }
+
+        private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";        
     }
 }

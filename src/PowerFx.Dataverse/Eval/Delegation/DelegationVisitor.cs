@@ -1030,9 +1030,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            // If existing First[N] or Sort[ByColumns], we can't delegate
+            // If existing First[N], Sort[ByColumns], Distinct, or ShowColumns we don't delegate
             // When multiple Sort would occur, we cannot reliably group OrderBy commands
-            if (tableArg.hasTopCount || tableArg.hasOrderBy)
+            if (tableArg.hasTopCount || tableArg.hasOrderBy || tableArg._isDistinct || (tableArg._columnSet != null && tableArg._columnSet.Any()))
             {
                 return NoSortTransform(node, tableArg);
             }

@@ -29,3 +29,8 @@ SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, Fa
 Sort(Table({Value:30}, {Value:10}, {Value:20}), (Value))
 __retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, True, new_price)
 __retrieveSingle(local, __lte(local, new_price, 100), __orderBy(local, new_quantity, True), False)
+Sort(__retrieveMultiple(local, __noop(), __noop(), 999, True, new_price), (Value))
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, False, new_quantity, new_price, localid)
+Sort(__retrieveMultiple(local, __noop(), __noop(), 999, False, new_quantity, new_price, localid), (new_price))
+Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, False), (new_quantity))
+Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, False), (new_quantity))
