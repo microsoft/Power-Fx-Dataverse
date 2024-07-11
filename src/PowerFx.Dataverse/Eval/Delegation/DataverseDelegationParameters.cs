@@ -113,10 +113,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                     var op = condition.Operator switch
                     {
-                        ConditionOperator.GreaterEqual => "gt",
-                        ConditionOperator.GreaterThan => "ge",
-                        ConditionOperator.LessEqual => "lt",
-                        ConditionOperator.LessThan => "le",
+                        ConditionOperator.GreaterEqual => "ge",
+                        ConditionOperator.GreaterThan => "gt",
+                        ConditionOperator.LessEqual => "le",
+                        ConditionOperator.LessThan => "lt",
                         ConditionOperator.Equal => "eq",
                         ConditionOperator.NotEqual => "ne",
                         _ => throw new NotImplementedException($"AzureTable can't delegate: {condition.Operator}"),
@@ -134,32 +134,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static string EscapeOdata(object obj)
         {
-            if (obj is string str)
+            return obj switch
             {
-                return EscapeOdata(str);
-            }
-            else if (obj is DateTime dt)
-            {
-                return EscapeOdata(dt);
-            }
-            else if (obj is float f)
-            {
-                return f.ToString();
-            }
-            else if (obj is decimal d)
-            {
-                return d.ToString();
-            }
-            else if (obj is double d2)
-            {
-                return d2.ToString();
-            }
-            else if (obj is int i)
-            {
-                return i.ToString();
-            }
-
-            throw new NotImplementedException($"OData type: {obj.GetType()}");
+                string str => EscapeOdata(str),
+                DateTime dt => (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                float f => f.ToString(),
+                decimal d => d.ToString(),
+                double d2 => d2.ToString(),
+                int i => i.ToString(),
+                _ => throw new NotImplementedException($"OData type: {obj.GetType()}")
+            };
         }
 
         private static string EscapeOdata(string str)
@@ -167,11 +151,6 @@ namespace Microsoft.PowerFx.Dataverse
             // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
             // ecaped single quote as 2 single quotes.
             return "'" + str.Replace("'", "''") + "'";
-        }
-
-        private static string EscapeOdata(DateTime dt)
-        {
-            return dt.ToLongDateString();
         }
 
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
