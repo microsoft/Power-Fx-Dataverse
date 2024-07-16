@@ -8,6 +8,7 @@ using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
 using Span = Microsoft.PowerFx.Syntax.Span;
 
@@ -229,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            if (context._dataverseFeatures.IsOptionSetEnabled)
+            if (context._dataverseFeatures.IsOptionSetEnabled && !(retVal.type is BlankType) && retVal?.varName != null)
             {
                 var columnDefinition = context.GetVarDetails(retVal.varName)?.Column;
                 ValidateOptionSetResultArgument(node, columnDefinition, ref optionSetName);

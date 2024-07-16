@@ -2562,6 +2562,17 @@ END
         }
 
         [Fact]
+        public void BlankFnUsedInControlFnsTest()
+        {
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile("If(1>2,1,Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("Switch(1,1,\"abc\", Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
         public void CheckRelatedEntityCurrencyUsedInFormula()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
