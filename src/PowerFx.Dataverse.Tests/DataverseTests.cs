@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
@@ -2559,6 +2560,17 @@ END
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal(OptionSetTestUDF, result.SqlFunction);
+        }
+
+        [Fact]
+        public void BlankFnUsedInControlFnsTest()
+        {
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile("If(1>2,1,Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("Switch(1,1,\"abc\", Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
         }
 
         [Fact]
