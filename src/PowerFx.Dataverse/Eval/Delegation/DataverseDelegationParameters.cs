@@ -137,6 +137,7 @@ namespace Microsoft.PowerFx.Dataverse
             return obj switch
             {
                 string str => EscapeOdata(str),
+                bool b => b.ToString().ToLowerInvariant(),
                 DateTime dt => (dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 float f => f.ToString(),
                 decimal d => d.ToString(),
