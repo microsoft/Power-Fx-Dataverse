@@ -16,8 +16,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Delegation using direct API. 
         [Theory]
         [InlineData(
-            "Filter(t1, Price < 120 And 90 < Price)",
-            "((Price le 120) and (Price ge 90))",
+            "Filter(t1, Price < 120 And 90 <= Price)",
+            "((Price lt 120) and (Price ge 90))",
             1000, // default fetch size
             "Table({Price:100,opt:Blank()})")]
         [InlineData(
