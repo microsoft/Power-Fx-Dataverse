@@ -142,6 +142,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return EscapeOdata(dt);
             }
+            else if (obj is bool b)
+            {
+                return b.ToString().ToLowerInvariant();
+            }
             else if (obj is float f)
             {
                 return f.ToString();
