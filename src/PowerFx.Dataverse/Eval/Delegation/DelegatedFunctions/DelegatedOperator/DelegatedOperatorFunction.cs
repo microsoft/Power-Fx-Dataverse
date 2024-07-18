@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using Newtonsoft.Json.Linq;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -74,41 +71,43 @@ namespace Microsoft.PowerFx.Dataverse
             if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
             {
                 throw new InvalidOperationException("Unsupported type : expected Primitive");
-            } 
+            }
 
             IEnumerable<string> links = null;
             LinkEntity relation = null;
             object dvValue = null;
             DelegationFormulaValue result = null;
-            if(args.Length > 3)
+
+            if (args.Length > 3)
             {
                 // If arguments have relation information, then we need to use that to generate the filter.
                 links = ((TableValue)args[3]).Rows.Select(row => ((StringValue)row.Value.GetField("Value")).Value);
-                relation = _hooks.RetreiveManyToOneRelation(table, links);
+                relation = _hooks.RetrieveManyToOneRelation(table, links);
                 dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
+
                 var filter = GenerateFilterExpression(field, _op, dvValue);
                 filter.Conditions[0].EntityName = relation.EntityAlias;
 
-                result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation });
+                result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation }, null);
             }
             else
             {
                 dvValue = _hooks.RetrieveAttribute(table, field, value);
-                if(DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == ConditionOperator.Equal)
+                if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == ConditionOperator.Equal)
                 {
-                    result = new DelegationFormulaValue(filter: null, relation: null, partitionId: (string)dvValue);
+                    result = new DelegationFormulaValue(filter: null, relation: null, partitionId: (string)dvValue, orderBy: null);
                 }
                 else
                 {
                     var filter = GenerateFilterExpression(field, _op, dvValue);
-                    result = new DelegationFormulaValue(filter, relation: null);
+                    result = new DelegationFormulaValue(filter, relation: null, orderBy: null);
                 }
             }
 
             return result;
         }
 
-        internal static FilterExpression GenerateFilterExpression(string field, ConditionOperator op,  object dataverseValue)
+        internal static FilterExpression GenerateFilterExpression(string field, ConditionOperator op, object dataverseValue)
         {
             var filter = new FilterExpression();
 
@@ -141,65 +140,63 @@ namespace Microsoft.PowerFx.Dataverse
                 return formulaValue;
             }
 
-            switch (_binaryOpKind)
+            return _binaryOpKind switch
             {
                 // Equality and Non-Equality returns Blank itself.
-                case BinaryOpKind.EqNumbers:
-                case BinaryOpKind.EqDecimals:
-                case BinaryOpKind.EqBoolean:
-                case BinaryOpKind.EqText:
-                case BinaryOpKind.EqTime:
-                case BinaryOpKind.EqDateTime:
-                case BinaryOpKind.EqGuid:
-                case BinaryOpKind.EqCurrency:
-                case BinaryOpKind.EqOptionSetValue:
-                case BinaryOpKind.NeqNumbers:
-                case BinaryOpKind.NeqBoolean:
-                case BinaryOpKind.NeqText:
-                case BinaryOpKind.NeqDate:
-                case BinaryOpKind.NeqTime:
-                case BinaryOpKind.NeqDateTime:
-                case BinaryOpKind.NeqGuid:
-                case BinaryOpKind.NeqDecimals:
-                case BinaryOpKind.NeqCurrency:
-                case BinaryOpKind.NeqOptionSetValue:
-                    return formulaValue;
+                BinaryOpKind.EqBoolean or
+                BinaryOpKind.EqCurrency or
+                BinaryOpKind.EqDateTime or
+                BinaryOpKind.EqDecimals or
+                BinaryOpKind.EqGuid or
+                BinaryOpKind.EqNumbers or
+                BinaryOpKind.EqOptionSetValue or
+                BinaryOpKind.EqText or
+                BinaryOpKind.EqTime or
+                BinaryOpKind.NeqBoolean or
+                BinaryOpKind.NeqCurrency or
+                BinaryOpKind.NeqDate or
+                BinaryOpKind.NeqDateTime or
+                BinaryOpKind.NeqDecimals or
+                BinaryOpKind.NeqGuid or
+                BinaryOpKind.NeqNumbers or
+                BinaryOpKind.NeqOptionSetValue or
+                BinaryOpKind.NeqText or
+                BinaryOpKind.NeqTime
+                    => formulaValue,
 
                 // Other Operations returns Default value.
+                BinaryOpKind.GeqNumbers or
+                BinaryOpKind.GtNumbers or
+                BinaryOpKind.LeqNumbers or
+                BinaryOpKind.LtNumbers
+                    => FormulaValue.New(0.0),
 
-                case BinaryOpKind.LtNumbers:
-                case BinaryOpKind.LeqNumbers:
-                case BinaryOpKind.GtNumbers:
-                case BinaryOpKind.GeqNumbers:
-                    return FormulaValue.New(0.0);
+                BinaryOpKind.GeqDecimals or
+                BinaryOpKind.GtDecimals or
+                BinaryOpKind.LeqDecimals or
+                BinaryOpKind.LtDecimals
+                    => FormulaValue.New(0m),
 
-                case BinaryOpKind.LtDecimals:
-                case BinaryOpKind.LeqDecimals:
-                case BinaryOpKind.GtDecimals:
-                case BinaryOpKind.GeqDecimals:
-                    return FormulaValue.New(0m);
+                BinaryOpKind.GeqDateTime or
+                BinaryOpKind.GtDateTime or
+                BinaryOpKind.LeqDateTime or
+                BinaryOpKind.LtDateTime
+                    => FormulaValue.New(DelegationEngineExtensions._epoch),
 
-                case BinaryOpKind.LtDateTime:
-                case BinaryOpKind.LeqDateTime:
-                case BinaryOpKind.GtDateTime:
-                case BinaryOpKind.GeqDateTime:
-                    return FormulaValue.New(DelegationEngineExtensions._epoch);
+                BinaryOpKind.GeqDate or
+                BinaryOpKind.GtDate or
+                BinaryOpKind.LeqDate or
+                BinaryOpKind.LtDate
+                    => FormulaValue.NewDateOnly(DelegationEngineExtensions._epoch),
 
-                case BinaryOpKind.LtDate:
-                case BinaryOpKind.LeqDate:
-                case BinaryOpKind.GtDate:
-                case BinaryOpKind.GeqDate:
-                    return FormulaValue.NewDateOnly(DelegationEngineExtensions._epoch);
+                BinaryOpKind.GeqTime or
+                BinaryOpKind.GtTime or
+                BinaryOpKind.LeqTime or
+                BinaryOpKind.LtTime
+                    => FormulaValue.New(TimeSpan.Zero),
 
-                case BinaryOpKind.LtTime:
-                case BinaryOpKind.LeqTime:
-                case BinaryOpKind.GtTime:
-                case BinaryOpKind.GeqTime:
-                    return FormulaValue.New(TimeSpan.Zero);
-
-                default:
-                    throw new NotSupportedException($"Unsupported operation {_op}");
-            }
+                _ => throw new NotSupportedException($"Unsupported operation {_op}"),
+            };
         }
     }
 }

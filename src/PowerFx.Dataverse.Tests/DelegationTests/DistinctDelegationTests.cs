@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
-using System.IO;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -46,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
 
-            for(var i= 0; i< inputs.Count; i++)
+            for (var i = 0; i < inputs.Count; i++)
             {
                 var input = inputs[i];
                 var check = engine1.Check(input, options: opts, symbolTable: dv.Symbols);
@@ -58,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 var irNode = check.ApplyIR();
                 var actualIr = check.GetCompactIRString();
 
-                await DelegationTestUtility.CompareSnapShotAsync("DistinctDelegation.txt", actualIr, id, i==1);
+                await DelegationTestUtility.CompareSnapShotAsync("DistinctDelegation.txt", actualIr, id, i == 1);
 
                 // Validate delegation warnings.
                 // error.ToString() will capture warning status, message, and source span. 
@@ -74,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 var run = check.GetEvaluator();
 
-                var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+                var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
                 // To check error cases.
                 if (expectedRows < 0)

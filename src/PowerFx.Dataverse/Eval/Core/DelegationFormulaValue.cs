@@ -1,10 +1,10 @@
-﻿using Microsoft.PowerFx.Core.IR;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
@@ -28,10 +28,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
         internal readonly string _partitionId;
 
-        internal DelegationFormulaValue(FilterExpression filter, ISet<LinkEntity> relation, string partitionId = null, int? top = null)
+        // OrderBy commands
+        internal readonly IList<OrderExpression> _orderBy;
+
+        internal DelegationFormulaValue(FilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FilterExpression();
+            _orderBy = orderBy ?? new List<OrderExpression>();
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
             _partitionId = partitionId;
@@ -49,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
         public override object ToObject()
         {
-            return _filter;
+            throw new NotImplementedException("DelegationFormulaValue.ToObject not implemented");
         }
     }
 }

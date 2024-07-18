@@ -4,18 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using static Microsoft.PowerFx.Dataverse.DelegationIRVisitor;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -41,15 +39,14 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var filter = new FilterExpression();
                         filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
-                        var rows = await t2.RetrieveMultipleAsync(filter: filter, relation: null, count: 1, columnSet: columns, isDistinct: false, cancel);
-                        result  = rows.FirstOrDefault();
+                        var rows = await t2.RetrieveMultipleAsync(filter: filter, relation: null, orderBy: null, count: 1, columnSet: columns, isDistinct: false, cancel);
+                        result = rows.FirstOrDefault();
                     }
                     else
                     {
                         // If the table is elastic and partitionId is not null we need to use RetrieveAsync api to point retrieve using guid and partitionId which is faster.
                         result = await t2.RetrieveAsync(id, partitionId, columns, cancel).ConfigureAwait(false);
                     }
-
                 }
                 else
                 {
@@ -74,7 +71,7 @@ namespace Microsoft.PowerFx.Dataverse
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
                 var result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
-                
+
                 return result;
             }
 
@@ -82,8 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {
                 // Binder should have enforced that this always succeeds.
-                var t2 = table as DataverseTableValue;
-                if (t2 != null)
+                if (table is DataverseTableValue t2)
                 {
                     if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                     {
@@ -93,12 +89,12 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
                 }
 
-                // We don't have any strong type information. 
+                // We don't have any strong type information.
                 if (value is OptionSetValue osv)
                 {
                     // Workaround for https://github.com/microsoft/Power-Fx/issues/2403
-                    // For delegation, Option set should return execution value. 
-                    // ToObject() / TryGetPrimitiveValue() will return display name. 
+                    // For delegation, Option set should return execution value.
+                    // ToObject() / TryGetPrimitiveValue() will return display name.
                     return osv.Option;
                 }
 
@@ -107,7 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return primitiveValue;
                 }
 
-                // Binder should ensure we never get here. 
+                // Binder should ensure we never get here.
                 throw new Exception($"Expected primitive for field {fieldName}, type={value.Type}.");
             }
 
@@ -115,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var t2 = (DataverseTableValue)table;
                 var metadata = t2.Connection.GetMetadataOrThrow(relation.LinkToEntityName);
-                if(metadata.TryGetAttribute(field, out var amd))
+                if (metadata.TryGetAttribute(field, out var amd))
                 {
                     return amd.ToAttributeObject(value, true);
                 }
@@ -135,7 +131,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return isRealTable;
             }
 
-            internal override LinkEntity RetreiveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            internal override LinkEntity RetrieveManyToOneRelation(TableValue table, IEnumerable<string> links)
             {
                 var dvTable = (DataverseTableValue)table;
 

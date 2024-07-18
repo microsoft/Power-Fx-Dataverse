@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 
@@ -10,14 +8,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
     {
         internal readonly IntermediateNode InnerNode;
 
-        public DelegableIntermediateNode(IntermediateNode node) 
+        public DelegableIntermediateNode(IntermediateNode node)
             : base(node.IRContext)
         {
-            if(node is DelegableIntermediateNode delegableNode)
+            if (node is DelegableIntermediateNode delegableNode)
             {
                 node = delegableNode.InnerNode;
             }
-            if( node is not (ResolvedObjectNode or ScopeAccessNode) )
+            if (node is not (ResolvedObjectNode or ScopeAccessNode))
             {
                 throw new ArgumentException($"Invalid Arg type: {node.GetType()}, It can only be {nameof(ResolvedObjectNode)} or {nameof(ScopeAccessNode)}");
             }

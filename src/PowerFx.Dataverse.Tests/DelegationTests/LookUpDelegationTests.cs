@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
-using System.Globalization;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -905,7 +903,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var fakeTableValue = new DataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
+            var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Length ?? 0);
 
             for(var i = 0; i < inputs.Count; i++)
             {
@@ -942,7 +940,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 fakeSymbolValues.Set(fakeSlot, fakeTableValue);
                 var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
 
-                var result = run.EvalAsync(CancellationToken.None, allValues).Result;
+                var result = await run.EvalAsync(CancellationToken.None, allValues);
 
                 if (expected is null)
                 {

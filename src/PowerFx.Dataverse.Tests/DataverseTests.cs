@@ -309,7 +309,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
@@ -375,7 +375,7 @@ END
             Assert.Empty(result.Errors);
 
             Assert.True(result.ReturnType is DecimalType);
-            Assert.Equal(1, result.TopLevelIdentifiers.Count);
+            Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("new_field", result.TopLevelIdentifiers.First());
             Assert.Equal("Decimal(new_field)", result.LogicalFormula);
         }
@@ -1389,7 +1389,7 @@ END
             Assert.NotNull(result.SqlCreateRow);
             Assert.Empty(result.Errors);
 
-            Assert.Equal(true, result.IsHintApplied);
+            Assert.True(result.IsHintApplied);
 
             Assert.Equal(IntegerFunction, result.SqlFunction);
             Assert.True(result.ReturnType is DecimalType);
@@ -2562,6 +2562,17 @@ END
         }
 
         [Fact]
+        public void BlankFnUsedInControlFnsTest()
+        {
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var result = engine.Compile("If(1>2,1,Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+
+            result = engine.Compile("Switch(1,1,\"abc\", Blank())", new SqlCompileOptions());
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
         public void CheckRelatedEntityCurrencyUsedInFormula()
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
@@ -2953,7 +2964,7 @@ END
             DataverseRecordValue dataverseRecordValue = new DataverseRecordValue(new Entity(entityName, Guid.NewGuid()), new EntityMetadata() { LogicalName = entityName }, recordType, new FakeConnectionValueContext());
             RecordValue recordValue = FormulaValue.NewRecordFromFields(new NamedValue(columnName, new ErrorValue(Core.IR.IRContext.NotInSource(columnType), new ExpressionError() { Message = errorMessage })));
 
-            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None).ConfigureAwait(false);
+            DValue<RecordValue> result = await dataverseRecordValue.UpdateFieldsAsync(recordValue, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Null(result.Value);
@@ -3021,6 +3032,8 @@ END
             // Simulates IExternalOptionSetDocument.RegisterOrRefreshOptionSet
             var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", "", "Rating", "", "", "", new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
             Assert.NotSame(refreshedOptionSet, optionSet);
+
+            // $$$ This call will fail in DEBUG mode as 'Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal)' will throw
             dv.MetadataCache.RegisterOptionSet("Rating (Locals)", refreshedOptionSet);
 
             check = engine1.Check(expr, options: opts, symbolTable: symbols);

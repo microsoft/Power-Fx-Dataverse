@@ -1,12 +1,11 @@
-﻿using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -23,6 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var filter = new FilterExpression(LogicalOperator.Or);
             var relations = new HashSet<LinkEntity>(new LinkEntityComparer());
             string partitionId = null;
@@ -51,7 +52,8 @@ namespace Microsoft.PowerFx.Dataverse
                 filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
             }
 
-            return new DelegationFormulaValue(filter, relations);
+            // OrderBy makes no sense here
+            return new DelegationFormulaValue(filter, relations, orderBy: null);
         }
     }
 }

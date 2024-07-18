@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await engine.EvalAsync(expression, default, runtimeConfig: rc);
             var errors = (ErrorValue)result;
 
-            Assert.Equal(1, errors.Errors.Count);
+            Assert.Single(errors.Errors);
 
             var error = errors.Errors[0];
             Assert.Equal(ErrorKind.ServiceUnavailable, error.Kind);

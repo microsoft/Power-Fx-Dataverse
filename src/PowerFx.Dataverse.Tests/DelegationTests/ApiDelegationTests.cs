@@ -16,8 +16,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Delegation using direct API. 
         [Theory]
         [InlineData(
-            "Filter(t1, Price < 120 And 90 < Price)",
-            "((Price le 120) and (Price ge 90))",
+            "Filter(t1, Price < 120 And 90 <= Price)",
+            "((Price lt 120) and (Price ge 90))",
             1000, // default fetch size
             "Table({Price:100,opt:Blank()})")]
         [InlineData(
@@ -31,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             1000, // default fetch size
             "Table({Price:100,opt:Blank()})")]
 
-        public void TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
+        public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
             {
@@ -77,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             
             rc.AddService(myService);
 
-            var result = eval.EvalAsync(CancellationToken.None, rc).Result;
+            var result = await eval.EvalAsync(CancellationToken.None, rc);
 
             string actualODataFilter = myService._parameters.GetOdataFilter();
             Assert.Equal(odataFilter, actualODataFilter);

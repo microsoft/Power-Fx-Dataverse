@@ -1,12 +1,12 @@
-﻿using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Query;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -22,22 +22,30 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
+        // arg0: table
+        // arg1: filter
+        // arg2: orderby
+        // arg3: top
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (args[0] is not IDelegatableTableValue table)
             {
-                throw new InvalidOperationException($"args0 should alway be of type {nameof(TableValue)} : found {args[0]}");
+                throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} : found {args[0]}");
             }
 
             int? topCount = null;
             FilterExpression filter;
+            IList<OrderExpression> orderBy;
             ISet<LinkEntity> relation;
             string partitionId = null;
-            if (args[2] is NumberValue count)
+
+            if (args[3] is NumberValue count)
             {
                 topCount = (int)(count).Value;
             }
-            else if (args[2] is BlankValue)
+            else if (args[3] is BlankValue)
             {
                 // If Count is Blank(), return empty table.
                 var emptyList = new List<DValue<RecordValue>>();
@@ -45,55 +53,62 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"args2 should alway be of type {nameof(NumberValue)} or {nameof(BlankValue)} : found {args[2]}");
+                throw new InvalidOperationException($"args3 should always be of type {nameof(NumberValue)} or {nameof(BlankValue)} : found {args[2]}");
             }
 
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;
+                filter = DelegationFormulaValue._filter;                
                 relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;
+                partitionId = DelegationFormulaValue._partitionId;                
             }
             else
             {
-                throw new InvalidOperationException($"args1 should alway be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args1 should always be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
+            }
+
+            if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
+            {                
+                orderBy = DelegationFormulaValue2._orderBy;             
+            }
+            else
+            {
+                throw new InvalidOperationException($"args2 should always be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
             }
 
             bool isDistinct = false;
-            if (args[3] is BooleanValue bv)
+            if (args[4] is BooleanValue bv)
             {
                 isDistinct = bv.Value;
             }
             else
             {
-                throw new InvalidOperationException($"args3 should alway be of type {nameof(BooleanValue)} : found {args[3]}");
+                throw new InvalidOperationException($"args4 should always be of type {nameof(BooleanValue)} : found {args[3]}");
             }
-
+            
             // column names to fetch. if kept null, fetches all columns.
             IEnumerable<string> columns = null;
-            if(args.Length > 4)
+
+            if (args.Length > 5)
             {
-                columns = args.Skip(4).Select(x => {
-                    if (x is StringValue stringValue)
-                    {
-                        return stringValue.Value;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"From Args3 onwards, all args should have been type {nameof(StringValue)} : found {args[4]}");
-                    }
-                });
+                columns = args.Skip(5).Select(
+                    x => x is StringValue stringValue
+                            ? stringValue.Value
+                            : throw new InvalidOperationException($"From args5 onwards, all args should have been type {nameof(StringValue)} : found {args[4]}")
+                );
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters
             {
-                _relation = relation,
                 Filter = filter,
-                _partitionId = partitionId,
+                OrderBy = orderBy,
                 Top = topCount,
+
                 _columnSet = columns,
-                _isDistinct = isDistinct
+                _isDistinct = isDistinct,
+                _partitionId = partitionId,
+                _relation = relation                
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -102,7 +117,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Distinct outputs always in default single column table.
             if (isDistinct)
             {
-                if(columns == null || !columns.Any() || columns.Count() > 1)
+                if (columns == null || !columns.Any() || columns.Count() > 1)
                 {
                     throw new InvalidOperationException("Distinct requires single column to be specified");
                 }

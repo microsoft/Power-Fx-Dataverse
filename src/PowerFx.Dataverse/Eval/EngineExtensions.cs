@@ -1,4 +1,8 @@
-﻿using Microsoft.PowerFx.Core.Functions;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -6,11 +10,6 @@ using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -18,8 +17,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
 
-        // Only Dataverse Eval should use this.  
-        // Nested class to decrease visibility. 
+        // Only Dataverse Eval should use this.
+        // Nested class to decrease visibility.
         internal class DelegationHooks
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
@@ -58,31 +57,32 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            internal CallNode MakeBlankFilterCall()
+            internal CallNode MakeBlankCall()
             {
-                var func = new DelegatedBlankFilter(this);
+                var func = new DelegatedBlank(this);
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
             }
-
+            
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
                 CallNode node;
                 FormulaType returnType;
                 List<IntermediateNode> args;
+
                 // If original node was returning record type, execute retrieveSingle. Otherwise, execute retrieveMultiple.
-                if(query._originalNode.IRContext.ResultType is RecordType recordReturnType)
+                if (query._originalNode.IRContext.ResultType is RecordType recordReturnType)
                 {
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy };
                     returnType = recordReturnType;
                 }
-                else if(query._originalNode.IRContext.ResultType is TableType tableReturnType)
+                else if (query._originalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.TopCountOrDefault };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
                     returnType = tableReturnType;
                 }
                 else
@@ -107,7 +107,6 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     node = new CallNode(IRContext.NotInSource(returnType), func, args);
                 }
-
 
                 return node;
             }
@@ -202,7 +201,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            // Generate a lookup call for: Lookup(Table, Id=Guid)  
+            // Generate a lookup call for: Lookup(Table, Id=Guid)
             internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
             {
                 var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
@@ -254,7 +253,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            internal virtual LinkEntity RetreiveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            internal virtual LinkEntity RetrieveManyToOneRelation(TableValue table, IEnumerable<string> links)
             {
                 throw new NotImplementedException();
             }
@@ -285,7 +284,7 @@ namespace Microsoft.PowerFx.Dataverse
             public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks, int maxRows)
                 : base("DelegationIRTransform")
             {
-                _hooks = hooks; 
+                _hooks = hooks;
                 _maxRows = maxRows;
             }
 
@@ -294,7 +293,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var visitor = new DelegationIRVisitor(_hooks, errors, _maxRows);
                 var context = new DelegationIRVisitor.Context();
 
-                var ret = node.Accept(visitor,context);
+                var ret = node.Accept(visitor, context);
                 var result = visitor.Materialize(ret);
                 return result;
             }

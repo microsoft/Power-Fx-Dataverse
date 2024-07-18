@@ -1,7 +1,7 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=0.2.6-preview.20230629-1008
+set pfxVer=1.3.0-build.20240705-1001
 set pfxRoot=C:\Data\Power-Fx
 set pfxConfig=Debug
 
@@ -11,7 +11,7 @@ set pfxTest=%pfxRoot%\src\tests
 set nugetDest1=%nugetRoot%\microsoft.powerfx.core\%pfxVer%\lib\netstandard2.0
 set nugetDest2=%nugetRoot%\microsoft.powerfx.connectors\%pfxVer%\lib\netstandard2.0
 set nugetDest3=%nugetRoot%\microsoft.powerfx.json\%pfxVer%\lib\netstandard2.0
-set nugetDest4=%nugetRoot%\microsoft.powerfx.core.tests\%pfxVer%\lib\netcoreapp3.1
+set nugetDest4=%nugetRoot%\microsoft.powerfx.core.tests\%pfxVer%\lib\net7.0
 set nugetDest5=%nugetRoot%\microsoft.powerfx.interpreter\%pfxVer%\lib\netstandard2.0
 set nugetDest6=%nugetRoot%\microsoft.powerfx.languageserverprotocol\%pfxVer%\lib\netstandard2.0
 set nugetDest7=%nugetRoot%\microsoft.powerfx.transport.attributes\%pfxVer%\lib\netstandard2.0
@@ -19,7 +19,7 @@ set nugetDest7=%nugetRoot%\microsoft.powerfx.transport.attributes\%pfxVer%\lib\n
 set source1=%pfxSource%\Microsoft.PowerFx.Core\bin\%pfxConfig%\netstandard2.0
 set source2=%pfxSource%\Microsoft.PowerFx.Connectors\bin\%pfxConfig%\netstandard2.0
 set source3=%pfxSource%\Microsoft.PowerFx.Json\bin\%pfxConfig%\netstandard2.0
-set source4=%pfxTest%\Microsoft.PowerFx.Core.Tests\bin\%pfxConfig%\netcoreapp3.1
+set source4=%pfxTest%\Microsoft.PowerFx.Core.Tests\bin\%pfxConfig%\net7.0
 set source5=%pfxSource%\Microsoft.PowerFx.Interpreter\bin\%pfxConfig%\netstandard2.0
 set source6=%pfxSource%\Microsoft.PowerFx.LanguageServerProtocol\bin\%pfxConfig%\netstandard2.0
 set source7=%pfxSource%\Microsoft.PowerFx.Transport.Attributes\bin\%pfxConfig%\netstandard2.0

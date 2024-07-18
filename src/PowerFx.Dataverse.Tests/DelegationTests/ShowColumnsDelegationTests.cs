@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var run = check.GetEvaluator();
 
-            var result = run.EvalAsync(CancellationToken.None, dv.SymbolValues).Result;
+            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
             var columnCount = 0;
             if (result is TableValue tv)
