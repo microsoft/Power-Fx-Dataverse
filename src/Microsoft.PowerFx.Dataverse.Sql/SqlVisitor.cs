@@ -491,14 +491,14 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (node.Value is ScopeAccessSymbol scopeAccess)
             {
-                var column = context.GetScopeColumn(scopeAccess);
                 Context.VarDetails varDetails;
+                var column = context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff ? context.GetScopeColumn(scopeAccess) : null;
 
                 // There are scenarios where lookup field's name and corresponding relationship's NavigationPropertyName could be different. for eg., for lookup fields created 
                 // on Activity entities will have the navprop name suffixed with _entityName. So, for cases where lookup field's name and it's relationship's navigationPropertyName
                 // are different, we are passing field name directly, instead of NavigationPropertyName.
                 // Bug - https://dynamicscrm.visualstudio.com/OneCRM/_workitems/edit/3951896
-                if (context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff && column.IsNavigation && 
+                if (context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff && column != null && column.IsNavigation && 
                     column.TypeDefinition is CdsNavigationTypeDefinition typeDef && !typeDef.ReferencingFieldName.Equals(typeDef.PropertyName))
                 {
                     var scope = context.GetScope(scopeAccess.Parent);
