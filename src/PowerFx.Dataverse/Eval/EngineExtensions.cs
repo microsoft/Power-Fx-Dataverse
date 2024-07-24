@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
             }
-            
+
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
@@ -97,6 +97,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     args.AddRange(query._columnSet);
                 }
+                else if (query.hasColumnMap)
+                {
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
+                }
 
                 if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                 {
@@ -109,6 +113,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 return node;
+            }
+
+            private static RecordType GetColumnMapType(DelegationIRVisitor.RetVal query)
+            {
+                RecordType rt = RecordType.Empty();
+
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap)
+                {
+                    rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
+                }
+
+                return rt;
             }
 
             internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IEnumerable<string> relations, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)

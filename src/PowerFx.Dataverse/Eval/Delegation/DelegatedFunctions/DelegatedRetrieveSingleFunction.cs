@@ -62,14 +62,21 @@ namespace Microsoft.PowerFx.Dataverse
                 ? bv.Value
                 : throw new InvalidOperationException($"args3 should always be of type {nameof(BooleanValue)} : found {args[3]}");
 
-            // column names to fetch.
             IEnumerable<string> columns = null;
+            Dictionary<string, string> columnMap = null;
+
             if (args.Length > 4)
             {
-                columns = args.Skip(4).Select(x => x is StringValue stringValue
-                                                        ? stringValue.Value
-                                                        : throw new InvalidOperationException($"From Args4 onwards, all args should have been String Value"));                
+                if (args[4] is RecordValue map)
+                {
+                    columnMap = map.Fields.ToDictionary(f => f.Name, f => f.Value is StringValue sv ? sv.Value : throw new InvalidOperationException($"Invalid type in column map, got {f.Value.GetType().Name}"));
+                }
+                else
+                {
+                    columns = args.Skip(4).Select((x, i) => x is StringValue sv ? sv.Value : throw new InvalidOperationException($"From args{5 + i} onwards, all args should have been type {nameof(StringValue)} : found {args[4 + i]}"));
+                }
             }
+
 
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters
@@ -79,6 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                 Top = 1,
 
                 _columnSet = columns,
+                _columnMap = columnMap,
                 _isDistinct = isDistinct,
                 _partitionId = partitionId,
                 _relation = relation,                

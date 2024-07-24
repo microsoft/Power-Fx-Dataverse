@@ -29,21 +29,25 @@ namespace Microsoft.PowerFx.Dataverse
 
         public Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _dataverseServices.CreateAsync(entity, cancellationToken);
         }
 
         public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _dataverseServices.DeleteAsync(entityName, id, cancellationToken);
         }
 
         public Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _dataverseServices.ExecuteAsync(request, cancellationToken);
         }
 
         public Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var entityMetadata = _metadataResolver(entityName);
 
             if (entityMetadata.IsElasticTable())
@@ -58,10 +62,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         private async Task<DataverseResponse<Entity>> RetrieveEntityFromElasticTableAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var reference = new EntityReference(entityName, id);
             var filter = new FilterExpression();
             filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, ConditionOperator.Equal, reference.Id);
-            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, filter, null, null, 1, columns, false);
+#pragma warning disable CS0618 // Type or member is obsolete
+            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters() { Filter = filter, Top = 1, _columnSet = columns });
+#pragma warning restore CS0618 // Type or member is obsolete
             var rows = await _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
 
             if (rows.HasError)
@@ -75,11 +82,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
         }
 
         public Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _dataverseServices.UpdateAsync(entity, cancellationToken);
         }
     }

@@ -21,6 +21,9 @@ namespace Microsoft.PowerFx.Dataverse
         // Top is count.
 
         internal IEnumerable<string> _columnSet { get; init; }
+
+        internal IDictionary<string, string> _columnMap { get; init; }
+
         internal bool _isDistinct { get; init; }
 
         // Use for dataverse elastic tables.

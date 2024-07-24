@@ -88,14 +88,18 @@ namespace Microsoft.PowerFx.Dataverse
             
             // column names to fetch. if kept null, fetches all columns.
             IEnumerable<string> columns = null;
+            Dictionary<string, string> columnMap = null;
 
             if (args.Length > 5)
             {
-                columns = args.Skip(5).Select(
-                    x => x is StringValue stringValue
-                            ? stringValue.Value
-                            : throw new InvalidOperationException($"From args5 onwards, all args should have been type {nameof(StringValue)} : found {args[4]}")
-                );
+                if (args[5] is RecordValue map)
+                {
+                    columnMap = map.Fields.ToDictionary(f => f.Name, f => f.Value is StringValue sv ? sv.Value : throw new InvalidOperationException($"Invalid type in column map, got {f.Value.GetType().Name}"));
+                }
+                else
+                {
+                    columns = args.Skip(5).Select((x, i) => x is StringValue sv ? sv.Value : throw new InvalidOperationException($"From args{5 + i} onwards, all args should have been type {nameof(StringValue)} : found {args[5 + i]}"));
+                }
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -106,9 +110,10 @@ namespace Microsoft.PowerFx.Dataverse
                 Top = topCount,
 
                 _columnSet = columns,
+                _columnMap = columnMap,
                 _isDistinct = isDistinct,
                 _partitionId = partitionId,
-                _relation = relation                
+                _relation = relation
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

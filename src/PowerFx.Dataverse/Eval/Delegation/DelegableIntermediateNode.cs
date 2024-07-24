@@ -26,5 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         {
             return InnerNode.Accept(visitor, context);
         }
+
+        public override string ToString() => $"Delegable({InnerNode}";
     }
 }

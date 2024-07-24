@@ -279,7 +279,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Called by DataverseRecordValue, which wont internal entity attributes.
-        public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -312,15 +312,16 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(refreshed);
         }
 
-        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
 
             if (refreshedRecord.IsValue)
             {
                 var dataverseRecord = (DataverseRecordValue)refreshedRecord.Value;
                 foreach (var attr in dataverseRecord.Entity.Attributes)
-                {
+                {                    
                     _entity.Attributes[attr.Key] = attr.Value;
                 }
             }
