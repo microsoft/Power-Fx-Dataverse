@@ -36,10 +36,10 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="entityName"></param>
         /// <param name="id"></param>
-        /// <param name="columns">column names to fetch, if kept null fetches all columns. </param>
+        /// <param name="columnMap">Column names to fetch, if kept null fetches all columns.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default);
+        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default);
         Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default);        
     }
 

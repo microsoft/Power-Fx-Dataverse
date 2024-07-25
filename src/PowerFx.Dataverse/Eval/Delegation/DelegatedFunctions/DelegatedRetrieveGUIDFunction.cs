@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
@@ -8,7 +6,7 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Generate a lookup call for: __retrieveGUID(Table, Id=Guid)  
+    // Generate a lookup call for: __retrieveGUID(Table, Id=Guid)
     internal class DelegatedRetrieveGUIDFunction : DelegateFunction
     {
         public DelegatedRetrieveGUIDFunction(DelegationHooks hooks, TableType tableType)
@@ -42,14 +40,16 @@ namespace Microsoft.PowerFx.Dataverse
                 partitionId = ((StringValue)args[2]).Value;
             }
 
-            // column names to fetch.
-            IEnumerable<string> columns = null;
+            ColumnMap columnMap = null;
+
             if (args.Length > 3)
             {
-                columns = args.Skip(3).Select(x => ((StringValue)x).Value);
+                columnMap = args[3] is RecordValue rv 
+                    ? new ColumnMap(rv)
+                    : throw new InvalidOperationException($"Expecting args3 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");                
             }
 
-            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columns, cancellationToken).ConfigureAwait(false);
+            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap, cancellationToken).ConfigureAwait(false);
 
             if (result == null || result.IsBlank)
             {

@@ -4,15 +4,15 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using QueryExpression = Microsoft.Xrm.Sdk.Query.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -146,10 +146,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Identity is important so that we can correlate bindings from Check and result. 
         // Logical Name --> Row Scope symbols for that table 
-        Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbols = new Dictionary<string, ReadOnlySymbolTable>();
+        private readonly Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbols = new Dictionary<string, ReadOnlySymbolTable>();
 
         // cache for row scope symbols without implicit this record
-        Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbolsNoITR = new Dictionary<string, ReadOnlySymbolTable>();
+        private readonly Dictionary<string, ReadOnlySymbolTable> _rowScopeSymbolsNoITR = new Dictionary<string, ReadOnlySymbolTable>();
 
         public ReadOnlySymbolTable GetRowScopeSymbols(string tableLogicalName)
         {
@@ -280,18 +280,19 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="logicalName">Table logical name</param>
         /// <param name="id">Entity Id</param>
+        /// <param name="columnMap"></param>
         /// <param name="cancellationToken">Cancellation Token</param>
         /// <returns>DataverseRecordValue or ErrorValue in case of error</returns>
         /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
         /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
-        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> response = await _dvServices.RetrieveAsync(metadata.LogicalName, id, columnMap, cancellationToken).ConfigureAwait(false);
             RecordType type = GetRecordType(metadata.LogicalName);
 
             return response.HasError
@@ -312,7 +313,9 @@ namespace Microsoft.PowerFx.Dataverse
         public async Task<FormulaValue[]> RetrieveMultipleAsync(string logicalName, Guid[] ids, CancellationToken cancellationToken = default)
         {
             if (ids.Length == 0)
+            {
                 throw new ArgumentException("No Id provided", nameof(ids));
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
             EntityMetadata metadata = GetMetadataOrThrow(logicalName);
@@ -323,12 +326,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (_maxRows > 0)
             {
-                query.PageInfo = new PagingInfo();
-
-                // use one more row to determine if the table has more rows than expected
-                query.PageInfo.Count = _maxRows + 1;
-                query.PageInfo.PageNumber = 1;
-                query.PageInfo.PagingCookie = null;
+                query.PageInfo = new PagingInfo()
+                {
+                    // use one more row to determine if the table has more rows than expected
+                    Count = _maxRows + 1,
+                    PageNumber = 1,
+                    PagingCookie = null
+                };
             }
 
             DataverseResponse<EntityCollection> response = await _dvServices.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);

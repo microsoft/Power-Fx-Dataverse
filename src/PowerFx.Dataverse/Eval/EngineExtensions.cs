@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
-            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancel)
+            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, ColumnMap columnMap, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
@@ -90,14 +90,10 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query._columnMap) ? query._columnMap.Distinct : null);
                 args.Add(isDistinctArg);
 
-                if (query.hasColumnSet)
-                {
-                    args.AddRange(query._columnSet);
-                }
-                else if (query.hasColumnMap)
+                if (query.hasColumnMap)
                 {
                     args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
                 }
@@ -226,9 +222,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // last arg is blank, as we don't need partition id for retrieve in non elastic table.
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, blankNode };
                 var returnType = query._originalNode.IRContext.ResultType;
-                if (query.hasColumnSet)
+                
+                if (query.hasColumnMap)
                 {
-                    args.AddRange(query._columnSet);
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
                 }
 
                 CallNode node;
@@ -250,9 +247,10 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, partitionId };
                 var returnType = query._originalNode.IRContext.ResultType;
-                if (query.hasColumnSet)
+                
+                if (query.hasColumnMap)
                 {
-                    args.AddRange(query._columnSet);
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
                 }
 
                 CallNode node;

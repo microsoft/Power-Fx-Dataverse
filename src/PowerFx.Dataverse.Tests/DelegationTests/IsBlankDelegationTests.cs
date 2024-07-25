@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -15,11 +12,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [Theory]
 
-        [InlineData("IsBlank(FirstN(t1, 1))", false, 1)]
-        [InlineData("IsBlank(ShowColumns(Filter(t1, Price < 120), 'new_price'))", false, 2)]
-        [InlineData("IsBlank(LookUp(t1, Price < -100))", true, 3)]
-        [InlineData("IsBlank(Distinct(t1, Price))", false, 4)]
-        public async Task IsBlankDelegationAsync(string expr, bool expected, int id, params string[] expectedWarnings)
+        [InlineData(1, "IsBlank(FirstN(t1, 1))", false)]
+        [InlineData(2, "IsBlank(ShowColumns(Filter(t1, Price < 120), 'new_price'))", false)]
+        [InlineData(3, "IsBlank(LookUp(t1, Price < -100))", true)]
+        [InlineData(4, "IsBlank(Distinct(t1, Price))", false)]
+        public async Task IsBlankDelegationAsync(int id, string expr, bool expected, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");

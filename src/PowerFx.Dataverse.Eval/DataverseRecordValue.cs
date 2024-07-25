@@ -28,9 +28,10 @@ namespace Microsoft.PowerFx.Dataverse
     {
         // The underlying entity (= table row)
         private Entity _entity;
+
         private readonly EntityMetadata _metadata;
 
-        // Used to resolve entity relationships (dot operators). 
+        // Used to resolve entity relationships (dot operators).
         private readonly IConnectionValueContext _connection;
 
         internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection)
@@ -42,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (_entity.LogicalName != _metadata.LogicalName)
             {
-                // Need to be for the same entity. 
+                // Need to be for the same entity.
                 throw new ArgumentException($"Entity {_entity.LogicalName} doesn't match Metadata {_metadata.LogicalName}.");
             }
         }
@@ -60,7 +61,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         public EntityReference EntityReference => _entity.ToEntityReference();
 
-
         public override bool TryGetSpecialFieldName(SpecialFieldKind kind, out string fieldName)
         {
             fieldName = kind switch
@@ -74,7 +74,6 @@ namespace Microsoft.PowerFx.Dataverse
             return fieldName != null;
         }
 
-
         public override bool TryGetPrimaryKey(out string key)
         {
             key = _entity.Id.ToString();
@@ -83,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool TryGetAttributeOrRelationship(string fieldName, out object value)
         {
-            // IR should convert the fieldName from display to Logical Name. 
+            // IR should convert the fieldName from display to Logical Name.
             if (_entity.Attributes.TryGetValue(fieldName, out value))
             {
                 return true;
@@ -117,14 +116,14 @@ namespace Microsoft.PowerFx.Dataverse
         {
             FormulaValue result;
 
-            // If primary key is missing from Attributes, still get it from the entity. 
+            // If primary key is missing from Attributes, still get it from the entity.
             if (fieldName == GetPrimaryKeyName())
             {
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
             }
 
-            // IR should convert the fieldName from display to Logical Name. 
+            // IR should convert the fieldName from display to Logical Name.
             if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
             {
                 result = null;
@@ -139,8 +138,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (value is EntityReference reference)
             {
-                // Blank was already handled, value would have been null. 
-                result = await ResolveEntityReferenceAsync(reference, fieldType, columns:null,cancellationToken).ConfigureAwait(false);
+                // Blank was already handled, value would have been null.
+                result = await ResolveEntityReferenceAsync(reference, fieldType, columnMap: null, cancellationToken).ConfigureAwait(false);
                 return (true, result);
             }
 
@@ -196,7 +195,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)
         {
-            var records = new List<RecordValue>();            
+            var records = new List<RecordValue>();
 
             foreach (var xrmOptionSetValue in optionSetValueCollection)
             {
@@ -238,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var row = new DataverseRecordValue(entity, referencingMetadata, recordType, _connection);
                     list.Add(row);
                 }
-             
+
                 result = FormulaValue.NewTable(recordType, list);
             }
             else
@@ -253,13 +252,13 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="reference"></param>
         /// <param name="fieldType"></param>
-        /// <param name="columns"> Columns to retrieve, if null fetches all columns.</param>
+        /// <param name="columnMap"> Columns to retrieve, if null fetches all columns.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, IEnumerable<string> columns, CancellationToken cancellationToken)
+        private async Task<FormulaValue> ResolveEntityReferenceAsync(EntityReference reference, FormulaType fieldType, ColumnMap columnMap, CancellationToken cancellationToken)
         {
             FormulaValue result;
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, columns, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(reference.LogicalName, reference.Id, columnMap, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -270,7 +269,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (fieldType is not RecordType)
             {
-                // Polymorphic case. 
+                // Polymorphic case.
                 fieldType = RecordType.Polymorphic();
             }
 
@@ -284,7 +283,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
-            var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue <RecordValue> error);
+            var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue<RecordValue> error);
 
             if (error != null)
             {
@@ -300,7 +299,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Once updated, other fields can get changed due to formula columns. Fetch a fresh copy from server.
-            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, columns:null, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await connection.Services.RetrieveAsync(leanEntity.LogicalName, leanEntity.Id, columnMap: null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -321,7 +320,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dataverseRecord = (DataverseRecordValue)refreshedRecord.Value;
                 foreach (var attr in dataverseRecord.Entity.Attributes)
-                {                    
+                {
                     _entity.Attributes[attr.Key] = attr.Value;
                 }
             }
@@ -329,14 +328,14 @@ namespace Microsoft.PowerFx.Dataverse
             return refreshedRecord;
         }
 
-        // Record should already be using logical names. 
-        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
+        // Record should already be using logical names.
+        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string _ = null)
         {
             var leanEntity = record.ConvertRecordToEntity(metadata, out error);
 
             if (error != null)
-            { 
-                return null; 
+            {
+                return null;
             }
 
             leanEntity.Id = id;
@@ -357,10 +356,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (value is bool b)
             {
-                // Support for 2-value option sets 
+                // Support for 2-value option sets
                 AttributeUtility.ConvertBoolToBooleanOptionSetOption(b, out logicalName);
             }
-
             else
             {
                 logicalName = value.ToString();
@@ -380,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse
             var id = _entity.Id.ToString("D");
             var keyName = GetPrimaryKeyName();
 
-            // Note that function names are case sensitive. 
+            // Note that function names are case sensitive.
             var expr = $"LookUp({IdentToken.MakeValidIdentifier(tableName)}, {keyName}=GUID(\"{id}\"))";
             sb.Append(expr);
         }

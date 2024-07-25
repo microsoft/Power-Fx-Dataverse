@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DataverseConnection dvc = SingleOrgPolicy.New(client);
 
             var c2 = new DataverseService(client);
-            var names = c2.GetLowCodeApiNamesAsync().Result;
+            _ = c2.GetLowCodeApiNamesAsync().Result;
 
             // Expected usage from PowerApps::
             // Environment.crbcd_lucgen1({x:Value,y:Value})
@@ -118,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var eval = check.GetEvaluator();
 
-            var result = eval.Eval(rc);
+            _ = eval.Eval(rc);
 
             // var result = await engine.EvalAsync(expr, default, runtimeConfig: rc);
 
@@ -698,11 +698,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [SkippableFact]
         public void ExecuteViaInterpreterRead()
         {
-            string tableName = "Table2";
-            int wn = new Random().Next(1000000);
-            decimal dc = wn / 100m;
-            float ft = wn / 117f;
-            double cy = ft;
+            string tableName = "Table2";            
 
             var expr = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
 
@@ -1106,7 +1102,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             XrmMetadataProvider xrmMetadataProvider = new XrmMetadataProvider(svcClient);
             disposableObjects = new List<IDisposable>() { svcClient };
 
-            DataverseConnection dv = null;
+            DataverseConnection dv;
 
             if (async)
             {
@@ -1269,11 +1265,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return _svcClient.ExecuteWebRequest(method, queryString, body, customHeaders, contentType, cancellationToken);
         }
 
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var columnsSet = columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray());
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, columnsSet, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
+            cancellationToken.ThrowIfCancellationRequested();            
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, ColumnMap.GetColumnSet(columnMap), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
         }
 
         public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)

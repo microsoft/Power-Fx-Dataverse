@@ -62,13 +62,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool hasFilter => _filter != null;
 
-            public bool hasColumnSet => _columnSet != null;
-
             public bool hasOrderBy => _orderBy != null;
 
             public bool hasTopCount => _topCount != null;
 
-            public bool hasColumnMap => _columnMap != null && _columnMap.Any();
+            public bool hasColumnMap => _columnMap != null;
 
             public IntermediateNode Filter => _filter ?? _hooks.MakeBlankCall();
 
@@ -76,11 +74,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
-            public readonly IEnumerable<IntermediateNode> _columnSet;
-
-            public readonly Dictionary<DName, IntermediateNode> _columnMap;
-
-            public readonly bool _isDistinct;
+            // supports $select with column renames and distinct
+            public readonly ColumnMap _columnMap;
 
             public readonly DelegationHooks _hooks;
 
@@ -126,14 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsElasticTable => _metadata?.IsElasticTable() ?? false;
 
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int _maxRows, Dictionary<DName, IntermediateNode> columnMap, bool isDistinct = false)
-                : this(hooks, originalNode, sourceTableIRNode, tableType, filter, orderBy, count, _maxRows, null as IEnumerable<IntermediateNode>, isDistinct)
-            {
-                _columnSet = null;
-                _columnMap = columnMap;
-            }
-
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int _maxRows, IEnumerable<IntermediateNode> columnSet, bool isDistinct = false)
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int _maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -145,10 +133,8 @@ namespace Microsoft.PowerFx.Dataverse
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
-                this._columnSet = columnSet;
-                this._isDistinct = isDistinct;
+                this._columnMap = columnMap;
                 this.IsDelegating = true;
-                this._columnMap = null;
 
                 _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
             }
@@ -222,34 +208,24 @@ namespace Microsoft.PowerFx.Dataverse
             _errors.Add(error);
         }
 
-        // Does this match:
-        //    primaryKey=value
-        private bool MatchPrimaryId(IntermediateNode primaryIdField, IntermediateNode value, RetVal tableArg)
+        // Does this match: primaryKey=value
+        private bool MatchPrimaryId(IntermediateNode primaryIdField, RetVal tableArg)
         {
-            if (primaryIdField is ScopeAccessNode left1)
-            {
-                if (left1.Value is ScopeAccessSymbol s)
-                {
-                    var fieldName = s.Name;
-                    if (tableArg.TryGetPrimaryIdFieldName(out var primaryId) && (fieldName == primaryId))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return primaryIdField is ScopeAccessNode san && san.Value is ScopeAccessSymbol sas
+                ? tableArg.TryGetPrimaryIdFieldName(out var primaryId) && (sas.Name == primaryId)
+                : false;
         }
 
         // Normalize order? (Id=Guid) vs (Guid=Id)
         private bool TryMatchPrimaryId(IntermediateNode left, IntermediateNode right, out IntermediateNode primaryIdField, out IntermediateNode guidValue, RetVal tableArg)
         {
-            if (MatchPrimaryId(left, right, tableArg))
+            if (MatchPrimaryId(left, tableArg))
             {
                 primaryIdField = left;
                 guidValue = right;
                 return true;
             }
-            else if (MatchPrimaryId(right, left, tableArg))
+            else if (MatchPrimaryId(right, tableArg))
             {
                 primaryIdField = right;
                 guidValue = left;
@@ -304,7 +280,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasColumnSet || ret.hasOrderBy || ret.hasColumnMap))
+            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasOrderBy || ret.hasColumnMap))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -336,7 +312,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     if (isRealTable)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnSet: null, isDistinct: false);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
                         return ret;
                     }
                 }
@@ -528,7 +504,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnSet: null, isDistinct: false);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null);
         }
 
         public override RetVal Visit(LazyEvalNode node, Context context)
@@ -672,10 +648,24 @@ namespace Microsoft.PowerFx.Dataverse
                 return Ret(node);
             }
 
-            var fieldTextNode = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
+            ColumnMap map;
+
+            if (tableArg.hasColumnMap)
+            {
+                map = tableArg._columnMap.WithDistinct(fieldName);
+
+                if (map == null)
+                {
+                    return NoTransform(node, tableArg);
+                }
+            }
+            else
+            {
+                map = new ColumnMap(fieldName);
+            }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, new[] { fieldTextNode }, isDistinct: true);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             return resultingTable;
         }
@@ -744,8 +734,10 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
             IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
+            ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
+
             // change to original node to current node and appends columnSet.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, node.Args.Skip(1), tableArg._isDistinct);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
             {
@@ -925,7 +917,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnMap);
             }
             else
             {
@@ -1028,7 +1020,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnMap);
             }
 
             return result;
@@ -1043,9 +1035,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            // If existing First[N], Sort[ByColumns], Distinct, or ShowColumns we don't delegate
+            // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
             // When multiple Sort would occur, we cannot reliably group OrderBy commands
-            if (tableArg.hasTopCount || tableArg.hasOrderBy || tableArg._isDistinct || (tableArg._columnSet != null && tableArg._columnSet.Any()))
+            if (tableArg.hasTopCount || tableArg.hasOrderBy || tableArg.hasColumnMap)
             {
                 return NoTransform(node, tableArg);
             }
@@ -1090,19 +1082,13 @@ namespace Microsoft.PowerFx.Dataverse
             var sortFunc = new DelegatedSort(_hooks);
             IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderByNode, count, _maxRows, null as IEnumerable<IntermediateNode>);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderByNode, count, _maxRows, tableArg._columnMap);
 
             return resultingTable;
         }
 
         private RetVal ProcessForAll(CallNode node, RetVal tableArg, Context context)
         {
-            if (tableArg.hasColumnMap)
-            {
-                // Simple approach for now, could be optimized later
-                return NoTransform(node, tableArg);
-            }
-
             IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
             IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
             IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
@@ -1111,23 +1097,37 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
             {
-                IntermediateNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);                
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, new Dictionary<DName, IntermediateNode>() { { new DName("Value"), column } }, tableArg._isDistinct);
+                TextLiteralNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
+                ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
+
+                if (tableArg.hasColumnMap)
+                {
+                    if (ColumnMap.HasDistinct(tableArg._columnMap))
+                    {
+                        map = map.WithDistinct(fieldName);
+                    }
+                    else
+                    {
+                        return NoTransform(node, tableArg);
+                    }
+                }
+
+                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map);
             }
 
             if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
             {
-                Dictionary<DName, IntermediateNode> map = new Dictionary<DName, IntermediateNode>();
+                Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
                 bool canDelegate = true;
 
                 foreach (KeyValuePair<DName, IntermediateNode> kvp in recordNode.Fields)
                 {
-                    string newFieldName = kvp.Key.Value;                    
+                    string newFieldName = kvp.Key.Value;
 
                     if (TryGetFieldName(context, kvp.Value, out string currentFieldName))
                     {
-                        IntermediateNode currentColumn = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), currentFieldName);
-                        map.Add(new DName(newFieldName), currentColumn);
+                        TextLiteralNode currentColumn = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), currentFieldName);
+                        dic.Add(new DName(newFieldName), currentColumn);
                     }
                     else
                     {
@@ -1138,9 +1138,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (canDelegate)
                 {
-                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map, tableArg._isDistinct);
+                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, new ColumnMap(dic));
                 }
-
             }
 
             return CreateNotSupportedErrorAndReturn(node, tableArg);
@@ -1176,13 +1175,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessFirst(CallNode node, RetVal tableArg)
         {
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;            
+            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var filter = tableArg.Filter;
-            var res = tableArg.hasColumnMap
-                ? new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, countOne, _maxRows, tableArg._columnMap, tableArg._isDistinct)
-                : new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, countOne, _maxRows, tableArg._columnSet, tableArg._isDistinct);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg._columnMap);
             return res;
         }
 
@@ -1199,11 +1195,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
-                      
 
-            return tableArg.hasColumnMap
-                ? new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg._columnMap, tableArg._isDistinct)
-                : new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg._columnSet, tableArg._isDistinct);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg._columnMap);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)
@@ -1390,7 +1383,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
             }
-            else if (TryGetRelationField(context, left, out var leftField2, out var leftRelation2) && TryGetRelationField(context, right, out var rightField2, out var rightRelation2))
+            else if (TryGetRelationField(context, left, out var leftField2, out _) && TryGetRelationField(context, right, out var rightField2, out _))
             {
                 if (leftField2 == rightField2)
                 {
@@ -1453,7 +1446,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (fieldAccess.From is CallNode callNode && callNode.Function.Name == BuiltinFunctionsCore.AsType.Name)
                 {
-                    if (TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out var sourceEntityName))
+                    if (TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out _))
                     {
                         TryGetFieldName(context, callNode.Args[0], out fromField);
                         AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
@@ -1613,14 +1606,9 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         fieldName = scopeAccessSymbol.Name;
 
-                        if (fieldName == "Value" && context.CallerTableRetVal._isDistinct)
+                        if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal._columnMap))
                         {
-                            if (context.CallerTableRetVal._columnSet.Count() != 1)
-                            {
-                                throw new InvalidOperationException("Distinct table should have only one column in columnSet");
-                            }
-
-                            fieldName = ((TextLiteralNode)context.CallerTableRetVal._columnSet.First()).LiteralValue;
+                            fieldName = context.CallerTableRetVal._columnMap.Distinct;
                         }
 
                         return true;

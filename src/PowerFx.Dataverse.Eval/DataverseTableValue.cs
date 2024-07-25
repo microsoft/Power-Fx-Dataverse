@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
 
-        public sealed override IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
+        public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new ();
+            List<DValue<RecordValue>> list = new();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)
@@ -74,13 +74,13 @@ namespace Microsoft.PowerFx.Dataverse
                 return new List<DValue<RecordValue>> { entities.DValueError(nameof(QueryExtensions.QueryAsync)) };
             }
 
-            var result = EntityCollectionToRecordValues(entities.Response); 
+            var result = EntityCollectionToRecordValues(entities.Response);
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columnMap, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -93,13 +93,13 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, ColumnMap columnMap, CancellationToken cancellationToken = default)
         {
             var entityReference = new EntityReference(this._entityMetadata.LogicalName, id);
 
             var request = new RetrieveRequest
             {
-                ColumnSet = columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray()),
+                ColumnSet = ColumnMap.GetColumnSet(columnMap),
                 Target = entityReference,
                 ["partitionId"] = partitionId
             };
@@ -141,6 +141,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
+
         internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -153,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (entityCollectionResponse.HasError)
             {
                 return new List<DValue<RecordValue>>() { entityCollectionResponse.DValueError("RetrieveMultiple") };
-            }            
+            }
 
             List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters._columnMap, cancellationToken).ConfigureAwait(false);
 
@@ -161,6 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
+
         internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, string partitionId, CancellationToken cancellationToken)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
@@ -188,17 +190,19 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
+
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
-            string[] selectedColumns = delegationParameters._columnSet?.ToArray() ?? delegationParameters._columnMap?.Values.ToArray();
-            var columns = selectedColumns != null ? new ColumnSet(selectedColumns) : new ColumnSet(true);
+            bool hasDistinct = !string.IsNullOrEmpty(delegationParameters._distinctColumn);
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = columns,
+                ColumnSet = hasDistinct
+                                ? new ColumnSet(delegationParameters._distinctColumn)
+                                : ColumnMap.GetColumnSet(delegationParameters._columnMap),
                 Criteria = delegationParameters.Filter ?? new FilterExpression(),
-                Distinct = delegationParameters._isDistinct
+                Distinct = hasDistinct
             };
 
             if (delegationParameters.Top != null)
@@ -244,7 +248,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columns: null, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columnMap: null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {
@@ -373,7 +377,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, IDictionary<string, string> columnMap, CancellationToken cancellationToken)
+        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, ColumnMap columnMap, CancellationToken cancellationToken)
         {
             if (entityCollection == null)
             {
@@ -384,7 +388,7 @@ namespace Microsoft.PowerFx.Dataverse
             List<DValue<RecordValue>> list = new();
 
             if (columnMap != null)
-            {                
+            {
                 foreach (Entity entity in entityCollection.Entities)
                 {
                     Dictionary<string, FormulaValue> record = new Dictionary<string, FormulaValue>();
@@ -396,17 +400,18 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     List<NamedValue> newRecord = new List<NamedValue>();
-                    foreach (KeyValuePair<string, string> map in columnMap)
+
+                    foreach (KeyValuePair<string, string> map in columnMap.AsStringDictionary())
                     {
                         bool b = record.TryGetValue(map.Value, out FormulaValue val);
-                        newRecord.Add(new NamedValue(map.Key, b ? val : FormulaValue.NewBlank(recordType.GetFieldType(map.Value))));                        
+                        newRecord.Add(new NamedValue(map.Key, b ? val : FormulaValue.NewBlank(recordType.GetFieldType(map.Value))));
                     }
 
                     list.Add(DValue<RecordValue>.Of(RecordValue.NewRecordFromFields(newRecord)));
                 }
 
                 return list;
-            }            
+            }
 
             foreach (Entity entity in entityCollection.Entities)
             {

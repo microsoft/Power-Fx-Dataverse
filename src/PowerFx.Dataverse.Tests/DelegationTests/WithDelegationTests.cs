@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -16,155 +13,42 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Theory]
 
         //Inner first which can still be delegated.
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, 1, false, false)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, 2,
-           true,
-           true)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
-           1,
-           3,
-           true,
-           false)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))",
-           1,
-           4,
-           false,
-           true)]
-
-        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
-            1,
-            5,
-            false,
-            false)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
-            1,
-            6,
-            true,
-            true)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
-            1,
-            7,
-            true,
-            false)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))",
-            1,
-            8,
-            false,
-            true)]
-
-        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
-            1,
-            9,
-            false,
-            false)]
-        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
-            1,
-            10,
-            true,
-            true)]
-        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
-            1,
-            11,
-            true,
-            false)]
-        [InlineData("With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))",
-            1,
-            12,
-            false,
-            true)]
-
-        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
-            1,
-            13,
-            false,
-            false)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
-            1,
-            14,
-            true,
-            true)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
-            1,
-            15,
-            true,
-            false)]
-        [InlineData("With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))",
-            1,
-            16,
-            false,
-            true)]
+        [InlineData(1, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, false, false)]
+        [InlineData(2, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, true, true)]
+        [InlineData(3, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, true, false)]
+        [InlineData(4, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, false, true)]
+        [InlineData(5, "With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))", 1, false, false)]
+        [InlineData(6, "With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))", 1, true, true)]
+        [InlineData(7, "With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))", 1, true, false)]
+        [InlineData(8, "With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90))", 1, false, true)]
+        [InlineData(9, "With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 1, false, false)]
+        [InlineData(10, "With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 1, true, true)]
+        [InlineData(11, "With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 1, true, false)]
+        [InlineData(12, "With({r: t1}, With({r : Filter(t1, Price < 120)}, Filter(r, Price > 90)))", 1, false, true)]
+        [InlineData(13, "With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 1, false, false)]
+        [InlineData(14, "With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 1, true, true)]
+        [InlineData(15, "With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 1, true, false)]
+        [InlineData(16, "With({r : Filter(t1, Price < 120)}, With({r: t1}, Filter(r, Price > 90)))", 1, false, true)]
 
         // Second Scoped variable uses the first scoped variable. Still the second scoped variable is delegated.
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
-            1,
-            17,
-            false,
-            false)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
-            1,
-            18,
-            true,
-            true)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
-            1,
-            19,
-            true,
-            false)]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))",
-            1,
-            20,
-            false,
-            true)]
+        [InlineData(17, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))", 1, false, false)]
+        [InlineData(18, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))", 1, true, true)]
+        [InlineData(19, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))", 1, true, false)]
+        [InlineData(20, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(r1, Price > 90)}, Filter(r2, Price = 100)))", 1, false, true)]
 
         // inner lookup has filter and that should delegate.
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
-            1,
-            21,
-            false,
-            false,
-            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
-            1,
-            22,
-            true,
-            true,
-            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
-            1,
-            23,
-            true,
-            false,
-            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData("With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))",
-            1,
-            24,
-            false,
-            true,
-            "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(21, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))", 1, false, false, "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(22, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))", 1, true, true, "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(23, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))", 1, true, false, "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(24, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price > 90)}, Filter(t1, Price = LookUp(r1, Price = 100).Price)))", 1, false, true, "Warning 18-20: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // With's first arg is not a record node directly, but still a record type.
-        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
-            1,
-            25,
-            false,
-            false)]
-        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
-            1,
-            26,
-            true,
-            true)]
-        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
-            1,
-            27,
-            true,
-            false)]
-        [InlineData("With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))",
-            1,
-            28,
-            false,
-            true)]
+        [InlineData(25, "With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))", 1, false, false)]
+        [InlineData(26, "With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))", 1, true, true)]
+        [InlineData(27, "With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))", 1, true, false)]
+        [InlineData(28, "With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))", 1, false, true)]
 
-        public async Task WithDelegationAsync(string expr, int expectedRows, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        public async Task WithDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -14,23 +11,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         [Theory]
 
-        [InlineData("FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)", 2, 1, true)]
-        [InlineData("ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')", 2, 2, true)]
-        [InlineData("FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)", 2, 3, true)]
-        [InlineData("First(ShowColumns(t1, 'new_price', 'old_price'))", 2, 4, true)]
-        [InlineData("First(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120))", 2, 5, true)]
-        [InlineData("LookUp(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)", 2, 6, true)]
-        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price')", 1, 7, true)]
-        [InlineData("ShowColumns(Filter(t1, Price < 120), 'new_price', 'old_price')", 2, 8, true)]
-        [InlineData("Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)", 2, 9, true)]
+        [InlineData(1, "FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)", 2, true)]
+        [InlineData(2, "ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')", 2, true)]
+        [InlineData(3, "FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)", 2, true)]
+        [InlineData(4, "First(ShowColumns(t1, 'new_price', 'old_price'))", 2, true)]
+        [InlineData(5, "First(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120))", 2, true)]
+        [InlineData(6, "LookUp(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)", 2, true)]
+        [InlineData(7, "ShowColumns(Filter(t1, Price < 120), 'new_price')", 1, true)]
+        [InlineData(8, "ShowColumns(Filter(t1, Price < 120), 'new_price', 'old_price')", 2, true)]
+        [InlineData(9, "Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120)", 2, true)]
 
         // This is not delegated, but doesn't impact perf.
-        [InlineData("ShowColumns(LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")), 'new_price')", 1, 10, true)]
-        [InlineData("LookUp(ShowColumns(t1, 'localid'), localid=GUID(\"00000000-0000-0000-0000-000000000001\"))", 1, 11, true)]
-        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))", 1, 12, true)]
-        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))", 1, 13, true)]
-        [InlineData("First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))", 1, 14, false)]
-        public async Task ShowColumnDelegationAsync(string expr, int expectedCount, int id, bool isCheckSuccess, params string[] expectedWarnings)
+        [InlineData(10, "ShowColumns(LookUp(t1, localid=GUID(\"00000000-0000-0000-0000-000000000001\")), 'new_price')", 1, true)]
+        [InlineData(11, "LookUp(ShowColumns(t1, 'localid'), localid=GUID(\"00000000-0000-0000-0000-000000000001\"))", 1, true)]
+        [InlineData(12, "First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))", 1, true)]
+        [InlineData(13, "First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))", 1, true)]
+        [InlineData(14, "First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))", 1, false)]
+        public async Task ShowColumnDelegationAsync(int id, string expr, int expectedCount, bool isCheckSuccess, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");

@@ -1,33 +1,29 @@
-﻿using Microsoft.PowerFx;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Helpers for marshalling between Custom API parameters and Power Fx. 
+    /// Helpers for marshalling between Custom API parameters and Power Fx.
     /// (client) Call a custom API from Fx:
     ///   Fx2Inputs --> run custom API --> Outputs2Fx.
-    /// 
+    ///
     /// (server) Implement a custom API in Fx:
-    ///   Inputs2Fx --> Eval Fx --> Fx2Outputs 
-    /// 
+    ///   Inputs2Fx --> Eval Fx --> Fx2Outputs
+    ///
     /// Also compute Fx types for Custom API signature.
-    /// These match the marshalling layers. 
+    /// These match the marshalling layers.
     ///   GetInputType:  Fx2Inputs + Inputs2Fx
     ///   GetOutputType: Outputs2Fx + Fx2Outputs
-    ///   
+    ///
     /// </summary>
     public static class CustomApiMarshaller
     {
-        // Get a record, with each field correspdonding to an input. Matched by name. 
+        // Get a record, with each field correspdonding to an input. Matched by name.
         private static RecordType GetRecordType(IParameterType[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
             if (parameterMarshaller == null)
@@ -35,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
                 parameterMarshaller = new CustomApiParameterMarshaller(null);
             }
 
-            // Inputs are always as a record. Enables named input parameters. 
+            // Inputs are always as a record. Enables named input parameters.
             var inRecord = RecordType.Empty();
             foreach (var input in inputs)
             {
@@ -53,8 +49,8 @@ namespace Microsoft.PowerFx.Dataverse
             return inRecord;
         }
 
-        // Given CustomAPI inputs, calculate the power fx type. 
-        // Record, with each field correspdonding to an input. Matched by name. 
+        // Given CustomAPI inputs, calculate the power fx type.
+        // Record, with each field correspdonding to an input. Matched by name.
         public static RecordType GetInputType(CustomApiRequestParam[] inputs, ICustomApiParameterMarshaller parameterMarshaller)
         {
             // Handle optional:
@@ -62,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (var input in inputs)
             {
                 if (input.isoptional)
-                {   
+                {
                     throw new NotSupportedException($"Optional parameters are not supported. {input.uniquename}");
                 }
             }
@@ -85,8 +81,8 @@ namespace Microsoft.PowerFx.Dataverse
             return FormulaValue.NewRecordFromFields(fields);
         }
 
-        // Convert individual input to Power Fx value. 
-        // Handle Entity,EntityRef which may require marshalling. 
+        // Convert individual input to Power Fx value.
+        // Handle Entity,EntityRef which may require marshalling.
         private static FormulaValue ToPowerFxValue(object obj, DataverseConnection dvc)
         {
             if (obj == null)
@@ -98,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (obj is EntityReference er)
             {
                 // For entity Reference, the lookup could be deferred.
-                var record = dvc.RetrieveAsync(er.LogicalName, er.Id, columns: null).GetAwaiter().GetResult();
+                var record = dvc.RetrieveAsync(er.LogicalName, er.Id, columnMap: null).GetAwaiter().GetResult();
                 return record;
             }
             else if (obj is Entity entity)
@@ -125,18 +121,18 @@ namespace Microsoft.PowerFx.Dataverse
 
         // For Fx calling a custom API.
         // Builds a Parameter collection that can then be decoded by GetInputValues.
-        // Fx --> Objects. 
+        // Fx --> Objects.
         public static void Fx2Inputs(ParameterCollection inputs, RecordValue fxInputValues, CustomApiRequestParam[] inputMetadata)
         {
             Fx2Record(inputs, fxInputValues, inputMetadata);
         }
 
-        // Common marshalling for both input and output parameters. 
+        // Common marshalling for both input and output parameters.
         // If input is null or has extra inputs, fx engine returns blankValue which is ignored and not added to parameters [UnitTest: IgnoreExtraFieldsWithInputs() | InvokeInstanActionWithEntityDataTypeAsInputParameter()]
         private static void Fx2Record(ParameterCollection parameters, RecordValue fxValues, IParameterType[] inputMetadata)
         {
             // Marshalling must be exact. If CDS expects an Int32, can't pass a Double.
-            // So we need to know the target type. 
+            // So we need to know the target type.
             foreach (var input in inputMetadata)
             {
                 string name = input.uniquename;
@@ -150,8 +146,8 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Returns a RecordValue where each field matches an output parameter. 
-        /// Unless there is 1 output parameter, named "Value" - in which case we return just that. 
+        /// Returns a RecordValue where each field matches an output parameter.
+        /// Unless there is 1 output parameter, named "Value" - in which case we return just that.
         /// </summary>
         /// <param name="outputMetadata"></param>
         /// <returns></returns>
@@ -180,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
             return outType;
         }
 
-        // Apply Power Fx result from Custom API back to a dataverse collection. 
+        // Apply Power Fx result from Custom API back to a dataverse collection.
         public static void Fx2Outputs(ParameterCollection outputs, FormulaValue result, CustomApiResponse[] outputMetadata)
         {
             ThrowIfErrorValue("", result);
@@ -225,7 +221,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Convert primitive parameters to Power Fx. 
+        /// Convert primitive parameters to Power Fx.
         /// For non-primitives, use <see cref="ICustomApiParameterMarshaller"/>.
         /// </summary>
         /// <param name="typeCode"></param>
@@ -233,33 +229,19 @@ namespace Microsoft.PowerFx.Dataverse
         /// <exception cref="NotSupportedException"></exception>
         public static FormulaType ToPrimitivePowerFxType(this CustomApiParamType typeCode)
         {
-            switch (typeCode)
+            return typeCode switch
             {
-                case CustomApiParamType.Float:
-                    return FormulaType.Number;
-
-                case CustomApiParamType.Integer:
-                case CustomApiParamType.Decimal:
-                    return FormulaType.Decimal;
-
-                case CustomApiParamType.Bool:
-                    return FormulaType.Boolean;
-
-                case CustomApiParamType.String:
-                    return FormulaType.String;
-
-                case CustomApiParamType.DateTime:
-                    return FormulaType.DateTime;
-
-                case CustomApiParamType.Guid:
-                    return FormulaType.Guid;
-
-                default:
-                    throw new NotSupportedException($"Unsupported param type: {typeCode}");
-            }
+                CustomApiParamType.Float => FormulaType.Number,
+                CustomApiParamType.Integer or CustomApiParamType.Decimal => FormulaType.Decimal,
+                CustomApiParamType.Bool => FormulaType.Boolean,
+                CustomApiParamType.String => FormulaType.String,
+                CustomApiParamType.DateTime => FormulaType.DateTime,
+                CustomApiParamType.Guid => FormulaType.Guid,
+                _ => throw new NotSupportedException($"Unsupported param type: {typeCode}"),
+            };
         }
 
-        // Called when a Custom API returns a FxValue and we need to marshal it back to Custom API type. 		
+        // Called when a Custom API returns a FxValue and we need to marshal it back to Custom API type.
         private static object ToCustomApiObject(FormulaValue fxValue, IParameterType parameterType, string hintName)
         {
             ThrowIfErrorValue(hintName, fxValue);
@@ -269,7 +251,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return null;
             }
 
-            // Use Power Fx coercions to handle the corner cases like Decimal / Number /Float. 
+            // Use Power Fx coercions to handle the corner cases like Decimal / Number /Float.
             // Don't use 'var' here, clearly specify .Net type we get back and are returning to Dataverse.
             var typeCode = parameterType.type;
             switch (typeCode)
@@ -280,7 +262,6 @@ namespace Microsoft.PowerFx.Dataverse
                 case CustomApiParamType.DateTime:
                     if (fxValue.TryCoerceTo(out DateTimeValue dtv))
                     {
-
                         DateTime result = dtv.GetConvertedValue(TimeZoneInfo.Utc);
                         return result;
                     }
@@ -350,8 +331,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // TODO: Picklist, StringArray
             }
 
-            // We shouldn't land here at runtime, since this 
-            // should have been caught by intellisense at design time. 
+            // We shouldn't land here at runtime, since this
+            // should have been caught by intellisense at design time.
             throw new NotSupportedException($"Unsupported param type: {typeCode}. Fx type {fxValue.GetType().Name}");
         }
 
@@ -386,7 +367,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var errorMessage = ErrorToString(error);
 
-                // Must specifically by InvalidPluginExecutionException for plugins. 
+                // Must specifically by InvalidPluginExecutionException for plugins.
                 throw new InvalidPluginExecutionException($"CustomAPI parameter `${field}` failed with error {errorMessage}");
             }
         }

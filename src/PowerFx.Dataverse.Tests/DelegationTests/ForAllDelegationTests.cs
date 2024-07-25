@@ -35,7 +35,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(14, "FirstN(ForAll(t1, { Xyz: Price }), 2)", 2, "Xyz", "100, 10")]
         [InlineData(15, "FirstN(ForAll(t1, { Price: Price, Price2: Price }), 2)", 2, "Price2", "100, 10")]
         [InlineData(16, "FirstN(ForAll(t1, { Price: Price * 2 }), 2)", 2, "Price", "200, 20", true)]
-
+        [InlineData(17, "ForAll(Filter(t1, Price < 0 Or Price > 90), Price)", 2, "Value", "100, -10")]
+        [InlineData(18, "ForAll(Sort(Filter(t1, Price < 0 Or Price > 90), Price), Price)", 2, "Value", "-10, 100")]
+        [InlineData(19, "ForAll(Filter(Sort(t1, Price), Price < 0 Or Price > 90), Price)", 2, "Value", "-10, 100")]
+        [InlineData(20, "ForAll(FirstN(t1, 3), { Price: Price, Price2: Price })", 3, "Price", "100, 10, -10")]
+        [InlineData(21, "FirstN(ForAll(t1, { Price: Price, Price2: Price }), 3)", 3, "Price", "100, 10, -10")]
+        [InlineData(22, "ForAll(Distinct(Filter(t1, Price > 0), Price), Value)", 2, "Value", "100, 10")]
+        [InlineData(23, "Distinct(ForAll(Filter(t1, Price > 0), Price), Value)", 2, "Value", "100, 10")]         
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, bool expectedWarning = false)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();

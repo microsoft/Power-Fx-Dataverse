@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -23,32 +20,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Theory]
 
         //Basic case 
-        [InlineData("First(t1).Price", 100.0, 1, false, false)]
-        [InlineData("First(t1).Price", 100.0, 2, true, true)]
-        [InlineData("First(t1).Price", 100.0, 3, true, false)]
-        [InlineData("First(t1).Price", 100.0, 4, false, true)]
+        [InlineData(1, "First(t1).Price", 100.0, false, false)]
+        [InlineData(2, "First(t1).Price", 100.0, true, true)]
+        [InlineData(3, "First(t1).Price", 100.0, true, false)]
+        [InlineData(4, "First(t1).Price", 100.0, false, true)]
 
         // Filter inside FirstN, both can be combined *(vice versa isn't true)*
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, 5, false, false)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, 6, true, true)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, 7, true, false)]
-        [InlineData("First(Filter(t1, Price < 100)).Price", 10.0, 8, false, true)]
+        [InlineData(5, "First(Filter(t1, Price < 100)).Price", 10.0, false, false)]
+        [InlineData(6, "First(Filter(t1, Price < 100)).Price", 10.0, true, true)]
+        [InlineData(7, "First(Filter(t1, Price < 100)).Price", 10.0, true, false)]
+        [InlineData(8, "First(Filter(t1, Price < 100)).Price", 10.0, false, true)]
 
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, 9, false, false)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, 10, true, true)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, 11, true, false)]
-        [InlineData("First(FirstN(t1, 2)).Price", 100.0, 12, false, true)]
+        [InlineData(9, "First(FirstN(t1, 2)).Price", 100.0, false, false)]
+        [InlineData(10, "First(FirstN(t1, 2)).Price", 100.0, true, true)]
+        [InlineData(11, "First(FirstN(t1, 2)).Price", 100.0, true, false)]
+        [InlineData(12, "First(FirstN(t1, 2)).Price", 100.0, false, true)]
 
-        [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 13, false, false)]
-        [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 14, true, true)]
-        [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 15, true, false)]
-        [InlineData("First(Distinct(t1, Quantity)).Value", 20.0, 16, false, true)]
+        [InlineData(13, "First(Distinct(t1, Quantity)).Value", 20.0, false, false)]
+        [InlineData(14, "First(Distinct(t1, Quantity)).Value", 20.0, true, true)]
+        [InlineData(15, "First(Distinct(t1, Quantity)).Value", 20.0, true, false)]
+        [InlineData(16, "First(Distinct(t1, Quantity)).Value", 20.0, false, true)]
 
-        [InlineData("First(et).Field1", 200.0, 17, false, false)]
-        [InlineData("First(et).Field1", 200.0, 18, true, true)]
-        [InlineData("First(et).Field1", 200.0, 19, true, false)]
-        [InlineData("First(et).Field1", 200.0, 20, false, true)]
-        public async Task FirstDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        [InlineData(17, "First(et).Field1", 200.0, false, false)]
+        [InlineData(18, "First(et).Field1", 200.0, true, true)]
+        [InlineData(19, "First(et).Field1", 200.0, true, false)]
+        [InlineData(20, "First(et).Field1", 200.0, false, true)]
+        public async Task FirstDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -71,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
 
-            for ( var i = 0; i < inputs.Count(); i++)
+            for (var i = 0; i < inputs.Count(); i++)
             {
                 expr = inputs[i];
 

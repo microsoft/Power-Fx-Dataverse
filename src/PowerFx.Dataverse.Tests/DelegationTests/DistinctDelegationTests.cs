@@ -10,19 +10,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public class DistinctDelegationTests
     {
         [Theory]
-        [InlineData("Distinct(t1, Price)", 1, 3)]
-        [InlineData("Distinct(t1, Quantity)", 2, 2)]
-        [InlineData("Distinct(FirstN(t1, 2), Quantity)", 3, 2)]
-        [InlineData("FirstN(Distinct(t1, Quantity), 2)", 4, 2)]
-        [InlineData("Distinct(Filter(t1, Quantity < 30 And Price < 120), Quantity)", 5, 2)]
-        [InlineData("Distinct(Filter(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity < 20), new_quantity)", 6, 1)]
-        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", 7, 1)]
+        [InlineData(1, "Distinct(t1, Price)", 3)]
+        [InlineData(2, "Distinct(t1, Quantity)", 2)]
+        [InlineData(3, "Distinct(FirstN(t1, 2), Quantity)", 2)]
+        [InlineData(4, "FirstN(Distinct(t1, Quantity), 2)", 2)]
+        [InlineData(5, "Distinct(Filter(t1, Quantity < 30 And Price < 120), Quantity)", 2)]
+        [InlineData(6, "Distinct(Filter(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity < 20), new_quantity)", 1)]
+        [InlineData(7, "Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", 1)]
+        
         // non primitive types are non delegable.
-        [InlineData("Distinct(t1, PolymorphicLookup)", 8, -1)]
+        [InlineData(8, "Distinct(t1, PolymorphicLookup)", -1)]
+        
         // Other is a lookup field, hence not delegable.
-        [InlineData("Distinct(t1, Other)", 9, -1)]
-        [InlineData("Distinct(et, Field1)", 10, 2)]
-        public async Task DistinctDelegationAsync(string expr, int id, int expectedRows, params string[] expectedWarnings)
+        [InlineData(9, "Distinct(t1, Other)", -1)]
+        [InlineData(10, "Distinct(et, Field1)", 2)]
+        public async Task DistinctDelegationAsync(int id, string expr, int expectedRows, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");

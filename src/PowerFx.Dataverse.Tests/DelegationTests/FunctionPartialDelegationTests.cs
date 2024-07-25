@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
-using System.Threading;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -15,33 +12,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Theory]
 
         // do not give warning on tabular function, where source is delegable.
-        [InlineData("Concat(Filter(t1, Price < 120), Price & \",\")",
-           "100,10,-10,",
-           1,
-           false,
-           false)]
-
-        [InlineData("Concat(FirstN(t1, 2), Price & \",\")",
-           "100,10,",
-           2,
-           false,
-           false)]
-
-        [InlineData("Concat(ShowColumns(t1, 'new_price'), new_price & \",\")",
-           "100,10,-10,",
-           3,
-           false,
-           false)]
+        [InlineData(1, "Concat(Filter(t1, Price < 120), Price & \",\")", "100,10,-10,", false, false)]
+        [InlineData(2, "Concat(FirstN(t1, 2), Price & \",\")", "100,10,", false, false)]
+        [InlineData(3, "Concat(ShowColumns(t1, 'new_price'), new_price & \",\")", "100,10,-10,", false, false)]
 
         // Give warning when source is entire table.
-        [InlineData("Concat(t1, Price & \",\")",
-           "100,10,-10,",
-           4,
-           false,
-           false,
-           "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(4, "Concat(t1, Price & \",\")", "100,10,-10,", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        public async Task FunctionPartialDelegationAsync(string expr, object expected, int id, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
+        public async Task FunctionPartialDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
