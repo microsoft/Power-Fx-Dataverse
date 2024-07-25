@@ -93,7 +93,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 IsFloatingPointEnabled = false,
                 IsOptionSetEnabled = false,
-                UseMaxInvariantExpressionLength = false
+                UseMaxInvariantExpressionLength = false,
+                UseLookupFieldNameWhenNavPropNameIsDiff = false
             };
 
             var functions = Library.FunctionList.ToList();
