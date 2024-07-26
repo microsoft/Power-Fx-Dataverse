@@ -105,6 +105,17 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            if (!string.IsNullOrEmpty(first._distinctColumn) && string.IsNullOrEmpty(distinctColumn))
+            {
+                distinctColumn = first._distinctColumn;
+            }
+
+            // verify that distinct column name is present in the new dictionary
+            if (!string.IsNullOrEmpty(distinctColumn) && !newDic.Values.Any(i => GetString(i) == distinctColumn))
+            {
+                throw new InvalidOperationException($"Invalid distinct column name {distinctColumn}");
+            }
+
             return new ColumnMap(newDic, distinctColumn);
         }
 

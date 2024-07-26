@@ -727,6 +727,8 @@ namespace Microsoft.PowerFx.Dataverse
             // ShowColumns is only a column selector, so let's create a map with (column, column) entries
             ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
 
+            map = ColumnMap.Combine(tableArg._columnMap, map);
+
             // change to original node to current node and appends columnSet.
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
 

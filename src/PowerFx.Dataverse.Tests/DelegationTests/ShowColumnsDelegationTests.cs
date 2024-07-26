@@ -31,6 +31,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(12, "First(ShowColumns(ShowColumns(t1, 'localid'), 'localid'))", 1, true)]
         [InlineData(13, "First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))", 1, true)]
         [InlineData(14, "First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))", 1, false)]
+        [InlineData(15, "ShowColumns(Distinct(t1, 'new_price'), Value)", 1, true)]
         public async Task ShowColumnDelegationAsync(int id, string expr, int expectedCount, bool isCheckSuccess, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "ShowColumnsDelegation.txt", expr, -2, expectedCount,

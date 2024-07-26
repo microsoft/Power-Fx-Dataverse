@@ -11,3 +11,5 @@ ShowColumns(__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Bl
 __retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank(), {localid:localid})
 __retrieveSingle(local, __noop(), __noop(), , {localid:localid})
 __retrieveSingle(local, __noop(), __noop(), , {localid:localid})
+
+__retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price})
