@@ -91,6 +91,10 @@ namespace Microsoft.PowerFx.Dataverse
                     newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), first._distinctColumn));
                     distinctColumn = first._distinctColumn;
                 }
+                else
+                {
+                    throw new InvalidOperationException("Missing element in first ColumnMap");
+                }
             }
 
             if (!string.IsNullOrEmpty(second._distinctColumn))
