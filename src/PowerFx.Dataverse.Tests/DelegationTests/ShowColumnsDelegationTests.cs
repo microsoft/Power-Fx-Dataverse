@@ -1,16 +1,20 @@
 ﻿using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class ShowColumnsDelegationTests
+    public class ShowColumnsDelegationTests : DelegationTests
     {
-        [Theory]
+        public ShowColumnsDelegationTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
 
+        [Theory]
         [InlineData(1, "FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)", 2, true)]
         [InlineData(2, "ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')", 2, true)]
         [InlineData(3, "FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)", 2, true)]
@@ -29,67 +33,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(14, "First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))", 1, false)]
         public async Task ShowColumnDelegationAsync(int id, string expr, int expectedCount, bool isCheckSuccess, params string[] expectedWarnings)
         {
-            var map = new AllTablesDisplayNameProvider();
-            map.Add("local", "t1");
-            map.Add("remote", "t2");
-            map.Add("virtualremote", "t3");
-            var policy = new SingleOrgPolicy(map);
-
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: false, policy: policy);
-
-            var opts = PluginExecutionTests._parserAllowSideEffects;
-
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation(dv.MaxRows);
-            engine1.UpdateVariable("_count", FormulaValue.New(100m));
-
-            var check = engine1.Check(expr, options: opts, symbolTable: dv.Symbols);
-
-            if (!isCheckSuccess)
-            {
-                Assert.False(check.IsSuccess);
-                return;
-            }
-
-            var scam = check.ScanDependencies(dv.MetadataCache);
-
-            Assert.True(check.IsSuccess);
-
-            // compare IR to verify the delegations are happening exactly where we expect 
-            var irNode = check.ApplyIR();
-            var actualIr = check.GetCompactIRString();
-
-            await DelegationTestUtility.CompareSnapShotAsync("ShowColumnsDelegation.txt", actualIr, id, false);
-
-            // Validate delegation warnings.
-            // error.ToString() will capture warning status, message, and source span. 
-            var errors = check.ApplyErrors();
-
-            var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-            Assert.Equal(expectedWarnings.Length, errorList.Length);
-            for (var i = 0; i < errorList.Length; i++)
-            {
-                Assert.Equal(expectedWarnings[i], errorList[i]);
-            }
-
-            var run = check.GetEvaluator();
-
-            var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
-
-            var columnCount = 0;
-            if (result is TableValue tv)
-            {
-                columnCount = tv.Type.FieldNames.Count();
-            }
-            else if (result is RecordValue rv)
-            {
-                columnCount = rv.Type.FieldNames.Count();
-            }
-
-            Assert.Equal(expectedCount, columnCount);
+            await DelegationTestAsync(id, "ShowColumnsDelegation.txt", expr, -2, expectedCount,
+                result => result switch
+                {
+                    TableValue tv => tv.Type.FieldNames.Count(),
+                    RecordValue rv => rv.Type.FieldNames.Count(),
+                    _ => throw FailException.ForFailure("Unexpected result")
+                }, false, false, null, false, isCheckSuccess, expectedWarnings);
         }
     }
 }

@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class LookUpDelegationTests
+    public class LookUpDelegationTests : DelegationTests
     {
+        public LookUpDelegationTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -268,113 +272,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(179, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            var map = new AllTablesDisplayNameProvider();
-            map.Add("local", "t1");
-            map.Add("remote", "t2");
-            map.Add("virtualremote", "t3");
-            map.Add("elastictable", "et");
-            var policy = new SingleOrgPolicy(map);
-
-            (DataverseConnection dv, EntityLookup el) =
-                PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: policy);
-            var tableT1Type = dv.GetRecordType("local");
-
-            var opts = parserNumberIsFloatOption ?
-                PluginExecutionTests._parserAllowSideEffects_NumberIsFloat :
-                PluginExecutionTests._parserAllowSideEffects;
-
-            var config = new PowerFxConfig(); // Pass in per engine
-            config.SymbolTable.EnableMutationFunctions();
-            var engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation(dv.MaxRows);
-            engine1.UpdateVariable("_g1", FormulaValue.New(PluginExecutionTests._g1)); // matches entity
-            engine1.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
-
-            // Add a variable with same table type.
-            // But it's not in the same symbol table, so we can't delegate this.
-            // Previously this was UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
-            var fakeSymbolTable = new SymbolTable();
-            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1Type.ToTable());
-
-            var fakeTableValue = new DataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
-            var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
-
-            var inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Length ?? 0);
-
-            for (var i = 0; i < inputs.Count; i++)
-            {
-                expr = inputs[i];
-
-                var check = engine1.Check(expr, options: opts, symbolTable: allSymbols);
-                Assert.True(check.IsSuccess, string.Join("\r\n", check.Errors.Select(ee => ee.Message)));
-
-                // comapre IR to verify the delegations are happening exactly where we expect
-                var irNode = check.ApplyIR();
-                var actualIr = check.GetCompactIRString();
-
-                await DelegationTestUtility.CompareSnapShotAsync("LookUpDelegation.txt", actualIr, id, i == 1);
-
-                // Validate delegation warnings.
-                // error.ToString() will capture warning status, message, and source span.
-                var errors = check.ApplyErrors();
-
-                var errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-
-                Assert.Equal(expectedWarnings.Length, errorList.Length);
-                for (var j = 0; j < errorList.Length; j++)
+            await DelegationTestAsync(id, "LookUpDelegation.txt", expr, -2, expected,
+                result =>
                 {
-                    Assert.Equal(expectedWarnings[j], errorList[j]);
-                }
-
-                var scan = check.ScanDependencies(dv.MetadataCache);
-
-                // Can still run and verify results.
-                var run = check.GetEvaluator();
-
-                // Place a reference to tableT1 in the fakeT1 symbol values and compose in
-                var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
-                fakeSymbolValues.Set(fakeSlot, fakeTableValue);
-                var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
-
-                var result = await run.EvalAsync(CancellationToken.None, allValues);
-
-                if (expected is null)
-                {
-                    Assert.IsType<BlankValue>(result);
-                }
-
-                if (expected is Type expectedType)
-                {
-                    Assert.IsType<ErrorValue>(result);
-                }
-                else
-                {
-                    if (cdsNumberIsFloat && parserNumberIsFloatOption ||
-                        cdsNumberIsFloat && !parserNumberIsFloatOption)
-                    {
-                        Assert.Equal(expected, result.ToObject());
-                    }
-                    else if (cdsNumberIsFloat && !parserNumberIsFloatOption)
-                    {
-                        Assert.Equal(expected, result.ToObject());
-                    }
-                    else
-                    {
-                        Assert.Equal(expected is double dexp ? new decimal(dexp) : expected, result.ToObject());
-                    }
-                }
-            }
+                    object res = result.ToObject();
+                    if (expected is decimal && res is double dbl) { res = new decimal(dbl); }
+                    if (expected is double && res is decimal dec) { res = (double)dec; }
+                    return res;
+                },
+                cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, expectedWarnings);
         }
 
         [Theory]
-        [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price",
-            "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
-        [InlineData("LookUp(t1, LocalId=LocalId).Price",
-            "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?",
-            "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
-        [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price",
-            "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas."
-            )]
+        [InlineData("LookUp(t1, LocalId=If(Price>50, _g1, _gMissing)).Price", "Warning 22-27: Não é possível delegar LookUp: a expressão compara vários campos.")]
+        [InlineData("LookUp(t1, LocalId=LocalId).Price", "Warning 18-19: Este predicado será sempre verdadeiro. Você quis usar ThisRecord ou [@ ]?", "Warning 19-26: Não é possível delegar LookUp: a expressão compara vários campos.")]
+        [InlineData("LookUp(Filter(t1, 1=1), localid=_g1).Price", "Warning 14-16: Esta operação na tabela \"local\" poderá não funcionar se tiver mais de 999 linhas.")]
         public void LookUpDelegationWarningLocaleTest(string expr, params string[] expectedWarnings)
         {
             var map = new AllTablesDisplayNameProvider();
