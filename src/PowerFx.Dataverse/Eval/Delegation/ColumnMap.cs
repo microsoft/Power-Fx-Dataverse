@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             _dic = list.ToDictionary(tln => new DName(tln.LiteralValue), tln => tln as IntermediateNode);
         }
 
-        // Constructor used by WithDistinct
+        // Constructor used by Combine static method
         private ColumnMap(Dictionary<DName, IntermediateNode> dic, string distinctColumn)
         {
             _dic = dic;
@@ -67,19 +67,44 @@ namespace Microsoft.PowerFx.Dataverse
                ? tln.LiteralValue
                : throw new InvalidOperationException($"Invalid {nameof(IntermediateNode)}, expexting {nameof(TextLiteralNode)} and received {i.GetType().Name}");
 
-        internal string Distinct => !string.IsNullOrEmpty(_distinctColumn) ? _distinctColumn : throw new InvalidOperationException("Cannot access Distinct property without checking ColumnMap.HasDistinct() first");
-
-        internal ColumnMap WithDistinct(string distinct)
+        internal static ColumnMap Combine(ColumnMap first, ColumnMap second)
         {
-            if (_dic == null || !AsStringDictionary().Values.Contains(distinct))
+            if (first == null)
             {
-                return null;
+                return second;
             }
 
-            return new ColumnMap(_dic.ToDictionary(
-                kvp => new DName(GetString(kvp.Value) == distinct ? "Value" : kvp.Key),
-                kvp => kvp.Value), distinct);
+            string distinctColumn = null;
+            Dictionary<DName, IntermediateNode> newDic = new Dictionary<DName, IntermediateNode>();
+
+            foreach (KeyValuePair<DName, IntermediateNode> kvp2 in second._dic)
+            {
+                string secondValue = GetString(kvp2.Value);
+
+                if (first._dic.TryGetValue(new DName(secondValue), out IntermediateNode firstNode))
+                {
+                    string firstValue = GetString(firstNode);
+                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));                    
+                }
+                else if (first._distinctColumn == secondValue)
+                {
+                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), first._distinctColumn));
+                    distinctColumn = first._distinctColumn;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(second._distinctColumn))
+            {
+                if (first._dic.TryGetValue(new DName(second._distinctColumn), out IntermediateNode firstNode))
+                {
+                    distinctColumn = GetString(firstNode);
+                }
+            }
+
+            return new ColumnMap(newDic, distinctColumn);
         }
+
+        internal string Distinct => !string.IsNullOrEmpty(_distinctColumn) ? _distinctColumn : throw new InvalidOperationException("Cannot access Distinct property without checking ColumnMap.HasDistinct() first");
 
         public int Count => throw new NotImplementedException();
 

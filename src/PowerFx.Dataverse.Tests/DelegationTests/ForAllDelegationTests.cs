@@ -41,7 +41,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(20, "ForAll(FirstN(t1, 3), { Price: Price, Price2: Price })", 3, "Price", "100, 10, -10")]
         [InlineData(21, "FirstN(ForAll(t1, { Price: Price, Price2: Price }), 3)", 3, "Price", "100, 10, -10")]
         [InlineData(22, "ForAll(Distinct(Filter(t1, Price > 0), Price), Value)", 2, "Value", "100, 10")]
-        [InlineData(23, "Distinct(ForAll(Filter(t1, Price > 0), Price), Value)", 2, "Value", "100, 10")]         
+        [InlineData(23, "Distinct(ForAll(Filter(t1, Price > 0), Price), Value)", 2, "Value", "100, 10")]
+        [InlineData(24, "ForAll(Filter(t1, Price < 0 Or Price > 90), { x: Price })", 2, "x", "100, -10")]
+        [InlineData(25, "ForAll(Sort(Filter(t1, Price < 0 Or Price > 90), Price), { x: Price })", 2, "x", "-10, 100")]
+        [InlineData(26, "ForAll(Filter(Sort(t1, Price), Price < 0 Or Price > 90), { x: Price })", 2, "x", "-10, 100")]
+        [InlineData(27, "ForAll(FirstN(t1, 3), { Price: Price, Price2: Price })", 3, "Price2", "100, 10, -10")]
+        [InlineData(28, "FirstN(ForAll(t1, { Price: Price, Price2: Price }), 3)", 3, "Price2", "100, 10, -10")]
+        [InlineData(29, "ForAll(ForAll(t1, Price), Value)", 4, "Value", "100, 10, -10, 10")]
+        [InlineData(30, "ForAll(ForAll(t1, Price), { x: Value })", 4, "x", "100, 10, -10, 10")]
+        [InlineData(31, "ForAll(ForAll(t1, { x: Price }), { x: x })", 4, "x", "100, 10, -10, 10")]
+        [InlineData(32, "ForAll(ForAll(t1, { x: Price }), { y: x })", 4, "y", "100, 10, -10, 10")]
+        [InlineData(33, "ForAll(ForAll(t1, { x: Price, y: LocalId }), { x: y, y: x })", 4, "y", "100, 10, -10, 10")]
+        [InlineData(34, "ForAll(ForAll(t1, { x: Price, y: LocalId }), { x: y, y: x })", 4, "x", "00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000003, 00000000-0000-0000-0000-000000000004, 00000000-0000-0000-0000-000000000005")]
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, bool expectedWarning = false)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
@@ -91,7 +102,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 else if (result is RecordValue rv)
                 {
                     Assert.Equal(1, expectedRows);
-                    //ids = (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..];
                     ids = GetString(rv.Fields.First(nv => nv.Name == column).Value);
                 }
                 else

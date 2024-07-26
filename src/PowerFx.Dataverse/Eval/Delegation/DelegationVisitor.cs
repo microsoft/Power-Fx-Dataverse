@@ -616,7 +616,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "FirstN" => ProcessFirstN(node, tableArg),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
                 "Sort" or "SortByColumns" => ProcessSort(node, tableArg, context),
-                "ShowColumns" => ProcessShowColumn(node, tableArg),
+                "ShowColumns" => ProcessShowColumns(node, tableArg),
                 "ForAll" => ProcessForAll(node, tableArg, context),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
@@ -648,21 +648,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return Ret(node);
             }
 
-            ColumnMap map;
+            // let's create a single column map ("Value", fieldName) with a distinct on fieldName
+            ColumnMap map = new ColumnMap(fieldName);
 
-            if (tableArg.hasColumnMap)
-            {
-                map = tableArg._columnMap.WithDistinct(fieldName);
-
-                if (map == null)
-                {
-                    return NoTransform(node, tableArg);
-                }
-            }
-            else
-            {
-                map = new ColumnMap(fieldName);
-            }
+            // Combine with an existing map
+            map = ColumnMap.Combine(tableArg._columnMap, map);
 
             // change to original node to current node and appends columnSet and Distinct.
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
@@ -728,12 +718,13 @@ namespace Microsoft.PowerFx.Dataverse
             return CreateNotSupportedErrorAndReturn(node, tableArg);
         }
 
-        private RetVal ProcessShowColumn(CallNode node, RetVal tableArg)
+        private RetVal ProcessShowColumns(CallNode node, RetVal tableArg)
         {
             IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
             IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
 
+            // ShowColumns is only a column selector, so let's create a map with (column, column) entries
             ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
 
             // change to original node to current node and appends columnSet.
@@ -1095,26 +1086,21 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
+            // check if we have a simple field name here
             if (TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
             {
                 TextLiteralNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
+
+                // Create a map with ("Value", fieldName)
                 ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
 
-                if (tableArg.hasColumnMap)
-                {
-                    if (ColumnMap.HasDistinct(tableArg._columnMap))
-                    {
-                        map = map.WithDistinct(fieldName);
-                    }
-                    else
-                    {
-                        return NoTransform(node, tableArg);
-                    }
-                }
+                // Combine with an existing map
+                map = ColumnMap.Combine(tableArg._columnMap, map);
 
                 return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map);
             }
 
+            // check if we have a record of (newName: oldName)
             if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
             {
                 Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
@@ -1131,6 +1117,8 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
+                        // If any record field is not a trivial field name, we'll not delegate
+                        // ex: { newName: oldName * 2 }
                         canDelegate = false;
                         break;
                     }
@@ -1138,7 +1126,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (canDelegate)
                 {
-                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, new ColumnMap(dic));
+                    // Combine with an existing map
+                    ColumnMap map = ColumnMap.Combine(tableArg._columnMap, new ColumnMap(dic));
+
+                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map);
                 }
             }
 
