@@ -95,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
@@ -115,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 RecordType rt = RecordType.Empty();
 
-                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap._dic)
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap.Map)
                 {
                     rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
                 }
@@ -225,7 +225,7 @@ namespace Microsoft.PowerFx.Dataverse
                 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 CallNode node;
@@ -250,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 CallNode node;

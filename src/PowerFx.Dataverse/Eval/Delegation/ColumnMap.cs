@@ -13,7 +13,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         // For now, even if we could store any IntermediateNode, we only manage TexlLiteralNode for simplicity
         // Key represents the new column name, Value represents the value of that column (logical name)
-        internal readonly Dictionary<DName, IntermediateNode> _dic;
+        private readonly Dictionary<DName, IntermediateNode> _dic;
 
         // When defined, this is the column named used for Distinct function
         private readonly string _distinctColumn = null;
@@ -128,6 +128,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             return new ColumnMap(newDic, distinctColumn);
         }
+
+        internal IReadOnlyDictionary<DName, IntermediateNode> Map => _dic;
 
         internal string Distinct => !string.IsNullOrEmpty(_distinctColumn) ? _distinctColumn : throw new InvalidOperationException("Cannot access Distinct property without checking ColumnMap.HasDistinct() first");
 
