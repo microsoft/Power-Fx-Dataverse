@@ -20,6 +20,12 @@ namespace Microsoft.PowerFx.Dataverse
         // When defined, this is the column named used for Distinct function
         private readonly string _distinctColumn = null;
 
+        // Public constructor
+        public ColumnMap(IReadOnlyDictionary<string, string> map)
+        {
+            _dic = map.ToDictionary(kvp => new DName(kvp.Key), kvp => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), kvp.Value) as IntermediateNode);
+        }
+
         // Constructor used for ForAll (renames are possible)
         internal ColumnMap(IReadOnlyDictionary<DName, TextLiteralNode> dic)
         {

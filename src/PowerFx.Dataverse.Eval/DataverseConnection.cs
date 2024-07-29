@@ -280,7 +280,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="logicalName">Table logical name</param>
         /// <param name="id">Entity Id</param>
-        /// <param name="columnMap"></param>
+        /// <param name="columnMap">Map of columns (newName, logicalName) set. Can be null, meaning all columns.</param>
         /// <param name="cancellationToken">Cancellation Token</param>
         /// <returns>DataverseRecordValue or ErrorValue in case of error</returns>
         /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
@@ -298,6 +298,24 @@ namespace Microsoft.PowerFx.Dataverse
             return response.HasError
                 ? response.GetErrorValue(type)
                 : new DataverseRecordValue(response.Response, metadata, type, this);
+        }
+
+        /// <summary>
+        /// Retrieves an Entity by localname and Id
+        /// </summary>
+        /// <param name="logicalName">Table logical name</param>
+        /// <param name="id">Entity Id</param>
+        /// <param name="columns">List of columns</param>
+        /// <param name="cancellationToken">Cancellation Token</param>
+        /// <returns>DataverseRecordValue or ErrorValue in case of error</returns>
+        /// <exception cref="InvalidOperationException">When logicalName has no corresponding Metadata</exception>
+        /// <exception cref="TaskCanceledException">When cancelaltion is requested</exception>
+        [Obsolete("Use RetrieveAsync with ColumnMap instead")]
+        public async Task<FormulaValue> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();            
+            ColumnMap map = columns == null ? null : new ColumnMap(columns.ToDictionary(col => col, col => col));
+            return await RetrieveAsync(logicalName, id, map, cancellationToken).ConfigureAwait(false);            
         }
 
         /// <summary>

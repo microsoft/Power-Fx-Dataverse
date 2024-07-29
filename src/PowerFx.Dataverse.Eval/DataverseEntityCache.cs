@@ -180,6 +180,14 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
+        [Obsolete("Use RetrieveAsync with ColumnMap")]
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ColumnMap map = columns == null ? null : new ColumnMap(columns.ToDictionary(col => col, col => col));
+            return await RetrieveAsync(entityName, id, map, cancellationToken).ConfigureAwait(false);
+        }
+
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();

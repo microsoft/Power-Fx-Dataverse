@@ -689,5 +689,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             throw new NotImplementedException();
         }
+
+        // Obsolete API
+        public Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
