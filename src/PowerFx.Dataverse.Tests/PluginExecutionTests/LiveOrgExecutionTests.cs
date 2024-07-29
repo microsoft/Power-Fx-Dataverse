@@ -1265,17 +1265,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return _svcClient.ExecuteWebRequest(method, queryString, body, customHeaders, contentType, cancellationToken);
         }
 
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();            
-            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, ColumnMap.GetColumnSet(columnMap), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
-        }
-
-
-        // Obsolete API
         public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            cancellationToken.ThrowIfCancellationRequested();            
+            return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, ColumnMap.GetColumnSet(columns), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
         }
 
         public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
