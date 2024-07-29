@@ -156,7 +156,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.DeleteAsync(entityName, id, cancellationToken);
         }
 
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -170,7 +170,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, columnMap, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> result = await _innerService.RetrieveAsync(entityName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (!result.HasError)
             {
@@ -178,14 +178,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
-        }
-
-        [Obsolete("Use RetrieveAsync with ColumnMap")]
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            ColumnMap map = columns == null ? null : new ColumnMap(columns.ToDictionary(col => col, col => col));
-            return await RetrieveAsync(entityName, id, map, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)

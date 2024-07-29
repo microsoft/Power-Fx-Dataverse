@@ -19,11 +19,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.
-        internal class DelegationHooks
+        internal class DelegationHooks 
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
-            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, ColumnMap columnMap, CancellationToken cancel)
+            public virtual async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columnMap, CancellationToken cancel)
             {
                 throw new NotImplementedException();
             }
@@ -95,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
                 }
 
                 if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
@@ -115,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 RecordType rt = RecordType.Empty();
 
-                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap)
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap._dic)
                 {
                     rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
                 }
@@ -225,7 +225,7 @@ namespace Microsoft.PowerFx.Dataverse
                 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
                 }
 
                 CallNode node;
@@ -250,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                 
                 if (query.hasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap._dic));
                 }
 
                 CallNode node;

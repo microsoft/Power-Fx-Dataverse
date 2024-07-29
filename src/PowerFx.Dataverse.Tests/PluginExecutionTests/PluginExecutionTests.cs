@@ -445,7 +445,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var id = "00000000-0000-0000-0000-000000000001";
             var entityOriginal = el.LookupRef(new EntityReference(logicalName, Guid.Parse(id)), CancellationToken.None);
-            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id), columnMap: null) as RecordValue;
+            RecordValue record = await dv.RetrieveAsync(logicalName, Guid.Parse(id), columns: null) as RecordValue;
 
             // Test the serializer!
             var expr = record.ToExpression();
@@ -2342,7 +2342,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             (DataverseConnection dv, EntityLookup el) = CreateMemoryForAllAttributeModel();
             dv.AddTable("t1", "allattributes");
 
-            var entity = (await el.RetrieveAsync("allattributes", _g1, columnMap: null)).Response;
+            var entity = (await el.RetrieveAsync("allattributes", _g1, columns: null)).Response;
 
             var expectedErrors = new List<string>()
             {

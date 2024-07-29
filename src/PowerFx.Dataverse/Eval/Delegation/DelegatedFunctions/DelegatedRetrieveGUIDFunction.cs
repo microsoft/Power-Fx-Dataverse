@@ -45,11 +45,11 @@ namespace Microsoft.PowerFx.Dataverse
             if (args.Length > 3)
             {
                 columnMap = args[3] is RecordValue rv 
-                    ? new ColumnMap(rv)
+                    ? new ColumnMap(rv, null)
                     : throw new InvalidOperationException($"Expecting args3 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");                
             }
 
-            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap, cancellationToken).ConfigureAwait(false);
+            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap?.Columns, cancellationToken).ConfigureAwait(false);
 
             if (result == null || result.IsBlank)
             {

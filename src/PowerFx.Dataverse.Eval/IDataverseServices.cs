@@ -30,18 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
     }
 
     public interface IDataverseReader
-    {
-        /// <summary>
-        /// Retrieve a single entity by id and logical entity name.
-        /// </summary>
-        /// <param name="entityName"></param>
-        /// <param name="id"></param>
-        /// <param name="columnMap">Column names to fetch, if kept null fetches all columns.</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default);
-
-        [Obsolete("Use RetrieveAsync with ColumnMap")]
+    {        
         Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default);
 
         Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default);        

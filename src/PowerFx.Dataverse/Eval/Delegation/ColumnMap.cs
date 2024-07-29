@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core.IR;
@@ -10,20 +9,19 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // ColumnMap is an IReadOnlyDictionary<DName, IntermediateNode> to be used in RecordNode constructor
-    public class ColumnMap : IReadOnlyDictionary<DName, IntermediateNode>
+    public class ColumnMap
     {
         // For now, even if we could store any IntermediateNode, we only manage TexlLiteralNode for simplicity
         // Key represents the new column name, Value represents the value of that column (logical name)
-        private readonly Dictionary<DName, IntermediateNode> _dic;
+        internal readonly Dictionary<DName, IntermediateNode> _dic;
 
         // When defined, this is the column named used for Distinct function
         private readonly string _distinctColumn = null;
 
-        // Public constructor
-        public ColumnMap(IReadOnlyDictionary<string, string> map)
+        // Public constructor (doesn't support renames or distinct)
+        public ColumnMap(IEnumerable<string> map)
         {
-            _dic = map.ToDictionary(kvp => new DName(kvp.Key), kvp => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), kvp.Value) as IntermediateNode);
+            _dic = map.ToDictionary(str => new DName(str), str => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), str) as IntermediateNode);
         }
 
         // Constructor used for ForAll (renames are possible)
@@ -46,13 +44,15 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Constructor used by delegate functions
-        internal ColumnMap(RecordValue recordValue)
+        internal ColumnMap(RecordValue recordValue, string distinctColumn)
         {
             _dic = recordValue.Fields.ToDictionary(
                 f => new DName(f.Name),
                 f => f.Value is StringValue sv
                      ? new TextLiteralNode(IRContext.NotInSource(FormulaType.String), sv.Value) as IntermediateNode
                      : throw new InvalidOperationException($"Invalid type in column map, got {f.Value.GetType().Name}"));
+
+            _distinctColumn = distinctColumn;
         }
 
         // Constructor used for Distinct
@@ -65,6 +65,10 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         internal static ColumnSet GetColumnSet(ColumnMap map) => map == null ? new ColumnSet(true) : new ColumnSet(map.Columns);
+
+        internal static ColumnSet GetColumnSet(IEnumerable<string> columns) => columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray());
+
+        internal static ColumnMap GetColumnMap(IEnumerable<string> columns) => columns == null ? null : new ColumnMap(columns);
 
         internal static bool HasDistinct(ColumnMap map) => map != null && !string.IsNullOrEmpty(map._distinctColumn);
 
@@ -127,27 +131,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal string Distinct => !string.IsNullOrEmpty(_distinctColumn) ? _distinctColumn : throw new InvalidOperationException("Cannot access Distinct property without checking ColumnMap.HasDistinct() first");
 
-        public int Count => throw new NotImplementedException();
-
         public IReadOnlyDictionary<string, string> AsStringDictionary() => _dic.ToDictionary(kvp => kvp.Key.Value, kvp => GetString(kvp.Value));
 
         internal string[] Columns => _dic.Values.Select(node => GetString(node)).ToArray();
-
-        public IEnumerable<DName> Keys => throw new NotImplementedException();
-
-        IEnumerable<IntermediateNode> IReadOnlyDictionary<DName, IntermediateNode>.Values => throw new NotImplementedException();
-
-        IntermediateNode IReadOnlyDictionary<DName, IntermediateNode>.this[DName key] => throw new NotImplementedException();
-
-        internal IEnumerator<KeyValuePair<DName, IntermediateNode>> GetEnum() => _dic.GetEnumerator();
-
-        public IEnumerator GetEnumerator() => this.GetEnum();
-
-        IEnumerator<KeyValuePair<DName, IntermediateNode>> IEnumerable<KeyValuePair<DName, IntermediateNode>>.GetEnumerator() => this.GetEnum();
-
-        public bool ContainsKey(DName key) => _dic.ContainsKey(key);
-
-        bool IReadOnlyDictionary<DName, IntermediateNode>.TryGetValue(DName key, out IntermediateNode value) => _dic.TryGetValue(key, out value);
 
         // Used for debugging
         public override string ToString()

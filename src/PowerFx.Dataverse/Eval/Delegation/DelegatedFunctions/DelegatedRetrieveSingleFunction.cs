@@ -73,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (args.Length > 4)
             {
                 columnMap = args[4] is RecordValue rv
-                    ? new ColumnMap(rv)
+                    ? new ColumnMap(rv, distinctColumn)
                     : throw new InvalidOperationException($"Expecting args4 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");
             }
 
@@ -84,8 +84,7 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = 1,
 
-                _columnMap = columnMap,
-                _distinctColumn = distinctColumn,
+                _columnMap = columnMap,                
                 _partitionId = partitionId,
                 _relation = relation,
             };

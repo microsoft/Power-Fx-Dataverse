@@ -78,9 +78,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
-            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columnMap, cancellationToken).ConfigureAwait(false);
+            var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
             {
@@ -93,13 +93,13 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, ColumnMap columnMap, CancellationToken cancellationToken = default)
+        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             var entityReference = new EntityReference(this._entityMetadata.LogicalName, id);
 
             var request = new RetrieveRequest
             {
-                ColumnSet = ColumnMap.GetColumnSet(columnMap),
+                ColumnSet = ColumnMap.GetColumnSet(columns),
                 Target = entityReference,
                 ["partitionId"] = partitionId
             };
@@ -194,12 +194,12 @@ namespace Microsoft.PowerFx.Dataverse
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
-            bool hasDistinct = !string.IsNullOrEmpty(delegationParameters._distinctColumn);
+            bool hasDistinct = ColumnMap.HasDistinct(delegationParameters._columnMap);
 
             var query = new QueryExpression(entityName)
             {
                 ColumnSet = hasDistinct
-                                ? new ColumnSet(delegationParameters._distinctColumn)
+                                ? new ColumnSet(delegationParameters._columnMap.Distinct)
                                 : ColumnMap.GetColumnSet(delegationParameters._columnMap),
                 Criteria = delegationParameters.Filter ?? new FilterExpression(),
                 Distinct = hasDistinct
@@ -248,7 +248,7 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             // Once inserted, let's get the newly created Entity with all its attributes
-            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columnMap: null, cancellationToken).ConfigureAwait(false);
+            DataverseResponse<Entity> newEntity = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, response.Response, columns: null, cancellationToken).ConfigureAwait(false);
 
             if (newEntity.HasError)
             {

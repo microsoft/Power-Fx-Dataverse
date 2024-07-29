@@ -6,7 +6,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,18 +33,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, ColumnMap columnMap, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();            
-            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, ColumnMap.GetColumnSet(columnMap)), $"Retrieve '{logicalName}':{id}");
-        }
-
-        [Obsolete("Use RetrieveAsync with ColumnMap")]
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ColumnMap map = columns == null ? null : new ColumnMap(columns.ToDictionary(col => col, col => col));
-            return await RetrieveAsync(entityName, id, map, cancellationToken).ConfigureAwait(false);
+            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, ColumnMap.GetColumnSet(columns)), $"Retrieve '{logicalName}':{id}");
         }
 
         public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
