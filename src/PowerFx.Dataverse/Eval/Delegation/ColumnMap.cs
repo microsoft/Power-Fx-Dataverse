@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
                      ? new TextLiteralNode(IRContext.NotInSource(FormulaType.String), sv.Value) as IntermediateNode
                      : throw new InvalidOperationException($"Invalid type in column map, got {f.Value.GetType().Name}"));
 
-            _distinctColumn = distinctColumn;
+            _distinctColumn = string.IsNullOrEmpty(distinctColumn) ? null : distinctColumn;
         }
 
         // Constructor used for Distinct

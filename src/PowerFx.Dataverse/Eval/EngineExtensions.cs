@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query._columnMap) ? query._columnMap.Distinct : null);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query._columnMap) ? query._columnMap.Distinct : string.Empty);
                 args.Add(isDistinctArg);
 
                 if (query.hasColumnMap)
