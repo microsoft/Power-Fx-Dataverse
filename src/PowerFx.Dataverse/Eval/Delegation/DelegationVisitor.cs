@@ -1417,7 +1417,9 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeFieldAccessNode;
 
             // If the node had injected float coercion, then we need to pull field access node from it.
-            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
+            if (node is CallNode functionCall && 
+                (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
+                functionCall.Args.Count == 1)
             {
                 maybeFieldAccessNode = functionCall.Args[0];
             }
@@ -1576,7 +1578,9 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if (node is CallNode functionCall && (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name))
+            if (node is CallNode functionCall && 
+                (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
+                functionCall.Args.Count == 1)
             {
                 maybeScopeAccessNode = functionCall.Args[0];
             }

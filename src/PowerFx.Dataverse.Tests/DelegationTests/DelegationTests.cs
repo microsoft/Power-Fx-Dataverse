@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 IEnumerable<ExpressionError> errors = check.ApplyErrors();
 
                 string[] errorList = errors.Select(x => x.ToString()).OrderBy(x => x).ToArray();
-                Assert.Equal(expectedWarnings.Length, errorList.Length);
+                Assert.True(expectedWarnings.Length == errorList.Length, string.Join("\r\n", errorList));
 
                 for (int j = 0; j < errorList.Length; j++)
                 {
