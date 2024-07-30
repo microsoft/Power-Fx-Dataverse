@@ -256,7 +256,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(197, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, false, true)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, expectedWarnings);
+            await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
         }
 
         [Fact]

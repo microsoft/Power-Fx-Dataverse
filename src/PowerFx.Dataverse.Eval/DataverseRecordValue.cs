@@ -34,12 +34,19 @@ namespace Microsoft.PowerFx.Dataverse
         // Used to resolve entity relationships (dot operators).
         private readonly IConnectionValueContext _connection;
 
-        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection)
+        // when a column map is used, we use a subset of columns and potentially rename them
+        // the map contains (new column name, Entity column name) entries
+        // the recordType will be using the new set of column names
+        // updates are not supported when a column map exists
+        private readonly IReadOnlyDictionary<string, string> _columnMap;
+
+        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection, IReadOnlyDictionary<string, string> columnMap = null)
             : base(recordType)
         {
             _entity = entity ?? throw new ArgumentNullException(nameof(entity));
             _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _columnMap = columnMap;
 
             if (_entity.LogicalName != _metadata.LogicalName)
             {
@@ -80,22 +87,22 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        private bool TryGetAttributeOrRelationship(string fieldName, out object value)
-        {
+        private bool TryGetAttributeOrRelationship(string innerFieldName, out object value)
+        {            
             // IR should convert the fieldName from display to Logical Name.
-            if (_entity.Attributes.TryGetValue(fieldName, out value))
+            if (_entity.Attributes.TryGetValue(innerFieldName, out value))
             {
                 return true;
             }
 
-            if (_metadata.TryGetRelationship(fieldName, out var realAttributeName))
+            if (_metadata.TryGetRelationship(innerFieldName, out var realAttributeName))
             {
                 if (_entity.Attributes.TryGetValue(realAttributeName, out value))
                 {
                     return true;
                 }
             }
-            else if (_metadata.TryGetOneToManyRelationship(fieldName, out var relation))
+            else if (_metadata.TryGetOneToManyRelationship(innerFieldName, out var relation))
             {
                 value = relation;
                 return true;
@@ -106,7 +113,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
-        {
+        {            
             (bool isSuccess, FormulaValue value) = TryGetFieldAsync(fieldType, fieldName, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
             result = value;
             return isSuccess;
@@ -116,15 +123,17 @@ namespace Microsoft.PowerFx.Dataverse
         {
             FormulaValue result;
 
+            string innerFieldName = _columnMap == null ? fieldName : _columnMap[fieldName];
+
             // If primary key is missing from Attributes, still get it from the entity.
-            if (fieldName == GetPrimaryKeyName())
+            if (innerFieldName == GetPrimaryKeyName())
             {
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
             }
 
             // IR should convert the fieldName from display to Logical Name.
-            if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
+            if (!TryGetAttributeOrRelationship(innerFieldName, out var value) || value == null)
             {
                 result = null;
                 return (false, result);
@@ -179,14 +188,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return (true, result);
             }
 
-            _metadata.TryGetAttribute(fieldName, out var amd);
+            _metadata.TryGetAttribute(innerFieldName, out var attributeMetadata);
 
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
             {
                 Kind = ErrorKind.Unknown,
                 Severity = ErrorSeverity.Critical,
-                Message = string.Format("{0} column type not supported.", amd != null ? amd.AttributeTypeName.Value : fieldType)
+                Message = string.Format("{0} column type not supported.", attributeMetadata != null ? attributeMetadata.AttributeTypeName.Value : fieldType)
             };
 
             result = NewError(expressionError);
@@ -217,12 +226,12 @@ namespace Microsoft.PowerFx.Dataverse
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                        {
-                            new ConditionExpression(referencingAttribute, ConditionOperator.Equal, _entity.Id)
-                        }
+                Criteria = new FilterExpression 
+                { 
+                    Conditions = 
+                    { 
+                        new ConditionExpression(referencingAttribute, ConditionOperator.Equal, _entity.Id) 
+                    } 
                 }
             };
 
@@ -280,7 +289,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Called by DataverseRecordValue, which wont internal entity attributes.
         public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();            
 
             // Update local copy of entity.
             var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue<RecordValue> error);
@@ -314,6 +323,12 @@ namespace Microsoft.PowerFx.Dataverse
         public override async Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue record, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (_columnMap != null)
+            {
+                throw new InvalidOperationException($"Update operation not supported on {nameof(DataverseRecordValue)} with column map");
+            }
+
             var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
 
             if (refreshedRecord.IsValue)
@@ -374,6 +389,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
         {
+            if (_columnMap != null)
+            {
+                throw new InvalidOperationException($"ToExpression not supported on {nameof(DataverseRecordValue)} with column map");
+            }
+
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
             var keyName = GetPrimaryKeyName();
@@ -390,6 +410,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override void ShallowCopyFieldInPlace(string fieldName)
         {
+            if (_columnMap != null)
+            {
+                throw new InvalidOperationException($"ShallowCopyFieldInPlace not supported on {nameof(DataverseRecordValue)} with column map");
+            }
+
             var clonedEntity = new Entity(Entity.LogicalName, Entity.Id);
 
             foreach (var attr in Entity.Attributes)

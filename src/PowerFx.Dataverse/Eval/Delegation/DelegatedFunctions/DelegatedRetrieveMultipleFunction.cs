@@ -21,10 +21,12 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        // arg0: table
-        // arg1: filter
-        // arg2: orderby
-        // arg3: top
+        // args[0]: table
+        // args[1]: filter
+        // args[2]: orderby
+        // args[3]: count
+        // args[4]: distinct column
+        // args[5]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();

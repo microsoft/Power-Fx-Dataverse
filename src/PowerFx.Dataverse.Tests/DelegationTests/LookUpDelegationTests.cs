@@ -280,7 +280,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     if (expected is double && res is decimal dec) { res = (double)dec; }
                     return res;
                 },
-                cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, expectedWarnings);
+                cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
         }
 
         [Theory]

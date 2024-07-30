@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
 
         protected async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat,
-            bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, params string[] expectedWarnings)
+            bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             for (int i = 0; i < inputs.Count; i++)
             {
-                if (i == 1 && !File.Exists($"WithTransformed_{file}"))
+                if (i == 1 && !withTransformed)
                 {
                     break;
                 }

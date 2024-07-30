@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(4, "IsBlank(Distinct(t1, Price))", false)]
         public async Task IsBlankDelegationAsync(int id, string expr, bool expected, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "IsBlankDelegation.txt", expr, -2, expected, result => ((BooleanValue)result).Value, false, false, null, false, true, expectedWarnings);
+            await DelegationTestAsync(id, "IsBlankDelegation.txt", expr, -2, expected, result => ((BooleanValue)result).Value, false, false, null, false, true, false, expectedWarnings);
         }
     }
 }

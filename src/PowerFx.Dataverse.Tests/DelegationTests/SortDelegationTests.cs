@@ -88,7 +88,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     RecordValue rv => (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..],
                     _ => throw FailException.ForFailure("Unexpected result")
                 }
-                , true, true, null, true, true);
+                , true, true, null, true, true, true);
         }
 
         private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";

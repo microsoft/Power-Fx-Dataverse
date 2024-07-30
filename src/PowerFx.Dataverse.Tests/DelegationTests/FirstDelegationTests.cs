@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(20, "First(et).Field1", 200.0, false, true)]
         public async Task FirstDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FirstDelegation.txt", expr, -2, expected, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, expectedWarnings);
+            await DelegationTestAsync(id, "FirstDelegation.txt", expr, -2, expected, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
         }
     }
 }

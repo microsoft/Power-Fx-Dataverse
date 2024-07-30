@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -49,16 +50,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(32, "ForAll(ForAll(t1, { x: Price }), { y: x })", 4, "y", "100, 10, -10, 10")]
         [InlineData(33, "ForAll(ForAll(t1, { x: Price, y: LocalId }), { x: y, y: x })", 4, "y", "100, 10, -10, 10")]
         [InlineData(34, "ForAll(ForAll(t1, { x: Price, y: LocalId }), { x: y, y: x })", 4, "x", "00000000-0000-0000-0000-000000000001, 00000000-0000-0000-0000-000000000003, 00000000-0000-0000-0000-000000000004, 00000000-0000-0000-0000-000000000005")]
+        [InlineData(35, "ForAll(t1, {})", 4, null, "∅, ∅, ∅, ∅")]
+        [InlineData(36, "ForAll(FirstN(t1, 3), { Price: Price*2, Price2: Price })", 3, "Price", "200, 20, -20")]
+        [InlineData(37, "ForAll(ForAll(t1, Price), Value*2)", 4, "Value", "200, 20, -20, 20")]
+        [InlineData(38, "ForAll(ForAll(t1, Price*2), Value )", 4, "Value", "200, 20, -20, 20", "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "ForAllDelegation.txt", expr, expectedRows, expectedIds,
                 (result) => result switch
                 {
-                    TableValue tv => string.Join(", ", tv.Rows.Select(drv => GetString(drv.Value.Fields.First(nv => nv.Name == column).Value))),
+                    TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column)
+                                                                             ? ((Func<string>)(() => { Assert.Empty(drv.Value.Fields); return "∅"; }))()
+                                                                             : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value))),
                     RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value),
                     _ => throw FailException.ForFailure("Unexpected result")
                 },
-                true, true, null, true, true, expectedWarnings);
+                true, true, null, true, true, true, expectedWarnings);
         }
 
         private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";

@@ -72,6 +72,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static bool HasDistinct(ColumnMap map) => map != null && !string.IsNullOrEmpty(map._distinctColumn);
 
+        // returns the string contained in TextLiteralNode
         private static string GetString(IntermediateNode i)
             => i is TextLiteralNode tln
                ? tln.LiteralValue

@@ -385,37 +385,26 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new();            
+
+            RecordType recordType = Type.ToRecord();
 
             if (columnMap != null)
             {
-                foreach (Entity entity in entityCollection.Entities)
+                RecordType rt = RecordType.Empty();
+
+                foreach (KeyValuePair<string, string> kvp in columnMap.AsStringDictionary())
                 {
-                    Dictionary<string, FormulaValue> record = new Dictionary<string, FormulaValue>();
-                    RecordType recordType = Type.ToRecord();
-
-                    await foreach (NamedValue nv in new DataverseRecordValue(entity, _entityMetadata, recordType, _connection).GetFieldsAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        record.Add(nv.Name, nv.Value);
-                    }
-
-                    List<NamedValue> newRecord = new List<NamedValue>();
-
-                    foreach (KeyValuePair<string, string> map in columnMap.AsStringDictionary())
-                    {
-                        bool b = record.TryGetValue(map.Value, out FormulaValue val);
-                        newRecord.Add(new NamedValue(map.Key, b ? val : FormulaValue.NewBlank(recordType.GetFieldType(map.Value))));
-                    }
-
-                    list.Add(DValue<RecordValue>.Of(RecordValue.NewRecordFromFields(newRecord)));
+                    rt = rt.Add(kvp.Key /* new name */, recordType.GetFieldType(kvp.Value /* old name */));
                 }
 
-                return list;
+                recordType = rt;
             }
+
 
             foreach (Entity entity in entityCollection.Entities)
             {
-                var row = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+                var row = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection, columnMap?.AsStringDictionary());
                 list.Add(DValue<RecordValue>.Of(row));
             }
 

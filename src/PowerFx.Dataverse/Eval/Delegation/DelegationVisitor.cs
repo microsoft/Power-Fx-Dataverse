@@ -1135,7 +1135,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            return CreateNotSupportedErrorAndReturn(node, tableArg);
+            return ProcessOtherFunctions(node, tableArg);
         }
 
         private RetVal NoTransform(CallNode node, RetVal tableArg)

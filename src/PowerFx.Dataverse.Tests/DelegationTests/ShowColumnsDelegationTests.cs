@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     TableValue tv => tv.Type.FieldNames.Count(),
                     RecordValue rv => rv.Type.FieldNames.Count(),
                     _ => throw FailException.ForFailure("Unexpected result")
-                }, false, false, null, false, isCheckSuccess, expectedWarnings);
+                }, false, false, null, false, isCheckSuccess, false, expectedWarnings);
         }
     }
 }

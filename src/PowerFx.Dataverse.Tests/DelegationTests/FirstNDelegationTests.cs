@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption,
-                (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, expectedWarnings);
+                (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
         }
     }
 }
