@@ -38,3 +38,5 @@ With({r:local}, (ForAll(__retrieveMultiple(local, __noop(), __noop(), 999, , {Va
 
 
 
+With({r:local}, (ForAll(Distinct(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value))))
+With({r:local}, (Distinct(ForAll(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value))))
