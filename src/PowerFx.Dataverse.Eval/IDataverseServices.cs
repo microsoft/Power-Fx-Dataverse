@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
 
     public interface IDataverseCreator
     {
-        Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default);
     }
 
     public interface IDataverseReader
@@ -36,11 +36,12 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="entityName"></param>
         /// <param name="id"></param>
-        /// <param name="columns">column names to fetch, if kept null fetches all columns. </param>
+        /// <param name="columns">column names to fetch, if kept null fetches all columns.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken));
-        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken));        
+        Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default);
+
+        Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default);
     }
 
     // Optional interface to enable clearing any caches.
@@ -53,11 +54,11 @@ namespace Microsoft.PowerFx.Dataverse
     {
         // Entity can contain just the fields to update.
         // Return fully updated entity 
-        Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default);
     }
     public interface IDataverseDeleter
     {
-        Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken));
+        Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default);
     }
 
     public class DataverseNotPresent : IDataverseExecute

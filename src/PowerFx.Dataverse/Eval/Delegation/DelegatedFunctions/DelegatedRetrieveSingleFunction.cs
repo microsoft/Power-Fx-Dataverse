@@ -21,9 +21,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        // arg0: table
-        // arg1: filter
-        // arg2: orderby
+        // args[0]: table
+        // args[1]: filter
+        // args[2]: orderby        
+        // args[3]: distinct column
+        // args[4]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -40,9 +42,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;                
+                filter = DelegationFormulaValue._filter;
                 relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;               
+                partitionId = DelegationFormulaValue._partitionId;
             }
             else
             {
@@ -50,25 +52,31 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
-            {                
-                orderBy = DelegationFormulaValue2._orderBy;                
+            {
+                orderBy = DelegationFormulaValue2._orderBy;
             }
             else
             {
                 throw new InvalidOperationException($"Input arg2 should always be of type {nameof(DelegationFormulaValue)}"); ;
             }
 
-            var isDistinct = args[3] is BooleanValue bv
-                ? bv.Value
-                : throw new InvalidOperationException($"args3 should always be of type {nameof(BooleanValue)} : found {args[3]}");
+            string distinctColumn = null;
+            if (args[3] is StringValue sv)
+            {
+                distinctColumn = sv.Value;
+            }
+            else if (args[3] is not BlankValue)
+            {
+                throw new InvalidOperationException($"args3 should always be of type {nameof(StringValue)} : found {args[3]}");
+            }
 
-            // column names to fetch.
-            IEnumerable<string> columns = null;
+            ColumnMap columnMap = null;
+
             if (args.Length > 4)
             {
-                columns = args.Skip(4).Select(x => x is StringValue stringValue
-                                                        ? stringValue.Value
-                                                        : throw new InvalidOperationException($"From Args4 onwards, all args should have been String Value"));                
+                columnMap = args[4] is RecordValue rv
+                    ? new ColumnMap(rv, distinctColumn)
+                    : throw new InvalidOperationException($"Expecting args4 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -78,10 +86,9 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = 1,
 
-                _columnSet = columns,
-                _isDistinct = isDistinct,
+                _columnMap = columnMap,                
                 _partitionId = partitionId,
-                _relation = relation,                
+                _relation = relation,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -100,19 +107,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Adjust type, as function like ShowColumn() can manipulate it.
                 RecordValue resultRecord;
-                if (isDistinct)
-                {
-                    if (columns == null || !columns.Any() || columns.Count() > 1)
-                    {
-                        throw new InvalidOperationException("Distinct requires single column to be specified");
-                    }
-
-                    resultRecord = DelegatedRetrieveMultipleFunction.ToValueColumn(result, columns.First()).Value;
-                }
-                else
-                {
-                    resultRecord = CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
-                }
+                resultRecord = CompileTimeTypeWrapperRecordValue.AdjustType((RecordType)ReturnFormulaType, result.Value);
 
                 return resultRecord;
             }

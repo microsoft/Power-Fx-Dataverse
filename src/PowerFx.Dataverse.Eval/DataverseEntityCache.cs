@@ -4,13 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -22,7 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public TimeSpan DefaultLifeTime => new(0, 5, 0); // 5 minutes
 
-        public int CacheSize { get { lock (_lock) { return _cache.Count; } } }
+        public int CacheSize
+        { get { lock (_lock) { return _cache.Count; } } }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
         private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
@@ -131,7 +132,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -146,7 +147,7 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -155,7 +156,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _innerService.DeleteAsync(entityName, id, cancellationToken);
         }
 
-        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -179,9 +180,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();           
+            cancellationToken.ThrowIfCancellationRequested();
 
             DataverseResponse<EntityCollection> result = await _innerService.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
@@ -196,7 +197,7 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             RemoveCacheEntry(entity.Id);
             return _innerService.UpdateAsync(entity, cancellationToken);
@@ -219,8 +220,6 @@ namespace Microsoft.PowerFx.Dataverse
                             RemoveCacheEntry(entityKvp.Key);
                         }
                     }
-
-                    
                 }
             }
         }

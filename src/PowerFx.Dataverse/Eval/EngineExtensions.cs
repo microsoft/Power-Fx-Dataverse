@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.
-        internal class DelegationHooks
+        internal class DelegationHooks 
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
             }
-            
+
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
@@ -90,12 +90,12 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                var isDistinctArg = new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), query._isDistinct);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query._columnMap) ? query._columnMap.Distinct : string.Empty);
                 args.Add(isDistinctArg);
 
-                if (query.hasColumnSet)
+                if (query.hasColumnMap)
                 {
-                    args.AddRange(query._columnSet);
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
@@ -109,6 +109,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 return node;
+            }
+
+            private static RecordType GetColumnMapType(DelegationIRVisitor.RetVal query)
+            {
+                RecordType rt = RecordType.Empty();
+
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap.Map)
+                {
+                    rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
+                }
+
+                return rt;
             }
 
             internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IEnumerable<string> relations, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
@@ -210,9 +222,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // last arg is blank, as we don't need partition id for retrieve in non elastic table.
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, blankNode };
                 var returnType = query._originalNode.IRContext.ResultType;
-                if (query.hasColumnSet)
+                
+                if (query.hasColumnMap)
                 {
-                    args.AddRange(query._columnSet);
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 CallNode node;
@@ -234,9 +247,10 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, partitionId };
                 var returnType = query._originalNode.IRContext.ResultType;
-                if (query.hasColumnSet)
+                
+                if (query.hasColumnMap)
                 {
-                    args.AddRange(query._columnSet);
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
                 }
 
                 CallNode node;

@@ -4,14 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -34,39 +33,39 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var columnSet = columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray());
-            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, columnSet), $"Retrieve '{logicalName}':{id}");
+            return DataverseExtensions.DataverseCall(() => _organizationService.Retrieve(logicalName, id, ColumnMap.GetColumnSet(columns)), $"Retrieve '{logicalName}':{id}");
         }
 
-        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _organizationService.Create(entity), $"Create '{entity.LogicalName}'");
         }
 
-        public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall((Func<bool>)(() => { this._organizationService.Update(entity); return true; }), $"Update '{entity.LogicalName}':{entity.Id}");
+            return DataverseExtensions.DataverseCall((() => { this._organizationService.Update(entity); return true; }), $"Update '{entity.LogicalName}':{entity.Id}");
         }
 
-        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse<EntityCollection>> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _organizationService.RetrieveMultiple(query), $"Query {query} returned nothing");
         }
 
-        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();            
-            return DataverseExtensions.DataverseCall((Func<bool>)(() => { this._organizationService.Delete(entityName, id); return true; }), $"Delete '{entityName}':{id}");
+            return DataverseExtensions.DataverseCall((() => { this._organizationService.Delete(entityName, id); return true; }), $"Delete '{entityName}':{id}");
         }
 
-        internal virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default(CancellationToken))
+        internal virtual HttpResponseMessage ExecuteWebRequest(HttpMethod method, string queryString, string body, Dictionary<string, List<string>> customHeaders, string contentType = null, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             throw new NotImplementedException();
         }
 
@@ -76,9 +75,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public virtual async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
         {
-            return DataverseExtensions.DataverseCall(
-                () => _organizationService.Execute(request),
-                $"Execute '{request.RequestName}'");
+            cancellationToken.ThrowIfCancellationRequested();
+            return DataverseExtensions.DataverseCall(() => _organizationService.Execute(request), $"Execute '{request.RequestName}'");
         }
     }
 }

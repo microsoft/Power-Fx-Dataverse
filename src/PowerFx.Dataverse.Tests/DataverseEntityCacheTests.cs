@@ -105,7 +105,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(0, cache.CacheSize);
 
             orgService.SetNextRetrieveResult(entities[0]);
-            DataverseResponse<Entity> r2 = await cache.RetrieveAsync(entities[0].LogicalName, entities[0].Id, columns:null);
+            DataverseResponse<Entity> r2 = await cache.RetrieveAsync(entities[0].LogicalName, entities[0].Id, columns: null);
             Assert.NotNull(r2);
             Assert.False(r2.HasError);
 

@@ -1,21 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class SortDelegationTests
+    public class SortDelegationTests : DelegationTests
     {
-        private readonly ITestOutputHelper _output;
-
         public SortDelegationTests(ITestOutputHelper output)
+            : base(output)
         {
-            _output = output;
         }
 
         [Theory]
@@ -60,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // Non-delegable
         [InlineData(23, @"Sort(t1, ""Price"")", 4, "0001, 0003, 0004, 0005")]
-        [InlineData(24, @"Sort(t1, ""new_price"")", 4, "0001, 0003, 0004, 0005")]        
+        [InlineData(24, @"Sort(t1, ""new_price"")", 4, "0001, 0003, 0004, 0005")]
         [InlineData(25, @"Sort(t1, ""XXXXX"")", 4, "0001, 0003, 0004, 0005")]
 
         // Delegable
@@ -74,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Not a delegable table
         [InlineData(29, @"Sort([30, 10, 20], Value)", 3, "10, 20, 30", true)]
 
-        [InlineData(30, @"Distinct(Sort(t1, Price), Price)", 3, "-10, 10, 100", true)]        
+        [InlineData(30, @"Distinct(Sort(t1, Price), Price)", 3, "-10, 10, 100", true)]
         [InlineData(31, "LookUp(Sort(t1, Quantity), Price <= 100)", 1, "0001")]
         [InlineData(32, @"Sort(Distinct(t1, Price), Value)", 3, "-10, 10, 100", true)]
         [InlineData(33, "ShowColumns(Sort(t1, Price), 'new_quantity', 'new_price', 'localid')", 4, "0004, 0003, 0005, 0001")]
@@ -83,66 +79,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(36, "Sort(SortByColumns(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
         public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds, bool useValue = false)
         {
-            AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
-            map.Add("local", "t1");            
-
-            SingleOrgPolicy policy = new SingleOrgPolicy(map);
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: true, policy: policy, withExtraEntity: true);
-            ParserOptions opts = PluginExecutionTests._parserAllowSideEffects_NumberIsFloat;
-            PowerFxConfig config = new PowerFxConfig();
-            config.SymbolTable.EnableMutationFunctions();
-
-            RecalcEngine engine1 = new RecalcEngine(config);
-            engine1.EnableDelegation(dv.MaxRows);
-
-            IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, 0);
-
-            for (int i = 0; i < inputs.Count; i++)
-            {
-                string input = inputs[i];
-                CheckResult check = engine1.Check(input, options: opts, symbolTable: dv.Symbols);
-                Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => er.Message)));
-
-                DependencyInfo scam = check.ScanDependencies(dv.MetadataCache);
-                Core.IR.IRResult irNode = check.ApplyIR();
-                string actualIr = check.GetCompactIRString();
-
-                _output.WriteLine(input);
-                await DelegationTestUtility.CompareSnapShotAsync("SortDelegation.txt", actualIr, id, i == 1);
-
-                _output.WriteLine(actualIr);
-                _output.WriteLine(string.Empty);
-
-                IEnumerable<ExpressionError> errors = check.ApplyErrors();
-                Assert.Empty(errors);
-
-                IExpressionEvaluator run = check.GetEvaluator();
-                FormulaValue result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
-
-                Assert.IsNotType<ErrorValue>(result);
-
-                string ids = null;
-                if (result is TableValue tv)
+            await DelegationTestAsync(id, "SortDelegation.txt", expr, expectedRows, expectedIds,
+                result => result switch
                 {
-                    Assert.Equal(expectedRows, tv.Rows.Count());
-                    ids = useValue
-                        ? string.Join(", ", tv.Rows.Select(drv => GetString(drv.Value.Fields.First(nv => nv.Name == "Value").Value)))
-                        : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..]));
+                    TableValue tv => useValue
+                                        ? string.Join(", ", tv.Rows.Select(drv => GetString(drv.Value.Fields.First(nv => nv.Name == "Value").Value)))
+                                        : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..])),
+                    RecordValue rv => (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..],
+                    _ => throw FailException.ForFailure("Unexpected result")
                 }
-                else if (result is RecordValue rv)
-                {
-                    Assert.Equal(1, expectedRows);
-                    ids = (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..];
-                }
-                else
-                {
-                    Assert.Fail("result is neither a TableValue nor a RecordValue");
-                }
-
-                Assert.Equal<object>(expectedIds, ids);
-            }
+                , true, true, null, true, true, true);
         }
 
-        private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";        
+        private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";
     }
 }

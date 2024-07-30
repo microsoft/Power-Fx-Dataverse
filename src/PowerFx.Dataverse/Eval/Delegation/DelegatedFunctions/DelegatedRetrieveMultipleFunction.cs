@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
@@ -22,10 +21,12 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        // arg0: table
-        // arg1: filter
-        // arg2: orderby
-        // arg3: top
+        // args[0]: table
+        // args[1]: filter
+        // args[2]: orderby
+        // args[3]: count
+        // args[4]: distinct column
+        // args[5]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -58,9 +59,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[1] is DelegationFormulaValue DelegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;                
+                filter = DelegationFormulaValue._filter;
                 relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;                
+                partitionId = DelegationFormulaValue._partitionId;
             }
             else
             {
@@ -68,34 +69,31 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
-            {                
-                orderBy = DelegationFormulaValue2._orderBy;             
+            {
+                orderBy = DelegationFormulaValue2._orderBy;
             }
             else
             {
                 throw new InvalidOperationException($"args2 should always be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
             }
 
-            bool isDistinct = false;
-            if (args[4] is BooleanValue bv)
+            string distinctColumn = null;
+            if (args[4] is StringValue sv)
             {
-                isDistinct = bv.Value;
+                distinctColumn = sv.Value;
             }
-            else
+            else if (args[4] is not BlankValue)
             {
-                throw new InvalidOperationException($"args4 should always be of type {nameof(BooleanValue)} : found {args[3]}");
+                throw new InvalidOperationException($"args4 should always be of type {nameof(StringValue)} : found {args[4]}");
             }
-            
-            // column names to fetch. if kept null, fetches all columns.
-            IEnumerable<string> columns = null;
+
+            ColumnMap columnMap = null;
 
             if (args.Length > 5)
             {
-                columns = args.Skip(5).Select(
-                    x => x is StringValue stringValue
-                            ? stringValue.Value
-                            : throw new InvalidOperationException($"From args5 onwards, all args should have been type {nameof(StringValue)} : found {args[4]}")
-                );
+                columnMap = args[5] is RecordValue rv
+                    ? new ColumnMap(rv, distinctColumn)
+                    : throw new InvalidOperationException($"Expecting args5 to be a {nameof(RecordValue)} : found {args[5].GetType().Name}");
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -105,26 +103,13 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = topCount,
 
-                _columnSet = columns,
-                _isDistinct = isDistinct,
+                _columnMap = columnMap,                
                 _partitionId = partitionId,
-                _relation = relation                
+                _relation = relation
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
-
-            // Distinct outputs always in default single column table.
-            if (isDistinct)
-            {
-                if (columns == null || !columns.Any() || columns.Count() > 1)
-                {
-                    throw new InvalidOperationException("Distinct requires single column to be specified");
-                }
-
-                rows = ToValueColumn(rows, columns.First());
-            }
-
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
             return result;
         }

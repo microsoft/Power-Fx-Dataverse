@@ -24,8 +24,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
-            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancel)
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken)                
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Binder should have enforced that this always succeeds.
                 var t2 = (DataverseTableValue)table;
 
@@ -39,18 +41,20 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var filter = new FilterExpression();
                         filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
-                        var rows = await t2.RetrieveMultipleAsync(filter: filter, relation: null, orderBy: null, count: 1, columnSet: columns, isDistinct: false, cancel);
+#pragma warning disable CS0618 // Type or member is obsolete
+                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { Filter = filter, Top = 1, _columnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
+#pragma warning restore CS0618 // Type or member is obsolete
                         result = rows.FirstOrDefault();
                     }
                     else
                     {
                         // If the table is elastic and partitionId is not null we need to use RetrieveAsync api to point retrieve using guid and partitionId which is faster.
-                        result = await t2.RetrieveAsync(id, partitionId, columns, cancel).ConfigureAwait(false);
+                        result = await t2.RetrieveAsync(id, partitionId, columns, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    result = await t2.RetrieveAsync(id, columns, cancel).ConfigureAwait(false);
+                    result = await t2.RetrieveAsync(id, columns, cancellationToken).ConfigureAwait(false);
                 }
 
                 return result;
@@ -70,6 +74,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// <returns></returns>
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
 
                 return result;

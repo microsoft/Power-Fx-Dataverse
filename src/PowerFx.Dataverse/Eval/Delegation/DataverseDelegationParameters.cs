@@ -18,10 +18,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal ISet<LinkEntity> _relation { get; init; }
 
-        // Top is count.
-
-        internal IEnumerable<string> _columnSet { get; init; }
-        internal bool _isDistinct { get; init; }
+        internal ColumnMap _columnMap { get; init; }        
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -31,42 +28,33 @@ namespace Microsoft.PowerFx.Dataverse
             get
             {
                 DelegationParameterFeatures features = 0;
-                
-                if (Filter != null) 
+
+                if (Filter != null)
                 {
                     features |= DelegationParameterFeatures.Filter | DelegationParameterFeatures.Columns;
                 }
-                
-                if (OrderBy != null) 
-                { 
+
+                if (OrderBy != null)
+                {
                     features |= DelegationParameterFeatures.Sort;  // $$$ Should be renamed OrderBy
                 }
-                
-                if (Top > 0) 
-                { 
-                    features |= DelegationParameterFeatures.Top; 
+
+                if (Top > 0)
+                {
+                    features |= DelegationParameterFeatures.Top;
                 }
 
                 return features;
-
             }
         }
 
         public override string GetOdataFilter()
-        {            
+        {
             var odata = ToOdataFilter(Filter);
             return odata;
         }
 
-        public override IReadOnlyCollection<string> GetColumns()
-        {
-            if (this._columnSet == null)
-            {
-                return null;
-            }
-            var columns = this._columnSet.ToArray();
-            return columns.Length == 0 ? null : columns;
-        }
+        public override IReadOnlyCollection<string> GetColumns() => _columnMap?.Columns;
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FilterExpression filter)
