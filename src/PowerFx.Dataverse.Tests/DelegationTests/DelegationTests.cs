@@ -182,7 +182,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [TestPriority(2)]
         public void CheckDelegationExpressions()
         {
-#if true
+#if false
             // For debugging only
             string file = @"c:\temp\delegation.txt";
 
