@@ -16,10 +16,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedRetrieveMultipleFunction : DelegateFunction
     {
-        internal const string DelegatedRetrieveMultipleFunctionName = "__retrieveMultiple";
-
         public DelegatedRetrieveMultipleFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, DelegatedRetrieveMultipleFunctionName, tableType)
+          : base(hooks, "__retrieveMultiple", tableType)
         {
         }
 
@@ -105,7 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = topCount,
 
-                _columnMap = columnMap,                
+                _columnMap = columnMap,
                 _partitionId = partitionId,
                 _relation = relation
             };

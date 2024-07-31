@@ -16,18 +16,25 @@ using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
+    // This class is sealed to make sure all tests should be calling DelegationTestAsync with [TestPriority(1)] so that they all
+    // execute before CheckDelegationExpressions test which uses [TestPriority(2)]
+    // In DelegationTestAsync, we accumulate delegation tests in _delegationTests dictionary below
+    // and then validate with have the expected combinations in CheckDelegationExpressions
+    // For determining the sequence of function calls, we use CallVisitor below and only look at 1st call arguments as
+    // all delegated calls have the table/delegation managed as first parameter.
+    // We ignore/skip 'With' call as it's just modifying the context.
     [TestCaseOrderer("Microsoft.PowerFx.Dataverse.Tests.PriorityOrderer", "PowerFx.Dataverse.Tests")]
-    public partial class DelegationTests
+    public sealed partial class DelegationTests
     {
         internal static ConcurrentDictionary<string, List<string>> _delegationTests = new ConcurrentDictionary<string, List<string>>();
-        protected readonly ITestOutputHelper _output;
+        public readonly ITestOutputHelper _output;
 
         public DelegationTests(ITestOutputHelper output)
         {
             _output = output;
         }
 
-        protected async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat,
+        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat,
             bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();

@@ -16,10 +16,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedRetrieveSingleFunction : DelegateFunction
     {
-        internal const string DelegatedRetrieveSingleFunctionName = "__retrieveSingle";
-
         public DelegatedRetrieveSingleFunction(DelegationHooks hooks, RecordType returnType)
-          : base(hooks, DelegatedRetrieveSingleFunctionName, returnType)
+          : base(hooks, "__retrieveSingle", returnType)
         {
         }
 
@@ -88,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = 1,
 
-                _columnMap = columnMap,                
+                _columnMap = columnMap,
                 _partitionId = partitionId,
                 _relation = relation,
             };

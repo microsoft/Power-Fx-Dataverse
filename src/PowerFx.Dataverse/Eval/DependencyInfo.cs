@@ -344,7 +344,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Context newContext = context;
 
-                if (node.Function.Name == DelegatedRetrieveMultipleFunction.DelegatedRetrieveMultipleFunctionName &&
+                if (node.Function.GetType() == typeof(DelegatedRetrieveMultipleFunction) &&
                     node.Args.Count == 6 &&
                     node.Args[4] is TextLiteralNode distinctNode &&
                     node.Args[5] is RecordNode columnMapNode)
@@ -352,7 +352,7 @@ namespace Microsoft.PowerFx.Dataverse
                     ColumnMap columnMap = new ColumnMap(ToRecordValue(columnMapNode), distinctNode.LiteralValue);
                     newContext = newContext.SetColumnMap(columnMap);
                 }
-                else if (node.Function.Name == DelegatedRetrieveSingleFunction.DelegatedRetrieveSingleFunctionName &&
+                else if (node.Function.GetType() == typeof(DelegatedRetrieveSingleFunction) &&
                     node.Args.Count == 5 &&
                     node.Args[3] is TextLiteralNode distinctNode2 &&
                     node.Args[4] is RecordNode columnMapNode2)
