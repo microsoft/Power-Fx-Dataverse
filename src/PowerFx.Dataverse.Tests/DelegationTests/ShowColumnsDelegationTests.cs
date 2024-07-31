@@ -2,19 +2,14 @@
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class ShowColumnsDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public ShowColumnsDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
         [InlineData(1, "FirstN(ShowColumns(t1, 'new_price', 'old_price'), 1)", 2, true)]
         [InlineData(2, "ShowColumns(FirstN(t1, 1), 'new_price', 'old_price')", 2, true)]
         [InlineData(3, "FirstN(Filter(ShowColumns(t1, 'new_price', 'old_price'), new_price < 120), 1)", 2, true)]

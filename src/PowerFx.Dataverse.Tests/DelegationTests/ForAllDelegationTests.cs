@@ -3,19 +3,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class ForAllDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public ForAllDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
         [InlineData(1, "ForAll([10,20,30], Value)", 3, "Value", "10, 20, 30")]
         [InlineData(2, "ForAll(t1, Price)", 4, "Value", "100, 10, -10, 10")]
         [InlineData(3, "ForAll(t1, { Price: Price })", 4, "Price", "100, 10, -10, 10")]

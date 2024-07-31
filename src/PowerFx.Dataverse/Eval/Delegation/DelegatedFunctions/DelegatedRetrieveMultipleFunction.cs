@@ -16,8 +16,10 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedRetrieveMultipleFunction : DelegateFunction
     {
+        internal const string DelegatedRetrieveMultipleFunctionName = "__retrieveMultiple";
+
         public DelegatedRetrieveMultipleFunction(DelegationHooks hooks, TableType tableType)
-          : base(hooks, "__retrieveMultiple", tableType)
+          : base(hooks, DelegatedRetrieveMultipleFunctionName, tableType)
         {
         }
 

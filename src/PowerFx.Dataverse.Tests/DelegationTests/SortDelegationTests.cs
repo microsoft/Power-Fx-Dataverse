@@ -2,19 +2,14 @@
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class SortDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public SortDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
         [InlineData(1, "Sort(t1, Price)", 4, "0004, 0003, 0005, 0001")]
         [InlineData(2, "Sort(t1, Price, SortOrder.Ascending)", 4, "0004, 0003, 0005, 0001")]
         [InlineData(3, "Sort(t1, Price, SortOrder.Descending)", 4, "0001, 0003, 0005, 0004")]
@@ -90,7 +85,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 }
                 , true, true, null, true, true, true);
         }
-
-        private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";
     }
 }

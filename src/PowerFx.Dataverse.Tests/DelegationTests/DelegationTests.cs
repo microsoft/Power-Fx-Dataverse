@@ -1,19 +1,25 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
+using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class DelegationTests
+    [TestCaseOrderer("Microsoft.PowerFx.Dataverse.Tests.PriorityOrderer", "PowerFx.Dataverse.Tests")]
+    public partial class DelegationTests
     {
+        internal static ConcurrentDictionary<string, List<string>> _delegationTests = new ConcurrentDictionary<string, List<string>>();
         protected readonly ITestOutputHelper _output;
 
         public DelegationTests(ITestOutputHelper output)
@@ -38,10 +44,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             extraConfig?.Invoke(config);
 
             RecalcEngine engine = new RecalcEngine(config);
-            engine.EnableDelegation(dv.MaxRows);
-            engine.UpdateVariable("_count", FormulaValue.New(100m));
-            engine.UpdateVariable("_g1", FormulaValue.New(PluginExecutionTests._g1)); // matches entity
-            engine.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+            ConfigureEngine(dv, engine, true);
 
             // Add a variable with same table type.
             // But it's not in the same symbol table, so we can't delegate this.
@@ -71,13 +74,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     return;
                 }
 
-                Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => er.Message)));
+                Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => $"{er.Span.Min}-{er.Span.Lim}: {er.Message}")));
 
                 DependencyInfo scam = check.ScanDependencies(dv.MetadataCache);
 
                 // compare IR to verify the delegations are happening exactly where we expect
                 IRResult irNode = check.ApplyIR();
                 string actualIr = check.GetCompactIRString();
+
+                if (i == 0)
+                {
+                    SaveExpression(expr, dv, opts, config, allSymbols);
+                }
 
                 await DelegationTestUtility.CompareSnapShotAsync(file, actualIr, id, i == 1);
 
@@ -142,6 +150,142 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     }
                 }
             }
+        }
+
+        private static void SaveExpression(string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
+        {
+            RecalcEngine engine2 = new RecalcEngine(config);
+            ConfigureEngine(dv, engine2, false);
+            CheckResult check2 = engine2.Check(expr, options: opts, symbolTable: allSymbols);
+            Assert.True(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => er.Message)));
+            IRResult irNode2 = check2.ApplyIR();
+            string actualIr2 = check2.GetCompactIRString();
+
+            CallVisitor visitor = new CallVisitor();
+            CallVisitor.RetVal retVal = visitor.StartVisit(irNode2.TopNode, null);
+            _delegationTests.TryAdd(expr, retVal.Calls);
+        }
+
+        private static void ConfigureEngine(DataverseConnection dv, RecalcEngine engine, bool enableDelegation)
+        {
+            if (enableDelegation)
+            {
+                engine.EnableDelegation(dv.MaxRows);
+            }
+
+            engine.UpdateVariable("_count", FormulaValue.New(100m));
+            engine.UpdateVariable("_g1", FormulaValue.New(PluginExecutionTests._g1)); // matches entity
+            engine.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
+        }
+
+        [Fact]
+        [TestPriority(2)]
+        public void CheckDelegationExpressions()
+        {
+#if true
+            // For debugging only
+            string file = @"c:\temp\delegation.txt";
+
+            File.WriteAllText(file, JsonConvert.SerializeObject(_delegationTests.Select(kvp => new KeyValuePair<string, string>(kvp.Key, string.Join("|", kvp.Value))).OrderBy(kvp => kvp.Key)));
+            IEnumerable<KeyValuePair<string, List<string>>> data = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(File.ReadAllText(file)).Select(kvp => new KeyValuePair<string, List<string>>(kvp.Key, kvp.Value.Split('|').ToList()));
+            _delegationTests = new ConcurrentDictionary<string, List<string>>(data);
+#endif
+
+            _output.WriteLine($"Number of expressions {_delegationTests.Count}");
+
+            ConcurrentDictionary<string, List<string>> d2 = new ConcurrentDictionary<string, List<string>>();
+            foreach (KeyValuePair<string, List<string>> kvp in _delegationTests.OrderBy(kvp => kvp.Key))
+            {
+                string expr = kvp.Key;
+                string functions = string.Join(", ", kvp.Value);
+
+                d2.AddOrUpdate(functions, new List<string>() { expr }, (e, lst) => { lst.Add(expr); return lst; });
+            }
+
+            foreach (KeyValuePair<string, List<string>> kvp in d2.OrderBy(kvp => kvp.Key))
+            {
+                string functions = kvp.Key;
+
+                _output.WriteLine($"[{functions}]");
+
+                foreach (string expr in kvp.Value)
+                {
+                    _output.WriteLine(expr);
+                }
+
+                _output.WriteLine(string.Empty);
+            }
+
+            _output.WriteLine("----");
+
+            foreach (string f1 in new[] { "Distinct", "Filter", "First", "FirstN", "LookUp", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+            {
+                foreach (string f2 in new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+                {
+                    string f = $"{f1}, {f2}";
+                    
+                    if (d2.ContainsKey(f))
+                    {
+                        continue;
+                    }
+
+                    _output.WriteLine($"Missing {f}");
+                }
+            }
+        }
+    }
+
+    internal class CallVisitor : SearchIRVisitor<CallVisitor.RetVal, CallVisitor.Context>
+    {
+        public class RetVal
+        {
+            public RetVal()
+            {
+                Calls = new List<string>();
+            }
+
+            public List<string> Calls { get; private set; }
+        }
+
+        public class Context
+        {
+        }
+
+        public override RetVal Visit(Core.IR.Nodes.CallNode node, Context context)
+        {
+            string funcName = node.Function.Name;
+            int i = funcName == "With" ? 1 : 0;
+
+            RetVal ret = node.Args[i].Accept(this, context);
+
+            if (ret != null)
+            {
+                if (i == 0)
+                {
+                    ret.Calls.Insert(0, funcName);
+                }
+
+                return ret;
+            }
+
+            RetVal retVal = new RetVal();
+
+            if (i == 0)
+            {
+                retVal.Calls.Insert(0, funcName);
+            }
+
+            return retVal;
+        }
+
+        public RetVal StartVisit(IntermediateNode node, Context ctx)
+        {
+            return node switch
+            {
+                Core.IR.Nodes.CallNode callNode => this.Visit(callNode, ctx),
+                Core.IR.Nodes.RecordFieldAccessNode recordFieldAccessNode => base.Visit(recordFieldAccessNode, ctx),
+                _ => throw new Exception($"Unknown {node.GetType().Name} type")
+            };
         }
     }
 }

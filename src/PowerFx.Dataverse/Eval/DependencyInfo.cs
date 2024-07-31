@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -81,14 +80,14 @@ namespace Microsoft.PowerFx.Dataverse
     }
 
     // IR has already:
-    // - resolved everything to logical names. 
+    // - resolved everything to logical names.
     // - resolved implicit ThisRecord
     internal class DependencyVisitor : IRNodeVisitor<DependencyVisitor.RetVal, DependencyVisitor.Context>
     {
-        // IR is already in logical names, but needed for resolving relationship names back to attribute names. 
+        // IR is already in logical names, but needed for resolving relationship names back to attribute names.
         private readonly CdsEntityMetadataProvider _metadataCache;
 
-        // Track reults. 
+        // Track reults.
         public DependencyInfo Info { get; private set; } = new DependencyInfo();
 
         public DependencyVisitor(CdsEntityMetadataProvider metadataCache)
@@ -144,16 +143,15 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override RetVal Visit(CallNode node, Context context)
         {
-            // Scope is created against type of arg0 
+            // Scope is created against type of arg0
             if (node.Scope != null)
             {
                 var arg0 = node.Args[0];
                 _scopeTypes[node.Scope.Id] = arg0.IRContext.ResultType;
             }
 
-            // If arg0 is a write-only arg, then skip it for reading. 
+            // If arg0 is a write-only arg, then skip it for reading.
             bool firstArgIsWrite = false;
-
 
             // Special casing Delegation runtime helper added during IR Rewriting.
             if (node.Function is DelegatedOperatorFunction)
@@ -169,12 +167,12 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // Relationship case
-                if(node.Args.Count > 3)
+                if (node.Args.Count > 3)
                 {
                     if (node.Args[3] is CallNode maybeTableArg && maybeTableArg.Function is TableFunction tableArg && maybeTableArg.Args.Count == 1)
                     {
                         var arg0 = (RecordNode)maybeTableArg.Args[0];
-                        if(arg0.Fields.TryGetValue(new Core.Utils.DName("Value"), out var valueNode) && valueNode is TextLiteralNode textNode)
+                        if (arg0.Fields.TryGetValue(new Core.Utils.DName("Value"), out var valueNode) && valueNode is TextLiteralNode textNode)
                         {
                             var relationshipObj = DelegationUtility.DeserializeRelatioMetadata(textNode.LiteralValue);
                             AddFieldRead(tableLogicalName, relationshipObj.ReferencingFieldName);
@@ -182,9 +180,9 @@ namespace Microsoft.PowerFx.Dataverse
                             var referencedEntityName = relationshipObj.ReferencedEntityName;
 
                             // referencedEntityName is null for non polymorphic relationships.
-                            if(referencedEntityName == null)
+                            if (referencedEntityName == null)
                             {
-                                if(_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata) && 
+                                if (_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata) &&
                                     entityMetadata.TryGetManyToOneRelationship(relationshipObj.ReferencingFieldName, out var relation))
                                 {
                                     referencedEntityName = relation.ReferencedEntity;
@@ -212,7 +210,14 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (node.Args[1] is TextLiteralNode field)
                     {
-                        AddFieldRead(tableLogicalName, field.LiteralValue);
+                        string fieldName = field.LiteralValue;
+
+                        if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+                        {
+                            fieldName = realFieldName;
+                        }
+
+                        AddFieldRead(tableLogicalName, fieldName);
                     }
                     else
                     {
@@ -248,13 +253,13 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
                 }
-                else if(arg0 is RecordFieldAccessNode recordFieldAccessNode)
+                else if (arg0 is RecordFieldAccessNode recordFieldAccessNode)
                 {
                     recordFieldAccessNode.From.Accept(this, context);
                     var ltype = recordFieldAccessNode.From.IRContext.ResultType;
                     if (ltype is RecordType ltypeRecord)
                     {
-                        // Logical name of the table on left side. 
+                        // Logical name of the table on left side.
                         // This will be null for non-dataverse records
                         var tableLogicalName = ltypeRecord.TableSymbolName;
 
@@ -309,11 +314,11 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var tableLogicalName = type.TableSymbolName;
 
-                    // Every field in the record is a field write. 
+                    // Every field in the record is a field write.
                     var argWrites = node.Args[argRecordWrite];
 
                     IntermediateNode maybeRecordNode;
-                    if(argWrites is AggregateCoercionNode aggregateCoercionNode)
+                    if (argWrites is AggregateCoercionNode aggregateCoercionNode)
                     {
                         maybeRecordNode = aggregateCoercionNode.Child;
                     }
@@ -333,15 +338,38 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-
             // Find all dependencies in args
-            // This will catch reads. 
+            // This will catch reads.
             foreach (var arg in node.Args.Skip(firstArgIsWrite ? 1 : 0))
             {
-                arg.Accept(this, context);
+                Context newContext = context;
+
+                if (node.Function.Name == DelegatedRetrieveMultipleFunction.DelegatedRetrieveMultipleFunctionName &&
+                    node.Args.Count == 6 &&
+                    node.Args[4] is TextLiteralNode distinctNode &&
+                    node.Args[5] is RecordNode columnMapNode)
+                {
+                    ColumnMap columnMap = new ColumnMap(ToRecordValue(columnMapNode), distinctNode.LiteralValue);
+                    newContext = newContext.SetColumnMap(columnMap);
+                }
+                else if (node.Function.Name == DelegatedRetrieveSingleFunction.DelegatedRetrieveSingleFunctionName &&
+                    node.Args.Count == 5 &&
+                    node.Args[3] is TextLiteralNode distinctNode2 &&
+                    node.Args[4] is RecordNode columnMapNode2)
+                {
+                    ColumnMap columnMap = new ColumnMap(ToRecordValue(columnMapNode2), distinctNode2.LiteralValue);
+                    newContext = newContext.SetColumnMap(columnMap);
+                }
+
+                arg.Accept(this, newContext);
             }
 
             return null;
+        }
+
+        private RecordValue ToRecordValue(RecordNode recordNode)
+        {
+            return new InMemoryRecordValue(recordNode.IRContext, recordNode.Fields.Select(field => new NamedValue(field.Key.Value, FormulaValue.New((field.Value as TextLiteralNode).LiteralValue))).ToArray());
         }
 
         public override RetVal Visit(BinaryOpNode node, Context context)
@@ -375,7 +403,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Any symbol access here is some temporary local, and not a field. 
+            // Any symbol access here is some temporary local, and not a field.
             return null;
         }
 
@@ -389,7 +417,7 @@ namespace Microsoft.PowerFx.Dataverse
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)
             {
-                // Logical name of the table on left side. 
+                // Logical name of the table on left side.
                 // This will be null for non-dataverse records
                 var tableLogicalName = ltypeRecord.TableSymbolName;
                 if (tableLogicalName != null)
@@ -465,9 +493,25 @@ namespace Microsoft.PowerFx.Dataverse
         public class RetVal
         {
         }
+
         public class Context
         {
+            public ColumnMap ColumnMap { get; private set; }
 
+            public Context()
+            {
+                ColumnMap = null;
+            }
+
+            public Context SetColumnMap(ColumnMap columnMap)
+            {
+                if (ColumnMap != null)
+                {
+                    throw new InvalidOperationException("Cannot set ColumnMap in a context already having a ColumnMap");
+                }
+
+                return new Context() { ColumnMap = columnMap };
+            }
         }
 
         // Translate relationship names to actual field references.
@@ -475,7 +519,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (_metadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata))
             {
-                // Normal case. 
+                // Normal case.
                 if (entityMetadata.TryGetAttribute(fieldLogicalName, out _))
                 {
                     return fieldLogicalName;
@@ -491,7 +535,7 @@ namespace Microsoft.PowerFx.Dataverse
             throw new InvalidOperationException($"Can't resolve {tableLogicalName}.{fieldLogicalName}");
         }
 
-        // if fieldLogicalName, then we're taking a dependency on entire record. 
+        // if fieldLogicalName, then we're taking a dependency on entire record.
         private void AddField(Dictionary<string, HashSet<string>> list, string tableLogicalName, string fieldLogicalName)
         {
             if (tableLogicalName == null)
