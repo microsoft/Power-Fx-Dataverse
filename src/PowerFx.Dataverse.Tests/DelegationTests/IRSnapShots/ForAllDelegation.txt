@@ -37,6 +37,11 @@ ForAll(__retrieveMultiple(local, __noop(), __noop(), 3, ), ({Price:MulNumbers(ne
 ForAll(__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price}), (MulNumbers(Value,2)))
 ForAll(ForAll(local, (MulNumbers(new_price,2))), (Value))
 ForAll(local, (Value(new_price, fr-FR)))
-
+ForAll(local, (Scope_1))
 ForAll(Distinct(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value))
 Distinct(ForAll(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value))
+__retrieveMultiple(local, __gt(local, new_price, (__retrieveSingle(local, __gt(local, new_price, 0), __noop(), , {a:old_price})).a), __noop(), 999, new_price, {Value:new_price})
+__retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price})
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {Value:new_price})
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {Value:new_price})
+__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price})

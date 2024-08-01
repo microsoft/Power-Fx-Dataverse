@@ -3,19 +3,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class ForAllDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public ForAllDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
         [InlineData(1, "ForAll([10,20,30], Value)", 3, "Value", "10, 20, 30")]
         [InlineData(2, "ForAll(t1, Price)", 4, "Value", "100, 10, -10, 10")]
         [InlineData(3, "ForAll(t1, { Price: Price })", 4, "Price", "100, 10, -10, 10")]
@@ -55,9 +50,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(37, "ForAll(ForAll(t1, Price), Value*2)", 4, "Value", "200, 20, -20, 20")]
         [InlineData(38, "ForAll(ForAll(t1, Price*2), Value )", 4, "Value", "200, 20, -20, 20", "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(39, @"ForAll(t1, Value(Price, ""fr-FR""))", 4, "Value", "100, 10, -10, 10", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        // [InlineData(40, "ForAll(t1, ThisRecord)", 4, "Price", "100, 10, -10, 10")] // Cannot add test as PrettyPrintIRVisitor throws NotImplementedException
+        [InlineData(40, "ForAll(t1, ThisRecord)", 4, "new_price", "100, 10, -10, 10", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(41, "ForAll(Distinct(Filter(t1, Price > 0), Price * 2), Value)", 2, "Value", "200, 20")]
         [InlineData(42, "Distinct(ForAll(Filter(t1, Price > 0), Price * 2), Value)", 2, "Value", "200, 20")]
+        [InlineData(43, "Distinct(ForAll(Filter(t1, Price > First(ForAll(Filter(t1, Price > 0), { a: Old_Price })).a), { b: Price }), b)", 0, "Value", "")]
+        [InlineData(44, "ForAll(Distinct(t1, Price), Value)", 3, "Value", "100, 10, -10")]
+        [InlineData(45, "ForAll(Sort(t1, Price), Price)", 4, "Value", "-10, 10, 10, 100")]
+        [InlineData(46, "ForAll(SortByColumns(t1, Price), Price)", 4, "Value", "-10, 10, 10, 100")]
+        [InlineData(47, "ForAll(ShowColumns(t1, Price), new_price)", 4, "Value", "100, 10, -10, 10")]
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "ForAllDelegation.txt", expr, expectedRows, expectedIds,

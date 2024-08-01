@@ -4,17 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class LookUpDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public LookUpDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -24,6 +18,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Price = -10
 
         [Theory]
+        [TestPriority(1)]
 
         //Basic case
         [InlineData(1, "LookUp(t1, Price = 255).Price", null, true, true)]
@@ -270,6 +265,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(177, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, false, false)]
         [InlineData(178, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, true, false)]
         [InlineData(179, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
+
+        [InlineData(180, "LookUp(SortByColumns(t1, Price, SortOrder.Descending), Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
+        [InlineData(181, "LookUp(ForAll(t1, {a: Price, b: Quantity}), b = 20).a", 100.0, false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "LookUpDelegation.txt", expr, -2, expected,

@@ -1,18 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class FilterDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public FilterDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0), Currency = 100
@@ -22,6 +17,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Price = -10
 
         [Theory]
+        [TestPriority(1)]
 
         //Basic case
         [InlineData(1, "Filter(t1, Price < 100)", 2, false, false)]
@@ -254,6 +250,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(195, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, false, false)]
         [InlineData(196, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, true, false)]
         [InlineData(197, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, false, true)]
+
+        [InlineData(198, "Filter(Distinct(t1, Price), Value > 5)", 2, false, true)]
+        [InlineData(199, "Filter(Sort(t1, Price), Price > 5)", 2, false, true)]
+        [InlineData(200, "Filter(SortByColumns(t1, Price), Price > 5)", 2, false, true)]
+        [InlineData(201, "Filter(ForAll(t1, Price), Value > 5)", 2, false, true)]
+        [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
+        [InlineData(203, "Distinct(Filter(Distinct(t1, Price), Value > 5), Value)", 2, false, true)]
+        [InlineData(204, "Distinct(Filter(Sort(t1, Price), Price > 5), Price)", 2, false, true)]
+        [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]
+        [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
+        [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

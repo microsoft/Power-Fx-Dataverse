@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // args[0]: table
         // args[1]: filter
-        // args[2]: orderby        
+        // args[2]: orderby
         // args[3]: distinct column
         // args[4]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = 1,
 
-                _columnMap = columnMap,                
+                _columnMap = columnMap,
                 _partitionId = partitionId,
                 _relation = relation,
             };
@@ -111,6 +111,20 @@ namespace Microsoft.PowerFx.Dataverse
 
                 return resultRecord;
             }
+        }
+
+        internal override bool IsUsingColumnMap(Core.IR.Nodes.CallNode node, out ColumnMap columnMap)
+        {
+            if (node.Args.Count == 5 &&
+                node.Args[3] is Core.IR.Nodes.TextLiteralNode distinctNode &&
+                node.Args[4] is Core.IR.Nodes.RecordNode columnMapNode)
+            {
+                columnMap = new ColumnMap(columnMapNode, distinctNode);
+                return true;
+            }
+
+            columnMap = null;
+            return false;
         }
     }
 }
