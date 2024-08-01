@@ -1,23 +1,20 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Binding.BindInfo;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Hook into symbol table to support Dataverse OptionSets which are populated 
-    /// lazily from the metadata cache. 
+    /// Hook into symbol table to support Dataverse OptionSets which are populated
+    /// lazily from the metadata cache.
     /// </summary>
     public class DVSymbolTable : SymbolTable, IGlobalSymbolNameResolver
     {
@@ -39,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var options = _metadataCache.OptionSets;
                 foreach (var option in options)
                 {
-                    if(this.TryLookup(option.EntityName, out var optionNameInfo))
+                    if (this.TryLookup(option.EntityName, out var optionNameInfo))
                     {
                         yield return new KeyValuePair<string, NameLookupInfo>(option.DisplayName, optionNameInfo);
                     }
@@ -62,8 +59,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         // This requires internal types in PowerFx, so it needs to be in PowerFx.Dataverse
         // (which has InternalsVisibleTo) and not in Dataverse.Eval.
-        // Hook to get symbols directly from Dataverse MetadataCache. 
-        // Especially for OptionSets. 
+        // Hook to get symbols directly from Dataverse MetadataCache.
+        // Especially for OptionSets.
         internal override bool TryLookup(DName name, out NameLookupInfo nameInfo)
         {
             if (_metadataCache.TryGetOptionSet(name, out var optionSet))

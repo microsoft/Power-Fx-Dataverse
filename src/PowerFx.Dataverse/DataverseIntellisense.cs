@@ -1,9 +1,7 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System.Collections.Generic;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Texl.Intellisense;
@@ -11,7 +9,6 @@ using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Intellisense.IntellisenseData;
 using Microsoft.PowerFx.Syntax;
-using System.Collections.Generic;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -19,7 +16,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly CdsEntityMetadataProvider _provider;
 
-        internal DataverseIntellisense(PowerFxConfig config, CdsEntityMetadataProvider provider) : base(config, config.EnumStore, IntellisenseProvider.SuggestionHandlers)
+        internal DataverseIntellisense(PowerFxConfig config, CdsEntityMetadataProvider provider) 
+            : base(config, config.EnumStore, IntellisenseProvider.SuggestionHandlers)
         {
             _provider = provider;
         }

@@ -1,28 +1,25 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System.Collections.Generic;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Binding.BindInfo;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
-using System.Collections.Generic;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Resolver for Dataverse bindings. 
+    /// Resolver for Dataverse bindings.
     /// </summary>
-    class DataverseResolver : ComposedReadOnlySymbolTable
+    internal class DataverseResolver : ComposedReadOnlySymbolTable
     {
         private CdsEntityMetadataProvider _provider;
 
         public DataverseResolver(CdsEntityMetadataProvider provider, ReadOnlySymbolTable functions)
             : base(functions)
-        {            
+        {
             _provider = provider;
         }
 
@@ -47,6 +44,5 @@ namespace Microsoft.PowerFx.Dataverse
 
             return base.LookupGlobalEntity(name, out lookupInfo);
         }
-
     }
 }

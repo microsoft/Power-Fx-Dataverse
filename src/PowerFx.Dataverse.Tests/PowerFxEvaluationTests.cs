@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Concurrent;
@@ -24,31 +21,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class ExpressionEvaluationTests : IClassFixture<SkippedTestsReporting>
     {
         public readonly ITestOutputHelper Console;
+
         public readonly SkippedTestsReporting SkippedTestsReporting;
-        
+
         public ExpressionEvaluationTests(SkippedTestsReporting fixture, ITestOutputHelper output)
         {
             Console = output;
-            SkippedTestsReporting = fixture;            
+            SkippedTestsReporting = fixture;
         }
 
         private const string ConnectionStringVariable = "FxTestSQLDatabase";
 
         /// <summary>
-        /// The connection string for the database to execute generated SQL
+        /// The connection string for the database to execute generated SQL.
         /// </summary>
-        /// <example> 
-        /// "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";
+        /// <example>
+        /// "Data Source=tcp:SQL_SERVER;Initial Catalog=test;Integrated Security=True;Persist Security Info=True;";.
         /// </example>
         private static readonly string ConnectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
 
-        // .txt tests will be filtered to match these seetings. 
+        // .txt tests will be filtered to match these seetings.
         private static readonly Dictionary<string, bool> _testSettings = new Dictionary<string, bool>()
         {
             { "PowerFxV1CompatibilityRules", true },
             { "NumberIsFloat", DataverseEngine.NumberIsFloat },
-            { "Default", false }              // anything not explicitly called out here is not supported
-        };
+            
+            // anything not explicitly called out here is not supported
+            { "Default", false }
+        };
 
         [SkippableTheory]
         [TxtFileData("ExpressionTestCases", "SqlExpressionTestCases", nameof(ExpressionEvaluationTests), "PowerFxV1CompatibilityRules, disable:NumberIsFloat")]
@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             using SqlRunner sqlRunner = new SqlRunner(ConnectionString, Console) { NumberIsFloat = DataverseEngine.NumberIsFloat, Features = PowerFx2SqlEngine.DefaultFeatures };
             (TestResult result, string message) = sqlRunner.RunTestCase(testCase);
-            
+
             var prefix = $"Test {Path.GetFileName(testCase.SourceFile)}:{testCase.SourceLine}: ";
             switch (result)
             {
@@ -70,13 +70,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case TestResult.Skip:
                     if (!SkippedTestsReporting.Report.TryAdd($"{prefix} {testCase.Input}", message))
                     {
-                          Assert.Fail($"CONFLICT when adding test to report: {prefix + message}");
+                        Assert.Fail($"CONFLICT when adding test to report: {prefix + message}");
                     }
+
                     Skip.If(true, prefix + message);
                     break;
             }
         }
-        
+
         [Fact(Skip = "Enable to run a single test")]
         public void RunOneTest()
         {
@@ -90,16 +91,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             testRunner.AddFile(_testSettings, path);
 
-            // We can filter to just cases we want 
+            // We can filter to just cases we want
             if (line > 0)
             {
                 testRunner.Tests.RemoveAll(x => x.SourceLine != line);
             }
+
             int totalTests = testRunner.Tests.Count;
 
             var result = testRunner.RunTests();
         }
-
 
         [Fact]
         public void ScanForTxtParseErrors()
@@ -111,7 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             IEnumerable<object[]> list = attr.GetData(method);
             Console.WriteLine($"{list.Count()} test cases found.");
 
-            // And doesn't report back any test failures. 
+            // And doesn't report back any test failures.
             foreach (object[] batch in list)
             {
                 var item = (ExpressionTestCase)batch[0];
@@ -135,7 +136,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private class SqlRunner : BaseRunner, IDisposable
         {
-            private SqlConnection _connection;            
+            private SqlConnection _connection;
+
             public readonly ITestOutputHelper Console;
 
             public SqlRunner(string connectionString, ITestOutputHelper console)
@@ -179,6 +181,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     return true;
                 }
+
                 return false;
             }
 
@@ -214,9 +217,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 };
 
                 var metadata = PowerFx2SqlEngine.Empty();
+
                 // run unit tests with time zone conversions on
                 // instantiate engine with floating point feature as on
-                var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures : new DataverseFeatures() { IsFloatingPointEnabled = true});
+                var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
                 var compileResult = engine.Compile(expr, options);
 
                 if (!compileResult.IsSuccess)
@@ -224,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     // Evaluation ran, but failed due to unsupported features.
                     var result = new RunResult(compileResult);
 
-                    // If error is a known SQL restriction, than flag as unsupported. 
+                    // If error is a known SQL restriction, than flag as unsupported.
                     foreach (var error in compileResult.Errors)
                     {
                         if (SqlCompileException.IsError(error.MessageKey))
@@ -242,8 +246,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             result.UnsupportedReason = compileResult._unsupportedWarnings[0];
                         }
                     }
+
                     return result;
-                }                
+                }
 
                 try
                 {
@@ -307,7 +312,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     Console.WriteLine(e.Message);
                     Assert.Fail($"Failed SQL for {expr}");
                     throw;
-                }                
+                }
             }
 
             public override bool IsError(FormulaValue value)
@@ -321,7 +326,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class SkippedTestsReporting : IDisposable
     {
         public static ConcurrentDictionary<string, string> Report;
-        private bool disposedValue;
+
+        private bool _disposedValue;
 
         public SkippedTestsReporting()
         {
@@ -341,14 +347,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
                     GenerateReport();
                 }
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

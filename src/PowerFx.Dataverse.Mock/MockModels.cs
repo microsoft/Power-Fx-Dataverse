@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -48,33 +45,10 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewString("new_string", "String"),
                 AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 AttributeMetadataModel.NewGuid("some_id", "SomeId"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "Hot", Value = 1 },
-                    new OptionMetadataModel { Label = "Warm", Value = 2 },
-                    new OptionMetadataModel { Label = "Cold", Value = 3 }
-                }),
-                AttributeMetadataModel.NewPicklist("global_pick", "Global Picklist", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "High", Value = 1 },
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Low", Value = 3 }
-                },
-                isGlobal: true),
-                AttributeMetadataModel.NewPicklist("new_status", "Status", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "New", Value = 1 },
-                    new OptionMetadataModel { Label = "Active", Value = 2 },
-                    new OptionMetadataModel { Label = "Resolved", Value = 3 }
-                },
-                attributeType: AttributeTypeCode.Status,
-                isGlobal: true),
-                AttributeMetadataModel.NewPicklist("new_state", "State", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "In Active", Value = 0 },
-                    new OptionMetadataModel { Label = "Active", Value = 1 }
-                },
-                attributeType: AttributeTypeCode.State),
+                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Hot", Value = 1 }, new OptionMetadataModel { Label = "Warm", Value = 2 }, new OptionMetadataModel { Label = "Cold", Value = 3 } }),
+                AttributeMetadataModel.NewPicklist("global_pick", "Global Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "High", Value = 1 }, new OptionMetadataModel { Label = "Medium", Value = 2 }, new OptionMetadataModel { Label = "Low", Value = 3 } }, isGlobal: true),
+                AttributeMetadataModel.NewPicklist("new_status", "Status", new OptionMetadataModel[] { new OptionMetadataModel { Label = "New", Value = 1 }, new OptionMetadataModel { Label = "Active", Value = 2 }, new OptionMetadataModel { Label = "Resolved", Value = 3 } }, attributeType: AttributeTypeCode.Status, isGlobal: true),
+                AttributeMetadataModel.NewPicklist("new_state", "State", new OptionMetadataModel[] { new OptionMetadataModel { Label = "In Active", Value = 0 }, new OptionMetadataModel { Label = "Active", Value = 1 } }, attributeType: AttributeTypeCode.State),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
@@ -138,7 +112,7 @@ namespace Microsoft.Dataverse.EntityMock
                     ReferencingEntityNavigationPropertyName = "new_polyfield_t1_t1",
                     SchemaName = "logical"
                 },
-                 new OneToManyRelationshipMetadataModel
+                new OneToManyRelationshipMetadataModel
                 {
                     ReferencedAttribute = "etid",
                     ReferencedEntity = "elastictable",
@@ -179,11 +153,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDecimal("calc", "Calculated Data").SetCalculated(),
                 AttributeMetadataModel.NewDecimal("float", "Float"),
                 AttributeMetadataModel.NewDouble("actual_float", "Actual Float"),
-                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                {   new OptionMetadataModel { Label = "Small", Value = 1},
-                    new OptionMetadataModel { Label = "Medium", Value = 2 },
-                    new OptionMetadataModel { Label = "Large", Value = 3 }
-                }),
+                AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Small", Value = 1 }, new OptionMetadataModel { Label = "Medium", Value = 2 }, new OptionMetadataModel { Label = "Large", Value = 3 } }),
                 AttributeMetadataModel.NewLookup("otherotherid", "Other Other", new string[] { "doubleremote" }),
                 AttributeMetadataModel.NewDouble("other", "Other")
             },
@@ -244,11 +214,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDecimal("data3", "Data Three"),
                 AttributeMetadataModel.NewGuid("tripleremoteid", "TripleRemoteId"),
                 AttributeMetadataModel.NewMoney("currencyField", "Currency Field"),
-                AttributeMetadataModel.NewPicklist("optionsetField", "Optionset Field", new OptionMetadataModel[]
-                {
-                    new OptionMetadataModel { Label = "One", Value = 1 },
-                    new OptionMetadataModel { Label = "Two", Value = 2 },
-                })
+                AttributeMetadataModel.NewPicklist("optionsetField", "Optionset Field", new OptionMetadataModel[] { new OptionMetadataModel { Label = "One", Value = 1 }, new OptionMetadataModel { Label = "Two", Value = 2 }, })
             }
         };
 
@@ -321,8 +287,8 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDecimal("new_field", "field"),
                 AttributeMetadataModel.NewDouble("double", "Double"),
                 AttributeMetadataModel.NewInteger("int", "Int"),
-                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new [] { "tripleremote" }),
-                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new [] { "allattributes" }),
+                AttributeMetadataModel.NewLookup("new_lookup", "Lookup", new[] { "tripleremote" }),
+                AttributeMetadataModel.NewLookup("selfid", "Self Reference", new[] { "allattributes" }),
                 AttributeMetadataModel.NewMoney("money", "Money"),
                 AttributeMetadataModel.NewGuid("guid", "Guid"),
                 AttributeMetadataModel.NewGuid("allid", "AllId"),
@@ -341,12 +307,12 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewString("fullname", "Full name").SetReadOnly(), // 'fullname' is a DV read-only virtual field.
                 new AttributeMetadataModel
                 {
-                    LogicalName= "bigint",
+                    LogicalName = "bigint",
                     DisplayName = "BigInt",
                     AttributeType = AttributeTypeCode.BigInt
                 },
                 AttributeMetadataModel.NewBoolean("boolean", "Boolean", "Yes", "No"),
-                AttributeMetadataModel.NewLookup("customerid", "Customer", new [] { "tripleremote" }, AttributeTypeCode.Customer),
+                AttributeMetadataModel.NewLookup("customerid", "Customer", new[] { "tripleremote" }, AttributeTypeCode.Customer),
                 new AttributeMetadataModel
                 {
                     LogicalName = "EntityName",
@@ -359,83 +325,25 @@ namespace Microsoft.Dataverse.EntityMock
                     DisplayName = "Memo",
                     AttributeType = AttributeTypeCode.Memo
                 },
-                AttributeMetadataModel.NewLookup("ownerid", "Owner", new [] { "tripleremote" }, AttributeTypeCode.Owner),
+                AttributeMetadataModel.NewLookup("ownerid", "Owner", new[] { "tripleremote" }, AttributeTypeCode.Owner),
                 AttributeMetadataModel.NewPicklist(
                     "statecode",
                     "State",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
+                    new OptionMetadataModel[] { new OptionMetadataModel { Label = "Active", Value = 1 }, new OptionMetadataModel { Label = "Inactive", Value = 2 } },
                     AttributeTypeCode.State),
                 AttributeMetadataModel.NewPicklist(
                     "statuscode",
                     "Status",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Active",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Inactive",
-                            Value = 2
-                        }
-                    },
+                    new OptionMetadataModel[] { new OptionMetadataModel { Label = "Active", Value = 1 }, new OptionMetadataModel { Label = "Inactive", Value = 2 } },
                     AttributeTypeCode.Status),
                 AttributeMetadataModel.NewPicklist(
                     "picklist",
                     "Picklist",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "One",
-                            Value = 1
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Two",
-                            Value = 2
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Three",
-                            Value = 3
-                        }
-                    }),
+                    new OptionMetadataModel[] { new OptionMetadataModel { Label = "One", Value = 1 }, new OptionMetadataModel { Label = "Two", Value = 2 }, new OptionMetadataModel { Label = "Three", Value = 3 } }),
                 AttributeMetadataModel.NewPicklist(
                     "multiSelect",
                     "MultiSelect",
-                    new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "Eight",
-                            Value = 8
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Nine",
-                            Value = 9
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "Ten",
-                            Value = 10
-                        }
-                    },
+                    new OptionMetadataModel[] { new OptionMetadataModel { Label = "Eight", Value = 8 }, new OptionMetadataModel { Label = "Nine", Value = 9 }, new OptionMetadataModel { Label = "Ten", Value = 10 } },
                     typeName: AttributeTypeDisplayName.MultiSelectPicklistType,
                     attributeType: AttributeTypeCode.Virtual),
                 AttributeMetadataModel.NewImage("image", "Image"),
@@ -494,7 +402,7 @@ namespace Microsoft.Dataverse.EntityMock
             Attributes = new AttributeMetadataModel[]
             {
                 AttributeMetadataModel.NewDecimal("new_field", "field"),
-                AttributeMetadataModel.NewLookup("new_testlookup", "TestLookup", new [] { "tripleremote" })
+                AttributeMetadataModel.NewLookup("new_testlookup", "TestLookup", new[] { "tripleremote" })
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
@@ -523,7 +431,7 @@ namespace Microsoft.Dataverse.EntityMock
             PrimaryIdAttribute = "accountid",
             Attributes = new AttributeMetadataModel[]
             {
-                AttributeMetadataModel.NewLookup("new_tasklookup", "TaskLookup", new [] { "task" }),
+                AttributeMetadataModel.NewLookup("new_tasklookup", "TaskLookup", new[] { "task" }),
                 AttributeMetadataModel.NewGuid("accountid", "AccountId"),
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
@@ -555,17 +463,16 @@ namespace Microsoft.Dataverse.EntityMock
             }
         };
 
-        public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { Account, Task};
+        public static readonly EntityMetadataModel[] TestAllAttributeModels = new EntityMetadataModel[] { Account, Task };
 
-        public static readonly List<OptionSetMetadata> GlobalOptionSets = new()
+        public static readonly List<OptionSetMetadata> GlobalOptionSets = new ()
         {
             new OptionSetMetadata(new OptionMetadataCollection(new List<OptionMetadata>(
                 new OptionMetadata[]
                 {
                     new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
                     new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
-                }
-            )))
+                })))
             {
                 IsGlobal = true,
                 Name = "global1",
@@ -577,8 +484,7 @@ namespace Microsoft.Dataverse.EntityMock
                 {
                     new OptionMetadata { Label = new Label(new LocalizedLabel("Three", 1033), new LocalizedLabel[0]), Value = 1 },
                     new OptionMetadata { Label = new Label(new LocalizedLabel("Four", 1033), new LocalizedLabel[0]), Value = 2 },
-                }
-            )))
+                })))
             {
                 IsGlobal = true,
                 Name = "global2",

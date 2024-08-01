@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
@@ -128,9 +125,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 {
                     var kindNode = record.Fields[new DName("Kind")];
                     RetVal kind = kindNode.Accept(visitor, context);
+
                     // if the input can't be coerced to an numeric value, emit an error with the validation error kind
                     return context.SetIntermediateVariable(context.CurrentErrorContext.Code, $"IIF(ISNUMERIC({kind})=1,{kind},{Context.ValidationErrorCode})");
                 }
+
                 throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, node.Args[0].IRContext.SourceContext, node.Args[0].IRContext.ResultType._type.GetKindString());
             }
             else
@@ -149,6 +148,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 errorCode = error.Code;
                 node.Args[0].Accept(visitor, context);
             }
+
             return context.SetIntermediateVariable(node, $"{errorCode} <> 0");
         }
 
@@ -210,18 +210,20 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     }
                 }
             }
+
             return result;
         }
 
         private static RetVal SetIntermediateVariableForBranchResult(RetVal result, ref bool resultCoerced, RetVal retVal, IntermediateNode node, Context context, ref string optionSetName)
         {
             var sourceContext = node.IRContext.SourceContext;
+
             // if the branch type is more specific than the overall binding type, update it
-            if (retVal.type != result.type && IsDateTimeType(retVal.type))
+            if (retVal.Type != result.Type && IsDateTimeType(retVal.Type))
             {
                 if (!resultCoerced)
                 {
-                    result.type = retVal.type;
+                    result.Type = retVal.Type;
                 }
                 else
                 {
@@ -230,9 +232,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 }
             }
 
-            if (context._dataverseFeatures.IsOptionSetEnabled && !(retVal.type is BlankType) && retVal?.varName != null)
+            if (context._dataverseFeatures.IsOptionSetEnabled && !(retVal.Type is BlankType) && retVal?.VarName != null)
             {
-                var columnDefinition = context.GetVarDetails(retVal.varName)?.Column;
+                var columnDefinition = context.GetVarDetails(retVal.VarName)?.Column;
                 ValidateOptionSetResultArgument(node, columnDefinition, ref optionSetName);
             }
 
@@ -241,15 +243,15 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         }
 
         /// <summary>
-		/// Validates if all optionsetvalue result arguments are using same optionset.
-        /// e.g., If(1>2, 'localPicklist1'.A, 'localPicklist2'.A) - here localPicklist1, localPicklist2 are two different optionsets and 
+        /// Validates if all optionsetvalue result arguments are using same optionset.
+        /// e.g., If(1>2, 'localPicklist1'.A, 'localPicklist2'.A) - here localPicklist1, localPicklist2 are two different optionsets and
         /// two different optionsets cannot be used as result type, hence should throw error.
-		/// </summary>
+        /// </summary>
         private static void ValidateOptionSetResultArgument(IntermediateNode node, CdsColumnDefinition columnDefinition, ref string optionSetName)
         {
             string currentResultArgOptionSetName = null;
 
-            if (node is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordFieldAccessNode fieldNode && 
+            if (node is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordFieldAccessNode fieldNode &&
                 fieldNode.From is ResolvedObjectNode resolvedNode && resolvedNode.Value is DataverseOptionSet optionSet)
             {
                 currentResultArgOptionSetName = optionSet.InvariantName;

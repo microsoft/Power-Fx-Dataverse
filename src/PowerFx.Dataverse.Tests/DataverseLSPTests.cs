@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +17,7 @@ using Xunit;
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // end2end test with full LSP (Language Service Provider) to mimic Dataverse test usage.
-    // LSP is network layer on top of intellisense support.     
+    // LSP is network layer on top of intellisense support.
     public class DataverseLSPTests
     {
         private static readonly string _entityLogicalName = MockModels.AllAttributeModel.LogicalName;
@@ -40,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var localeName = query.Get("localeName");
                 var culture = (localeName == null) ? null : CultureInfo.CreateSpecificCulture(localeName);
 
-                // Dataverse would use the entity name to look up proper metadata. 
+                // Dataverse would use the entity name to look up proper metadata.
                 Assert.Equal(_entityLogicalName, entityLogicalName);
 
                 Engine powerFx2SqlEngine = DataverseIntellisenseTests.GetAllAttributesEngine(culture);
@@ -52,14 +49,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public void CheckLspSuggestion()
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var ssendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(ssendToClientData.Add, scopeFactory);
 
             string expression = "Ab"; // expect "Abs"
 
 #pragma warning disable CS0618
-            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            testServer.OnDataReceived(JsonSerializer.Serialize(new
 #pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
@@ -83,8 +80,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }));
 
-            Assert.Single(_sendToClientData);
-            var resultJson = _sendToClientData[0];
+            Assert.Single(ssendToClientData);
+            var resultJson = ssendToClientData[0];
 
             var response = JsonSerializer.Deserialize<JsonRpcCompletionResponse>(resultJson);
 
@@ -114,12 +111,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Mod(int, int)", "Decimal")] // "Mod function"
         public void CheckLspCheck(string expression, string type)
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var sendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(sendToClientData.Add, scopeFactory);
 
 #pragma warning disable CS0618
-            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            testServer.OnDataReceived(JsonSerializer.Serialize(new
 #pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
@@ -131,7 +128,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         uri = "powerfx://field_designer?entityLogicalName=" + _entityLogicalName + "&getExpressionType=true",
                         version = 4
                     },
-                    contentChanges = new[] {
+                    contentChanges = new[] 
+                    {
                         new
                         {
                             text = expression
@@ -140,9 +138,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }));
 
-            Assert.Equal(2, _sendToClientData.Count);
+            Assert.Equal(2, sendToClientData.Count);
 
-            var resultJson = _sendToClientData[1];
+            var resultJson = sendToClientData[1];
             var response = JsonSerializer.Deserialize<JsonRpcExpressionTypeResponse>(resultJson);
 
             Assert.Equal("2.0", response.jsonrpc);
@@ -174,7 +172,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }));
         }
 
-        // Helper to verify the results of an $/initialFixup message. 
+        // Helper to verify the results of an $/initialFixup message.
         private void AssertFixupResult(List<string> sendToClientData, string expected)
         {
             Assert.Single(sendToClientData);
@@ -186,15 +184,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(expected, response.result.text);
         }
 
-
-        // Fixup message is sent when FormulaBar first initializes to convert from 
-        // invariant locale to current locale. 
+        // Fixup message is sent when FormulaBar first initializes to convert from
+        // invariant locale to current locale.
         [Fact]
         public void CheckLspFixup()
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var sendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(sendToClientData.Add, scopeFactory);
 
             // Fixup will adjust from invariant to current locale:
             //   Invariant name (new_field) --> Display Name  (field)
@@ -203,39 +200,39 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             string invariantExpr = "If(true, 1.1, new_field)";
             string localeExpr = "If(true; 1,1; field)";
-            string localeName = "fr-FR"; // pass to engine. 
+            string localeName = "fr-FR"; // pass to engine.
 
-            SendFixup(_testServer, localeName, invariantExpr);
+            SendFixup(testServer, localeName, invariantExpr);
 
-            AssertFixupResult(_sendToClientData, localeExpr);
+            AssertFixupResult(sendToClientData, localeExpr);
         }
 
-        // Fixup still works with error expressions. 
+        // Fixup still works with error expressions.
         [Fact]
         public void CheckLspFixupError()
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var sendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(sendToClientData.Add, scopeFactory);
 
             // Intentional Parse error (missing closing quote)
-            // - still fixes up what it can. 
+            // - still fixes up what it can.
             string invariantExpr = "If(missing, 1.1, new_field // error";
             string localeExpr = "If(missing; 1,1; field // error";
-            string localeName = "fr-FR"; // pass to engine. 
+            string localeName = "fr-FR"; // pass to engine.
 
-            SendFixup(_testServer, localeName, invariantExpr);
+            SendFixup(testServer, localeName, invariantExpr);
 
-            AssertFixupResult(_sendToClientData, localeExpr);
+            AssertFixupResult(sendToClientData, localeExpr);
         }
 
-        // Get errors  in other locales. 
+        // Get errors  in other locales.
         [Theory]
-        [InlineData("1.2", "en-US")] // success case 
-        [InlineData("1,2", "fr-FR")] // success case 
+        [InlineData("1.2", "en-US")] // success case
+        [InlineData("1,2", "fr-FR")] // success case
         [InlineData("1.2", "fr-FR", "Caractères inattendus. La formule contient « 2 » a...;Un opérateur était attendu. Nous attendons un opér...;Opérande attendu. La formule ou l’expression atten...;L’opérateur « . » ne peut pas être utilisé sur les...")] // error - no dups, all French
-        [InlineData("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding 
-        [InlineData("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding         
+        [InlineData("1 + foo", "fr-FR", "Le nom n’est pas valide. « foo » n’est pas reconnu...")] // binding
+        [InlineData("1 + foo", "en-US", "Name isn't valid. 'foo' isn't recognized.")] // binding
         [InlineData("1 + ", "en-US", "Expected an operand. The formula or expression exp...;Invalid argument type. Expecting one of the follow...")] // Parse error
         [InlineData("1 + ", "fr-FR", "Opérande attendu. La formule ou l’expression atten...;Type d’argument non valide. L’une des valeurs suiv...")] // Parse error
         public void ErrorIsLocalized(string expression, string localeName, string expectedError = null)
@@ -263,17 +260,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 return s;
             }
+
             return s.Substring(0, len) + "...";
         }
 
         private void AssertErrors(string[] expectedErrors, JsonRpcPublishDiagnosticsNotification json)
         {
             var msgs = json.@params.diagnostics.ToArray();
-            msgs.OrderBy(m => m.ToString()).ToArray(); // make deterministic for tests. 
+            msgs.OrderBy(m => m.ToString()).ToArray(); // make deterministic for tests.
             Assert.Equal(expectedErrors.Length, msgs.Length);
             for (int i = 0; i < expectedErrors.Length; i++)
             {
-                // Some error message sare are too long, just truncate first part for comparison. 
+                // Some error message sare are too long, just truncate first part for comparison.
                 var truncatedMessage = Truncate(msgs[i].message, 50);
                 Assert.Equal(expectedErrors[i], truncatedMessage);
             }
@@ -282,12 +280,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Verify errors with didOpen message.
         private void ErrorIsLocalized_DidOpen(string expression, string localeName, string[] expectedErrors)
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var sendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(sendToClientData.Add, scopeFactory);
 
 #pragma warning disable CS0618
-            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            testServer.OnDataReceived(JsonSerializer.Serialize(new
 #pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
@@ -304,18 +302,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }));
 
-            AssertErrors(expectedErrors, _sendToClientData);
+            AssertErrors(expectedErrors, sendToClientData);
         }
 
         // Verify errors with didChange
         internal void ErrorIsLocalized_DidChange(string expression, string localeName, string[] expectedErrors)
         {
-            var _sendToClientData = new List<string>();
-            var _scopeFactory = new PowerFxScopeFactory();
-            var _testServer = new TestLanguageServer(_sendToClientData.Add, _scopeFactory);
+            var sendToClientData = new List<string>();
+            var scopeFactory = new PowerFxScopeFactory();
+            var testServer = new TestLanguageServer(sendToClientData.Add, scopeFactory);
 
 #pragma warning disable CS0618
-            _testServer.OnDataReceived(JsonSerializer.Serialize(new
+            testServer.OnDataReceived(JsonSerializer.Serialize(new
 #pragma warning restore CS0618
             {
                 jsonrpc = "2.0",
@@ -330,23 +328,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     },
                     contentchanges = new[]
                     {
-                        new {
+                        new 
+                        {
                             text = expression
                         }
                     }
                 }
             }));
 
-            AssertErrors(expectedErrors, _sendToClientData);
+            AssertErrors(expectedErrors, sendToClientData);
         }
 
+#pragma warning disable SA1300 // Elements should begin with uppercase letter
 
         public class JsonRpcExpressionTypeResponse
         {
             public string jsonrpc { get; set; }
 
             public Params @params { get; set; }
-
 
             public class Params
             {
@@ -379,7 +378,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-
         public class JsonRpcCompletionResponse
         {
             public string jsonrpc { get; set; }
@@ -395,7 +393,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 public bool isincomplete { get; set; }
 
                 public CompletionItem[] items { get; set; }
-
             }
 
             public class CompletionItem
@@ -441,12 +438,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             public int severity { get; set; }
         }
 
+#pragma warning restore SA1300 // Elements should begin with uppercase letter
 
         public class TestLanguageServer : LanguageServer
         {
             public List<string> _sendToClientData = new List<string>();
 
 #pragma warning disable CS0618
+
             public TestLanguageServer(SendToClient sendToClient, IPowerFxScopeFactory scopeFactory)
                 : base(sendToClient, scopeFactory)
 #pragma warning restore CS0618

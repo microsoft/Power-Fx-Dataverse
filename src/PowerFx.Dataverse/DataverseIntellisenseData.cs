@@ -1,9 +1,8 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Texl;
@@ -14,8 +13,6 @@ using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Intellisense.IntellisenseData;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.Xrm.Sdk.Metadata;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -32,12 +29,12 @@ namespace Microsoft.PowerFx.Dataverse
         /// should therefore be excluded from being suggested
         /// Note that ErrorKind is supported by the infra, but not in maker scenarios, so should be excluded
         /// </summary>
-        private readonly static string[] _supportedEnums = new [] { Microsoft.PowerFx.Core.Utils.LanguageConstants.TimeUnitEnumString };
+        private static readonly string[] _supportedEnums = new[] { Microsoft.PowerFx.Core.Utils.LanguageConstants.TimeUnitEnumString };
 
         /// <summary>
         /// Not all functions supported by the name resolver should be suggested for makers
         /// </summary>
-        private readonly static TexlFunction[] _excludedFunctions = new[]
+        private static readonly TexlFunction[] _excludedFunctions = new[]
         {
             BuiltinFunctionsCore.Error,
             BuiltinFunctionsCore.Today,
@@ -55,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
             _provider = provider;
         }
 
-        internal override IEnumerable<EnumSymbol> EnumSymbols => base.EnumSymbols.Where(symbol => _supportedEnums.Contains(symbol.EntityName) );
+        internal override IEnumerable<EnumSymbol> EnumSymbols => base.EnumSymbols.Where(symbol => _supportedEnums.Contains(symbol.EntityName));
 
         public override void AddSuggestionsForConstantKeywords() =>
             IntellisenseHelper.AddSuggestionsForMatches(
@@ -117,17 +114,22 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             case AttributeTypeCode.Integer:
                                 return column.FormatName == IntegerFormat.None.ToString();
+
                             case AttributeTypeCode.String:
                                 return column.FormatName == StringFormat.Text.ToString();
+
                             case AttributeTypeCode.Virtual:
+
                                 // multi-select are suggested, but files and images are not
                                 return column.IsOptionSet;
+
                             default:
                                 return true;
                         }
                     }
                 }
             }
+
             return base.DetermineSuggestibility(suggestion, type);
         }
     }

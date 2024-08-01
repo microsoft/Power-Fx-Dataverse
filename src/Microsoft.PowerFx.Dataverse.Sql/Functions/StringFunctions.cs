@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +11,8 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor;
+using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
@@ -27,10 +24,11 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 throw BuildUnsupportedArgumentException(node.Function, 1, node.Args[1].IRContext.SourceContext);
             }
+
             var arg0 = node.Args[0];
             RetVal arg = null;
 
-            // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case 
+            // Currency Fields can only be accepted through Decimal function so passing this flag valueFunctionCall to accept currency fields in this case
             if (node.Args.Count == 1 && node.Function != BuiltinFunctionsCore.Float && arg0 is ScopeAccessNode scopeAccessNode && scopeAccessNode.Value is ScopeAccessSymbol scopeAccess)
             {
                 var varDetails = context.GetVarDetails(scopeAccess, scopeAccessNode.IRContext.SourceContext, true);
@@ -40,8 +38,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             {
                 arg = arg0.Accept(visitor, context);
             }
-            
-            if (arg.type is StringType)
+
+            if (arg.Type is StringType)
             {
                 if (arg0 is TextLiteralNode literal)
                 {
@@ -53,9 +51,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                 // TODO: evaluate SQL perf for visitor scenario, should it be a function that can be tuned?
                 var result = context.GetTempVar(context.GetReturnType(node));
-                var numberType = ToSqlType(result.type, context._dataverseFeatures);
+                var numberType = ToSqlType(result.Type, context._dataverseFeatures);
 
-                if (context._dataverseFeatures.IsFloatingPointEnabled && result.type is NumberType)
+                if (context._dataverseFeatures.IsFloatingPointEnabled && result.Type is NumberType)
                 {
                     context.SetIntermediateVariable(result, $"TRY_PARSE({CoerceNullToString(arg)} AS FLOAT)");
                 }
@@ -71,12 +69,12 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
             else if (context.IsNumericType(arg))
             {
-                var column = context.GetVarDetails(arg.varName).Column;
+                var column = context.GetVarDetails(arg.VarName).Column;
                 if (column != null && (column.TypeCode == AttributeTypeCode.Money || column.LogicalName.Equals("exchangerate")))
                 {
                     var result = context.GetTempVar(context.GetReturnType(node));
 
-                    if (result.type is NumberType)
+                    if (result.Type is NumberType)
                     {
                         context.TryCastToFloat($"{CoerceNullToInt(arg)}", result);
                     }
@@ -85,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         // only allow whole numbers to be parsed
                         context.TryCastToDecimal($"{CoerceNullToInt(arg)}", result);
                     }
-                        
+
                     context.PerformRangeChecks(result, node);
                     return result;
                 }
@@ -93,7 +91,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // calling Value on a number is a pass-thru
                 return context.SetIntermediateVariable(node, arg.ToString());
             }
-            else if (context._dataverseFeatures.IsOptionSetEnabled && arg.type is OptionSetValueType)
+            else if (context._dataverseFeatures.IsOptionSetEnabled && arg.Type is OptionSetValueType)
             {
                 if (node.Args[0] is RecordFieldAccessNode fieldNode)
                 {
@@ -106,16 +104,15 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     return context.SetIntermediateVariable(node, arg.ToString());
                 }
 
-                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), arg0.IRContext.SourceContext);
-
+                throw BuildUnsupportedArgumentTypeException(arg.Type._type.GetKindString(), arg0.IRContext.SourceContext);
             }
-            else if (arg.type is BlankType)
+            else if (arg.Type is BlankType)
             {
                 return context.SetIntermediateVariable(node, "NULL");
             }
             else
             {
-                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), arg0.IRContext.SourceContext);
+                throw BuildUnsupportedArgumentTypeException(arg.Type._type.GetKindString(), arg0.IRContext.SourceContext);
             }
         }
 
@@ -131,13 +128,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             }
             else if (node.Args.Count == 1)
             {
-                if (val.type is StringType)
+                if (val.Type is StringType)
                 {
                     // String passes through Text()
                     // Blank values should pass through too and not be converted to an empty string
                     return context.SetIntermediateVariable(node, $"{val}");
                 }
-                else if (val.type is BlankType)
+                else if (val.Type is BlankType)
                 {
                     // Blank() passes through Text()
                     return context.SetIntermediateVariable(node, $"NULL");
@@ -147,8 +144,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     throw new SqlCompileException(SqlCompileException.TextNumberMissingFormat, node.IRContext.SourceContext);
                 }
             }
+
             // two arguments is only supported for numbers, datetimes, and typed/untyped blanks
-            else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.type is BlankType))
+            else if (node.Args.Count == 2 && (context.IsNumericType(val) || val.Type is BlankType))
             {
                 string format = null;
 
@@ -182,7 +180,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     // generally match the .NET placeholders used by SQL: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-numeric-format-strings
 
                     // Do not allow , . or locale tag or datetime format
-                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out var textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)") 
+                    if (!TextFormatUtils.IsValidFormatArg(format, formatCulture: null, defaultLanguage: null, out var textFormatArgs) || Regex.IsMatch(textFormatArgs.FormatArg, @"(,|\.)")
                         || (textFormatArgs.DateTimeFmt != DateTimeFmtType.NoDateTimeFormat) || !string.IsNullOrEmpty(textFormatArgs.FormatCultureName))
                     {
                         context._unsupportedWarnings.Add("Unsupported numeric format");
@@ -193,7 +191,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                     // For Excel compat, an empty format string should return an empty result string
                     // .NET format will treat an empty format string as a general format
-                    if (format == "")
+                    if (format == string.Empty)
                     {
                         context.SetIntermediateVariable(result, "N''");
                     }
@@ -209,8 +207,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         //    SELECT FORMAT( 567.0, N'0 "a" 0') incorrectly returns "56 a 0"
                         //    SELECT FORMAT( 567.0, N'0 \a 0' correctly returns "56 a 7"
                         //
-                        // To avoid this problem, double quoted string escaping is converted to per character backslash escaping
-                        //
+                        // To avoid this problem, double quoted string escaping is converted to per character backslash escaping                        
                         StringBuilder backslashEscaped = new StringBuilder();
                         int strLength = format.Length;
                         bool inDblQuotes = false;
@@ -234,6 +231,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                                 {
                                     backslashEscaped.Append('\\');
                                 }
+
                                 backslashEscaped.Append(format[i]);
                             }
                         }
@@ -249,15 +247,17 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                         context.SetIntermediateVariable(result, $"FORMAT({CoerceNullToInt(val)}, N'{format}')");
                     }
                 }
+
                 return result;
             }
 
-            throw BuildUnsupportedArgumentTypeException(val.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
+            throw BuildUnsupportedArgumentTypeException(val.Type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
         }
 
         public static RetVal UpperLower(SqlVisitor visitor, CallNode node, Context context, string function)
         {
             var val = node.Args[0].Accept(visitor, context);
+
             // Null values are coerced to empty string
             return context.SetIntermediateVariable(node, $"{function}({CoerceNullToString(val)})");
         }
@@ -273,7 +273,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var val = node.Args[0].Accept(visitor, context);
             var expression = RoundDownToInt(val);
             var roundedVal = context.TryCastToDecimal(expression);
-            context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation:true);
+            context.ErrorCheck($"{roundedVal} < 1 OR {roundedVal} > 255", Context.ValidationErrorCode, postValidation: true);
             return context.SetIntermediateVariable(node, $"CHAR({roundedVal})");
         }
 
@@ -285,6 +285,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 var arg = node.Args[i].Accept(visitor, context);
 
                 var coercedArg = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(arg));
+
                 // if there is a single parameter, this is a pass thru
                 if (i == 0 && node.Args.Count == 1)
                 {
@@ -307,7 +308,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal IsBlank(SqlVisitor visitor, CallNode node, Context context)
         {
             var arg = node.Args[0].Accept(visitor, context);
-            if (arg.type is StringType)
+            if (arg.Type is StringType)
             {
                 return context.SetIntermediateVariable(node, $"({arg} IS NULL OR LEN({arg}+N'x') = 1)");
             }
@@ -321,8 +322,9 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         {
             var strArg = node.Args[0].Accept(visitor, context);
             var offset = node.Args[1].Accept(visitor, context);
-            
+
             context.NegativeNumberCheck(offset);
+
             //Left Right functions doesn't support offset more than int range
             context.ErrorCheck($"{offset} > {SqlStatementFormat.IntTypeMaxValue}", Context.ValidationErrorCode, postValidation: true);
 
@@ -359,14 +361,14 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static RetVal Len(SqlVisitor visitor, CallNode node, Context context)
         {
             var arg = node.Args[0].Accept(visitor, context);
-            if (arg.type is StringType)
+            if (arg.Type is StringType)
             {
                 // SQL ignores trailing spaces when counting the length
                 return context.SetIntermediateVariable(node, $"LEN({CoerceNullToString(arg)} + N'x')-1");
             }
             else
             {
-                throw BuildUnsupportedArgumentTypeException(arg.type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
+                throw BuildUnsupportedArgumentTypeException(arg.Type._type.GetKindString(), node.Args[0].IRContext.SourceContext);
             }
         }
 
@@ -414,8 +416,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 var matchCount = context.GetTempVar(FormulaType.Decimal);
                 context.SetIntermediateVariable(idx, $"1");
                 context.SetIntermediateVariable(matchCount, $"1");
+
                 // SQL ignores trailing whitespace when counting string length, so add an additional character and and remove it from the count
                 var oldLen = context.SetIntermediateVariable(FormulaType.Decimal, $"LEN({CoerceNullToString(oldStr)}+N'x')-1");
+
                 // find the appropriate instance (case sensitive) in the original string
                 context.AppendContentLine($"WHILE({matchCount} <= {coercedInstance}) BEGIN set {idx}=CHARINDEX({CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(str)}, {idx}); IF ({idx}=0 OR {matchCount}={coercedInstance}) BREAK; set {matchCount}+=1; set {idx}+={oldLen} END");
 
@@ -426,6 +430,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 // if no instance is indicated, replace all
                 context.SetIntermediateVariable(result, $"REPLACE({CoerceNullToString(str)}, {CoerceNullToString(oldStr)} {SqlStatementFormat.CollateString}, {CoerceNullToString(newStr)})");
             }
+
             return result;
         }
 
@@ -436,16 +441,19 @@ namespace Microsoft.PowerFx.Dataverse.Functions
             var coercedStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(str));
             ValidateNumericArgument(node.Args[1]);
             var start = node.Args[1].Accept(visitor, context);
+
             // the start value must be 1 or larger
             context.NonPositiveNumberCheck(start);
-            start = context.TryCastToInteger($"{start}", applyNullCheck : true);
+            start = context.TryCastToInteger($"{start}", applyNullCheck: true);
             ValidateNumericArgument(node.Args[2]);
             var count = node.Args[2].Accept(visitor, context);
+
             // the count value must be 0 or larger
             context.NegativeNumberCheck(count);
             count = context.TryCastToInteger($"{count}", applyNullCheck: true);
             var newStr = node.Args[3].Accept(visitor, context);
             var coercedNewStr = context.SetIntermediateVariable(FormulaType.String, CoerceNullToString(newStr));
+
             // STUFF will return null if the start index is larger than the string, so concatenate the strings in that case
             return context.SetIntermediateVariable(result, $"ISNULL(STUFF({coercedStr}, {start}, {count}, {coercedNewStr}), {coercedStr} + {coercedNewStr})");
         }

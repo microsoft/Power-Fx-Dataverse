@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using Microsoft.PowerFx.Core.Functions;
@@ -16,17 +13,18 @@ using Span = Microsoft.PowerFx.Syntax.Span;
 namespace Microsoft.PowerFx.Dataverse.Functions
 {
     internal static partial class Library
-    {        
+    {
         public static RetVal NowUTCNow(SqlVisitor visitor, CallNode node, Context context, FormulaType formulaType)
         {
-            context.expressionHasTimeBoundFunction = true;
+            context.ExpressionHasTimeBoundFunction = true;
+
             // round to the second, for parity with existing legacy CDS calculated fields
             return context.SetIntermediateVariable(formulaType, "DATEADD(ms, (0 - DATEPART(ms, GETUTCDATE())), GETUTCDATE())");
         }
 
         public static RetVal UTCToday(SqlVisitor visitor, CallNode node, Context context)
         {
-            context.expressionHasTimeBoundFunction = true;
+            context.ExpressionHasTimeBoundFunction = true;
             return context.SetIntermediateVariable(FormulaType.DateTimeNoTimeZone, "CONVERT(date, GETUTCDATE())");
         }
 
@@ -63,7 +61,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static void ValidateTypeCompatibility(RetVal val1, RetVal val2, Span sourceContext)
         {
             // if the representations of the dates are the same (local in UTC(TZI/DateOnly) vs UTC), they can be used together
-            if (IsDateTimeType(val1.type) && ColumnContainsLocalDateInUTC(val1.type) != ColumnContainsLocalDateInUTC(val2.type))
+            if (IsDateTimeType(val1.Type) && ColumnContainsLocalDateInUTC(val1.Type) != ColumnContainsLocalDateInUTC(val2.Type))
             {
                 throw BuildDateTimeCompatibilityError(sourceContext);
             }
@@ -91,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                 using (context.NewInlineLiteralContext())
                 {
                     var unitsEnum = unitsNode.Accept(visitor, context);
-                    units = unitsEnum.inlineSQL.ToLowerInvariant();
+                    units = unitsEnum.InlineSQL.ToLowerInvariant();
                 }
             }
             else if (unitsNode is RecordFieldAccessNode fieldNode)
@@ -114,8 +112,8 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     _ => throw new SqlCompileException(SqlCompileException.InvalidTimeUnit, unitsNode.IRContext.SourceContext, GetArgumentName(callNode.Function, argumentIndex), callNode.Function.Name)
                 };
             }
-            
-            throw BuildLiteralArgumentException(callNode.Args[argumentIndex].IRContext.SourceContext);            
+
+            throw BuildLiteralArgumentException(callNode.Args[argumentIndex].IRContext.SourceContext);
         }
 
         public static RetVal DatePart(SqlVisitor visitor, CallNode node, Context context, string part)
@@ -135,7 +133,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static void CheckForTimeZoneConversionToLocal(RetVal date, TexlFunction function, Span sourceContext)
         {
             // if the column isn't TimeZoneIndependent or DateOnly, it will need to be converted to local
-            if (IsDateTimeType(date.type) && !ColumnContainsLocalDateInUTC(date.type))
+            if (IsDateTimeType(date.Type) && !ColumnContainsLocalDateInUTC(date.Type))
             {
                 throw BuildTimeZoneConversionError(function, sourceContext);
             }
@@ -144,7 +142,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         public static void CheckForTimeZoneConversionToUTC(RetVal date, TexlFunction function, Span sourceContext)
         {
             // if the column is TZI or DateOnly, it will need to be converted to UTC to be evaluated
-            if (IsDateTimeType(date.type) && ColumnContainsLocalDateInUTC(date.type))
+            if (IsDateTimeType(date.Type) && ColumnContainsLocalDateInUTC(date.Type))
             {
                 throw BuildTimeZoneConversionError(function, sourceContext);
             }
@@ -179,7 +177,7 @@ namespace Microsoft.PowerFx.Dataverse.Functions
         private static RetVal AddDatesInternal(IntermediateNode node, RetVal date, RetVal offset, string units, Context context, bool supportFractionalDays = false)
         {
             // use the same return type as the input, so TZI type is retained
-            var result = context.GetTempVar(date.type);
+            var result = context.GetTempVar(date.Type);
             var validatedOffset = context.SetIntermediateVariable(FormulaType.Decimal, $"ISNULL({offset},0)");
             context.DateAdditionOverflowCheck(validatedOffset, units, date);
             if (supportFractionalDays)
@@ -192,11 +190,13 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     {
                         context.SetIntermediateVariable(result, $"DATEADD({SqlStatementFormat.Second}, {validatedOffset}*24*60*60, {date})");
                     }
+
                     using (indenter.EmitElse())
                     {
                         context.SetIntermediateVariable(result, $"DATEADD({units}, {validatedOffset}, {date})");
                     }
                 }
+
                 return result;
             }
             else

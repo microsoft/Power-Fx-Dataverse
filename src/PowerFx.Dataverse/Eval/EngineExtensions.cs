@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.
-        internal class DelegationHooks 
+        internal class DelegationHooks
         {
             public virtual int DefaultMaxRows => throw new NotImplementedException();
 
@@ -72,14 +75,15 @@ namespace Microsoft.PowerFx.Dataverse
                 List<IntermediateNode> args;
 
                 // If original node was returning record type, execute retrieveSingle. Otherwise, execute retrieveMultiple.
-                if (query._originalNode.IRContext.ResultType is RecordType recordReturnType)
+                if (query.OriginalNode.IRContext.ResultType is RecordType recordReturnType)
                 {
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
+
                     // $$$ Change args to single record, instead of list of separate args.
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy };
                     returnType = recordReturnType;
                 }
-                else if (query._originalNode.IRContext.ResultType is TableType tableReturnType)
+                else if (query.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
@@ -87,18 +91,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unexpected return type: {query._originalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
+                    throw new InvalidOperationException($"Unexpected return type: {query.OriginalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query._columnMap) ? query._columnMap.Distinct : string.Empty);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query.ColumnMap) ? query.ColumnMap.Distinct : string.Empty);
                 args.Add(isDistinctArg);
 
-                if (query.hasColumnMap)
+                if (query.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
                 }
 
-                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                if (query.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                 {
                     var scopeSymbol = originalCallNode.Scope;
                     node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
@@ -115,7 +119,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 RecordType rt = RecordType.Empty();
 
-                foreach (KeyValuePair<DName, IntermediateNode> kvp in query._columnMap.Map)
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query.ColumnMap.Map)
                 {
                     rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
                 }
@@ -154,6 +158,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     result = new CallNode(iRContext, func, scope, args);
                 }
+
                 return result;
             }
 
@@ -216,20 +221,20 @@ namespace Microsoft.PowerFx.Dataverse
             // Generate a lookup call for: Lookup(Table, Id=Guid)
             internal CallNode MakeRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid)
             {
-                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
+                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query.OriginalNode.IRContext.ResultType);
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.String), BuiltinFunctionsCore.Blank);
 
                 // last arg is blank, as we don't need partition id for retrieve in non elastic table.
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, blankNode };
-                var returnType = query._originalNode.IRContext.ResultType;
-                
-                if (query.hasColumnMap)
+                var returnType = query.OriginalNode.IRContext.ResultType;
+
+                if (query.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
                 }
 
                 CallNode node;
-                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                if (query.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                 {
                     var scopeSymbol = originalCallNode.Scope;
                     node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
@@ -244,17 +249,17 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal CallNode MakeElasticRetrieveCall(DelegationIRVisitor.RetVal query, IntermediateNode argGuid, IntermediateNode partitionId)
             {
-                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query._originalNode.IRContext.ResultType);
+                var func = new DelegatedRetrieveGUIDFunction(this, (TableType)query.OriginalNode.IRContext.ResultType);
                 var args = new List<IntermediateNode> { query._sourceTableIRNode, argGuid, partitionId };
-                var returnType = query._originalNode.IRContext.ResultType;
-                
-                if (query.hasColumnMap)
+                var returnType = query.OriginalNode.IRContext.ResultType;
+
+                if (query.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query._columnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
                 }
 
                 CallNode node;
-                if (query._originalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                if (query.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                 {
                     var scopeSymbol = originalCallNode.Scope;
                     node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);
@@ -293,6 +298,7 @@ namespace Microsoft.PowerFx.Dataverse
         private class DelegationIRTransform : IRTransform
         {
             private readonly DelegationEngineExtensions.DelegationHooks _hooks;
+
             private readonly int _maxRows;
 
             public DelegationIRTransform(DelegationEngineExtensions.DelegationHooks hooks, int maxRows)

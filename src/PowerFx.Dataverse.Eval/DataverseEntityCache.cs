@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -20,19 +17,27 @@ namespace Microsoft.PowerFx.Dataverse
 
         public TimeSpan LifeTime { get; }
 
-        public TimeSpan DefaultLifeTime => new(0, 5, 0); // 5 minutes
+        public TimeSpan DefaultLifeTime => new (0, 5, 0); // 5 minutes
 
         public int CacheSize
-        { get { lock (_lock) { return _cache.Count; } } }
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _cache.Count;
+                }
+            }
+        }
 
         // Stores all entities, sorted by Id (key) with their timestamp (value)
-        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new();
+        private readonly Dictionary<Guid, DataverseCachedEntity> _cache = new ();
 
         // Stores the list of cached entry Ids in order they are cached
-        private readonly List<Guid> _cacheList = new();
+        private readonly List<Guid> _cacheList = new ();
 
         // Lock used for cache dictionary and list
-        private readonly object _lock = new();
+        private readonly object _lock = new ();
 
         private readonly IDataverseServices _innerService;
 
@@ -59,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             lock (_lock)
             {
-                DataverseCachedEntity dce = new(entity);
+                DataverseCachedEntity dce = new (entity);
 
                 if (_cache.ContainsKey(id))
                 {

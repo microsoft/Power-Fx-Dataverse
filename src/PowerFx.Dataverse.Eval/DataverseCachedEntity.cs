@@ -1,11 +1,8 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
-using Microsoft.Xrm.Sdk;
 using System;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -15,8 +12,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal DateTime TimeStamp { get; } // UTC
 
-        internal DataverseCachedEntity(Entity entity) 
-        { 
+        internal DataverseCachedEntity(Entity entity)
+        {
             Entity = entity;
             TimeStamp = DateTime.UtcNow;
         }

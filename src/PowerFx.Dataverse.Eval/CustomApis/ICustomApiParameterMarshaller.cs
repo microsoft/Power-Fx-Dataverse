@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.PowerFx.Types;
@@ -6,7 +9,7 @@ using Microsoft.PowerFx.Types;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Convert a Custom API parameter type to a Power Fx type. 
+    /// Convert a Custom API parameter type to a Power Fx type.
     /// </summary>
     public interface ICustomApiParameterMarshaller
     {
@@ -37,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (string.IsNullOrWhiteSpace(logicalName))
                 {
                     // We normally need a logical name so we can create a strongly typed Fx type.
-                    // But if we're just calling (not implementing) an existing Custom API - we can loosen. 
+                    // But if we're just calling (not implementing) an existing Custom API - we can loosen.
                     if (parameterType is CustomApiRequestParam)
                     {
                         return RecordType.Empty();
@@ -45,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     throw new NotSupportedException($"Type {typeCode} requires ${nameof(IParameterType.logicalentityname)} to be set");
                 }
+
                 var metadataCache = _metadataCache ?? throw new NotSupportedException($"Can't resolve {typeCode}:{logicalName}  - Metadatacache is not set");
 
                 var type = metadataCache.GetRecordType(logicalName);
@@ -57,7 +61,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return type;
             }
 
-            return typeCode.ToPrimitivePowerFxType(); // throws if not handled 
+            return typeCode.ToPrimitivePowerFxType(); // throws if not handled
         }
     }
 }

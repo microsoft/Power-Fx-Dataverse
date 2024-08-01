@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -250,7 +253,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(195, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, false, false)]
         [InlineData(196, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, true, false)]
         [InlineData(197, "Filter(t1, State = If(1<0, 'State (Locals)'.Active))", 0, false, true)]
-
         [InlineData(198, "Filter(Distinct(t1, Price), Value > 5)", 2, false, true)]
         [InlineData(199, "Filter(Sort(t1, Price), Price > 5)", 2, false, true)]
         [InlineData(200, "Filter(SortByColumns(t1, Price), Price > 5)", 2, false, true)]

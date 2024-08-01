@@ -1,14 +1,17 @@
-﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -16,18 +19,18 @@ namespace Microsoft.PowerFx.Dataverse
     /// Extensions for enabling Dataverse features in config.
     /// </summary>
     public static class ConfigExtensions
-    {        
+    {
         public static void EnableAIFunctions(this PowerFxConfig config)
         {
             config.SymbolTable.EnableAIFunctions();
         }
 
         /// <summary>
-        /// Add AI functions (like AISummarize) to the symbol table. 
-        /// This will also require a runtime call to add a <see cref="IDataverseExecute"/> so these functions can make the call at runtime. 
+        /// Add AI functions (like AISummarize) to the symbol table.
+        /// This will also require a runtime call to add a <see cref="IDataverseExecute"/> so these functions can make the call at runtime.
         /// </summary>
         /// <param name="symbolTable"></param>
-        public static void EnableAIFunctions(this SymbolTable symbolTable )
+        public static void EnableAIFunctions(this SymbolTable symbolTable)
         {
             symbolTable.AddFunction(new AISummarizeFunction());
             symbolTable.AddFunction(new AIReplyFunction());

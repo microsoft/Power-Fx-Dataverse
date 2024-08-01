@@ -17,11 +17,29 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>powerfx;dataverse</PackageTags>
-    <RepositoryType />
+    <RepositoryType />    
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.5.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <AnalysisLevel>8.0.0</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
+    
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)Microsoft.PowerFx.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   
 </Project>

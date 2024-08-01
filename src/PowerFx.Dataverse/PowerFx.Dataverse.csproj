@@ -45,6 +45,7 @@
     <EmbeddedResource Include="..\strings\DataverseResources.*.resx">
       <Link>strings\%(Filename)%(Extension)</Link>
     </EmbeddedResource>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
 </Project>

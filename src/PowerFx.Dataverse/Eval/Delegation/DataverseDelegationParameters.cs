@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,9 +19,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         public IList<OrderExpression> OrderBy { get; init; }
 
-        internal ISet<LinkEntity> _relation { get; init; }
+        internal ISet<LinkEntity> Relation { get; init; }
 
-        internal ColumnMap _columnMap { get; init; }        
+        internal ColumnMap ColumnMap { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -54,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
             return odata;
         }
 
-        public override IReadOnlyCollection<string> GetColumns() => _columnMap?.Columns;
+        public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Columns;
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FilterExpression filter)
@@ -85,6 +88,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     count++;
                 }
+
                 sb.Append(")");
 
                 return sb.ToString();

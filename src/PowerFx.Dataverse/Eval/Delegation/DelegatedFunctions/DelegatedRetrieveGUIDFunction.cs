@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
@@ -44,9 +47,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args.Length > 3)
             {
-                columnMap = args[3] is RecordValue rv 
+                columnMap = args[3] is RecordValue rv
                     ? new ColumnMap(rv, null)
-                    : throw new InvalidOperationException($"Expecting args3 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");                
+                    : throw new InvalidOperationException($"Expecting args3 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");
             }
 
             var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap?.Columns, cancellationToken).ConfigureAwait(false);

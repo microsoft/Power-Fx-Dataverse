@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseTableValue : TableValue, IRefreshable, IDelegatableTableValue
     {
         private readonly IConnectionValueContext _connection;
+
         private readonly RecordType _recordType;
 
         internal IConnectionValueContext Connection => _connection;
@@ -38,6 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
         public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
 
         public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
+
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
@@ -57,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
         public void Refresh()
         {
             _lazyTaskRows = NewLazyTaskRowsInstance;
-            var services = _connection.Services.dataverseServices;
+            var services = _connection.Services.DataverseServices;
             if (services is IDataverseRefresh serviceRefresh)
             {
                 serviceRefresh.Refresh(_entityMetadata.LogicalName);
@@ -66,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)
@@ -144,7 +143,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
 #pragma warning restore CS0618 // Type or member is obsolete
-
         {
             cancellationToken.ThrowIfCancellationRequested();
             QueryExpression query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
@@ -156,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new List<DValue<RecordValue>>() { entityCollectionResponse.DValueError("RetrieveMultiple") };
             }
 
-            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters._columnMap, cancellationToken).ConfigureAwait(false);
+            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters.ColumnMap, cancellationToken).ConfigureAwait(false);
 
             return result;
         }
@@ -186,7 +184,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             EntityCollection entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
-            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters._columnMap, cancellationToken).ConfigureAwait(false);
+            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters.ColumnMap, cancellationToken).ConfigureAwait(false);
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -194,13 +192,13 @@ namespace Microsoft.PowerFx.Dataverse
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
-            bool hasDistinct = ColumnMap.HasDistinct(delegationParameters._columnMap);
+            bool hasDistinct = ColumnMap.HasDistinct(delegationParameters.ColumnMap);
 
             var query = new QueryExpression(entityName)
             {
                 ColumnSet = hasDistinct
-                                ? new ColumnSet(delegationParameters._columnMap.Distinct)
-                                : ColumnMap.GetColumnSet(delegationParameters._columnMap),
+                                ? new ColumnSet(delegationParameters.ColumnMap.Distinct)
+                                : ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
                 Criteria = delegationParameters.Filter ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
@@ -210,9 +208,9 @@ namespace Microsoft.PowerFx.Dataverse
                 query.TopCount = delegationParameters.Top;
             }
 
-            if (delegationParameters._relation != null && delegationParameters._relation.Any())
+            if (delegationParameters.Relation != null && delegationParameters.Relation.Any())
             {
-                query.LinkEntities.AddRange(delegationParameters._relation);
+                query.LinkEntities.AddRange(delegationParameters.Relation);
             }
 
             if (delegationParameters.OrderBy != null && delegationParameters.OrderBy.Any())
@@ -385,7 +383,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            List<DValue<RecordValue>> list = new();            
+            List<DValue<RecordValue>> list = new ();
 
             RecordType recordType = Type.ToRecord();
 
@@ -400,7 +398,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                 recordType = rt;
             }
-
 
             foreach (Entity entity in entityCollection.Entities)
             {
@@ -424,7 +421,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new ArgumentNullException(nameof(entityCollection));
             }
 
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
 
             foreach (Entity entity in entityCollection.Entities)
             {

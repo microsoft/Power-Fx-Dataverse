@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -18,7 +15,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseEvalHelpers
     {
-        // Lookup, expect exactly one. 
+        // Lookup, expect exactly one.
         public static async Task<T> RetrieveAsync<T>(this IDataverseReader reader, string filterName, string filterValue, CancellationToken cancel)
               where T : class, new()
         {
@@ -34,17 +31,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             var list = await reader.RetrieveMultipleAsync(query, cancel);
             list.ThrowEvalExOnError();
-            
+
             var entities = list.Response.Entities;
             if (entities.Count != 1)
             {
                 throw new InvalidOperationException($"{entities.Count} entities in {tableName} with {filterName} equal to {filterValue}.");
             }
+
             var entity = entities[0];
             return entity.ToObject<T>();
         }
 
-        // Lookup, can return 0, 1, or many. 
+        // Lookup, can return 0, 1, or many.
         public static Task<T[]> RetrieveMultipleAsync<T>(this IDataverseReader reader, string filterName, object filterValue, CancellationToken cancel)
               where T : class, new()
         {
@@ -54,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
             return reader.RetrieveMultipleAsync<T>(filter, cancel);
         }
 
-        // Lookup, can return 0, 1, or many. 
+        // Lookup, can return 0, 1, or many.
         public static async Task<T[]> RetrieveMultipleAsync<T>(this IDataverseReader reader, FilterExpression filter, CancellationToken cancel)
               where T : class, new()
         {
@@ -80,8 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
             return items.ToArray();
         }
 
-
-        // Lookup the entity name via the DataverseEntityAttribute on a type. 
+        // Lookup the entity name via the DataverseEntityAttribute on a type.
         private static string GetEntityName(this ICustomAttributeProvider type)
         {
             var attrs = type.GetCustomAttributes(typeof(DataverseEntityAttribute), true);
@@ -90,7 +87,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return ((DataverseEntityAttribute)attrs[0]).LogicalName;
             }
 
-            // This is a bug, since only calls here are determined at compile time.  
+            // This is a bug, since only calls here are determined at compile time.
             throw new InvalidOperationException($"Type {type} does not have a {nameof(DataverseEntityAttribute)}");
         }
 
@@ -99,7 +96,7 @@ namespace Microsoft.PowerFx.Dataverse
             var attrs = type.GetCustomAttributes(typeof(DataverseEntityPrimaryIdAttribute), true);
 
             // All entity does not need to populate their primary id field name.
-            if(attrs.Length == 0)
+            if (attrs.Length == 0)
             {
                 return string.Empty;
             }
@@ -109,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return ((DataverseEntityPrimaryIdAttribute)attrs[0]).PrimeryIdFieldName;
             }
 
-            // This is a bug, since only calls here are determined at compile time.  
+            // This is a bug, since only calls here are determined at compile time.
             throw new InvalidOperationException($"Type {type} does not have a {nameof(DataverseEntityAttribute)}");
         }
 
@@ -144,7 +141,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (prop.PropertyType == typeof(Guid))
             {
                 string primaryIdFieldName = entityType.GetEntityPrimeryIdFieldName();
-                if(primaryIdFieldName == prop.Name)
+                if (primaryIdFieldName == prop.Name)
                 {
                     val = entity.Id;
                     return true;
@@ -160,11 +157,14 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var entities = entityCollection.Entities;
             T[] result = new T[entities.Count];
-            for(int i = 0; i < entities.Count; i++) {
+
+            for (int i = 0; i < entities.Count; i++)
+            {
                 Entity entity = entities[i];
                 T obj = entity.ToObject<T>();
                 result[i] = obj;
             }
+
             return result;
         }
 

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.IO;
 using System.Linq;
 using Microsoft.PowerFx.Types;
@@ -17,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return expr;
         }
 
-        // $$$ Ensure expectDelegationFailures=false in all cases. 
+        // $$$ Ensure expectDelegationFailures=false in all cases.
         [Theory]
         [InlineData("FilterLiteralWithDateTimeValue.txt")]
         [InlineData("FilterLiteralWithGuid.txt")]
@@ -29,9 +32,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData("ProposalMultipleFiltersWithTwoLiterals.txt")]
         [InlineData("ProposalSingleFilter.txt")]
         [InlineData("ProposalNoFilter.txt")]
-
-        // $$$ C# mocks don't support polymorphism
-        //[InlineData("ProposalIssuerRelatedPartyNoFilterPolymorphic.txt", true)] // polymorphism
         public void BasicCompile(string shortFilename, bool expectDelegationFailures = false)
         {
             var symbols = GetSymbols();
@@ -39,8 +39,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             string expr = ReadFile(shortFilename);
 
-            // First do a basic sanity-check compilation without delegation. 
-            // This should always pass. 
+            // First do a basic sanity-check compilation without delegation.
+            // This should always pass.
             {
                 var engine = new RecalcEngine();
                 var check = new CheckResult(engine)
@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 var errors = check.ApplyErrors();
 
-                // $$$ check for delegation warnings. 
+                // $$$ check for delegation warnings.
                 var delegationWarnings = errors.Where(e => e.MessageKey == "WrnDelegationTableNotSupported").ToArray();
 
                 if (delegationWarnings.Length > 0)
@@ -83,6 +83,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
 
         #region Schema
+
+#pragma warning disable SA1300 // Element names must begin with an uppercase letter
+
         // aib_proposal
         private class AibProposal
         {
@@ -91,30 +94,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public DateTime modifiedon { get; set; }
 
             public string aib_name { get; set; }
+
             public string aib_status { get; set; }
+
             public double aib_agreementdurationamount { get; set; }
+
             public DateTime aib_agreementdurationunits { get; set; }
 
             public AibIssuer aib_Issuer { get; set; }
+
             public AibIssuer aib_Approver { get; set; }
         }
 
         private class AibIssuer
         {
             public Guid aib_issuerid { get; set; }
+
             public string aib_name { get; set; }
+
             public string aib_title { get; set; }
         }
 
         private class AibRelatedParty
         {
             public Guid aib_relatedpartyid { get; set; }
+
             public string aib_name { get; set; }
+
             public string aib_referredtype { get; set; }
 
             public AibProposal aib_Proposal { get; set; }
         }
-        #endregion
+#pragma warning restore SA1300 // Element names must begin with an uppercase letter
+
+        #endregion Schema
 
         private readonly TypeMarshallerCache _typeCache = new TypeMarshallerCache();
 
@@ -133,7 +146,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             AddTable<AibProposal>(st, "aib_proposal");
             AddTable<AibIssuer>(st, "aib_issuer");
             AddTable<AibRelatedParty>(st, "aib_relatedparty");
-
 
             // Input parameters
             st.AddVariable("inputStatus", FormulaType.String);

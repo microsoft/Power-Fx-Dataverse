@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -16,39 +13,31 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class DataverseIntellisenseTests
     {
-        // For testing, provide a new engine instance each time to ensure their caches are reset between tests. 
-        internal static PowerFx2SqlEngine _engine =>
-            new PowerFx2SqlEngine(
-                MockModels.RelationshipModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels)));
+        // For testing, provide a new engine instance each time to ensure their caches are reset between tests.
+        internal static PowerFx2SqlEngine Engine => new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels)));
 
-        internal static PowerFx2SqlEngine _allAttributesEngine => GetAllAttributesEngine(null);
+        internal static PowerFx2SqlEngine AllAttributesEngine => GetAllAttributesEngine(null);
 
-        internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) =>
-            new PowerFx2SqlEngine(
-                MockModels.AllAttributeModels[0].ToXrm(),
-                new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                locale);
+        internal static PowerFx2SqlEngine GetAllAttributesEngine(CultureInfo locale) => new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels)) { NumberIsFloat = DataverseEngine.NumberIsFloat }, locale);
 
         /// <summary>
         /// This method receives a test case string, along with an optional context type that defines the valid
-        /// names and types in the expression and invokes Intellisense.Suggest on it, and returns a the result
+        /// names and types in the expression and invokes Intellisense.Suggest on it, and returns a the result.
         /// </summary>
         /// <param name="expression">
-        /// Expression in which is expected exactly one occurence of | to indicate cursor position
+        /// Expression in which is expected exactly one occurence of | to indicate cursor position.
         /// </param>
         /// <param name="engine">
-        /// The engine to use when performing the suggest.  Optional.  Defaults to the base engine
+        /// The engine to use when performing the suggest.  Optional.  Defaults to the base engine.
         /// </param>
         /// <returns>
-        /// An intellisense result to be tested
+        /// An intellisense result to be tested.
         /// </returns>
         internal IIntellisenseResult Suggest(string expression, PowerFx2SqlEngine engine = null)
         {
-            engine ??= _engine;
+            engine ??= Engine;
             Assert.NotNull(expression);
 
             var cursorMatches = Regex.Matches(expression, @"\|");
@@ -65,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// position that would be considered.
         /// </param>
         /// <param name="unexpectedOutput">
-        /// The value of the suggestion which should not be shown in the list
+        /// The value of the suggestion which should not be shown in the list.
         /// </param>
         [Theory]
         [InlineData("sel|", "Self")]
@@ -76,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.DoesNotContain(intellisense.Suggestions, suggestion => suggestion.DisplayText.Text == unexpectedOutput);
         }
 
-        static string[] ToArray(IIntellisenseResult intellisense)
+        private static string[] ToArray(IIntellisenseResult intellisense)
         {
             return intellisense.Suggestions.Select(suggestion => suggestion.DisplayText.Text).ToArray();
         }
@@ -89,53 +78,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// position. Note also that these test suggestion order as well as contents.
         /// </summary>
         /// <param name="expression">
-        /// Expression on which intellisense will be run
+        /// Expression on which intellisense will be run.
         /// </param>
         /// <param name="expectedSuggestions">
         /// A list of arguments that will be compared with the names of the output of
-        /// <see cref="Workspace.Suggest"/> in order
+        /// <see cref="Workspace.Suggest"/> in order.
         /// </param>
         [Theory]
         [InlineData("ab|", "Abs")]
-        [InlineData("TimeUni|", "TimeUnit",
-            "TimeUnit.Days",
-            "TimeUnit.Hours",
-            "TimeUnit.Milliseconds",
-            "TimeUnit.Minutes",
-            "TimeUnit.Months",
-            "TimeUnit.Quarters",
-            "TimeUnit.Seconds",
-            "TimeUnit.Years")]
+        [InlineData("TimeUni|", "TimeUnit", "TimeUnit.Days", "TimeUnit.Hours", "TimeUnit.Milliseconds", "TimeUnit.Minutes", "TimeUnit.Months", "TimeUnit.Quarters", "TimeUnit.Seconds", "TimeUnit.Years")]
         [InlineData("ErrorKin|")] // "ErrorKind is excluded"
         [InlineData("DateTimeFo|")] // "DateTimeFormat is excluded"
         [InlineData("Ye|", "TimeUnit.Years", "Year")] // "Only Namespaced Enums"
-        [InlineData("DateAdd(x, 1,|",
-            "'Boolean (Locals)'",
-            "'Global Picklist'",
-            "'Rating (Locals)'",
-            "'State (Locals)'",
-            "Status",
-            "TimeUnit.Days",
-            "TimeUnit.Hours",
-            "TimeUnit.Milliseconds",
-            "TimeUnit.Minutes",
-            "TimeUnit.Months",
-            "TimeUnit.Quarters",
-            "TimeUnit.Seconds",
-            "TimeUnit.Years")] // "TimeUnit inside DateAdd"
-        [InlineData("Text(UTCToday(),|",
-            "'Boolean (Locals)'",
-            "'Global Picklist'",
-            "'Rating (Locals)'",
-            "'State (Locals)'",
-            "Status")] // "DateTimeFormat in Text on Date"            
+        
+        // "TimeUnit inside DateAdd"
+        [InlineData("DateAdd(x, 1,|", "'Boolean (Locals)'", "'Global Picklist'", "'Rating (Locals)'", "'State (Locals)'", "Status", "TimeUnit.Days", "TimeUnit.Hours", "TimeUnit.Milliseconds", "TimeUnit.Minutes", "TimeUnit.Months", "TimeUnit.Quarters", "TimeUnit.Seconds", "TimeUnit.Years")]
+        
+        // "DateTimeFormat in Text on Date"
+        [InlineData("Text(UTCToday(),|", "'Boolean (Locals)'", "'Global Picklist'", "'Rating (Locals)'", "'State (Locals)'", "Status")] 
         [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'", "'State (Locals)'")] // "One To Many not shown"
         [InlineData("Sel|", "'Self Reference'")] // "Lookup (Many To One) is shown"
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
         [InlineData("Pric|", "Old_Price", "Price")] // "Display Name of field is suggested, but logical name is not"
         [InlineData("Floa|", "Float")]
-        [InlineData("Other.Actual|", "'Actual Float'")] 
+        [InlineData("Other.Actual|", "'Actual Float'")]
         [InlineData("Other.Floa|", "'Actual Float'", "Float")] // "Name collisions with floating point fields are handled"
         [InlineData("Virtual|", "'Virtual Lookup'")] // "Lookups to virtual tables are still suggested"
         [InlineData("'Virtual Lookup'.|")] // "Fields on virtual tables are not"
@@ -167,19 +134,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] // "Global picklist"
         public void CheckOptionSetSuggestions2(string expression, params string[] expectedSuggestions)
         {
-            // don't reorder suggestions. 
+            // don't reorder suggestions.
             var intellisense = Suggest(expression);
             var actualSuggestions = ToArray(intellisense);
             Assert.Equal(expectedSuggestions, actualSuggestions);
         }
 
-        // Engines have an intellisense cache. 
+        // Engines have an intellisense cache.
         // The cache grows as we evaluate lookups into other tables.
-        // This means users can get more intellisense suggestions the more evaluations they do. 
+        // This means users can get more intellisense suggestions the more evaluations they do.
         [Fact]
         public void CheckOptionSetSuggestionsCaches()
         {
-            var engine = _engine;
+            var engine = Engine;
 
             List<string> expected = new List<string> { "Rating", "'Rating (Locals)'" };
             expected.Sort(StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
@@ -189,13 +156,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var actualSuggestions = ToArray(intellisense);
             Assert.Equal(expected, actualSuggestions);
 
-
-            // Suggestion to cache in more metadata from another table. This will bring in "'Rating (Remotes)'"            
+            // Suggestion to cache in more metadata from another table. This will bring in "'Rating (Remotes)'"
             Suggest("Other.Rating|", engine);
             expected.Add("'Rating (Remotes)'");
             expected.Sort(StringComparer.Ordinal);
 
-            // Now repeating the original request will get more suggestions. 
+            // Now repeating the original request will get more suggestions.
             intellisense = Suggest("Rat|", engine);
             actualSuggestions = ToArray(intellisense);
             Assert.Equal(expected, actualSuggestions);
@@ -206,7 +172,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Strin|", "String")] // "String suggested"
         [InlineData("Hyperlin|")] // "Hyperlink not suggested"
         [InlineData("Emai|")] // "Email not suggested"
-        [InlineData("Ticke|")] // "Ticker not suggested"        
+        [InlineData("Ticke|")] // "Ticker not suggested"
         [InlineData("Duratio|")] // "Duration not suggested"
         [InlineData("Doubl|", "Double")] // "Double suggested"
         [InlineData("Mone|", "Money")] // "Currency suggested"
@@ -216,7 +182,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void CheckUnsupportedTypeSuggestions(string expression, params string[] expectedSuggestions)
         {
             Array.Sort(expectedSuggestions, StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
-            var intellisense = Suggest(expression, _allAttributesEngine);
+            var intellisense = Suggest(expression, AllAttributesEngine);
             var actualSuggestions = ToArray(intellisense);
             Assert.Equal(expectedSuggestions, actualSuggestions);
         }

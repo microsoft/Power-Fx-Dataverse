@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
@@ -60,16 +63,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(47, "ForAll(ShowColumns(t1, Price), new_price)", 4, "Value", "100, 10, -10, 10")]
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "ForAllDelegation.txt", expr, expectedRows, expectedIds,
+            await DelegationTestAsync(
+                id,
+                "ForAllDelegation.txt",
+                expr,
+                expectedRows,
+                expectedIds,
                 (result) => result switch
                 {
                     TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column)
-                                                                             ? ((Func<string>)(() => { Assert.Empty(drv.Value.Fields); return "∅"; }))()
+                                                                             ? ((Func<string>)(() =>
+                                                                                {
+                                                                                    Assert.Empty(drv.Value.Fields);
+                                                                                    return "∅";
+                                                                                }))()
                                                                              : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value))),
                     RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value),
                     _ => throw FailException.ForFailure("Unexpected result")
                 },
-                true, true, null, true, true, true, expectedWarnings);
+                true,
+                true,
+                null,
+                true,
+                true,
+                true,
+                expectedWarnings);
         }
 
         private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";

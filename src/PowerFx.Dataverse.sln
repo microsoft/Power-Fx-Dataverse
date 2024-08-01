@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\.editorconfig = ..\.editorconfig
 		..\.gitignore = ..\.gitignore
 		Build.props = Build.props
+		Microsoft.PowerFx.ruleset = Microsoft.PowerFx.ruleset
 		..\nuget.config = ..\nuget.config
 		test.runsettings = test.runsettings
 	EndProjectSection
@@ -24,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PowerFx.Dataverse", "PowerF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse.Sql", "Microsoft.PowerFx.Dataverse.Sql\Microsoft.PowerFx.Dataverse.Sql.csproj", "{1C5AA47E-C112-4B96-BD9A-539EB4D1DAEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.PowerFx.AzureStorage", "Microsoft.PowerFx.AzureStorage\Microsoft.PowerFx.AzureStorage.csproj", "{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.AzureStorage", "Microsoft.PowerFx.AzureStorage\Microsoft.PowerFx.AzureStorage.csproj", "{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

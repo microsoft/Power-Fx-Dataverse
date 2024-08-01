@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core.IR;
@@ -102,7 +105,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (first._dic.TryGetValue(new DName(secondValue), out IntermediateNode firstNode))
                 {
                     string firstValue = GetString(firstNode);
-                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));                    
+                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));
                 }
                 else if (first._distinctColumn == secondValue)
                 {

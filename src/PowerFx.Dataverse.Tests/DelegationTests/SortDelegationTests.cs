@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
@@ -73,7 +76,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(34, "Sort(ShowColumns(t1, 'new_quantity', 'new_price', 'localid'), new_price)", 4, "0004, 0003, 0005, 0001")]
         [InlineData(35, "Sort(Sort(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
         [InlineData(36, "Sort(SortByColumns(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
-        
         [InlineData(37, "Sort(Filter(t1, Price > 0), Quantity)", 3, "0003, 0005, 0001")]
         [InlineData(38, "Sort(ForAll(t1, { Value: Price }), Value)", 4, "-10, 10, 10, 100", true)]
         [InlineData(39, "SortByColumns(Distinct(t1, Price), Value)", 3, "-10, 10, 100", true)]
@@ -83,7 +85,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(43, "SortByColumns(ForAll(t1, { Value: Price }), Value)", 4, "-10, 10, 10, 100", true)]
         public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds, bool useValue = false)
         {
-            await DelegationTestAsync(id, "SortDelegation.txt", expr, expectedRows, expectedIds,
+            await DelegationTestAsync(
+                id,
+                "SortDelegation.txt",
+                expr,
+                expectedRows,
+                expectedIds,
                 result => result switch
                 {
                     TableValue tv => useValue
@@ -91,8 +98,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                         : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..])),
                     RecordValue rv => (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..],
                     _ => throw FailException.ForFailure("Unexpected result")
-                }
-                , true, true, null, true, true, true);
+                },
+                true,
+                true,
+                null,
+                true,
+                true,
+                true);
         }
     }
 }

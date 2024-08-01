@@ -1,34 +1,32 @@
-﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AITranslate(String) : string 
-    // given a string, call GPT to return a English-translated version of the string. 
+    // AITranslate(String) : string
+    // given a string, call GPT to return a English-translated version of the string.
     public abstract class AITranslateFunctionBase : ReflectionFunction
     {
         public AITranslateFunctionBase()
-                : base("AITranslate",
-                      FormulaType.String,
-                      FormulaType.String)
+            : base("AITranslate", FormulaType.String, FormulaType.String)
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
 
         public AITranslateFunctionBase(FormulaType fieldType)
-                : base("AITranslate", 
-                      FormulaType.String, 
-                      FormulaType.String, 
-                      fieldType)
+            : base("AITranslate", FormulaType.String, FormulaType.String, fieldType)
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
@@ -37,12 +35,12 @@ namespace Microsoft.PowerFx.Dataverse
         protected class TranslateRequest
         {
             /// <summary>
-            /// The incoming text. 
+            /// The incoming text.
             /// </summary>
             public string Text { get; set; }
 
             /// <summary>
-            /// The target language to translate the text to. 
+            /// The target language to translate the text to.
             /// </summary>
             public string TargetLanguage { get; set; }
 
@@ -93,12 +91,12 @@ namespace Microsoft.PowerFx.Dataverse
 
     public class AITranslateFunction : AITranslateFunctionBase
     {
-        public AITranslateFunction() 
+        public AITranslateFunction()
             : base()
         {
         }
 
-        // Entry called by Power Fx interpreter. 
+        // Entry called by Power Fx interpreter.
         public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, CancellationToken cancel)
         {
             if (client == null)
@@ -108,7 +106,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var result = await TranslatedText(value.Value, null, client, cancel);
-
 
             return FormulaValue.New(result);
         }
@@ -121,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        // Entry called by Power Fx interpreter. 
+        // Entry called by Power Fx interpreter.
         public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, StringValue targetLanguage, CancellationToken cancel)
         {
             if (client == null)
@@ -130,8 +127,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new CustomFunctionErrorException("Org not available");
             }
 
-            var result =  await TranslatedText(value.Value, targetLanguage.Value, client, cancel);
-             
+            var result = await TranslatedText(value.Value, targetLanguage.Value, client, cancel);
 
             return FormulaValue.New(result);
         }

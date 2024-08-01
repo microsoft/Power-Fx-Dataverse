@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PowerFx.Dataverse\PowerFx.Dataverse.csproj" />
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
 </Project>

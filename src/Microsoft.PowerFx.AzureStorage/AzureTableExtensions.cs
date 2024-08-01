@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -15,7 +18,7 @@ namespace Microsoft.PowerFx.AzureStorage
     public static class AzureTableExtensions
     {
         /// <summary>
-        /// Read the Azure Table to infer the schema. 
+        /// Read the Azure Table to infer the schema.
         /// </summary>
         /// <param name="tableClient"></param>
         /// <param name="cancel"></param>
@@ -28,7 +31,7 @@ namespace Microsoft.PowerFx.AzureStorage
             return tableValue;
         }
 
-        // Azure Tables are schema-less. Read a few rows and see. 
+        // Azure Tables are schema-less. Read a few rows and see.
         public static async Task<RecordType> InferRecordType(this TableClient tableClient, CancellationToken cancel = default)
         {
             //TableClient.CreateQueryFilter(new FormattableString("PartitionKey eq 'pk'"))

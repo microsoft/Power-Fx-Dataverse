@@ -1,10 +1,13 @@
-﻿using Microsoft.AppMagic.Authoring.Importers.DataDescription;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
+using System.Linq;
+using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
-using System;
-using System.Linq;
 using XrmAttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -25,6 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return type;
             }
+
             throw new Exception($"Cannot convert {typeCode} to formula type");
         }
 
@@ -69,6 +73,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
 
                 case XrmAttributeTypeCode.DateTime:
+
                     // Return the default formula type
                     type = Types.FormulaType.DateTime;
                     return true;
@@ -86,6 +91,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return dsInfo.CdsTableDefinition;
             }
+
             throw new Exception("Unsupported data source");
         }
 
@@ -95,6 +101,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return dsInfo.CdsTableDefinition;
             }
+
             return default;
         }
 
@@ -123,6 +130,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new Exception($"{name} not found on {table.Name}");
             }
+
             return column;
         }
     }

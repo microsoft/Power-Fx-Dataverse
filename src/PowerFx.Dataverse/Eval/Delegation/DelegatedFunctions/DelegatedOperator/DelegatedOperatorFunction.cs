@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,13 +16,14 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Delegation means rewriting a client-side functions into functions that make efficient server calls. 
+    // Delegation means rewriting a client-side functions into functions that make efficient server calls.
     // This means injecting new runtime helper functions into the IR.
-    // As runtime helpers, they can't be referenced by binder and don't show in intellisense or source. 
-    // As such, the actual function name doesn't matter and is just used for diagnostics. 
+    // As runtime helpers, they can't be referenced by binder and don't show in intellisense or source.
+    // As such, the actual function name doesn't matter and is just used for diagnostics.
     internal abstract class DelegatedOperatorFunction : DelegateFunction
     {
         private readonly ConditionOperator _op;
+
         private readonly BinaryOpKind _binaryOpKind;
 
         public DelegatedOperatorFunction(DelegationHooks hooks, string name, BinaryOpKind binaryOpKind)
@@ -118,9 +122,11 @@ namespace Microsoft.PowerFx.Dataverse
                     case ConditionOperator.Equal:
                         filter.AddCondition(field, ConditionOperator.Null);
                         break;
+
                     case ConditionOperator.NotEqual:
                         filter.AddCondition(field, ConditionOperator.NotNull);
                         break;
+
                     default:
                         throw new InvalidOperationException($"Unsupported operator {op} for null value");
                 }

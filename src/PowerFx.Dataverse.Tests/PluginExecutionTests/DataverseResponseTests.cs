@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.ServiceModel;
@@ -35,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Fact]
         public async Task RunSuccess()
         {
-            var resp = await  DataverseResponse<FakeMessage>.RunAsync(static async () => new FakeMessage { Value = "ok" }, "op");
+            var resp = await DataverseResponse<FakeMessage>.RunAsync(static async () => new FakeMessage { Value = "ok" }, "op");
 
             Assert.False(resp.HasError);
             Assert.NotNull(resp.Response);
@@ -58,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Contains(opMessage, resp.Error);
         }
 
-        // Non-async callback. 
+        // Non-async callback.
         [Fact]
         public async Task RunHardError1()
         {
@@ -75,7 +72,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Not a dataverse exception
         private class MyException : Exception
         {
-            public MyException(string message) : base(message)
+            public MyException(string message) 
+                : base(message)
             {
             }
         }

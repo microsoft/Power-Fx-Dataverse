@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.IO;
@@ -19,11 +16,11 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal static class DataverseExtensions
     {
-        public static bool Execute<Req, Res, Out>(this IOrganizationService svcClient, Req request, Func<Res, Out> transform, out Out result)
-            where Req : OrganizationRequest
-            where Res : OrganizationResponse
+        public static bool Execute<TReq, TRes, TOut>(this IOrganizationService svcClient, TReq request, Func<TRes, TOut> transform, out TOut result)
+            where TReq : OrganizationRequest
+            where TRes : OrganizationResponse
         {
-            var resp = DataverseCall<Res>(() => (Res)svcClient.Execute(request), request.RequestName);
+            var resp = DataverseCall<TRes>(() => (TRes)svcClient.Execute(request), request.RequestName);
             if (resp.HasError)
             {
                 result = default;
@@ -49,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="parameters"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        /// <exception cref="CustomFunctionErrorException"></exception>
+        /// <exception cref="CustomFunctionErrorException">.</exception>
         public static T GetOrThrowEvalEx<T>(this ParameterCollection parameters, string name)
         {
             if (parameters.TryGetValue(name, out var value))
@@ -71,8 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-
-        // Record should already be logical names. 
+        // Record should already be logical names.
         public static Entity ConvertRecordToEntity(this RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string methodName = null)
         {
             // Contains only the modified fields.
@@ -92,20 +88,21 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (metadata.TryGetRelationship(field.Name, out var realAttributeName))
                     {
-                        // Get primary key, set as guid. 
+                        // Get primary key, set as guid.
                         DataverseRecordValue dvr = field.Value as DataverseRecordValue;
                         if (dvr == null)
                         {
-                            // Binder should have stopped this. 
+                            // Binder should have stopped this.
                             error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
                             return null;
                         }
+
                         var entityRef = dvr.Entity.ToEntityReference();
 
                         leanEntity.Attributes.Add(realAttributeName, entityRef);
                         continue;
                     }
-                    else if(metadata.TryGetOneToManyRelationship(field.Name, out var relationship))
+                    else if (metadata.TryGetOneToManyRelationship(field.Name, out var relationship))
                     {
                         error = DataverseExtensions.DataverseError<RecordValue>($"One to Many Relations is not supported yet: {field.Name}  {metadata.LogicalName}", methodName);
                         return null;
@@ -143,7 +140,9 @@ namespace Microsoft.PowerFx.Dataverse
         private static string DisplayName(this Type t)
         {
             if (!t.IsGenericType)
+            {
                 return t.Name;
+            }
 
             string genericTypeName = t.GetGenericTypeDefinition().Name;
             genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
@@ -159,19 +158,19 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<T>.Of(FormulaValue.NewError(DataverseHelpers.GetExpressionError(message, messageKey: method)));
         }
 
-        // Call IOrganizationService and translate responses. 
+        // Call IOrganizationService and translate responses.
         // This should be the one place we translate from IOrganizationClient failures.
         public static DataverseResponse<T> DataverseCall<T>(Func<T> call, string operationDescription)
         {
             string message;
             try
             {
-                // Will throw on error 
+                // Will throw on error
                 try
                 {
                     T result = call();
 
-                    // Success. 
+                    // Success.
                     return new DataverseResponse<T>(result);
                 }
                 catch (AggregateException ae)
@@ -184,13 +183,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // thrown by server- server received command and it failed. Like missing record, etc.
                 // Details contain things like:
-                // - http status code 
+                // - http status code
 
-                message = e.Message;                
+                message = e.Message;
             }
             catch (MessageSecurityException e)
             {
-                // thrown if we can't auth to server.                 
+                // thrown if we can't auth to server.
                 message = e.Message;
             }
             catch (InvalidOperationException e)
@@ -200,7 +199,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (IOException e)
             {
-                // Network is bad - such as network is offline. 
+                // Network is bad - such as network is offline.
                 message = e.Message;
             }
             catch (Exception e)
@@ -213,8 +212,8 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    // Any other exception is a "hard failure" that should propagate up. 
-                    // this will terminate the eval. 
+                    // Any other exception is a "hard failure" that should propagate up.
+                    // this will terminate the eval.
                     throw;
                 }
             }

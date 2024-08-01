@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -24,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
-            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken)                
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -42,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var filter = new FilterExpression();
                         filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
 #pragma warning disable CS0618 // Type or member is obsolete
-                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { Filter = filter, Top = 1, _columnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
+                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { Filter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CS0618 // Type or member is obsolete
                         result = rows.FirstOrDefault();
                     }
@@ -69,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="partitionId">Provide partitionId in case of elastic table. else keep it null.</param>
             /// <param name="count">count of record that will be fetched from top.</param>
             /// <param name="columnSet">Fetches only provided columns. If kept null, fetches all the columns.</param>
-            /// <param name="isDistinct">Decides if Distinct needs be applied</param>
+            /// <param name="isDistinct">Decides if Distinct needs be applied.</param>
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)

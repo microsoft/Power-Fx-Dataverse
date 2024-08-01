@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -27,6 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public sealed partial class DelegationTests
     {
         internal static ConcurrentDictionary<string, List<string>> _delegationTests = new ConcurrentDictionary<string, List<string>>();
+
         public readonly ITestOutputHelper _output;
 
         public DelegationTests(ITestOutputHelper output)
@@ -34,8 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             _output = output;
         }
 
-        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat,
-            bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
+        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -147,7 +150,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     {
                         Assert.Equal(expectedResult, resultGetter(result));
                     }
-                    else if (cdsNumberIsFloat && parserNumberIsFloatOption || cdsNumberIsFloat && !parserNumberIsFloatOption)
+                    else if (cdsNumberIsFloat && (parserNumberIsFloatOption || (cdsNumberIsFloat && !parserNumberIsFloatOption)))
                     {
                         Assert.Equal(expectedResult, result.ToObject());
                     }
@@ -190,6 +193,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public void CheckDelegationExpressions()
         {
 #if false
+
             // For debugging only
             string file = @"c:\temp\delegation.txt";
 
@@ -206,7 +210,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 string expr = kvp.Key;
                 string functions = string.Join(", ", kvp.Value);
 
-                d2.AddOrUpdate(functions, new List<string>() { expr }, (e, lst) => { lst.Add(expr); return lst; });
+                d2.AddOrUpdate(functions, new List<string>() { expr }, (e, lst) =>
+                {
+                    lst.Add(expr);
+                    return lst;
+                });
             }
 
             foreach (KeyValuePair<string, List<string>> kvp in d2.OrderBy(kvp => kvp.Key))
@@ -232,7 +240,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 foreach (string f2 in new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
                 {
                     string f = $"{f1}, {f2}";
-                    
+
                     if (d2.ContainsKey(f))
                     {
                         continue;
@@ -243,7 +251,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 }
             }
 
-            Assert.True(0 == missing, $"Missing {missing} tests");
+            Assert.True(missing == 0, $"Missing {missing} tests");
         }
     }
 

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -35,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -120,13 +117,13 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Double
                      },
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field1",
+                         LogicalName = "new_field1",
                          DisplayName = "field1",
                          AttributeType = AttributeTypeCode.Double
                      },
@@ -137,7 +134,7 @@ END
 
             var engine = new PowerFx2SqlEngine(metadata, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
 
-            SqlCompileOptions options = new()
+            SqlCompileOptions options = new ()
             {
                 CreateMode = SqlCompileOptions.Mode.Create,
                 UdfName = "fn_testUdf1",
@@ -224,13 +221,13 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field1",
+                         LogicalName = "new_field1",
                          DisplayName = "field1",
                          AttributeType = AttributeTypeCode.Money
                      },
@@ -290,7 +287,7 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Money
                      },
@@ -350,7 +347,7 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Money
                      },
@@ -431,13 +428,13 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "exchangerate",
+                         LogicalName = "exchangerate",
                          DisplayName = "exchangerate",
                          AttributeType = AttributeTypeCode.Decimal
                      },
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field1",
+                         LogicalName = "new_field1",
                          DisplayName = "field1",
                          AttributeType = AttributeTypeCode.Money
                      },
@@ -480,17 +477,17 @@ END
                 {
                     new AttributeMetadataModel
                     {
-                         LogicalName= "exchangerate",
+                         LogicalName = "exchangerate",
                          AttributeType = AttributeTypeCode.Decimal
                     },
                     new AttributeMetadataModel
                     {
-                         LogicalName= "money",
+                         LogicalName = "money",
                          AttributeType = AttributeTypeCode.Money
                     },
                     new AttributeMetadataModel
                     {
-                         LogicalName= "decimal",
+                         LogicalName = "decimal",
                          AttributeType = AttributeTypeCode.Decimal
                     }
                 }
@@ -540,12 +537,12 @@ END
                 {
                     new AttributeMetadataModel
                     {
-                         LogicalName= "field",
+                         LogicalName = "field",
                          AttributeType = AttributeTypeCode.Double
                     },
                     new AttributeMetadataModel
                     {
-                         LogicalName= "field1",
+                         LogicalName = "field1",
                          AttributeType = AttributeTypeCode.Decimal
                     }
                 }
@@ -626,12 +623,12 @@ END
                 {
                     new AttributeMetadataModel
                     {
-                         LogicalName= "field",
+                         LogicalName = "field",
                          AttributeType = AttributeTypeCode.Double
                     },
                     new AttributeMetadataModel
                     {
-                         LogicalName= "field1",
+                         LogicalName = "field1",
                          AttributeType = AttributeTypeCode.Decimal
                     }
                 }
@@ -990,8 +987,7 @@ END
             CallEngineAndVerifyResult("Max(1, Float(2),3,4)", null, "Max(#$decimal$#, Float(#$decimal$#), #$decimal$#, #$decimal$#)", isFloatingPointEnabled: false, isSuccess: false, errorMsg: "'Float' is an unknown or unsupported function.");
         }
 
-        private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula, bool isFloatingPointEnabled = true,
-            bool isSuccess = true, string errorMsg = null)
+        private void CallEngineAndVerifyResult(string expr, FormulaType returnType, string sanitizedFormula, bool isFloatingPointEnabled = true, bool isSuccess = true, string errorMsg = null)
         {
             var engine = new PowerFx2SqlEngine(dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = isFloatingPointEnabled });
             var result = engine.Compile(expr, new SqlCompileOptions());
@@ -1056,7 +1052,7 @@ END
                     AttributeMetadataModel.NewDouble("new_Quantity", "Quantity"),
                     AttributeMetadataModel.NewString("new_Name", "Name"),
                     AttributeMetadataModel.NewDecimal("new_Calc", "Calc", "new_Calc_Schema").SetSchemaName("new_Calc_Schema").SetCalculated(),
-                    AttributeMetadataModel.NewGuid("accountid","accountid").SetSchemaName("AccountId"),
+                    AttributeMetadataModel.NewGuid("accountid", "accountid").SetSchemaName("AccountId"),
                     AttributeMetadataModel.NewDecimal("address1_latitude", "Latitude").SetLogical()
                 }
         }.SetSchemaName("Account");
@@ -1160,7 +1156,7 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -1272,7 +1268,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var expr = "Concatenate(\"" + (new string('a', 977)) + "\", new_test)";
+            var expr = "Concatenate(\"" + new string('a', 977) + "\", new_test)";
             Assert.True(expr.Length > DataverseEngine.MaxExpressionLength);
             Assert.True(expr.Length < DataverseEngine.MaxInvariantExpressionLength);
 
@@ -1285,7 +1281,7 @@ END
             result = engine.Compile(expr, new SqlCompileOptions());
             Assert.True(result.IsSuccess);
 
-            var displayExp = "Concatenate(\"" + (new string('a', 977)) + "\", Test)";
+            var displayExp = "Concatenate(\"" + new string('a', 977) + "\", Test)";
             Assert.True(displayExp.Length < DataverseEngine.MaxExpressionLength);
 
             result = engine.Compile(displayExp, new SqlCompileOptions());
@@ -1314,7 +1310,7 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_currency",
+                         LogicalName = "new_currency",
                          DisplayName = "currency",
                          AttributeType = AttributeTypeCode.Money
                      },
@@ -1366,7 +1362,7 @@ END
                 {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -1625,6 +1621,7 @@ END
                 case AttributeTypeCode.Picklist:
                 case AttributeTypeCode.Status:
                 case AttributeTypeCode.State:
+
                     // Generate comparison to constant, like:
                     //   'State' = 'State (All Attributes)'.'Active'
                     var os = attr.OptionSet;
@@ -1636,7 +1633,7 @@ END
                 case AttributeTypeCode.Owner:
                     addIdentityCheck = false; // Owner is a record, can't compare records
                     break;
-            };
+            }
 
             // Identity check.
             if (addIdentityCheck)
@@ -1674,7 +1671,7 @@ END
             {
                 { "multiSelect", "Columns of type Multi-Select Option Set are not supported in formula columns." },
                 { "duration", "Columns of type Integer with format Duration are not supported in formula columns" },
-                { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized."  },
+                { "new_lookup", "Name isn't valid. 'new_lookup' isn't recognized." },
                 { "selfid", "Name isn't valid. 'selfid' isn't recognized." },
                 { "hyperlink", "Columns of type String with format Url are not supported in formula columns." },
                 { "email", "Columns of type String with format Email are not supported in formula columns." },
@@ -1682,13 +1679,13 @@ END
                 { "timezone", "Columns of type Integer with format TimeZone are not supported in formula columns." },
                 { "bigint", "Columns of type BigInt are not supported in formula columns." },
                 { "EntityName", "Name isn't valid. 'EntityName' isn't recognized." }, // AttributeTypeCode.EntityName are not imported
-                { "file", "Name isn't valid. 'file' isn't recognized."},
+                { "file", "Name isn't valid. 'file' isn't recognized." },
                 { "customerid", "Name isn't valid. 'customerid' isn't recognized." },
 
                 // Different test expressions may give different errors:
                 // image='Image' fails since BinaryOpKind.EqImage isn't implemented.
                 // IsBlank(image) fails accessing the image field (Virtual).
-                { "image", "Columns of type Virtual are not supported in formula columns."}
+                { "image", "Columns of type Virtual are not supported in formula columns." }
             };
 
             var unsupportedProducer = new Dictionary<string, string>
@@ -1700,12 +1697,14 @@ END
             };
 
             var provider = new MockXrmMetadataProvider(MockModels.AllAttributeModels);
-            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
-                    , dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true, IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(MockModels.AllAttributeModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true, IsOptionSetEnabled = true });
 
             foreach (var attr in MockModels.AllAttributeModel.Attributes)
             {
-                if (!attr.AttributeType.HasValue) { continue; }
+                if (!attr.AttributeType.HasValue)
+                {
+                    continue;
+                }
 
                 var exprs = GetConsumingExpressions(attr);
 
@@ -1749,7 +1748,7 @@ END
         }
 
         // Model where names conflict on case.
-        private readonly EntityMetadataModel ModelWithCasing = new EntityMetadataModel
+        private readonly EntityMetadataModel _modelWithCasing = new EntityMetadataModel
         {
             Attributes = new AttributeMetadataModel[]
               {
@@ -1767,7 +1766,7 @@ END
         [InlineData("Field1", typeof(StringType))]
         public void CheckCasing(string expr, Type returnType)
         {
-            var metadata = ModelWithCasing.ToXrm();
+            var metadata = _modelWithCasing.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
 
             AssertReturnType(engine, expr, returnType);
@@ -1827,7 +1826,7 @@ END
         }
 
         // Has conflicting _display_ names
-        private readonly EntityMetadataModel ModelWithConflict = new EntityMetadataModel
+        private readonly EntityMetadataModel _modelWithConflict = new EntityMetadataModel
         {
             Attributes = new AttributeMetadataModel[]
               {
@@ -1851,7 +1850,7 @@ END
         {
             var expr = "Conflict - conflict2";
 
-            var metadata = ModelWithConflict.ToXrm();
+            var metadata = _modelWithConflict.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
             var result = engine.Check(expr);
 
@@ -1866,7 +1865,7 @@ END
         [InlineData("'Conflict (conflict1)' + 'Conflict (conflict2)'")] // "Disambiguation"
         public void CompileFieldConflictResolved(string expr)
         {
-            var metadata = ModelWithConflict.ToXrm();
+            var metadata = _modelWithConflict.ToXrm();
             var engine = new PowerFx2SqlEngine(metadata);
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
@@ -1939,22 +1938,27 @@ END
         }
 
         [Theory]
-        [InlineData("Price * Quantity", "new_price,new_quantity")] // "Main Entity"
-        [InlineData("ThisRecord.Price + Quantity", "new_price,new_quantity")] // "Main Entity ThisRecord"
-        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")] // "Lookup"
-        [InlineData("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'",
-            "otherid",
-            "remote=>otherotherid|doubleremote=>data2,otherotherotherid|tripleremote=>data3",
-            "local=>local_remote|remote=>remote_doubleremote|doubleremote=>doubleremote_tripleremote")] // "Multiple levels of lookup"
-        [InlineData("'Self Reference'.Price + Other.Data",
-            "new_price,otherid,selfid",
-            "remote=>data",
-            "local=>local_remote,self")] // "Multiple lookups"
-        [InlineData("'Logical Lookup'.Data",
-            "localid,logicalid",
-            "remote=>data",
-            "local=>logical")] // "Logical Lookup"
-        [InlineData("7 + 2", "")] // "Literals"
+
+        // "Main Entity"
+        [InlineData("Price * Quantity", "new_price,new_quantity")]
+        
+        // "Main Entity ThisRecord"
+        [InlineData("ThisRecord.Price + Quantity", "new_price,new_quantity")]
+        
+        // "Lookup"
+        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")] 
+
+        // "Multiple levels of lookup"
+        [InlineData("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "otherid", "remote=>otherotherid|doubleremote=>data2,otherotherotherid|tripleremote=>data3", "local=>local_remote|remote=>remote_doubleremote|doubleremote=>doubleremote_tripleremote")]
+
+        // "Multiple lookups"
+        [InlineData("'Self Reference'.Price + Other.Data", "new_price,otherid,selfid", "remote=>data", "local=>local_remote,self")]
+
+        // "Logical Lookup"
+        [InlineData("'Logical Lookup'.Data", "localid,logicalid", "remote=>data", "local=>logical")]
+
+        // "Literals"
+        [InlineData("7 + 2", "")] 
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
@@ -1972,6 +1976,7 @@ END
             {
                 Assert.Empty(result.RelatedIdentifiers);
             }
+
             if (relationships != null)
             {
                 Assert.Equal(relationships, string.Join('|', result.DependentRelationships.ToArray().Select(pair => pair.Key + "=>" + ToStableString(pair.Value))));
@@ -2166,6 +2171,7 @@ END
         // [InlineData("UTCToday() = UTCNow()", true, typeof(BooleanType))] // "= UTCToday UTCNow"
 
         [InlineData("UTCToday() = dateOnly", true, typeof(BooleanType))] // "= UTCToday vs. Date Only"
+
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
         [InlineData("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "= TZI Date Time vs. User Local Date Only"
         [InlineData("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "<= Date Only vs. User Local Date Only"
@@ -2215,22 +2221,8 @@ END
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "Eeny", Value = 1 },
-                        new OptionMetadataModel { Label = "Meany", Value = 2 },
-                        new OptionMetadataModel { Label = "Miney", Value = 3 },
-                        new OptionMetadataModel { Label = "Moe", Value = 4 }
-                    },
-                    isGlobal: true),
-                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "Eeny", Value = 1 },
-                        new OptionMetadataModel { Label = "Meany", Value = 2 },
-                        new OptionMetadataModel { Label = "Miney", Value = 3 },
-                        new OptionMetadataModel { Label = "Moe", Value = 4 }
-                    },
-                    isGlobal: true)
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Eeny", Value = 1 }, new OptionMetadataModel { Label = "Meany", Value = 2 }, new OptionMetadataModel { Label = "Miney", Value = 3 }, new OptionMetadataModel { Label = "Moe", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Eeny", Value = 1 }, new OptionMetadataModel { Label = "Meany", Value = 2 }, new OptionMetadataModel { Label = "Miney", Value = 3 }, new OptionMetadataModel { Label = "Moe", Value = 4 } }, isGlobal: true)
                 }
             };
 
@@ -2250,22 +2242,8 @@ END
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "4", Value = 1 },
-                        new OptionMetadataModel { Label = "3", Value = 2 },
-                        new OptionMetadataModel { Label = "2", Value = 3 },
-                        new OptionMetadataModel { Label = "1", Value = 4 }
-                    },
-                    isGlobal: true),
-                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "4", Value = 1 },
-                        new OptionMetadataModel { Label = "3", Value = 2 },
-                        new OptionMetadataModel { Label = "2", Value = 3 },
-                        new OptionMetadataModel { Label = "1", Value = 4 }
-                    },
-                    isGlobal: true)
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true)
                 }
             };
 
@@ -2285,22 +2263,8 @@ END
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "Eeny", Value = 1 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 2 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 3 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 4 }
-                    },
-                    isGlobal: true),
-                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[]
-                    {
-                        new OptionMetadataModel { Label = "Eeny", Value = 1 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 2 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 3 },
-                        new OptionMetadataModel { Label = "Eeny", Value = 4 }
-                    },
-                    isGlobal: true)
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Eeny", Value = 1 }, new OptionMetadataModel { Label = "Eeny", Value = 2 }, new OptionMetadataModel { Label = "Eeny", Value = 3 }, new OptionMetadataModel { Label = "Eeny", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Eeny", Value = 1 }, new OptionMetadataModel { Label = "Eeny", Value = 2 }, new OptionMetadataModel { Label = "Eeny", Value = 3 }, new OptionMetadataModel { Label = "Eeny", Value = 4 } }, isGlobal: true)
                 }
             };
 
@@ -2317,8 +2281,7 @@ END
         public void CheckFloatingPoint(string expr, bool success, string error = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
-            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }
-                , dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), new CdsEntityMetadataProvider(provider) { NumberIsFloat = DataverseEngine.NumberIsFloat }, dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
             var options = new SqlCompileOptions();
             var result = engine.Compile(expr, options);
 
@@ -2356,8 +2319,10 @@ END
             var result = engine.Compile("'Logical Lookup'.Data", options);
 
             Assert.True(result.IsSuccess);
+
             // the SqlCreateRow has an embedded newline
-            Assert.Equal(@"fn_udf_Logical([localid])
+            Assert.Equal(
+                @"fn_udf_Logical([localid])
 ", result.SqlCreateRow);
         }
 
@@ -2374,8 +2339,7 @@ END
             Assert.Contains("Name isn't valid. 'Global2' isn't recognized", result.Errors.First().ToString());
 
             // passing list of these global optionsets so that these option sets will also be processed and added to metadatacache optionsets
-            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: MockModels.GlobalOptionSets),
-                dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine2 = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider, globalOptionSets: MockModels.GlobalOptionSets), dataverseFeatures: new () { IsOptionSetEnabled = true });
 
             var result2 = engine2.Compile("Global2", new SqlCompileOptions());
             Assert.False(result2.IsSuccess);
@@ -2403,7 +2367,7 @@ END
             Assert.False(result.IsSuccess);
             Assert.Equal("Error 0-72: The result type OptionSetValue (allattributes_picklist_optionSet) is not supported in formula columns.", result.Errors.First().ToString());
 
-            engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = true });
 
             // Using related entity optionset in result value is not supported.
             result = engine.Compile("If(lookup.data3>1,'Optionset Field (Triple Remotes)'.One, 'Optionset Field (Triple Remotes)'.Two)", new SqlCompileOptions());
@@ -2446,7 +2410,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = isOptionSetEnabled });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = isOptionSetEnabled });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.Equal(success, result.IsSuccess);
@@ -2468,7 +2432,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.Equal(success, result.IsSuccess);
@@ -2489,7 +2453,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions());
 
             Assert.Equal(success, result.IsSuccess);
@@ -2508,7 +2472,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels), globalOptionSets: MockModels.GlobalOptionSets);
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = true });
             var result = engine.Compile(expr, new SqlCompileOptions() { UdfName = "test" });
 
             Assert.Equal(success, result.IsSuccess);
@@ -2556,7 +2520,7 @@ END
         {
             var xrmModel = MockModels.AllAttributeModel.ToXrm();
             var provider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.AllAttributeModels));
-            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(xrmModel, provider, dataverseFeatures: new () { IsOptionSetEnabled = true });
 
             var result = engine.Compile("If(1 > 2,'Picklist (All Attributes)'.One, 'Picklist (All Attributes)'.Two)", new SqlCompileOptions() { UdfName = "test" });
             Assert.True(result.IsSuccess);
@@ -2567,7 +2531,7 @@ END
         [Fact]
         public void BlankFnUsedInControlFnsTest()
         {
-            var engine = new PowerFx2SqlEngine(dataverseFeatures: new() { IsOptionSetEnabled = true });
+            var engine = new PowerFx2SqlEngine(dataverseFeatures: new () { IsOptionSetEnabled = true });
             var result = engine.Compile("If(1>2,1,Blank())", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
 
@@ -2610,6 +2574,7 @@ AS BEGIN
     RETURN ROUND(@v0, 10)
 END
 ";
+
         public const string TestUDF2 = @"CREATE FUNCTION testUDF(
     @v1 uniqueidentifier, -- new_testlookup
     @v4 decimal(23,10) -- new_field
@@ -2633,12 +2598,13 @@ AS BEGIN
     RETURN ROUND(@v0, 10)
 END
 ";
+
         [Fact]
         public void LookupFieldIRTest()
         {
-            var TestAttributeModel = new EntityMetadataModel[] { MockModels.TestAttributeModel, MockModels.TripleRemoteModel };
+            var testAttributeModel = new EntityMetadataModel[] { MockModels.TestAttributeModel, MockModels.TripleRemoteModel };
             var xrmModel = MockModels.TestAttributeModel.ToXrm();
-            var provider = new MockXrmMetadataProvider(TestAttributeModel);
+            var provider = new MockXrmMetadataProvider(testAttributeModel);
             var engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider));
 
             // IR - {If:w(IsBlank:b(ScopeAccess(Scope 0, testLookupNavName)), Lazy(FieldAccess(ScopeAccess(Scope 0, testLookupNavName), data3)), Lazy(ScopeAccess(Scope 0, new_field)))}
@@ -2652,13 +2618,13 @@ END
             // @v3 for both scenarios and variable @v1 from first scenario is not declared in the UDF. So, UDF creation fails as @v3 is declared twice and @v1 is not defined.
             Assert.Equal(TestUDF1, result.SqlFunction);
 
-            engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new() { UseLookupFieldNameWhenNavPropNameIsDiff = true });
+            engine = new PowerFx2SqlEngine(xrmModel, new CdsEntityMetadataProvider(provider), dataverseFeatures: new () { UseLookupFieldNameWhenNavPropNameIsDiff = true });
             result = engine.Compile("If(IsBlank(TestLookup), TestLookup.'Data Three', field)", new SqlCompileOptions() { UdfName = "testUDF" });
             Assert.True(result.IsSuccess);
             Assert.Equal(TestUDF2, result.SqlFunction);
         }
 
-        public const string guidTestUDF = @"CREATE FUNCTION test(
+        public const string GuidTestUDF = @"CREATE FUNCTION test(
     @v0 uniqueidentifier -- guid
 ) RETURNS nvarchar(4000)
   WITH SCHEMABINDING
@@ -2691,7 +2657,7 @@ END
             Assert.True(result.IsSuccess);
             Assert.Single(result.TopLevelIdentifiers);
             Assert.Equal("guid", result.TopLevelIdentifiers.ElementAt(0));
-            Assert.Equal(guidTestUDF, result.SqlFunction);
+            Assert.Equal(GuidTestUDF, result.SqlFunction);
 
             result = engine.Compile("Concatenate(lookup.tripleremoteid,\"abc\")", new SqlCompileOptions());
             Assert.True(result.IsSuccess);
@@ -3038,7 +3004,7 @@ END
             Assert.True(dv.MetadataCache.TryGetOptionSet(new Core.Utils.DName("Rating (Locals)"), out var optionSet));
 
             // Simulates IExternalOptionSetDocument.RegisterOrRefreshOptionSet
-            var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", "", "Rating", "", "", "", new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
+            var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", string.Empty, "Rating", string.Empty, string.Empty, string.Empty, new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
             Assert.NotSame(refreshedOptionSet, optionSet);
 
             // $$$ This call will fail in DEBUG mode as 'Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal)' will throw

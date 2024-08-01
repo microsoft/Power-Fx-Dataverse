@@ -25,8 +25,11 @@
     <Authors>Microsoft</Authors>
   </PropertyGroup>
 
+  <Import Project="..\Build.props" />
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33" />
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
 </Project>

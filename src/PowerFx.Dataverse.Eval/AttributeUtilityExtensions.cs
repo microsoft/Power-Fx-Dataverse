@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -16,14 +13,14 @@ using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Operations on dataverse Attributes. 
+    /// Operations on dataverse Attributes.
     /// These can use FormulaValues like records and Tables.
     /// See <see cref="AttributeUtility"/> for core methods that don't require Fx.
     /// </summary>
     public static class AttributeUtilityExtensions
     {
         /// <summary>
-        /// Convert an Power Fx FormulaValue to an entity Object value. 
+        /// Convert an Power Fx FormulaValue to an entity Object value.
         /// </summary>
         /// <param name="amd"></param>
         /// <param name="fxValue"></param>
@@ -43,7 +40,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new InvalidOperationException($"ErrorValue can not be serialized for : {amd.DisplayName} with Type: {amd.AttributeTypeName}");
             }
-
 
             switch (amd.AttributeType.Value)
             {
@@ -110,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return int.Parse(((FxOptionSetValue)fxValue).Option);
                     }
-                    
+
                     return new XrmOptionSetValue(int.Parse(((FxOptionSetValue)fxValue).Option));
 
                 case AttributeTypeCode.Money:
@@ -120,14 +116,16 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             return dvm.Value;
                         }
+
                         return new Money(dvm.Value);
                     }
                     else
                     {
-                        if(isUsedinQueryExpression)
+                        if (isUsedinQueryExpression)
                         {
                             return (decimal)((NumberValue)fxValue).Value;
                         }
+
                         return new Money((decimal)((NumberValue)fxValue).Value);
                     }
 
@@ -171,6 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                         return dv.EntityReference;
                     }
+
                     goto default;
 
                 case AttributeTypeCode.CalendarRules:

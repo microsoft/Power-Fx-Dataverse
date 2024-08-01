@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Globalization;
@@ -33,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                return context.SetIntermediateVariable(node , $"N{CrmEncodeDecode.SqlLiteralEncode(value)}");
+                return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(value)}");
             }
         }
 
@@ -122,7 +125,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return ptr(this, node, context);
             }
 
-            // Match against Coalesce(number, 0) for blank coercion            
+            // Match against Coalesce(number, 0) for blank coercion
             if (Library.TryCoalesceNum(this, node, context, out var ret))
             {
                 return ret;
@@ -210,46 +213,54 @@ namespace Microsoft.PowerFx.Dataverse
 
                 //case BinaryOpKind.EqBlob:
                 case BinaryOpKind.EqBoolean:
+
                 //case BinaryOpKind.EqColor:
                 case BinaryOpKind.EqCurrency:
                 case BinaryOpKind.EqDate:
                 case BinaryOpKind.EqDateTime:
                 case BinaryOpKind.EqGuid:
                 case BinaryOpKind.EqHyperlink:
+
                 //case BinaryOpKind.EqImage:
                 //case BinaryOpKind.EqMedia:
                 case BinaryOpKind.EqNumbers:
                 case BinaryOpKind.EqDecimals:
                 case BinaryOpKind.EqOptionSetValue:
                 case BinaryOpKind.EqText:
-                //case BinaryOpKind.EqTime:
+
+                    //case BinaryOpKind.EqTime:
                     return EqualityCheck(node.Left, node.Right, node.Op, context.GetReturnType(node), context, node.IRContext.SourceContext);
 
                 //case BinaryOpKind.NeqBlob:
                 case BinaryOpKind.NeqBoolean:
+
                 //case BinaryOpKind.NeqColor:
                 case BinaryOpKind.NeqCurrency:
                 case BinaryOpKind.NeqDate:
                 case BinaryOpKind.NeqDateTime:
                 case BinaryOpKind.NeqGuid:
                 case BinaryOpKind.NeqHyperlink:
+
                 //case BinaryOpKind.NeqImage:
                 //case BinaryOpKind.NeqMedia:
                 case BinaryOpKind.NeqNumbers:
                 case BinaryOpKind.NeqDecimals:
                 case BinaryOpKind.NeqOptionSetValue:
                 case BinaryOpKind.NeqText:
-                //case BinaryOpKind.NeqTime:
+
+                    //case BinaryOpKind.NeqTime:
                     return EqualityCheck(node.Left, node.Right, node.Op, context.GetReturnType(node), context, node.IRContext.SourceContext, equals: false);
 
                 case BinaryOpKind.EqNull:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "IS", context, node.IRContext.SourceContext);
+
                 case BinaryOpKind.NeqNull:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "IS NOT", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GtDate:
                 case BinaryOpKind.GtDateTime:
-                //case BinaryOpKind.GtTime:
+
+                    //case BinaryOpKind.GtTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GtNumbers:
@@ -258,7 +269,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.GeqDate:
                 case BinaryOpKind.GeqDateTime:
-                //case BinaryOpKind.GeqTime:
+
+                    //case BinaryOpKind.GeqTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), ">=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.GeqNumbers:
@@ -267,7 +279,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.LtDate:
                 case BinaryOpKind.LtDateTime:
-                //case BinaryOpKind.LtTime:
+
+                    //case BinaryOpKind.LtTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LtNumbers:
@@ -276,7 +289,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.LeqDate:
                 case BinaryOpKind.LeqDateTime:
-                //case BinaryOpKind.LeqTime:
+
+                    //case BinaryOpKind.LeqTime:
                     return BinaryOperation(node.Left, node.Right, context.GetReturnType(node), "<=", context, node.IRContext.SourceContext);
 
                 case BinaryOpKind.LeqNumbers:
@@ -295,7 +309,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool IsExchangeRateColumn(RetVal field, Context context)
         {
-            CdsColumnDefinition column = context.GetVarDetails(field.varName).Column;
+            CdsColumnDefinition column = context.GetVarDetails(field.VarName).Column;
             if (column != null && column.LogicalName.Equals("exchangerate"))
             {
                 return true;
@@ -329,13 +343,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Helper function to generate a binary operation
+        /// Helper function to generate a binary operation.
         /// </summary>
-        /// <param name="left">The left node</param>
-        /// <param name="right">The right node</param>
-        /// <param name="type">The return type</param>
-        /// <param name="op">The SQL operation string</param>
-        /// <param name="context">The context</param>
+        /// <param name="left">The left node.</param>
+        /// <param name="right">The right node.</param>
+        /// <param name="type">The return type.</param>
+        /// <param name="op">The SQL operation string.</param>
+        /// <param name="context">The context.</param>
         /// <returns></returns>
         private RetVal BinaryOperation(IntermediateNode left, IntermediateNode right, FormulaType type, string op, Context context, Span sourceContext = default)
         {
@@ -346,13 +360,13 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Helper function to generate a numeric binary operation, that includes coorcing nulls to zero
+        /// Helper function to generate a numeric binary operation, that includes coorcing nulls to zero.
         /// </summary>
-        /// <param name="left">The left node</param>
-        /// <param name="right">The right node</param>
-        /// <param name="type">The return type</param>
-        /// <param name="op">The SQL operation string</param>
-        /// <param name="context">The context</param>
+        /// <param name="left">The left node.</param>
+        /// <param name="right">The right node.</param>
+        /// <param name="type">The return type.</param>
+        /// <param name="op">The SQL operation string.</param>
+        /// <param name="context">The context.</param>
         /// <returns></returns>
         private RetVal BinaryNumericOperation(IntermediateNode left, IntermediateNode right, FormulaType type, string op, Context context)
         {
@@ -397,11 +411,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                     return node.Op switch
                     {
-                        UnaryOpKind.BooleanToText => 
-                            RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'")), 
-                                context.GetReturnType(node)),
-                        _ => RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "1", "0")), 
-                                context.GetReturnType(node))
+                        UnaryOpKind.BooleanToText => RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "N'true'", "N'false'")), context.GetReturnType(node)),
+                        _ => RetVal.FromSQL(context.WrapInlineBoolean($"{arg} IS NULL", "NULL", context.WrapInlineBoolean(boolResult.ToString(), "1", "0")), context.GetReturnType(node))
                     };
 
                 case UnaryOpKind.NumberToBoolean:
@@ -424,6 +435,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return context.SetIntermediateVariable(node, $"{coercedArg} = N'true'");
 
                 case UnaryOpKind.OptionSetToBoolean:
+
                     // converting a boolean option set to a boolean is a noop
                     return node.Child.Accept(this, context);
 
@@ -461,9 +473,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                         // blocking OptionSetToText operation if dataverse optionsetvalues are passed as args, as we can't return the labels which are user locale-specific.
                         // e.g., OptionSetValue Labels - [{label:"Yes", languagecode:"1033"(en-US)}, {label:"Ja", languagecode:"1031"(de-DE)}]
-                        // When formula saved by maker with en-US language, Formula - Text('OptionSet ()'.Yes), UDF created returns string 'Yes' which is fixed and 
+                        // When formula saved by maker with en-US language, Formula - Text('OptionSet ()'.Yes), UDF created returns string 'Yes' which is fixed and
                         // users with en-US or de-DE language code will see the formula field value as 'Yes' and it is not localized based on user locale.
-                        if (context._dataverseFeatures.IsOptionSetEnabled && fieldNode.From is ResolvedObjectNode resolvedObjectNode && 
+                        if (context._dataverseFeatures.IsOptionSetEnabled && fieldNode.From is ResolvedObjectNode resolvedObjectNode &&
                             resolvedObjectNode.Value is DataverseOptionSet)
                         {
                             throw new SqlCompileException(SqlCompileException.ArgumentTypeNotSupported, node.Child.IRContext.SourceContext, context.GetReturnType(node.Child).ToString().Split('.').Last());
@@ -494,24 +506,25 @@ namespace Microsoft.PowerFx.Dataverse
                 Context.VarDetails varDetails;
                 var column = context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff ? context.GetScopeColumn(scopeAccess) : null;
 
-                // There are scenarios where lookup field's name and corresponding relationship's NavigationPropertyName could be different. for eg., for lookup fields created 
+                // There are scenarios where lookup field's name and corresponding relationship's NavigationPropertyName could be different. for eg., for lookup fields created
                 // on Activity entities will have the navprop name suffixed with _entityName. So, for cases where lookup field's name and it's relationship's navigationPropertyName
                 // are different, we are passing field name directly, instead of NavigationPropertyName.
                 // Bug - https://dynamicscrm.visualstudio.com/OneCRM/_workitems/edit/3951896
-                if (context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff && column != null && column.IsNavigation && 
+                if (context._dataverseFeatures.UseLookupFieldNameWhenNavPropNameIsDiff && column != null && column.IsNavigation &&
                     column.TypeDefinition is CdsNavigationTypeDefinition typeDef && !typeDef.ReferencingFieldName.Equals(typeDef.PropertyName))
                 {
                     var scope = context.GetScope(scopeAccess.Parent);
                     var varName = context.GetVarName(typeDef.ReferencingFieldName, scope, node.IRContext.SourceContext);
                     varDetails = context.GetVarDetails(varName);
                 }
-                else 
+                else
                 {
                     varDetails = context.GetVarDetails(scopeAccess, node.IRContext.SourceContext);
                 }
 
                 return RetVal.FromVar(varDetails.VarName, context.GetReturnType(node, varDetails.VarType));
             }
+
             // TODO: handle direct scope access, like entities for roll-ups
             throw new SqlCompileException(SqlCompileException.RecordAccessNotSupported, node.IRContext.SourceContext);
         }
@@ -554,7 +567,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // This is a chain of lookups, first visit the From to unroll the chain
                 var parent = node.From.Accept(this, context);
-                var parentVar = context.GetVarDetails(parent.varName);
+                var parentVar = context.GetVarDetails(parent.VarName);
 
                 var lookup = parentVar.Column;
                 if (lookup.IsNavigation && lookup.TypeDefinition is CdsNavigationTypeDefinition scopeNavType)
@@ -608,7 +621,9 @@ namespace Microsoft.PowerFx.Dataverse
         internal enum MatchType
         {
             Prefix,
+
             Suffix,
+
             Inner
         }
 
@@ -629,8 +644,8 @@ namespace Microsoft.PowerFx.Dataverse
                     match = match.Replace("'", "''");
 
                     // append start and end wildcards, as needed
-                    var startWildcard = matchType != MatchType.Prefix ? "%" : "";
-                    var endWildcard = matchType != MatchType.Suffix ? "%" : "";
+                    var startWildcard = matchType != MatchType.Prefix ? "%" : string.Empty;
+                    var endWildcard = matchType != MatchType.Suffix ? "%" : string.Empty;
                     return $"N'{startWildcard}{match}{endWildcard}'";
                 }
             }
@@ -651,16 +666,16 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // SQL does not allow boolean literals or boolean variables as a logical operation
             if (node is BooleanLiteralNode || ((node as LazyEvalNode)?.Child is BooleanLiteralNode) ||
-                (node is UnaryOpNode opNode && opNode.Child is RecordFieldAccessNode fieldNode && fieldNode.From is ResolvedObjectNode resolvedNode && 
+                (node is UnaryOpNode opNode && opNode.Child is RecordFieldAccessNode fieldNode && fieldNode.From is ResolvedObjectNode resolvedNode &&
                 resolvedNode.Value is DataverseOptionSet optionSet && optionSet.BackingKind == DKind.Boolean))
             {
                 return RetVal.FromSQL($"({result}=1)", FormulaType.Boolean);
             }
-            else if (result.type is BlankType)
+            else if (result.Type is BlankType)
             {
                 return RetVal.FromSQL("(0=1)", FormulaType.Boolean);
             }
-            else if (result.varName != null && result.type is BooleanType)
+            else if (result.VarName != null && result.Type is BooleanType)
             {
                 return RetVal.FromSQL($"({Library.CoerceNullToInt(result)}=1)", FormulaType.Boolean);
             }
@@ -717,6 +732,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return "nvarchar"; // TODO: what type should be used to a null variable?
             }
+
             throw new SqlCompileException(default);
         }
 
@@ -727,15 +743,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal class RetVal
         {
-            public string varName;
-            public string inlineSQL;
-            public FormulaType type;
+            public string VarName;
+
+            public string InlineSQL;
+
+            public FormulaType Type;
 
             private RetVal(string varName, string inlineSQL, FormulaType type)
             {
-                this.varName = varName;
-                this.inlineSQL = inlineSQL;
-                this.type = type;
+                this.VarName = varName;
+                this.InlineSQL = inlineSQL;
+                this.Type = type;
             }
 
             public static RetVal FromVar(string varName, FormulaType type)
@@ -743,14 +761,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return new RetVal(varName, null, type);
             }
 
-            public static RetVal FromSQL(string SQL, FormulaType type)
+            public static RetVal FromSQL(string sql, FormulaType type)
             {
-                return new RetVal(null, SQL, type);
+                return new RetVal(null, sql, type);
             }
 
             public override string ToString()
             {
-                return inlineSQL ?? varName;
+                return InlineSQL ?? VarName;
             }
         }
 
@@ -759,48 +777,48 @@ namespace Microsoft.PowerFx.Dataverse
             internal class VarDetails
             {
                 /// <summary>
-                /// The index of the var
+                /// The index of the var.
                 /// </summary>
                 public int Index;
 
                 /// <summary>
-                /// The name of the variable
+                /// The name of the variable.
                 /// </summary>
                 public string VarName;
 
                 /// <summary>
-                /// The type of the variable
+                /// The type of the variable.
                 /// </summary>
                 public FormulaType VarType;
 
                 /// <summary>
-                /// The backing field attribute metadata, will be null for temp variables
+                /// The backing field attribute metadata, will be null for temp variables.
                 /// </summary>
                 public CdsColumnDefinition Column;
 
                 /// <summary>
-                /// The navigation type, for lookup fields
+                /// The navigation type, for lookup fields.
                 /// </summary>
                 public CdsNavigationTypeDefinition Navigation;
 
                 /// <summary>
-                /// The logical name of the table for the field
+                /// The logical name of the table for the field.
                 /// </summary>
                 public string Table;
 
                 /// <summary>
-                /// The field's scope
+                /// The field's scope.
                 /// </summary>
                 public Scope Scope;
 
                 /// <summary>
-                /// The path to the field
+                /// The path to the field.
                 /// </summary>
                 public DPath Path;
 
                 /// <summary>
                 /// True if the field is stored on Primary Table
-                /// False if the field is inherited from a different table
+                /// False if the field is inherited from a different table.
                 /// </summary>
                 public bool IsReferenceFieldOnInheritedEntity;
             }
@@ -817,7 +835,7 @@ namespace Microsoft.PowerFx.Dataverse
             internal class Scope : DataverseType
             {
                 /// <summary>
-                /// The ScopeSymbol for the scope
+                /// The ScopeSymbol for the scope.
                 /// </summary>
                 public ScopeSymbol Symbol;
             }
@@ -837,7 +855,7 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly EntityAttributeMetadataProvider _secondaryMetadataCache;
 
             /// <summary>
-            /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function
+            /// A flag to indicate that the compliation is just validate SQL functionality, and shouldn't generate the full SQL function.
             /// </summary>
             private bool _checkOnly;
 
@@ -864,9 +882,9 @@ namespace Microsoft.PowerFx.Dataverse
             public bool DoesDateDiffOverflowCheck { get; internal set; }
 
             /// <summary>
-            /// Get temp variable details
+            /// Get temp variable details.
             /// </summary>
-            /// <returns>List of tuples of variable name and type</returns>
+            /// <returns>List of tuples of variable name and type.</returns>
             public IEnumerable<Tuple<string, FormulaType>> GetTemps()
             {
                 foreach (var pair in _vars)
@@ -880,9 +898,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             /// <summary>
-            /// Get calculated field variable details
+            /// Get calculated field variable details.
             /// </summary>
-            /// <returns>List of tuples of calculated field variable name, field name, and type</returns>
+            /// <returns>List of tuples of calculated field variable name, field name, and type.</returns>
             public IEnumerable<VarDetails> GetReferenceFields()
             {
                 foreach (var pair in _vars)
@@ -897,14 +915,14 @@ namespace Microsoft.PowerFx.Dataverse
             public bool IsReferenceField(VarDetails field)
             {
                 // For fields on inherited entity, if field is stored on primary table,
-                // field require reference and cannot be passed as a parameter to UDF 
+                // field require reference and cannot be passed as a parameter to UDF
                 return field.Column != null && (field.Column.RequiresReference() || field.Navigation != null || field.IsReferenceFieldOnInheritedEntity);
             }
 
             /// <summary>
-            /// Get parameter fields
+            /// Get parameter fields.
             /// </summary>
-            /// <returns>List of tuples of parameter field name and type</returns>
+            /// <returns>List of tuples of parameter field name and type.</returns>
             public IEnumerable<Tuple<CdsColumnDefinition, FormulaType>> GetParameters()
             {
                 foreach (var pair in _fields)
@@ -925,9 +943,11 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         dependentFields[pair.Value.Table] = new HashSet<string>();
                     }
+
                     // Add by logical name
                     dependentFields[pair.Value.Table].Add(pair.Value.Column.LogicalName);
                 }
+
                 return dependentFields;
             }
 
@@ -947,7 +967,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (optionSet != null)
                     {
                         // For local optionset, adding only dependency with attribute that the local optionset is bound to, as dependency between attribute and optionset
-                        // already exists - attribute being the required component for the optionset and local optionset gets deleted only when it's optionset field is deleted. 
+                        // already exists - attribute being the required component for the optionset and local optionset gets deleted only when it's optionset field is deleted.
                         // Taking only dependent global optionsetids as global optionsets are not bound to any attribute.
                         if (!optionSet.IsGlobal)
                         {
@@ -988,9 +1008,11 @@ namespace Microsoft.PowerFx.Dataverse
                             rels = new HashSet<string>();
                             dependentRelationships.Add(pair.Value.Navigation.ReferencingTableName, rels);
                         }
+
                         rels.Add(pair.Value.Navigation.SchemaName);
                     }
                 }
+
                 return dependentRelationships;
             }
 
@@ -1005,7 +1027,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public VarDetails GetVarDetails(ScopeAccessSymbol scopeAccess, Span sourceContext, bool allowCurrencyFieldProcessing = false)
             {
-                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, allowCurrencyFieldProcessing : allowCurrencyFieldProcessing);
+                return GetVarDetails(new DPath().Append(scopeAccess.Name), GetScope(scopeAccess.Parent), sourceContext, allowCurrencyFieldProcessing: allowCurrencyFieldProcessing);
             }
 
             // "new_Field" --> "@v0"
@@ -1051,12 +1073,13 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         throw new Exception($"Variable not found for field '{path.ToDottedSyntax()}'");
                     }
+
                     var idx = _vars.Count;
                     var varName = "@v" + idx;
 
                     var table = navigation == null ? scope.Type.AssociatedDataSources.First().Name : navigation.TargetTableNames[0];
 
-                    var isReferenceFieldOnInheritedEntity = !column.IsKey && _secondaryMetadataCache != null && 
+                    var isReferenceFieldOnInheritedEntity = !column.IsKey && _secondaryMetadataCache != null &&
                         _secondaryMetadataCache.IsInheritedEntityFieldStoredOnPrimaryTable(table, column.LogicalName);
 
                     var varType = GetFormulaType(column, sourceContext);
@@ -1073,6 +1096,7 @@ namespace Microsoft.PowerFx.Dataverse
                         GetVarName(primaryKeyPath, scope, sourceContext, navigation);
                     }
                 }
+
                 return details;
             }
 
@@ -1080,7 +1104,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dkind = column.TypeDefinition.DKind;
 
-                if(_dataverseFeatures.IsFloatingPointEnabled && dkind == DKind.Number)
+                if (_dataverseFeatures.IsFloatingPointEnabled && dkind == DKind.Number)
                 {
                     return FormulaType.Number;
                 }
@@ -1089,6 +1113,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     case DKind.Number:
                     case DKind.Decimal:
+
                         // formatted integer types are not supported
                         if (column.TypeCode == AttributeTypeCode.Integer && column.FormatName != null && column.FormatName != IntegerFormat.None.ToString())
                         {
@@ -1106,6 +1131,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                     case DKind.DataEntity:
+
                         // TODO: in the long run, we will need to convert the data entity into a Record type with proper data source backing
                         return FormulaType.Build(DType.EmptyRecord);
 
@@ -1114,7 +1140,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     case DKind.OptionSet:
                         var optionSetInfo = (column.TypeDefinition as CdsOptionSetTypeDefinition)?.DType?.OptionSetInfo;
-                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean : 
+                        return column.TypeCode == AttributeTypeCode.Boolean ? FormulaType.Boolean :
                             ((_dataverseFeatures.IsOptionSetEnabled && optionSetInfo != null) ? new OptionSetValueType(optionSetInfo) : FormulaType.OptionSetValue);
 
                     case DKind.DateTimeNoTimeZone:
@@ -1130,13 +1156,14 @@ namespace Microsoft.PowerFx.Dataverse
                                 return FormulaType.DateTime;
                             }
                         }
+
                         throw new SqlCompileException(sourceContext);
 
                     case DKind.Date:
                         return FormulaType.Date;
 
-                    // These column types aren't support  in SQL compilation.                    
-                    case DKind.Image: 
+                    // These column types aren't support  in SQL compilation.
+                    case DKind.Image:
                         throw new SqlCompileException(SqlCompileException.ColumnTypeNotSupported, sourceContext, column.TypeCode);
 
                     default:
@@ -1158,6 +1185,7 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             throw new SqlCompileException(SqlCompileException.ColumnFormatNotSupported, sourceContext, column.TypeCode, column.FormatName);
                         }
+
                         return type;
                 }
             }
@@ -1180,6 +1208,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return scope;
                 }
+
                 throw new SqlCompileException(default);
             }
 
@@ -1196,34 +1225,45 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ((int)kind).ToString();
             }
+
             internal static string ValidationErrorCode => GetErrorCode(ErrorKind.Validation);
+
             internal static string Div0ErrorCode => GetErrorCode(ErrorKind.Div0);
+
             internal static string InvalidArgumentErrorCode => GetErrorCode(ErrorKind.InvalidArgument);
 
             internal StringBuilder _sbContent = new StringBuilder();
-            internal bool expressionHasTimeBoundFunction = false;
-            int _indentLevel = 1;
+
+            internal bool ExpressionHasTimeBoundFunction = false;
+
+            private int _indentLevel = 1;
 
             // TODO: make this private so it is only called from other higher level functions
             internal void AppendContentLine(string content, bool skipEmittingElse = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 // if there is a pending else on the error context from a post-set validation, emit it before adding any other context
                 if (InErrorContext && CurrentErrorContext?.PostValidationElse == true)
                 {
                     CurrentErrorContext.PostValidationElse = false;
+
                     // skip it if we are closing an if result
                     if (!skipEmittingElse)
                     {
                         AppendContentLine("END ELSE BEGIN");
                     }
                 }
+
                 var indent = "    ";
                 for (int i = 0; i < _indentLevel; i++)
                 {
                     _sbContent.Append(indent);
                 }
+
                 _sbContent.AppendLine(content);
             }
 
@@ -1232,9 +1272,9 @@ namespace Microsoft.PowerFx.Dataverse
                 return $"IIF({conditionClause}, {trueValue}, {falseValue})";
             }
 
-            internal bool IsNumericType(RetVal arg) 
+            internal bool IsNumericType(RetVal arg)
             {
-                return IsNumericType(arg.type);
+                return IsNumericType(arg.Type);
             }
 
             internal static bool IsNumericType(FormulaType type)
@@ -1244,7 +1284,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal TryCast(string expression, RetVal retVal = null, bool castToFloat = false)
             {
-                if(_dataverseFeatures.IsFloatingPointEnabled && castToFloat)
+                if (_dataverseFeatures.IsFloatingPointEnabled && castToFloat)
                 {
                     return TryCastToFloat(expression, retVal);
                 }
@@ -1256,21 +1296,21 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal TryCastToDecimal(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
-                expression = $"TRY_CAST(({expression}) AS decimal(23,10))";                    
+                expression = $"TRY_CAST(({expression}) AS decimal(23,10))";
                 retVal = retVal != null ? SetIntermediateVariable(retVal, expression) : SetIntermediateVariable(FormulaType.Decimal, expression);
-                
-                if(applyNullCheck)
+
+                if (applyNullCheck)
                 {
                     NullCheck(retVal, postValidation: true);
                 }
-                
+
                 return retVal;
             }
 
             internal RetVal TryCastToFloat(string expression, RetVal retVal = null, bool applyNullCheck = true)
             {
                 // If Floating point is disabled then route the value to decimal
-                if(!_dataverseFeatures.IsFloatingPointEnabled)
+                if (!_dataverseFeatures.IsFloatingPointEnabled)
                 {
                     return TryCastToDecimal(expression, retVal, applyNullCheck);
                 }
@@ -1295,7 +1335,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     NullCheck(retVal, postValidation: true);
                 }
-                    
+
                 return retVal;
             }
 
@@ -1309,7 +1349,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal SetIntermediateVariable(RetVal retVal, string value = null, RetVal fromRetVal = null)
             {
-                Contracts.AssertNonEmptyOrNull(retVal.varName);
+                Contracts.AssertNonEmptyOrNull(retVal.VarName);
+
                 // assert only one of value and fromRetVal should be non-null
                 Contracts.Assert(value == null || fromRetVal == null);
                 Contracts.Assert(value != null || fromRetVal != null);
@@ -1317,21 +1358,21 @@ namespace Microsoft.PowerFx.Dataverse
                 if (!_checkOnly)
                 {
                     // otherwise, if assigning a boolean from inline SQL, but not assigning from a bit literal, convert from expression to boolean value
-                    var inlineSql = value ?? fromRetVal.inlineSQL;
-                    if (retVal.type is BooleanType && inlineSql != null && value != "1" && inlineSql != "0" && inlineSql != "NULL")
+                    var inlineSql = value ?? fromRetVal.InlineSQL;
+                    if (retVal.Type is BooleanType && inlineSql != null && value != "1" && inlineSql != "0" && inlineSql != "NULL")
                     {
                         inlineSql = WrapInlineBoolean(inlineSql);
                     }
 
-                    AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueFormat, retVal.varName, inlineSql ?? fromRetVal.varName));
+                    AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.SetValueFormat, retVal.VarName, inlineSql ?? fromRetVal.VarName));
                 }
+
                 return retVal;
             }
 
-
             internal RetVal SetIntermediateVariable(IntermediateNode node, string value = null, RetVal fromRetVal = null)
             {
-                return SetIntermediateVariable(fromRetVal?.type ?? GetReturnType(node), value, fromRetVal);
+                return SetIntermediateVariable(fromRetVal?.Type ?? GetReturnType(node), value, fromRetVal);
             }
 
             internal RetVal SetIntermediateVariable(FormulaType type, string value = null, RetVal fromRetVal = null)
@@ -1341,19 +1382,23 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal RetVal SelectIntermediateVariable(RetVal retVal, string value)
             {
-                Contracts.AssertNonEmptyOrNull(retVal.varName);
+                Contracts.AssertNonEmptyOrNull(retVal.VarName);
                 if (!_checkOnly)
                 {
-                    AppendContentLine(string.Format(CultureInfo.InvariantCulture, "SELECT {0}={1}", retVal.varName, value));
+                    AppendContentLine(string.Format(CultureInfo.InvariantCulture, "SELECT {0}={1}", retVal.VarName, value));
                 }
+
                 return retVal;
             }
 
             internal void DivideByZeroCheck(RetVal retVal, bool coerce = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
-                var condition = 
+                var condition =
                     coerce
                     ? string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCoerceCondition, retVal)
                     : string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DivideByZeroCondition, retVal);
@@ -1363,7 +1408,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NegativeNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NegativeNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1371,7 +1419,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NonPositiveNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NonPositiveNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1379,7 +1430,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void LessThanOneNumberCheck(RetVal retVal)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.LessThanOneNumberCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1387,7 +1441,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void NullCheck(RetVal retVal, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.NullCondition, retVal);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1395,11 +1452,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void PowerOverflowCheck(RetVal num, RetVal exponent, bool postValidation = false, bool isFloatFlow = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 // compute approximate power to determine if there will be an overflow
                 var expression = $"IIF(ISNULL({num},0)<>0,LOG(ABS({num}),10)*{exponent},0)";
-                var power = TryCast(expression, castToFloat : isFloatFlow);
+                var power = TryCast(expression, castToFloat: isFloatFlow);
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.PowerOverflowCondition, power);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1413,7 +1473,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void ErrorCheck(string condition, string errorCode, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 if (InErrorContext)
                 {
@@ -1421,6 +1484,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         SetIntermediateVariable(CurrentErrorContext.Code, errorCode);
                     }
+
                     // if this is post validation, emit any necessary else later
                     if (postValidation)
                     {
@@ -1439,18 +1503,23 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void PerformRangeChecks(RetVal result, IntermediateNode node, bool postCheck = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 // if this is the root node, omit the final range check
                 if (node != RootNode)
                 {
-                    if (result.type is DecimalType)
+                    if (result.Type is DecimalType)
                     {
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                     }
-                    else if (result.type is NumberType) // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata, type hints min and max values are not entertained
+
+                    // if formula has float in middle of computation then we need to comply with its min, max range as per float metadata, type hints min and max values are not entertained
+                    else if (result.Type is NumberType) 
                     {
-                        if(_dataverseFeatures.IsFloatingPointEnabled)
+                        if (_dataverseFeatures.IsFloatingPointEnabled)
                         {
                             double minValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MinSupportedValue;
                             double maxValue = Microsoft.Xrm.Sdk.Metadata.DoubleAttributeMetadata.MaxSupportedValue;
@@ -1468,9 +1537,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void PerformFinalRangeChecks(RetVal result, SqlCompileOptions sqlCompileOptions, bool postCheck = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
-                if (result.type is DecimalType)
+                if (result.Type is DecimalType)
                 {
                     if (sqlCompileOptions?.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                     {
@@ -1484,7 +1556,7 @@ namespace Microsoft.PowerFx.Dataverse
                         PerformOverflowCheck(result, SqlStatementFormat.DecimalTypeMin, SqlStatementFormat.DecimalTypeMax, postCheck);
                     }
                 }
-                else if (result.type is NumberType)
+                else if (result.Type is NumberType)
                 {
                     if (_dataverseFeatures.IsFloatingPointEnabled)
                     {
@@ -1533,7 +1605,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var epsilon = Math.Abs(literal);
                     if (epsilon < 1e-90 && epsilon > 0)
                     {
-                        // Fall through to below, unsupported. 
+                        // Fall through to below, unsupported.
                     }
                     else
                     {
@@ -1574,11 +1646,11 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         return true;
-                    } 
+                    }
                     else if (InErrorContext)
                     {
                         SetIntermediateVariable(CurrentErrorContext.Code, ValidationErrorCode);
-                    } 
+                    }
                     else
                     {
                         _unsupportedWarnings.Add("Overflow decimal literal");
@@ -1586,7 +1658,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     return false;
-                } 
+                }
                 else
                 {
                     throw new NotSupportedException($"Unsupported type for decimal literal check: {type}");
@@ -1595,7 +1667,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             private void PerformOverflowCheck(RetVal result, string min, string max, bool postValidation = true)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.OverflowCondition, result, min, max);
                 ErrorCheck(condition, ValidationErrorCode, postValidation);
@@ -1603,14 +1678,20 @@ namespace Microsoft.PowerFx.Dataverse
 
             private void PerformErrorCheck(string condition)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 AppendContentLine(string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.ErrorCheck, condition));
             }
 
             internal void DateOverflowCheck(RetVal year, RetVal month, RetVal day, bool postValidation = false)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DateOverflowCondition, year, month, day);
                 ErrorCheck(condition, ValidationErrorCode);
@@ -1618,26 +1699,33 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void DateAdditionOverflowCheck(RetVal offset, string part, RetVal date)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 // do overflow checks at the minimum resolution of an hour
                 if (part == SqlStatementFormat.Minute)
                 {
                     part = SqlStatementFormat.Hour;
-                    date = RetVal.FromSQL($"{offset}*60", offset.type);
+                    date = RetVal.FromSQL($"{offset}*60", offset.Type);
                 }
                 else if (part == SqlStatementFormat.Second)
                 {
                     part = SqlStatementFormat.Hour;
-                    date = RetVal.FromSQL($"{offset}*3600", offset.type);
+                    date = RetVal.FromSQL($"{offset}*3600", offset.Type);
                 }
+
                 var condition = string.Format(CultureInfo.InvariantCulture, SqlStatementFormat.DateAdditionOverflowCondition, offset, part, date);
                 ErrorCheck(condition, ValidationErrorCode);
             }
 
             internal void DateDiffOverflowCheck(RetVal date1, RetVal date2, string part)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
 
                 switch (part)
                 {
@@ -1653,23 +1741,31 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal void FloatingPointErrorCheck(RetVal number)
             {
-                if (_checkOnly) return;
+                if (_checkOnly)
+                {
+                    return;
+                }
+
                 var condition = $"FLOOR({number}) <> {number}";
+
                 ErrorCheck(condition, ValidationErrorCode);
             }
 
             /// <summary>
-            /// Create a context to manage indenting and structuring if statements and ensuring blocks are closed
+            /// Create a context to manage indenting and structuring if statements and ensuring blocks are closed.
             /// </summary>
             internal class IfIndenter : IDisposable
             {
                 private Context _context;
+
                 private int _indentations = 0;
+
                 private int _ifsEmitted = 0;
 
                 internal IfIndenter(Context context, ErrorContext errorContext = null)
                 {
                     _context = context;
+
                     // if this indenter is not associated with an error context, link to the current one
                     if (_context.InErrorContext && errorContext == null)
                     {
@@ -1678,10 +1774,10 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 /// <summary>
-                /// Emit an else block and return a result context
+                /// Emit an else block and return a result context.
                 /// </summary>
-                /// <param name="isMakerDefinedCondition">A flag that indicates the conditional logic has been created by the maker, and can contain additional error checks or error contexts</param>
-                /// <returns>The result context</returns>
+                /// <param name="isMakerDefinedCondition">A flag that indicates the conditional logic has been created by the maker, and can contain additional error checks or error contexts.</param>
+                /// <returns>The result context.</returns>
                 public IfResultContext EmitElse(bool isMakerDefinedCondition = false)
                 {
                     // do not indent, as the result handles it
@@ -1697,11 +1793,11 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 /// <summary>
-                /// Emit an if condition and return a result context
+                /// Emit an if condition and return a result context.
                 /// </summary>
-                /// <param name="condition">A string containing the SQL condition</param>
-                /// <param name="isMakerDefinedCondition">A flag that indicates the conditional logic has been created by the maker, and can contain additional error checks or error contexts</param>
-                /// <returns>The result context</returns>
+                /// <param name="condition">A string containing the SQL condition.</param>
+                /// <param name="isMakerDefinedCondition">A flag that indicates the conditional logic has been created by the maker, and can contain additional error checks or error contexts.</param>
+                /// <returns>The result context.</returns>
                 public IfResultContext EmitIfCondition(string condition, bool isMakerDefinedCondition = false)
                 {
                     _ifsEmitted++;
@@ -1741,7 +1837,6 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
                 }
-
             }
 
             internal IfIndenter NewIfIndenter()
@@ -1749,7 +1844,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new IfIndenter(this);
             }
 
-            #endregion
+            #endregion SQL Building
 
             internal enum ContextState
             {
@@ -1782,14 +1877,14 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // TODO: will we need to maintain more detailed information about the context
-            readonly Stack<ContextState> _stack = new Stack<ContextState>();
+            private readonly Stack<ContextState> _stack = new Stack<ContextState>();
 
-            private bool checkCondition(ContextState state)
+            private bool CheckCondition(ContextState state)
             {
                 return _stack.Contains(state);
             }
 
-            private void setCondition(ContextState state, bool value)
+            private void SetCondition(ContextState state, bool value)
             {
                 if (value)
                 {
@@ -1804,22 +1899,24 @@ namespace Microsoft.PowerFx.Dataverse
             internal class ContextStateContainer : IDisposable
             {
                 protected Context _context;
+
                 protected ContextState _state;
 
                 public ContextStateContainer(Context context, ContextState state)
                 {
                     _context = context;
                     _state = state;
-                    context.setCondition(state, true);
+                    context.SetCondition(state, true);
                 }
 
                 public virtual void Dispose()
                 {
-                    _context.setCondition(_state, false);
+                    _context.SetCondition(_state, false);
                 }
             }
 
             #region If Condition Context
+
             public IfConditionContext NewIfConditionContext()
             {
                 return new IfConditionContext(this);
@@ -1827,10 +1924,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal class IfConditionContext : ContextStateContainer
             {
-                internal IfConditionContext(Context context) : base(context, ContextState.IfCondition) {}
+                internal IfConditionContext(Context context) 
+                    : base(context, ContextState.IfCondition)
+                {
+                }
             }
 
-            #endregion
+            #endregion If Condition Context
 
             #region If Result Context
 
@@ -1842,9 +1942,12 @@ namespace Microsoft.PowerFx.Dataverse
             internal class IfResultContext : ContextStateContainer
             {
                 private IfIndenter _nestedIndenter;
-                internal IfResultContext(Context context, bool isMakerDefinedCondition) : base(context, ContextState.IfResult)
+
+                internal IfResultContext(Context context, bool isMakerDefinedCondition) 
+                    : base(context, ContextState.IfResult)
                 {
                     context._indentLevel++;
+
                     // if we are creating a new result context in an error context, create a new indenter on the error context so nested results get rolled up
                     if (context.InErrorContext && isMakerDefinedCondition)
                     {
@@ -1858,18 +1961,21 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         _nestedIndenter.Dispose();
                     }
+
                     _context._indentLevel--;
                     base.Dispose();
                 }
             }
-            #endregion
+
+            #endregion If Result Context
 
             #region Inline Literal Context
+
             public bool InInlineLiteralContext
             {
                 get
                 {
-                    return checkCondition(ContextState.InlineLiteral);
+                    return CheckCondition(ContextState.InlineLiteral);
                 }
             }
 
@@ -1880,20 +1986,26 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal class InlineLiteralContext : ContextStateContainer
             {
-                internal InlineLiteralContext(Context context) : base(context, ContextState.InlineLiteral) { }
+                internal InlineLiteralContext(Context context) 
+                    : base(context, ContextState.InlineLiteral)
+                {
+                }
             }
-            #endregion
+
+            #endregion Inline Literal Context
 
             #region Error Context
+
             public bool InErrorContext
             {
                 get
                 {
-                    return checkCondition(ContextState.Error);
+                    return CheckCondition(ContextState.Error);
                 }
+
                 internal set
                 {
-                    setCondition(ContextState.Error, value);
+                    SetCondition(ContextState.Error, value);
                 }
             }
 
@@ -1913,6 +2025,7 @@ namespace Microsoft.PowerFx.Dataverse
                 internal static Stack<ErrorContext> ErrorStack = new Stack<ErrorContext>();
 
                 private Context _context;
+
                 private List<IfResultContext> _resultContexts = new List<IfResultContext>();
 
                 public RetVal Code { get; }
@@ -1950,7 +2063,8 @@ namespace Microsoft.PowerFx.Dataverse
                     ErrorStack.Pop();
                 }
             }
-            #endregion
+
+            #endregion Error Context
         }
     }
 }

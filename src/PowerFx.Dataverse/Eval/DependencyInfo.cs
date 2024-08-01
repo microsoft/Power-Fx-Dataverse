@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,13 +20,13 @@ namespace Microsoft.PowerFx.Dataverse
     public class DependencyInfo
     {
         /// <summary>
-        /// A dictionary of field logical names on related records, indexed by the related entity logical name
+        /// A dictionary of field logical names on related records, indexed by the related entity logical name.
         /// </summary>
         /// <example>
         /// On account, the formula "Name & 'Primary Contact'.'Full Name'" would return
         ///    "contact" => { "fullname" }
         /// The formula "Name & 'Primary Contact'.'Full Name' & Sum(Contacts, 'Number Of Childeren')" would return
-        ///    "contact" => { "fullname", "numberofchildren" }
+        ///    "contact" => { "fullname", "numberofchildren" }.
         /// </example>
         public Dictionary<string, HashSet<string>> FieldReads { get; set; }
 
@@ -58,9 +61,11 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             sb.Append(", ");
                         }
+
                         first = false;
                         sb.Append(x);
                     }
+
                     sb.AppendLine("; ");
                 }
             }
@@ -126,6 +131,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 kv.Value.Accept(this, context);
             }
+
             return null;
         }
 
@@ -352,8 +358,6 @@ namespace Microsoft.PowerFx.Dataverse
             return null;
         }
 
-
-
         public override RetVal Visit(BinaryOpNode node, Context context)
         {
             node.Left.Accept(this, context);
@@ -460,6 +464,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 child.Accept(this, context);
             }
+
             return null;
         }
 
@@ -469,6 +474,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 kv.Value.Accept(this, context);
             }
+
             return null;
         }
 
@@ -520,11 +526,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return;
             }
+
             if (!list.TryGetValue(tableLogicalName, out var fieldReads))
             {
                 fieldReads = new HashSet<string>();
                 list[tableLogicalName] = fieldReads;
             }
+
             if (fieldLogicalName != null)
             {
                 var name = Translate(tableLogicalName, fieldLogicalName);
@@ -538,6 +546,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Info.FieldReads = new Dictionary<string, HashSet<string>>();
             }
+
             AddField(Info.FieldReads, tableLogicalName, fieldLogicalName);
         }
 
@@ -547,6 +556,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Info.FieldWrites = new Dictionary<string, HashSet<string>>();
             }
+
             AddField(Info.FieldWrites, tableLogicalName, fieldLogicalName);
         }
     }

@@ -1,20 +1,17 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System;
+using System.Collections.Generic;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Generic;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// Only include things that are explicitly added by <see cref="DataverseConnection.AddTable(string, string)"/>.
-    /// Tables are explicitly added with their variable name and don't get localized. 
+    /// Tables are explicitly added with their variable name and don't get localized.
     /// This is condusive to allowing multiple orgs.
     /// </summary>
     public class MultiOrgPolicy : Policy
@@ -24,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Mapping of logical name back to variable name.
         internal readonly Dictionary<string, string> _logical2Variable = new Dictionary<string, string>();
 
-        // Mapping of Table variable names (what's used in expression) to values. 
+        // Mapping of Table variable names (what's used in expression) to values.
         private protected readonly Dictionary<string, DataverseTableValue> _tablesDisplay2Value = new Dictionary<string, DataverseTableValue>();
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
@@ -33,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _symbols;
         }
 
-        // Helper to create a DV connection over the given service client. 
+        // Helper to create a DV connection over the given service client.
         public static DataverseConnection New(IOrganizationService client, bool numberIsFloat = false)
         {
             var displayNameMap = client.GetTableDisplayNames();
@@ -54,9 +51,9 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Add a table from the connection. Must be present in the metadata. 
+        /// Add a table from the connection. Must be present in the metadata.
         /// </summary>
-        /// <param name="variableName"> name to use in the expressions. This is often the table's display name, 
+        /// <param name="variableName"> name to use in the expressions. This is often the table's display name,
         /// but the host can adjust to disambiguiate (Accounts, Accounts_1).</param>
         /// <param name="tableLogicalName">The table logical name in dataverse.</param>
         /// <returns></returns>
@@ -66,6 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new InvalidOperationException($"Table with logical name '{tableLogicalName}' was already added as {existingVariableName}.");
             }
+
             if (_tablesDisplay2Value.TryGetValue(variableName, out var existingTable))
             {
                 throw new InvalidOperationException($"Table with variable name '{variableName}' was already added as {existingTable._entityMetadata.LogicalName}.");
@@ -78,9 +76,10 @@ namespace Microsoft.PowerFx.Dataverse
             RecordType recordType = _parent.GetRecordType(entityMetadata);
             DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
 
-            var slot = _symbols.AddVariable(variableName, tableValue.Type, new SymbolProperties {
-                 CanSet = false,
-                 CanMutate = true
+            var slot = _symbols.AddVariable(variableName, tableValue.Type, new SymbolProperties
+            {
+                CanSet = false,
+                CanMutate = true
             });
 
             _tablesDisplay2Value[variableName] = tableValue;

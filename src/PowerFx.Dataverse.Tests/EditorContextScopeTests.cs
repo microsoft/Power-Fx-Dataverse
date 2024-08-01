@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Intellisense;
@@ -12,7 +9,7 @@ using Xunit;
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
     // Unit tests on EditorContextScope.
-    // This is used for intellisense. 
+    // This is used for intellisense.
 
     public class EditorContextScopeTests
     {
@@ -23,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return sqlEngine;
         }
 
-        // Check() calls through to engine. 
+        // Check() calls through to engine.
         [Fact]
         public void Test()
         {
@@ -31,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Engine engine = sqlEngine;
 
             // 'field' is defined on sql
-            var expr = "ThisRecord.new_price + new_quantity"; // Succeeds! 
+            var expr = "ThisRecord.new_price + new_quantity"; // Succeeds!
 
             var result = engine.Check(expr);
             Assert.True(result.IsSuccess);
@@ -50,14 +47,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal("ThisRecord.Price + Quantity", display);
         }
 
-        // Verify EditorContextScope still picks up the SQL restrictions. 
+        // Verify EditorContextScope still picks up the SQL restrictions.
         [Fact]
         public void SqlRestriction()
         {
-            // An expression that's not valid in SQL compiler. 
+            // An expression that's not valid in SQL compiler.
             string expr = "Text(123, \",###.0\")";
 
-            // Normally valid 
+            // Normally valid
             var engineFull = new Engine(new PowerFxConfig());
             var result = engineFull.Check(expr);
             Assert.True(result.IsSuccess);
@@ -66,7 +63,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Engine engineSql = GetSqlEngine();
             result = engineSql.Check(expr);
             Assert.False(result.IsSuccess);
-
 
             EditorContextScope scope = engineSql.CreateEditorScope();
             result = scope.Check(expr);

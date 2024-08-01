@@ -1,14 +1,11 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System;
+using System.Linq;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
-using System;
-using System.Linq;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 
@@ -57,10 +54,12 @@ namespace Microsoft.PowerFx.Dataverse.DataSource
                 var parent = path.Parent;
                 type = type.GetType(parent);
             }
+
             if (!DType.TryGetLogicalNameForColumn(type, path.Name, out var logicalName))
             {
                 logicalName = path.Name;
             }
+
             return type.CdsColumnDefinitionOrDefault(logicalName);
         }
 

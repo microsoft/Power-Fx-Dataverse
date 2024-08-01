@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
@@ -73,8 +76,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(37, "FirstN(FirstN(et, 20), 2)", 2, true, true)]
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption,
-                (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
+            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
         }
     }
 }

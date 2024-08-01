@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,15 +13,20 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// Syntax of the UDF declaration
         /// </summary>
         public const string FunctionSignatureFormat = "CREATE FUNCTION {0}";
+
         public const string WithSchemaBindingFormat = "WITH SCHEMABINDING";
+
         public const string AsFormat = "AS";
+
         public const string ReturnsSqlTypeFormat = "RETURNS {0}";
 
         /// <summary>
         /// If/Else/ElseIf keyword
         /// </summary>
         public const string SqlIf = "IF";
+
         public const string SqlElse = "ELSE";
+
         public const string SqlElseIf = "ELSE IF";
 
         /// <summary>
@@ -66,7 +74,6 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// </summary>
         public const string NegativeNumberCondition = "{0} < 0";
 
-
         /// <summary>
         /// Non-positive number condition
         /// </summary>
@@ -86,7 +93,6 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// Power Overflow condition - big type is decimal(38,10), which overflows after 10^28
         /// </summary>
         public const string PowerOverflowCondition = "{0} > 28";
-
 
         /// <summary>
         /// The max supported year
@@ -121,17 +127,17 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// <summary>
         /// DateTime Overflow check for Diff In Minutes or Seconds
         /// Compare the parameters to find the min datetime parameter and Add MaxInteger(2147483647) to min datetime parameter in terms of minutes or seconds (@maxAllowedDate)
-        /// Now, compare max datetime parameter(@maxInputDate) with the MaxInteger added Datetime parameter(@maxAllowedDate), 
+        /// Now, compare max datetime parameter(@maxInputDate) with the MaxInteger added Datetime parameter(@maxAllowedDate),
         /// If @maxAllowedDate is less than the @maxInputDate then the scenario is overflow and return NULL.
         /// </summary>
-        public const string PrepareDateTimeOverflowConditionForDateDiff = @"IF({0} < {1}) 
-    BEGIN 
-        SET @maxInputDate={1} 
+        public const string PrepareDateTimeOverflowConditionForDateDiff = @"IF({0} < {1})
+    BEGIN
+        SET @maxInputDate={1}
         SET @maxAllowedDate=DATEADD({2},2147483647,{0})
-    END 
-ELSE 
-    BEGIN 
-        SET @maxInputDate={0} 
+    END
+ELSE
+    BEGIN
+        SET @maxInputDate={0}
         SET @maxAllowedDate=DATEADD({2},2147483647,{1})
     END";
 
@@ -162,20 +168,25 @@ ELSE
         /// </summary>
         public const string SetValueIfGreaterThanValue = "IF({0} > {1}) BEGIN SET {0} = {1} END";
 
-
-
         /// <summary>
         /// Sql data type
         /// </summary>
         public const string SqlNvarcharType = "nvarchar(4000)";
+
         public const string SqlIntegerType = "int";
+
         public const string SqlBitType = "bit";
+
         public const string SqlDecimalType = "decimal(23,10)";
+
         public const string SqlBigType = "decimal(38,10)";
 
         public const string SqlMoneyType = "money";
+
         public const string SqlDateTimeType = "datetime";
+
         public const string SqlUniqueIdentifierType = "uniqueidentifier";
+
         public const string SqlExchangeRateType = "decimal(28,12)";
 
         public const string SqlFloatType = "float";
@@ -187,62 +198,87 @@ ELSE
         /// Declare intermediate variable
         /// </summary>
         public const string DeclareIntermediateVariableFormat = "DECLARE {0} {1}";
+
         public const string CastToLargeDataType = "(CAST({0} as {1}))";
 
         /// <summary>
         /// Max/Min value for Int/Decimal/Money
         /// </summary>
         public const string IntTypeMin = "-2147483648";
+
         public const string IntTypeMax = "2147483647";
+
         public const double IntTypeMinValue = -2147483648;
+
         public const double IntTypeMaxValue = 2147483647;
 
         public const string IntTypeMinForLanguageFormat = "0";
+
         public const string IntTypeMaxForLanguageFormat = "2147483647";
 
         public const string IntTypeMinForTimeZoneFormat = "-1500";
+
         public const string IntTypeMaxForTimeZoneFormat = "1500";
 
         public const string IntTypeMinForDurationFormat = "0";
+
         public const string IntTypeMaxForDurationFormat = "2147483647";
 
         // Changing the min and max for decimals to match with
-        // CRM supported min and max for decimals. 
+        // CRM supported min and max for decimals.
         public const string DecimalTypeMin = "-100000000000";
+
         public const string DecimalTypeMax = "100000000000";
+
         public const double DecimalTypeMinValue = -100000000000;
+
         public const double DecimalTypeMaxValue = 100000000000;
 
         // decimal constants for comparision with decimal literal node
         public const decimal DDecimalTypeMinValue = -100000000000;
+
         public const decimal DDecimalTypeMaxValue = 100000000000;
 
         public const string MoneyTypeMin = "-922337203685477.5808";
+
         public const string MoneyTypeMax = "922337203685477.5807";
+
         public const double MoneyTypeMinValue = -922337203685477.5808;
+
         public const double MoneyTypeMaxValue = 922337203685477.5807;
 
         public const string RoundArgMaxLength = "400";
+
         public const string RoundArgMinLength = "-400";
 
         /// <summary>
         /// DateTime part
         /// </summary>
         public const string Second = "second";
+
         public const string Minute = "minute";
+
         public const string Hour = "hour";
+
         public const string Day = "day";
+
         public const string Week = "week";
+
         public const string Month = "month";
+
         public const string Quarter = "quarter";
+
         public const string Year = "year";
 
         /// <summary>
         /// Boundary Condition for Trims
         /// </summary>
         public const string TrimLenNullOrNegative = "IF({0} IS NULL OR {0} <= 0) BEGIN SET {1} = {2} END";
+
         public const string TrimLenHigher = "ELSE IF({0} >= {1}) BEGIN SET {2} = N'' END";
+
         public const string TrimLenOkay = "ELSE BEGIN SET {0} = {1} END";
+
         public const string SetLengthValue = "LEN(({0} + N'1') {1}) - 1";
 
         /// <summary>
@@ -264,11 +300,12 @@ ELSE
         /// SQL Expression format for Trim Functions without using CLR
         /// </summary>
         public const string CollateString = "collate Latin1_General_100_CS_AS_KS_WS_SC";
+
         public const string CollateNone = "";
 
         /// <summary>
         /// Selecting related attribute from related entity view.
-        /// {0} = Local variable in set format.        
+        /// {0} = Local variable in set format.
         /// {1} = Related entity view name.
         /// {2} = Primary key attribute name of the related entity table.
         /// {3} = Lookup field of primary entity.

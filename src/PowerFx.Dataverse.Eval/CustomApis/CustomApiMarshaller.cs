@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// Also compute Fx types for Custom API signature.
     /// These match the marshalling layers.
     ///   GetInputType:  Fx2Inputs + Inputs2Fx
-    ///   GetOutputType: Outputs2Fx + Fx2Outputs
+    ///   GetOutputType: Outputs2Fx + Fx2Outputs.
     ///
     /// </summary>
     public static class CustomApiMarshaller
@@ -41,9 +44,7 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"Bad name");
                 }
 
-                inRecord = inRecord.Add(new NamedFormulaType(
-                    name, parameterMarshaller.ToType(input)
-                     ));
+                inRecord = inRecord.Add(new NamedFormulaType(name, parameterMarshaller.ToType(input)));
             }
 
             return inRecord;
@@ -74,9 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Ignore Target entity passed for bounded actions, target entity will be marshalled separately as done for automated plugins
             var fields = inputs
                 .Where(kv => kv.Key != "Target")
-                .Select(
-                kv => new NamedValue(kv.Key, ToPowerFxValue(kv.Value, dvc))
-                );
+                .Select(kv => new NamedValue(kv.Key, ToPowerFxValue(kv.Value, dvc)));
 
             return FormulaValue.NewRecordFromFields(fields);
         }
@@ -109,6 +108,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     records.Add(dvc.Marshal(input));
                 }
+
                 // Handle empty input entityCollection
                 var tableValue = (records.Count != 0) ?
                                     FormulaValue.NewTable(records[0].Type, records.ToArray()) :
@@ -179,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Apply Power Fx result from Custom API back to a dataverse collection.
         public static void Fx2Outputs(ParameterCollection outputs, FormulaValue result, CustomApiResponse[] outputMetadata)
         {
-            ThrowIfErrorValue("", result);
+            ThrowIfErrorValue(string.Empty, result);
 
             if (outputMetadata.Length == 0)
             {
@@ -188,7 +188,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (IsOutputTypeSingle(outputMetadata))
             {
-                var x = ToCustomApiObject(result, outputMetadata[0], "");
+                var x = ToCustomApiObject(result, outputMetadata[0], string.Empty);
                 outputs[TableValue.ValueName] = x;
             }
             else
@@ -226,7 +226,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="typeCode"></param>
         /// <returns></returns>
-        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="NotSupportedException">.</exception>
         public static FormulaType ToPrimitivePowerFxType(this CustomApiParamType typeCode)
         {
             return typeCode switch
@@ -265,6 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
                         DateTime result = dtv.GetConvertedValue(TimeZoneInfo.Utc);
                         return result;
                     }
+
                     break;
 
                 case CustomApiParamType.Decimal:
@@ -273,6 +274,7 @@ namespace Microsoft.PowerFx.Dataverse
                         decimal result = dec.Value;
                         return result;
                     }
+
                     break;
 
                 case CustomApiParamType.Float:
@@ -281,6 +283,7 @@ namespace Microsoft.PowerFx.Dataverse
                         double result = num.Value;
                         return result;
                     }
+
                     break;
 
                 case CustomApiParamType.Integer:
@@ -289,6 +292,7 @@ namespace Microsoft.PowerFx.Dataverse
                         int result = (int)num2.Value;
                         return result;
                     }
+
                     break;
 
                 case CustomApiParamType.String:
@@ -297,6 +301,7 @@ namespace Microsoft.PowerFx.Dataverse
                         string result = str.Value;
                         return result;
                     }
+
                     break;
 
                 case CustomApiParamType.Guid:
@@ -337,7 +342,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Converts output formulaValue to cds entity
+        /// Converts output formulaValue to cds entity.
         /// </summary>
         private static Entity ToCdsEntity(FormulaValue fxValue, IParameterType paramType)
         {
@@ -346,7 +351,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return entity;
             }
-            var fxOutputs = (IDictionary<string, object>)(fxOutputObject);
+
+            var fxOutputs = (IDictionary<string, object>)fxOutputObject;
             if (!fxOutputs.TryGetValue(paramType.uniquename, out var outputValue))
             {
                 throw new InvalidPluginExecutionException($"Unable to extract value of output from pfx result");
@@ -360,7 +366,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="field">name of field containing error, used for error message.</param>
         /// <param name="value"></param>
-        /// <exception cref="InvalidPluginExecutionException"></exception>
+        /// <exception cref="InvalidPluginExecutionException">.</exception>
         private static void ThrowIfErrorValue(string field, FormulaValue value)
         {
             if (value is ErrorValue error)
@@ -380,6 +386,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sb.Append(x.ToString());
                 sb.Append(';');
             }
+
             return sb.ToString();
         }
     }

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,11 +9,11 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse
 {
     internal static class QueryExtensions
-    { 
+    {
         public static async Task<DataverseResponse<EntityCollection>> QueryAsync(this ElasticTableAwareDVServices reader, string tableName, int maxRows, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            QueryExpression query = new(tableName);
+            QueryExpression query = new (tableName);
             query.ColumnSet.AllColumns = true;
 
             if (maxRows > 0)
@@ -28,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
                 query.PageInfo.PageNumber = 1;
                 query.PageInfo.PagingCookie = null;
             }
-           
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return await reader.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +12,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class AITranslateFunctionTests
     {
         // FAils if config.EnableAIFunctions() is not called.
@@ -31,6 +27,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 config.EnableAIFunctions();
             }
+
             var engine = new RecalcEngine(config);
 
             var result = engine.Check(input);
@@ -49,7 +46,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
-
 
             client.Work = (req) =>
             {
@@ -82,7 +78,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
-
 
             client.Work = (req) =>
             {

@@ -1,26 +1,26 @@
-﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AIClassify(String, Table) : string 
-    // given a string and categories call GPT to return the best-fit category. 
+    // AIClassify(String, Table) : string
+    // given a string and categories call GPT to return the best-fit category.
     public class AIClassifyFunction : ReflectionFunction
     {
-        public AIClassifyFunction()
-            : base("AIClassify",
-                  FormulaType.String,
-                  FormulaType.String,
-                  RecordType.Empty().Add("Value", FormulaType.String).ToTable())
+        public AIClassifyFunction() 
+            : base("AIClassify", FormulaType.String, FormulaType.String, RecordType.Empty().Add("Value", FormulaType.String).ToTable())
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
@@ -29,9 +29,10 @@ namespace Microsoft.PowerFx.Dataverse
         private class ClassifyRequest
         {
             /// <summary>
-            /// The incoming text. 
+            /// The incoming text.
             /// </summary>
             public string Text { get; set; }
+
             public TableValue Categories { get; set; }
 
             public OrganizationRequest Get()
@@ -54,6 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
                     string currStr = ((StringValue)val.GetField("Value")).Value;
                     list.Add(currStr);
                 }
+
                 return list.ToArray();
             }
         }
@@ -76,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // Entry called by Power Fx interpreter. 
+        // Entry called by Power Fx interpreter.
         public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, TableValue categories, CancellationToken cancel)
         {
             if (client == null)

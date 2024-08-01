@@ -1,4 +1,7 @@
-﻿using Microsoft.PowerFx.Core.Localization;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.Localization;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -9,8 +12,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var resourceKey = (messageKey == null) ? default : new ErrorResourceKey(messageKey, DataverseStringResources.LocalStringResources);
 
-            return new ExpressionError() 
-            { 
+            return new ExpressionError()
+            {
                 Kind = ErrorKind.Unknown,
                 Severity = severity,
                 Message = message,

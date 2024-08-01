@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Collections.Generic;
 using Azure.Data.Tables;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.AzureStorage
 {
     /// <summary>
-    /// Convert a TableEntity to a FormulaValue
+    /// Convert a TableEntity to a FormulaValue.
     /// </summary>
     public class TableEntityMarshaller : IDynamicTypeMarshaller
     {
