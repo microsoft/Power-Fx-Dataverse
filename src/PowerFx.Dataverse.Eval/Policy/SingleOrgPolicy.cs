@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -19,15 +16,16 @@ namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// Include all elements in the entire org, but lazily load them.
-    /// Tables are added with their DisplayName and get localized. 
-    /// This is condusive to a single org. 
+    /// Tables are added with their DisplayName and get localized.
+    /// This is condusive to a single org.
     /// </summary>
     public class SingleOrgPolicy : Policy
     {
         internal const string SymTableName = "DataverseLazyGlobals";
+
         private ReadOnlySymbolTable _symbols;
 
-        // Mapping of Table logical names to values. 
+        // Mapping of Table logical names to values.
         // Since this is a single-org case, the "Variable Name" is just the display name.
         private protected readonly Dictionary<string, DataverseTableValue> _tablesLogical2Value = new Dictionary<string, DataverseTableValue>();
 
@@ -35,10 +33,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         public SingleOrgPolicy(DisplayNameProvider displayNameLookup)
         {
-            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));                
+            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));
         }
 
-        // HElper to create a DV connection over the given service client. 
+        // HElper to create a DV connection over the given service client.
         public static DataverseConnection New(IOrganizationService client, bool numberIsFloat = false)
         {
             var displayNameMap = client.GetTableDisplayNames();
@@ -58,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (AllTables.TryGetDisplayName(new DName(logicalName), out var variable))
             {
                 // For whole-org, we don't have fixed-name variables. (aren't converted to invariant)
-                // We use display namaes, which are converted to their logical name.  
+                // We use display namaes, which are converted to their logical name.
                 variableName = logicalName;
                 return true;
             }
@@ -80,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        ReadOnlySymbolTable _allEntitieSymbols;
+        private ReadOnlySymbolTable _allEntitieSymbols;
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
@@ -92,9 +90,9 @@ namespace Microsoft.PowerFx.Dataverse
             return _symbols;
         }
 
-        // This can be called on multiple threads, and multiple times. 
+        // This can be called on multiple threads, and multiple times.
         // Called lazily when we encounter a new name and add the table.
-        // Only called on explicit access by resolved; not called when we pickup via relationships. 
+        // Only called on explicit access by resolved; not called when we pickup via relationships.
         private DeferredSymbolPlaceholder LazyAddTable(string logicalName, string displayName)
         {
             lock (_tablesLogical2Value)
@@ -107,13 +105,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Can't be under lock - this may invoke metadata callback interfaces and network requests.
-            // Safe to call this multiple times since we don't update any state. 
+            // Safe to call this multiple times since we don't update any state.
             EntityMetadata entityMetadata = _parent.GetMetadataOrThrow(logicalName);
             RecordType recordType = _parent._metadataCache.GetRecordType(logicalName);
 
             DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
 
-            // This is critical for dependency finder. 
+            // This is critical for dependency finder.
             Contract.Assert(logicalName == tableValue.Type.TableSymbolName);
 
             lock (_tablesLogical2Value)
@@ -129,14 +127,14 @@ namespace Microsoft.PowerFx.Dataverse
 
                 return new DeferredSymbolPlaceholder(tableValue.Type, (slot) =>
                 {
-                    // Invoked when we get the slot. 
+                    // Invoked when we get the slot.
                     _parent.SetInternal(slot, tableValue);
                 });
             }
         }
 
-        // Get logical names of tables that this specific expression depends on. 
-        // This will be a subset of all known tables. 
+        // Get logical names of tables that this specific expression depends on.
+        // This will be a subset of all known tables.
         public HashSet<string> GetDependencies(CheckResult check)
         {
             check.ApplyBinding();
@@ -148,10 +146,11 @@ namespace Microsoft.PowerFx.Dataverse
             return tf._tableNames;
         }
 
-        // Given an expression with Table References, get a list of all the tables that are actually used. 
+        // Given an expression with Table References, get a list of all the tables that are actually used.
         internal class TableFinder : IdentityTexlVisitor
         {
             private readonly CheckResult _check;
+
             public readonly HashSet<string> _tableNames = new HashSet<string>();
 
             public TableFinder(CheckResult check)
@@ -185,6 +184,7 @@ namespace Microsoft.PowerFx.Dataverse
                         _tableNames.Add(name);
                     }
                 }
+
                 base.Visit(node);
             }
         }

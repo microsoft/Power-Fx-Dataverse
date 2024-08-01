@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -23,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         // args[0]: table
         // args[1]: filter
-        // args[2]: orderby        
+        // args[2]: orderby
         // args[3]: distinct column
         // args[4]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
@@ -40,24 +43,24 @@ namespace Microsoft.PowerFx.Dataverse
             ISet<LinkEntity> relation;
             string partitionId;
 
-            if (args[1] is DelegationFormulaValue DelegationFormulaValue)
+            if (args[1] is DelegationFormulaValue delegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;
-                relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;
+                filter = delegationFormulaValue._filter;
+                relation = delegationFormulaValue._relation;
+                partitionId = delegationFormulaValue._partitionId;
             }
             else
             {
-                throw new InvalidOperationException($"Input arg1 should always be of type {nameof(DelegationFormulaValue)}"); ;
+                throw new InvalidOperationException($"Input arg1 should always be of type {nameof(delegationFormulaValue)}");
             }
 
-            if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
+            if (args[2] is DelegationFormulaValue delegationFormulaValue2)
             {
-                orderBy = DelegationFormulaValue2._orderBy;
+                orderBy = delegationFormulaValue2._orderBy;
             }
             else
             {
-                throw new InvalidOperationException($"Input arg2 should always be of type {nameof(DelegationFormulaValue)}"); ;
+                throw new InvalidOperationException($"Input arg2 should always be of type {nameof(delegationFormulaValue)}");
             }
 
             string distinctColumn = null;
@@ -86,9 +89,9 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = 1,
 
-                _columnMap = columnMap,                
+                ColumnMap = columnMap,
                 _partitionId = partitionId,
-                _relation = relation,
+                Relation = relation,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

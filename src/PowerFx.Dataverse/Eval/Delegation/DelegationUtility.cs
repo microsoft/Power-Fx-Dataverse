@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +14,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
     internal class DelegationUtility
     {
-
         public static RelationMetadata DeserializeRelatioMetadata(string serializedMetadata)
         {
             var relationshipObj = JsonSerializer.Deserialize<RelationMetadata>(serializedMetadata, DelegationIRVisitor._options);
@@ -50,6 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             {
                 return entityMetadata.IsElasticTable();
             }
+
             return false;
         }
     }

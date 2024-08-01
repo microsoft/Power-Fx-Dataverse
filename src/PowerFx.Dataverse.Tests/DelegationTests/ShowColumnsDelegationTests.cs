@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -34,13 +37,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(15, "ShowColumns(Distinct(t1, 'new_price'), Value)", 1, true)]
         public async Task ShowColumnDelegationAsync(int id, string expr, int expectedCount, bool isCheckSuccess, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "ShowColumnsDelegation.txt", expr, -2, expectedCount,
+            await DelegationTestAsync(
+                id,
+                "ShowColumnsDelegation.txt",
+                expr,
+                -2,
+                expectedCount,
                 result => result switch
                 {
                     TableValue tv => tv.Type.FieldNames.Count(),
                     RecordValue rv => rv.Type.FieldNames.Count(),
                     _ => throw FailException.ForFailure("Unexpected result")
-                }, false, false, null, false, isCheckSuccess, false, expectedWarnings);
+                },
+                false,
+                false,
+                null,
+                false,
+                isCheckSuccess,
+                false,
+                expectedWarnings);
         }
     }
 }

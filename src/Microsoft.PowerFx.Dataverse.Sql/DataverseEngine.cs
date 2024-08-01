@@ -1,28 +1,23 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Errors;
 using Microsoft.PowerFx.Core.Types;
+using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Functions;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.PowerFx.Dataverse.CdsUtilities;
-using System.Linq;
 using BuiltinFunctionsCore = Microsoft.PowerFx.Core.Texl.BuiltinFunctionsCore;
 using TexlFunction = Microsoft.PowerFx.Core.Functions.TexlFunction;
-
-
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -31,14 +26,19 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     public class DataverseEngine : Engine
     {
-        // The current entity that expressions are compiled against. 
+        // The current entity that expressions are compiled against.
         private readonly DataverseDataSourceInfo _currentDataSource;
 
-        private CdsTableDefinition _currentEntity => _currentDataSource.CdsTableDefinition;
+        private CdsTableDefinition CurrentEntity => _currentDataSource.CdsTableDefinition;
 
-        protected string _currentEntityName => _currentEntity.Name;
+        protected string CurrentEntityName => CurrentEntity.Name;
 
-        // Callback object for getting metadata for other entities, such as with relationships. 
+#pragma warning disable SA1300 // Elements should begin with uppercase letter
+        [Obsolete("Use CurrentEntityName instead.")]
+        protected string _currentEntityName => CurrentEntity.Name;
+#pragma warning restore SA1300 // Elements should begin with uppercase letter
+
+        // Callback object for getting metadata for other entities, such as with relationships.
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
         // Callback object for getting additional metadata which is not present in xrmentitymetadata like basetablename, isstoredonprimarytable, etc for entities.
@@ -67,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
             BuiltinFunctionsCore.Ln
         };
 
-        // $$$ - remove culture parameter and just get it from the config. 
+        // $$$ - remove culture parameter and just get it from the config.
         public DataverseEngine(
           EntityMetadata currentEntityMetadata,
           CdsEntityMetadataProvider metadataProvider,
@@ -89,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse
             this.SupportedFunctions = ReadOnlySymbolTable.NewDefault(Library.FunctionList);
             _cultureInfo = culture ?? CultureInfo.InvariantCulture;
 
-            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures() 
+            _dataverseFeatures = dataverseFeatures ?? new DataverseFeatures()
             {
                 IsFloatingPointEnabled = false,
                 IsOptionSetEnabled = false,
@@ -103,7 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
             // but internal support for Float function would be there for IR nodes as we are not removing these functions from static library list
             if (!_dataverseFeatures.IsFloatingPointEnabled)
             {
-                foreach(TexlFunction function in FloatingPointFunctions)
+                foreach (TexlFunction function in FloatingPointFunctions)
                 {
                     if (functions.IndexOf(function) != -1)
                     {
@@ -126,7 +126,7 @@ namespace Microsoft.PowerFx.Dataverse
                 Culture = _cultureInfo,
                 MaxExpressionLength = (_dataverseFeatures.UseMaxInvariantExpressionLength && _cultureInfo == CultureInfo.InvariantCulture)
                                       ? MaxInvariantExpressionLength : MaxExpressionLength,
-                 NumberIsFloat = NumberIsFloat
+                NumberIsFloat = NumberIsFloat
             };
         }
 
@@ -150,15 +150,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // This hook requires we manually include other symbols:
             // - Config.SymbolTable includes custom added functions (for interpreted case)
-            // - this.SupportedFunctions is the functions builtin for SQL engine. 
+            // - this.SupportedFunctions is the functions builtin for SQL engine.
             var functionList = ReadOnlySymbolTable.Compose(Config.SymbolTable, this.SupportedFunctions);
             var resolver = new DataverseResolver(_metadataCache, functionList);
             return resolver;
         }
 
-#endregion
+        #endregion Critical Virtuals
 
-        // Helper to get an empty entity for cases where there's no metadata dependency. 
+        // Helper to get an empty entity for cases where there's no metadata dependency.
         public static EntityMetadata Empty()
         {
             var name = "placeholder";
@@ -168,6 +168,7 @@ namespace Microsoft.PowerFx.Dataverse
                 SchemaName = name,
                 DisplayName = new Label(new LocalizedLabel(name, 1033), new LocalizedLabel[0])
             };
+
             // use reflection to set read-only properties on the entity
             Type attrType = typeof(UniqueIdentifierAttributeMetadata);
             attrType.GetProperty("IsValidForRead").SetValue(attribute, true);
@@ -199,17 +200,18 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 returnType = BuildReturnType(FormulaType.Decimal, _dataverseFeatures);
             }
-            else 
+            else
             {
                 // if Floating Point Feature is disabled this method will never return Number but it will return decimal in its place
                 returnType = BuildReturnType(nodeType, _dataverseFeatures);
             }
 
-            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && String.IsNullOrWhiteSpace(expression)))
+            if (!SupportedReturnType(returnType) && !(allowEmptyExpression && returnType is BlankType && string.IsNullOrWhiteSpace(expression)))
             {
                 errors = new SqlCompileException(SqlCompileException.ResultTypeNotSupported, sourceContext, returnType._type.GetKindString()).GetErrors(sourceContext);
                 return false;
             }
+
             if (options.TypeHints?.TypeHint != null)
             {
                 var hintType = options.TypeHints.TypeHint.FormulaType();
@@ -220,7 +222,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         returnType = hintType;
 
-                        if(sqlResult != null )
+                        if (sqlResult != null)
                         {
                             sqlResult.IsHintApplied = true;
                         }
@@ -272,6 +274,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     throw new NotImplementedException();
                 }
+
                 return fxType;
             }
             catch (NotImplementedException)
@@ -279,7 +282,6 @@ namespace Microsoft.PowerFx.Dataverse
                 // if the return type is not supported, report it as a failure
                 throw new SqlCompileException(SqlCompileException.ResultTypeNotSupported, null, type.GetKindString());
             }
-            
         }
 
         internal static FormulaType BuildReturnType(FormulaType type, DataverseFeatures dataverseFeatures)

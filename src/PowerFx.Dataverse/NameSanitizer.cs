@@ -1,14 +1,11 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
 using Microsoft.PowerFx.Core.Binding;
-using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Logging;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Syntax;
@@ -17,10 +14,10 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal class NameSanitizer : ISanitizedNameProvider
     {
-        private DataverseType _scopeType;        
+        private DataverseType _scopeType;
 
         public NameSanitizer(TexlBinding binding)
-        {            
+        {
             _scopeType = new DataverseType { Type = binding.ContextScope };
         }
 
@@ -71,8 +68,9 @@ namespace Microsoft.PowerFx.Dataverse
                     return (column, path);
                 }
             }
-            return (null,DPath.Root);
-        }  
+
+            return (null, DPath.Root);
+        }
 
         private static DPath GetPath(DataverseType scopeType, TexlNode node)
         {
@@ -84,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var (column, _) = GetColumnAndPath(scopeType, node);
             return column;
-        }      
+        }
 
         internal static DPath GetPathFromIdentifier(DataverseType scopeType, Identifier identifier)
         {
@@ -122,6 +120,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return path;
                 }
             }
+
             return DPath.Root;
         }
     }

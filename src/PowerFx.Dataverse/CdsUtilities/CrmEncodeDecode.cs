@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 namespace Microsoft.PowerFx.Dataverse.CdsUtilities
 {
@@ -15,8 +12,8 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
     {
         /// <summary>
         /// Encodes a string to be used as a sql literal string.
-        /// 
-        /// IMPORTANT: Please use SQL PARAMETERS whenever possible 
+        ///
+        /// IMPORTANT: Please use SQL PARAMETERS whenever possible
         /// instead of using this function.
         /// </summary>
         /// <param name="input">The string to encode</param>
@@ -29,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
         /// <remarks>See http://msdn.microsoft.com/en-us/library/ms998271.aspx</remarks>
         public static string SqlLiteralEncode(string input)
         {
-            char unicodeQuotation = '\u02BC'; // U+02BC is the quotation in unicode. SQL internally convert it as a regular quotation. Hence it can be used in sql query as SQL Smuggling attack. 
+            char unicodeQuotation = '\u02BC'; // U+02BC is the quotation in unicode. SQL internally convert it as a regular quotation. Hence it can be used in sql query as SQL Smuggling attack.
             char ansiQuotation = '\'';
             input = input.Replace(unicodeQuotation, ansiQuotation);
             return "'" + input.Replace("'", "''") + "'";

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//-------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -57,7 +54,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal("b (a)", policy.AllTables.TryGetDisplayName(new DName("a"), out var d1) ? d1.Value : "noValue");
             Assert.Equal("a1", policy.AllTables.TryGetDisplayName(new DName("b"), out var d2) ? d2.Value : "noValue");
         }
-
 
         [Fact]
         public void TestPolicyDuplicateDisplayNames()

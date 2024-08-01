@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -31,13 +28,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class PluginExecutionTests
     {
         internal static readonly Guid _g1 = new Guid("00000000-0000-0000-0000-000000000001");
+
         internal static readonly Guid _g2 = new Guid("00000000-0000-0000-0000-000000000002");
+
         internal static readonly Guid _g3 = new Guid("00000000-0000-0000-0000-000000000003");
+
         internal static readonly Guid _g4 = new Guid("00000000-0000-0000-0000-000000000004");
+
         internal static readonly Guid _g5 = new Guid("00000000-0000-0000-0000-000000000005");
+
         internal static readonly Guid _g6 = new Guid("00000000-0000-0000-0000-000000000006");
+
         internal static readonly Guid _g7 = new Guid("00000000-0000-0000-0000-000000000007");
+
         internal static readonly Guid _g8 = new Guid("00000000-0000-0000-0000-000000000008");
+
         internal static readonly Guid _g9 = new Guid("00000000-0000-0000-0000-000000000009");
 
         internal static readonly ParserOptions _parserAllowSideEffects = new ParserOptions
@@ -57,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 new AttributeMetadataModel
                 {
-                    LogicalName= "new_field",
+                    LogicalName = "new_field",
                     DisplayName = "field",
                     AttributeType = AttributeTypeCode.Decimal
                 },
@@ -107,6 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public class TrackingXrmMetadataProvider : IXrmMetadataProvider
         {
             private readonly IXrmMetadataProvider _inner;
+
             public List<string> _requests = new List<string>();
 
             public TrackingXrmMetadataProvider(IXrmMetadataProvider inner)
@@ -127,15 +133,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var localName = MockModels.LocalModel.LogicalName;
 
-            var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(MockModels.RelationshipModels)
-            );
+            var rawProvider = new TrackingXrmMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels));
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
             var disp = new Dictionary<string, string>
             {
                 { "local", "Locals" },
-                { "remote", "Remotes"  }
+                { "remote", "Remotes" }
             };
 
             var provider = new CdsEntityMetadataProvider(rawProvider, disp);  // NumberIsFloat = false
@@ -170,15 +174,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var localName = MockModels.LocalModel.LogicalName;
 
-            var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(MockModels.RelationshipModels)
-            );
+            var rawProvider = new TrackingXrmMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels));
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
             var disp = new Dictionary<string, string>
             {
                 { "local", "Locals" },
-                { "remote", "Remotes"  }
+                { "remote", "Remotes" }
             };
 
             var provider = new CdsEntityMetadataProvider(rawProvider, disp) { NumberIsFloat = true };
@@ -237,15 +239,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var localName = MockModels.LocalModel.LogicalName;
 
-            var rawProvider = new TrackingXrmMetadataProvider(
-                new MockXrmMetadataProvider(MockModels.RelationshipModels)
-            );
+            var rawProvider = new TrackingXrmMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels));
 
             // Passing in a display dictionary avoids unecessary calls to to metadata lookup.
             var disp = new Dictionary<string, string>
             {
                 { "local", "Locals" },
-                { "remote", "Remotes"  }
+                { "remote", "Remotes" }
             };
 
             var provider = new CdsEntityMetadataProvider(rawProvider, disp);
@@ -522,7 +522,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await engine.EvalAsync(expr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
 
             var entity = (Entity)result.ToObject();
-            Assert.Null(entity); //
+            Assert.Null(entity);
         }
 
         // Serialize the entire table
@@ -946,39 +946,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup _) = CreateMemoryForRelationshipModels(policy);
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
 
+            var config = new PowerFxConfig();
+            config.EnableSetFunction();
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
+
+            // Check conversion against all forms.
+            foreach (var expr in new string[] { logical, display, mixed })
             {
-                var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
-                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols);
-
-                var config = new PowerFxConfig();
-                config.EnableSetFunction();
-                var engine = new RecalcEngine(config);
-                engine.EnableDelegation();
-
-                // Check conversion against all forms.
-                foreach (var expr in new string[] { logical, display, mixed })
+                if (expr == null)
                 {
-                    if (expr == null)
-                    {
-                        continue;
-                    }
-
-                    // Get invariant
-                    var check = new CheckResult(engine)
-                        .SetText(expr, _parserAllowSideEffects)
-                        .SetBindingInfo(symbols);
-
-                    check.ApplyBinding();
-                    Assert.True(check.IsSuccess);
-
-                    var invariant = check.ApplyGetInvariant();
-                    Assert.Equal(invariant, logical);
-
-                    // Get display
-                    var display2 = engine.GetDisplayExpression(expr, symbols);
-                    Assert.Equal(display, display2);
+                    continue;
                 }
+
+                // Get invariant
+                var check = new CheckResult(engine)
+                    .SetText(expr, _parserAllowSideEffects)
+                    .SetBindingInfo(symbols);
+
+                check.ApplyBinding();
+                Assert.True(check.IsSuccess);
+
+                var invariant = check.ApplyGetInvariant();
+                Assert.Equal(invariant, logical);
+
+                // Get display
+                var display2 = engine.GetDisplayExpression(expr, symbols);
+                Assert.Equal(display, display2);
             }
         }
 
@@ -1069,7 +1066,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var info = DependencyInfo.Scan(check, dv.MetadataCache);
 
-            var actual = info.ToString().Replace("\r", "").Replace("\n", "").Trim();
+            var actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
 
             Assert.Equal(expected, actual);
         }
@@ -1333,28 +1330,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var policy = new SingleOrgPolicy(map);
 
             (DataverseConnection dv, EntityLookup _) = CreateMemoryForRelationshipModels(policy);
+            var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
+            var parametersRecord = RecordType.Empty().Add("entityRef", dv.GetRecordType("local"), "EntityRef");
+            var parametersSymbols = ReadOnlySymbolTable.NewFromRecord(parametersRecord);
+            var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parametersSymbols);
 
-            {
-                var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
-                var parametersRecord = RecordType.Empty().Add("entityRef", dv.GetRecordType("local"), "EntityRef");
-                var parametersSymbols = ReadOnlySymbolTable.NewFromRecord(parametersRecord);
-                var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parametersSymbols);
+            var config = new PowerFxConfig();
+            config.EnableSetFunction();
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
 
-                var config = new PowerFxConfig();
-                config.EnableSetFunction();
-                var engine = new RecalcEngine(config);
-                engine.EnableDelegation();
+            var check = new CheckResult(engine)
+                .SetText(expression)
+                .SetBindingInfo(symbols);
 
-                var check = new CheckResult(engine)
-                    .SetText(expression)
-                    .SetBindingInfo(symbols);
+            var list = policy.GetDependencies(check).ToArray();
+            Array.Sort(list);
+            var x = string.Join(",", list);
 
-                var list = policy.GetDependencies(check).ToArray();
-                Array.Sort(list);
-                var x = string.Join(",", list);
-
-                Assert.Equal(listTables, x);
-            }
+            Assert.Equal(listTables, x);
         }
 
         // Enumerate various setups to run tests in.
@@ -1602,6 +1596,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
+
         // DV works by making a copy of the entity when retrieving it. In-memory works by reference.
         [InlineData("With({oldCount:CountRows(t1)},Collect(t1,{Price:200});CountRows(t1)-oldCount)", 1.0)]
         [InlineData("Collect(t1,{Price:110});CountRows(t1)", 4.0)]
@@ -1631,6 +1626,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
+
         // DV works by making a copy of the entity when retrieving it. In-memory works by reference.
         [InlineData("With({oldCount:CountRows(t1)},Collect(t1,{Price:200});CountRows(t1)-oldCount)", 1.0)]
         [InlineData("Collect(t1,{Price:110});CountRows(t1)", 4.0)]
@@ -2045,7 +2041,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var s12 = ReadOnlySymbolValues.Compose(s1, s2);
 
             var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
-            Assert.Equal(100 * 1000 + 200m, result.ToObject());
+            Assert.Equal((100 * 1000) + 200m, result.ToObject());
         }
 
         [Fact]
@@ -2068,7 +2064,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var result = await engine1.EvalAsync("First(T1).Price*1000 + First(T2).Price", CancellationToken.None, runtimeConfig: s12);
 
-            Assert.Equal(100 * 1000 + 200.0, result.ToObject());
+            Assert.Equal((100 * 1000) + 200.0, result.ToObject());
         }
 
         [Fact]
@@ -2707,7 +2703,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [Theory]
         [InlineData("GetPrice():Decimal = First(t1).Price;", "GetPrice()")]
         [InlineData("ApplyDiscount(x:Decimal):Decimal = First(t1).Price * (1 - x/100) ;", "ApplyDiscount(10)")]
-        public void UDFWithRestrictedTypesTest(string script, string _)
+        public void UDFWithRestrictedTypesTest(string script, string unused)
         {
             // create table "local"
             var logicalName = "local";
@@ -2989,10 +2985,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 return num.Value;
             }
+
             if (value is DecimalValue dec)
             {
                 return (double)dec.Value;
             }
+
             throw new InvalidOperationException($"Not a number: {value.GetType().FullName}");
         }
 
@@ -3004,6 +3002,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 return (double)dec.Value;
             }
+
             return value.ToObject();
         }
     }

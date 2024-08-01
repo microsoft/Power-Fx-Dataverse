@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -272,15 +275,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(179, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "LookUpDelegation.txt", expr, -2, expected,
+            await DelegationTestAsync(
+                id,
+                "LookUpDelegation.txt",
+                expr,
+                -2,
+                expected,
                 result =>
                 {
                     object res = result.ToObject();
-                    if (expected is decimal && res is double dbl) { res = new decimal(dbl); }
-                    if (expected is double && res is decimal dec) { res = (double)dec; }
+
+                    if (expected is decimal && res is double dbl)
+                    {
+                        res = new decimal(dbl);
+                    }
+
+                    if (expected is double && res is decimal dec)
+                    {
+                        res = (double)dec;
+                    }
+
                     return res;
                 },
-                cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
+                cdsNumberIsFloat,
+                parserNumberIsFloatOption,
+                null,
+                false,
+                true,
+                true,
+                expectedWarnings);
         }
 
         [Theory]

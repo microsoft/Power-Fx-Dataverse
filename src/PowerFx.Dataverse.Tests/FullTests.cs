@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -20,12 +17,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     public class FullTests
     {
-
-        internal static readonly Dictionary<AttributeTypeCode, string> AttributeTypeCodeToSqlTypeDictionary = new Dictionary<AttributeTypeCode, string> {
-                    { AttributeTypeCode.Integer, SqlStatementFormat.SqlIntegerType },
-                    { AttributeTypeCode.Money, SqlStatementFormat.SqlMoneyType },
-                    { AttributeTypeCode.Double, SqlStatementFormat.SqlFloatType }
-                };
+        internal static readonly Dictionary<AttributeTypeCode, string> AttributeTypeCodeToSqlTypeDictionary = new Dictionary<AttributeTypeCode, string>
+        {
+            { AttributeTypeCode.Integer, SqlStatementFormat.SqlIntegerType },
+            { AttributeTypeCode.Money, SqlStatementFormat.SqlMoneyType },
+            { AttributeTypeCode.Double, SqlStatementFormat.SqlFloatType }
+        };
 
         [SkippableFact]
         public void SqlCompileBaselineTest()
@@ -43,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal(DataverseTests.BaselineLogicalFormula, result.LogicalFormula); // "Baseline logical formula has changed"
             }
         }
-        
+
         [SkippableFact]
         public void SqlIntegerCalculatedDependencyTest()
         {
@@ -52,7 +49,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 LogicalName = "foo",
                 PrimaryIdAttribute = "fooid",
-                Attributes = new AttributeMetadataModel[] {
+                Attributes = new AttributeMetadataModel[] 
+                {
                     AttributeMetadataModel.NewInteger(rawField, "Raw"),
                     AttributeMetadataModel.NewInteger("calc1", "Calc1").SetCalculated(),
                     AttributeMetadataModel.NewInteger("calc2", "Calc2").SetCalculated(),
@@ -62,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             using (var cx = GetSql())
             {
-                CreateTable(cx, metadata, new Dictionary<string, string> { { rawField, "1" } }, calculations: new Dictionary<string, string> { { "calc1", "" }, { "calc2", "" } });
+                CreateTable(cx, metadata, new Dictionary<string, string> { { rawField, "1" } }, calculations: new Dictionary<string, string> { { "calc1", string.Empty }, { "calc2", string.Empty } });
 
                 var metadataArray = new EntityMetadataModel[] { metadata };
                 var calc1 = ExecuteSqlTest("raw + 1", 2, cx, metadataArray, true, false, "udfCalc1", GetIntegerHint());
@@ -112,7 +110,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void FormulaUDFTest()
         {
             using (var cx = GetSql())
-            { 
+            {
                 ExecuteScript(cx, TestCreateTableScript);
                 ExecuteScript(cx, "drop view if exists account1;");
                 ExecuteScript(cx, TestCreateViewScript);
@@ -168,14 +166,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     // first create the referenced triple remote row
                     var trid = Guid.NewGuid();
-                    InsertRow(cx, tx, MockModels.TripleRemoteModel, new Dictionary<string, string> {
+                    InsertRow(cx, tx, MockModels.TripleRemoteModel, new Dictionary<string, string> 
+                    {
                         { MockModels.TripleRemoteModel.PrimaryIdAttribute, GuidToSql(trid) },
                         { "data3", "1" }
                     });
 
                     // then create the referenced double remote row
                     var drid = Guid.NewGuid();
-                    InsertRow(cx, tx, MockModels.DoubleRemoteModel, new Dictionary<string, string> {
+                    InsertRow(cx, tx, MockModels.DoubleRemoteModel, new Dictionary<string, string> 
+                    {
                         { MockModels.DoubleRemoteModel.PrimaryIdAttribute, GuidToSql(drid) },
                         { "otherotherotherid", GuidToSql(trid) },
                         { "data2", "1" }
@@ -183,7 +183,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     // then create the referenced remote row
                     var rid = Guid.NewGuid();
-                    InsertRow(cx, tx, MockModels.RemoteModel, new Dictionary<string, string> {
+                    InsertRow(cx, tx, MockModels.RemoteModel, new Dictionary<string, string> 
+                    {
                         { MockModels.RemoteModel.PrimaryIdAttribute, GuidToSql(rid) },
                         { "data", "1" },
                         { "otherotherid", GuidToSql(drid) }
@@ -191,14 +192,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     // then create the referenced local row
                     var lid = Guid.NewGuid();
-                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> {
+                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> 
+                    {
                         { MockModels.LocalModel.PrimaryIdAttribute, GuidToSql(lid) },
                         { "new_price", "1" }
                     });
 
                     // then create the row that references both
                     selfrefid = Guid.NewGuid();
-                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> {
+                    InsertRow(cx, tx, MockModels.LocalModel, new Dictionary<string, string> 
+                    {
                         { MockModels.LocalModel.PrimaryIdAttribute, GuidToSql(selfrefid) },
                         { "new_price", "1" },
                         { "otherid", GuidToSql(rid) },
@@ -221,6 +224,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Assert.Equal("refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", calc.LogicalFormula);
             }
         }
+
         private static string GuidToSql(Guid guid)
         {
             return $"'{guid}'";
@@ -233,7 +237,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 LogicalName = "foo",
                 PrimaryIdAttribute = "fooid",
-                Attributes = new AttributeMetadataModel[] {
+                Attributes = new AttributeMetadataModel[] 
+                {
                     AttributeMetadataModel.NewString("new_null_param", "Null Param"),
                     AttributeMetadataModel.NewInteger("new_int", "Integer"),
                 }
@@ -244,6 +249,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, metadata, new Dictionary<string, string> { { "new_int", "1" } });
 
                 var metadataArray = new EntityMetadataModel[] { metadata };
+
                 // v0 (return value) is not defaulted to empty string for null string input
                 ExecuteSqlTest("If('Null Param' = \"test\",1,2)", 2M, cx, metadataArray);
 
@@ -263,13 +269,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     LogicalName = "this",
                     DisplayCollectionName = "Thises",
                     PrimaryIdAttribute = "thisid",
-                    Attributes = new AttributeMetadataModel[] {
-                        AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[]
-                        {
-                            new OptionMetadataModel { Label = "Hot", Value = 1 },
-                            new OptionMetadataModel { Label = "Warm", Value = 2 },
-                            new OptionMetadataModel { Label = "Cold", Value = 3 }
-                        })
+                    Attributes = new AttributeMetadataModel[]
+                    {
+                        AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Hot", Value = 1 }, new OptionMetadataModel { Label = "Warm", Value = 2 }, new OptionMetadataModel { Label = "Cold", Value = 3 } })
                     }
                 };
                 var entityMetadata = new EntityMetadataModel[] { metadata };
@@ -286,7 +288,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Value(rating)", 2M, cx, entityMetadata, dataverseFeatures: dataverseFeatures);
 
                 // OptionSetToText operation is supported with FCB disabled.
-                ExecuteSqlTest("Text('Rating (Thises)'.Hot)", "1", cx, entityMetadata, dataverseFeatures: new() { IsOptionSetEnabled = false });
+                ExecuteSqlTest("Text('Rating (Thises)'.Hot)", "1", cx, entityMetadata, dataverseFeatures: new () { IsOptionSetEnabled = false });
             }
         }
 
@@ -299,8 +301,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     new OptionMetadata { Label = new Label(new LocalizedLabel("One", 1033), new LocalizedLabel[0]), Value = 1 },
                     new OptionMetadata { Label = new Label(new LocalizedLabel("Two", 1033), new LocalizedLabel[0]), Value = 2 },
-                }
-            )))
+                })))
             {
                 IsGlobal = true,
                 Name = "global1",
@@ -360,7 +361,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     { "userLocalDateTime", "N'2021-07-23 06:11:00.000'" },
                     { "userLocalDateOnly", "N'2021-08-01 07:00:00.000'" },
-                    { "dateOnly","N'2021-07-16 00:00:00.000'" },
+                    { "dateOnly", "N'2021-07-16 00:00:00.000'" },
                     { "tziDateTime", "N'2021-07-23 18:00:00.000'" },
                     { "tziDateOnly", "N'2021-08-26 00:00:00.000'" },
                 });
@@ -382,7 +383,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Now() < Now()", false, cx, metadata);
                 ExecuteSqlTest("If(DateDiff(userLocalDateTime,Now()),1,2)", 1.0M, cx, metadata);
                 ExecuteSqlTest("userLocalDateTime > Now()", false, cx, metadata);
-
             }
         }
 
@@ -416,19 +416,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     AttributeMetadataModel.NewDecimal("null_decimal", "NullDec"),
                     AttributeMetadataModel.NewString("string", "String"),
                     AttributeMetadataModel.NewString("null_string", "NullStr"),
-                    AttributeMetadataModel.NewPicklist("null_picklist", "NullPicklist", new []
-                    {
-                        new OptionMetadataModel
-                        {
-                            Label = "A",
-                            Value = 1,
-                        },
-                        new OptionMetadataModel
-                        {
-                            Label = "B",
-                            Value = 2,
-                        }
-                    }),
+                    AttributeMetadataModel.NewPicklist("null_picklist", "NullPicklist", new[] { new OptionMetadataModel { Label = "A", Value = 1, }, new OptionMetadataModel { Label = "B", Value = 2, } }),
                     AttributeMetadataModel.NewBoolean("null_boolean", "NullBoolean", "Yup", "Naw"),
                     AttributeMetadataModel.NewGuid("guid", "Guid")
                 }
@@ -439,7 +427,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 CreateTable(cx, model, new Dictionary<string, string>
                 {
                     { "decimal", "1" },
-                    { "string", "N'foo'"},
+                    { "string", "N'foo'" },
                     { "guid", "'70278D61-CD79-467E-8E89-AA3FA802EC79'" }
                 });
 
@@ -456,6 +444,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("NullDec %", 0M, cx, metadata);
                 ExecuteSqlTest("\"o\" in NullStr", false, cx, metadata);
                 ExecuteSqlTest("\"o\" in String", true, cx, metadata);
+
                 // don't coerce null for equality checks
                 ExecuteSqlTest("NullDec = 0", false, cx, metadata);
                 ExecuteSqlTest("NullDec <> 0", true, cx, metadata);
@@ -465,20 +454,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("NullDec <> Blank()", false, cx, metadata);
                 ExecuteSqlTest("Blank() = NullDec", true, cx, metadata);
                 ExecuteSqlTest("NullDec = Blank()", true, cx, metadata);
-                ExecuteSqlTest("Blank() = NullStr", true, cx, metadata); 
+                ExecuteSqlTest("Blank() = NullStr", true, cx, metadata);
                 ExecuteSqlTest("Blank() <> NullStr", false, cx, metadata);
                 ExecuteSqlTest("Blank() = \"\"", false, cx, metadata);
                 ExecuteSqlTest("Blank() <> \"\"", true, cx, metadata);
                 ExecuteSqlTest("Blank() = String", false, cx, metadata);
                 ExecuteSqlTest("Blank() <> String", true, cx, metadata);
+
                 // coerce null to 0 in math functions
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
+
                 // coerce null to 0 in math operations
                 ExecuteSqlTest("IsError(Mod(NullDec, NullDec))", true, cx, metadata);
                 ExecuteSqlTest("5 * NullDec", 0M, cx, metadata);
                 ExecuteSqlTest("IsError(1/NullDec)", true, cx, metadata);
+
                 // coerce null to empty string in string functions
-                ExecuteSqlTest("Upper(NullStr)", "", cx, metadata);
+                ExecuteSqlTest("Upper(NullStr)", string.Empty, cx, metadata);
+
                 // don't coerce in IsBlank
                 ExecuteSqlTest("IsBlank(NullDec)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullStr)", true, cx, metadata);
@@ -486,7 +479,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("IsBlank(String)", false, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullPicklist)", true, cx, metadata);
                 ExecuteSqlTest("IsBlank(NullBoolean)", true, cx, metadata);
-                ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata); 
+                ExecuteSqlTest("Value(NullStr) = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Text(NullStr) = Blank()", true, cx, metadata);
                 ExecuteSqlTest("Upper(NullStr) = \"\"", true, cx, metadata);
                 ExecuteSqlTest("Lower(NullStr) = \"\"", true, cx, metadata);
@@ -529,7 +522,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     { "whole", "30" },
                     { "fractional", "100.5" },
-                    { "int", "20"}
+                    { "int", "20" }
                 });
 
                 ExecuteSqlTest("Text(Integer, \"###\")", "20", cx, metadata);
@@ -586,8 +579,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal3", "10000000000" },
                     { "decimal4", SqlStatementFormat.DecimalTypeMax },
                     { "decimal5", SqlStatementFormat.DecimalTypeMin },
-                    { "decimal6",  "1000000000000"},
-                    { "int", "20"},
+                    { "decimal6",  "1000000000000" },
+                    { "int", "20" },
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax },
@@ -633,7 +626,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Decimal(decimal6)", null, cx, metadata);
                 ExecuteSqlTest("IsError(Decimal(decimal6))", true, cx, metadata);
 
-                ExecuteSqlTest("int2 + int", null, cx, metadata, typeHints:GetIntegerHint()); // whole no overflow
+                ExecuteSqlTest("int2 + int", null, cx, metadata, typeHints: GetIntegerHint()); // whole no overflow
                 ExecuteSqlTest("big_int", int.Parse(SqlStatementFormat.IntTypeMax), cx, metadata, typeHints: GetIntegerHint());
             }
         }
@@ -676,14 +669,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal3", "10000000000" },
                     { "decimal4", SqlStatementFormat.DecimalTypeMax },
                     { "decimal5", SqlStatementFormat.DecimalTypeMin },
-                    { "decimal6",  "1000000000000"},
+                    { "decimal6",  "1000000000000" },
                     { "double1", "25.63658" },
                     { "double2", "1.02342" },
                     { "double3", "10000000000" },
                     { "double4", SqlStatementFormat.DecimalTypeMax },
                     { "double5", SqlStatementFormat.DecimalTypeMin },
                     { "double6", "-1343.2233" },
-                    { "int", "20"},
+                    { "int", "20" },
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax },
@@ -755,7 +748,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", "ebcd", cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Mid(\"abcd\", 1, double2)", "a", cx, metadata, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", "ebcd", cx, metadata, dataverseFeatures: dataverseFeatures);
-                
             }
         }
 
@@ -797,14 +789,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     { "decimal3", "10000000000" },
                     { "decimal4", SqlStatementFormat.DecimalTypeMax },
                     { "decimal5", SqlStatementFormat.DecimalTypeMin },
-                    { "decimal6",  "1000000000000"},
+                    { "decimal6", "1000000000000" },
                     { "double1", "25.63658" },
                     { "double2", "1.02342" },
                     { "double3", "10000000000" },
                     { "double4", SqlStatementFormat.DecimalTypeMax },
                     { "double5", SqlStatementFormat.DecimalTypeMin },
                     { "double6", "-1343.2233" },
-                    { "int", "20"},
+                    { "int", "20" },
                     { "int2", "2147483645" },
                     { "big_decimal", SqlStatementFormat.DecimalTypeMax },
                     { "big_int", SqlStatementFormat.IntTypeMax },
@@ -815,7 +807,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 DataverseFeatures dataverseFeatures = new DataverseFeatures() { IsFloatingPointEnabled = false };
 
                 // arithmetic
-                ExecuteSqlTest("double1+double2", null, cx, metadata, success : false, dataverseFeatures: dataverseFeatures); 
+                ExecuteSqlTest("double1+double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("double1-double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("double1*double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("double1/double2", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
@@ -876,7 +868,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 ExecuteSqlTest("Replace(\"abcd\", 1, double2, \"e\")", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Mid(\"abcd\", 1, double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
                 ExecuteSqlTest("Substitute(\"abcd\", \"a\", \"e\", double2)", null, cx, metadata, success: false, dataverseFeatures: dataverseFeatures);
-
             }
         }
 
@@ -953,11 +944,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     var executeCmd = connection.CreateCommand();
                     executeCmd.Transaction = tx;
-                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? "" : $"FROM {metadata[0].SchemaName}Base";
-                    if (from != "" && rowid.HasValue)
+                    var from = compileResult.TopLevelIdentifiers.Count == 0 && !rowid.HasValue ? string.Empty : $"FROM {metadata[0].SchemaName}Base";
+                    if (from != string.Empty && rowid.HasValue)
                     {
                         from = $"{from} WHERE {GetPrimaryIdSchemaName(metadata[0])} = '{rowid}'";
                     }
+
                     executeCmd.CommandText = $"SELECT dbo.{compileResult.SqlCreateRow}{from}";
                     var actualResult = executeCmd.ExecuteScalar();
 
@@ -965,6 +957,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     {
                         actualResult = null;
                     }
+
                     Assert.Equal(expectedResult, actualResult); // $"Incorrect result from '{formula}'"
 
                     if (verbose)
@@ -988,7 +981,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new PowerFx2SqlEngine(
                 metadata[0].ToXrm(),
                 new CdsEntityMetadataProvider(provider, globalOptionSets: globalOptionSets) { NumberIsFloat = DataverseEngine.NumberIsFloat },
-                dataverseFeatures : dataverseFeatures);
+                dataverseFeatures: dataverseFeatures);
 
             var options = new SqlCompileOptions
             {
@@ -1006,6 +999,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     Debug.WriteLine($"{error.Span.Min}-{error.Span.Lim}:{error.Message}");
                 }
+
                 return result;
             }
 
@@ -1018,14 +1012,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     Debug.WriteLine("  " + fieldName);
                 }
-                Debug.WriteLine("");
+
+                Debug.WriteLine(string.Empty);
 
                 // Write actual function definition
 
                 Debug.WriteLine("SQL function:");
                 Debug.WriteLine("---------");
                 Debug.WriteLine(result.SqlFunction);
-                Debug.WriteLine("");
+                Debug.WriteLine(string.Empty);
 
                 Debug.WriteLine("------");
                 Debug.WriteLine("For CreateTable command:");
@@ -1052,6 +1047,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private static string GenerateTableScript(EntityMetadataModel model, Mode mode = Mode.Create, Dictionary<string, string> calculations = null)
         {
             var op = mode == Mode.Alter ? "ALTER" : "CREATE";
+
             // use the schema name for the primary id attribute, or the primary id logical name if not found
 
             var primaryId = GetPrimaryIdSchemaName(model);
@@ -1069,7 +1065,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var found = calculations?.TryGetValue(attr.LogicalName, out calc);
                 if (found.HasValue && found.Value)
                 {
-                    if (calc == "")
+                    if (calc == string.Empty)
                     {
                         // skip calculated fields with empty string calculations
                         continue;
@@ -1096,6 +1092,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 baseTable += $@",
 [{attr.SchemaName}] {type}";
             }
+
             baseTable += ")";
             return baseTable;
         }
@@ -1133,7 +1130,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             insertCmd.ExecuteNonQuery();
         }
 
-        #endregion
+        #endregion Full Test infra
 
         public const string TestCreateTableScript = @"drop table if exists [dbo].AccountBase1;
 drop table if exists [dbo].CustomerBase;
@@ -1159,8 +1156,5 @@ CONSTRAINT[cndx_PrimaryKey_Account1] PRIMARY KEY CLUSTERED
         public const string TestCreateViewScript = @"CREATE VIEW [dbo].ACCOUNT1(
    AccountId, new_Calc_Schema, address1_latitude) with view_metadata as
 (select t1.AccountId, t1.new_Calc_Schema,t2.address from[dbo].AccountBase1 t1 join[dbo].CustomerBase t2 on t1.customerId = t2.customerId);";
-
     }
-
-    
 }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly IDataverseServices _dataverseServices;
 
-        public IDataverseServices dataverseServices => _dataverseServices;
+        public IDataverseServices DataverseServices => _dataverseServices;
 
         private readonly Func<string, EntityMetadata> _metadataResolver;
 
@@ -67,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             var filter = new FilterExpression();
             filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, ConditionOperator.Equal, reference.Id);
 #pragma warning disable CS0618 // Type or member is obsolete
-            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters() { Filter = filter, Top = 1, _columnMap = ColumnMap.GetColumnMap(columns) });
+            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters() { Filter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) });
 #pragma warning restore CS0618 // Type or member is obsolete
             var rows = await _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
 

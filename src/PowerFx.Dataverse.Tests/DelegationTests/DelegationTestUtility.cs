@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,14 +43,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                  // Set this if you need to regenerate the snapshot files.
 #if REGENERATE
                  baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0", "win-x64"), string.Empty)
-                              .Replace(Path.Join("bin", "Release", "net7.0", "win-x64"), string.Empty) 
+                              .Replace(Path.Join("bin", "Release", "net7.0", "win-x64"), string.Empty)
 #else
                  baseDirectory;
 #endif
 
 #if REGENERATE
             if (!File.Exists(path))
-            {                
+            {
                 using (var sw = new StreamWriter(path))
                 {
                     for (int i = 1; i < lineNumber; i++)
@@ -56,7 +59,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     }
 
                     await sw.WriteLineAsync(inputString);
-                }                
+                }
             }
 #endif
 
@@ -72,15 +75,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
 
 #if REGENERATE
-            
+
             // Update or add the specified line with the input string
             allLines[index] = inputString;
             await File.WriteAllLinesAsync(path, allLines);
 #else
+
             // Compare the specified line with the input string, considering new lines as empty
-            var targetLine = index < allLines.Length ? allLines[index] : "";
+            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;
             Assert.True(targetLine == inputString, $"File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
-#endif            
+#endif
         }
 
         private static string ShowDifference(string target, string input)

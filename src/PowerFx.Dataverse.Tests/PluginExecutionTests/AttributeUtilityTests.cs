@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Immutable;
@@ -13,10 +10,9 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class AttributeUtilityTests
     {
-        internal readonly IImmutableList<FormulaValue> exampleValues = ImmutableList.Create<FormulaValue>(
+        internal readonly IImmutableList<FormulaValue> ExampleValues = ImmutableList.Create<FormulaValue>(
             FormulaValue.New(1),
             FormulaValue.New(1m),
             FormulaValue.New("test"),
@@ -26,8 +22,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             FormulaValue.NewDateOnly(new DateTime(2023, 07, 06)),
             FormulaValue.NewBlank(),
             FormulaValue.NewError(new ExpressionError(), FormulaType.Blank),
-            FormulaValue.NewVoid()
-         );
+            FormulaValue.NewVoid());
 
         [Theory]
         [InlineData("_ownerid_value", "ownerid")]
@@ -59,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entityMetadata = dv.GetMetadataOrThrow("local");
             foreach (var attribute in entityMetadata.Attributes)
             {
-                foreach (var fv in exampleValues)
+                foreach (var fv in ExampleValues)
                 {
                     var fieldName = attribute.LogicalName;
                     Assert.True(entityMetadata.TryGetAttribute(fieldName, out var attributeMetadata));
@@ -114,15 +109,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         }
                         catch (NotImplementedException)
                         {
-
                         }
                         catch (InvalidOperationException)
                         {
-
                         }
                         catch (InvalidCastException)
                         {
-
                         }
                     }
                 }

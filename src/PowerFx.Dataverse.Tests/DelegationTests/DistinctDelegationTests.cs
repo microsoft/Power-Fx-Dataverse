@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -7,8 +10,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public class DistinctDelegationTests : DelegationTests
     {
         public DistinctDelegationTests(ITestOutputHelper output)
-            : base(output) 
-        { 
+            : base(output)
+        {
         }
 
         [Theory]
@@ -29,6 +32,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public async Task DistinctDelegationAsync(int id, string expr, int expectedRows, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "DistinctDelegation.txt", expr, expectedRows, null, null, true, true, null, false, true, true, expectedWarnings);
-        }        
+        }
     }
 }

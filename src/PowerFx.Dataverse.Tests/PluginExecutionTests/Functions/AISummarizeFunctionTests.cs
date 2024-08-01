@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +12,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    
     public class AISummarizeFunctionTests
     {
         // FAils if config.EnableAIFunctions() is not called.
@@ -24,13 +20,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData(false)]
         public void Missing(bool enable)
         {
-            var config = new PowerFxConfig();        
+            var config = new PowerFxConfig();
             if (enable)
             {
                 config.EnableAIFunctions();
             }
+
             var engine = new RecalcEngine(config);
-            
+
             var result = engine.Check("AISummarize(\"very long string\")");
             Assert.Equal(enable, result.IsSuccess);
         }
@@ -48,7 +45,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
 
-
             client.Work = (req) =>
             {
                 // Validate parameters
@@ -62,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 resp["SummarizedText"] = "short string";
                 return resp;
             };
-            
+
             var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
 
             Assert.Equal("short string", result.ToObject());
@@ -89,7 +85,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             };
 
             var result = await engine.EvalAsync("AISummarize(\"very long string\")", default, runtimeConfig: rc);
-            
+
             var errors = (ErrorValue)result;
             Assert.Single(errors.Errors);
             var error = errors.Errors[0];
@@ -104,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             public async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
             {
                 return await DataverseResponse<OrganizationResponse>.RunAsync(
-                    async () => this.Work(request), 
+                    async () => this.Work(request),
                     "method");
             }
         }

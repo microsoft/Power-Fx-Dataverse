@@ -1,9 +1,11 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.CdsService;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
@@ -18,27 +20,22 @@ using Microsoft.PowerFx.Dataverse.Parser.Importers.DataDescription;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Metadata cache for the compiler. Allows sharing metadata cross compiler instances. 
+    /// Metadata cache for the compiler. Allows sharing metadata cross compiler instances.
     /// </summary>
     public class CdsEntityMetadataProvider : IDisplayNameProvider, IExternalDataEntityMetadataProvider, IExternalEntityScope
     {
         private readonly IXrmMetadataProvider _innerProvider;
+
         private readonly DataverseDocument _document;
 
         /// <summary>
         /// All option sets, indexed by both display and logical name
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseOptionSet> _optionSets = new ConcurrentDictionary<string, DataverseOptionSet>(StringComparer.Ordinal);
-
 
         /// <summary>
         /// Cache of XRM entity metadata already retrieved, indexed by logical name
@@ -53,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         /// <summary>
         /// Currently, only option sets that are used in attributes of the entity are present in the metadatacache and only these option sets are suggested in intellisense
-        /// so, we are passing list of all global option sets so that these option sets are also processed and will be suggested in intellisense. 
+        /// so, we are passing list of all global option sets so that these option sets are also processed and will be suggested in intellisense.
         /// </summary>
         private readonly List<OptionSetMetadata> _globalOptionSets = new List<OptionSetMetadata>();
 
@@ -62,13 +59,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal IExternalDocument Document => _document;
 
-        // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups. 
+        // Optimized lookup for IDisplayNameProvider that lets us avoid metadata lookups.
         // Map logical name to display name
-        private readonly Func<string,string> _displayNameLookup;
-                
+        private readonly Func<string, string> _displayNameLookup;
+
         private CdsEntityMetadataProvider()
         {
-            // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number. 
+            // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number.
             // https://msazure.visualstudio.com/OneAgile/_git/PowerApps-Client/pullrequest/7953377
             Microsoft.AppMagic.Authoring.Importers.ServiceConfig.WadlExtensions.PFxV1Semantics = true;
         }
@@ -79,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
             : this()
         {
             _innerProvider = provider;
-            if(globalOptionSets != null)
+            if (globalOptionSets != null)
             {
                 _globalOptionSets = globalOptionSets;
             }
@@ -88,6 +85,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 _displayNameLookup = (logicalName) => displayNameLookup.TryGetValue(logicalName, out var displayName) ? displayName : null;
             }
+
             _document = new DataverseDocument(this);
         }
 
@@ -108,13 +106,13 @@ namespace Microsoft.PowerFx.Dataverse
             // Share all caches except CDS cache, since DataverseDataSourceInfo hold onto the metadata provider.
             this._optionSets = original._optionSets;
             this._xrmCache = original._xrmCache;
-            this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;            
+            this._displayNameLookup = displayNameLookup ?? original._displayNameLookup;
         }
 
         /// <summary>
-        /// Create a metadata provider that shares the cache, but is accessed via a new provider. 
+        /// Create a metadata provider that shares the cache, but is accessed via a new provider.
         /// This is important when the IXrmMetadataProvider are based on short lived IOranizationService objects,
-        /// but we want to share the cached results longer. 
+        /// but we want to share the cached results longer.
         /// </summary>
         /// <param name="provider"></param>
         /// <returns></returns>
@@ -123,7 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new CdsEntityMetadataProvider(provider, this, displayNameLookup);
         }
 
-        // Called by operations that just want to get the metadata. 
+        // Called by operations that just want to get the metadata.
         internal bool TryGetDataSource(string logicalName, out DataverseDataSourceInfo dataSource)
         {
             return TryGetDataSource(logicalName, null, out dataSource);
@@ -135,6 +133,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return true;
             }
+
             if (TryGetXrmEntityMetadata(logicalName, out var xrmEntity))
             {
                 dataSource = FromXrm(xrmEntity, variableName);
@@ -167,6 +166,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return entity.SchemaName;
             }
+
             throw new Exception($"Unrecognized table {logicalName}");
         }
 
@@ -176,6 +176,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return entity.CdsColumnDefinition(attributeLogicalName).SchemaName;
             }
+
             throw new Exception($"Unrecognized table {entityLogicalName}");
         }
 
@@ -185,6 +186,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return true;
             }
+
             if (_innerProvider != null && _innerProvider.TryGetEntityMetadata(logicalName, out xrmEntity))
             {
                 _xrmCache[xrmEntity.LogicalName] = xrmEntity;
@@ -214,16 +216,16 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         internal void RegisterOptionSet(string name, DataverseOptionSet optionSet)
-        {            
+        {
             // register the option set.  Global option sets may be added multiple times
             Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal);
             _optionSets[name] = optionSet;
         }
 
         /// <summary>
-        /// Convert a dataverse entity metadata into a Power Fx type. 
+        /// Convert a dataverse entity metadata into a Power Fx type.
         /// </summary>
-        /// <param name="logicalName">Logical name of the entity. 
+        /// <param name="logicalName">Logical name of the entity.
         /// Metadata will be resolved via the <see cref="IXrmMetadataProvider"/> provided to ctor. </param>
         /// <returns></returns>
         public RecordType GetRecordType(string logicalName, string variableName = null)
@@ -232,6 +234,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new ArgumentNullException(nameof(logicalName));
             }
+
             if (TryGetDataSource(logicalName, variableName, out DataverseDataSourceInfo dataSource))
             {
                 var dtype = dataSource.Schema.ToRecord();
@@ -242,8 +245,8 @@ namespace Microsoft.PowerFx.Dataverse
             throw new InvalidOperationException($"Entity {logicalName} not present");
         }
 
-        // This constructs a DataverseDataSourceInfo around the entity. 
-        // If the entity has option sets or relationships, this may need to call back on the _document object to resolve types. 
+        // This constructs a DataverseDataSourceInfo around the entity.
+        // If the entity has option sets or relationships, this may need to call back on the _document object to resolve types.
         internal DataverseDataSourceInfo FromXrm(EntityMetadata entity, string variableName = null)
         {
             if (_xrmCache.ContainsKey(entity.LogicalName) && _cdsCache.TryGetValue(entity.LogicalName, out var cachedDs))
@@ -275,24 +278,28 @@ namespace Microsoft.PowerFx.Dataverse
                     case AttributeTypeCode.Status:
                         parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, (EnumAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
+
                     case AttributeTypeCode.Boolean:
                         parsed = CdsOptionSetRegisterer.TryRegisterParsedBooleanOptionSet(_document, (BooleanAttributeMetadata)attribute, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         break;
+
                     case AttributeTypeCode.Virtual:
                         if (attribute is MultiSelectPicklistAttributeMetadata multiSelectPicklistAttributeMetadata)
                         {
                             parsed = CdsOptionSetRegisterer.TryRegisterParsedOptionSet(_document, multiSelectPicklistAttributeMetadata, entity.LogicalName, dataSetName, out columnName, out optionSet);
                         }
+
                         break;
+
                     default:
                         break;
                 }
 
-                if (parsed) 
+                if (parsed)
                 {
                     // Formula Fields doesn't have their own local optionset, they use either global optionset or other optionset field
                     // hence skipping RegisterDataverseOptionSet for formula fields.
-                    var dataverseOptionSet = (attribute.SourceType == FormulaFieldSourceType && attribute.AttributeType.Value == AttributeTypeCode.Picklist) 
+                    var dataverseOptionSet = (attribute.SourceType == FormulaFieldSourceType && attribute.AttributeType.Value == AttributeTypeCode.Picklist)
                         ? (optionSet as DataverseOptionSet) : RegisterDataverseOptionSet(entity, optionSet);
                     optionSets[columnName] = dataverseOptionSet;
                 }
@@ -371,6 +378,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
                 RegisterOptionSet(logicalName, dataverseOptionSet);
             }
+
             return dataverseOptionSet;
         }
 
@@ -409,6 +417,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return _optionSets.TryGetValue(name.Value, out optionSet);
         }
+
         internal IEnumerable<DataverseOptionSet> OptionSets => _optionSets.Values.Distinct();
 
         public bool IsNameAvailable(string name, bool ignoreNamedFormulas = false)
@@ -417,6 +426,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         #region IDisplayNameProvider implementation
+
         /// <summary>
         /// Get the DisplayCollectionName for an entity, based
         /// </summary>
@@ -430,13 +440,14 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return entity.CdsTableDefinition.DisplayName;
                 }
+
                 if (_xrmCache.TryGetValue(key, out var xrmEntity))
                 {
                     return GetDisplayName(xrmEntity);
                 }
                 else
                 {
-                    // Try to check against lookup map. This is fast. 
+                    // Try to check against lookup map. This is fast.
                     if (_displayNameLookup != null)
                     {
                         var displayName = _displayNameLookup(key);
@@ -468,7 +479,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return displayName != null;
             }
 
-            // Fallback to metadata lookup - this can be slow. 
+            // Fallback to metadata lookup - this can be slow.
             if (TryGetXrmEntityMetadata(key, out _))
             {
                 return true;
@@ -482,9 +493,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             return entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
         }
-        #endregion
+
+        #endregion IDisplayNameProvider implementation
 
         #region IExternalDataEntityMetadataProvider implementation
+
         bool IExternalDataEntityMetadataProvider.TryGetEntityMetadata(string expandInfoIdentity, out IDataEntityMetadata entityMetadata)
         {
             if (TryGetDataSource(expandInfoIdentity, out DataverseDataSourceInfo dsInfo))
@@ -498,9 +511,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
         }
-        #endregion
+
+        #endregion IExternalDataEntityMetadataProvider implementation
 
         #region IExternalEntityScope implementation
+
         bool IExternalEntityScope.TryGetNamedEnum(DName identName, out DType enumType)
         {
             throw new NotImplementedException();
@@ -529,6 +544,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             throw new NotImplementedException();
         }
-        #endregion
+
+        #endregion IExternalEntityScope implementation
     }
 }

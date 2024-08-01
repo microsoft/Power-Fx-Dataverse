@@ -1,19 +1,16 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
 using System;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Allows a union between Success case (T) and an error. 
-    /// 
+    /// Allows a union between Success case (T) and an error.
+    ///
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class DataverseResponse<T> : DataverseResponse
@@ -25,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
             Response = response;
         }
 
-        public new static DataverseResponse<T> NewError(string error)
+        public static new DataverseResponse<T> NewError(string error)
         {
             // Error and Response are mutually exclusive.
             return new DataverseResponse<T>(default(T))
@@ -35,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Helper for invoking a dataverse operation and translating the errors. 
+        /// Helper for invoking a dataverse operation and translating the errors.
         /// </summary>
         /// <param name="call"></param>
         /// <param name="operationDescription"></param>
@@ -43,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
         public static async Task<DataverseResponse<T>> RunAsync(Func<Task<T>> call, string operationDescription)
         {
             return DataverseExtensions.DataverseCall(() => call().Result, operationDescription);
-        }        
+        }
     }
 
     public class DataverseResponse
@@ -60,10 +57,10 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Throw a  <see cref="=CustomFunctionErrorException"/> on error. 
+        /// Throw a  <see cref="=CustomFunctionErrorException"/> on error.
         /// This exception type is specifically useful in interpreter.
         /// </summary>
-        /// <exception cref="CustomFunctionErrorException"></exception>
+        /// <exception cref="CustomFunctionErrorException">.</exception>
         public void ThrowEvalExOnError()
         {
             if (this.HasError)

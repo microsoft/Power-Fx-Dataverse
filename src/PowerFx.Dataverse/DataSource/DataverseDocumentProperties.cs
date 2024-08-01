@@ -1,18 +1,16 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System.Collections.Generic;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.PowerFx.Core.App;
-using System.Collections.Generic;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     internal class DataverseDocumentProperties : IExternalDocumentProperties
     {
         public IExternalEnabledFeatures EnabledFeatures => new DefaultEnabledFeatures();
+
         public IExternalUserFlags UserFlags => new DefaultUserFlags();
     }
 }

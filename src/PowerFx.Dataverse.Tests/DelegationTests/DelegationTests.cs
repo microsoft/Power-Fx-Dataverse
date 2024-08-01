@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,8 +24,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             _output = output;
         }
 
-        protected async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat,
-            bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
+        protected async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
@@ -132,7 +134,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     {
                         Assert.Equal(expectedResult, resultGetter(result));
                     }
-                    else if (cdsNumberIsFloat && parserNumberIsFloatOption || cdsNumberIsFloat && !parserNumberIsFloatOption)
+                    else if (cdsNumberIsFloat && (parserNumberIsFloatOption || (cdsNumberIsFloat && !parserNumberIsFloatOption)))
                     {
                         Assert.Equal(expectedResult, result.ToObject());
                     }

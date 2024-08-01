@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var arg in args)
             {
-                var siblingFilter = ((DelegationFormulaValue)arg)._filter;                
+                var siblingFilter = ((DelegationFormulaValue)arg)._filter;
                 var siblingRelation = ((DelegationFormulaValue)arg)._relation;
                 var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
 

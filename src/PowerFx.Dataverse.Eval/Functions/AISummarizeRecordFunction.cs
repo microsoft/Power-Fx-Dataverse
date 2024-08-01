@@ -1,25 +1,26 @@
-﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AISummarizeRecord(String, Guid) : string 
+    // AISummarizeRecord(String, Guid) : string
     // given a dataverse entity name and record Id in that entity, call GPT to return summarize that record and its linked records from other linked entities in dataverse.
     public class AISummarizeRecordFunction : ReflectionFunction
     {
         public AISummarizeRecordFunction()
-            : base("AISummarizeRecord",
-                  FormulaType.String,
-                  RecordType.Empty())
+            : base("AISummarizeRecord", FormulaType.String, RecordType.Empty())
         {
             this.ConfigType = typeof(IDataverseExecute);
         }
@@ -28,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
         private class AISummarizeRecordRequest
         {
             /// <summary>
-            /// The incoming text. 
+            /// The incoming text.
             /// </summary>
             public string EntityLogicalName { get; set; }
 
@@ -62,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // Entry called by Power Fx interpreter. 
+        // Entry called by Power Fx interpreter.
         public async Task<StringValue> Execute(IDataverseExecute client, RecordValue record, CancellationToken cancel)
         {
             if (client == null)

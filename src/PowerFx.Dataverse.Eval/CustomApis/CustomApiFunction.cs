@@ -1,19 +1,22 @@
-﻿using Microsoft.PowerFx;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Represent a single Custom API. 
+    // Represent a single Custom API.
     // Input: single Record, each field is a parameter
-    // Output: a scalar if API has 1 output, else a record of outputs. 
+    // Output: a scalar if API has 1 output, else a record of outputs.
     // cr378_TestApi2({ cr378_Param1 : 1})
     internal class CustomApiFunctionBase : ReflectionFunction
     {
@@ -24,9 +27,10 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly CustomApiSignature _signature;
 
         public RecordType InputParameters { get; private set; }
+
         public FormulaType OutputParameters { get; private set; }
 
-        // Custom APIs by default appear in "Environment" namespace. 
+        // Custom APIs by default appear in "Environment" namespace.
         public static DPath EnvironmentNamespace = DPath.Root.Append(new DName("Environment"));
 
         // For 0-param cases, use signature Foo() instead of Foo({}).
@@ -36,14 +40,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return new FormulaType[0];
             }
+
             return new FormulaType[1] { inputType };
         }
 
-        public CustomApiFunctionBase(
-            DataverseConnection dataverseConnection,
-            CustomApiSignature signature,
-            FormulaType returnType,
-            RecordType inputType) : base(EnvironmentNamespace, signature.Api.uniquename, returnType, Norm(inputType))
+        public CustomApiFunctionBase(DataverseConnection dataverseConnection, CustomApiSignature signature, FormulaType returnType, RecordType inputType)
+            : base(EnvironmentNamespace, signature.Api.uniquename, returnType, Norm(inputType))
         {
             // To invoke, use uniqueName
             // Also support display names: https://github.com/microsoft/Power-Fx-Dataverse/issues/389
@@ -59,12 +61,12 @@ namespace Microsoft.PowerFx.Dataverse
             this.ConfigType = typeof(IDataverseExecute);
         }
 
-        // Callback invoked by Power Fx engine during expression execution. 
+        // Callback invoked by Power Fx engine during expression execution.
         protected async Task<FormulaValue> ExecuteWorker(IDataverseExecute invoker, RecordValue namedArgs, CancellationToken cancel)
         {
             cancel.ThrowIfCancellationRequested();
 
-            // Don't invoke if there are any incoming errors. 
+            // Don't invoke if there are any incoming errors.
             foreach (var fields in namedArgs.Fields)
             {
                 if (fields.Value is ErrorValue error)
@@ -98,8 +100,8 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
-            RecordType inputType
-            ) : base(dataverseConnection, signature, returnType, inputType)
+            RecordType inputType)
+            : base(dataverseConnection, signature, returnType, inputType)
         {
         }
 
@@ -115,7 +117,8 @@ namespace Microsoft.PowerFx.Dataverse
             DataverseConnection dataverseConnection,
             CustomApiSignature signature,
             FormulaType returnType,
-            RecordType inputType) : base(dataverseConnection, signature, returnType, inputType)
+            RecordType inputType)
+            : base(dataverseConnection, signature, returnType, inputType)
         {
         }
 

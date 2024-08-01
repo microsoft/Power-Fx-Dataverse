@@ -1,5 +1,8 @@
-﻿using Microsoft.PowerFx.Types;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse

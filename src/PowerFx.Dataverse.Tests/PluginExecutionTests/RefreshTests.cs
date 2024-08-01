@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Linq;
@@ -14,7 +11,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class RefreshTests
     {
         internal static readonly EntityMetadataModel Accounts = new EntityMetadataModel
@@ -47,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             DataverseConnection dv = new DataverseConnection(null, ds, metadataCache, maxRows: 999);
 
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
-            ReadOnlySymbolTable symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols); ;
+            ReadOnlySymbolTable symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
             PowerFxConfig config = new PowerFxConfig(Features.PowerFxV1);
             config.SymbolTable.EnableMutationFunctions();

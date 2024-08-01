@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class ApiDelegationTests
     {
-        // Delegation using direct API. 
+        // Delegation using direct API.
         [Theory]
         [InlineData(
             "Filter(t1, Price < 120 And 90 <= Price)",
@@ -30,7 +33,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             "(opt eq 'logical2')",
             1000, // default fetch size
             "Table({Price:100,opt:Blank()})")]
-
         public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
@@ -44,10 +46,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 .Add("Price", FormulaType.Number)
                 .Add("opt", optionSet.FormulaType);
 
-            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[]
-            {
-                new NamedValue("Price", FormulaValue.New(100f))
-            });
+            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
             var t1 = new MyTable(recordType);
 
@@ -73,8 +72,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var rc = new RuntimeConfig(st);
             var myService = new MyService()
-                .SetResult(recordValue); // all queries expect just 1 row returned. 
-            
+                .SetResult(recordValue); // all queries expect just 1 row returned.
+
             rc.AddService(myService);
 
             var result = await eval.EvalAsync(CancellationToken.None, rc);
@@ -84,15 +83,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.Equal(top, myService._parameters.Top);
 
             var sb = new StringBuilder();
-            result.ToExpression(sb, new FormulaValueSerializerSettings {  UseCompactRepresentation = true});
+            result.ToExpression(sb, new FormulaValueSerializerSettings { UseCompactRepresentation = true });
             var resultStr = sb.ToString();
             Assert.Equal(expectedStr, resultStr);
 
-            Assert.NotNull(myService._parameters);            
+            Assert.NotNull(myService._parameters);
         }
     }
 
-    // Test that we can pass services through the IServiceProvider to the table. 
+    // Test that we can pass services through the IServiceProvider to the table.
     // also used for test infra.
     internal class MyService
     {
@@ -110,17 +109,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     // An example class that implements IDelegatingTableValue
     public class MyTable : TableValue, IDelegatableTableValue
     {
-        public MyTable(RecordType recordType) : base(recordType)
+        public MyTable(RecordType recordType)
+            : base(recordType)
         {
         }
 
-        // should never get called since we're delegating 
+        // should never get called since we're delegating
         public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
 
         public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             // Esnure service was plumbed through...
-            var myService = (MyService) services.GetService(typeof(MyService));
+            var myService = (MyService)services.GetService(typeof(MyService));
             Assert.NotNull(myService);
 
             myService._parameters = parameters;

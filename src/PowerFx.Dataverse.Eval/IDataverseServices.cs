@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -18,7 +15,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
     }
 
-    // Channel for IOrganizationService.Execute()  
+    // Channel for IOrganizationService.Execute()
     public interface IDataverseExecute
     {
         Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default);
@@ -53,9 +50,10 @@ namespace Microsoft.PowerFx.Dataverse
     public interface IDataverseUpdater
     {
         // Entity can contain just the fields to update.
-        // Return fully updated entity 
+        // Return fully updated entity
         Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default);
     }
+
     public interface IDataverseDeleter
     {
         Task<DataverseResponse> DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken = default);

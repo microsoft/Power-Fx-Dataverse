@@ -1,22 +1,25 @@
-﻿using Microsoft.PowerFx.Core.Functions;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Types;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Types;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Functions;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.Localization;
+using Microsoft.PowerFx.Core.Types;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // Delegation means rewriting a client-side functions into functions that make efficient server calls. 
+    // Delegation means rewriting a client-side functions into functions that make efficient server calls.
     // This means injecting new runtime helper functions into the IR.
-    // As runtime helpers, they can't be referenced by binder and don't show in intellisense or source. 
-    // As such, the actual function name doesn't matter and is just used for diagnostics. 
+    // As runtime helpers, they can't be referenced by binder and don't show in intellisense or source.
+    // As such, the actual function name doesn't matter and is just used for diagnostics.
     internal abstract class DelegateFunction : TexlFunction, IAsyncTexlFunction5
     {
         protected readonly DelegationHooks _hooks;
@@ -62,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (errors.Any())
             {
-                return  Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));
+                return Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));
             }
 
             return ExecuteAsync(services, args, cancellationToken);

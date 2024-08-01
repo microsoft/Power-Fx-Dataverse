@@ -1,19 +1,22 @@
-﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Interpreter;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.PowerFx;
+using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // AISentiment(String) : string 
-    // given a string, call GPT to return the analyzed sentiment of the string. 
+    // AISentiment(String) : string
+    // given a string, call GPT to return the analyzed sentiment of the string.
     public class AISentimentFunction : ReflectionFunction
     {
         public AISentimentFunction()
@@ -25,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
         private class SentimentRequest
         {
             /// <summary>
-            /// The incoming text. 
+            /// The incoming text.
             /// </summary>
             public string Text { get; set; }
 
@@ -56,7 +59,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        // Entry called by Power Fx interpreter. 
+        // Entry called by Power Fx interpreter.
         public async Task<StringValue> Execute(IDataverseExecute client, StringValue value, CancellationToken cancel)
         {
             if (client == null)

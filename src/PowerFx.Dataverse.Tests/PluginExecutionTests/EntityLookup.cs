@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -19,13 +16,14 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    // Simulate dataverse entities. 
-    // Handles both metadata and the instances of Entity objects for testing. 
+    // Simulate dataverse entities.
+    // Handles both metadata and the instances of Entity objects for testing.
     internal class EntityLookup : IDataverseServices, IDataverseRefresh
     {
         internal readonly List<Entity> _list = new List<Entity>();
 
         public IXrmMetadataProvider _rawProvider;
+
         public readonly CdsEntityMetadataProvider _provider;
 
         public EntityLookup(IXrmMetadataProvider xrmMetadataProvider)
@@ -41,6 +39,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 throw new InvalidOperationException($"Metadata {logicalName} not found.");
             }
+
             return metadata;
         }
 
@@ -75,10 +74,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             var entity = GetFirstEntity(logicalName, dataverseConnection, cancellationToken);
-            return dataverseConnection.Marshal(entity);            
+            return dataverseConnection.Marshal(entity);
         }
 
-        // Entities should conform to the metadata passed to the ctor. 
+        // Entities should conform to the metadata passed to the ctor.
         public void Add(CancellationToken cancellationToken, params Entity[] entities)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -87,15 +86,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Assert the entities we provide match the metadata we have. 
-                var metadata = LookupMetadata(entity.LogicalName, cancellationToken); // will throw if missing. 
+                // Assert the entities we provide match the metadata we have.
+                var metadata = LookupMetadata(entity.LogicalName, cancellationToken); // will throw if missing.
 
                 foreach (var attr in entity.Attributes)
                 {
-                    // Fails for EntityReference due to ReferencingEntityNavigationPropertyName. 
+                    // Fails for EntityReference due to ReferencingEntityNavigationPropertyName.
                     if (!(attr.Value is EntityReference))
                     {
-                        metadata.Attributes.First(x => x.LogicalName == attr.Key || x.DisplayName.UserLocalizedLabel.Label == attr.Key); // throw if missing. 
+                        metadata.Attributes.First(x => x.LogicalName == attr.Key || x.DisplayName.UserLocalizedLabel.Label == attr.Key); // throw if missing.
                     }
                 }
 
@@ -103,7 +102,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        // Chance to hook for error injection. Can throw. 
+        // Chance to hook for error injection. Can throw.
         public Action<EntityReference> _onLookupRef;
 
         // Return error message if numeric column is our of range (string: field name, object: number value).
@@ -115,13 +114,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
         public Func<string> _getTargetedColumnName;
 
-        // Gets a copy of the entity. 
-        // modifying the storage still requires a call to Update. 
+        // Gets a copy of the entity.
+        // modifying the storage still requires a call to Update.
         public Entity LookupRef(EntityReference entityRef, CancellationToken cancellationToken)
         {
             return Clone(LookupRefCore(entityRef), cancellationToken);
         }
-                
+
         // Gets direct access to the entire storage.
         // Modifying this entity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
@@ -135,6 +134,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return entity;
                 }
             }
+
             throw new InvalidOperationException($"Entity {entityRef.LogicalName}:{entityRef.Id} not found");
         }
 
@@ -147,6 +147,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -168,9 +169,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // gets the raw storage and mutate it. 
-            var existing = LookupRefCore(entity.ToEntityReference()); 
-            
+            // gets the raw storage and mutate it.
+            var existing = LookupRefCore(entity.ToEntityReference());
+
             foreach (var attr in entity.Attributes)
             {
                 if (_getTargetedColumnName != null && _getTargetedColumnName() != attr.Key)
@@ -185,12 +186,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     if (errorMessage != null)
                     {
                         return Task.FromResult(DataverseResponse.NewError(errorMessage));
-                    }                    
+                    }
                 }
 
                 existing.Attributes[attr.Key] = attr.Value;
             }
-            
+
             return Task.FromResult(new DataverseResponse());
         }
 
@@ -231,7 +232,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var entityList = ProcessEntity(data, qe, take, cancellationToken);
 
-            if(qe.Distinct)
+            if (qe.Distinct)
             {
                 entityList = entityList.Distinct(new EntityComparer(qe.ColumnSet)).ToList();
             }
@@ -247,11 +248,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 EntityMetadata metadata = LookupMetadata(entity.LogicalName, cancellationToken);
-                
+
                 if (entity.LogicalName == qe.EntityName && IsCriteriaMatching(entity, qe.Criteria, qe.LinkEntities, metadata))
-                {                    
+                {
                     entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
-                    
+
                     if (--take == 0)
                     {
                         break;
@@ -301,9 +302,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         }
                     }
 
-                    foreach(var condition in criteria.Conditions)
+                    foreach (var condition in criteria.Conditions)
                     {
-                        if (isSatisfyingCondition(condition, entity, metadata))
+                        if (IsSatisfyingCondition(condition, entity, metadata))
                         {
                             return true;
                         }
@@ -322,7 +323,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     foreach (var condition in criteria.Conditions)
                     {
-                        if (!isSatisfyingCondition(condition, entity, metadata))
+                        if (!IsSatisfyingCondition(condition, entity, metadata))
                         {
                             return false;
                         }
@@ -337,12 +338,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private Entity AttachRelationship(Entity currentEntity, DataCollection<LinkEntity> linkEntities)
         {
-            if(linkEntities == null)
+            if (linkEntities == null)
             {
                 return currentEntity;
             }
 
-            if(linkEntities.Count > 1)
+            if (linkEntities.Count > 1)
             {
                 throw new NotImplementedException("Multiple LinkEntities not supported");
             }
@@ -350,15 +351,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var linkEntity = linkEntities[0];
             var linkEntityMetadata = LookupMetadata(linkEntity.LinkToEntityName, CancellationToken.None);
 
-            foreach(var attribute in linkEntityMetadata.Attributes)
+            foreach (var attribute in linkEntityMetadata.Attributes)
             {
                 currentEntity.Attributes["_" + linkEntity.LinkToEntityName + "_" + attribute.LogicalName] = null;
             }
 
             var fromAttribute = linkEntity.LinkFromAttributeName;
             currentEntity.Attributes.TryGetValue(fromAttribute, out var fromValue);
-            
-            if(fromValue == null)
+
+            if (fromValue == null)
             {
                 currentEntity.Attributes["_" + linkEntity.LinkToEntityName + "_" + fromAttribute] = null;
                 return currentEntity;
@@ -366,19 +367,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var foreignEntity = LookupRef((EntityReference)fromValue, CancellationToken.None);
 
-            foreach(var attribute in foreignEntity.Attributes)
+            foreach (var attribute in foreignEntity.Attributes)
             {
                 currentEntity.Attributes["_" + foreignEntity.LogicalName + "_" + attribute.Key] = attribute.Value;
             }
 
             return currentEntity;
-
         }
 
-        public bool isSatisfyingCondition(ConditionExpression condition, Entity entity, EntityMetadata metadata)
+        public bool IsSatisfyingCondition(ConditionExpression condition, Entity entity, EntityMetadata metadata)
         {
             // this means condition was on relationship.
-            if(condition.EntityName != null && condition.EntityName != entity.LogicalName)
+            if (condition.EntityName != null && condition.EntityName != entity.LogicalName)
             {
                 _rawProvider.TryGetEntityMetadata(condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")), out metadata);
             }
@@ -399,49 +399,65 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.NotEqual:
                     if (comparer.Compare(condition.Values[0], value) != 0)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.Null:
                     if (value == null)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.NotNull:
                     if (value != null)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.GreaterThan:
                     if (comparer.Compare(condition.Values[0], value) < 0)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.GreaterEqual:
                     if (comparer.Compare(condition.Values[0], value) <= 0)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.LessThan:
                     if (comparer.Compare(condition.Values[0], value) > 0)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.LessEqual:
                     if (comparer.Compare(condition.Values[0], value) >= 0)
                     {
                         return true;
                     }
+
                     break;
+
                 case ConditionOperator.In:
                     foreach (var v in condition.Values)
                     {
@@ -450,7 +466,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             return true;
                         }
                     }
+
                     break;
+
                 default:
                     throw new NotImplementedException($"Operator not supported: {condition.Operator.ToString()}");
             }
@@ -460,11 +478,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         private static bool TryGetAttributeOrPrimaryId(Entity entity, EntityMetadata metadata, string attributeName, out object value)
         {
-            if(entity.Attributes.TryGetValue(attributeName, out value))
+            if (entity.Attributes.TryGetValue(attributeName, out value))
             {
                 return true;
             }
-            if(attributeName == metadata.PrimaryIdAttribute)
+
+            if (attributeName == metadata.PrimaryIdAttribute)
             {
                 value = entity.Id;
                 return true;
@@ -482,7 +501,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 _amd = amd;
             }
 
-            public int Compare(object x,object y)
+            public int Compare(object x, object y)
             {
                 switch (_amd.AttributeType.Value)
                 {
@@ -498,10 +517,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             x = mx.Value;
                         }
+
                         if (y is Xrm.Sdk.Money my)
                         {
                             y = my.Value;
                         }
+
                         return (x == null ? default : (decimal)x).CompareTo(y == null ? default : (decimal)y);
 
                     case AttributeTypeCode.Double:
@@ -515,6 +536,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             x = osx.Value;
                         }
+
                         if (y is Xrm.Sdk.OptionSetValue osy)
                         {
                             y = osy.Value;
@@ -531,6 +553,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     case AttributeTypeCode.Lookup:
                         return (x == null ? default : (x is Guid gx ? gx : ((EntityReference)x).Id)).CompareTo(y == null ? default : (y is Guid gy ? gy : ((EntityReference)y).Id));
+
                     case AttributeTypeCode.BigInt:
                     case AttributeTypeCode.CalendarRules:
                     case AttributeTypeCode.Customer:
@@ -550,7 +573,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public EntityComparer(ColumnSet columnSet)
             {
-                if(columnSet.Columns.Count == 1)
+                if (columnSet.Columns.Count == 1)
                 {
                     _column = columnSet.Columns[0];
                     return;
@@ -561,7 +584,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public bool Equals(Entity x, Entity y)
             {
-                if(x.Attributes.TryGetValue(_column, out var xValue) && y.Attributes.TryGetValue(_column, out var yValue))
+                if (x.Attributes.TryGetValue(_column, out var xValue) && y.Attributes.TryGetValue(_column, out var yValue))
                 {
                     return xValue.Equals(yValue);
                 }
@@ -571,7 +594,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public int GetHashCode([DisallowNull] Entity obj)
             {
-                if(obj.Attributes.TryGetValue(_column, out var value))
+                if (obj.Attributes.TryGetValue(_column, out var value))
                 {
                     return value.GetHashCode();
                 }
@@ -598,7 +621,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (var entity in _list)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (entity.LogicalName == entityName&& entity.Id == id)
+                if (entity.LogicalName == entityName && entity.Id == id)
                 {
                     _list.Remove(entity);
                     break;
@@ -618,6 +641,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 newEntity.Attributes[attr.Key] = attr.Value;
             }
+
             return newEntity;
         }
 
@@ -630,16 +654,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {
-                if(columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
+                if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
                 {
                     newEntity.Attributes[attr.Key] = attr.Value;
                 }
             }
+
             return newEntity;
         }
 
         public virtual void Refresh(string logicalTableName)
-        {            
+        {
         }
 
         public async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
@@ -649,7 +674,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 throw new InvalidOperationException("PartitionId not found in the request.");
             }
 
-            if(request is RetrieveMultipleRequest rmr)
+            if (request is RetrieveMultipleRequest rmr)
             {
                 var result = await RetrieveMultipleAsync(rmr.Query, cancellationToken);
                 var paramCollection = new ParameterCollection
@@ -657,9 +682,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     ["EntityCollection"] = new EntityCollection(result.Response.Entities.Select(e => e.Attributes.TryGetValue("partitionid", out var value) && (partitionId == null || value.Equals(partitionId)) ? e : null).Where(e => e != null).ToList())
                 };
 
-                return new DataverseResponse<OrganizationResponse>(new RetrieveMultipleResponse () { Results = paramCollection });
+                return new DataverseResponse<OrganizationResponse>(new RetrieveMultipleResponse() { Results = paramCollection });
             }
-            else if(request is RetrieveRequest rr)
+            else if (request is RetrieveRequest rr)
             {
                 this._rawProvider.TryGetEntityMetadata(rr.Target.LogicalName, out var metadata);
                 var filter = new FilterExpression(LogicalOperator.And);
@@ -669,6 +694,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     filter.AddCondition("partitionid", ConditionOperator.Equal, partitionId);
                 }
+
                 var query = new QueryExpression(rr.Target.LogicalName)
                 {
                     ColumnSet = new ColumnSet(true),
@@ -678,13 +704,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var result = await RetrieveMultipleAsync(query, cancellationToken);
                 var entity = result.Response.Entities.FirstOrDefault();
 
-                if(entity == null)
+                if (entity == null)
                 {
                     return new DataverseResponse<OrganizationResponse>(new RetrieveResponse() { Results = new ParameterCollection() });
                 }
 
                 return new DataverseResponse<OrganizationResponse>(new RetrieveResponse() { Results = new ParameterCollection { ["Entity"] = entity } });
-                
             }
 
             throw new NotImplementedException();

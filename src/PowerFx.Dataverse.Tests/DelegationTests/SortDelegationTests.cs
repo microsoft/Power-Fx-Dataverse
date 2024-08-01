@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -79,7 +82,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(36, "Sort(SortByColumns(t1, Price), Quantity)", 4, "0004, 0003, 0005, 0001")]
         public async Task SortDelegationAsync(int id, string expr, int expectedRows, string expectedIds, bool useValue = false)
         {
-            await DelegationTestAsync(id, "SortDelegation.txt", expr, expectedRows, expectedIds,
+            await DelegationTestAsync(
+                id,
+                "SortDelegation.txt",
+                expr,
+                expectedRows,
+                expectedIds,
                 result => result switch
                 {
                     TableValue tv => useValue
@@ -87,8 +95,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                         : string.Join(", ", tv.Rows.Select(drv => (drv.Value.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..])),
                     RecordValue rv => (rv.Fields.First(nv => nv.Name == "localid").Value as GuidValue).Value.ToString()[^4..],
                     _ => throw FailException.ForFailure("Unexpected result")
-                }
-                , true, true, null, true, true, true);
+                },
+                true,
+                true,
+                null,
+                true,
+                true,
+                true);
         }
 
         private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Linq;
@@ -14,12 +11,12 @@ using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Operations on dataverse Attributes. 
+    /// Operations on dataverse Attributes.
     /// Takes <see cref="AttributeMetadata"/> and switches on <see cref="AttributeTypeCode"/>.
     /// </summary>
     public static class AttributeUtility
     {
-        // Lookup by attribute logical name or by relationship name. 
+        // Lookup by attribute logical name or by relationship name.
         public static bool TryGetAttribute(this EntityMetadata entityMetadata, string fieldName, out AttributeMetadata amd)
         {
             if (entityMetadata == null)
@@ -33,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static bool TryGetOneToManyRelationship(this EntityMetadata entityMetadata, string fieldName, out OneToManyRelationshipMetadata relationship)
         {
-            if(entityMetadata?.OneToManyRelationships == null)
+            if (entityMetadata?.OneToManyRelationships == null)
             {
                 relationship = default;
                 return false;
@@ -75,7 +72,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return true;
             }
-          
+
             realAttributeName = null;
             return false;
         }
@@ -86,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 throw new ArgumentNullException(nameof(entityMetadata));
             }
-            
+
             if (entityMetadata.ManyToOneRelationships != null)
             {
                 foreach (var relationships in entityMetadata.ManyToOneRelationships)
@@ -126,8 +123,8 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        // OData polymorphic case. fieldname is mangled by convention, and not reflected in metadata. 
-        // The IR is passing the Odata name (not logical name), and we need to extract the logical name from it. 
+        // OData polymorphic case. fieldname is mangled by convention, and not reflected in metadata.
+        // The IR is passing the Odata name (not logical name), and we need to extract the logical name from it.
         // The odata name is: $"_{logicalName}_value"
         internal static bool TryGetLogicalNameFromOdataName(string fieldName, out string realAttributeName)
         {
@@ -142,6 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
             }
+
             realAttributeName = null;
             return false;
         }
@@ -164,6 +162,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
         }
+
         public static void ConvertBoolToBooleanOptionSetOption(bool value, out string opt)
         {
             opt = "0";
@@ -185,7 +184,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (fxOptionSetValueType._type.IsOptionSetBackedByNumber)
             {
-
                 return new FxOptionSetValue(optionSetValue.Value.ToString(), fxOptionSetValueType, (double)optionSetValue.Value);
             }
             else

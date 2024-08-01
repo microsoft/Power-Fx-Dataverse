@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -26,21 +23,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class CustomApiTests
     {
         #region Signature helpers
+
         private static CustomApiEntity NewApi(string name)
         {
             return new CustomApiEntity
             {
-                 name = name,
-                 uniquename = name,
-                 isfunction = true
+                name = name,
+                uniquename = name,
+                isfunction = true
             };
         }
+
         private static CustomApiRequestParam NewIn(string name, CustomApiParamType type)
         {
             return new CustomApiRequestParam
             {
-                 uniquename = name,
-                 type = type
+                uniquename = name,
+                type = type
             };
         }
 
@@ -64,35 +63,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return sig;
         }
 
-        #endregion // Signature helpers
+        #endregion Signature helpers
 
-        public static readonly CustomApiSignature _api1Signature =
-                NewSig("api1",
-                NewIn("p1", CustomApiParamType.Integer),
-                NewOut("out", CustomApiParamType.Integer));
+        public static readonly CustomApiSignature _api1Signature = NewSig("api1", NewIn("p1", CustomApiParamType.Integer), NewOut("out", CustomApiParamType.Integer));
 
-        // No inputs. 
-        public static readonly CustomApiSignature _apiNonputsSignature =
-            NewSig("apiNoInputs",
-            NewOut("out", CustomApiParamType.Integer));
+        // No inputs.
+        public static readonly CustomApiSignature _apiNonputsSignature = NewSig("apiNoInputs", NewOut("out", CustomApiParamType.Integer));
 
-        // Normal Check and Eval. 
+        // Normal Check and Eval.
         [Fact]
         public async Task CustomApiTestsStatic()
         {
             var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
-            
-            // Plugins are imported into "Environment" namespace by default. 
+
+            // Plugins are imported into "Environment" namespace by default.
             dvc.AddPlugin(_api1Signature);
 
             var engine = new RecalcEngine();
 
             var expr = "Environment.api1({p1:19}).out";
             var check = engine.Check(expr, symbolTable: dvc.Symbols);
-                        
+
             Assert.True(check.IsSuccess);
 
-            // Now invoke it. 
+            // Now invoke it.
             var eval = check.GetEvaluator();
 
             var mockExec = new MockExecute
@@ -118,7 +112,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(38, result.ToDouble());
         }
 
-        // An error parameter gets short circuited and won't call. 
+        // An error parameter gets short circuited and won't call.
         [Fact]
         public async Task Error()
         {
@@ -133,7 +127,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.True(check.IsSuccess);
 
-            // Now invoke it. 
+            // Now invoke it.
             var eval = check.GetEvaluator();
 
             bool called = false;
@@ -142,7 +136,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 Work = (req) =>
                 {
                     // Should never call.
-                    // set flag instead of throwing - in case things are catching the exception. 
+                    // set flag instead of throwing - in case things are catching the exception.
                     called = true;
                     return new OrganizationResponse();
                 }
@@ -157,7 +151,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.IsType<ErrorValue>(result);
         }
 
-        // Server-side errors are caught. 
+        // Server-side errors are caught.
         [Fact]
         public async Task ServerError()
         {
@@ -172,10 +166,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.True(check.IsSuccess);
 
-            // Now invoke it. 
+            // Now invoke it.
             var eval = check.GetEvaluator();
 
-            var msg = $"xyz"; // some message from server. 
+            var msg = $"xyz"; // some message from server.
 
             var mockExec = new MockExecute
             {
@@ -191,8 +185,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await eval.EvalAsync(default, rc);
 
             Assert.IsType<ErrorValue>(result);
-            
-            // Error should have message from server. 
+
+            // Error should have message from server.
             var actualMsg = ((ErrorValue)result).Errors[0].Message;
             Assert.Contains(msg, actualMsg);
         }
@@ -202,7 +196,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var (dvc, el) = PluginExecutionTests.CreateMemoryForRelationshipModels();
 
-            // Plugins are imported into "Environment" namespace by default. 
+            // Plugins are imported into "Environment" namespace by default.
             dvc.AddPlugin(_apiNonputsSignature);
 
             var engine = new RecalcEngine();
@@ -215,7 +209,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             check = engine.Check(expr, symbolTable: dvc.Symbols);
             Assert.True(check.IsSuccess);
 
-            // Now invoke it. 
+            // Now invoke it.
             var eval = check.GetEvaluator();
 
             var mockExec = new MockExecute
@@ -224,7 +218,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     Assert.Equal("apiNoInputs", req.RequestName);
                     Assert.Empty(req.Parameters);
-                    
+
                     var orgResp = new OrganizationResponse();
                     orgResp["out"] = 38;
 
@@ -238,9 +232,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var result = await eval.EvalAsync(default, rc);
 
             Assert.Equal(38, result.ToDouble());
-
         }
-
 
         public class MockExecute : IDataverseExecute
         {

@@ -1,6 +1,5 @@
-﻿// <copyright file="Program.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -31,17 +30,21 @@ namespace Microsoft.PowerFx
         private const string OptionFormatTable = "FormatTable";
 
         private const string OptionNumberIsFloat = "NumberIsFloat";
+
         private static bool _numberIsFloat = false;
 
         private const string OptionLargeCallDepth = "LargeCallDepth";
+
         private static bool _largeCallDepth = false;
 
         private const string OptionStackTrace = "StackTrace";
+
         private static bool _stackTrace = false;
 
         private const string OptionHashCodes = "HashCodes";
 
         private const string OptionFormatTableColumns = "FormatTableColumns";
+
         private static HashSet<string> _formatTableColumns;
 
         private const string OptionFeaturesNone = "FeaturesNone";
@@ -233,6 +236,7 @@ namespace Microsoft.PowerFx
                 {
                     _dv = SingleOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
+
                 _repl.ExtraSymbolValues = _dv.SymbolValues;
 
                 UpdateUserInfo(svcClient);
@@ -249,7 +253,7 @@ namespace Microsoft.PowerFx
                 }
                 catch (Exception e)
                 {
-                    // Non-fatal error 
+                    // Non-fatal error
                     Console.WriteLine($"Failed to add APIs: {e.Message}");
                 }
 
@@ -261,7 +265,7 @@ namespace Microsoft.PowerFx
                 List<CustomApiSignature> sigs = new List<CustomApiSignature>();
 
                 // Org can have 100s of plugins. We don't want to load them all.
-                // Add Low code plugins ...  Fewer, and more useful. 
+                // Add Low code plugins ...  Fewer, and more useful.
                 Console.WriteLine("Loading Low Code Plugins:");
                 CustomApiEntity[] customApis = await clientExecute.GetLowCodeApiNamesAsync();
 
@@ -271,8 +275,8 @@ namespace Microsoft.PowerFx
                     sigs.Add(sig);
                 }
 
-                foreach(var sig in sigs)
-                { 
+                foreach (var sig in sigs)
+                {
                     _dv.AddPlugin(sig);
                     Console.WriteLine($"Added: Environment.{sig.Api.uniquename}(...)");
                 }
@@ -492,6 +496,7 @@ namespace Microsoft.PowerFx
                     {
                         _formatTableColumns.Add(match.Value);
                     }
+
                     if (_formatTableColumns.Count() == 0)
                     {
                         _formatTableColumns = null;

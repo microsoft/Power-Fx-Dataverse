@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -23,10 +20,10 @@ using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-    // Run Dataverse execution against a live org.    
+    // Run Dataverse execution against a live org.
     public class LiveOrgExecutionTests
     {
-        // Env var we look for to get a dataverse connection string. 
+        // Env var we look for to get a dataverse connection string.
         private const string ConnectionStringVariable = "FxTestDataverseCx";
 
         private ServiceClient GetClient()
@@ -74,16 +71,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var expr = "crbcd_lucgen1({x:\"str\", y:19}).z";
             var check = engine.Check(expr, symbolTable: dvc.Symbols);
-
-            if (!check.IsSuccess)
-            {
-
-            }
+            
             Assert.True(check.IsSuccess);
 
-            // Now invoke it. 
+            // Now invoke it.
             var eval = check.GetEvaluator();
-            
+
             var rc = new RuntimeConfig(dvc.SymbolValues);
             rc.AddDataverseExecute(client);
 
@@ -91,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Assert.Equal("str38", ((StringValue)result).Value);
 
-            // "str38" 
+            // "str38"
             // Success!!!
         }
 
@@ -121,9 +114,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             _ = eval.Eval(rc);
 
             // var result = await engine.EvalAsync(expr, default, runtimeConfig: rc);
-
         }
-
 
         [SkippableFact]
         public void ExecuteViaInterpreterFirst()
@@ -217,7 +208,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // If Tasks field was empty, returns empty table.
         [InlineData("Index(Accounts, 2).Tasks", 2)]
-
         public void ExecuteViaInterpreterOneToMany(string expression, int expected)
         {
             var tableName = new string[] { "account", "task", "contact" };
@@ -239,7 +229,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [SkippableTheory]
         [InlineData("AsType(Blank(), JVLookups)")]
         [InlineData("AsType({test:1}, JVLookups)")]
-        [InlineData("AsType(Index(JV1S, 1).reg, [1,2])")]        
+        [InlineData("AsType(Index(JV1S, 1).reg, [1,2])")]
         public void ExecuteViaInterpreterAsType_Negative(string expression)
         {
             var tableName = new string[] { "JVLookups" };
@@ -388,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [SkippableFact]
         public async Task SlowRepeatingLookup()
         {
-            var token = "";
+            var token = string.Empty;
 
             if (string.IsNullOrEmpty(token))
             {
@@ -448,9 +438,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 var ev5 = obj5 as ErrorValue;
 
                 Assert.Single(ev5.Errors);
-                Assert.Equal("Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
-                                "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
-                                "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'", ev5.Errors.First().Message);
+                Assert.Equal(
+                    "Error in CreateAsync: [DataverseOperationException] A record that has the attribute values Name already exists. " +
+                    "The entity key Key requires that this set of attributes contains unique values. Select unique values and try again.\r\n" +
+                    "[HttpOperationException] Operation returned an invalid status code 'PreconditionFailed'", ev5.Errors.First().Message);
             }
             finally
             {
@@ -698,7 +689,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [SkippableFact]
         public void ExecuteViaInterpreterRead()
         {
-            string tableName = "Table2";            
+            string tableName = "Table2";
 
             var expr = $"First(Filter(Table2, Table2 = GUID(\"b8e7086e-c22d-ed11-9db2-0022482aea8f\")))";
 
@@ -857,7 +848,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterRemoveWithId()
         {
             string tableName = "Table2";
-            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", "")}";
+            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", string.Empty)}";
             string expr = $"Collect(Table2, {{ Name: \"{newName}\" }} ); Remove(Table2, First(Filter(Table2, crcef2_name = \"{newName}\")))";
             List<IDisposable> disposableObjects = null;
 
@@ -878,7 +869,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void ExecuteViaInterpreterRemoveByName()
         {
             string tableName = "Table2";
-            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", "")}";
+            string newName = $"N7-{Guid.NewGuid().ToString().ToUpperInvariant().Replace("-", string.Empty)}";
             string expr = $"Collect(Table2, {{ Name: \"{newName}A\", Name2: \"{newName}\" }}); Collect(Table2, {{ Name: \"{newName}B\", Name2: \"{newName}\" }}); Remove(Table2, {{ crcef2_name2: \"{newName}\" }})";
             List<IDisposable> disposableObjects = null;
 
@@ -1139,7 +1130,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     symbols = ReadOnlySymbolTable.Compose(symbols, dv.GetRowScopeSymbols(tableLogicalName: tableName));
                 }
-
             }
 
             Assert.NotNull(symbols);
@@ -1168,7 +1158,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return result;
         }
 
-        private static readonly Dictionary<string, string> PredefinedTables = new()
+        private static readonly Dictionary<string, string> PredefinedTables = new ()
         {
             { "Accounts", "account" },
             { "Tasks", "task" },
@@ -1200,6 +1190,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 dv = new DataverseConnection(svcClient);
             }
+
             TableValue tableValue = dv.AddTable(variableName: tableName, tableLogicalName: logicalName);
             symbols = ReadOnlySymbolTable.Compose(dv.GetRowScopeSymbols(tableLogicalName: logicalName), dv.Symbols);
 
@@ -1240,7 +1231,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     internal class DataverseAsyncClient : IDataverseServices, IDisposable, IDataverseRefresh
     {
         private readonly ServiceClient _svcClient;
-        private bool disposedValue;
+
+        private bool _disposedValue;
 
         public DataverseAsyncClient(ServiceClient client)
         {
@@ -1267,7 +1259,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string entityName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();            
+            cancellationToken.ThrowIfCancellationRequested();
             return DataverseExtensions.DataverseCall(() => _svcClient.RetrieveAsync(entityName, id, ColumnMap.GetColumnSet(columns), cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(), "Retrieve");
         }
 
@@ -1280,19 +1272,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public virtual async Task<DataverseResponse> UpdateAsync(Entity entity, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => { _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult(); return entity; }, "Update");
+            return DataverseExtensions.DataverseCall(
+                () =>
+                {
+                    _svcClient.UpdateAsync(entity, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+                    return entity;
+                },
+                "Update");
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
                     _svcClient?.Dispose();
                 }
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

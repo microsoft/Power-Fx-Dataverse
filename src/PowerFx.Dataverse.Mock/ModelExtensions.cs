@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Reflection;
@@ -13,7 +10,7 @@ namespace Microsoft.Dataverse.EntityMock
 {
     // Helpers for converting from the model classes to the real Xrm classes.
     // The only reason we need this is that Xrm classes have private setters and
-    // can't be serialized / mocked. 
+    // can't be serialized / mocked.
     public static class ModelExtensions
     {
         public static EntityMetadata ToXrm(this EntityMetadataModel model)
@@ -47,6 +44,7 @@ namespace Microsoft.Dataverse.EntityMock
             return Array.ConvertAll<AttributeMetadataModel, AttributeMetadata>(array, item =>
             {
                 Type type = GetAttributeType(item.AttributeType.Value, item.AttributeTypeName);
+
                 // use reflection to invoke the correct conversion for the specific attribute type
                 return (AttributeMetadata)typeof(ModelExtensions).GetMethod("Copy").
                     MakeGenericMethod(typeof(AttributeMetadataModel), type).
@@ -60,36 +58,51 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 case AttributeTypeCode.String:
                     return typeof(StringAttributeMetadata);
+
                 case AttributeTypeCode.Integer:
                     return typeof(IntegerAttributeMetadata);
+
                 case AttributeTypeCode.Double:
                     return typeof(DoubleAttributeMetadata);
+
                 case AttributeTypeCode.Decimal:
                     return typeof(DecimalAttributeMetadata);
+
                 case AttributeTypeCode.Money:
                     return typeof(MoneyAttributeMetadata);
+
                 case AttributeTypeCode.BigInt:
                     return typeof(BigIntAttributeMetadata);
+
                 case AttributeTypeCode.Boolean:
                     return typeof(BooleanAttributeMetadata);
+
                 case AttributeTypeCode.Lookup:
                 case AttributeTypeCode.Customer:
                 case AttributeTypeCode.Owner:
                     return typeof(LookupAttributeMetadata);
+
                 case AttributeTypeCode.DateTime:
                     return typeof(DateTimeAttributeMetadata);
+
                 case AttributeTypeCode.Memo:
                     return typeof(MemoAttributeMetadata);
+
                 case AttributeTypeCode.EntityName:
                     return typeof(EntityNameAttributeMetadata);
+
                 case AttributeTypeCode.Picklist:
                     return typeof(PicklistAttributeMetadata);
+
                 case AttributeTypeCode.State:
                     return typeof(StateAttributeMetadata);
+
                 case AttributeTypeCode.Status:
                     return typeof(StatusAttributeMetadata);
+
                 case AttributeTypeCode.Uniqueidentifier:
                     return typeof(UniqueIdentifierAttributeMetadata);
+
                 case AttributeTypeCode.Virtual:
                     if (typeName == AttributeTypeDisplayName.ImageType)
                     {
@@ -103,16 +116,18 @@ namespace Microsoft.Dataverse.EntityMock
                     {
                         return typeof(MultiSelectPicklistAttributeMetadata);
                     }
+
                     return typeof(AttributeMetadata);
+
                 case AttributeTypeCode.CalendarRules:
                 case AttributeTypeCode.ManagedProperty:
                 case AttributeTypeCode.PartyList:
                 default:
+
                     // TODO - how to handle these?
                     return typeof(AttributeMetadata);
             }
         }
-
 
         public static AttributeMetadataModel[] ToModel(AttributeMetadata[] array)
         {
@@ -138,7 +153,8 @@ namespace Microsoft.Dataverse.EntityMock
                 Copy<OptionMetadataModel, OptionMetadata>(item)));
         }
 
-        public static TDest Copy<TSrc, TDest>(TSrc src) where TDest : new()
+        public static TDest Copy<TSrc, TDest>(TSrc src)
+            where TDest : new()
         {
             var obj = new TDest();
 
@@ -151,6 +167,7 @@ namespace Microsoft.Dataverse.EntityMock
                 {
                     continue;
                 }
+
                 var val = propSrc.GetValue(src);
 
                 // Arrays?
@@ -174,7 +191,7 @@ namespace Microsoft.Dataverse.EntityMock
                 {
                     val = ToXrm(a5);
                 }
-                else if(val is EntityMetadata[] a6)
+                else if (val is EntityMetadata[] a6)
                 {
                     val = ToModel(a6);
                 }

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -19,11 +16,10 @@ using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 using static Microsoft.PowerFx.Dataverse.SqlVisitor.Context;
 
-
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Allows compiling to SQL. 
+    /// Allows compiling to SQL.
     /// </summary>
     public sealed class PowerFx2SqlEngine : DataverseEngine
     {
@@ -42,8 +38,8 @@ namespace Microsoft.PowerFx.Dataverse
         {
         }
 
-        // Called by Engine after Bind to collect additional errors. 
-        // this can walk the tree and apply SQL-engine specific restrictions. 
+        // Called by Engine after Bind to collect additional errors.
+        // this can walk the tree and apply SQL-engine specific restrictions.
         protected override IEnumerable<ExpressionError> PostCheck(CheckResult result)
         {
             var errors = PostCheck2(result);
@@ -51,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private IEnumerable<IDocumentError> PostCheck2(CheckResult result)
-        { 
+        {
             var expression = result.Parse.Text;
             var binding = result.ApplyBindingInternal();
 
@@ -66,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
                     var res = sqlInfo._retVal;
 
                     var errors = new List<IDocumentError>();
-                    if (!ValidateReturnType(new SqlCompileOptions(), res.type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
+                    if (!ValidateReturnType(new SqlCompileOptions(), res.Type, binding.Top.GetTextSpan(), out returnType, out var typeErrors, allowEmptyExpression: true, expression))
                     {
                         errors.AddRange(typeErrors);
                     }
@@ -75,7 +71,6 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return errors;
                     }
-
 
                     if (result.IsSuccess)
                     {
@@ -93,16 +88,14 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 catch (Exception ex)
                 {
-                    return new[] {
-                        new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
-                        };
+                    return new[] { new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message) };
                 }
             }
 
             return new IDocumentError[0];
         }
 
-        // Compile the formula to SQL that can be called from CDS. 
+        // Compile the formula to SQL that can be called from CDS.
         // Expression: "new_CurrencyPrice * new_Quantity";
         public SqlCompileResult Compile(string expression, SqlCompileOptions options)
         {
@@ -125,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
                 sqlResult._unsupportedWarnings = new List<string>();
                 foreach (var error in sqlResult.Errors)
                 {
-                    if (error.MessageKey == "ErrUnknownFunction" || 
+                    if (error.MessageKey == "ErrUnknownFunction" ||
                         error.MessageKey == "ErrUnimplementedFunction" ||
                         error.MessageKey == "ErrNumberExpected" || // remove when fixed: https://github.com/microsoft/Power-Fx/issues/1375
                         error.MessageKey == "ErrNumberTooLarge" || // Numeric value is too large.
@@ -133,8 +126,8 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         sqlResult._unsupportedWarnings.Add(error.Message);
                     }
-
                 }
+
                 return sqlResult;
             }
 
@@ -151,7 +144,7 @@ namespace Microsoft.PowerFx.Dataverse
                     result = ctx.SetIntermediateVariable(irNode, fromRetVal: result);
                 }
 
-                if (!ValidateReturnType(options, result.type, irNode.IRContext.SourceContext, out var retType, out var errors, sqlResult: sqlResult))
+                if (!ValidateReturnType(options, result.Type, irNode.IRContext.SourceContext, out var retType, out var errors, sqlResult: sqlResult))
                 {
                     var errorResult = new SqlCompileResult(errors);
                     errorResult.SanitizedFormula = sanitizedFormula;
@@ -160,7 +153,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 StringWriter tw = new StringWriter();
 
-                var funcName = (string.IsNullOrWhiteSpace(options.UdfName))
+                var funcName = string.IsNullOrWhiteSpace(options.UdfName)
                     ? "fn_udf_" + Guid.NewGuid().ToString("n")
                     : options.UdfName;
 
@@ -171,7 +164,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var parameters = ctx.GetParameters().ToList();
                 for (var i = 0; i < parameters.Count(); i++)
                 {
-                    var del = (i == parameters.Count - 1) ? "" : ",";
+                    var del = (i == parameters.Count - 1) ? string.Empty : ",";
                     var fieldName = parameters[i].Item1.LogicalName;
                     var varName = ctx.GetVarName(fieldName, ctx.RootScope, null, allowCurrencyFieldProcessing: true);
 
@@ -182,7 +175,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         typeName = SqlStatementFormat.SqlExchangeRateType;
                     }
-                    else 
+                    else
                     {
                         typeName = parameters[i].Item1.TypeCode == AttributeTypeCode.Money ? SqlStatementFormat.SqlBigType : SqlVisitor.ToSqlType(parameters[i].Item2, _dataverseFeatures);
                     }
@@ -192,21 +185,22 @@ namespace Microsoft.PowerFx.Dataverse
 
                 var returnType = SqlVisitor.ToSqlType(retType, _dataverseFeatures);
 
-                // if the return type is numeric and type hint is of type integer then it is assignable, only in that 
+                // if the return type is numeric and type hint is of type integer then it is assignable, only in that
                 // case use integer in UDF, actual return type of compiler will be decimal only
                 if (SqlVisitor.Context.IsNumericType(retType) && options.TypeHints?.TypeHint == AttributeTypeCode.Integer)
                 {
                     returnType = SqlStatementFormat.SqlIntegerType;
                 }
-                
+
                 tw.WriteLine($") RETURNS {returnType}");
 
                 // schemabinding only applies if there are no reference fields and formula field doesn't use any time bound functions
                 var refFieldCount = ctx.GetReferenceFields().Count();
-                if (refFieldCount == 0 && !ctx.expressionHasTimeBoundFunction)
+                if (refFieldCount == 0 && !ctx.ExpressionHasTimeBoundFunction)
                 {
                     tw.WriteLine($"  {SqlStatementFormat.WithSchemaBindingFormat}");
                 }
+
                 tw.WriteLine($"AS BEGIN");
 
                 var indent = "    ";
@@ -228,7 +222,6 @@ namespace Microsoft.PowerFx.Dataverse
                             referencing = field.Navigation.ReferencingFieldName;
                             var referencedLogical = field.Navigation.TargetFieldNames[0];
                             referenced = _metadataCache.GetColumnSchemaName(field.Navigation.TargetTableNames[0], field.Navigation.TargetFieldNames[0]);
-
                         }
                         else if (field.Column.RequiresReference() || field.IsReferenceFieldOnInheritedEntity)
                         {
@@ -255,12 +248,13 @@ namespace Microsoft.PowerFx.Dataverse
                                 fields = new List<VarDetails>();
                                 initRefFieldsMap.Add(key, fields);
                             }
+
                             fields.Add(field);
                         }
                     }
                 }
 
-                // Declare temps 
+                // Declare temps
                 foreach (var temp in ctx.GetTemps())
                 {
                     string tempVariableType = SqlVisitor.ToSqlType(temp.Item2, _dataverseFeatures);
@@ -277,7 +271,7 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (var pair in initRefFieldsMap)
                     {
                         // Initialize the reference field values from the primary field
-                        var selects = String.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " + $"[{GetColumnSchemaName(field)}]"; }));
+                        var selects = string.Join(",", pair.Value.Select((VarDetails field) => { return $"{field.VarName} = " + $"[{GetColumnSchemaName(field)}]"; }));
                         tw.WriteLine($"{indent}SELECT TOP(1) {selects} FROM [dbo].[{pair.Key.Item1}] WHERE[{pair.Key.Item3}] = {pair.Key.Item2}");
                     }
                 }
@@ -292,13 +286,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                 EmitReturn(tw, indent, ctx, result, retType, options);
                 tw.WriteLine($"END");
-                                
+
                 sqlResult.SqlFunction = tw.ToString();
 
-                // Write actual function definition 
+                // Write actual function definition
                 tw = new StringWriter();
                 {
-                    string dil = "";
+                    string dil = string.Empty;
                     tw.Write($"{funcName}(");
 
                     foreach (var details in parameters)
@@ -311,6 +305,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     tw.WriteLine(")");
                 }
+
                 sqlResult.SqlCreateRow = tw.ToString();
 
                 var dependentFields = ctx.GetDependentFields();
@@ -339,10 +334,10 @@ namespace Microsoft.PowerFx.Dataverse
                             // if optionset used by formula field is a local optionset from another field,
                             // add dependency between formula field and optionset field.
                             var key = optionSet.RelatedEntityName;
- 
+
                             // Currently blocking related entity's field's local optionset to be used as result type in formula columns due to solution
                             // import challenges when related entity optionset field and formula field are getting created as part of same solution.
-                            if (key != _currentEntityName)
+                            if (key != CurrentEntityName)
                             {
                                 errors = new SqlCompileException(SqlCompileException.RelatedEntityOptionSetNotSupported, irNode.IRContext.SourceContext, "'" + optionSet.DisplayName + "'").GetErrors(irNode.IRContext.SourceContext);
                                 var errorResult = new SqlCompileResult(errors) { SanitizedFormula = sanitizedFormula };
@@ -367,12 +362,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // The top-level identifiers are the logical names of fields on the main entity
                 sqlResult.ApplyDependencyAnalysis();
-                var topLevelIdentifiers = dependentFields.ContainsKey(_currentEntityName) ? dependentFields[_currentEntityName] : new HashSet<string>();
+                var topLevelIdentifiers = dependentFields.ContainsKey(CurrentEntityName) ? dependentFields[CurrentEntityName] : new HashSet<string>();
                 sqlResult.TopLevelIdentifiers.Clear();
                 sqlResult.TopLevelIdentifiers.UnionWith(topLevelIdentifiers);
 
                 // related identifiers are the the logical names of fields on other entities
-                sqlResult.RelatedIdentifiers = dependentFields.Where(pair => pair.Key != _currentEntityName).ToDictionary(pair => pair.Key, pair => pair.Value);
+                sqlResult.RelatedIdentifiers = dependentFields.Where(pair => pair.Key != CurrentEntityName).ToDictionary(pair => pair.Key, pair => pair.Value);
 
                 sqlResult.DependentRelationships = ctx.GetDependentRelationships();
 
@@ -385,19 +380,14 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (NotImplementedException)
             {
-                var errorResult = new SqlCompileResult(
-                    new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan())
-                );
+                var errorResult = new SqlCompileResult(new SqlCompileException(SqlCompileException.NotSupported, binding.Top.GetTextSpan()).GetErrors(binding.Top.GetTextSpan()));
+
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;
             }
             catch (Exception ex)
             {
-                var errorResult = new SqlCompileResult(
-                    new[] {
-                        new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message)
-                    }
-                );
+                var errorResult = new SqlCompileResult(new[] { new TexlError(binding.Top, DocumentErrorSeverity.Critical, TexlStrings.ErrGeneralError, ex.Message) });
 
                 errorResult.SanitizedFormula = sanitizedFormula;
                 return errorResult;
@@ -414,7 +404,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return tableSchemaName;
             }
 
-            if(_secondaryMetadataCache != null && _secondaryMetadataCache.ShouldReferFieldFromExtensionTable(field.Table, field.Column.LogicalName, out var extensionTableName))
+            if (_secondaryMetadataCache != null && _secondaryMetadataCache.ShouldReferFieldFromExtensionTable(field.Table, field.Column.LogicalName, out var extensionTableName))
             {
                 tableSchemaName = extensionTableName;
             }
@@ -440,13 +430,13 @@ namespace Microsoft.PowerFx.Dataverse
         private void EmitReturn(StringWriter tw, string indent, SqlVisitor.Context context, SqlVisitor.RetVal result, FormulaType returnType, SqlCompileOptions options)
         {
             // emit final range checks using the final type
-            result.type = returnType;
+            result.Type = returnType;
 
             context._sbContent = new System.Text.StringBuilder();
             context.PerformFinalRangeChecks(result, options, postCheck: true);
             tw.Write(context._sbContent);
 
-            if (result.type is DecimalType)
+            if (result.Type is DecimalType)
             {
                 int precision = options.TypeHints?.Precision ?? DefaultPrecision;
 
@@ -459,7 +449,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 tw.WriteLine($"{indent}RETURN ROUND({result}, {precision})");
             }
-            else if (result.type is NumberType && null != options.TypeHints) 
+            else if (result.Type is NumberType && options.TypeHints != null)
             {
                 // In case of float result type, no rounding will be done if the type hint precision is not specified
                 int precision = options.TypeHints.Precision;
@@ -487,8 +477,8 @@ namespace Microsoft.PowerFx.Dataverse
             SqlCompileResult sqlCheck = check as SqlCompileResult;
 
             var ctx = new SqlVisitor.Context(irNode, scopeSymbol, binding.ContextScope, secondaryMetadataCache: (check.Engine as PowerFx2SqlEngine)?.SecondaryMetadataCache, dataverseFeatures: dataverseFeatures);
-            
-            // This visitor will throw exceptions on SQL errors. 
+
+            // This visitor will throw exceptions on SQL errors.
             var result = irNode.Accept(v, ctx);
 
             var info = new SqlCompileInfo
@@ -500,17 +490,17 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Run SQL compiler phase or throw on errors. 
+        /// Run SQL compiler phase or throw on errors.
         /// If the check result is a <see cref="SqlCompileResult"/>, then this is cached.
         /// </summary>
         /// <param name="check"></param>
         /// <returns></returns>
-        /// <exception cref="SqlCompileException">Throw if we hit Power Fx restrictions that 
+        /// <exception cref="SqlCompileException">Throw if we hit Power Fx restrictions that
         /// aren't supported by the SQL backend.</exception>
         internal static SqlCompileInfo ApplySqlCompiler(this CheckResult check, DataverseFeatures dataverseFeatures)
         {
-            // If this is a SqlCompileResult, then we can cache it. 
-            // Else, just recompute. 
+            // If this is a SqlCompileResult, then we can cache it.
+            // Else, just recompute.
             SqlCompileResult sqlCheck = check as SqlCompileResult;
             var info = sqlCheck?._sqlInfo;
             if (info != null)
@@ -525,6 +515,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 sqlCheck._sqlInfo = info;
             }
+
             return info;
         }
     }

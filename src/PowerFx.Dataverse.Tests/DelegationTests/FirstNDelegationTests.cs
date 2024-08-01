@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,13 +30,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(3, "FirstN(t1, 2)", 2, true, false)]
         [InlineData(4, "FirstN(t1, 2)", 2, false, true)]
 
-        // Variable as arg 
+        // Variable as arg
         [InlineData(5, "FirstN(t1, _count)", 3, false, false)]
         [InlineData(6, "FirstN(t1, _count)", 3, true, true)]
         [InlineData(7, "FirstN(t1, _count)", 3, true, false)]
         [InlineData(8, "FirstN(t1, _count)", 3, false, true)]
 
-        // Function as arg 
+        // Function as arg
         [InlineData(9, "FirstN(t1, If(1<0,_count, 1))", 1, false, false)]
         [InlineData(10, "FirstN(t1, If(1<0,_count, 1))", 1, true, true)]
         [InlineData(11, "FirstN(t1, If(1<0,_count, 1))", 1, true, false)]
@@ -45,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(15, "FirstN(Filter(t1, Price > 90), 10)", 1, true, false)]
         [InlineData(16, "FirstN(Filter(t1, Price > 90), 10)", 1, false, true)]
 
-        // Aliasing prevents delegation. 
+        // Aliasing prevents delegation.
         [InlineData(17, "With({r : t1}, FirstN(r, Float(100)))", 3, false, false)]
         [InlineData(18, "With({r : t1}, FirstN(r, 100))", 3, true, true)]
         [InlineData(19, "With({r : t1}, FirstN(r, 100))", 3, true, false)]
@@ -70,16 +73,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(30, "FirstN(t1)", 1, true, true)]
         [InlineData(31, "FirstN(t1)", 1, true, false)]
         [InlineData(32, "FirstN(t1)", 1, false, true)]
-
         [InlineData(33, "FirstN(et, 2)", 2, false, false)]
         [InlineData(34, "FirstN(et, 2)", 2, true, true)]
         [InlineData(35, "FirstN(et, 2)", 2, true, false)]
         [InlineData(36, "FirstN(et, 2)", 2, false, true)]
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption,
-                (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
+            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
         }
     }
 }
-

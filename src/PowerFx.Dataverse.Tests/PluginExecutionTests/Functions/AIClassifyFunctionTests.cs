@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +12,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class AIClassifyFunctionTests
     {
         // FAils if config.EnableAIFunctions() is not called.
@@ -29,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 config.EnableAIFunctions();
             }
+
             var engine = new RecalcEngine(config);
 
             var result = engine.Check("AIClassify(\"very long string\", [\"string\", \"int\"])");
@@ -53,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Validate parameters
                 Assert.Equal("AIClassify", req.RequestName);
                 Assert.Equal("very long string", req.Parameters["Text"]);
-                Assert.Equal(new string[] { "string", "int", "double"}, req.Parameters["Categories"]);
+                Assert.Equal(new string[] { "string", "int", "double" }, req.Parameters["Categories"]);
 
                 var resp = new OrganizationResponse
                 {

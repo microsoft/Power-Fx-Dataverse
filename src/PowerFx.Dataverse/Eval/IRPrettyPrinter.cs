@@ -1,18 +1,22 @@
-﻿using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.IR.Symbols;
 
 namespace Microsoft.PowerFx.Dataverse
 {
 #if false
-    // Pretty printer for tests. 
-    // Stable  - tests rely on this, so we need to fix the format 
+
+    // Pretty printer for tests.
+    // Stable  - tests rely on this, so we need to fix the format
     // Compact / No newlines - ideally can fit on a single line in Theorys
     // Deterministic ordering - when traversing dictionaries
-    // Unambiguous - additional parenthesis as needed to show (a+b)+c vs. a+(b+c). 
+    // Unambiguous - additional parenthesis as needed to show (a+b)+c vs. a+(b+c).
     internal class PrettyPrintIR : IRNodeVisitor<PrettyPrintIR.RetVal, PrettyPrintIR.Context>
     {
         private StringBuilder _sb = new StringBuilder();
@@ -22,7 +26,6 @@ namespace Microsoft.PowerFx.Dataverse
         }
         public class Context
         {
-
         }
 
         internal static string ToString(CheckResult check)
@@ -35,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var visitor = new PrettyPrintIR();
             var ret = node.Accept(visitor, new Context());
-            return visitor._sb.ToString();  
+            return visitor._sb.ToString();
         }
 
         public override RetVal Visit(TextLiteralNode node, Context context)
@@ -83,7 +86,6 @@ namespace Microsoft.PowerFx.Dataverse
                 _sb.Append(child.Key);
                 _sb.Append(":");
                 child.Value.Accept(this, context);
-
             }
             _sb.Append('}');
             return null;
@@ -114,7 +116,6 @@ namespace Microsoft.PowerFx.Dataverse
                 i++;
 
                 arg.Accept(this, context);
-
             }
 
             _sb.Append(')');
@@ -122,10 +123,10 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override RetVal Visit(BinaryOpNode node, Context context)
-        {            
+        {
             _sb.Append(node.Op.ToString());
             _sb.Append('(');
-            node.Left.Accept(this, context);            
+            node.Left.Accept(this, context);
             _sb.Append(',');
             node.Right.Accept(this, context);
             _sb.Append(')');
@@ -147,11 +148,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (node.Value is ScopeAccessSymbol s)
             {
-                _sb.Append(s.Name);               
+                _sb.Append(s.Name);
             }
             else
             {
-
             }
 
             return null;
@@ -201,6 +201,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             throw new NotImplementedException();
         }
-    } 
+    }
 #endif
 }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -12,25 +15,25 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Lookup a Custom API signature from dataverse
+    /// Lookup a Custom API signature from dataverse.
     /// </summary>
     public static class CustomApiLookupExtensions
     {
         /// <summary>
-        /// Lookup an API signature given its logical name (aka uniqueName). 
+        /// Lookup an API signature given its logical name (aka uniqueName).
         /// </summary>
-        /// <param name="reader">reader to access dataverse metadata, which is stored in tables like 
+        /// <param name="reader">reader to access dataverse metadata, which is stored in tables like
         /// customapi, customapirequestparameter, customapiresponseproperty.</param>
         /// <param name="logicalName">logical name of the API. this will include a prefix.</param>
         /// <param name="cancellationToken"></param>
         /// <returns>the signature object. </returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="InvalidOperationException">.</exception>
         /// <remarks>
         /// See description of https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api-tables?tabs=webapi.
         /// </remarks>
         public static async Task<CustomApiSignature> GetApiSignatureAsync(
             this IDataverseReader reader,
-            string logicalName, 
+            string logicalName,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -46,14 +49,14 @@ namespace Microsoft.PowerFx.Dataverse
             var outputs = await reader.RetrieveMultipleAsync<CustomApiResponse>(
                 nameof(CustomApiResponse.customapiid), api.customapiid, cancellationToken)
                 .ConfigureAwait(false);
-                        
+
             var sig = new CustomApiSignature
             {
                 Api = api,
                 Inputs = inputs,
                 Outputs = outputs
             };
-         
+
             return sig;
         }
 
@@ -75,22 +78,22 @@ namespace Microsoft.PowerFx.Dataverse
 
         /// <summary>
         /// Helper to get list of lowcode plugins.
-        /// There are 1000s of custom apis in an org, most are private and not interesting. 
-        /// LowCode plugins have the fxexpressionid column set. 
+        /// There are 1000s of custom apis in an org, most are private and not interesting.
+        /// LowCode plugins have the fxexpressionid column set.
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public static async Task<CustomApiEntity[]> GetLowCodeApiNamesAsync(
-            this IDataverseReader reader,        
+            this IDataverseReader reader,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Lowcode plugins have the fxexpressionid set. 
+            // Lowcode plugins have the fxexpressionid set.
             FilterExpression filter = new FilterExpression();
             filter.AddCondition(nameof(CustomApiEntity.fxexpressionid), ConditionOperator.NotNull);
-                     
+
             var results = await reader.RetrieveMultipleAsync<CustomApiEntity>(
                                filter, cancellationToken).ConfigureAwait(false);
 
@@ -103,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="reader"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="InvalidOperationException">.</exception>
         public static async Task<(CultureInfo, TimeZoneInfo)> GetUserLocaleTimeZoneSettingsAsync(this IDataverseReader reader, CancellationToken cancellationToken = default)
         {
             var query = new QueryExpression(UserSettingsEntity.TableName)
@@ -120,11 +123,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             var currentUserSettingsResponse = await reader.RetrieveMultipleAsync(query, cancellationToken);
 
-            if(currentUserSettingsResponse.Response.Entities.Count == 0)
+            if (currentUserSettingsResponse.Response.Entities.Count == 0)
             {
                 return (null, null);
             }
-            else if(currentUserSettingsResponse.Response.Entities.Count > 1)
+            else if (currentUserSettingsResponse.Response.Entities.Count > 1)
             {
                 throw new InvalidOperationException("More than one User settings found, please report a bug");
             }
@@ -151,11 +154,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             var timeZoneDefResponse = await reader.RetrieveMultipleAsync(timezoneQuery, cancellationToken);
 
-            if(timeZoneDefResponse.Response.Entities.Count == 0)
+            if (timeZoneDefResponse.Response.Entities.Count == 0)
             {
                 return null;
             }
-            else if(timeZoneDefResponse.Response.Entities.Count > 1)
+            else if (timeZoneDefResponse.Response.Entities.Count > 1)
             {
                 throw new InvalidOperationException("More than one timezone definition found, please report a bug");
             }

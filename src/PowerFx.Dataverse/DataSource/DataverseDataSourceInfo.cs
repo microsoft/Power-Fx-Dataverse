@@ -1,28 +1,25 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AppMagic;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.App;
-using Microsoft.PowerFx.Core.Entities.Delegation;
-using Microsoft.PowerFx.Core.Entities.QueryOptions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Entities.Delegation;
+using Microsoft.PowerFx.Core.Entities.QueryOptions;
 using Microsoft.PowerFx.Core.Errors;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.UtilityDataStructures;
 using Microsoft.PowerFx.Core.Utils;
-using System.Text.Json;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -34,12 +31,14 @@ namespace Microsoft.PowerFx.Dataverse
         public CdsTableDefinition CdsTableDefinition { get; }
 
         private BidirectionalDictionary<string, string> _columnDisplayNameMapping;
+
         private CdsEntityMetadataProvider _provider;
+
         private DelegationMetadata _delegationMetadata;
 
         public DataverseDataSourceInfo(
-            CdsTableDefinition tableDefinition, 
-            CdsEntityMetadataProvider provider, 
+            CdsTableDefinition tableDefinition,
+            CdsEntityMetadataProvider provider,
             string variableName = null)
         {
             CdsTableDefinition = tableDefinition;
@@ -58,7 +57,9 @@ namespace Microsoft.PowerFx.Dataverse
             // As there is no CdsDataSourceInfo created during parsing, we need to update parent information later when there is an instance of CdsDataSourceInfo available.
             // That's what we are doing below.
             foreach (var info in Schema.GetExpands())
+            {
                 info.UpdateEntityInfo(this, string.Empty);
+            }
 
             Schema = DType.AttachDataSourceInfo(Schema, this);
 
@@ -132,7 +133,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         public BidirectionalDictionary<string, string> PreviousDisplayNameMapping => null;
 
-
         public bool CanIncludeExpand(IExpandInfo expandToAdd)
         {
             return CdsTableDefinition.CanIncludeExpand(expandToAdd);
@@ -145,8 +145,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool CanIncludeSelect(string selectColumnName)
         {
-            return IsSelectable
-                && CdsTableDefinition.CanIncludeSelect(selectColumnName); throw new NotImplementedException();
+            return IsSelectable && CdsTableDefinition.CanIncludeSelect(selectColumnName);
+            throw new NotImplementedException();
         }
 
         public bool CanIncludeSelect(IExpandInfo expandInfo, string selectColumnName)
@@ -181,10 +181,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var name in type.GetAllNames(DPath.Root))
             {
-                
                 var columnDefinition = CdsTableDefinition.CdsColumnDefinitionOrDefault(name.Name.Value);
 
-                if (columnDefinition!= null && columnDefinition.IsReadOnly)
+                if (columnDefinition != null && columnDefinition.IsReadOnly)
                 {
                     invalidNames.Add(name.Name.Value);
                     isValid = false;
@@ -197,6 +196,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         #region IDataEntityMetadata implementation
+
         string IDataEntityMetadata.EntityName => this.EntityName;
 
         bool IDataEntityMetadata.IsConvertingDisplayNameMapping { get => false; set => throw new NotImplementedException(); }
@@ -239,6 +239,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             throw new NotImplementedException();
         }
-        #endregion
+
+        #endregion IDataEntityMetadata implementation
     }
 }

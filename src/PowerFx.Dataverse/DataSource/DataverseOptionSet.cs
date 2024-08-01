@@ -1,9 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -15,16 +11,16 @@ using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 
-
 namespace Microsoft.PowerFx.Dataverse
 {
-
 #pragma warning disable CS0659 // 'DataverseOptionSet' overrides Object.Equals(object o) but does not override Object.GetHashCode()
 
     internal class DataverseOptionSet : ICdsOptionSetInfo
     {
         private readonly string _relatedEntityName;
+
         private readonly List<DName> _optionNames;
+
         private readonly DType _invariantType = DType.Invalid;
 
         // Boolean To: For ease of use, Boolean backed option sets can be used as Boolean values directly (To), for example If( Record.IsOpen And Record.IsValid, ... )
@@ -33,8 +29,11 @@ namespace Microsoft.PowerFx.Dataverse
         // Number From: There is currently no option set constructor or other way to translate directly from a number backed option set to a number (From), but one can use Select( Value, 1, OptionSet.Value1, ... ) as a workaround
         // *** This logic should match Canvas OptionSetInfo.cs ***
         public bool CanCoerceFromBackingKind => IsBooleanValued;
+
         public bool CanCoerceToBackingKind => IsBooleanValued;
+
         public bool CanConcatenateStronglyTyped => false;
+
         public bool CanCompareNumeric => false;
 
         public DataverseOptionSet(string invariantName, string datasetName, string entityName, string columnName, string metadataId, string optionSetName, string optionSetId, string optionSetMetadataName, string attributeTypeName, Dictionary<int, string> optionSetValues, bool isGlobal, bool isBooleanValued)

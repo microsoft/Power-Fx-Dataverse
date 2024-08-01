@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class CustomApiRestore
     {
         // Needed to resolve Entity/EntityReference to a FormulaType
-        // These could be null if we just use primitives. 
+        // These could be null if we just use primitives.
         private readonly CdsEntityMetadataProvider _metadataCache;
 
         public CustomApiRestore(CdsEntityMetadataProvider metadataCache)
@@ -31,10 +34,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var marshaller = new CustomApiParameterMarshaller(metadataCache);
 
-            // Inputs are always as a record. Enables named input parameters. 
+            // Inputs are always as a record. Enables named input parameters.
             RecordType inRecord = CustomApiMarshaller.GetInputType(model.Inputs, marshaller);
 
-            // If multiple return types, then use a record. 
+            // If multiple return types, then use a record.
             FormulaType outType = CustomApiMarshaller.GetOutputType(model.Outputs, marshaller);
 
             if (inRecord.FieldNames.Any())

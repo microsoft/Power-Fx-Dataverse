@@ -10,7 +10,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Tests
 {
-
     public class PublicSurfaceTests
     {
         // The goal for public namespaces is to make the SDK easy for the consumer. 
@@ -19,8 +18,6 @@ namespace Microsoft.PowerFx.Tests
         // - For easy discovery, but Engine in "Microsoft.PowerFx".
         // - For sub areas with many related classes, cluster into a single subnamespace.
         // - Avoid nesting more than 1 level deep
-
-
         [Fact]
         public void TestPowerFxDataverseEval()
         {
@@ -133,7 +130,7 @@ namespace Microsoft.PowerFx.Tests
             Assert.True(count == 0, $"Unexpected public types: {sb}");
 
             // Types we expect to be in the assembly are all there. 
-            Assert.Equal("", string.Join(",", allowed));
+            Assert.Equal(string.Empty, string.Join(",", allowed));
         }
     }
 }

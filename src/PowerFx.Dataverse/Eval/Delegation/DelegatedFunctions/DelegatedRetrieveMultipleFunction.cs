@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[3] is NumberValue count)
             {
-                topCount = (int)(count).Value;
+                topCount = (int)count.Value;
             }
             else if (args[3] is BlankValue)
             {
@@ -57,24 +60,24 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args3 should always be of type {nameof(NumberValue)} or {nameof(BlankValue)} : found {args[2]}");
             }
 
-            if (args[1] is DelegationFormulaValue DelegationFormulaValue)
+            if (args[1] is DelegationFormulaValue delegationFormulaValue)
             {
-                filter = DelegationFormulaValue._filter;
-                relation = DelegationFormulaValue._relation;
-                partitionId = DelegationFormulaValue._partitionId;
+                filter = delegationFormulaValue._filter;
+                relation = delegationFormulaValue._relation;
+                partitionId = delegationFormulaValue._partitionId;
             }
             else
             {
-                throw new InvalidOperationException($"args1 should always be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args1 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
             }
 
-            if (args[2] is DelegationFormulaValue DelegationFormulaValue2)
+            if (args[2] is DelegationFormulaValue delegationFormulaValue2)
             {
-                orderBy = DelegationFormulaValue2._orderBy;
+                orderBy = delegationFormulaValue2._orderBy;
             }
             else
             {
-                throw new InvalidOperationException($"args2 should always be of type {nameof(DelegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
             }
 
             string distinctColumn = null;
@@ -103,9 +106,9 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = topCount,
 
-                _columnMap = columnMap,                
+                ColumnMap = columnMap,
                 _partitionId = partitionId,
-                _relation = relation
+                Relation = relation
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core;
@@ -14,6 +11,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class AllTablesDisplayNameProvider : DisplayNameProvider
     {
         private readonly Dictionary<string, string> _display2logical = new Dictionary<string, string>();
+
         private readonly Dictionary<string, string> _logical2Display = new Dictionary<string, string>();
 
         public override IEnumerable<KeyValuePair<DName, DName>> LogicalToDisplayPairs
@@ -50,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse
                 logicalName = new DName(logical);
                 return true;
             }
+
             return false;
         }
 
@@ -60,6 +59,7 @@ namespace Microsoft.PowerFx.Dataverse
                 displayName = new DName(display);
                 return true;
             }
+
             return false;
         }
     }

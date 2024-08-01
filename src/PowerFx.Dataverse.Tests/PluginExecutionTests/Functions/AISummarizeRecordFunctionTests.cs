@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +12,6 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
-
     public class AISummarizeRecordFunctionTests
     {
         // Fails if config.EnableAIFunctions() is not called.
@@ -30,6 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 config.EnableAIFunctions();
             }
+
             var engine = new RecalcEngine(config);
 
             var result = engine.Check("AISummarizeRecord({})");
@@ -48,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new RecalcEngine(config);
 
             var rc = new RuntimeConfig(dvc.SymbolValues);
-            
+
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
 
@@ -77,21 +74,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var config = new PowerFxConfig();
             config.EnableAIFunctions();
-                        
+
             var engine = new RecalcEngine(config);
 
             var rc = new RuntimeConfig();
 
             var client = new MockExecute();
             rc.AddDataverseExecute(client);
-                        
+
             var result = await engine.EvalAsync("AISummarizeRecord({})", default, runtimeConfig: rc);
 
             var error = (ErrorValue)result;
             string msg = error.Errors[0].Message;
             Assert.Equal("Record must be a dataverse record", msg);
         }
-
 
         [Fact]
         public async Task Failure()

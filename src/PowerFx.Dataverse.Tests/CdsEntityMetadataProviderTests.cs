@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using Microsoft.Dataverse.EntityMock;
@@ -14,6 +11,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
     public class CdsEntityMetadataProviderTests
     {
         #region EntityMetadataModel declarations
+
         private static readonly EntityMetadataModel _trivial = new EntityMetadataModel
         {
             LogicalName = "local",
@@ -22,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -38,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -54,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -70,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -86,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
@@ -102,18 +100,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                     new AttributeMetadataModel
                      {
-                         LogicalName= "new_field",
+                         LogicalName = "new_field",
                          DisplayName = "field",
                          AttributeType = AttributeTypeCode.Decimal
                      },
             }
         };
-        #endregion
 
+        #endregion EntityMetadataModel declarations
 
         private class SwitchMetadataProvider : IXrmMetadataProvider
         {
             public Func<string, EntityMetadata> _func;
+
             public IXrmMetadataProvider _inner;
 
             public void Dispose()
@@ -156,15 +155,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.True(ok);
             Assert.NotNull(entityMetadata1);
 
-            // Dispose 
+            // Dispose
             provider1.Dispose();
 
             Assert.Throws<InvalidOperationException>(() => metadataCache.TryGetXrmEntityMetadata("second", out entityMetadata1));
 
-            // Clone 
+            // Clone
             var provider2 = new SwitchMetadataProvider();
             var metadataCache2 = metadataCache.Clone(provider2);
-                        
 
             // hit the cache again
             ok = metadataCache2.TryGetXrmEntityMetadata("local", out entityMetadata1);
@@ -198,7 +196,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var provider1 = new SwitchMetadataProvider();
             var metadataCache = new CdsEntityMetadataProvider(provider1);
 
-            // Clone 
+            // Clone
             var provider2 = new SwitchMetadataProvider()
             {
                 _inner = new MockXrmMetadataProvider(_trivial)
@@ -219,21 +217,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         /// <summary>
-        /// Clone should not hold on to CDS Cache, because that would mean caching the DType as well and 
+        /// Clone should not hold on to CDS Cache, because that would mean caching the DType as well and
         /// that could lead to Problems in multi threaded env.
         /// </summary>
         [Fact]
         public void CloneDoesNotSharesCDSCache()
         {
             var provider = new MockXrmMetadataProvider(_trivial);
-            var CDSMetadata = new CdsEntityMetadataProvider(provider);
+            var cDSMetadata = new CdsEntityMetadataProvider(provider);
 
-            var ok = CDSMetadata.TryGetDataSource("local", out var dvSource);
+            var ok = cDSMetadata.TryGetDataSource("local", out var dvSource);
             Assert.True(ok);
             var schema = dvSource.Schema;
 
             var anotherProvider = new SwitchMetadataProvider();
-            var clone = CDSMetadata.Clone(anotherProvider);
+            var clone = cDSMetadata.Clone(anotherProvider);
 
             var cloneOk = clone.TryGetDataSource("local", out var clonedDvSource);
             Assert.True(cloneOk);

@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -14,23 +11,31 @@ using Microsoft.Xrm.Sdk.Metadata;
 namespace Microsoft.Dataverse.EntityMock
 {
     // Serializable form of EntityMetadata
-    // Useful for testing. 
+    // Useful for testing.
     public class EntityMetadataModel
     {
         public string LogicalName { get; set; }
+
         public string EntitySetName { get; set; }
+
         public string DisplayName { get; set; }
+
         public string DisplayCollectionName { get; set; }
 
         private string _schemaName;
+
         public string SchemaName => _schemaName ?? LogicalName;
 
         public string PrimaryIdAttribute { get; set; }
+
         public string PrimaryNameAttribute { get; set; }
 
         public bool IsPrivate { get; set; }
+
         public bool IsIntersect { get; set; }
+
         public bool IsLogicalEntity { get; set; }
+
         public int ObjectTypeCode { get; set; }
 
         public Guid? DataProviderId { get; set; }
@@ -40,7 +45,12 @@ namespace Microsoft.Dataverse.EntityMock
         public OneToManyRelationshipMetadataModel[] ManyToOneRelationships { get; set; }
 
         public OneToManyRelationshipMetadataModel[] OneToManyRelationships { get; set; }
-        public EntityMetadataModel() : this("placeholder") { }
+
+        public EntityMetadataModel()
+            : this("placeholder")
+        {
+        }
+
         public EntityMetadataModel(string name)
         {
             LogicalName = name;
@@ -61,6 +71,7 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 _schemaName = schemaName;
             }
+
             return this;
         }
     }
@@ -68,9 +79,11 @@ namespace Microsoft.Dataverse.EntityMock
     public class AttributeMetadataModel
     {
         public string LogicalName { get; set; }
+
         public string DisplayName { get; set; }
 
         private string _schemaName;
+
         public string SchemaName => _schemaName ?? LogicalName;
 
         public int? SourceType { get; set; }
@@ -111,6 +124,7 @@ namespace Microsoft.Dataverse.EntityMock
             {
                 _schemaName = schemaName;
             }
+
             return this;
         }
 
@@ -123,8 +137,6 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeType = AttributeTypeCode.Decimal
             }.SetSchemaName(schemaName);
         }
-
-
 
         public static AttributeMetadataModel NewDouble(string logicalName, string displayName)
         {
@@ -281,7 +293,7 @@ namespace Microsoft.Dataverse.EntityMock
             };
         }
 
-        // Simulate a future unsupported type. 
+        // Simulate a future unsupported type.
         // This tests cases where Dataverse adds a type and feeds into an older version of the compiler.
         public static AttributeMetadataModel NewFutureUnsupported(string logicalName, string displayName)
         {
@@ -317,28 +329,41 @@ namespace Microsoft.Dataverse.EntityMock
     public class OneToManyRelationshipMetadataModel
     {
         public string ReferencedAttribute { get; set; }
+
         public string ReferencedEntity { get; set; }
+
         public string ReferencingAttribute { get; set; }
+
         public string ReferencingEntity { get; set; }
+
         public string ReferencedEntityNavigationPropertyName { get; set; }
+
         public string ReferencingEntityNavigationPropertyName { get; set; }
+
         public string SchemaName { get; set; }
     }
 
     public class OptionMetadataModel
     {
         public string Label { get; set; }
+
         public int? Value { get; set; }
     }
 
     public class OptionSetMetadataModel
     {
         public bool IsGlobal { get; set; }
+
         public string Name { get; set; }
+
         public string DisplayName { get; set; }
+
         public OptionMetadataModel[] Options { get; set; }
+
         public OptionMetadataModel TrueOption { get; set; }
+
         public OptionMetadataModel FalseOption { get; set; }
+
         public Guid MetadataId { get; set; }
     }
 }

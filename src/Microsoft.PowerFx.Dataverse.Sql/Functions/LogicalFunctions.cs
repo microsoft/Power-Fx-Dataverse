@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -52,9 +49,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
                     var condition = shortCircuitTest ? coercedArg.ToString() : $"(NOT {coercedArg})";
                     using (indenter.EmitIfCondition(condition))
                     {
-                        result = context.SetIntermediateVariable(result, fromRetVal:coercedArg);
+                        result = context.SetIntermediateVariable(result, fromRetVal: coercedArg);
                     }
                 }
+
                 return result;
             }
         }

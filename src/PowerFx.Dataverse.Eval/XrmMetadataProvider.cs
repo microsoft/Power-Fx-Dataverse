@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Linq;
@@ -59,7 +56,9 @@ namespace Microsoft.PowerFx.Dataverse
         public bool TryGetEntityMetadataFromDisplayName(string displayName, out EntityMetadata entityMetadata)
         {
             if (TryGetLogicalName(displayName, out var logicalName))
+            {
                 return TryGetEntityMetadata(logicalName, out entityMetadata);
+            }
 
             entityMetadata = null;
             return false;
@@ -70,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse
             return _serviceClient.TryGetValidEntityMetadata(logicalName, out entityMetadata);
         }
 
-        // We should *never* call this API. Too expensive. 
+        // We should *never* call this API. Too expensive.
         // 236 mb working set , 196.28412 mb allocations ,  9104ms , 517 entities
         [Obsolete("Bad perf API - avoid this. Use SingleOrgPolicy instead for lazy loading.")]
         public bool GetEntitiesMetadata(out EntityMetadata[] entities)

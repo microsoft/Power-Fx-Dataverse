@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -64,6 +61,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override bool CanShallowCopy => true;
 
         internal Entity Entity => _entity;
+
         internal EntityMetadata Metadata => _metadata;
 
         public EntityReference EntityReference => _entity.ToEntityReference();
@@ -88,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private bool TryGetAttributeOrRelationship(string innerFieldName, out object value)
-        {            
+        {
             // IR should convert the fieldName from display to Logical Name.
             if (_entity.Attributes.TryGetValue(innerFieldName, out value))
             {
@@ -113,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
-        {            
+        {
             (bool isSuccess, FormulaValue value) = TryGetFieldAsync(fieldType, fieldName, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
             result = value;
             return isSuccess;
@@ -226,12 +224,12 @@ namespace Microsoft.PowerFx.Dataverse
             var query = new QueryExpression(refernecingTable)
             {
                 ColumnSet = new ColumnSet(true),
-                Criteria = new FilterExpression 
-                { 
-                    Conditions = 
-                    { 
-                        new ConditionExpression(referencingAttribute, ConditionOperator.Equal, _entity.Id) 
-                    } 
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression(referencingAttribute, ConditionOperator.Equal, _entity.Id)
+                    }
                 }
             };
 
@@ -239,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!filteredEntityCollection.HasError)
             {
-                List<RecordValue> list = new();
+                List<RecordValue> list = new ();
                 var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
@@ -253,6 +251,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 result = filteredEntityCollection.DValueError(nameof(IDataverseReader.RetrieveMultipleAsync)).ToFormulaValue();
             }
+
             return result;
         }
 
@@ -289,7 +288,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Called by DataverseRecordValue, which wont internal entity attributes.
         public static async Task<DValue<RecordValue>> UpdateEntityAsync(Guid id, RecordValue record, EntityMetadata metadata, RecordType type, IConnectionValueContext connection, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();            
+            cancellationToken.ThrowIfCancellationRequested();
 
             // Update local copy of entity.
             var leanEntity = DataverseRecordValue.ConvertRecordToEntity(id, record, metadata, out DValue<RecordValue> error);
@@ -344,7 +343,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Record should already be using logical names.
-        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string _ = null)
+        public static Entity ConvertRecordToEntity(Guid id, RecordValue record, EntityMetadata metadata, out DValue<RecordValue> error, [CallerMemberName] string caller = null)
         {
             var leanEntity = record.ConvertRecordToEntity(metadata, out error);
 

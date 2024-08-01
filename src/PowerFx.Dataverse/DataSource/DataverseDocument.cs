@@ -1,13 +1,10 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
-using Microsoft.AppMagic.Authoring;
-using Microsoft.PowerFx.Core.App;
 using System;
 using System.Collections.Generic;
+using Microsoft.AppMagic.Authoring;
+using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Errors;
@@ -18,6 +15,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DataverseDocument : IExternalDocument, IExternalOptionSetDocument
     {
         private IExternalEntityScope _globalScope;
+
         private DataverseDocumentProperties _properties;
 
         public DataverseDocument(CdsEntityMetadataProvider provider)
@@ -33,7 +31,6 @@ namespace Microsoft.PowerFx.Dataverse
         public IEnumerable<IDocumentError> Errors => new IDocumentError[0];
 
         public IExternalControl AppInfoControl => throw new NotImplementedException();
-
 
         public bool TryGetControlByUniqueId(string name, out IExternalControl control)
         {

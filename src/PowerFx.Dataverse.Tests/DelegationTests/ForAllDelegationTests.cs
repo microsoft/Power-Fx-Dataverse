@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
@@ -55,21 +58,37 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(37, "ForAll(ForAll(t1, Price), Value*2)", 4, "Value", "200, 20, -20, 20")]
         [InlineData(38, "ForAll(ForAll(t1, Price*2), Value )", 4, "Value", "200, 20, -20, 20", "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(39, @"ForAll(t1, Value(Price, ""fr-FR""))", 4, "Value", "100, 10, -10, 10", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         // [InlineData(40, "ForAll(t1, ThisRecord)", 4, "Price", "100, 10, -10, 10")] // Cannot add test as PrettyPrintIRVisitor throws NotImplementedException
         [InlineData(41, "ForAll(Distinct(Filter(t1, Price > 0), Price * 2), Value)", 2, "Value", "200, 20")]
         [InlineData(42, "Distinct(ForAll(Filter(t1, Price > 0), Price * 2), Value)", 2, "Value", "200, 20")]
         public async Task ForAllDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "ForAllDelegation.txt", expr, expectedRows, expectedIds,
+            await DelegationTestAsync(
+                id,
+                "ForAllDelegation.txt",
+                expr,
+                expectedRows,
+                expectedIds,
                 (result) => result switch
                 {
                     TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column)
-                                                                             ? ((Func<string>)(() => { Assert.Empty(drv.Value.Fields); return "∅"; }))()
+                                                                             ? ((Func<string>)(() =>
+                                                                                {
+                                                                                    Assert.Empty(drv.Value.Fields);
+                                                                                    return "∅";
+                                                                                }))()
                                                                              : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value))),
                     RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value),
                     _ => throw FailException.ForFailure("Unexpected result")
                 },
-                true, true, null, true, true, true, expectedWarnings);
+                true,
+                true,
+                null,
+                true,
+                true,
+                true,
+                expectedWarnings);
         }
 
         private static string GetString(FormulaValue fv) => fv?.ToObject()?.ToString() ?? "<Blank>";

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -60,28 +63,28 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly NumberLiteralNode _maxRows;
 
-            public bool hasFilter => _filter != null;
+            public bool HasFilter => _filter != null;
 
-            public bool hasOrderBy => _orderBy != null;
+            public bool HasOrderBy => _orderBy != null;
 
-            public bool hasTopCount => _topCount != null;
+            public bool HasTopCount => _topCount != null;
 
-            public bool hasColumnMap => _columnMap != null;
+            public bool HasColumnMap => ColumnMap != null;
 
-            public IntermediateNode Filter => _filter ?? _hooks.MakeBlankCall();
+            public IntermediateNode Filter => _filter ?? Hooks.MakeBlankCall();
 
-            public IntermediateNode OrderBy => _orderBy ?? _hooks.MakeBlankCall();
+            public IntermediateNode OrderBy => _orderBy ?? Hooks.MakeBlankCall();
 
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
             // supports $select with column renames and distinct
-            public readonly ColumnMap _columnMap;
+            public readonly ColumnMap ColumnMap;
 
-            public readonly DelegationHooks _hooks;
+            public readonly DelegationHooks Hooks;
 
             // Original IR node for non-delegating path.
             // This should always be set. Even if we are attempting to delegate, we may need to use this if we can't support the delegation.
-            public readonly IntermediateNode _originalNode;
+            public readonly IntermediateNode OriginalNode;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating { get; init; }
@@ -91,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly DelegableIntermediateNode _sourceTableIRNode;
 
             // Table type  and original metadata for table that we're delegating to.
-            public readonly TableType _tableType;
+            public readonly TableType TableType;
 
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
@@ -103,6 +106,7 @@ namespace Microsoft.PowerFx.Dataverse
                     primaryId = null;
                     return false;
                 }
+
                 primaryId = _metadata.PrimaryIdAttribute;
                 return true;
             }
@@ -121,19 +125,19 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsElasticTable => _metadata?.IsElasticTable() ?? false;
 
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int _maxRows, ColumnMap columnMap)
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
-                this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
+                this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
-                this._tableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
-                this._originalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
-                this._hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
+                this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
+                this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
+                this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
 
                 // topCount and filter are optional.
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
-                this._columnMap = columnMap;
+                this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
                 _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
@@ -142,7 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Non-delegating path
             public RetVal(IntermediateNode node)
             {
-                _originalNode = node;
+                OriginalNode = node;
             }
 
             internal IntermediateNode AddFilter(IntermediateNode newFilter, ScopeSymbol scope)
@@ -150,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_filter != null)
                 {
                     var combinedFilter = new List<IntermediateNode> { _filter, newFilter };
-                    var result = _hooks.MakeAndCall(_tableType, combinedFilter, scope);
+                    var result = Hooks.MakeAndCall(TableType, combinedFilter, scope);
                     return result;
                 }
 
@@ -174,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public Context()
             {
-                WithScopes = new();
+                WithScopes = new ();
             }
 
             private Context(bool ignoreDelegation, Stack<IDictionary<string, RetVal>> withScopes, CallNode callerNode, RetVal callerTableRetVal)
@@ -280,13 +284,13 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.hasFilter || ret.hasTopCount || ret.hasOrderBy || ret.hasColumnMap))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
             }
 
-            return ret._originalNode;
+            return ret.OriginalNode;
         }
 
         protected override RetVal Ret(IntermediateNode node)
@@ -346,6 +350,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             IList<string> relations = null;
+
             // Either left or right is field (not both)
             if (!TryGetFieldName(context, node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation)
                 && !TryGetRelationField(context, node.Left, node.Right, node.Op, out fieldName, out relations, out rightNode, out operation))
@@ -377,7 +382,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                rightNode = retDelegationVisitor._originalNode;
+                rightNode = retDelegationVisitor.OriginalNode;
             }
 
             RetVal ret;
@@ -513,6 +518,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return base.Visit(node, context);
             }
+
             var child = node.Child.Accept(this, context);
 
             if (child.IsDelegating)
@@ -521,9 +527,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                if (!ReferenceEquals(child._originalNode, node.Child))
+                if (!ReferenceEquals(child.OriginalNode, node.Child))
                 {
-                    node = new LazyEvalNode(node.IRContext, child._originalNode);
+                    node = new LazyEvalNode(node.IRContext, child.OriginalNode);
                 }
 
                 return Ret(node);
@@ -626,9 +632,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessDistinct(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
@@ -636,7 +642,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (count != null
                 || !TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName)
                 || !IsReturnTypePrimitive(node.IRContext.ResultType)
-                || DelegationUtility.IsElasticTable(tableArg._tableType))
+                || DelegationUtility.IsElasticTable(tableArg.TableType))
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
@@ -652,10 +658,10 @@ namespace Microsoft.PowerFx.Dataverse
             ColumnMap map = new ColumnMap(fieldName);
 
             // Combine with an existing map
-            map = ColumnMap.Combine(tableArg._columnMap, map);
+            map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             return resultingTable;
         }
@@ -697,6 +703,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
         {
             var maybeDelegableTable = Materialize(tableArg);
+
             // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
             if (!ReferenceEquals(node.Args[0], maybeDelegableTable))
             {
@@ -720,17 +727,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessShowColumns(CallNode node, RetVal tableArg)
         {
-            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
             // ShowColumns is only a column selector, so let's create a map with (column, column) entries
             ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
 
-            map = ColumnMap.Combine(tableArg._columnMap, map);
+            map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
             // change to original node to current node and appends columnSet.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderBy, count, _maxRows, map);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
             {
@@ -818,7 +825,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             var predicate = node.Args[1];
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
@@ -898,9 +905,9 @@ namespace Microsoft.PowerFx.Dataverse
             if (!pr.IsDelegating)
             {
                 // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
-                if (!ReferenceEquals(pr._originalNode, predicate))
+                if (!ReferenceEquals(pr.OriginalNode, predicate))
                 {
-                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr.OriginalNode });
                 }
 
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
@@ -910,7 +917,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
             }
             else
             {
@@ -959,18 +966,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool IsTableArgLookUpDelegable(Context context, RetVal tableArg)
         {
-            if (tableArg._originalNode is ResolvedObjectNode
+            if (tableArg.OriginalNode is ResolvedObjectNode
                 || (tableArg._sourceTableIRNode.InnerNode is ScopeAccessNode scopedTableArg
                     && scopedTableArg.Value is ScopeAccessSymbol scopedSymbol
                     && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode)
-                    && scopedNode._originalNode is ResolvedObjectNode)
-                || (tableArg.IsDelegating && tableArg._originalNode is CallNode callNode
+                    && scopedNode.OriginalNode is ResolvedObjectNode)
+                || (tableArg.IsDelegating && tableArg.OriginalNode is CallNode callNode
                     && (callNode.Function.Name == "ShowColumns" ||
                         callNode.Function.Name == "Distinct" ||
                         callNode.Function.Name == "Sort" ||
-                        callNode.Function.Name == "SortByColumns")
-                   )
-                )
+                        callNode.Function.Name == "SortByColumns")))
             {
                 return true;
             }
@@ -986,7 +991,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             IntermediateNode predicate = node.Args[1];
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
@@ -994,9 +999,9 @@ namespace Microsoft.PowerFx.Dataverse
             if (!pr.IsDelegating)
             {
                 // Though entire predicate is not delegable, pr._originalNode may still have delegation buried inside it.
-                if (!ReferenceEquals(pr._originalNode, predicate))
+                if (!ReferenceEquals(pr.OriginalNode, predicate))
                 {
-                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr._originalNode });
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, new List<IntermediateNode>() { node.Args[0], pr.OriginalNode });
                 }
 
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
@@ -1005,7 +1010,7 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal result;
 
             // If tableArg has top count, that means we need to materialize the tableArg and can't delegate.
-            if (tableArg.hasTopCount)
+            if (tableArg.HasTopCount)
             {
                 result = MaterializeTableAndAddWarning(tableArg, node);
             }
@@ -1013,7 +1018,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg._columnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
             }
 
             return result;
@@ -1021,8 +1026,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
-            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
+            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
             List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
 
@@ -1030,7 +1035,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
             // When multiple Sort would occur, we cannot reliably group OrderBy commands
-            if (tableArg.hasTopCount || tableArg.hasOrderBy || tableArg.hasColumnMap)
+            if (tableArg.HasTopCount || tableArg.HasOrderBy || tableArg.HasColumnMap)
             {
                 return NoTransform(node, tableArg);
             }
@@ -1075,16 +1080,16 @@ namespace Microsoft.PowerFx.Dataverse
             var sortFunc = new DelegatedSort(_hooks);
             IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy: orderByNode, count, _maxRows, tableArg._columnMap);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap);
 
             return resultingTable;
         }
 
         private RetVal ProcessForAll(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.hasFilter ? tableArg.Filter : null;
-            IntermediateNode count = tableArg.hasTopCount ? tableArg.TopCountOrDefault : null;
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
+            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
@@ -1097,9 +1102,9 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
 
                 // Combine with an existing map
-                map = ColumnMap.Combine(tableArg._columnMap, map);
+                map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map);
+                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
             }
 
             // check if we have a record of (newName: oldName)
@@ -1129,9 +1134,9 @@ namespace Microsoft.PowerFx.Dataverse
                 if (canDelegate)
                 {
                     // Combine with an existing map
-                    ColumnMap map = ColumnMap.Combine(tableArg._columnMap, new ColumnMap(dic));
+                    ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic));
 
-                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, filter, orderBy, count, _maxRows, map);
+                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
                 }
             }
 
@@ -1168,16 +1173,16 @@ namespace Microsoft.PowerFx.Dataverse
 
         private RetVal ProcessFirst(CallNode node, RetVal tableArg)
         {
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg._columnMap);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg.ColumnMap);
             return res;
         }
 
         private RetVal ProcessFirstN(CallNode node, RetVal tableArg)
         {
-            IntermediateNode orderBy = tableArg.hasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             // Add default count of 1 if not specified.
             if (node.Args.Count == 1)
@@ -1189,7 +1194,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg._tableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg._columnMap);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg.ColumnMap);
         }
 
         private RetVal MaterializeTableAndAddWarning(RetVal tableArg, CallNode node)
@@ -1250,7 +1255,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessAndOr(CallNode node, Context context, Func<IList<IntermediateNode>, IntermediateNode> filterDelegate)
         {
             bool isDelegating = true;
-            List<IntermediateNode> delegatedChild = new();
+            List<IntermediateNode> delegatedChild = new ();
 
             foreach (var arg in node.Args)
             {
@@ -1260,7 +1265,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (delegatedArg.IsDelegating)
                 {
-                    if (delegatedArg.hasFilter)
+                    if (delegatedArg.HasFilter)
                     {
                         delegatedChild.Add(delegatedArg.Filter);
                     }
@@ -1417,7 +1422,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeFieldAccessNode;
 
             // If the node had injected float coercion, then we need to pull field access node from it.
-            if (node is CallNode functionCall && 
+            if (node is CallNode functionCall &&
                 (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
                 functionCall.Args.Count == 1)
             {
@@ -1578,7 +1583,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
-            if (node is CallNode functionCall && 
+            if (node is CallNode functionCall &&
                 (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
                 functionCall.Args.Count == 1)
             {
@@ -1603,9 +1608,9 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         fieldName = scopeAccessSymbol.Name;
 
-                        if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal._columnMap))
+                        if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
                         {
-                            fieldName = context.CallerTableRetVal._columnMap.Distinct;
+                            fieldName = context.CallerTableRetVal.ColumnMap.Distinct;
                         }
 
                         return true;

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -18,19 +21,19 @@ namespace Microsoft.PowerFx.AzureStorage
     {
         internal static readonly TypeMarshallerCache _marshaller = new TypeMarshallerCache().WithDynamicMarshallers(new TableEntityMarshaller());
 
-        // Live connection to azure table. 
+        // Live connection to azure table.
         private readonly TableClient _tableClient;
 
         public string TableName => _tableClient.Name;
 
-        public AzureTableValue(TableClient tableClient, RecordType recordType) : base(recordType)
+        public AzureTableValue(TableClient tableClient, RecordType recordType)
+            : base(recordType)
         {
             _tableClient = tableClient ?? throw new ArgumentNullException(nameof(tableClient));
         }
 
         // Don't implement since we should be using delegation
         public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
-
 
         public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
@@ -48,17 +51,16 @@ namespace Microsoft.PowerFx.AzureStorage
 
             var results = new List<DValue<RecordValue>>();
 
-            foreach(TableEntity qEntity in pages)
+            foreach (TableEntity qEntity in pages)
             {
-                var fxValue =_marshaller.Marshal(qEntity); // $$$ better?
+                var fxValue = _marshaller.Marshal(qEntity); // $$$ better?
 
-                // $$$ Ensure it has standard type? 
-                var dvalue = DValue<RecordValue>.Of((RecordValue) fxValue);
+                // $$$ Ensure it has standard type?
+                var dvalue = DValue<RecordValue>.Of((RecordValue)fxValue);
                 results.Add(dvalue);
             }
 
             return results;
         }
-
     }
 }

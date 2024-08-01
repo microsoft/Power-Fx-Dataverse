@@ -1,8 +1,5 @@
-﻿//------------------------------------------------------------------------------
-// <copyright company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core;
@@ -12,13 +9,13 @@ using Microsoft.Xrm.Sdk.Metadata;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Extensions on various Dataverse SDK classes. 
+    /// Extensions on various Dataverse SDK classes.
     /// </summary>
     public static class MetadataExtensions
     {
         /// <summary>
-        /// Helper to get all Logical 2 Display name map for the entire org. 
-        /// This efficiently fetches the table names, but not the metadata. 
+        /// Helper to get all Logical 2 Display name map for the entire org.
+        /// This efficiently fetches the table names, but not the metadata.
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>

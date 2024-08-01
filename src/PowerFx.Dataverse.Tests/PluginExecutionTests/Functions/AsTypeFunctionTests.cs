@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -43,11 +46,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.Functions
             var run = check.GetEvaluator();
             var result = await run.EvalAsync(CancellationToken.None, dv.SymbolValues);
 
-            if(isErrorValue.HasValue && isErrorValue.Value)
+            if (isErrorValue.HasValue && isErrorValue.Value)
             {
                 Assert.IsAssignableFrom<ErrorValue>(result);
             }
-            else if(isErrorValue.HasValue && !isErrorValue.Value)
+            else if (isErrorValue.HasValue && !isErrorValue.Value)
             {
                 var resultRecord = Assert.IsAssignableFrom<RecordValue>(result);
                 resultRecord.TryGetPrimaryKey(out var key);

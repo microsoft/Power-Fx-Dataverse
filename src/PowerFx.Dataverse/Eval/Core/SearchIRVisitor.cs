@@ -1,12 +1,15 @@
-﻿using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 using System;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
     // Search the IR for a condition.
-    // This will walk the entire tree until it gets a non-null TResult, and then returns it. 
-    // Beware some traversals (record fields, etc) are unordered. 
+    // This will walk the entire tree until it gets a non-null TResult, and then returns it.
+    // Beware some traversals (record fields, etc) are unordered.
     internal class SearchIRVisitor<TResult, TContext> : IRNodeVisitor<TResult, TContext>
         where TResult : class
     {
@@ -45,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                     return ret;
                 }
             }
+
             return null;
         }
 
@@ -68,6 +72,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                     return ret;
                 }
             }
+
             return null;
         }
 
@@ -113,6 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                     return ret;
                 }
             }
+
             return null;
         }
 
@@ -132,6 +138,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
                     return ret;
                 }
             }
+
             return null;
         }
     }
