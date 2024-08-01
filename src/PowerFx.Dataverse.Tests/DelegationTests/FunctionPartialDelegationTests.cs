@@ -3,18 +3,13 @@
 
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class FunctionPartialDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public FunctionPartialDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
 
         // do not give warning on tabular function, where source is delegable.
         [InlineData(1, "Concat(Filter(t1, Price < 120), Price & \",\")", "100,10,-10,", false, false)]

@@ -13,3 +13,7 @@ __retrieveSingle(local, __noop(), __noop(), , {localid:localid})
 __retrieveSingle(local, __noop(), __noop(), , {localid:localid})
 
 __retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price})
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {new_price:new_price})
+__retrieveMultiple(local, __noop(), __noop(), 999, , {new_price:new_price})
+__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price})
+__retrieveMultiple(local, __noop(), __noop(), 999, , {z:new_price})

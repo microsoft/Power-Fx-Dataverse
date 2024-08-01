@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -21,13 +20,13 @@ namespace Microsoft.PowerFx.Dataverse
     public class DependencyInfo
     {
         /// <summary>
-        /// A dictionary of field logical names on related records, indexed by the related entity logical name
+        /// A dictionary of field logical names on related records, indexed by the related entity logical name.
         /// </summary>
         /// <example>
         /// On account, the formula "Name & 'Primary Contact'.'Full Name'" would return
         ///    "contact" => { "fullname" }
         /// The formula "Name & 'Primary Contact'.'Full Name' & Sum(Contacts, 'Number Of Childeren')" would return
-        ///    "contact" => { "fullname", "numberofchildren" }
+        ///    "contact" => { "fullname", "numberofchildren" }.
         /// </example>
         public Dictionary<string, HashSet<string>> FieldReads { get; set; }
 
@@ -217,7 +216,14 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (node.Args[1] is TextLiteralNode field)
                     {
-                        AddFieldRead(tableLogicalName, field.LiteralValue);
+                        string fieldName = field.LiteralValue;
+
+                        if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+                        {
+                            fieldName = realFieldName;
+                        }
+
+                        AddFieldRead(tableLogicalName, fieldName);
                     }
                     else
                     {
@@ -342,7 +348,11 @@ namespace Microsoft.PowerFx.Dataverse
             // This will catch reads.
             foreach (var arg in node.Args.Skip(firstArgIsWrite ? 1 : 0))
             {
-                arg.Accept(this, context);
+                Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
+                                     ? context.WithColumnMap(columnMap)
+                                     : context;
+
+                arg.Accept(this, newContext);
             }
 
             return null;
@@ -474,6 +484,18 @@ namespace Microsoft.PowerFx.Dataverse
 
         public class Context
         {
+            public ColumnMap ColumnMap { get; private set; }
+
+            public Context()
+            {
+                ColumnMap = null;
+            }
+
+            public Context WithColumnMap(ColumnMap columnMap)
+            {
+                // replace any existing columnMap with the new one as the context is local only
+                return new Context() { ColumnMap = columnMap };
+            }
         }
 
         // Translate relationship names to actual field references.

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
@@ -72,5 +73,11 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         protected abstract Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken);
+
+        internal virtual bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
+        {
+            columnMap = null;
+            return false;
+        }
     }
 }

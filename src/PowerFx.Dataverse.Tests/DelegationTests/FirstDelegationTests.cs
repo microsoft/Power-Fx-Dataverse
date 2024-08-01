@@ -3,17 +3,11 @@
 
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class FirstDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public FirstDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -23,6 +17,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Price = -10
 
         [Theory]
+        [TestPriority(1)]
 
         //Basic case
         [InlineData(1, "First(t1).Price", 100.0, false, false)]

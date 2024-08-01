@@ -115,5 +115,19 @@ namespace Microsoft.PowerFx.Dataverse
                 return resultRecord;
             }
         }
+
+        internal override bool IsUsingColumnMap(Core.IR.Nodes.CallNode node, out ColumnMap columnMap)
+        {
+            if (node.Args.Count == 5 &&
+                node.Args[3] is Core.IR.Nodes.TextLiteralNode distinctNode &&
+                node.Args[4] is Core.IR.Nodes.RecordNode columnMapNode)
+            {
+                columnMap = new ColumnMap(columnMapNode, distinctNode);
+                return true;
+            }
+
+            columnMap = null;
+            return false;
+        }
     }
 }

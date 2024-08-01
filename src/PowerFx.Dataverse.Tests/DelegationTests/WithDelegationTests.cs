@@ -3,18 +3,13 @@
 
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class WithDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public WithDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         [Theory]
+        [TestPriority(1)]
 
         //Inner first which can still be delegated.
         [InlineData(1, "With({r1 : Filter(t1, Price < 120)}, With({r2: Filter(t1, Price >90)}, Filter(r2, Price = First(Filter(r1, Price > 90)).Price)))", 1, false, false)]

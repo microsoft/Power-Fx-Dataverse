@@ -3,17 +3,11 @@
 
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class FirstNDelegationTests : DelegationTests
+    public partial class DelegationTests
     {
-        public FirstNDelegationTests(ITestOutputHelper output)
-            : base(output)
-        {
-        }
-
         // Table 't1' has
         // 1st item with
         // Price = 100, Old_Price = 200,  Date = Date(2023, 6, 1), DateTime = DateTime(2023, 6, 1, 12, 0, 0)
@@ -23,6 +17,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Price = -10
 
         [Theory]
+        [TestPriority(1)]
 
         // Basic case.
         [InlineData(1, "FirstN(t1, 2)", 2, false, false)]
@@ -77,6 +72,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(34, "FirstN(et, 2)", 2, true, true)]
         [InlineData(35, "FirstN(et, 2)", 2, true, false)]
         [InlineData(36, "FirstN(et, 2)", 2, false, true)]
+
+        [InlineData(37, "FirstN(FirstN(et, 20), 2)", 2, true, true)]
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);

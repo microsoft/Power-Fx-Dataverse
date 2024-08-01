@@ -34,3 +34,11 @@ __retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {l
 Sort(__retrieveMultiple(local, __noop(), __noop(), 999, , {localid:localid, new_price:new_price, new_quantity:new_quantity}), (new_price))
 Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, ), (new_quantity))
 Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, ), (new_quantity))
+__retrieveMultiple(local, __gt(local, new_price, 0), __orderBy(__gt(local, new_price, 0), new_quantity, True), 999, )
+Sort(__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price}), (Value))
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}), Value)
+__retrieveMultiple(local, __gt(local, new_price, 0), __orderBy(__gt(local, new_price, 0), new_quantity, True), 999, )
+SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, ), new_quantity)
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), 999, , {localid:localid, new_price:new_price, new_quantity:new_quantity}), new_price)
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price}), Value)
+

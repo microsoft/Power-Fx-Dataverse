@@ -358,6 +358,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return new RetVal(node);
             }
 
+            if (context.CallerTableRetVal.HasColumnMap && context.CallerTableRetVal.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+            {
+                fieldName = realFieldName;
+            }
+
             if (!IsRelationDelegationAllowed(tableType, relations))
             {
                 return new RetVal(node);
