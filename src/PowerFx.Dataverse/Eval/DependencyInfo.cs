@@ -342,24 +342,9 @@ namespace Microsoft.PowerFx.Dataverse
             // This will catch reads.
             foreach (var arg in node.Args.Skip(firstArgIsWrite ? 1 : 0))
             {
-                Context newContext = context;
-
-                if (node.Function.GetType() == typeof(DelegatedRetrieveMultipleFunction) &&
-                    node.Args.Count == 6 &&
-                    node.Args[4] is TextLiteralNode distinctNode &&
-                    node.Args[5] is RecordNode columnMapNode)
-                {
-                    ColumnMap columnMap = new ColumnMap(ToRecordValue(columnMapNode), distinctNode.LiteralValue);
-                    newContext = newContext.SetColumnMap(columnMap);
-                }
-                else if (node.Function.GetType() == typeof(DelegatedRetrieveSingleFunction) &&
-                    node.Args.Count == 5 &&
-                    node.Args[3] is TextLiteralNode distinctNode2 &&
-                    node.Args[4] is RecordNode columnMapNode2)
-                {
-                    ColumnMap columnMap = new ColumnMap(ToRecordValue(columnMapNode2), distinctNode2.LiteralValue);
-                    newContext = newContext.SetColumnMap(columnMap);
-                }
+                Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
+                                     ? context.WithColumnMap(columnMap)
+                                     : context;
 
                 arg.Accept(this, newContext);
             }
@@ -367,10 +352,7 @@ namespace Microsoft.PowerFx.Dataverse
             return null;
         }
 
-        private RecordValue ToRecordValue(RecordNode recordNode)
-        {
-            return new InMemoryRecordValue(recordNode.IRContext, recordNode.Fields.Select(field => new NamedValue(field.Key.Value, FormulaValue.New((field.Value as TextLiteralNode).LiteralValue))).ToArray());
-        }
+
 
         public override RetVal Visit(BinaryOpNode node, Context context)
         {
@@ -503,13 +485,9 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap = null;
             }
 
-            public Context SetColumnMap(ColumnMap columnMap)
+            public Context WithColumnMap(ColumnMap columnMap)
             {
-                if (ColumnMap != null)
-                {
-                    throw new InvalidOperationException("Cannot set ColumnMap in a context already having a ColumnMap");
-                }
-
+                // replace any existing columnMap with the new one as the context is local only
                 return new Context() { ColumnMap = columnMap };
             }
         }

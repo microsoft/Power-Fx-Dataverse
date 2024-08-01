@@ -177,3 +177,5 @@ With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-00000000000
 ((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1
 ((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), __noop(), )).elastic_ref_local_et).field1
 ((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1
+((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(local, new_price, False), )).elastic_ref_local_et).field1
+(LookUp(__retrieveMultiple(local, __noop(), __noop(), 999, , {a:new_price, b:new_quantity}), (EqNumbers(Value(b),20)))).a

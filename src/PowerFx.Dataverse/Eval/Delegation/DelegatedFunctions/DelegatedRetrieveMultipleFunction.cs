@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
@@ -127,6 +128,20 @@ namespace Microsoft.PowerFx.Dataverse
             var columnValue = record.Value.GetField(column);
             var valueRecord = FormulaValue.NewRecordFromFields(new NamedValue("Value", columnValue));
             return DValue<RecordValue>.Of(valueRecord);
+        }
+
+        internal override bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
+        {
+            if (node.Args.Count == 6 &&
+                node.Args[4] is TextLiteralNode distinctNode &&
+                node.Args[5] is RecordNode columnMapNode)
+            {
+                columnMap = new ColumnMap(columnMapNode, distinctNode);
+                return true;
+            }
+
+            columnMap = null;
+            return false;
         }
     }
 }

@@ -177,3 +177,4 @@ With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1))
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), __noop(), )).elastic_ref_local_et).field1))
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1))
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(r, new_price, False), )).elastic_ref_local_et).field1))

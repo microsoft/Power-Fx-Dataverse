@@ -225,6 +225,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             _output.WriteLine("----");
 
+            int missing = 0;
+
             foreach (string f1 in new[] { "Distinct", "Filter", "First", "FirstN", "LookUp", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
             {
                 foreach (string f2 in new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
@@ -236,9 +238,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                         continue;
                     }
 
+                    missing++;
                     _output.WriteLine($"Missing {f}");
                 }
             }
+
+            Assert.True(0 == missing, $"Missing {missing} tests");
         }
     }
 

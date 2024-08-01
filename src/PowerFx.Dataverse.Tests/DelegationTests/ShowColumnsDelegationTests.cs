@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -27,6 +28,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(13, "First(ShowColumns(ShowColumns(t1, 'localid', 'new_price'), 'localid'))", 1, true)]
         [InlineData(14, "First(ShowColumns(ShowColumns(t1, 'localid'), 'new_price'))", 1, false)]
         [InlineData(15, "ShowColumns(Distinct(t1, 'new_price'), Value)", 1, true)]
+
+        [InlineData(16, "ShowColumns(SortByColumns(t1, Price), 'new_price')", 1, true)]
+        [InlineData(17, "ShowColumns(ShowColumns(t1, Price), 'new_price')", 1, true)]
+        [InlineData(18, "ShowColumns(ForAll(t1, Price), Value)", 1, true)]
+        [InlineData(19, "ShowColumns(ForAll(t1, { z: Price }), z)", 1, true)]
         public async Task ShowColumnDelegationAsync(int id, string expr, int expectedCount, bool isCheckSuccess, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "ShowColumnsDelegation.txt", expr, -2, expectedCount,

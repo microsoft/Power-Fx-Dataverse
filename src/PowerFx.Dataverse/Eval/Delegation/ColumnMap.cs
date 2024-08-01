@@ -55,6 +55,13 @@ namespace Microsoft.PowerFx.Dataverse
             _distinctColumn = string.IsNullOrEmpty(distinctColumn) ? null : distinctColumn;
         }
 
+        // Constructor used by DelegateFunction.IsUsingColumnMap
+        internal ColumnMap(RecordNode recordNode, TextLiteralNode textLiteralNode)
+        {
+            _dic = recordNode.Fields.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            _distinctColumn = textLiteralNode.LiteralValue;
+        }      
+
         // Constructor used for Distinct
         internal ColumnMap(string distinctColumn)
         {

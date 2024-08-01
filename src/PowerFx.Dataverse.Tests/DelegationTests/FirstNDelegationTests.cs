@@ -69,6 +69,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(34, "FirstN(et, 2)", 2, true, true)]
         [InlineData(35, "FirstN(et, 2)", 2, true, false)]
         [InlineData(36, "FirstN(et, 2)", 2, false, true)]
+
+        [InlineData(37, "FirstN(FirstN(et, 20), 2)", 2, true, true)]
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption,
