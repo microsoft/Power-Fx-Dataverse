@@ -13,7 +13,7 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    internal class ColumnMapRecordValue : RecordValue
+    public class ColumnMapRecordValue : RecordValue
     {
         // when a column map is used, we use a subset of columns and potentially rename them
         // the map contains (new column name, Entity column name) entries
