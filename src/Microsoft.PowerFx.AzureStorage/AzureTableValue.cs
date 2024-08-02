@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.AzureStorage
             foreach (TableEntity qEntity in pages)
             {
                 RecordValue fxValue = (RecordValue)_marshaller.Marshal(qEntity); // $$$ better?
-                RecordValue row = new AzureRecordValue(fxValue, dataverseDelegationParameters.ColumnMap?.AsStringDictionary());
+                RecordValue row = new ColumnMapRecordValue(fxValue, dataverseDelegationParameters.ColumnMap?.AsStringDictionary());
 
                 // $$$ Ensure it has standard type?
                 var dvalue = DValue<RecordValue>.Of(row);
