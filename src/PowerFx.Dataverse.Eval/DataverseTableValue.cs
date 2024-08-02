@@ -385,23 +385,11 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
 
-            RecordType recordType = Type.ToRecord();
-
-            if (columnMap != null)
-            {
-                RecordType rt = RecordType.Empty();
-
-                foreach (KeyValuePair<string, string> kvp in columnMap.AsStringDictionary())
-                {
-                    rt = rt.Add(kvp.Key /* new name */, recordType.GetFieldType(kvp.Value /* old name */));
-                }
-
-                recordType = rt;
-            }
-
             foreach (Entity entity in entityCollection.Entities)
             {
-                var row = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection, columnMap?.AsStringDictionary());
+                DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+                RecordValue row = new DataverseColumnMapRecordValue(dvRecordValue, columnMap?.AsStringDictionary());
+
                 list.Add(DValue<RecordValue>.Of(row));
             }
 

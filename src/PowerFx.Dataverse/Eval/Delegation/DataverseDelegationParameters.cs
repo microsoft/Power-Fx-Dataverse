@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal ISet<LinkEntity> Relation { get; init; }
 
-        internal ColumnMap ColumnMap { get; init; }
+        public ColumnMap ColumnMap { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;

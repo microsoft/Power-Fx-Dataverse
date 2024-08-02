@@ -89,17 +89,23 @@ namespace Microsoft.PowerFx.Dataverse
                     if (metadata.TryGetRelationship(field.Name, out var realAttributeName))
                     {
                         // Get primary key, set as guid.
-                        DataverseRecordValue dvr = field.Value as DataverseRecordValue;
-                        if (dvr == null)
+
+                        if (field.Value is DataverseRecordValue drv)
+                        {
+                            leanEntity.Attributes.Add(realAttributeName, drv.Entity.ToEntityReference());
+                        }
+                        else if (field.Value is DataverseColumnMapRecordValue dcmrv)
+                        {
+                            leanEntity.Attributes.Add(realAttributeName, dcmrv.RecordValue.Entity.ToEntityReference());
+                        }
+                        else
                         {
                             // Binder should have stopped this.
                             error = DataverseExtensions.DataverseError<RecordValue>($"{field.Name} should be a Dataverse Record", methodName);
+
                             return null;
                         }
 
-                        var entityRef = dvr.Entity.ToEntityReference();
-
-                        leanEntity.Attributes.Add(realAttributeName, entityRef);
                         continue;
                     }
                     else if (metadata.TryGetOneToManyRelationship(field.Name, out var relationship))
