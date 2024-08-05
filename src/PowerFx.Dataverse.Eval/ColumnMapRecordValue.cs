@@ -58,13 +58,14 @@ namespace Microsoft.PowerFx.Dataverse
             return isSuccess;
         }
 
-        public override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
+        protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             string innerFieldName = _columnMap == null ? fieldName : _columnMap[fieldName];
 
-            return await _recordValue.TryGetFieldAsync(fieldType, innerFieldName, cancellationToken).ConfigureAwait(false);
+            var value = await _recordValue.GetFieldAsync(innerFieldName, cancellationToken).ConfigureAwait(false);
+            return (true, value);
         }
 
         public override Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue changeRecord, CancellationToken cancellationToken)

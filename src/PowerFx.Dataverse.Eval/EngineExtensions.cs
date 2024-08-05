@@ -78,7 +78,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (columnMap != null && result.Any())
                 {
-                    RecordType recordType = ColumnMapRecordValue.ApplyMap(result.First().Value.Type, columnMap);
+                    TableType innerTableType = ((TableValue)table).Type;
+                    RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), columnMap);
+
                     List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
 
                     foreach (DValue<RecordValue> record in result)

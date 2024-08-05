@@ -110,7 +110,7 @@ namespace Microsoft.PowerFx.Dataverse
             return isSuccess;
         }
 
-        public override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
+        protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
         {
             FormulaValue result;
 
