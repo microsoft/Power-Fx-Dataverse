@@ -13,17 +13,17 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    internal class ColumnMapRecordValue : RecordValue
+    internal sealed class ColumnMapRecordValue : RecordValue
     {
         // when a column map is used, we use a subset of columns and potentially rename them
         // the map contains (new column name, Entity column name) entries
         // the recordType will be using the new set of column names
         // updates are not supported when a column map exists
-        protected readonly IReadOnlyDictionary<string, string> _columnMap;
+        private readonly IReadOnlyDictionary<string, string> _columnMap;
 
-        protected readonly RecordValue _recordValue;
+        private readonly RecordValue _recordValue;
 
-        public ColumnMapRecordValue(RecordValue recordValue, RecordType recordType, IReadOnlyDictionary<string, string> columnMap = null)
+        public ColumnMapRecordValue(RecordValue recordValue, RecordType recordType, IReadOnlyDictionary<string, string> columnMap)
             : base(recordType)
         {
             _columnMap = columnMap;
@@ -38,7 +38,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                 foreach (KeyValuePair<string, string> kvp in columnMap)
                 {
-                    rt = rt.Add(kvp.Key /* new name */, recordType.GetFieldType(kvp.Value /* old name */));
+                    string newName = kvp.Key;
+                    string oldName = kvp.Value;
+
+                    rt = rt.Add(newName, recordType.GetFieldType(oldName));
                 }
 
                 recordType = rt;
@@ -67,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override Task<DValue<RecordValue>> UpdateFieldsAsync(RecordValue changeRecord, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            throw new NotImplementedException("Cannot update a RecordValue wth a column map");
+            throw new NotImplementedException("Cannot update a RecordValue with a column map");
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)

@@ -35,12 +35,11 @@ namespace Microsoft.PowerFx.AzureStorage
         // Don't implement since we should be using delegation
         public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
 
-        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            cancel.ThrowIfCancellationRequested();
 
             string oDataFilter = parameters.GetOdataFilter();
-            DataverseDelegationParameters dataverseDelegationParameters = (DataverseDelegationParameters)parameters;
 
             int? top = parameters.Top;
             IEnumerable<string> select = parameters.GetColumns(); // which columns.
@@ -50,7 +49,7 @@ namespace Microsoft.PowerFx.AzureStorage
                 filter: oDataFilter,
                 maxPerPage: top,
                 select: select,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancel);
 
             var results = new List<DValue<RecordValue>>();
 
