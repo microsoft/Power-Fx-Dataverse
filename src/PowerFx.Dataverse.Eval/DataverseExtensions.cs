@@ -94,10 +94,6 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             leanEntity.Attributes.Add(realAttributeName, drv.Entity.ToEntityReference());
                         }
-                        else if (field.Value is DataverseColumnMapRecordValue dcmrv)
-                        {
-                            leanEntity.Attributes.Add(realAttributeName, dcmrv.RecordValue.Entity.ToEntityReference());
-                        }
                         else
                         {
                             // Binder should have stopped this.

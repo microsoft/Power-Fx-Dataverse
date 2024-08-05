@@ -70,9 +70,24 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
-            {
+            {                
                 cancellationToken.ThrowIfCancellationRequested();
-                var result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                
+                IReadOnlyDictionary<string, string> columnMap = ((DataverseDelegationParameters)delegationParameters).ColumnMap?.AsStringDictionary();
+
+                if (columnMap != null && result.Any())
+                {
+                    RecordType recordType = ColumnMapRecordValue.ApplyMap(result.First().Value.Type, columnMap);
+                    List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
+
+                    foreach (DValue<RecordValue> record in result)
+                    {
+                        list.Add(DValue<RecordValue>.Of(new ColumnMapRecordValue(record.Value, recordType, columnMap)));
+                    }
+
+                    result = list;
+                }
 
                 return result;
             }

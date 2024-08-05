@@ -46,6 +46,7 @@ namespace Microsoft.PowerFx.AzureStorage.Tests
             RecalcEngine engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
+            // Delegation but no column renaming here
             string expr = $"First({tableName})";
             CheckResult check = new CheckResult(engine).SetText(expr).SetBindingInfo(sv.SymbolTable);
 
@@ -80,6 +81,7 @@ namespace Microsoft.PowerFx.AzureStorage.Tests
             RecalcEngine engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
+            // Delegation with column renaming (Str -> Value)
             string expr = $"ForAll({tableName}, Str)";
             CheckResult check = new CheckResult(engine).SetText(expr).SetBindingInfo(sv.SymbolTable);
 

@@ -388,9 +388,8 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (Entity entity in entityCollection.Entities)
             {
                 DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
-                RecordValue row = new DataverseColumnMapRecordValue(dvRecordValue, columnMap?.AsStringDictionary());
-
-                list.Add(DValue<RecordValue>.Of(row));
+                
+                list.Add(DValue<RecordValue>.Of(dvRecordValue));
             }
 
             if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)

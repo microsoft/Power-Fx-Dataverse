@@ -159,17 +159,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     throw new NotImplementedException($"FieldType {amd.AttributeTypeName.Value} not supported");
 
-                case AttributeTypeCode.Lookup: // EntityReference
-                    if (fxValue is DataverseColumnMapRecordValue cmrv)
-                    {
-                        if (isUsedinQueryExpression)
-                        {
-                            return cmrv.RecordValue.EntityReference.Id;
-                        }
-
-                        return cmrv.RecordValue.EntityReference;
-                    }
-
+                case AttributeTypeCode.Lookup: // EntityReference                    
                     if (fxValue is DataverseRecordValue dv)
                     {
                         if (isUsedinQueryExpression)

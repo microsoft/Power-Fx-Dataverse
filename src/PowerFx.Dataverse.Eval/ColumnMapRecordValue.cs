@@ -13,7 +13,7 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class ColumnMapRecordValue : RecordValue
+    internal class ColumnMapRecordValue : RecordValue
     {
         // when a column map is used, we use a subset of columns and potentially rename them
         // the map contains (new column name, Entity column name) entries
@@ -23,14 +23,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected readonly RecordValue _recordValue;
 
-        public ColumnMapRecordValue(/*ISupportsColumnMap*/ RecordValue recordValue, IReadOnlyDictionary<string, string> columnMap = null)
-            : base(ApplyMap(recordValue.Type, columnMap))
+        public ColumnMapRecordValue(RecordValue recordValue, RecordType recordType, IReadOnlyDictionary<string, string> columnMap = null)
+            : base(recordType)
         {
             _columnMap = columnMap;
             _recordValue = recordValue;
         }
 
-        private static RecordType ApplyMap(RecordType recordType, IReadOnlyDictionary<string, string> columnMap = null)
+        public static RecordType ApplyMap(RecordType recordType, IReadOnlyDictionary<string, string> columnMap = null)
         {
             if (columnMap != null)
             {
