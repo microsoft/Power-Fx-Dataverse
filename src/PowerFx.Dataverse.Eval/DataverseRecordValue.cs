@@ -31,19 +31,12 @@ namespace Microsoft.PowerFx.Dataverse
         // Used to resolve entity relationships (dot operators).
         private readonly IConnectionValueContext _connection;
 
-        // when a column map is used, we use a subset of columns and potentially rename them
-        // the map contains (new column name, Entity column name) entries
-        // the recordType will be using the new set of column names
-        // updates are not supported when a column map exists
-        private readonly IReadOnlyDictionary<string, string> _columnMap;
-
-        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection, IReadOnlyDictionary<string, string> columnMap = null)
+        internal DataverseRecordValue(Entity entity, EntityMetadata metadata, RecordType recordType, IConnectionValueContext connection)
             : base(recordType)
         {
             _entity = entity ?? throw new ArgumentNullException(nameof(entity));
             _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _columnMap = columnMap;
 
             if (_entity.LogicalName != _metadata.LogicalName)
             {
@@ -121,17 +114,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             FormulaValue result;
 
-            string innerFieldName = _columnMap == null ? fieldName : _columnMap[fieldName];
-
             // If primary key is missing from Attributes, still get it from the entity.
-            if (innerFieldName == GetPrimaryKeyName())
+            if (fieldName == GetPrimaryKeyName())
             {
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
             }
 
             // IR should convert the fieldName from display to Logical Name.
-            if (!TryGetAttributeOrRelationship(innerFieldName, out var value) || value == null)
+            if (!TryGetAttributeOrRelationship(fieldName, out var value) || value == null)
             {
                 result = null;
                 return (false, result);
@@ -186,7 +177,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return (true, result);
             }
 
-            _metadata.TryGetAttribute(innerFieldName, out var attributeMetadata);
+            _metadata.TryGetAttribute(fieldName, out var attributeMetadata);
 
             // Not supported FormulaType types.
             var expressionError = new ExpressionError()
@@ -323,11 +314,6 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (_columnMap != null)
-            {
-                throw new InvalidOperationException($"Update operation not supported on {nameof(DataverseRecordValue)} with column map");
-            }
-
             var refreshedRecord = await DataverseRecordValue.UpdateEntityAsync(_entity.Id, record, Metadata, Type, _connection, cancellationToken);
 
             if (refreshedRecord.IsValue)
@@ -388,11 +374,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
         {
-            if (_columnMap != null)
-            {
-                throw new InvalidOperationException($"ToExpression not supported on {nameof(DataverseRecordValue)} with column map");
-            }
-
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
             var keyName = GetPrimaryKeyName();
@@ -409,11 +390,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override void ShallowCopyFieldInPlace(string fieldName)
         {
-            if (_columnMap != null)
-            {
-                throw new InvalidOperationException($"ShallowCopyFieldInPlace not supported on {nameof(DataverseRecordValue)} with column map");
-            }
-
             var clonedEntity = new Entity(Entity.LogicalName, Entity.Id);
 
             foreach (var attr in Entity.Attributes)

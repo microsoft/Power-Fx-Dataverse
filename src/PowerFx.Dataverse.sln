@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.Dataverse
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.PowerFx.AzureStorage", "Microsoft.PowerFx.AzureStorage\Microsoft.PowerFx.AzureStorage.csproj", "{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.PowerFx.AzureStorage.Tests", "Microsoft.PowerFx.AzureStorage.Tests\Microsoft.PowerFx.AzureStorage.Tests.csproj", "{9549801B-55BC-4C39-B4D5-DAEF1761C9CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA316CE6-E0E5-47DB-BEE3-53229794E7EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9549801B-55BC-4C39-B4D5-DAEF1761C9CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9549801B-55BC-4C39-B4D5-DAEF1761C9CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9549801B-55BC-4C39-B4D5-DAEF1761C9CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9549801B-55BC-4C39-B4D5-DAEF1761C9CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

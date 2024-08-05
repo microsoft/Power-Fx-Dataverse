@@ -37,6 +37,8 @@ namespace Microsoft.PowerFx.AzureStorage
 
         public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
+            cancel.ThrowIfCancellationRequested();
+
             string oDataFilter = parameters.GetOdataFilter();
 
             int? top = parameters.Top;
@@ -53,10 +55,10 @@ namespace Microsoft.PowerFx.AzureStorage
 
             foreach (TableEntity qEntity in pages)
             {
-                var fxValue = _marshaller.Marshal(qEntity); // $$$ better?
+                RecordValue fxValue = (RecordValue)_marshaller.Marshal(qEntity); // $$$ better?
 
                 // $$$ Ensure it has standard type?
-                var dvalue = DValue<RecordValue>.Of((RecordValue)fxValue);
+                var dvalue = DValue<RecordValue>.Of(fxValue);
                 results.Add(dvalue);
             }
 
