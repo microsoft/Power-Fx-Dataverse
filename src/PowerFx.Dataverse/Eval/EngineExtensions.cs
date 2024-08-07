@@ -42,8 +42,8 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="table">Table that the field belongs to.</param>
             /// <param name="fieldName">Field Name.</param>
             /// <param name="value">Field Formula Value.</param>
-            /// <returns>converted object</returns>
-            /// <exception cref="NotImplementedException"></exception>
+            /// <returns>converted object.</returns>
+            /// <exception cref="NotImplementedException">.</exception>
             public virtual object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {
                 throw new NotImplementedException();
@@ -58,14 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
                 return false;
-            }
-
-            internal CallNode MakeBlankCall()
-            {
-                var func = new DelegatedBlank(this);
-                var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
-                return node;
-            }
+            }            
 
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
