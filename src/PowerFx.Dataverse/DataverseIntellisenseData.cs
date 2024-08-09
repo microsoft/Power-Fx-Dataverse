@@ -47,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
         private CdsEntityMetadataProvider _provider;
 
         public DataverseIntellisenseData(IIntellisenseContext context, PowerFxConfig config, DType expectedType, TexlBinding binding, TexlFunction curFunc, TexlNode curNode, int argIndex, int argCount, IsValidSuggestion isValidSuggestionFunc, IList<DType> missingTypes, List<CommentToken> comments, CdsEntityMetadataProvider provider)
-            : base(config, config.EnumStore, context, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments)
+            : base(config, config.EnumStore, context, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments, null)
         {
             _provider = provider;
         }
