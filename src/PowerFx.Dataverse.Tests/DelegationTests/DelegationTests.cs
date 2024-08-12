@@ -97,6 +97,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     SaveExpression(expr, dv, opts, config, allSymbols);
                 }
 
+                _output.WriteLine(actualIr);
                 await DelegationTestUtility.CompareSnapShotAsync(file, actualIr, id, i == 1);
 
                 // Validate delegation warnings.
@@ -235,9 +236,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             int missing = 0;
 
-            foreach (string f1 in new[] { "Distinct", "Filter", "First", "FirstN", "LookUp", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+            string[] functionsReturningTable = new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" };
+            string[] functionsReturningRecord = new[] { "First", "LookUp" };
+
+            foreach (string f1 in functionsReturningTable.Union(functionsReturningRecord))
             {
-                foreach (string f2 in new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+                foreach (string f2 in functionsReturningTable)
                 {
                     string f = $"{f1}, {f2}";
 
