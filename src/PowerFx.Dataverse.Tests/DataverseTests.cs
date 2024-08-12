@@ -3086,9 +3086,16 @@ END
             return displayExpr;
         }
 
-        public static IIntellisenseResult Suggest(this DataverseEngine engine, string expression, int cursorPosition)
+        public static IIntellisenseResult Suggest(this DataverseEngine engine, string expression, int cursorPosition, string locale = null)
         {
-            IPowerFxScope scope = engine.CreateEditorScope(symbols: null);
+            CultureInfo errorLocale = locale == null ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfo(locale);
+
+            IPowerFxScope scope = new EditorContextScope(
+                    (expr) => new CheckResult(engine)
+                        .SetText(expr)
+                        .SetBindingInfo()
+                        .SetDefaultErrorCulture(errorLocale));
+
             var results = scope.Suggest(expression, cursorPosition);
             return results;
         }

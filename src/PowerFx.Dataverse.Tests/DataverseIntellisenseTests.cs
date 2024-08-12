@@ -35,7 +35,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         /// <returns>
         /// An intellisense result to be tested.
         /// </returns>
-        internal IIntellisenseResult Suggest(string expression, PowerFx2SqlEngine engine = null)
+        internal IIntellisenseResult Suggest(string expression, PowerFx2SqlEngine engine = null, string locale = null)
         {
             engine ??= Engine;
             Assert.NotNull(expression);
@@ -46,7 +46,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             expression = expression.Replace("|", string.Empty);
 
-            return engine.Suggest(expression, cursorPosition);
+            return engine.Suggest(expression, cursorPosition, locale);
         }
 
         /// <param name="expression">
@@ -200,6 +200,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // TODO: this will be false until additional math operations are implemented
             Assert.DoesNotContain(intellisense.Suggestions, sug => sug.DisplayText.Text == "Acos");
+        }
+
+        [Theory]
+        [InlineData("Text(|", "Converte um 'valor' em texto em um 'formato_texto' específico de número.", "Um valor a ser formatado em texto.", "pt-BR")]
+        [InlineData("Text(|", "Converts a 'value' to text in a specific number 'format_text'.", "A value to format into text.")]
+        public void CheckSuggestionsLocalized(string expression, string expectedDefinition, string expectedParameterDescription, string locale = null)
+        {
+            var intellisense = Suggest(expression, locale: locale);
+            var overload = intellisense.FunctionOverloads.First();
+
+            Assert.Equal(expectedDefinition, overload.Definition);
+            Assert.Equal(expectedParameterDescription, overload.FunctionParameterDescription);
         }
     }
 }
