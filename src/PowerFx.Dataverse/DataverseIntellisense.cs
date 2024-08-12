@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected internal override IntellisenseData CreateData(IIntellisenseContext context, DType expectedType, TexlBinding binding, TexlFunction curFunc, TexlNode curNode, int argIndex, int argCount, IsValidSuggestion isValidSuggestionFunc, IList<DType> missingTypes, List<CommentToken> comments, CultureInfo locale)
         {
-            return new DataverseIntellisenseData(context, _config, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments, _provider);
+            return new DataverseIntellisenseData(context, _config, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments, _provider, locale);
         }
     }
 }

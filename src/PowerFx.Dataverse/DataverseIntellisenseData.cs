@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.PowerFx.Core.Binding;
 using Microsoft.PowerFx.Core.Functions;
@@ -46,8 +47,8 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         private CdsEntityMetadataProvider _provider;
 
-        public DataverseIntellisenseData(IIntellisenseContext context, PowerFxConfig config, DType expectedType, TexlBinding binding, TexlFunction curFunc, TexlNode curNode, int argIndex, int argCount, IsValidSuggestion isValidSuggestionFunc, IList<DType> missingTypes, List<CommentToken> comments, CdsEntityMetadataProvider provider)
-            : base(config, config.EnumStore, context, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments, null)
+        public DataverseIntellisenseData(IIntellisenseContext context, PowerFxConfig config, DType expectedType, TexlBinding binding, TexlFunction curFunc, TexlNode curNode, int argIndex, int argCount, IsValidSuggestion isValidSuggestionFunc, IList<DType> missingTypes, List<CommentToken> comments, CdsEntityMetadataProvider provider, CultureInfo locale)
+            : base(config, config.EnumStore, context, expectedType, binding, curFunc, curNode, argIndex, argCount, isValidSuggestionFunc, missingTypes, comments, locale)
         {
             _provider = provider;
         }
