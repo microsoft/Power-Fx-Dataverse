@@ -236,7 +236,6 @@ namespace Microsoft.PowerFx.Dataverse
                                 : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, Negate(nodeLeft), call.Args[2]);
                     nodeLeft = arg0;
                 }
-
             }
             else if (TryGetFieldName(context, arg1, out _))
             {
@@ -297,8 +296,7 @@ namespace Microsoft.PowerFx.Dataverse
                 DKind.Time => new UnaryOpNode(node.IRContext, UnaryOpKind.NegateTime, node),
                 
                 _ => throw new InvalidOperationException($"Cannnot negate {node.IRContext.ResultType._type.Kind} kind")
-            };
-            
+            };            
         }
 
         private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind)
