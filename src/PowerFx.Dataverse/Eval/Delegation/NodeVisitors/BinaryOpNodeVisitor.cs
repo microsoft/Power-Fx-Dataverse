@@ -53,14 +53,14 @@ namespace Microsoft.PowerFx.Dataverse
                 tableType = (TableType)callerReturnType;
             }            
 
-            IntermediateNode nodeLeft = node.Left;
-            IntermediateNode nodeRight = node.Right;            
+            IntermediateNode binaryOpNodeLeft = node.Left;
+            IntermediateNode binaryOpNodeRight = node.Right;            
             
-            if (!TryGetFieldNameOrRelationField(context, nodeLeft, nodeRight, node.Op, out var fieldName, out var rightNode, out var operation, out var relations))
+            if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out string fieldName, out IntermediateNode rightNode, out BinaryOpKind operation, out IList<string> relations))
             {
-                TryRearrangeNodes(context, ref nodeLeft, ref nodeRight);
+                TryRearrangeNodes(context, ref binaryOpNodeLeft, ref binaryOpNodeRight);
 
-                if (!TryGetFieldNameOrRelationField(context, nodeLeft, nodeRight, node.Op, out fieldName, out rightNode, out operation, out relations))
+                if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out fieldName, out rightNode, out operation, out relations))
                 {
                     return new RetVal(node);
                 }
