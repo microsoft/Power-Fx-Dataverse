@@ -57,6 +57,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(26, "Filter(t1, ThisRecord.DateTime - 5 < Today())", 4, "localid", "0001, 0003, 0004, 0005", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData(27, "LookUp(t1, DateDiff(DateTime, Today()) < 20000)", 1, "localid", "0001")]
+        [InlineData(28, "LookUp(t1, DateDiff(DateTime, DateTime) < 2)", 1, "localid", "0001", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task LoopInvariantDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

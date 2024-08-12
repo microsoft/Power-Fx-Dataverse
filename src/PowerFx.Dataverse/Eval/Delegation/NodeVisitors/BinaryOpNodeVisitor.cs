@@ -206,7 +206,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode arg0 = call.Args[0];
             IntermediateNode arg1 = call.Args[1];
 
-            if (TryGetFieldName(context, arg0, out _))
+            if (TryGetFieldName(context, arg0, out _) && !TryGetFieldName(context, arg1, out _))
             {
                 // arg0 = datetime
                 // arg1 = end
@@ -237,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
                     nodeLeft = arg0;
                 }
             }
-            else if (TryGetFieldName(context, arg1, out _))
+            else if (TryGetFieldName(context, arg1, out _) && !TryGetFieldName(context, arg0, out _))
             {
                 // arg0 = start
                 // arg1 = datetime
