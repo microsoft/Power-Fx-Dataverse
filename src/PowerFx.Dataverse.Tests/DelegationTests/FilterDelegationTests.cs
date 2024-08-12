@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(32, "Filter(t1, Price < Abs(-120))", 3, false, true)]
 
         // These two tests have Coalesce for numeric literals where the NumberIsFloat version does not.
-        // Although not wrong, they should be the same.  Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
+        // Although not wrong, they should be the same. Being tracked with https://github.com/microsoft/Power-Fx/issues/1609
         // Date
         [InlineData(33, "Filter(t1, Date = Date(2023, 6, 1))", 1, false, false)]
         [InlineData(34, "Filter(t1, Date = Date(2023, 6, 1))", 1, true, true)]
@@ -74,7 +74,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(43, "With({r: t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, true, false)]
         [InlineData(44, "With({r: t1}, Filter(r, DateTime = Date(2023, 6, 1)))", 0, false, true)]
 
-        //Order doesn't matter
+        // Order doesn't matter
         [InlineData(45, "Filter(t1, 0 > Price)", 1, false, false)]
         [InlineData(46, "Filter(t1, 0 > Price)", 1, true, true)]
         [InlineData(47, "Filter(t1, 0 > Price)", 1, true, false)]
