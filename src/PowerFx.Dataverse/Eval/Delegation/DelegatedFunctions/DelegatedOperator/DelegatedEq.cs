@@ -8,7 +8,7 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Generates a delegation filter expression for the Equal operator
+    /// Generates a delegation filter expression for the Equal operator.
     /// </summary>
     internal class DelegatedEq : DelegatedOperatorFunction
     {

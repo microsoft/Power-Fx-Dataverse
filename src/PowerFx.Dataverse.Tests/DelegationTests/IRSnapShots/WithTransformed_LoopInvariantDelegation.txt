@@ -20,3 +20,8 @@ With({r:local}, (__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(Dat
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )))
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )))
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )))
+
+
+
+
+With({r:local}, (__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(20000))), __noop(), )))

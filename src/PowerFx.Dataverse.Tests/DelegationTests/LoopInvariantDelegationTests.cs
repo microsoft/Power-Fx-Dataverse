@@ -56,6 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(25, "Filter(t1, 7 + ThisRecord.DateTime < Today())", 4, "localid", "0001, 0003, 0004, 0005", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(26, "Filter(t1, ThisRecord.DateTime - 5 < Today())", 4, "localid", "0001, 0003, 0004, 0005", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData(27, "LookUp(t1, DateDiff(DateTime, Today()) < 20000)", 1, "localid", "0001")]
         public async Task LoopInvariantDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
             await DelegationTestAsync(
@@ -67,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 (FormulaValue result) => result switch
                 {
                     TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column) ? EmptyColumn(drv.Value.Fields) : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value)[^4..])),
-                    RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value),
+                    RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value)[^4..],
                     _ => throw FailException.ForFailure("Unexpected result")
                 },
                 true,
