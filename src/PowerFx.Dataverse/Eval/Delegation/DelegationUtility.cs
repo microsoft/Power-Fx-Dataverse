@@ -16,13 +16,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
     {
         public static RelationMetadata DeserializeRelatioMetadata(string serializedMetadata)
         {
-            var relationshipObj = JsonSerializer.Deserialize<RelationMetadata>(serializedMetadata, DelegationIRVisitor._options);
+            var relationshipObj = JsonSerializer.Deserialize<RelationMetadata>(serializedMetadata, DelegationIRVisitor._jsonSerializerDefaultOptions);
             return relationshipObj;
         }
 
         public static string SerializeRelationMetadata(RelationMetadata metadata)
         {
-            var serializedMetadata = JsonSerializer.Serialize(metadata, DelegationIRVisitor._options);
+            var serializedMetadata = JsonSerializer.Serialize(metadata, DelegationIRVisitor._jsonSerializerDefaultOptions);
             return serializedMetadata;
         }
 

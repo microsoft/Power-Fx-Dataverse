@@ -66,8 +66,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (erv == null || node2 == null)
                 {
-                    return new RetVal(node);
-                }
+                return new RetVal(node);
+            }
 
                 node = (BinaryOpNode)node2;
 
