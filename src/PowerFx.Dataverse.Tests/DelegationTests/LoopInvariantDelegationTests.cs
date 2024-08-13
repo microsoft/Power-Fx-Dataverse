@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             foreach (bool cdsNumberIsFloat in new[] { true, false })
             {
-                foreach (bool parserNumberIsFloatOption in new[] { /*true,*/ false })
+                foreach (bool parserNumberIsFloatOption in new[] { true, false })
                 {
                     int i = 1 + (4 * (id - 1)) + (cdsNumberIsFloat ? 0 : 2) + (parserNumberIsFloatOption ? 0 : 1);
                     await DelegationTestAsync(i, "LoopInvariantDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, expectedWarnings);
