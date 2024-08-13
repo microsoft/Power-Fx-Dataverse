@@ -317,12 +317,39 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
+        private RetVal CreateBehaviorErrorAndReturn(BinaryOpNode node, BehaviorIRVisitor.RetVal findBehaviorFunc)
+        {
+            var reason = new ExpressionError()
+            {
+                MessageArgs = new object[] { findBehaviorFunc.Name },
+                Span = node.IRContext.SourceContext,
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelegationBehaviorFunction
+            };
+
+            AddError(reason);
+            return new RetVal(node);
+        }
+
         private RetVal CreateThisRecordErrorAndReturn(CallNode node, ThisRecordIRVisitor.RetVal findThisRecord)
         {
             var reason = new ExpressionError()
             {
                 MessageArgs = new object[] { node.Function.Name },
                 Span = findThisRecord.Span,
+                Severity = ErrorSeverity.Warning,
+                ResourceKey = TexlStrings.WrnDelegationRefersThisRecord
+            };
+            AddError(reason);
+            return new RetVal(node);
+        }
+
+        private RetVal CreateThisRecordErrorAndReturn(BinaryOpNode node, ThisRecordIRVisitor.RetVal findThisRecord)
+        {
+            var reason = new ExpressionError()
+            {
+                MessageArgs = new object[] { node.Op.ToString() },
+                Span = node.IRContext.SourceContext,
                 Severity = ErrorSeverity.Warning,
                 ResourceKey = TexlStrings.WrnDelegationRefersThisRecord
             };

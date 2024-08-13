@@ -30,6 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public sealed partial class DelegationTests
     {
         internal static ConcurrentDictionary<string, List<string>> _delegationTests = new ConcurrentDictionary<string, List<string>>();
+        internal static ConcurrentDictionary<string, string> _delegationIds = new ConcurrentDictionary<string, string>();
 
         public readonly ITestOutputHelper _output;
 
@@ -40,6 +41,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
+            _output.WriteLine($"{id}");
+
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
@@ -65,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var fakeTableValue = new DataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
+            IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);          
 
             for (int i = 0; i < inputs.Count; i++)
             {
@@ -90,14 +93,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 // compare IR to verify the delegations are happening exactly where we expect
                 IRResult irNode = check.ApplyIR();
-                string actualIr = check.GetCompactIRString();
+                string actualIr = check.GetCompactIRString();                
 
                 if (i == 0)
                 {
-                    SaveExpression(expr, dv, opts, config, allSymbols);
+                    SaveExpression(id, file, expr, dv, opts, config, allSymbols);
                 }
 
-                await DelegationTestUtility.CompareSnapShotAsync(file, actualIr, id, i == 1);
+                _output.WriteLine(actualIr);
+                _output.WriteLine(check.PrintIR());
+
+                await DelegationTestUtility.CompareSnapShotAsync(id, file, actualIr, id, i == 1);
 
                 // Validate delegation warnings.
                 // error.ToString() will capture warning status, message, and source span.
@@ -127,6 +133,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                         Assert.IsType<ErrorValue>(result);
                     }
                 }
+                else if (result is ErrorValue ev)
+                {
+                    Assert.Fail($"Unexpected error: {string.Join("\r\n", ev.Errors.Select(er => er.Message))}");
+                }
                 else if (result is RecordValue rv)
                 {
                     Assert.Equal(1, expectedRows);
@@ -134,6 +144,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 else if (result is TableValue tv)
                 {
                     Assert.Equal(expectedRows, tv.Rows.Count());
+                }
+                else if (result is BlankValue)
+                {
+                    Assert.Equal(0, expectedRows);
                 }
                 else
                 {
@@ -162,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
-        private static void SaveExpression(string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
+        private static void SaveExpression(int id, string file, string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
         {
             RecalcEngine engine2 = new RecalcEngine(config);
             ConfigureEngine(dv, engine2, false);
@@ -174,6 +188,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             CallVisitor visitor = new CallVisitor();
             CallVisitor.RetVal retVal = visitor.StartVisit(irNode2.TopNode, null);
             _delegationTests.TryAdd(expr, retVal.Calls);
+            _delegationIds.AddOrUpdate($"{id:0000}-{file}", (s1) => null, (s1, s2) => throw new InvalidOperationException($"Conflicting test with {id} in file {file}"));
         }
 
         private static void ConfigureEngine(DataverseConnection dv, RecalcEngine engine, bool enableDelegation)
@@ -235,9 +250,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             int missing = 0;
 
-            foreach (string f1 in new[] { "Distinct", "Filter", "First", "FirstN", "LookUp", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+            string[] functionsReturningTable = new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" };
+            string[] functionsReturningRecord = new[] { "First", "LookUp" };
+
+            foreach (string f1 in functionsReturningTable.Union(functionsReturningRecord))
             {
-                foreach (string f2 in new[] { "Distinct", "Filter", "FirstN", "Sort", "SortByColumns", "ShowColumns", "ForAll" })
+                foreach (string f2 in functionsReturningTable)
                 {
                     string f = $"{f1}, {f2}";
 

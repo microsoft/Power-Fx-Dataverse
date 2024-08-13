@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return inputs;
         }
 
-        internal static async Task CompareSnapShotAsync(string fileName, string inputString, int lineNumber, bool isWithTransform)
+        internal static async Task CompareSnapShotAsync(int id, string fileName, string inputString, int lineNumber, bool isWithTransform)
         {
             var fileName2 = $"{(isWithTransform ? "WithTransformed_" : string.Empty)}{fileName}";
             var baseDirectory = Path.Join(Directory.GetCurrentDirectory(), "DelegationTests", "IRSnapShots", fileName2);
@@ -83,7 +83,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             // Compare the specified line with the input string, considering new lines as empty
             var targetLine = index < allLines.Length ? allLines[index] : string.Empty;
-            Assert.True(targetLine == inputString, $"File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
+            Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
 #endif
         }
 

@@ -5,12 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
@@ -50,15 +51,19 @@ namespace Microsoft.PowerFx.Dataverse
             else
             {
                 tableType = (TableType)callerReturnType;
-            }
+            }            
 
-            IList<string> relations = null;
-
-            // Either left or right is field (not both)
-            if (!TryGetFieldName(context, node.Left, node.Right, node.Op, out var fieldName, out var rightNode, out var operation) &&
-                !TryGetRelationField(context, node.Left, node.Right, node.Op, out fieldName, out relations, out rightNode, out operation))
+            IntermediateNode binaryOpNodeLeft = node.Left;
+            IntermediateNode binaryOpNodeRight = node.Right;            
+            
+            if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out string fieldName, out IntermediateNode rightNode, out BinaryOpKind operation, out IList<string> relations))
             {
-                return new RetVal(node);
+                TryRearrangeNodes(context, ref binaryOpNodeLeft, ref binaryOpNodeRight);
+
+                if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out fieldName, out rightNode, out operation, out relations))
+                {
+                    return new RetVal(node);
+                }
             }
 
             if (context.CallerTableRetVal.HasColumnMap && context.CallerTableRetVal.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
@@ -74,13 +79,13 @@ namespace Microsoft.PowerFx.Dataverse
             var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(caller, rightNode);
             if (findThisRecord != null)
             {
-                return CreateThisRecordErrorAndReturn(caller, findThisRecord);
+                return CreateThisRecordErrorAndReturn(node, findThisRecord);
             }
 
             var findBehaviorFunc = BehaviorIRVisitor.Find(rightNode);
             if (findBehaviorFunc != null)
             {
-                return CreateBehaviorErrorAndReturn(caller, findBehaviorFunc);
+                return CreateBehaviorErrorAndReturn(node, findBehaviorFunc);
             }
 
             var retDelegationVisitor = rightNode.Accept(this, context);
@@ -133,6 +138,136 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
+        private void TryRearrangeNodes(Context context, ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight)
+        {
+            // Let's just transform the left/right nodes and the rest of the code will validate if we can delegate and generate the delegated expression
+
+            // Check for CallNode presence
+            (CallNode call, bool isCallOnLeft, bool isCallOnRight) = nodeLeft is CallNode callLeft ? (callLeft, true, false) : nodeRight is CallNode callRight ? (callRight, false, true) : (null, false, false);
+
+            if (call != null)
+            {
+                if (call.Function == BuiltinFunctionsCore.DateAdd)
+                {
+                    ProcessDateAdd(ref nodeLeft, ref nodeRight, call, isCallOnLeft, isCallOnRight);
+                }
+               
+                if (call.Function == BuiltinFunctionsCore.DateDiff)
+                {
+                    ProcessDateDiff(ref nodeLeft, ref nodeRight, call, isCallOnLeft, isCallOnRight, context);
+                }
+            }
+        }
+
+        private bool TryGetFieldNameOrRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IList<string> relations)
+        {
+            relations = null;
+
+            // Either left or right is field (not both)
+            return TryGetFieldName(context, left, right, op, out fieldName, out node, out opKind) ||
+                   TryGetRelationField(context, left, right, op, out fieldName, out relations, out node, out opKind);
+        }
+
+        // Let's just transform the left/right nodes and the rest of the code will validate if we can delegate and generate the delegated expression
+        private static void ProcessDateAdd(ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, CallNode call, bool isCallOnLeft, bool isCallOnRight)
+        {
+            IntermediateNode arg0 = call.Args[0];            // datetime
+            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration            
+
+            if (isCallOnLeft)
+            {
+                // DateAdd(datetime, duration, [unit]) Op Xyz
+                //     datetime + duration Op Xyz
+                //     datetime Op Xyz - duration
+                // datetime Op DateAdd(Xyz, -duration, [unit])
+                nodeLeft = arg0;
+                nodeRight = call.Args.Count == 2
+                            ? new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1))
+                            : new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1), call.Args[2]);
+            }
+
+            if (isCallOnRight)
+            {
+                // Xyz Op DateAdd(datetime, duration, [unit])
+                //     Xyz Op datetime + duration
+                //     Xyz - duration Op datetime
+                // DateAdd(Xyz, -duration, [unit]) Op datetime
+                nodeLeft = call.Args.Count == 2
+                           ? new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, EnsureNumber(negArg1))
+                           : new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, EnsureNumber(negArg1), call.Args[2]);
+                nodeRight = arg0;
+            }
+        }
+
+        // Let's just transform the left/right nodes and the rest of the code will validate if we can delegate and generate the delegated expression
+        private void ProcessDateDiff(ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, CallNode call, bool isCallOnLeft, bool isCallOnRight, Context context)
+        {
+            // DateDiff(start, end, [unit])
+            IntermediateNode arg0 = call.Args[0];
+            IntermediateNode arg1 = call.Args[1];
+
+            if (TryGetFieldName(context, arg0, out _))
+            {
+                // arg0 = datetime
+                // arg1 = end
+
+                if (isCallOnLeft)
+                {
+                    // DateDiff(datetime, end, [unit]) Op Xyz
+                    //     end - datetime Op Xyz
+                    //     end Op Xyz + datetime
+                    //     end - Xyz Op datetime
+                    // DateAdd(end, -Xyz, [unit]) Op datetime
+                    nodeLeft = call.Args.Count == 2
+                               ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeRight)))
+                               : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeRight)), call.Args[2]);
+                    nodeRight = arg0;
+                }
+
+                if (isCallOnRight)
+                {
+                    // Xyz Op DateDiff(datetime, end, [unit])
+                    //     Xyz Op end - datetime
+                    //     datetime + Xyz Op end
+                    //     datetime Op end - Xyz
+                    // datetime Op DateAdd(end, -Xyz, [unit])
+                    nodeRight = call.Args.Count == 2
+                                ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeLeft)))
+                                : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeLeft)), call.Args[2]);
+                    nodeLeft = arg0;
+                }
+            }
+            else if (TryGetFieldName(context, arg1, out _))
+            {
+                // arg0 = start
+                // arg1 = datetime
+
+                if (isCallOnLeft)
+                {
+                    // DateDiff(start, datetime, [unit]) Op Xyz
+                    //     datetime - start Op Xyz
+                    //     datetime Op start + Xyz
+                    // datetime Op DateAdd(start, Xyz, [unit])
+                    nodeLeft = arg1;
+                    nodeRight = call.Args.Count == 2
+                                ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeRight))
+                                : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeRight), call.Args[2]);
+                }
+
+                if (isCallOnRight)
+                {
+                    // Xyz Op DateDiff(start, datetime, [unit])
+                    //     Xyz Op datetime - start
+                    //     Xyz + start Op datetime
+                    // DateAdd(start, Xyz) Op datetime
+                    nodeRight = arg1;
+                    nodeLeft = call.Args.Count == 2
+                               ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft))
+                               : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft), call.Args[2]);
+                }
+            }
+        }
+
         private bool IsRelationDelegationAllowed(TableType tableType, IList<string> relations)
         {
             // Assume we can delegate if we can't find the metadata. It is possible if the table was the output of ShowColumns().
@@ -145,6 +280,39 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
+        }
+
+        private static IntermediateNode EnsureNumber(IntermediateNode node)
+        {
+            if (node.IRContext.ResultType != FormulaType.Number && 
+                node.IRContext.ResultType != FormulaType.Decimal)
+            {
+                throw new InvalidOperationException("Expecting decimal or number type");
+            }
+
+            if (node.IRContext.ResultType == FormulaType.Number)
+            {
+                return node;
+            }
+
+            return new CallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, node);
+        }
+
+        private static IntermediateNode Negate(IntermediateNode node)
+        {
+            return node.IRContext.ResultType._type.Kind switch
+            {
+                // If existing negation exists, we optimize so that -(-x) => x
+                DKind.Number => node is UnaryOpNode uon && uon.Child.IRContext.ResultType == node.IRContext.ResultType && uon.Op == UnaryOpKind.Negate ? uon.Child : new UnaryOpNode(node.IRContext, UnaryOpKind.Negate, node),
+                DKind.Decimal => node is UnaryOpNode uon && uon.Child.IRContext.ResultType == node.IRContext.ResultType && uon.Op == UnaryOpKind.NegateDecimal ? uon.Child : new UnaryOpNode(node.IRContext, UnaryOpKind.NegateDecimal, node),
+
+                DKind.Date => new UnaryOpNode(node.IRContext, UnaryOpKind.NegateDate, node),
+                DKind.DateTime => new UnaryOpNode(node.IRContext, UnaryOpKind.NegateDateTime, node),
+                DKind.DateTimeNoTimeZone => new UnaryOpNode(node.IRContext, UnaryOpKind.NegateDateTime, node),
+                DKind.Time => new UnaryOpNode(node.IRContext, UnaryOpKind.NegateTime, node),
+                
+                _ => throw new InvalidOperationException($"Cannnot negate {node.IRContext.ResultType._type.Kind} kind")
+            };            
         }
 
         private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind)
