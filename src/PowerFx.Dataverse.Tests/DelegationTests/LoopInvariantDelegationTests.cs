@@ -61,26 +61,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(29, "LookUp(t1, DateDiff(DateTime, DateTime+0) < 2)", 1, "localid", "0001", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task LoopInvariantDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(
-                id,
-                "LoopInvariantDelegation.txt",
-                expr,
-                expectedRows,
-                expectedIds,
-                (FormulaValue result) => result switch
+            foreach (bool cdsNumberIsFloat in new[] { true, false })
+            {
+                foreach (bool parserNumberIsFloatOption in new[] { /*true,*/ false })
                 {
-                    TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column) ? EmptyColumn(drv.Value.Fields) : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value)[^4..])),
-                    RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value)[^4..],
-                    _ => throw FailException.ForFailure("Unexpected result")
-                },
-                true,
-                true,
-                null,
-                true,
-                true,
-                true,
-                expectedWarnings);
-        }        
+                    int i = 1 + (4 * (id - 1)) + (cdsNumberIsFloat ? 0 : 2) + (parserNumberIsFloatOption ? 0 : 1);
+                    await DelegationTestAsync(i, "LoopInvariantDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, expectedWarnings);
+                }
+            }
+        }
+
+        private static Func<FormulaValue, object> ResultGetter(string column)
+        {
+            return (FormulaValue result) => result switch
+            {
+                TableValue tv => string.Join(", ", tv.Rows.Select(drv => string.IsNullOrEmpty(column) ? EmptyColumn(drv.Value.Fields) : GetString(drv.Value.Fields.First(nv => nv.Name == column).Value)[^4..])),
+                RecordValue rv => GetString(rv.Fields.First(nv => nv.Name == column).Value)[^4..],
+                _ => throw FailException.ForFailure("Unexpected result")
+            };
+        }
 
         private static string EmptyColumn(IEnumerable<NamedValue> values)
         {

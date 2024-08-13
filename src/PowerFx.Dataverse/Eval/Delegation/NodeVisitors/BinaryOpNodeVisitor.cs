@@ -182,8 +182,8 @@ namespace Microsoft.PowerFx.Dataverse
                 // datetime Op DateAdd(Xyz, -duration, [unit])
                 nodeLeft = arg0;
                 nodeRight = call.Args.Count == 2
-                            ? new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, negArg1)
-                            : new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, negArg1, call.Args[2]);
+                            ? new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1))
+                            : new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1), call.Args[2]);
             }
 
             if (isCallOnRight)
@@ -193,8 +193,8 @@ namespace Microsoft.PowerFx.Dataverse
                 //     Xyz - duration Op datetime
                 // DateAdd(Xyz, -duration, [unit]) Op datetime
                 nodeLeft = call.Args.Count == 2
-                           ? new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, negArg1)
-                           : new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, negArg1, call.Args[2]);
+                           ? new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, EnsureNumber(negArg1))
+                           : new CallNode(IRContext.NotInSource(nodeLeft.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeLeft, EnsureNumber(negArg1), call.Args[2]);
                 nodeRight = arg0;
             }
         }
@@ -219,8 +219,8 @@ namespace Microsoft.PowerFx.Dataverse
                     //     end - Xyz Op datetime
                     // DateAdd(end, -Xyz, [unit]) Op datetime
                     nodeLeft = call.Args.Count == 2
-                               ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, Negate(nodeRight))
-                               : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, Negate(nodeRight), call.Args[2]);
+                               ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeRight)))
+                               : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeRight)), call.Args[2]);
                     nodeRight = arg0;
                 }
 
@@ -232,8 +232,8 @@ namespace Microsoft.PowerFx.Dataverse
                     //     datetime Op end - Xyz
                     // datetime Op DateAdd(end, -Xyz, [unit])
                     nodeRight = call.Args.Count == 2
-                                ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, Negate(nodeLeft))
-                                : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, Negate(nodeLeft), call.Args[2]);
+                                ? new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeLeft)))
+                                : new CallNode(IRContext.NotInSource(arg1.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg1, EnsureNumber(Negate(nodeLeft)), call.Args[2]);
                     nodeLeft = arg0;
                 }
             }
@@ -250,8 +250,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // datetime Op DateAdd(start, Xyz, [unit])
                     nodeLeft = arg1;
                     nodeRight = call.Args.Count == 2
-                                ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, nodeRight)
-                                : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, nodeRight, call.Args[2]);
+                                ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeRight))
+                                : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeRight), call.Args[2]);
                 }
 
                 if (isCallOnRight)
@@ -262,8 +262,8 @@ namespace Microsoft.PowerFx.Dataverse
                     // DateAdd(start, Xyz) Op datetime
                     nodeRight = arg1;
                     nodeLeft = call.Args.Count == 2
-                               ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, nodeLeft)
-                               : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, nodeLeft, call.Args[2]);
+                               ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft))
+                               : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft), call.Args[2]);
                 }
             }
         }
@@ -280,6 +280,22 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
+        }
+
+        private static IntermediateNode EnsureNumber(IntermediateNode node)
+        {
+            if (node.IRContext.ResultType != FormulaType.Number && 
+                node.IRContext.ResultType != FormulaType.Decimal)
+            {
+                throw new InvalidOperationException("Expecting decimal or number type");
+            }
+
+            if (node.IRContext.ResultType == FormulaType.Number)
+            {
+                return node;
+            }
+
+            return new CallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, node);
         }
 
         private static IntermediateNode Negate(IntermediateNode node)
