@@ -145,6 +145,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 {
                     Assert.Equal(expectedRows, tv.Rows.Count());
                 }
+                else if (result is BlankValue)
+                {
+                    Assert.Equal(0, expectedRows);
+                }
                 else
                 {
                     Assert.Fail($"Unexpected result type {result.GetType().Name}");

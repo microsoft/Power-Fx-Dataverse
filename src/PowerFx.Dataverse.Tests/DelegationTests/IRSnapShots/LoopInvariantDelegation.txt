@@ -114,3 +114,7 @@ LookUp(local, (LtNumbers(DateDiff(new_datetime, AddDateTimeAndDay(new_datetime,0
 LookUp(local, (LtDecimals(DateDiff(new_datetime, AddDateTimeAndDay(new_datetime,Float(0))),2)))
 LookUp(local, (LtNumbers(DateDiff(new_datetime, AddDateTimeAndDay(new_datetime,0)),2)))
 LookUp(local, (LtDecimals(DateDiff(new_datetime, AddDateTimeAndDay(new_datetime,Float(0))),2)))
+LookUp(local, (LtDateTime(DateAdd(new_datetime, 2),DateAdd(new_datetime, 2))))
+LookUp(local, (LtDateTime(DateAdd(new_datetime, Float(2)),DateAdd(new_datetime, Float(2)))))
+LookUp(local, (LtDateTime(DateAdd(new_datetime, 2),DateAdd(new_datetime, 2))))
+LookUp(local, (LtDateTime(DateAdd(new_datetime, Float(2)),DateAdd(new_datetime, Float(2)))))

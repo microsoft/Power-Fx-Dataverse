@@ -172,9 +172,9 @@ namespace Microsoft.PowerFx.Dataverse
         private static void ProcessDateAdd(ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, CallNode call, bool isCallOnLeft, bool isCallOnRight)
         {
             IntermediateNode arg0 = call.Args[0];            // datetime
-            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration
+            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration            
 
-            if (isCallOnLeft)
+            if (isCallOnLeft && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(nodeRight))
             {
                 // DateAdd(datetime, duration, [unit]) Op Xyz
                 //     datetime + duration Op Xyz
@@ -186,7 +186,7 @@ namespace Microsoft.PowerFx.Dataverse
                             : new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1), call.Args[2]);
             }
 
-            if (isCallOnRight)
+            if (isCallOnRight && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(nodeLeft))
             {
                 // Xyz Op DateAdd(datetime, duration, [unit])
                 //     Xyz Op datetime + duration
