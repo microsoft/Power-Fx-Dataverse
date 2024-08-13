@@ -174,7 +174,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode arg0 = call.Args[0];            // datetime
             IntermediateNode negArg1 = Negate(call.Args[1]); // -duration            
 
-            if (isCallOnLeft && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(nodeRight))
+            if (isCallOnLeft)
             {
                 // DateAdd(datetime, duration, [unit]) Op Xyz
                 //     datetime + duration Op Xyz
@@ -186,7 +186,7 @@ namespace Microsoft.PowerFx.Dataverse
                             : new CallNode(IRContext.NotInSource(nodeRight.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, nodeRight, EnsureNumber(negArg1), call.Args[2]);
             }
 
-            if (isCallOnRight && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(nodeLeft))
+            if (isCallOnRight)
             {
                 // Xyz Op DateAdd(datetime, duration, [unit])
                 //     Xyz Op datetime + duration
@@ -206,7 +206,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode arg0 = call.Args[0];
             IntermediateNode arg1 = call.Args[1];
 
-            if (TryGetFieldName(context, arg0, out _) && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(arg1))
+            if (TryGetFieldName(context, arg0, out _))
             {
                 // arg0 = datetime
                 // arg1 = end
@@ -237,7 +237,7 @@ namespace Microsoft.PowerFx.Dataverse
                     nodeLeft = arg0;
                 }
             }
-            else if (TryGetFieldName(context, arg1, out _) && !ScopeAccessNodeIRVisitor.ContainsScopeAccessNode(arg0))
+            else if (TryGetFieldName(context, arg1, out _))
             {
                 // arg0 = start
                 // arg1 = datetime
