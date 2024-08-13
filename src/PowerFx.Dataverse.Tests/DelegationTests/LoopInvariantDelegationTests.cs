@@ -57,17 +57,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(26, "Filter(t1, ThisRecord.DateTime - 5 < Today())", 4, "localid", "0001, 0003, 0004, 0005", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData(27, "LookUp(t1, DateDiff(DateTime, Today()) < 20000)", 1, "localid", "0001")]
-        [InlineData(28, "LookUp(t1, DateDiff(DateTime, DateTime) < 2)", 1, "localid", "0001", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(29, "LookUp(t1, DateDiff(DateTime, DateTime+0) < 2)", 1, "localid", "0001", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(30, "LookUp(t1, DateAdd(DateTime, 2) <  DateAdd(DateTime, 2))", 0, "localid", null, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]        
+        [InlineData(28, "LookUp(t1, DateDiff(DateTime, DateTime) < 2)", 1, "localid", "0001", "Warning 40-41: Can't delegate LtNumbers: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(29, "LookUp(t1, DateDiff(DateTime, DateTime+0) < 2)", 1, "localid", "0001", "Warning 42-43: Can't delegate LtNumbers: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(30, "LookUp(t1, DateAdd(DateTime, 2) <  DateAdd(DateTime, 2))", 0, "localid", null, "Warning 32-33: Can't delegate LtDateTime: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]        
         public async Task LoopInvariantDelegationAsync(int id, string expr, int expectedRows, string column, string expectedIds, params string[] expectedWarnings)
         {
             foreach (bool cdsNumberIsFloat in new[] { true, false })
             {
                 foreach (bool parserNumberIsFloatOption in new[] { true, false })
                 {
-                    int i = 1 + (4 * (id - 1)) + (cdsNumberIsFloat ? 0 : 2) + (parserNumberIsFloatOption ? 0 : 1);
-                    await DelegationTestAsync(i, "LoopInvariantDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, expectedWarnings);
+                    int i = 1 + (4 * (id - 1)) + (cdsNumberIsFloat ? 0 : 2) + (parserNumberIsFloatOption ? 0 : 1);                    
+                    await DelegationTestAsync(i, "LoopInvariantDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, expectedWarnings.Select(ew => parserNumberIsFloatOption ? ew : ew.Replace("LtNumbers", "LtDecimals")).ToArray());
                 }
             }
         }

@@ -79,13 +79,13 @@ namespace Microsoft.PowerFx.Dataverse
             var findThisRecord = ThisRecordIRVisitor.FindThisRecordUsage(caller, rightNode);
             if (findThisRecord != null)
             {
-                return CreateThisRecordErrorAndReturn(caller, findThisRecord);
+                return CreateThisRecordErrorAndReturn(node, findThisRecord);
             }
 
             var findBehaviorFunc = BehaviorIRVisitor.Find(rightNode);
             if (findBehaviorFunc != null)
             {
-                return CreateBehaviorErrorAndReturn(caller, findBehaviorFunc);
+                return CreateBehaviorErrorAndReturn(node, findBehaviorFunc);
             }
 
             var retDelegationVisitor = rightNode.Accept(this, context);
