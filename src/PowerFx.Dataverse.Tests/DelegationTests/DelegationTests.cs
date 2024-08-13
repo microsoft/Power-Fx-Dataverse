@@ -41,6 +41,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
+            _output.WriteLine($"{id}");
+
             AllTablesDisplayNameProvider map = new AllTablesDisplayNameProvider();
             map.Add("local", "t1");
             map.Add("remote", "t2");
@@ -66,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var fakeTableValue = new DataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
-            IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
+            IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);          
 
             for (int i = 0; i < inputs.Count; i++)
             {
@@ -91,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 // compare IR to verify the delegations are happening exactly where we expect
                 IRResult irNode = check.ApplyIR();
-                string actualIr = check.GetCompactIRString();
+                string actualIr = check.GetCompactIRString();                
 
                 if (i == 0)
                 {
@@ -99,7 +101,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 }
 
                 _output.WriteLine(actualIr);
-                await DelegationTestUtility.CompareSnapShotAsync(file, actualIr, id, i == 1);
+                _output.WriteLine(check.PrintIR());
+
+                await DelegationTestUtility.CompareSnapShotAsync(id, file, actualIr, id, i == 1);
 
                 // Validate delegation warnings.
                 // error.ToString() will capture warning status, message, and source span.
@@ -128,6 +132,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     {
                         Assert.IsType<ErrorValue>(result);
                     }
+                }
+                else if (result is ErrorValue ev)
+                {
+                    Assert.Fail($"Unexpected error: {string.Join("\r\n", ev.Errors.Select(er => er.Message))}");
                 }
                 else if (result is RecordValue rv)
                 {
