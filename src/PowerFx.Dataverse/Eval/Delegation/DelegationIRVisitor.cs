@@ -77,6 +77,14 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
                 node = left;
+
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && 
+                                                  left.IRContext.ResultType == FormulaType.String)
+                {
+                    opKind = op;
+                    return true;
+                }
+
                 if (TryInvertLeftRight(op, out var invertedOp))
                 {
                     opKind = invertedOp;
@@ -177,6 +185,11 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqTime ||
                 op == BinaryOpKind.EqOptionSetValue ||
                 op == BinaryOpKind.EqPolymorphic;
+        }
+
+        internal static bool IsOpKindInComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.InText;
         }
 
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)

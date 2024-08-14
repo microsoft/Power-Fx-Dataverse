@@ -55,6 +55,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 _op = ConditionOperator.GreaterEqual;
             }
+            else if (_binaryOpKind == BinaryOpKind.InText)
+            {
+                // case insensitive
+                _op = ConditionOperator.Contains;
+            }
             else
             {
                 throw new NotSupportedException($"Unsupported operation {_op}");

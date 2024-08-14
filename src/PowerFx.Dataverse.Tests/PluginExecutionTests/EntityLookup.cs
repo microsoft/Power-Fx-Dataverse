@@ -384,7 +384,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
 
             metadata.TryGetAttribute(condition.AttributeName, out var amd);
-            var comparer = new AttributeComparer(amd);
+            var comparer = new AttributeComparer(amd);            
 
             var fieldName = condition.EntityName != null ? "_" + condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")) + "_" + condition.AttributeName : condition.AttributeName;
             if (!TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value))
@@ -468,6 +468,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     }
 
                     break;
+
+                case ConditionOperator.Contains:
+
+                    // case insensitive, always on strings
+                    return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);                    
 
                 default:
                     throw new NotImplementedException($"Operator not supported: {condition.Operator.ToString()}");

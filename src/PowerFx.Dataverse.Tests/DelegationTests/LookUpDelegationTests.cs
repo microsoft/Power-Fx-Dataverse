@@ -273,6 +273,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(181, "LookUp(ForAll(t1, {a: Price, b: Quantity}), b = 20).a", 100.0, false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData(182, "LookUp(t1, DateAdd(DateTime, -2) < DateTime)", null, true, true, "Warning 33-34: Can't delegate LtDateTime: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(183, @"LookUp(t1, ""o"" & ""W1"" in Name).Price", 100.0, false, false)]
+        [InlineData(184, @"LookUp(t1, ""o"" & ""W1"" in Name).Price", 100.0, true, true)]
+        [InlineData(185, @"LookUp(t1, ""o"" & ""W1"" in Name).Price", 100.0, true, false)]
+        [InlineData(186, @"LookUp(t1, ""o"" & ""W1"" in Name).Price", 100.0, false, true)]
+        [InlineData(187, @"LookUp(t1, 1 in Name).Price", 100.0, false, false)]
+        [InlineData(188, @"LookUp(t1, 1 in Name).Price", 100.0, true, true)]
+        [InlineData(189, @"LookUp(t1, 1 in Name).Price", 100.0, true, false)]
+        [InlineData(190, @"LookUp(t1, 1 in Name).Price", 100.0, false, true)]        
+        [InlineData(191, @"LookUp(t1, ""oW1"" in Name).Price", 100.0, false, false)]
+        [InlineData(192, @"LookUp(t1, ""oW1"" in Name).Price", 100.0, true, true)]
+        [InlineData(193, @"LookUp(t1, ""oW1"" in Name).Price", 100.0, true, false)]
+        [InlineData(194, @"LookUp(t1, ""oW1"" in Name).Price", 100.0, false, true)]
+        [InlineData(195, @"With({r: t1}, LookUp(r, ""oW1"" in Name)).Price", 100.0, false, false)]
+        [InlineData(196, @"With({r: t1}, LookUp(r, ""oW1"" in Name)).Price", 100.0, true, true)]
+        [InlineData(197, @"With({r: t1}, LookUp(r, ""oW1"" in Name)).Price", 100.0, true, false)]
+        [InlineData(198, @"With({r: t1}, LookUp(r, ""oW1"" in Name)).Price", 100.0, false, true)]
+        [InlineData(199, @"LookUp(t1, ""oW1"" exactin Name)", null, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(200, @"LookUp(t1, ""oW1"" exactin Name)", null, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(201, @"LookUp(t1, ""oW1"" exactin Name)", null, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(202, @"LookUp(t1, ""oW1"" exactin Name)", null, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(203, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, false, false, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(204, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, true, true, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(205, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, true, false, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(206, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, false, true, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

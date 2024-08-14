@@ -197,6 +197,13 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
+            internal CallNode MakeInCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            {
+                var func = new DelegatedIn(this, operation);
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                return node;
+            }
+
             internal CallNode MakeAndCall(FormulaType tableType, IList<IntermediateNode> args, ScopeSymbol scope)
             {
                 var func = new DelegatedAnd(this);

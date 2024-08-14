@@ -130,6 +130,11 @@ namespace Microsoft.PowerFx.Dataverse
                 var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, geqNode);
             }
+            else if (operation == BinaryOpKind.InText)
+            {
+                var inNode = _hooks.MakeInCall(callerSourceTable, tableType, relations, fieldName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, inNode);
+            }
             else
             {
                 ret = new RetVal(node);
