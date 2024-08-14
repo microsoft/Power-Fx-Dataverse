@@ -409,6 +409,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             Console.WriteLine(dec.CacheSize);
         }
+        
+        [Fact(Skip="Only for live testing")]
+        public async Task DVLiveTest()
+        {            
+            var engine = new RecalcEngine();            
+            var serviceClient = new ServiceClient("AuthType=OAuth;redirectUri=http://localhost;Url=https://powerfxops.crm.dynamics.com/;LoginPrompt=Auto;TokenCacheStorePath=c:\\MyTokenCache\\toks.dat") { UseWebApi = false };
+            var dec = new DataverseEntityCache(serviceClient, maxEntries: 500, cacheLifeTime: new TimeSpan(0, 10, 0));           
+            var dvc = new DataverseConnection(dec, new XrmMetadataProvider(serviceClient));
+            dvc.AddTable("Accounts", "account");
+
+            RecalcEngine recalcEngine = new RecalcEngine();
+            RuntimeConfig rc = new RuntimeConfig(dvc.SymbolValues);
+            CheckResult cr = recalcEngine.Check("LookUp(Accounts, DateDiff(createdon, Today()) < 20000)", symbolTable: dvc.SymbolValues.SymbolTable);
+
+            FormulaValue fv = await cr.GetEvaluator().EvalAsync(CancellationToken.None, runtimeConfig: rc);            
+        }
 
         [SkippableFact]
         public void ExecuteViaInterpreterInsertRowsAsyncWithConflict()
