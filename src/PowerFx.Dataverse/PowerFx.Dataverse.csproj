@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.PowerFx.Dataverse.Parser" Version="$(DataverseParserVersion)" />
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" /> <!-- CVE-2024-21907 -->
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
