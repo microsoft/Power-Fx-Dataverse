@@ -187,11 +187,6 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.EqPolymorphic;
         }
 
-        internal static bool IsOpKindInComparison(BinaryOpKind op)
-        {
-            return op == BinaryOpKind.InText;
-        }
-
         internal static bool IsOpKindInequalityComparison(BinaryOpKind op)
         {
             return op == BinaryOpKind.NeqBoolean ||
