@@ -1,91 +1,91 @@
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)), (TimeUnit).Days))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)), (TimeUnit).Days))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, )
-__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, )
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(Today())), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)), (TimeUnit).Days))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateToDateTime(DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)), (TimeUnit).Days))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)))), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Days)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5, (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(NegateDecimal(5))), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-16T03:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __lt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(Float(5)), (TimeUnit).Hours)), __noop(), 999, ) | $filter=(new_datetime lt 2024-08-15T17:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(5)))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-10T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), 5)), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
+__retrieveMultiple(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(5))), __noop(), 999, ) | $filter=(new_datetime gt 2024-08-20T22:00:00.000Z)&$top=999
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,7),DateToDateTime(Today()))))
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,Float(7)),DateToDateTime(Today()))))
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,7),DateToDateTime(Today()))))
@@ -102,10 +102,10 @@ Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,Negate(5)),DateToDateTi
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,Float(NegateDecimal(5))),DateToDateTime(Today()))))
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,Negate(5)),DateToDateTime(Today()))))
 Filter(local, (LtDateTime(AddDateTimeAndDay(new_datetime,Float(NegateDecimal(5))),DateToDateTime(Today()))))
-__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(20000))), __noop(), )
-__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(20000)))), __noop(), )
-__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(20000))), __noop(), )
-__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(20000)))), __noop(), )
+__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(20000))), __noop(), ) | $filter=(new_datetime gt 1969-11-12T23:00:00.000Z)&$top=1
+__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(20000)))), __noop(), ) | $filter=(new_datetime gt 1969-11-12T23:00:00.000Z)&$top=1
+__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Negate(20000))), __noop(), ) | $filter=(new_datetime gt 1969-11-12T23:00:00.000Z)&$top=1
+__retrieveSingle(local, __gt(local, new_datetime, DateAdd(DateToDateTime(Today()), Float(NegateDecimal(20000)))), __noop(), ) | $filter=(new_datetime gt 1969-11-12T23:00:00.000Z)&$top=1
 LookUp(local, (LtNumbers(DateDiff(new_datetime, new_datetime),2)))
 LookUp(local, (LtDecimals(DateDiff(new_datetime, new_datetime),2)))
 LookUp(local, (LtNumbers(DateDiff(new_datetime, new_datetime),2)))

@@ -1,84 +1,79 @@
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, Float(100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Float(100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, Float(100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Decimal(20)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Value(Decimal(20))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(Decimal(20))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Decimal(20)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(NegateDecimal(120), 0))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price lt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price lt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(100)), __noop(), 999, ))) | $filter=(new_price lt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price lt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price le 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price le 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, Float(100)), __noop(), 999, ))) | $filter=(new_price le 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price le 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price eq 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price eq 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Float(100)), __noop(), 999, ))) | $filter=(new_price eq 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price eq 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(100)), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price ge 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price ge 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, Float(100)), __noop(), 999, ))) | $filter=(new_price ge 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gte(local, new_price, 100), __noop(), 999, ))) | $filter=(new_price ge 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(120)), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Decimal(20)), __noop(), 999, ))) | $filter=(new_price lt 20)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Value(Decimal(20))), __noop(), 999, ))) | $filter=(new_price lt 20)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(Decimal(20))), __noop(), 999, ))) | $filter=(new_price lt 20)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Decimal(20)), __noop(), 999, ))) | $filter=(new_price lt 20)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(NegateDecimal(120), 0))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
 
 
 
 
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(0)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, _count), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Value(_count)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(_count)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, _count), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, If(LtDecimals(1,0), (_count), (1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, Float(0)), __lt(local, new_price, Float(100))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(120)), __gt(local, new_price, Float(90))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, Float(0)), __gt(local, new_price, Float(90))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __eq(local, old_price, Blank())), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, )))
-
-
-
-
-
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(0)), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, 0), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, _count), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Value(_count)), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(_count)), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, _count), __noop(), 999, ))) | $filter=(new_price gt 100)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, If(LtDecimals(1,0), (_count), (1))), __noop(), 999, ))) | $filter=(new_price gt 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Value(If(LtNumbers(1,0), (_count), (Decimal(1))))), __noop(), 999, ))) | $filter=(new_price gt 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(If(LtDecimals(1,0), (_count), (1)))), __noop(), 999, ))) | $filter=(new_price gt 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, If(LtNumbers(1,0), (_count), (Decimal(1)))), __noop(), 999, ))) | $filter=(new_price gt 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, ))) | $filter=((new_price gt 0) and (new_price lt 100))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, ))) | $filter=((new_price gt 0) and (new_price lt 100))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, Float(0)), __lt(local, new_price, Float(100))), __noop(), 999, ))) | $filter=((new_price gt 0) and (new_price lt 100))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__gt(local, new_price, 0), __lt(local, new_price, 100)), __noop(), 999, ))) | $filter=((new_price gt 0) and (new_price lt 100))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 120) and (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 120) and (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(120)), __gt(local, new_price, Float(90))), __noop(), 999, ))) | $filter=((new_price lt 120) and (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 120), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 120) and (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 0) or (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 0) or (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, Float(0)), __gt(local, new_price, Float(90))), __noop(), 999, ))) | $filter=((new_price lt 0) or (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, ))) | $filter=((new_price lt 0) or (new_price gt 90))&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price eq null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price eq null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __eq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price eq null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __eq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price eq null))&$top=999
 
 
 
@@ -102,10 +97,15 @@ With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __
 
 
 
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
+
+
+
+
+
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
 
 
 
@@ -114,110 +114,110 @@ With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, DivDecimals(1,
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, DivNumbers(1,0)), __noop(), 999, )))
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(DivDecimals(1,0))), __noop(), 999, )))
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, DivNumbers(1,0)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, Float(0)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price lt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price ne null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price ne null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price ne null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ))) | $filter=(new_price ne null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating ne 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating ne 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating ne 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating ne 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, rating, (local_rating_optionSet).1), __noop(), 999, ))) | $filter=(rating eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, ))) | $filter=(new_currency gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, ))) | $filter=(new_currency gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, Float(0)), __noop(), 999, ))) | $filter=(new_currency gt 0)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_currency, 0), __noop(), 999, ))) | $filter=(new_currency gt 0)&$top=999
 
 
 
 With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, Float(10))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata ne 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata ne 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata ne 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata ne 10)&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, ))) | $filter=((vdata ne 10) and (new_price ne 10))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, ))) | $filter=((vdata ne 10) and (new_price ne 10))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, Float(10))), __noop(), 999, ))) | $filter=((vdata ne 10) and (new_price ne 10))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), 999, ))) | $filter=((vdata ne 10) and (new_price ne 10))&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), 999, ))) | $filter=(vdata eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data ne 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data ne 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data ne 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __neq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), 999, ))) | $filter=(data ne 200)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
+With({r:local}, (__retrieveMultiple(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), 999, ))) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=999 | $top=1
 
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1})))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1})))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), __noop(), 999, , {field1:field1})))
-With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1})))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Xyz:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
-
-
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, ))) | $filter=(field1 eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, ))) | $filter=(field1 eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), __noop(), 999, ))) | $filter=(field1 eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, ))) | $filter=(field1 eq 200)&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1}))) | $filter=(field1 eq 200)&$select=field1&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1}))) | $filter=(field1 eq 200)&$select=field1&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, Float(200)), __noop(), 999, , {field1:field1}))) | $filter=(field1 eq 200)&$select=field1&$top=999
+With({r:local}, (__retrieveMultiple(elastictable, __eq(elastictable, field1, 200), __noop(), 999, , {field1:field1}))) | $filter=(field1 eq 200)&$select=field1&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, ))) | $filter=(new_state eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, ))) | $filter=(new_state eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, ))) | $filter=(new_state eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), 999, ))) | $filter=(new_state eq 1)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderBy=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderBy=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Xyz:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderBy=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderBy=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
 
 
 
 
 
 
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, )))
-With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )))
+
+
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, ))) | $filter=contains(new_name,'oW1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999

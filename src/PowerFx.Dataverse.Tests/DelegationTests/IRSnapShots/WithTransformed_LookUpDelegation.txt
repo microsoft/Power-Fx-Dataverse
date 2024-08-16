@@ -1,29 +1,29 @@
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Float(255)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price)) | $filter=(new_price eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price)) | $filter=(new_price eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Float(255)), __noop(), )).new_price)) | $filter=(new_price eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, 255), __noop(), )).new_price)) | $filter=(new_price eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price eq null)&$top=1
 
 
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, Float(255)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price)) | $filter=(new_int eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price)) | $filter=(new_int eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, Float(255)), __noop(), )).new_price)) | $filter=(new_int eq 255)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_int, 255), __noop(), )).new_price)) | $filter=(new_int eq 255)&$top=1
 With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank())).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) and (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) and (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) and (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) and (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
+With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), )).new_price)) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), )).new_price)) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T10:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T10:00:00.000Z)&$top=1
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
@@ -35,10 +35,10 @@ With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 
 
 
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, Float(50)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, Float(50)), __noop(), )).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).new_price)) | $filter=(new_price gt 50)&$top=1
 With({r:local}, ((__retrieveGUID(local, If(True, (_g1), (_gMissing)), Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, (__retrieveGUID(local, _g1, Blank())).localid, Blank())).new_price))
 
@@ -51,10 +51,10 @@ With({r:local}, ((__retrieveGUID(local, (__retrieveGUID(local, _g1, Blank())).lo
 
 
 
-With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price))
-With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price))
-With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, Float(50)), __noop(), )).localid, Blank())).new_price))
-With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price))
+With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, Float(50)), __noop(), )).localid, Blank())).new_price)) | $filter=(new_price gt 50)&$top=1
+With({r:local}, ((__retrieveGUID(local, (__retrieveSingle(local, __gt(local, new_price, 50), __noop(), )).localid, Blank())).new_price)) | $filter=(new_price gt 50)&$top=1
 With({r:local}, ((__retrieveGUID(local, (First(Table({Value:_g1}, {Value:_gMissing}))).Value, Blank())).new_price))
 
 
@@ -75,22 +75,22 @@ With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, If(NumberToBool
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, If(DecimalToBoolean(DivDecimals(1,0)), (255))), __noop(), )).new_price))
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Float(If(DecimalToBoolean(DivDecimals(1,0)), (255)))), __noop(), )).new_price))
 With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, If(NumberToBoolean(DivNumbers(1,0)), (255))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, Float(0)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price ne null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price ne null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price ne null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price ne null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price lt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price lt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price lt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_price, Blank()), __noop(), )).new_price)) | $filter=(new_price lt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price)) | $filter=(new_currency gt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price)) | $filter=(new_currency gt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, Float(0)), __noop(), )).new_price)) | $filter=(new_currency gt 0)&$top=1
+With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop(), )).new_price)) | $filter=(new_currency gt 0)&$top=1
 
 
 
@@ -98,35 +98,35 @@ With({r:local}, ((__retrieveSingle(local, __gt(local, new_currency, 0), __noop()
 
 
 
-With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, Float(10))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, Float(20)), __noop(), new_quantity, {Value:new_quantity})).Value))
-With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value))
+With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata eq 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata eq 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata eq 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata eq 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata ne 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata ne 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata ne 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata ne 10)&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price)) | $filter=((vdata ne 10) and (new_price ne 10))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price)) | $filter=((vdata ne 10) and (new_price ne 10))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, Float(10), Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, Float(10))), __noop(), )).new_price)) | $filter=((vdata ne 10) and (new_price ne 10))&$top=1
+With({r:local}, ((__retrieveSingle(local, __and(__neq(local, vdata, 10, Table({Value:{"ReferencingFieldName":"virtual"}})), __neq(local, new_price, 10)), __noop(), )).new_price)) | $filter=((vdata ne 10) and (new_price ne 10))&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, vdata, Blank(), Table({Value:{"ReferencingFieldName":"virtual"}})), __noop(), )).new_price)) | $filter=(vdata eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price)) | $filter=(data eq 200)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price)) | $filter=(data eq 200)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, data, Float(200), Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price)) | $filter=(data eq 200)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, data, 200, Table({Value:{"ReferencingFieldName":"new_polyfield","isPolymorphic":true,"ReferencedEntityName":"remote"}})), __noop(), )).new_price)) | $filter=(data eq 200)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield eq 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __neq(local, _new_polyfield_value, __retrieveSingle(remote, __noop(), __noop(), )), __noop(), )).new_price)) | $filter=(new_polyfield ne 00000000-0000-0000-0000-000000000002)&$top=1 | $top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value)) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value)) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, Float(20)), __noop(), new_quantity, {Value:new_quantity})).Value)) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, new_quantity, 20), __noop(), new_quantity, {Value:new_quantity})).Value)) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=1
 With({r:local}, ((__retrieveGUID(local, If(LtNumbers(1,0), (GUID(00000000-0000-0000-0000-000000000001))), Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, If(NumberToBoolean(DivNumbers(1,0)), (GUID(00000000-0000-0000-0000-000000000001))), Blank())).new_price))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1))
@@ -137,58 +137,58 @@ With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-0000
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), p1)).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, Float(199))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, Float(199))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
-With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1))
+With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=((partitionid ne 'p1') and (etid eq 00000000-0000-0000-0000-000000000007))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=((partitionid ne 'p1') and (etid eq 00000000-0000-0000-0000-000000000007))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=((partitionid ne 'p1') and (etid eq 00000000-0000-0000-0000-000000000007))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__neq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=((partitionid ne 'p1') and (etid eq 00000000-0000-0000-0000-000000000007))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=( and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=( and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, Float(199))), __noop(), )).field1)) | $filter=( and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__eq(elastictable, partitionid, p1), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=( and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, Float(199))), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __gt(elastictable, field1, 199)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (field1 gt 199))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (partitionid eq 'p2') and (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (partitionid eq 'p2') and (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (partitionid eq 'p2') and (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __and(__and(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __eq(elastictable, partitionid, p2)), __noop(), )).field1)) | $filter=(( and (etid eq 00000000-0000-0000-0000-000000000007)) and (partitionid eq 'p2') and (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=( or (partitionid eq null) or (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=( or (partitionid eq null) or (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=( or (partitionid eq null) or (partitionid eq 'p1'))&$top=1
+With({r:local}, ((__retrieveSingle(elastictable, __or(__eq(elastictable, partitionid, p1), __eq(elastictable, etid, GUID(00000000-0000-0000-0000-000000000007))), __noop(), )).field1)) | $filter=( or (partitionid eq null) or (partitionid eq 'p1'))&$top=1
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtNumbers(1,0), (p1)))).field1))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtDecimals(1,0), (p1)))).field1))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtDecimals(1,0), (p1)))).field1))
 With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), If(LtNumbers(1,0), (p1)))).field1))
-With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1))
-With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1))
-With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1))
-With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price))
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1))
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1))
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), __noop(), )).elastic_ref_local_et).field1))
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1))
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(r, new_price, False), )).elastic_ref_local_et).field1))
+With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1)) | $filter=(new_name eq 'p1')&$top=1
+With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1)) | $filter=(new_name eq 'p1')&$top=1
+With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1)) | $filter=(new_name eq 'p1')&$top=1
+With({r:local}, ((__retrieveGUID(elastictable, GUID(00000000-0000-0000-0000-000000000007), (__retrieveSingle(local, __eq(local, new_name, p1), __noop(), )).new_name)).field1)) | $filter=(new_name eq 'p1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price)) | $filter=(new_state eq 1)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price)) | $filter=(new_state eq 1)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price)) | $filter=(new_state eq 1)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, (local_new_state_optionSet).1), __noop(), )).new_price)) | $filter=(new_state eq 1)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price)) | $filter=(new_state eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price)) | $filter=(new_state eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price)) | $filter=(new_state eq null)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), )).new_price)) | $filter=(new_state eq null)&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(r, new_price, False), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$orderBy=new_price desc&$top=1
 
 
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, DecimalToText(1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, NumberToText(1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, DecimalToText(1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, NumberToText(1)), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price))
-With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price))
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, DecimalToText(1)), __noop(), )).new_price)) | $filter=contains(new_name,'1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, NumberToText(1)), __noop(), )).new_price)) | $filter=contains(new_name,'1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, DecimalToText(1)), __noop(), )).new_price)) | $filter=contains(new_name,'1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, NumberToText(1)), __noop(), )).new_price)) | $filter=contains(new_name,'1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1

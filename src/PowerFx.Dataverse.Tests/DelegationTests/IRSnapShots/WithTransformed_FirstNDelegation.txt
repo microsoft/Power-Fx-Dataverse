@@ -1,19 +1,19 @@
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(2), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(2), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(_count), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(_count), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(_count), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(_count), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), Float(10), )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), 10, )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(90)), __noop(), Float(10), )))
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), 10, )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), 10, ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, Float(90)), __noop(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 90), __noop(), 10, ))) | $filter=(new_price gt 90)&$top=10
 
 
 
@@ -26,12 +26,12 @@ With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecima
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), If(LtNumbers(1,0), (1)), )))
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (1))), )))
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), If(LtNumbers(1,0), (1)), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, )))
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), )))
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, )))
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), )))
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, )))
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $top=2

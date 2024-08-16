@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public SingleOrgPolicy(DisplayNameProvider displayNameLookup)
         {
-            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));
+            AllTables = DisplayNameUtility.MakeUnique(displayNameLookup.LogicalToDisplayPairs.ToDictionary(kvp => kvp.Key.Value, kvp => kvp.Value.Value));           
         }
 
         // HElper to create a DV connection over the given service client.
@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private ReadOnlySymbolTable _allEntitieSymbols;
+        private ReadOnlySymbolTable _allEntitieSymbols;        
 
         internal override ReadOnlySymbolTable CreateSymbols(CdsEntityMetadataProvider metadataCache)
         {
@@ -89,6 +89,8 @@ namespace Microsoft.PowerFx.Dataverse
             _symbols = ReadOnlySymbolTable.Compose(_allEntitieSymbols, optionSetSymbols);
             return _symbols;
         }
+
+        internal virtual DataverseTableValue NewDataverseTableValue(RecordType recordType, DataverseConnection dataverseConnection, EntityMetadata entityMetadata) => new DataverseTableValue(recordType, dataverseConnection, entityMetadata);
 
         // This can be called on multiple threads, and multiple times.
         // Called lazily when we encounter a new name and add the table.
@@ -109,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
             EntityMetadata entityMetadata = _parent.GetMetadataOrThrow(logicalName);
             RecordType recordType = _parent._metadataCache.GetRecordType(logicalName);
 
-            DataverseTableValue tableValue = new DataverseTableValue(recordType, _parent, entityMetadata);
+            DataverseTableValue tableValue = NewDataverseTableValue(recordType, _parent, entityMetadata);
 
             // This is critical for dependency finder.
             Contract.Assert(logicalName == tableValue.Type.TableSymbolName);

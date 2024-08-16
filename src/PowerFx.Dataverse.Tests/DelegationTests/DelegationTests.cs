@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Types;
-using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -49,7 +47,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             map.Add("virtualremote", "t3");
             map.Add("elastictable", "et");
 
-            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: new SingleOrgPolicy(map), withExtraEntity: withExtraEntity);
+            TestSingleOrgPolicy singleOrgPolicy = new TestSingleOrgPolicy(map);
+            (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: singleOrgPolicy, withExtraEntity: withExtraEntity);
             ParserOptions opts = parserNumberIsFloatOption ? PluginExecutionTests._parserAllowSideEffects_NumberIsFloat : PluginExecutionTests._parserAllowSideEffects;
 
             PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
@@ -65,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var tableT1Type = dv.GetRecordType("local");
             var fakeSymbolTable = new SymbolTable();
             var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1Type.ToTable());
-            var fakeTableValue = new DataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
+            var fakeTableValue = new TestDataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
             IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);          
@@ -103,8 +102,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 _output.WriteLine(actualIr);
                 _output.WriteLine(check.PrintIR());
 
-                await DelegationTestUtility.CompareSnapShotAsync(id, file, actualIr, id, i == 1);
-
                 // Validate delegation warnings.
                 // error.ToString() will capture warning status, message, and source span.
                 IEnumerable<ExpressionError> errors = check.ApplyErrors();
@@ -125,6 +122,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
 
                 FormulaValue result = await run.EvalAsync(CancellationToken.None, allValues);
+
+                IEnumerable<DataverseDelegationParameters> ddpl = singleOrgPolicy.GetDelegationParameters();
+                string oDataStrings = string.Join(" | ", ddpl.Select(dp => dp.ODataString));
+
+                await DelegationTestUtility.CompareSnapShotAsync(id, file, string.IsNullOrEmpty(oDataStrings) ? actualIr : $"{actualIr} | {oDataStrings}", id, i == 1);
+
+                _output.WriteLine(string.Empty);
+                _output.WriteLine($"OData strings: {oDataStrings}");
 
                 if (expectedRows < 0)
                 {
