@@ -14,12 +14,14 @@ namespace Microsoft.PowerFx.Dataverse
 {
     // DelegationParameters implemented using Xrm filter classes.
     [Obsolete("Preview")]
-    [DebuggerDisplay("{ODataString}")]
     public class DataverseDelegationParameters : DelegationParameters
     {
         public const string Odata_Filter = "$filter";
+
         public const string Odata_OrderBy = "$orderby";
+
         public const string Odata_Select = "$select";
+
         public const string Odata_Top = "$top";
 
         // Systems can get the filter expression directrly and translate.
