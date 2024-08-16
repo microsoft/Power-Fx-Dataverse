@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        protected async Task<List<DValue<RecordValue>>> GetRowsAsync()
+        protected virtual async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
             List<DValue<RecordValue>> list = new ();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
@@ -77,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
 
@@ -92,7 +92,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        public async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             var entityReference = new EntityReference(this._entityMetadata.LogicalName, id);
 
@@ -117,7 +117,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        public virtual async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -141,7 +141,7 @@ namespace Microsoft.PowerFx.Dataverse
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
-        internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
+        internal virtual async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -161,7 +161,7 @@ namespace Microsoft.PowerFx.Dataverse
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
-        internal async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, string partitionId, CancellationToken cancellationToken)
+        internal virtual async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, string partitionId, CancellationToken cancellationToken)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
             cancellationToken.ThrowIfCancellationRequested();

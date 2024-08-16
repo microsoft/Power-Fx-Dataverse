@@ -42,8 +42,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                  // Set this if you need to regenerate the snapshot files.
 #if REGENERATE
-                 baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0", "win-x64"), string.Empty)
-                              .Replace(Path.Join("bin", "Release", "net7.0", "win-x64"), string.Empty)
+                 baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0"), string.Empty)
+                              .Replace(Path.Join("bin", "Release", "net7.0"), string.Empty);
 #else
                  baseDirectory;
 #endif
@@ -55,12 +55,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 {
                     for (int i = 1; i < lineNumber; i++)
                     {
-                        await sw.WriteLineAsync("");
+                        await sw.WriteLineAsync(string.Empty);
                     }
 
                     await sw.WriteLineAsync(inputString);
                 }
-            }
+            }            
 #endif
 
             string[] allLines = await File.ReadAllLinesAsync(path);
