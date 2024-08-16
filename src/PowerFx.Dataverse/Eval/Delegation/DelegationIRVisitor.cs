@@ -99,11 +99,8 @@ namespace Microsoft.PowerFx.Dataverse
                     opKind = invertedOp;
                     return true;
                 }
-                else
-                {
-                    opKind = default;
-                    return false;
-                }
+                
+                // will return false
             }
             else if (TryGetFieldName(context, left, out var leftField2) && TryGetFieldName(context, right, out var rightField2))
             {
@@ -124,14 +121,11 @@ namespace Microsoft.PowerFx.Dataverse
                         this.AddError(reason);
                     }
 
-                    opKind = op;
-                    fieldName = default;
-                    node = default;
-                    return false;
+                    // will return false
                 }
             }
 
-            opKind = op;
+            opKind = default;
             node = default;
             fieldName = default;
             return false;
