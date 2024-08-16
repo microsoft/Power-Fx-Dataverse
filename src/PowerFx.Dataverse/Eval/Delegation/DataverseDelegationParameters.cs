@@ -96,62 +96,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public string ODataString
-        {
-            get
-            {
-                void AddSeparatorIfNeeded(StringBuilder sb)
-                {
-                    if (sb.Length > 0)
-                    {
-                        sb.Append('&');
-                    }
-                }
-
-                void AddEqual(StringBuilder sb)
-                {
-                    sb.Append('=');
-                }
-
-                StringBuilder sb = new StringBuilder();
-
-                IReadOnlyDictionary<string, string> ode = ODataElements;
-
-                if (ode.TryGetValue(Odata_Filter, out string filter))
-                {
-                    sb.Append(Odata_Filter);
-                    AddEqual(sb);
-                    sb.Append(filter);
-                }
-
-                if (ode.TryGetValue(Odata_OrderBy, out string orderBy))
-                {
-                    AddSeparatorIfNeeded(sb);
-                    sb.Append(Odata_OrderBy);
-                    AddEqual(sb);
-                    sb.Append(orderBy);
-                }
-
-                if (ode.TryGetValue(Odata_Select, out string select))
-                {
-                    AddSeparatorIfNeeded(sb);
-                    sb.Append(Odata_Select);
-                    AddEqual(sb);
-                    sb.Append(select);
-                }
-
-                if (ode.TryGetValue(Odata_Top, out string top))
-                {
-                    AddSeparatorIfNeeded(sb);
-                    sb.Append(Odata_Top);
-                    AddEqual(sb);
-                    sb.Append(top);
-                }
-
-                return sb.ToString();
-            }
-        }
-
         public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Columns;
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
