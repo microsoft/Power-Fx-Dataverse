@@ -19,11 +19,11 @@ With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(0000000
 With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, Float(0))), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
 With({r:local}, ((__retrieveSingle(local, __or(__eq(local, localid, GUID(00000000-0000-0000-0000-000000000001)), __gt(local, new_price, 0)), __noop(), )).new_price)) | $filter=((localid eq 00000000-0000-0000-0000-000000000001) or (new_price gt 0))&$top=1
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), )).new_price)) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=1
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), )).new_price)) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=1
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=1
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T10:00:00.000Z)&$top=1
-With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T10:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), )).new_price)) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), )).new_price)) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T00:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(2023, 6, 1, 12, 0, 0)), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T12:00:00.000Z)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, new_datetime, DateTime(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0), Coalesce(Float(12), 0), Coalesce(Float(0), 0), Coalesce(Float(0), 0))), __noop(), )).new_price)) | $filter=(new_datetime eq 2023-06-01T12:00:00.000Z)&$top=1
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))
 With({r:local}, ((__retrieveGUID(local, _g1, Blank())).new_price))

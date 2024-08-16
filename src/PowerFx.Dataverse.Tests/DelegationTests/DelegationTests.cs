@@ -11,6 +11,7 @@ using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using Xunit.Abstractions;
@@ -120,8 +121,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 var fakeSymbolValues = new SymbolValues(fakeSymbolTable);
                 fakeSymbolValues.Set(fakeSlot, fakeTableValue);
                 var allValues = ReadOnlySymbolValues.Compose(fakeSymbolValues, dv.SymbolValues);
+                RuntimeConfig rc = new RuntimeConfig(allValues);
 
-                FormulaValue result = await run.EvalAsync(CancellationToken.None, allValues);
+                rc.SetClock(new HelperClock());
+                rc.SetTimeZone(TimeZoneInfo.Utc);
+
+                FormulaValue result = await run.EvalAsync(CancellationToken.None, rc);
 
                 IEnumerable<DataverseDelegationParameters> ddpl = singleOrgPolicy.GetDelegationParameters();
                 string oDataStrings = string.Join(" | ", ddpl.Select(dp => dp.ODataString));
@@ -179,6 +184,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     }
                 }
             }
+        }
+
+        public class HelperClock : IClockService
+        {
+            public DateTime UtcNow => new DateTime(2024, 7, 29, 21, 57, 04, DateTimeKind.Utc);
         }
 
         private static void SaveExpression(int id, string file, string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)

@@ -30,14 +30,14 @@ With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(N
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Float(Abs(Coalesce(NegateDecimal(120), 0)))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
 With({r:local}, (__retrieveMultiple(local, __lt(local, new_price, Abs(Coalesce(Negate(120), 0))), __noop(), 999, ))) | $filter=(new_price lt 120)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
-With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-05-31T22:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0))), __noop(), 999, ))) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_date, Date(2023, 6, 1)), __noop(), 999, ))) | $filter=(new_date eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(Coalesce(Float(2023), 0), Coalesce(Float(6), 0), Coalesce(Float(1), 0)))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-06-01T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_datetime, DateToDateTime(Date(2023, 6, 1))), __noop(), 999, ))) | $filter=(new_datetime eq 2023-06-01T00:00:00.000Z)&$top=999
 
 
 
