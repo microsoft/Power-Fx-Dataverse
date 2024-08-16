@@ -196,13 +196,13 @@ With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(
 With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
 With({r:local}, (__retrieveMultiple(local, __eq(local, new_state, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), 999, ))) | $filter=(new_state eq null)&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderBy=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderBy=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, ))) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, , {Xyz:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderBy=new_price&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderBy=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(r, new_price, True), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 5)&$select=new_price&$top=999
 

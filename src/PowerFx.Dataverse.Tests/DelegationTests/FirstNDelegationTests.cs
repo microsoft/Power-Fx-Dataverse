@@ -74,6 +74,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(36, "FirstN(et, 2)", 2, false, true)]
 
         [InlineData(37, "FirstN(FirstN(et, 20), 2)", 2, true, true)]
+        [InlineData(38, @"FirstN(Filter(t1, Name = ""&""""+'<>""), 5)", 0, true, true)]        
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);

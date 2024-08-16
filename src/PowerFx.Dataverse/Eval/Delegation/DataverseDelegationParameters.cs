@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -16,6 +17,11 @@ namespace Microsoft.PowerFx.Dataverse
     [DebuggerDisplay("{ODataString}")]
     public class DataverseDelegationParameters : DelegationParameters
     {
+        public const string Odata_Filter = "$filter";
+        public const string Odata_OrderBy = "$orderby";
+        public const string Odata_Select = "$select";
+        public const string Odata_Top = "$top";
+
         // Systems can get the filter expression directrly and translate.
         public FilterExpression Filter { get; init; }
 
@@ -55,6 +61,41 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override string GetOdataFilter() => ToOdataFilter(Filter);
 
+        public IReadOnlyDictionary<string, string> ODataElements
+        {
+            get
+            {
+                Dictionary<string, string> ode = new Dictionary<string, string>();
+
+                string filter = GetOdataFilter();
+                int top = Top ?? 0;
+                IReadOnlyCollection<string> select = GetColumns();
+                IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+
+                if (!string.IsNullOrEmpty(filter))
+                {
+                    ode.Add(Odata_Filter, filter);
+                }
+
+                if (orderBy != null && orderBy.Any())
+                {
+                    ode.Add(Odata_OrderBy, string.Join(",", orderBy.Select(x => x.col + (x.asc ? string.Empty : " desc"))));
+                }
+
+                if (select != null && select.Any())
+                {
+                    ode.Add(Odata_Select, string.Join(",", select));
+                }
+
+                if (top > 0)
+                {
+                    ode.Add(Odata_Top, top.ToString());
+                }
+
+                return ode;
+            }
+        }
+
         public string ODataString
         {
             get
@@ -74,38 +115,35 @@ namespace Microsoft.PowerFx.Dataverse
 
                 StringBuilder sb = new StringBuilder();
 
-                string filter = GetOdataFilter();
-                int top = Top ?? 0;
-                IReadOnlyCollection<string> select = GetColumns();
-                IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+                IReadOnlyDictionary<string, string> ode = ODataElements;
 
-                if (!string.IsNullOrEmpty(filter))
+                if (ode.TryGetValue(Odata_Filter, out string filter))
                 {
-                    sb.Append("$filter");
+                    sb.Append(Odata_Filter);
                     AddEqual(sb);
                     sb.Append(filter);
                 }
 
-                if (orderBy != null && orderBy.Any())
+                if (ode.TryGetValue(Odata_OrderBy, out string orderBy))
                 {
                     AddSeparatorIfNeeded(sb);
-                    sb.Append("$orderBy");
+                    sb.Append(Odata_OrderBy);
                     AddEqual(sb);
-                    sb.Append(string.Join(",", orderBy.Select(x => x.col + (x.asc ? string.Empty : " desc"))));
+                    sb.Append(orderBy);
                 }
 
-                if (select != null && select.Any())
+                if (ode.TryGetValue(Odata_Select, out string select))
                 {
                     AddSeparatorIfNeeded(sb);
-                    sb.Append("$select");
+                    sb.Append(Odata_Select);
                     AddEqual(sb);
-                    sb.Append(string.Join(",", select));
+                    sb.Append(select);
                 }
 
-                if (top > 0)
+                if (ode.TryGetValue(Odata_Top, out string top))
                 {
                     AddSeparatorIfNeeded(sb);
-                    sb.Append("$top");
+                    sb.Append(Odata_Top);
                     AddEqual(sb);
                     sb.Append(top);
                 }

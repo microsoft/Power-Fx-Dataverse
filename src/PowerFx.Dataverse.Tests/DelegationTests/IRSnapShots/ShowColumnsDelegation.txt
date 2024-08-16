@@ -13,7 +13,7 @@ __retrieveSingle(local, __noop(), __noop(), , {localid:localid}) | $select=local
 __retrieveSingle(local, __noop(), __noop(), , {localid:localid}) | $select=localid&$top=1
 
 __retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {new_price:new_price}) | $orderBy=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, , {new_price:new_price}) | $orderby=new_price&$select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, , {new_price:new_price}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, , {z:new_price}) | $select=new_price&$top=999

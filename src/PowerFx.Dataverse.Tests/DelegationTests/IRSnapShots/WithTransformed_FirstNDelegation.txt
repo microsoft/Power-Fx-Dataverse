@@ -35,3 +35,4 @@ With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $
 With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), ))) | $top=2
 With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $top=2
 With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __eq(local, new_name, &"+'<>), __noop(), 5, ))) | $filter=(new_name eq '&"+''<>')&$top=5

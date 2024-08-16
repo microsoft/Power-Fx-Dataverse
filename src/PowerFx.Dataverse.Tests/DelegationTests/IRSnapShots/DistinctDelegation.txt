@@ -8,7 +8,7 @@ __retrieveMultiple(local, __lt(local, new_quantity, 20), __noop(), 999, new_quan
 Distinct(local, (_new_polyfield_value))
 Distinct(local, (refg))
 Distinct(elastictable, (field1))
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, new_price, {Value:new_price}) | $orderBy=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), 999, new_price, {Value:new_price}) | $orderby=new_price&$select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999

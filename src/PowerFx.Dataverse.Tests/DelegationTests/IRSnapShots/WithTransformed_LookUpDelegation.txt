@@ -177,7 +177,7 @@ With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, Float(20)), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
 With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __noop(), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
-With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(r, new_price, False), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$orderBy=new_price desc&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, new_quantity, 20), __orderBy(r, new_price, False), )).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$orderby=new_price desc&$top=1
 
 
 With({r:local}, ((__retrieveSingle(local, __in(local, new_name, Concatenate(o, W1)), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
