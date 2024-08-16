@@ -8,7 +8,7 @@ using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Generates a delegation filter expression for In call (case insensitive).
+    /// Generates a delegation filter expression for In call (InText, case insensitive - not InScalarTable).
     /// </summary>
     internal class DelegatedIn : DelegatedOperatorFunction
     {
