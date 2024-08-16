@@ -68,6 +68,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (TryGetFieldName(context, left, out var leftField) && !TryGetFieldName(context, right, out _))
             {
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
+                                                  left.IRContext.ResultType == FormulaType.String)
+                {
+                    opKind = default;
+                    node = default;
+                    fieldName = default;
+                    return false;
+                }
+
                 fieldName = leftField;
                 node = right;
                 opKind = op;

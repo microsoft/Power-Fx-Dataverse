@@ -221,3 +221,8 @@ __retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999
 __retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )
 __retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, )
 __retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )
+Filter(local, (InText(new_name,oW1)))
+Filter(local, (InText(new_name,oW1)))
+Filter(local, (InText(new_name,oW1)))
+Filter(local, (InText(new_name,oW1)))
+Filter(local, (InScalarTable(new_name,Table({Value:oW1}, {Value:oW2}))))

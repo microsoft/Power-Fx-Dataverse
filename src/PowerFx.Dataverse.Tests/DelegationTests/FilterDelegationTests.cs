@@ -282,6 +282,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(221, @"Filter(t1, 1 in Name)", 2, true, true)]
         [InlineData(222, @"Filter(t1, 1 in Name)", 2, true, false)]
         [InlineData(223, @"Filter(t1, 1 in Name)", 2, false, true)]
+        [InlineData(224, @"Filter(t1, Name in ""oW1"")", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(225, @"Filter(t1, Name in ""oW1"")", 1, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(226, @"Filter(t1, Name in ""oW1"")", 1, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(227, @"Filter(t1, Name in ""oW1"")", 1, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(228, @"Filter(t1, Name in [""oW1"", ""oW2""])", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
