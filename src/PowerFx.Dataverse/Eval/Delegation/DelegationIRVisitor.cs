@@ -68,6 +68,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (TryGetFieldName(context, left, out var leftField) && !TryGetFieldName(context, right, out _))
             {
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
+                                                  left.IRContext.ResultType == FormulaType.String)
+                {
+                    opKind = default;
+                    node = default;
+                    fieldName = default;
+                    return false;
+                }
+
                 fieldName = leftField;
                 node = right;
                 opKind = op;
@@ -77,16 +86,21 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
                 node = left;
+
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && 
+                                                  left.IRContext.ResultType == FormulaType.String)
+                {
+                    opKind = op;
+                    return true;
+                }
+
                 if (TryInvertLeftRight(op, out var invertedOp))
                 {
                     opKind = invertedOp;
                     return true;
                 }
-                else
-                {
-                    opKind = default;
-                    return false;
-                }
+                
+                // will return false
             }
             else if (TryGetFieldName(context, left, out var leftField2) && TryGetFieldName(context, right, out var rightField2))
             {
@@ -107,14 +121,11 @@ namespace Microsoft.PowerFx.Dataverse
                         this.AddError(reason);
                     }
 
-                    opKind = op;
-                    fieldName = default;
-                    node = default;
-                    return false;
+                    // will return false
                 }
             }
 
-            opKind = op;
+            opKind = default;
             node = default;
             fieldName = default;
             return false;

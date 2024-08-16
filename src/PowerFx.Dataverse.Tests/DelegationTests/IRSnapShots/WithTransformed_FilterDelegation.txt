@@ -102,10 +102,10 @@ With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __
 
 
 
-
-
-
-
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, oW1), __noop(), 999, )))
 
 
 
@@ -206,3 +206,18 @@ With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __orderBy(
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
 With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 5), __noop(), 999, new_price, {Value:new_price})))
 
+
+
+
+
+
+
+
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, Concatenate(o, W1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, )))
+With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, )))
