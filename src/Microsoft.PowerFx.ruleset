@@ -153,7 +153,7 @@
     <Rule Id="CS8009" Action="None" />
     <Rule Id="CS8012" Action="None" />
     <Rule Id="CS8018" Action="None" />
-    <Rule Id="CS8019" Action="None" />
+    <Rule Id="CS8019" Action="None" /> <!-- Info: Unnecessary using directive. -->
     <Rule Id="CS8020" Action="None" />
     <Rule Id="CS8021" Action="None" />
     <Rule Id="CS8029" Action="None" />
@@ -381,7 +381,7 @@
     <Rule Id="IDE0062" Action="None" />
     <Rule Id="IDE0063" Action="None" />
     <Rule Id="IDE0064" Action="None" />
-    <Rule Id="IDE0065" Action="None" />
+    <Rule Id="IDE0065" Action="None" /> <!-- 'using' directive placement -->
     <Rule Id="IDE0066" Action="None" />
     <Rule Id="IDE0071" Action="None" />
     <Rule Id="IDE0072" Action="None" />

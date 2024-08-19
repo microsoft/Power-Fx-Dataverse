@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -287,11 +286,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(226, @"Filter(t1, Name in ""oW1"")", 1, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(227, @"Filter(t1, Name in ""oW1"")", 1, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(228, @"Filter(t1, Name in [""oW1"", ""oW2""])", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
         [InlineData(229, @"Filter(t1, ""1"" in Price)", 3, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(230, @"Filter(t1, ""1"" in Price)", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(231, @"Filter(t1, ""1"" in Price)", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(232, @"Filter(t1, ""1"" in Price)", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        
+        [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(236, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
