@@ -9,7 +9,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 namespace Microsoft.Dataverse.EntityMock
 {
     /// <summary>
-    /// Models used to run relationship tests
+    /// Models used to run relationship tests.
     /// </summary>
     public static class MockModels
     {
