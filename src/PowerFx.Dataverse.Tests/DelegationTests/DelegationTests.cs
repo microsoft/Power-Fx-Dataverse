@@ -103,6 +103,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     SaveExpression(id, file, expr, dv, opts, config, allSymbols);
                 }
 
+                _output.WriteLine("IR with delegation");
                 _output.WriteLine(actualIr);
                 _output.WriteLine(check.PrintIR());
 
@@ -247,14 +248,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public DateTime UtcNow => new DateTime(2024, 7, 29, 21, 57, 04, DateTimeKind.Utc);
         }
 
-        private static void SaveExpression(int id, string file, string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
+        private void SaveExpression(int id, string file, string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
         {
             RecalcEngine engine2 = new RecalcEngine(config);
             ConfigureEngine(dv, engine2, false);
             CheckResult check2 = engine2.Check(expr, options: opts, symbolTable: allSymbols);
             Assert.True(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => er.Message)));
             IRResult irNode2 = check2.ApplyIR();
-            string actualIr2 = check2.GetCompactIRString();
+            string actualIr2 = check2.PrintIR();
+
+            _output.WriteLine("IR without delegation:");
+            _output.WriteLine(actualIr2);
 
             CallVisitor visitor = new CallVisitor();
             CallVisitor.RetVal retVal = visitor.StartVisit(irNode2.TopNode, null);
