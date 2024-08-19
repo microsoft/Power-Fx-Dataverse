@@ -11,6 +11,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 {
     public class PriorityOrderer : ITestCaseOrderer
     {
+        public PriorityOrderer(IMessageSink messageSink)
+        {
+        }
+
         public IEnumerable<TTestCase> OrderTestCases<TTestCase>(IEnumerable<TTestCase> testCases)
             where TTestCase : ITestCase
         {

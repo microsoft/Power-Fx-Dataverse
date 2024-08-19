@@ -1,0 +1,4 @@
+With({r:local}, (AddColumns(local, XXX, (LookUp(virtualremote, (EqNumbers(new_price,vdata)))))))
+With({r:local}, (AddColumns(local, XXX, (LookUp(virtualremote, (EqNumbers(new_price,vdata)))))))
+With({r:local}, (AddColumns(local, XXX, (LookUp(virtualremote, (EqDecimals(new_price,vdata)))))))
+With({r:local}, (AddColumns(local, XXX, (LookUp(virtualremote, (EqDecimals(new_price,vdata)))))))

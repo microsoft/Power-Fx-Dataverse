@@ -87,7 +87,7 @@ namespace Microsoft.PowerFx.Dataverse
                 fieldName = rightField;
                 node = left;
 
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && 
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
                                                   left.IRContext.ResultType == FormulaType.String)
                 {
                     opKind = op;
@@ -99,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse
                     opKind = invertedOp;
                     return true;
                 }
-                
+
                 // will return false
             }
             else if (TryGetFieldName(context, left, out var leftField2) && TryGetFieldName(context, right, out var rightField2))
@@ -537,6 +537,19 @@ namespace Microsoft.PowerFx.Dataverse
 
                 case BinaryOpKind.GeqTime:
                     invertedOp = BinaryOpKind.LeqTime;
+                    return true;
+
+                case BinaryOpKind.EqBoolean:
+                case BinaryOpKind.EqCurrency:
+                case BinaryOpKind.EqDate:
+                case BinaryOpKind.EqDateTime:
+                case BinaryOpKind.EqDecimals:
+                case BinaryOpKind.EqGuid:
+                case BinaryOpKind.EqNumbers:
+                case BinaryOpKind.EqOptionSetValue:
+                case BinaryOpKind.EqText:
+                case BinaryOpKind.EqTime:
+                    invertedOp = op;
                     return true;
 
                 default:

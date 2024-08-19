@@ -1,29 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types.Enums;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Metadata;
-using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
-using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using Span = Microsoft.PowerFx.Syntax.Span;
-using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -73,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Only below function fulfills assumption that first arg is Table
             if (!(node.Function.ParamTypes.Length > 0 && node.Function.ParamTypes[0].IsTable))
             {
-                return base.Visit(node, context);
+                return new RetVal(node);
             }
 
             RetVal tableArg;
@@ -100,12 +83,12 @@ namespace Microsoft.PowerFx.Dataverse
                 "Filter" => ProcessFilter(node, tableArg, context),
                 "First" => ProcessFirst(node, tableArg),
                 "FirstN" => ProcessFirstN(node, tableArg),
+                "ForAll" => ProcessForAll(node, tableArg, context),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
                 "Sort" or
                 "SortByColumns" => ProcessSort(node, tableArg, context),
-                "ShowColumns" => ProcessShowColumns(node, tableArg),                
-                "ForAll" => ProcessForAll(node, tableArg, context),
-                _ => ProcessOtherFunctions(node, tableArg)
+                "ShowColumns" => ProcessShowColumns(node, tableArg),
+                _ => ProcessOtherCall(node, tableArg, context)
             };
 
             return ret;
