@@ -82,6 +82,10 @@ namespace Microsoft.PowerFx.Dataverse
                     args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
                     returnType = tableReturnType;
                 }
+                else if (query.OriginalNode is CallNode callNode)
+                {
+                    return callNode;
+                }
                 else
                 {
                     throw new InvalidOperationException($"Unexpected return type: {query.OriginalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
