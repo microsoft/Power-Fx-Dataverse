@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
             else if (funcName == BuiltinFunctionsCore.Or.Name && context.IsPredicateEvalInProgress)
             {
                 return ProcessOr(node, context);
-            }            
+            }
             else if (funcName == BuiltinFunctionsCore.IsBlank.Name && context.IsPredicateEvalInProgress)
             {
                 return ProcessIsBlank(node, context);

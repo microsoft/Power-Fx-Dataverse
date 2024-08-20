@@ -10,7 +10,7 @@ using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
-    {        
+    {
         private RetVal ProcessOtherCall(CallNode node, RetVal tableArg, Context context)
         {
             var maybeDelegableTable = Materialize(tableArg);

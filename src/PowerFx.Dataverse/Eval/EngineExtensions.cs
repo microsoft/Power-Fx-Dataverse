@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
                 return false;
-            }            
+            }
 
             internal IntermediateNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
@@ -151,11 +151,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal CallNode MakeCallNode(TexlFunction func, IRContext iRContext, IList<IntermediateNode> args, ScopeSymbol scope)
             {
-                CallNode result;                
+                CallNode result;
                 if (scope == null)
                 {
                     result = new CallNode(iRContext, func, args);
-                }                
+                }
                 else
                 {
                     result = new CallNode(iRContext, func, scope, args);

@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
             public RetVal(IntermediateNode node, bool isDelegating = false)
             {
                 OriginalNode = node;
-                IsDelegating = isDelegating;                
+                IsDelegating = isDelegating;
             }
 
             public bool HasFilter => _filter != null;
@@ -95,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating { get; init; }
-            
+
             public bool IsElasticTable => _metadata?.IsElasticTable() ?? false;
 
             public bool TryGetPrimaryIdFieldName(out string primaryId)
