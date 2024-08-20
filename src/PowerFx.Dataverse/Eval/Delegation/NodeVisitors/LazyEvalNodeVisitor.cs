@@ -14,6 +14,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (child.IsDelegating)
             {
+                child.IsLazy = true;
                 return child;
             }
             else

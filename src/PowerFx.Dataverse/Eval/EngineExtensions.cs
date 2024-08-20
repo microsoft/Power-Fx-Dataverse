@@ -60,10 +60,10 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }            
 
-            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
+            internal IntermediateNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
-                CallNode node;
+                IntermediateNode node;
                 FormulaType returnType;
                 List<IntermediateNode> args;
 
@@ -109,6 +109,11 @@ namespace Microsoft.PowerFx.Dataverse
                     node = new CallNode(IRContext.NotInSource(returnType), func, args);
                 }
 
+                if (query.IsLazy)
+                {
+                    node = new LazyEvalNode(node.IRContext, node);
+                }
+
                 return node;
             }
 
@@ -146,11 +151,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal CallNode MakeCallNode(TexlFunction func, IRContext iRContext, IList<IntermediateNode> args, ScopeSymbol scope)
             {
-                CallNode result;
+                CallNode result;                
                 if (scope == null)
                 {
                     result = new CallNode(iRContext, func, args);
-                }
+                }                
                 else
                 {
                     result = new CallNode(iRContext, func, scope, args);
