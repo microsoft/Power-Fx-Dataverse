@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Only below function fulfills assumption that first arg is Table
             if (!(node.Function.ParamTypes.Length > 0 && node.Function.ParamTypes[0].IsTable))
             {
-                return base.Visit(node, context);
+                return ProcessOtherCall(node, null, context);
             }
 
             RetVal tableArg;

@@ -13,34 +13,35 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessOtherCall(CallNode node, RetVal tableArg, Context context)
         {
-            var maybeDelegableTable = Materialize(tableArg);
-
-            // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
-            if (!ReferenceEquals(node.Args[0], maybeDelegableTable))
+            if (tableArg != null)
             {
-                var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
-                delegableArgs.AddRange(node.Args.Skip(1));
-                CallNode delegableCallNode;
-                if (node.Scope != null)
-                {
-                    delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
-                }
-                else
-                {
-                    delegableCallNode = new CallNode(node.IRContext, node.Function, delegableArgs);
-                }
+                var maybeDelegableTable = Materialize(tableArg);
 
-                return Ret(delegableCallNode);
+                // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
+                if (!ReferenceEquals(node.Args[0], maybeDelegableTable))
+                {
+                    var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
+                    delegableArgs.AddRange(node.Args.Skip(1));
+                    CallNode delegableCallNode;
+                    if (node.Scope != null)
+                    {
+                        delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
+                    }
+                    else
+                    {
+                        delegableCallNode = new CallNode(node.IRContext, node.Function, delegableArgs);
+                    }
+
+                    return Ret(delegableCallNode);
+                }
             }
-            else
-            {
-                // Traverse children to see if any could be delegable
-                RetVal rv = base.Visit(node, context);
 
-                if (context.HasDelegation)
-                {
-                    return rv;
-                }
+            // Traverse children to see if any could be delegable
+            RetVal rv = base.Visit(node, context);
+
+            if (context.HasDelegation || tableArg == null)
+            {
+                return rv;
             }
 
             return CreateNotSupportedErrorAndReturn(node, tableArg);
