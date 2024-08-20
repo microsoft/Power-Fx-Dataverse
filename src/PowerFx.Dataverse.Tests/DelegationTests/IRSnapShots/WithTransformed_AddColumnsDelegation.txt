@@ -6,4 +6,12 @@ With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(vi
 With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata eq 10)&$top=1
 With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata eq 10)&$top=1
 With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata eq 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata gt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata gt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata gt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata gt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata lt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata lt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata lt 10)&$top=1
+With({r:local}, (AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, vdata, new_price), __noop(), ))))) | $filter=(vdata lt 10)&$top=1
 
