@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -9,42 +10,36 @@ using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
-    {
+    {        
         private RetVal ProcessOtherCall(CallNode node, RetVal tableArg, Context context)
-        {            
-            List<IntermediateNode> args = new List<IntermediateNode>();
-            bool isDelegating = false;
+        {
+            var maybeDelegableTable = Materialize(tableArg);
 
-            // "other" calls won't be delegable but inner arguments could be, so let's investigate those
-            foreach (IntermediateNode arg in node.Args)
+            // If TableArg was delegable, then replace it and no need to add warning. As expr like Concat(Filter(), expr) works fine.
+            if (!ReferenceEquals(node.Args[0], maybeDelegableTable))
             {
-                RetVal rv = arg.Accept(this, context);
-
-                if (rv.IsDelegating)
-                {                    
-                    IntermediateNode newNode = Materialize(rv);
-
-                    if (!ReferenceEquals(newNode, arg))
-                    {
-                        isDelegating = true;
-                    }
-
-                    args.Add(newNode);
+                var delegableArgs = new List<IntermediateNode>() { maybeDelegableTable };
+                delegableArgs.AddRange(node.Args.Skip(1));
+                CallNode delegableCallNode;
+                if (node.Scope != null)
+                {
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, node.Scope, delegableArgs);
                 }
                 else
                 {
-                    args.Add(arg);
+                    delegableCallNode = new CallNode(node.IRContext, node.Function, delegableArgs);
                 }
+
+                return Ret(delegableCallNode);
             }
-
-            if (isDelegating)
+            else
             {
-                if (node.Scope != null)
-                {
-                    return Ret(new CallNode(node.IRContext, node.Function, node.Scope, args));
-                }
+                RetVal rv = base.Visit(node, context);
 
-                return Ret(new CallNode(node.IRContext, node.Function, args));
+                if (context.HasDelegation)
+                {
+                    return rv;
+                }
             }
 
             return CreateNotSupportedErrorAndReturn(node, tableArg);

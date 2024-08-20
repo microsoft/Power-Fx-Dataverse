@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Combine with an existing map
                 map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
+                return new RetVal(_hooks, context, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
             }
 
             // check if we have a record of (newName: oldName)
@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
                     // Combine with an existing map
                     ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic));
 
-                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
+                    return new RetVal(_hooks, context, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map);
                 }
             }            
 
