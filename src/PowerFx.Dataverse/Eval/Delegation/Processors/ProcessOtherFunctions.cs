@@ -34,6 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
+                // Traverse children to see if any could be delegable
                 RetVal rv = base.Visit(node, context);
 
                 if (context.HasDelegation)
