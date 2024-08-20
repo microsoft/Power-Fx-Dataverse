@@ -73,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Only below function fulfills assumption that first arg is Table
             if (!(node.Function.ParamTypes.Length > 0 && node.Function.ParamTypes[0].IsTable))
             {
-                return new RetVal(node);                
+                return base.Visit(node, context);
             }
 
             RetVal tableArg;
@@ -100,11 +100,11 @@ namespace Microsoft.PowerFx.Dataverse
                 "Filter" => ProcessFilter(node, tableArg, context),
                 "First" => ProcessFirst(node, tableArg),
                 "FirstN" => ProcessFirstN(node, tableArg),
+                "ForAll" => ProcessForAll(node, tableArg, context),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
                 "Sort" or
                 "SortByColumns" => ProcessSort(node, tableArg, context),
-                "ShowColumns" => ProcessShowColumns(node, tableArg),                
-                "ForAll" => ProcessForAll(node, tableArg, context),
+                "ShowColumns" => ProcessShowColumns(node, tableArg),
                 _ => ProcessOtherFunctions(node, tableArg)
             };
 
