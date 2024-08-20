@@ -39,6 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
             // Traverse children to see if any could be delegable
             RetVal rv = base.Visit(node, context);
 
+            // if tableArg is null, we don't generate a warning as we don't expect 
+            // it to delegate, like Float(10)
             if (context.HasDelegation || tableArg == null)
             {
                 return rv;
