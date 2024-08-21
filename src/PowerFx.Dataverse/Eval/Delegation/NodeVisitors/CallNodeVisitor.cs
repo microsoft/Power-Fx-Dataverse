@@ -74,7 +74,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!tableArg.IsDelegating)
             {
-                return base.Visit(node, context, tableArg);
+                return ProcessOtherCall(node, null, context);
             }
 
             RetVal ret = funcName switch
@@ -88,6 +88,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "Sort" or
                 "SortByColumns" => ProcessSort(node, tableArg, context),
                 "ShowColumns" => ProcessShowColumns(node, tableArg, context),
+
                 _ => ProcessOtherCall(node, tableArg, context)
             };
 
