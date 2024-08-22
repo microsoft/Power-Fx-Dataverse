@@ -67,8 +67,6 @@ namespace Microsoft.PowerFx.Dataverse
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
-                context.HasDelegation |= count != null || filter != null || orderBy != null || columnMap != null;
-
                 _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
             }
 

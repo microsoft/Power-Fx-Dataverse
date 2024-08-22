@@ -24,9 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly RetVal CallerTableRetVal;
 
-            public bool _ignoreDelegation;
-
-            public bool HasDelegation;
+            public bool _ignoreDelegation;            
 
             public Context()
             {
