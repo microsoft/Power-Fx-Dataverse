@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     if (isRealTable)
                     {
-                        var ret = new RetVal(_hooks, context, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
                         return ret;
                     }
                 }

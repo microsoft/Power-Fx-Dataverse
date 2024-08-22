@@ -81,13 +81,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 "Distinct" => ProcessDistinct(node, tableArg, context),
                 "Filter" => ProcessFilter(node, tableArg, context),
-                "First" => ProcessFirst(node, tableArg, context),
-                "FirstN" => ProcessFirstN(node, tableArg, context),
+                "First" => ProcessFirst(node, tableArg),
+                "FirstN" => ProcessFirstN(node, tableArg),
                 "ForAll" => ProcessForAll(node, tableArg, context),
                 "LookUp" => ProcessLookUp(node, tableArg, context),
                 "Sort" or
                 "SortByColumns" => ProcessSort(node, tableArg, context),
-                "ShowColumns" => ProcessShowColumns(node, tableArg, context),
+                "ShowColumns" => ProcessShowColumns(node, tableArg),
 
                 _ => ProcessOtherCall(node, tableArg, context)
             };

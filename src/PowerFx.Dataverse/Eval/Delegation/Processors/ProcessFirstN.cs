@@ -10,7 +10,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
-        private RetVal ProcessFirstN(CallNode node, RetVal tableArg, Context context)
+        private RetVal ProcessFirstN(CallNode node, RetVal tableArg)
         {
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            return new RetVal(_hooks, context, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg.ColumnMap);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg.ColumnMap);
         }
     }
 }

@@ -44,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse
             map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, context, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             return resultingTable;
         }

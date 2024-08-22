@@ -11,7 +11,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
-        private RetVal ProcessShowColumns(CallNode node, RetVal tableArg, Context context)
+        private RetVal ProcessShowColumns(CallNode node, RetVal tableArg)
         {
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
             map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
             // change to original node to current node and appends columnSet.
-            var resultingTable = new RetVal(_hooks, context, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
 
             if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
             {
