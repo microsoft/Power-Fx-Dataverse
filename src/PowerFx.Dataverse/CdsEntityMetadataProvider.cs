@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Core.Entities.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Parser.Importers.DataDescription;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
@@ -239,7 +240,28 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dtype = dataSource.Schema.ToRecord();
 
-                return (RecordType)FormulaType.Build(dtype);
+                var recordType = (RecordType)FormulaType.Build(dtype);
+                if (TryGetEntityMetadata(logicalName, out var entityMetadata))
+                {
+                    var primaryKeyColumn = entityMetadata.PrimaryKeyColumn;
+                    Func<string, EntityMetadata> metadataProvider = (logicalName) =>
+                    {
+                        if (TryGetXrmEntityMetadata(logicalName, out var entityMetadata))
+                        {
+                            return entityMetadata;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"EntityMetadata for {logicalName} not present");
+                        }
+                    };
+
+                    return new DataverseRecordType(recordType, metadataProvider);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"EntityMetadata for {logicalName} not present");
+                }
             }
 
             throw new InvalidOperationException($"Entity {logicalName} not present");

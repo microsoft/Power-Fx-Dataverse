@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+#define REGENERATE_SNAPSHOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,14 +42,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string path =
 
                  // Set this if you need to regenerate the snapshot files.
-#if REGENERATE
+#if REGENERATE_SNAPSHOT
                  baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0"), string.Empty)
                               .Replace(Path.Join("bin", "Release", "net7.0"), string.Empty);
 #else
                  baseDirectory;
 #endif
 
-#if REGENERATE
+#if REGENERATE_SNAPSHOT
             if (!File.Exists(path))
             {
                 using (var sw = new StreamWriter(path))
@@ -74,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Array.Resize(ref allLines, index + 1);
             }
 
-#if REGENERATE
+#if REGENERATE_SNAPSHOT
 
             // Update or add the specified line with the input string
             allLines[index] = inputString;
