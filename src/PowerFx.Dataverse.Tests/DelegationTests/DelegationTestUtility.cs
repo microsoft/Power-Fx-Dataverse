@@ -1,7 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-
-#define REGENERATE_SNAPSHOT
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -304,11 +304,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(209, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, false)]
         [InlineData(210, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, true)]
 
-        [InlineData(211, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, false)]
-        [InlineData(212, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, true)]
-        [InlineData(213, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, false)]
-        [InlineData(214, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, true)]
-
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(
