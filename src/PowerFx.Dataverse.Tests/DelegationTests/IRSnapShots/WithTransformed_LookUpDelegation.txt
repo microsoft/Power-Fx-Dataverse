@@ -192,3 +192,19 @@ With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), 
 With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
 With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
 With({r:local}, ((__retrieveSingle(local, __in(local, new_name, oW1), __noop(), )).new_price)) | $filter=contains(new_name,'oW1')&$top=1
+
+
+
+
+
+
+
+
+
+
+
+
+With({r:local}, ((__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price)) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price)) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price)) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
+With({r:local}, ((__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price)) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1

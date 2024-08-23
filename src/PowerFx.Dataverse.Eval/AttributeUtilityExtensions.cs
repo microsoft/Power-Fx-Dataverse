@@ -169,6 +169,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                         return dv.EntityReference;
                     }
+                    else if (fxValue is GuidValue gv)
+                    {
+                        return gv.Value;
+                    }
 
                     goto default;
 

@@ -42,6 +42,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsPredicateEvalInProgress => CallerNode != null && CallerTableNode != null;
 
+            public bool IsDataverseDelegation => CallerTableRetVal.Metadata != null;
+
             public Context GetContextForPredicateEval(CallNode callerNode, RetVal callerTableNode)
             {
                 return new Context(this._ignoreDelegation, this.WithScopes, callerNode, callerTableNode);

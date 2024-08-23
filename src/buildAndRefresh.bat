@@ -2,6 +2,7 @@ pwsh.exe -executionpolicy bypass -file %~dp0refreshLocalNugetCache.ps1
 
 copy /y %~dp0PowerFx.Dataverse\bin\Debug\*.nupkg %~dp0outputpackages
 copy /y %~dp0PowerFx.Dataverse.Eval\bin\Debug\*.nupkg  %~dp0outputpackages
+copy /y %~dp0PowerFx.Dataverse.Sql\bin\Debug\*.nupkg  %~dp0outputpackages
 
 @dir %~dp0outputpackages
 

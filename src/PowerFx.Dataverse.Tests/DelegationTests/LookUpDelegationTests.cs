@@ -299,6 +299,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(205, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, true, false, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(206, @"With({r: t1}, LookUp(r, ""oW1"" exactin Name))", null, false, true, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData(207, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, false)]
+        [InlineData(208, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, true)]
+        [InlineData(209, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, false)]
+        [InlineData(210, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, true)]
+
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

@@ -295,6 +295,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(236, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(237, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, false, false)]
+        [InlineData(238, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, true, true)]
+        [InlineData(239, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, true, false)]
+        [InlineData(240, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, false, true)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
