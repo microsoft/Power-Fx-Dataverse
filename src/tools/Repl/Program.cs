@@ -225,12 +225,7 @@ namespace Microsoft.PowerFx
             {
                 IOrganizationService svcClient;
 
-                string userName = "aurorauser04@capintegration01.onmicrosoft.com";
-                string url = "https://aurorabapenv95ac4.crmtest.dynamics.com/";
-                string localTokenCache = @"c:\MyTokenCache\toks.dat";
-
-                var connectionString = $"AuthType=OAuth;Username={userName};redirectUri=http://localhost;Url={url};TokenCacheStorePath={localTokenCache};LoginPrompt=Auto";
-
+                var connectionString = connectionSV.Value;
                 svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
