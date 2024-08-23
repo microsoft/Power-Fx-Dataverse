@@ -60,10 +60,10 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            internal IntermediateNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
+            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
-                IntermediateNode node;
+                CallNode node;
                 FormulaType returnType;
                 List<IntermediateNode> args;
 
