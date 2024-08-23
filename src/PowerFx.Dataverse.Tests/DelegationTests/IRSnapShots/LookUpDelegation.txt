@@ -63,10 +63,10 @@ IsBlank(Filter(local, (EqNumbers(1,1))))
 IsBlank(Filter(local, (EqDecimals(1,1))))
 IsBlank(Filter(local, (EqDecimals(1,1))))
 IsBlank(Filter(local, (EqNumbers(1,1))))
-(Collect(local, {new_price:200})).new_price
-(Collect(local, {new_price:200})).new_price
-(Collect(local, RecordToRecord([new_price:Float(new_price)],({new_price:200}))).new_price
-(Collect(local, RecordToRecord([new_price:Decimal(new_price)],({new_price:200}))).new_price
+(Collect((local), {new_price:200})).new_price
+(Collect((local), {new_price:200})).new_price
+(Collect((local), RecordToRecord([new_price:Float(new_price)],({new_price:200}))).new_price
+(Collect((local), RecordToRecord([new_price:Decimal(new_price)],({new_price:200}))).new_price
 IsError(__retrieveGUID(local, If(False, (_g1), (_gMissing)), Blank()))
 (LookUp(fakeT1, (EqGuid(localid,_g1)))).new_price
 (LookUp(local, (EqGuid(localid,localid)))).new_price
