@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
             public virtual bool IsDelegableSymbolTable(ReadOnlySymbolTable symTable)
             {
                 return false;
-            }            
+            }
 
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
@@ -108,7 +108,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     node = new CallNode(IRContext.NotInSource(returnType), func, args);
                 }
-
+                
                 return node;
             }
 

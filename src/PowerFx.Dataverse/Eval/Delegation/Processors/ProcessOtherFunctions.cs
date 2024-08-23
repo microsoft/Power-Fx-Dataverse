@@ -1,35 +1,17 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types.Enums;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Metadata;
-using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
-using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using Span = Microsoft.PowerFx.Syntax.Span;
-using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
-        private RetVal ProcessOtherFunctions(CallNode node, RetVal tableArg)
+        private RetVal ProcessOtherCall(CallNode node, RetVal tableArg, Context context)
         {
             var maybeDelegableTable = Materialize(tableArg);
 
@@ -51,6 +33,19 @@ namespace Microsoft.PowerFx.Dataverse
                 return Ret(delegableCallNode);
             }
 
+            // Traverse children to see if any could be delegable
+            RetVal rv = base.Visit(node, context);
+
+            if (!rv.IsDelegating)
+            {
+                // Here we check is any of the CallNode args might have been delegated
+                // and, if so, we recreate the CallNode based on these new arguments
+                if (!ReferenceEquals(rv.OriginalNode, node))
+                {                    
+                    node = new CallNode(node.IRContext, node.Function, node.Scope, ((CallNode)rv.OriginalNode).Args);
+                }
+            }
+            
             return CreateNotSupportedErrorAndReturn(node, tableArg);
         }
     }
