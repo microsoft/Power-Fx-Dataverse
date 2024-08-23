@@ -50,6 +50,11 @@ namespace Microsoft.PowerFx.Dataverse
             // Null if not dataverse
             private readonly EntityMetadata _metadata;            
 
+            /// <summary>
+            /// Will be null for non-dataverse tables.
+            /// </summary>
+            public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
+
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);

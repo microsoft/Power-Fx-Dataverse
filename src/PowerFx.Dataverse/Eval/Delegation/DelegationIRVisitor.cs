@@ -425,6 +425,30 @@ namespace Microsoft.PowerFx.Dataverse
                 fieldName = fieldAccess.Field;
                 if (TryGetFieldName(context, fieldAccess.From, out var fromField))
                 {
+                    // fetch the primary key name on relation here. If current is 1 depth relation, then we can delegate without fetching the related record. e.g. LookUp(t1, relationField.PrimaryKey = GUID).
+                    if (relations.Count == 0)
+                    {
+                        if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
+                            fromFieldType is RecordType fromFieldRelation &&
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
+                            fieldName == primaryKeyFieldName)
+                        {
+                            // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
+                            if (context.IsDataverseDelegation && 
+                                context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
+                            {
+                                fieldName = relation2.ReferencingAttribute;
+                            }
+                            else
+                            {
+                                fieldName = fromField;
+                            }
+
+                            relations = null;
+                            return true;
+                        }
+                    }
+
                     var relationMetadata = new RelationMetadata(fromField, false, null);
 
                     var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);

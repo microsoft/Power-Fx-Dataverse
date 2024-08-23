@@ -234,3 +234,7 @@ Filter(local, (Not(IsBlank(new_price))))
 Filter(local, (Not(IsBlank(new_price))))
 Filter(local, (Not(IsBlank(new_price))))
 Filter(local, (Not(IsBlank(new_price))))
+__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999

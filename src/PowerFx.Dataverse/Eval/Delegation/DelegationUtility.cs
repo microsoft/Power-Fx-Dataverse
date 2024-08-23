@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -28,7 +29,17 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 
         public static bool TryGetEntityMetadata(TableType tableType, out EntityMetadata entityMetadata)
         {
-            var tableDS = tableType._type.AssociatedDataSources.FirstOrDefault();
+            return TryGetEntityMetadata(tableType._type, out entityMetadata);
+        }
+
+        public static bool TryGetEntityMetadata(RecordType recordType, out EntityMetadata entityMetadata)
+        {
+            return TryGetEntityMetadata(recordType._type, out entityMetadata);
+        }
+
+        private static bool TryGetEntityMetadata(DType type, out EntityMetadata entityMetadata)
+        {
+            var tableDS = type.AssociatedDataSources.FirstOrDefault();
             if (tableDS != null)
             {
                 var tableLogicalName = tableDS.TableMetadata.Name; // logical name

@@ -221,3 +221,20 @@ With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1
 With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
 With({r:local}, (__retrieveMultiple(local, __in(local, new_name, DecimalToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
 With({r:local}, (__retrieveMultiple(local, __in(local, new_name, NumberToText(1)), __noop(), 999, ))) | $filter=contains(new_name,'1')&$top=999
+
+
+
+
+
+
+
+
+
+
+
+
+
+With({r:local}, (__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ))) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ))) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ))) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+With({r:local}, (__retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ))) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
