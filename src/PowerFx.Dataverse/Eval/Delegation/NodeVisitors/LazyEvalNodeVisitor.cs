@@ -9,12 +9,19 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         public override RetVal Visit(LazyEvalNode node, Context context)
-        {            
-            var child = node.Child.Accept(this, context);
+        {
+            RetVal child = node.Child.Accept(this, context);
 
             if (child.IsDelegating)
             {
-                child.IsLazy = true;
+                if (!context.IsPredicateEvalInProgress)
+                {
+                    node = new LazyEvalNode(node.IRContext, Materialize(child));
+
+                    // We want to preserve isDelegating flag here
+                    return new RetVal(node, true);
+                }
+
                 return child;
             }
             else

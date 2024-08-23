@@ -48,9 +48,7 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly NumberLiteralNode _maxRows;
 
             // Null if not dataverse
-            private readonly EntityMetadata _metadata;
-
-            public bool IsLazy = false;
+            private readonly EntityMetadata _metadata;            
 
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {

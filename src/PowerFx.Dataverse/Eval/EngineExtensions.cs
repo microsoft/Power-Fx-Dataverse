@@ -108,12 +108,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     node = new CallNode(IRContext.NotInSource(returnType), func, args);
                 }
-
-                if (query.IsLazy)
-                {
-                    node = new LazyEvalNode(node.IRContext, node);
-                }
-
+                
                 return node;
             }
 
