@@ -22,4 +22,3 @@ If(EqDecimals(1,1), ((__retrieveSingle(local, __noop(), __noop(), )).new_price))
 If(EqNumbers(1,1), ((__retrieveSingle(local, __noop(), __noop(), )).new_price)) | $top=1
 If(EqDecimals(1,1), ((__retrieveSingle(local, __noop(), __noop(), )).new_price)) | $top=1
 If(EqNumbers(1,1), ((__retrieveSingle(local, __noop(), __noop(), )).new_price)) | $top=1
-
