@@ -55,6 +55,8 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
+            public bool IsDataverseDelegation => _metadata != null;
+
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
