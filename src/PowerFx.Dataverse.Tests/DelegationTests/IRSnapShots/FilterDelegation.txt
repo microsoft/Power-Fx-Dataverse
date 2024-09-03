@@ -230,11 +230,19 @@ Filter(local, (InText(1,DecimalToText(new_price))))
 Filter(local, (InText(1,NumberToText(new_price))))
 Filter(local, (InText(1,NumberToText(new_price))))
 Filter(local, (InText(1,DecimalToText(new_price))))
-Filter(local, (Not(IsBlank(new_price))))
-Filter(local, (Not(IsBlank(new_price))))
-Filter(local, (Not(IsBlank(new_price))))
-Filter(local, (Not(IsBlank(new_price))))
+__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ) | $filter=(new_price ne null)&$top=999
+__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ) | $filter=(new_price ne null)&$top=999
+__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ) | $filter=(new_price ne null)&$top=999
+__retrieveMultiple(local, __neq(local, new_price, Blank()), __noop(), 999, ) | $filter=(new_price ne null)&$top=999
 __retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
 __retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
 __retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
 __retrieveMultiple(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), 999, ) | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=999
+__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+__retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+Filter(local, (And(LtDecimals(new_price,120), (Not(IsBlank(_count))))))
+Filter(local, (And(LtNumbers(new_price,120), (Not(IsBlank(_count))))))
+Filter(local, (And(LtNumbers(new_price,Float(120)), (Not(IsBlank(_count))))))
+Filter(local, (And(LtNumbers(Value(new_price),120), (Not(IsBlank(_count))))))

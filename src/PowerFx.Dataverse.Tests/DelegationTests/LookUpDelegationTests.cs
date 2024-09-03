@@ -304,6 +304,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(209, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, true, false)]
         [InlineData(210, "LookUp(t1, ThisRecord.virtual.virtualremoteid = GUID(\"00000000-0000-0000-0000-000000000006\")).new_price", 100.0, false, true)]
 
+        [InlineData(211, @"LookUp(t1, Not(IsBlank(Price))).Price", 100.0, false, true)]
+        [InlineData(212, @"LookUp(t1, Not(IsBlank(Price))).Price", 100.0, false, true)]
+        [InlineData(213, @"LookUp(t1, Not(IsBlank(Price))).Price", 100.0, false, true)]
+        [InlineData(214, @"LookUp(t1, Not(IsBlank(Price))).Price", 100.0, false, true)]
+
+        [InlineData(215, "LookUp(t1, Price < 200 And Not(IsBlank(Old_Price))).Price", 100.0, false, false)]
+        [InlineData(216, "LookUp(t1, Price < 200 And Not(IsBlank(Old_Price))).Price", 100.0, true, true)]
+        [InlineData(217, "LookUp(t1, Price < 200 And Not(IsBlank(Old_Price))).Price", 100.0, true, false)]
+        [InlineData(218, "LookUp(t1, Price < 200 And Not(IsBlank(Old_Price))).Price", 100.0, false, true)]
+
+        // predicate that uses function that is not delegable.
+        [InlineData(219, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(220, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(221, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(222, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

@@ -208,3 +208,15 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
 (__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
 (__retrieveSingle(local, __eq(local, virtualid, GUID(00000000-0000-0000-0000-000000000006)), __noop(), )).new_price | $filter=(virtualid eq 00000000-0000-0000-0000-000000000006)&$top=1
+(__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price | $filter=(new_price ne null)&$top=1
+(__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price | $filter=(new_price ne null)&$top=1
+(__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price | $filter=(new_price ne null)&$top=1
+(__retrieveSingle(local, __neq(local, new_price, Blank()), __noop(), )).new_price | $filter=(new_price ne null)&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(LookUp(local, (And(LtDecimals(new_price,120), (Not(IsBlank(_count))))))).new_price
+(LookUp(local, (And(LtNumbers(new_price,120), (Not(IsBlank(_count))))))).new_price
+(LookUp(local, (And(LtNumbers(new_price,Float(120)), (Not(IsBlank(_count))))))).new_price
+(LookUp(local, (And(LtNumbers(Value(new_price),120), (Not(IsBlank(_count))))))).new_price

@@ -291,15 +291,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(231, @"Filter(t1, ""1"" in Price)", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(232, @"Filter(t1, ""1"" in Price)", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         
-        [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(236, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
+        [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
+        [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
+        [InlineData(236, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
 
         [InlineData(237, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, false, false)]
         [InlineData(238, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, true, true)]
         [InlineData(239, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, true, false)]
         [InlineData(240, @"Filter(t1, ThisRecord.virtual.virtualremoteid = GUID(""00000000-0000-0000-0000-000000000006""))", 1, false, true)]
+
+        [InlineData(241, "Filter(t1, Price < 200 And Not(IsBlank(Old_Price)))", 1, false, false)]
+        [InlineData(242, "Filter(t1, Price < 200 And Not(IsBlank(Old_Price)))", 1, true, true)]
+        [InlineData(243, "Filter(t1, Price < 200 And Not(IsBlank(Old_Price)))", 1, true, false)]
+        [InlineData(244, "Filter(t1, Price < 200 And Not(IsBlank(Old_Price)))", 1, false, true)]
+
+        // predicate that uses function that is not delegable.
+        [InlineData(245, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(246, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(247, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(248, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
