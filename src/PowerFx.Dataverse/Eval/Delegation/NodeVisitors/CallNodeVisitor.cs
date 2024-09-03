@@ -28,6 +28,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ProcessIsBlank(node, context);
             }
+            else if (funcName == BuiltinFunctionsCore.Not.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessNot(node, context);
+            }
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning.
