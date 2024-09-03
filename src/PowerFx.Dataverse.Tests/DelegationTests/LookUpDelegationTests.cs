@@ -320,6 +320,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(221, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(222, "LookUp(t1, Price < 120 And Not(IsBlank(_count))).Price", 100.0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
+        [InlineData(223, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, false, false)]
+        [InlineData(224, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, true, true)]
+        [InlineData(225, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, true, false)]
+        [InlineData(226, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, false, true)]
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

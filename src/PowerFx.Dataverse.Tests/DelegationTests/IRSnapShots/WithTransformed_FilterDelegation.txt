@@ -242,3 +242,11 @@ With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __
 With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
 With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
 With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+
+
+
+
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ))) | $filter=((new_price lt 200) and (old_price ne null))&$top=999

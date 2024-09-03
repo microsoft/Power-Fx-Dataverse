@@ -311,6 +311,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(246, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(247, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(248, "Filter(t1, Price < 120 And Not(IsBlank(_count)))", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(249, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, false, false)]
+        [InlineData(250, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, true, true)]
+        [InlineData(251, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, true, false)]
+        [InlineData(252, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, false, true)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

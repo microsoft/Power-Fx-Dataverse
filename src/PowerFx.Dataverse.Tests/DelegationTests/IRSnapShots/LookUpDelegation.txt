@@ -220,3 +220,7 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (LookUp(local, (And(LtNumbers(new_price,120), (Not(IsBlank(_count))))))).new_price
 (LookUp(local, (And(LtNumbers(new_price,Float(120)), (Not(IsBlank(_count))))))).new_price
 (LookUp(local, (And(LtNumbers(Value(new_price),120), (Not(IsBlank(_count))))))).new_price
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
