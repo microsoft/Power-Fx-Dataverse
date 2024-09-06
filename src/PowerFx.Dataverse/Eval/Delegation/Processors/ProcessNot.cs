@@ -37,8 +37,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (node.Args[0] is CallNode callNode && 
                 callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name && 
-                    (TryGetFieldName(context, callNode, out var fieldName) || 
-                    TryGetRelationField(context, callNode, out fieldName, out relations)))
+                    ((TryGetFieldName(context, callNode, out var fieldName, out var invertCoercion, out _) && !invertCoercion)
+                    || (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _) && !invertCoercion)))
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 

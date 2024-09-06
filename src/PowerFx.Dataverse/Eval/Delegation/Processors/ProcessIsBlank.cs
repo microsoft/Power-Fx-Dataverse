@@ -32,8 +32,8 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessIsBlank(CallNode node, Context context)
         {
             IList<string> relations = null;
-            if (TryGetFieldName(context, node, out var fieldName)
-                || TryGetRelationField(context, node, out fieldName, out relations))
+            if ((TryGetFieldName(context, node, out var fieldName, out var invertCoercion, out _) && !invertCoercion)
+                || (TryGetRelationField(context, node, out fieldName, out relations, out invertCoercion, out _) && !invertCoercion))
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 

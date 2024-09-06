@@ -61,7 +61,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            if (TryGetFieldName(context, left, out var leftField) && !TryGetFieldName(context, right, out _))
+            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && 
+                !TryGetFieldName(context, right, out _, out _, out _))
             {
                 if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
                                                   left.IRContext.ResultType == FormulaType.String)
@@ -73,14 +74,15 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                node = right;
+                node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                 opKind = op;
                 return true;
             }
-            else if (TryGetFieldName(context, right, out var rightField) && !TryGetFieldName(context, left, out _))
+            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) 
+                && !TryGetFieldName(context, left, out _, out _, out _))
             {
                 fieldName = rightField;
-                node = left;
+                node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
                 if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
                                                   left.IRContext.ResultType == FormulaType.String)
@@ -97,7 +99,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // will return false
             }
-            else if (TryGetFieldName(context, left, out var leftField2) && TryGetFieldName(context, right, out var rightField2))
+            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && 
+                TryGetFieldName(context, right, out var rightField2, out _, out _))
             {
                 if (leftField2 == rightField2)
                 {
@@ -126,9 +129,21 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName)
+        /// <summary>
+        /// Finds a field name in the given node.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <param name="fieldName">name of the field.</param>
+        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind. 
+        /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
+        /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
+        /// <returns></returns>
+        public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName, out bool invertCoercion, out UnaryOpKind coercionOpKind)
         {
             IntermediateNode maybeScopeAccessNode;
+            invertCoercion = false;
+            coercionOpKind = default;
 
             // If the node had injected float coercion, then we need to pull scope access node from it.
             if (node is CallNode functionCall &&
@@ -137,9 +152,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 maybeScopeAccessNode = functionCall.Args[0];
             }
-            else if (node is UnaryOpNode unaryOp && AllowedCoercions(unaryOp))
+            else if (node is UnaryOpNode unaryOp && AllowedCoercions(unaryOp, out invertCoercion))
             {
                 maybeScopeAccessNode = unaryOp.Child;
+                coercionOpKind = unaryOp.Op;
             }
             else
             {
@@ -254,17 +270,74 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private static bool AllowedCoercions(UnaryOpNode unaryOp) =>
-            unaryOp.Op switch
+        private static IntermediateNode MaybeAddCoercion(IntermediateNode node, bool invertCoercion, UnaryOpKind coercionKind)
+        {
+            if (!invertCoercion)
             {
-                UnaryOpKind.DateTimeToTime => true,
-                UnaryOpKind.DateToTime => true,
-                UnaryOpKind.TimeToDate => true,
-                UnaryOpKind.DateTimeToDate => true,
-                UnaryOpKind.TimeToDateTime => true,
-                UnaryOpKind.DateToDateTime => true,
-                _ => false
-            };
+                return node;
+            }
+
+            switch (coercionKind)
+            {
+                case UnaryOpKind.DateToDecimal:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDate, node);
+                case UnaryOpKind.DateTimeToDecimal:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDateTime, node);
+                case UnaryOpKind.TimeToDecimal:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToTime, node);
+                case UnaryOpKind.DateToNumber:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDate, node);
+                case UnaryOpKind.DateTimeToNumber:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDateTime, node);
+                case UnaryOpKind.TimeToNumber:
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToTime, node);
+                default:
+                    throw new NotImplementedException($"{nameof(MaybeAddCoercion)} -> Coercion kind {coercionKind} is not implemented for coercion inversion.");
+            }
+        }
+
+        private static bool AllowedCoercions(UnaryOpNode unaryOp, out bool invertCoercion)
+        {
+            invertCoercion = false;
+            switch (unaryOp.Op)
+            {
+                case UnaryOpKind.DateTimeToTime:
+                    return true;
+                case UnaryOpKind.DateToTime:
+                    return true;
+                case UnaryOpKind.TimeToDate:
+                    return true;
+                case UnaryOpKind.DateTimeToDate:
+                    return true;
+                case UnaryOpKind.TimeToDateTime:
+                    return true;
+                case UnaryOpKind.DateToDateTime:
+                    return true;
+                case UnaryOpKind.DateToDecimal:
+                    invertCoercion = true;
+                    return true;
+                case UnaryOpKind.DateTimeToDecimal:
+                    invertCoercion = true;
+                    return true;
+                case UnaryOpKind.TimeToDecimal:
+                    invertCoercion = true;
+                    return true;
+                case UnaryOpKind.DateToNumber:
+                    invertCoercion = true;
+                    return true;
+                case UnaryOpKind.DateTimeToNumber:
+                    invertCoercion = true;
+                    return true;
+                case UnaryOpKind.TimeToNumber:
+                    invertCoercion = true;
+                    return true;
+                default:
+                    invertCoercion = false;
+                    return false;
+            }
+
+            return false;
+        }
 
         // If an attempted delegation can't be complete, then fail it.
         private void AddError(ExpressionError error)
@@ -402,11 +475,13 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations)
+        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations, out bool invertCoercion, out UnaryOpKind coercionOpKind)
         {
             relations = new List<string>();
 
             IntermediateNode maybeFieldAccessNode;
+            invertCoercion = false;
+            coercionOpKind = default;
 
             // If the node had injected float coercion, then we need to pull field access node from it.
             if (node is CallNode functionCall &&
@@ -423,7 +498,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (maybeFieldAccessNode is RecordFieldAccessNode fieldAccess)
             {
                 fieldName = fieldAccess.Field;
-                if (TryGetFieldName(context, fieldAccess.From, out var fromField))
+                if (TryGetFieldName(context, fieldAccess.From, out var fromField, out invertCoercion, out coercionOpKind))
                 {
                     // fetch the primary key name on relation here. If current is 1 depth relation, then we can delegate without fetching the related record. e.g. LookUp(t1, relationField.PrimaryKey = GUID).
                     if (relations.Count == 0)
@@ -459,7 +534,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out _))
                     {
-                        TryGetFieldName(context, callNode.Args[0], out fromField);
+                        TryGetFieldName(context, callNode.Args[0], out fromField, out invertCoercion, out coercionOpKind);
                         AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
                         var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
 
