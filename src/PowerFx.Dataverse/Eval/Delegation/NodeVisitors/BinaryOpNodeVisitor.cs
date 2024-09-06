@@ -201,7 +201,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode arg0 = call.Args[0];
             IntermediateNode arg1 = call.Args[1];
 
-            if (TryGetFieldName(context, arg0, out _))
+            if (TryGetFieldName(context, arg0, out _, out var invertCoercion, out var coercionKind))
             {
                 // arg0 = datetime
                 // arg1 = end
@@ -232,7 +232,7 @@ namespace Microsoft.PowerFx.Dataverse
                     nodeLeft = arg0;
                 }
             }
-            else if (TryGetFieldName(context, arg1, out _))
+            else if (TryGetFieldName(context, arg1, out _, out invertCoercion, out coercionKind))
             {
                 // arg0 = start
                 // arg1 = datetime
@@ -312,7 +312,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            if (TryGetRelationField(context, left, out var leftField, out var leftRelation) && !TryGetFieldName(context, right, out _))
+            if (TryGetRelationField(context, left, out var leftField, out var leftRelation, out var invertCoercion, out var coercionKind) && 
+                !TryGetFieldName(context, right, out _, out _, out _))
             {
                 fieldName = leftField;
                 relations = leftRelation;
@@ -320,7 +321,8 @@ namespace Microsoft.PowerFx.Dataverse
                 opKind = op;
                 return true;
             }
-            else if (TryGetRelationField(context, right, out var rightField, out var rightRelation) && !TryGetFieldName(context, left, out _))
+            else if (TryGetRelationField(context, right, out var rightField, out var rightRelation, out invertCoercion, out coercionKind) && 
+                !TryGetFieldName(context, left, out _, out _, out _))
             {
                 fieldName = rightField;
                 relations = rightRelation;
@@ -336,7 +338,8 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
             }
-            else if (TryGetRelationField(context, left, out var leftField2, out _) && TryGetRelationField(context, right, out var rightField2, out _))
+            else if (TryGetRelationField(context, left, out var leftField2, out _, out _, out _) && 
+                TryGetRelationField(context, right, out var rightField2, out _, out _, out _))
             {
                 if (leftField2 == rightField2)
                 {
