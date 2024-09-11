@@ -46,9 +46,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 .Add("Price", FormulaType.Number)
                 .Add("opt", optionSet.FormulaType);
 
+            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType);
+
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            var t1 = new MyTable(recordType);
+            var t1 = new MyTable(tt.ToRecord());
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", t1);

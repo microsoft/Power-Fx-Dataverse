@@ -290,7 +290,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(230, @"Filter(t1, ""1"" in Price)", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(231, @"Filter(t1, ""1"" in Price)", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(232, @"Filter(t1, ""1"" in Price)", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        
+
         [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
@@ -325,7 +325,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public void Delegation_DateTest()
         {
             SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
-            st.AddVariable("MyTable", TableType.Empty().Add("Date", FormulaType.Date));
+            RecordType rt = RecordType.Empty().Add("Date", FormulaType.Date);
+            st.AddVariable("MyTable", TestCdpDataSource.GetCDPTableType("MyTable", rt));
             Engine engine = new Engine(new PowerFxConfig());
             engine.EnableDelegation();
 
