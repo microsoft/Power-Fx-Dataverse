@@ -238,8 +238,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetDataSource(logicalName, variableName, out DataverseDataSourceInfo dataSource))
             {
                 var dtype = dataSource.Schema.ToRecord();
-                DType dtypeWithAds = DType.CreateDTypeWithConnectedDataSourceInfoMetadata(dtype, new HashSet<IExternalTabularDataSource>() { dataSource }, null);
-                return (RecordType)FormulaType.Build(dtypeWithAds);                                
+                return (RecordType)FormulaType.Build(dtype);                         
             }
 
             throw new InvalidOperationException($"Entity {logicalName} not present");
