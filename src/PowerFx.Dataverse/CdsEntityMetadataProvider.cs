@@ -20,6 +20,7 @@ using Microsoft.PowerFx.Dataverse.Parser.Importers.DataDescription;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using PfxConnectors = Microsoft.PowerFx.Connectors;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -33,18 +34,18 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly DataverseDocument _document;
 
         /// <summary>
-        /// All option sets, indexed by both display and logical name
+        /// All option sets, indexed by both display and logical name.
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseOptionSet> _optionSets = new ConcurrentDictionary<string, DataverseOptionSet>(StringComparer.Ordinal);
 
         /// <summary>
-        /// Cache of XRM entity metadata already retrieved, indexed by logical name
+        /// Cache of XRM entity metadata already retrieved, indexed by logical name.
         /// </summary>
         private readonly ConcurrentDictionary<string, EntityMetadata> _xrmCache = new ConcurrentDictionary<string, EntityMetadata>(StringComparer.Ordinal);
 
         /// <summary>
         /// Cache of processed CDS table definitions, indexed by logical name
-        /// TODO: rationalize with TabularDataManager
+        /// TODO: rationalize with TabularDataManager.
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
@@ -324,10 +325,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             var dataverseParserErrors = new List<string>();
 
+            CdsEntityMetadata cdsEntityMetadata = ToCdsEntityMetadata(entity);
+
             var externalEntity = DataverseEntityDefinitionParser.ParseTable(
                 dataSetName,
                 "dataSource?",
-                ToCdsEntityMetadata(entity),
+                cdsEntityMetadata,
                 options,
                 optionSets,
                 dataverseParserErrors,
@@ -342,12 +345,79 @@ namespace Microsoft.PowerFx.Dataverse
             }
 #endif
 
-            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName);
+            PfxConnectors.ServiceCapabilities capabilities = ParseServiceCapabilities(cdsEntityMetadata);
+
+            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName, capabilities);
 
             // add the external entity to the cache
             _cdsCache[dataSource.Name] = dataSource;
 
             return dataSource;
+        }
+
+        // From C:\Data\PowerApps-Client\src\Language\PowerFx.Dataverse.Parser\Importers\DataDescription\DataverseEntityDefinitionParser.cs
+        internal static PfxConnectors.ServiceCapabilities ParseServiceCapabilities(CdsEntityMetadata tableMetadata)
+        {
+            Contracts.AssertValue(tableMetadata);
+
+            PfxConnectors.FilterRestriction filterRestriction = null;
+
+            var requiredProperties = new List<string>();
+            var nonFilterableProperties = new List<string>();
+            var ungroupableProperties = new List<string>();
+            var unsortableProperties = new List<string>();
+            var ascendingOnlyProperties = new List<string>();
+
+            foreach (var attribute in tableMetadata.Attributes)
+            {
+                if (attribute.IsRequired())
+                {
+                    requiredProperties.Add(attribute.LogicalName);
+                }
+
+                if (attribute.AttributeType == AttributeTypeCode.Lookup || attribute is MultiSelectPicklistAttributeMetadata || attribute.AttributeType == AttributeTypeCode.Owner || attribute.AttributeType == AttributeTypeCode.Customer)
+                {
+                    unsortableProperties.Add(attribute.LogicalName);
+                }
+
+                // Do not support group on attribute of File, Image and Lookup type.
+                if (attribute is FileAttributeMetadata || attribute is ImageAttributeMetadata || attribute is LookupAttributeMetadata)
+                {
+                    ungroupableProperties.Add(attribute.LogicalName);
+                }
+            }
+
+            if (CdsCapabilities.Filterable)
+            {
+                filterRestriction = new PfxConnectors.FilterRestriction(requiredProperties, nonFilterableProperties);
+            }
+
+            PfxConnectors.SortRestriction sortRestriction = null;
+            if (CdsCapabilities.Sortable)
+            {
+                sortRestriction = new PfxConnectors.SortRestriction(unsortableProperties, ascendingOnlyProperties);
+            }
+
+            PfxConnectors.GroupRestriction groupRestriction = null;
+            if (CdsCapabilities.Groupable)
+            {
+                groupRestriction = new PfxConnectors.GroupRestriction(ungroupableProperties);
+            }
+
+            var selectionRestriction = new PfxConnectors.SelectionRestriction(CdsCapabilities.Selectable);
+
+            string[] filterFunctions = CdsCapabilities.FilterFunctionSupport;
+            string[] filterSupportedFunctions = CdsCapabilities.FilterFunctionSupport;
+            string[] serverPagingOptions = null;
+            bool recordPermissionCapabilities = CdsCapabilities.SupportsRecordPermission;
+
+            var pagingCapabilities = new PfxConnectors.PagingCapabilities(CdsCapabilities.IsOnlyServerPagable, serverPagingOptions);
+
+            bool supportsDataverseOffline = tableMetadata?.IsOfflineInMobileClient?.Value ?? false;
+
+            var serviceCapability = new PfxConnectors.ServiceCapabilities(sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline);
+
+            return serviceCapability;
         }
 
         private DataverseOptionSet RegisterDataverseOptionSet(EntityMetadata entity, IExternalOptionSet optionSet)
@@ -427,7 +497,7 @@ namespace Microsoft.PowerFx.Dataverse
         #region IDisplayNameProvider implementation
 
         /// <summary>
-        /// Get the DisplayCollectionName for an entity, based
+        /// Get the DisplayCollectionName for an entity, based.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>

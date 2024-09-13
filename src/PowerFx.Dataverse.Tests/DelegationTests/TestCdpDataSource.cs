@@ -24,66 +24,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         public CdpTable CdpTable;
 
-        public static TableType GetCDPTableType(string tableName, RecordType rt)
+        public static TableType GetCDPTableType(string tableName, RecordType recordType)
         {
-            return new TestCdpDataSource("dataset", tableName, rt).CdpTable.GetTableValue().Type;
+            return new TestCdpDataSource("dataset", tableName, recordType).CdpTable.GetTableValue().Type;
         }
 
-        public TestCdpDataSource(string dataset, string tableName, RecordType rt)
+        public TestCdpDataSource(string dataset, string tableName, RecordType recordType)
             : base(dataset)
         {
-            Type rawTableType = typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "RawTable");
-            object rawTable = Activator.CreateInstance(rawTableType);
-            rawTableType.GetProperty("Name").SetValue(rawTable, tableName);
-            rawTableType.GetProperty("DisplayName").SetValue(rawTable, "tableDisplayName");
+            RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };           
+            List<RawTable> listRawTable = new List<RawTable>() { rawTable };
 
-            Type listRawTableType = typeof(List<>).MakeGenericType(rawTableType);
-            object listRawTable = listRawTableType.GetConstructors().First(c => !c.GetParameters().Any()).Invoke(new object[] { });
-            listRawTableType.GetMethod("Add").Invoke(listRawTable, new object[] { rawTable });
+            ServiceCapabilities serviceCapabilities = new ServiceCapabilities(
+                new SortRestriction(new List<string>() /* unsortableProperties */, new List<string>() /* ascendingOnlyProperties */),
+                new FilterRestriction(new List<string>() /* requiredProperties */, new List<string>() /* nonFilterableProperties */),
+                new SelectionRestriction(true /* isSelectable */),
+                new GroupRestriction(new List<string>() /* ungroupableProperties */),
+                ColumnCapabilities.DefaultCdsFilterFunctionSupport, // filterFunctions
+                ColumnCapabilities.DefaultCdsFilterFunctionSupport, // filterSupportedFunctions
+                new PagingCapabilities(false /* isOnlyServerPagable */, new string[0] /* serverPagingOptions */),
+                true); // recordPermissionCapabilities                                
 
-            ConstructorInfo cdpConstructor = typeof(CdpTable).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).First(c => c.GetParameters().Any(p => p.Name == "datasetMetadata"));
-            CdpTable cdpTable = (CdpTable)cdpConstructor.Invoke(new object[] { dataset, tableName, new DatasetMetadata(), listRawTable });
+            serviceCapabilities.AddCdsColumnCapabilities(recordType);
 
-            Type cdpTableDescriptorType = typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "CdpTableDescriptor");
-            object cdpTableDescriptor = Activator.CreateInstance(cdpTableDescriptorType);
-            cdpTableDescriptorType.GetProperty("Name").SetValue(cdpTableDescriptor, tableName);
-            cdpTableDescriptorType.GetProperty("DisplayName").SetValue(cdpTableDescriptor, "tableDisplayName");
-
-            Type serviceCapabilitiesType = typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "ServiceCapabilities");
-            ConstructorInfo serviceCapabilitiesConstructor = serviceCapabilitiesType.GetConstructors()[0];
-            object serviceCapabilities = serviceCapabilitiesConstructor.Invoke(new object[]
-            {
-                typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "SortRestriction").GetConstructors()[0].Invoke(new object[] { new List<string>() /* unsortableProperties */, new List<string>() /* ascendingOnlyProperties */ }),
-                typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "FilterRestriction").GetConstructors()[0].Invoke(new object[] { new List<string>() /* requiredProperties */, new List<string>() /* nonFilterableProperties */ }),
-                typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "SelectionRestriction").GetConstructors()[0].Invoke(new object[] { true /* isSelectable */ }),
-                typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "GroupRestriction").GetConstructors()[0].Invoke(new object[] { new List<string>() /* ungroupableProperties */ }),
-                new string[0], // filterFunctions
-                new string[0], // filterSupportedFunctions
-                typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "PagingCapabilities").GetConstructors()[0].Invoke(new object[] { false /* isOnlyServerPagable */, new string[0] /* serverPagingOptions */ }),
-                true, // recordPermissionCapabilities
-                4, // oDataVersion
-                false // supportsDataverseOffline
-            });
-
-            cdpTableDescriptorType.GetProperty("TableCapabilities").SetValue(cdpTableDescriptor, serviceCapabilities);
-
-            FormulaType ft = (FormulaType)typeof(ConnectorType).GetMethod("GetRecordTypeWithADS", BindingFlags.Static | BindingFlags.NonPublic).Invoke(
-                null,
-                new object[]
-                {
-                    rt,
-                    Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "ReferencedEntity"))),
-                    Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(CdpTable).Assembly.GetTypes().First(t => t.Name == "SqlRelationship"))),
-                    typeof(FormulaValue).Assembly.GetTypes().First(t => t.Name == "DName").GetConstructors()[0].Invoke(new object[] { tableName }),
-                    dataset,
-                    serviceCapabilities,
-                    false,
-                    null
-                });
-
-            typeof(CdpTable).GetField("TabularTableDescriptor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(cdpTable, cdpTableDescriptor);
-            typeof(CdpTable).GetMethod("SetRecordType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(cdpTable, new object[] { ft });
-
+            CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
+            RecordType recordTypeWithAds = ConnectorType.GetRecordTypeWithADS(recordType, new List<ReferencedEntity>(), new List<SqlRelationship>(), new DName(tableName), dataset, serviceCapabilities, false, null);
+            CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);          
+            
             CdpTable = cdpTable;
         }
 

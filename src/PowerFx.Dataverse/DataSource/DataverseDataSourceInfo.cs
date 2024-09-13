@@ -24,7 +24,7 @@ using Microsoft.PowerFx.Core.Utils;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Repository for all information about an entity that will be needed to bind or generate SQL
+    /// Repository for all information about an entity that will be needed to bind or generate SQL.
     /// </summary>
     internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata
     {
@@ -36,15 +36,15 @@ namespace Microsoft.PowerFx.Dataverse
 
         private DelegationMetadata _delegationMetadata;
 
-        public DataverseDataSourceInfo(
-            CdsTableDefinition tableDefinition,
-            CdsEntityMetadataProvider provider,
-            string variableName = null)
+        internal Microsoft.PowerFx.Connectors.ServiceCapabilities ServiceCapabilities;
+
+        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null, Microsoft.PowerFx.Connectors.ServiceCapabilities serviceCapabilities = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
             _provider = provider;
             Document = provider.Document;
+            ServiceCapabilities = serviceCapabilities;
 
             // TODO: modeled from CdsDataSourceInfo.SetClientSemantics - is it worth breaking out?
 

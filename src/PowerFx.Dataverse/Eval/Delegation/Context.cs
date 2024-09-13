@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
                 WithScopes = withScopes;
                 CallerNode = callerNode;
                 CallerTableNode = callerTableRetVal._sourceTableIRNode;
-                CallerTableRetVal = callerTableRetVal;
+                CallerTableRetVal = callerTableRetVal; // contains TabularDataSource, if defined
                 _ignoreDelegation = ignoreDelegation;
             }
 

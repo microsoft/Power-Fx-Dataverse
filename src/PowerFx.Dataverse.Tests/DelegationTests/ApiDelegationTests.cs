@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -18,21 +19,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         // Delegation using direct API.
         [Theory]
-        [InlineData(
-            "Filter(t1, Price < 120 And 90 <= Price)",
-            "((Price lt 120) and (Price ge 90))",
-            1000, // default fetch size
-            "Table({Price:100,opt:Blank()})")]
-        [InlineData(
-            "First(t1).Price",
-            null,
-            1,
-            "100")]
-        [InlineData(
-            "Filter(t1, ThisRecord.opt = Opt.display2)",
-            "(opt eq 'logical2')",
-            1000, // default fetch size
-            "Table({Price:100,opt:Blank()})")]
+        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData("First(t1).Price", null, 1, "100")]
+        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
         public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
@@ -90,6 +79,42 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.Equal(expectedStr, resultStr);
 
             Assert.NotNull(myService._parameters);
+        }
+
+        [Theory]
+        [InlineData("Filter(t1, Price < 120)", "__retrieveMultiple(t1, __lt(t1, Price, Float(120)), __noop(), 1000, )")]
+        [InlineData("Filter(t1, Price <= 120)", "Filter(t1, (LeqNumbers(Price,Float(120))))")]
+        public async Task CapabilitiesTest(string expr, string expectedIr)
+        {
+            var recordType = RecordType.Empty()
+                .Add("Price", FormulaType.Number);
+
+            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType);
+
+            // Hack ServiceCapabilities to only allow '<' operator on Price
+            ((ColumnCapabilities)((ExternalCdpDataSource)tt._type.AssociatedDataSources.First()).ServiceCapabilities._columnsCapabilities["Price"]).Capabilities = new ColumnCapabilitiesDefinition(new string[] { "lt" }, null, null);
+
+            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
+
+            var t1 = new MyTable(tt.ToRecord());
+            var st = new SymbolValues("Delegable_1");
+            st.Add("t1", t1);
+
+            Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
+
+            var config = new PowerFxConfig();
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
+
+            var check = new CheckResult(engine)
+                .SetText(expr)
+                .SetBindingInfo(st.SymbolTable);
+
+            var errors = check.ApplyErrors().ToArray();
+
+            var ir = check.GetCompactIRString();
+
+            Assert.Equal<object>(expectedIr, ir);
         }
     }
 

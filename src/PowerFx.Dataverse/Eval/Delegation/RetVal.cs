@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.PowerFx.Connectors;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -39,6 +41,8 @@ namespace Microsoft.PowerFx.Dataverse
             // Table type  and original metadata for table that we're delegating to.
             public readonly TableType TableType;
 
+            public readonly ServiceCapabilities ServiceCapabilities;
+
             private readonly IntermediateNode _filter;
 
             private readonly IntermediateNode _orderBy;
@@ -48,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly NumberLiteralNode _maxRows;
 
             // Null if not dataverse
-            private readonly EntityMetadata _metadata;            
+            private readonly EntityMetadata _metadata;
 
             /// <summary>
             /// Will be null for non-dataverse tables.
@@ -57,13 +61,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsDataverseDelegation => _metadata != null;
 
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, ServiceCapabilities serviceCapabilities = null)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
+                this.ServiceCapabilities = serviceCapabilities;
 
                 // topCount and filter are optional.
                 this._topCount = count;

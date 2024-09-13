@@ -20,8 +20,8 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode predicate = node.Args[1];
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
-            var predicteContext = context.GetContextForPredicateEval(node, tableArg);
-            var pr = predicate.Accept(this, predicteContext);
+            Context predicateContext = context.GetContextForPredicateEval(node, tableArg);
+            RetVal pr = predicate.Accept(this, predicateContext);
 
             if (!pr.IsDelegating)
             {

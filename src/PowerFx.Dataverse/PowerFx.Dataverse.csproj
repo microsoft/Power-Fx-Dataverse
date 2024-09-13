@@ -36,6 +36,7 @@
     <PackageReference Include="System.Text.Json" Version="6.0.8" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="Microsoft.PowerFx.Core" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.33">
       <PrivateAssets>all</PrivateAssets>

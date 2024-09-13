@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Linq;
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -26,15 +27,22 @@ namespace Microsoft.PowerFx.Dataverse
                 {                    
                     IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);
 
-                    if (e?.IsDelegatable == true)
+                    ServiceCapabilities serviceCapabilities = e switch
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
+                        ExternalCdpDataSource cdpDs => cdpDs.ServiceCapabilities,
+                        DataverseDataSourceInfo dvDs => dvDs.ServiceCapabilities,
+                        _ => null
+                    };
+
+                    if (e?.IsDelegatable == true && serviceCapabilities?.IsDelegable == true)
+                    {
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null, serviceCapabilities: serviceCapabilities);
                         return ret;
                     }
                 }
             }
 
-            // Just a regular variable, don't bother delegating.
+            // Just a regular variable or non-delegable table, don't bother delegating.
             return Ret(node);
         }
     }

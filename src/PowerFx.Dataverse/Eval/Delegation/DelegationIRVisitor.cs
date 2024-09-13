@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -13,7 +14,9 @@ using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Types;
+using static Microsoft.PowerFx.Connectors.ServiceCapabilitiesExtensions;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -61,11 +64,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && 
-                !TryGetFieldName(context, right, out _, out _, out _))
+            IList<string> nonFilterableProperties = context.CallerTableRetVal.ServiceCapabilities.GetNonFilterableProperties();
+            string opFunctionName = ODataOpFromBinaryOp(op);
+
+            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && !TryGetFieldName(context, right, out _, out _, out _))
             {
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
-                                                  left.IRContext.ResultType == FormulaType.String)
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
                 {
                     opKind = default;
                     node = default;
@@ -74,33 +78,44 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
-                opKind = op;
-                return true;
-            }
-            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) 
-                && !TryGetFieldName(context, left, out _, out _, out _))
-            {
-                fieldName = rightField;
-                node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
-                                                  left.IRContext.ResultType == FormulaType.String)
+                IList<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
+
+                if ((nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) &&
+                    (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName)))
                 {
+                    node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
                     return true;
                 }
+            }
+            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) && !TryGetFieldName(context, left, out _, out _, out _))
+            {
+                fieldName = rightField;
 
-                if (TryInvertLeftRight(op, out var invertedOp))
+                IList<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
+
+                if ((nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) &&
+                    (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName)))
                 {
-                    opKind = invertedOp;
-                    return true;
+                    node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
+
+                    if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
+                    {
+                        opKind = op;
+                        return true;
+                    }
+
+                    if (TryInvertLeftRight(op, out var invertedOp))
+                    {
+                        opKind = invertedOp;
+                        return true;
+                    }
                 }
 
                 // will return false
             }
-            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && 
-                TryGetFieldName(context, right, out var rightField2, out _, out _))
+            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && TryGetFieldName(context, right, out var rightField2, out _, out _))
             {
                 if (leftField2 == rightField2)
                 {
@@ -505,11 +520,11 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
-                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) &&
                             fieldName == primaryKeyFieldName)
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
-                            if (context.IsDataverseDelegation && 
+                            if (context.IsDataverseDelegation &&
                                 context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
                             {
                                 fieldName = relation2.ReferencingAttribute;
@@ -651,5 +666,107 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
             }
         }
+
+        internal static string ODataOpFromBinaryOp(BinaryOpKind op) =>
+            op switch
+            {
+                BinaryOpKind.AddNumbers => "+",
+                BinaryOpKind.AddDateAndTime => "+",
+                BinaryOpKind.AddDateAndDay => "+",
+                BinaryOpKind.AddDateTimeAndDay => "+",
+                BinaryOpKind.AddTimeAndNumber => "+",
+                BinaryOpKind.DateDifference => "-",
+                BinaryOpKind.TimeDifference => "-",
+                BinaryOpKind.SubtractDateAndTime => "-",
+                BinaryOpKind.SubtractNumberAndDate => "-",
+                BinaryOpKind.SubtractNumberAndDateTime => "-",
+                BinaryOpKind.SubtractNumberAndTime => "-",
+                BinaryOpKind.DivNumbers => "/",
+
+                BinaryOpKind.MulNumbers => "*",
+
+                BinaryOpKind.AddDecimals => "+",
+                BinaryOpKind.DivDecimals => "/",
+                BinaryOpKind.MulDecimals => "*",
+
+                BinaryOpKind.EqNumbers => "eq",
+                BinaryOpKind.EqBoolean => "eq",
+                BinaryOpKind.EqText => "eq",
+                BinaryOpKind.EqDate => "eq",
+                BinaryOpKind.EqTime => "eq",
+                BinaryOpKind.EqDateTime => "eq",
+                BinaryOpKind.EqHyperlink => "eq",
+                BinaryOpKind.EqCurrency => "eq",
+                BinaryOpKind.EqImage => "eq",
+                BinaryOpKind.EqColor => "eq",
+                BinaryOpKind.EqMedia => "eq",
+                BinaryOpKind.EqBlob => "eq",
+                BinaryOpKind.EqGuid => "eq",
+                BinaryOpKind.EqOptionSetValue => "eq",
+                BinaryOpKind.EqViewValue => "eq",
+                BinaryOpKind.EqNamedValue => "eq",
+                BinaryOpKind.EqNull => "eq",
+                BinaryOpKind.EqDecimals => "eq",
+                BinaryOpKind.NeqNumbers => "ne",
+                BinaryOpKind.NeqBoolean => "ne",
+                BinaryOpKind.NeqText => "ne",
+                BinaryOpKind.NeqDate => "ne",
+                BinaryOpKind.NeqTime => "ne",
+                BinaryOpKind.NeqDateTime => "ne",
+                BinaryOpKind.NeqHyperlink => "ne",
+                BinaryOpKind.NeqCurrency => "ne",
+                BinaryOpKind.NeqImage => "ne",
+                BinaryOpKind.NeqColor => "ne",
+                BinaryOpKind.NeqMedia => "ne",
+                BinaryOpKind.NeqBlob => "ne",
+                BinaryOpKind.NeqGuid => "ne",
+                BinaryOpKind.NeqOptionSetValue => "ne",
+                BinaryOpKind.NeqViewValue => "ne",
+                BinaryOpKind.NeqNamedValue => "ne",
+                BinaryOpKind.NeqNull => "ne",
+                BinaryOpKind.NeqDecimals => "ne",
+                BinaryOpKind.LtNumbers => "lt",
+                BinaryOpKind.LeqNumbers => "le",
+                BinaryOpKind.GtNumbers => "gt",
+                BinaryOpKind.GeqNumbers => "ge",
+                BinaryOpKind.LtDecimals => "lt",
+                BinaryOpKind.LeqDecimals => "le",
+                BinaryOpKind.GtDecimals => "gt",
+                BinaryOpKind.GeqDecimals => "ge",
+                BinaryOpKind.LtDateTime => "lt",
+                BinaryOpKind.LeqDateTime => "le",
+                BinaryOpKind.GtDateTime => "gt",
+                BinaryOpKind.GeqDateTime => "ge",
+                BinaryOpKind.LtDate => "lt",
+                BinaryOpKind.LeqDate => "le",
+                BinaryOpKind.GtDate => "gt",
+                BinaryOpKind.GeqDate => "ge",
+                BinaryOpKind.LtTime => "lt",
+                BinaryOpKind.LeqTime => "le",
+                BinaryOpKind.GtTime => "gt",
+                BinaryOpKind.GeqTime => "ge",
+
+                BinaryOpKind.And => "and",
+                BinaryOpKind.Or => "or",
+
+                // BinaryOpKind.DynamicGetField => expr,
+
+                BinaryOpKind.Power => "pow",
+
+                // BinaryOpKind.Concatenate => expr,
+                // BinaryOpKind.AddTimeAndDate => expr,
+                // BinaryOpKind.AddDayAndDate => expr,
+                // BinaryOpKind.AddMillisecondsAndTime => expr,
+                // BinaryOpKind.AddDayAndDateTime => expr,
+
+                BinaryOpKind.InText => "inText",
+                
+                // BinaryOpKind.ExactInText => expr,
+                // BinaryOpKind.InScalarTable => expr,
+                // BinaryOpKind.ExactInScalarTable => expr,
+                // BinaryOpKind.InRecordTable => expr,
+
+                _ => null
+            };
     }
 }
