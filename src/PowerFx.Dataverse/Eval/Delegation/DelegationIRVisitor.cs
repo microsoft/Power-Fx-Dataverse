@@ -759,7 +759,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // BinaryOpKind.AddMillisecondsAndTime => expr,
                 // BinaryOpKind.AddDayAndDateTime => expr,
 
-                BinaryOpKind.InText => "inText",
+                BinaryOpKind.InText => "contains",
                 
                 // BinaryOpKind.ExactInText => expr,
                 // BinaryOpKind.InScalarTable => expr,
