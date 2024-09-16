@@ -33,24 +33,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             : base(dataset)
         {
             RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };           
-            List<RawTable> listRawTable = new List<RawTable>() { rawTable };
-
-            ServiceCapabilities serviceCapabilities = new ServiceCapabilities(
-                new SortRestriction(new List<string>() /* unsortableProperties */, new List<string>() /* ascendingOnlyProperties */),
-                new FilterRestriction(new List<string>() /* requiredProperties */, new List<string>() /* nonFilterableProperties */),
-                new SelectionRestriction(true /* isSelectable */),
-                new GroupRestriction(new List<string>() /* ungroupableProperties */),
-                ColumnCapabilities.DefaultCdsFilterFunctionSupport, // filterFunctions
-                ColumnCapabilities.DefaultCdsFilterFunctionSupport, // filterSupportedFunctions
-                new PagingCapabilities(false /* isOnlyServerPagable */, new string[0] /* serverPagingOptions */),
-                true); // recordPermissionCapabilities                                
-
-            serviceCapabilities.AddCdsColumnCapabilities(recordType);
-
+            List<RawTable> listRawTable = new List<RawTable>() { rawTable };            
+            ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType);
             CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
             RecordType recordTypeWithAds = ConnectorType.GetRecordTypeWithADS(recordType, new List<ReferencedEntity>(), new List<SqlRelationship>(), new DName(tableName), dataset, serviceCapabilities, false, null);
-            CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);          
-            
+            CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);                      
             CdpTable = cdpTable;
         }
 
