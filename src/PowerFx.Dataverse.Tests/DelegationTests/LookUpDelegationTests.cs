@@ -324,6 +324,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(224, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, true, true)]
         [InlineData(225, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, true, false)]
         [InlineData(226, "LookUp(t1, Price < 200 And !IsBlank(Old_Price)).Price", 100.0, false, true)]
+
+        [InlineData(227, "LookUp(t1, StartsWith(ThisRecord.Name, \"r\")).Price", 100.0, false, false)]
+        [InlineData(228, "LookUp(t1, StartsWith(ThisRecord.Name, \"r\")).Price", 100.0, true, true)]
+        [InlineData(229, "LookUp(t1, StartsWith(ThisRecord.Name, \"r\")).Price", 100.0, true, false)]
+        [InlineData(230, "LookUp(t1, StartsWith(ThisRecord.Name, \"r\")).Price", 100.0, false, true)]
+
+        [InlineData(231, "LookUp(t1, EndsWith(ThisRecord.Name, \"1\")).Price", 100.0, false, false)]
+        [InlineData(232, "LookUp(t1, EndsWith(ThisRecord.Name, \"1\")).Price", 100.0, true, true)]
+        [InlineData(233, "LookUp(t1, EndsWith(ThisRecord.Name, \"1\")).Price", 100.0, true, false)]
+        [InlineData(234, "LookUp(t1, EndsWith(ThisRecord.Name, \"1\")).Price", 100.0, false, true)]
+
+        [InlineData(235, "LookUp(t1, StartsWith(ThisRecord.Name, \"p\") And EndsWith(ThisRecord.Name, \"1\")).Price", 10.0, false, false)]
+        [InlineData(236, "LookUp(t1, StartsWith(ThisRecord.Name, \"p\") And EndsWith(ThisRecord.Name, \"1\")).Price", 10.0, true, true)]
+        [InlineData(237, "LookUp(t1, StartsWith(ThisRecord.Name, \"p\") And EndsWith(ThisRecord.Name, \"1\")).Price", 10.0, true, false)]
+        [InlineData(238, "LookUp(t1, StartsWith(ThisRecord.Name, \"p\") And EndsWith(ThisRecord.Name, \"1\")).Price", 10.0, false, true)]
+
+        [InlineData(239, "LookUp(t1, StartsWith(\"r\", ThisRecord.Name)).Price", null, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(240, "LookUp(t1, StartsWith(\"r\", ThisRecord.Name)).Price", null, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(241, "LookUp(t1, StartsWith(\"r\", ThisRecord.Name)).Price", null, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(242, "LookUp(t1, StartsWith(\"r\", ThisRecord.Name)).Price", null, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(243, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(244, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(245, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(246, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

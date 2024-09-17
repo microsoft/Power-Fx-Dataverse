@@ -13,6 +13,7 @@ using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
@@ -29,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
-        private RetVal ProcessNot(CallNode node, Context context)
+        private RetVal ProcessStartsEndsWith(CallNode node, Context context, bool isStartWith)
         {
             if (!context.IsPredicateEvalInProgress)
             {
@@ -38,18 +39,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             IList<string> relations = null;
 
-            // Currently only supports lamda Not(IsBlank()) delegation.
-
-            if (node.Args[0] is CallNode callNode && 
-                callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name && 
-                    ((TryGetFieldName(context, callNode, out var fieldName, out var invertCoercion, out _) && !invertCoercion)
-                    || (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _) && !invertCoercion)))
+            if ((TryGetFieldName(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out var fieldName, out var rightNode, out _) 
+                || TryGetRelationField(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out relations, out rightNode, out _)) 
+                &&
+                context.CallerTableRetVal.AssociatedDS.DoesColumnSupportStartsEndsWith(fieldName, context.CallerTableRetVal.TableType.GetFieldType(fieldName), isStartWith))
             {
-                var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
-
-                // BinaryOpKind doesn't matter for Not(IsBlank()) because all value will be compared to null, so just use NeqText.
-                var neqNode = _hooks.MakeNeqCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, BinaryOpKind.NeqText, blankNode, context.CallerNode.Scope);
-                var ret = CreateBinaryOpRetVal(context, node, neqNode);
+                var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
+                
+                var ret = CreateBinaryOpRetVal(context, node, startsEndsWithNode);
                 return ret;
             }
 

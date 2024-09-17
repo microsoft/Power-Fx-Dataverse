@@ -5,6 +5,8 @@ using System;
 using System.Linq;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Authoring.Importers.ServiceConfig;
+using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
@@ -93,6 +95,24 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             throw new Exception("Unsupported data source");
+        }
+
+        internal static bool TryGetAssociateDataSource(this FormulaType type, out IExternalDataSource ads)
+        {
+            return type._type.TryGetAssociateDataSource(out ads);
+        }
+
+        internal static bool TryGetAssociateDataSource(this DType type, out IExternalDataSource ads)
+        {
+            if (type.AssociatedDataSources?.FirstOrDefault() is IExternalDataSource dsInfo)
+            {
+                ads = dsInfo;
+                return true;
+            }
+
+            // $$$ Throw here after all the source has been updated with associated data sources.
+            ads = default;
+            return false;
         }
 
         internal static CdsTableDefinition CdsTableDefinitionOrDefault(this DType type)
