@@ -26,13 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (node.Value is NameSymbol nameSym)
                 {                    
                     IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);
-
-                    ServiceCapabilities serviceCapabilities = e switch
-                    {
-                        ExternalCdpDataSource cdpDs => cdpDs.ServiceCapabilities,
-                        DataverseDataSourceInfo dvDs => dvDs.ServiceCapabilities,
-                        _ => null
-                    };
+                    ServiceCapabilities serviceCapabilities = e is IExternalSupportsServiceCapabilities essc ? essc.ServiceCapabilities : null;
 
                     if (e?.IsDelegatable == true && serviceCapabilities?.IsDelegable == true)
                     {

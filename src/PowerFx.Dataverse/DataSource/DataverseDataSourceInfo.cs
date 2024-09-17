@@ -9,6 +9,7 @@ using Microsoft.AppMagic;
 using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
 using Microsoft.AppMagic.Common;
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;
@@ -20,13 +21,14 @@ using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.UtilityDataStructures;
 using Microsoft.PowerFx.Core.Utils;
+using ServiceCapabilities = Microsoft.PowerFx.Connectors.ServiceCapabilities;
 
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
     /// Repository for all information about an entity that will be needed to bind or generate SQL.
     /// </summary>
-    internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata
+    internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata, IExternalSupportsServiceCapabilities
     {
         public CdsTableDefinition CdsTableDefinition { get; }
 
@@ -36,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private DelegationMetadata _delegationMetadata;
 
-        internal Microsoft.PowerFx.Connectors.ServiceCapabilities ServiceCapabilities;
+        public ServiceCapabilities ServiceCapabilities { get; private set; }
 
         public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null, Microsoft.PowerFx.Connectors.ServiceCapabilities serviceCapabilities = null)
         {

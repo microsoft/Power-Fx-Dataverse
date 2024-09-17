@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             List<RawTable> listRawTable = new List<RawTable>() { rawTable };            
             ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType);
             CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
-            RecordType recordTypeWithAds = ConnectorType.GetRecordTypeWithADS(recordType, new List<ReferencedEntity>(), new List<SqlRelationship>(), new DName(tableName), dataset, serviceCapabilities, false, null);
+            RecordType recordTypeWithAds = ConnectorType.GetRecordTypeWithADS(recordType, new DName(tableName), dataset, serviceCapabilities, false);
             CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);                      
             CdpTable = cdpTable;
         }

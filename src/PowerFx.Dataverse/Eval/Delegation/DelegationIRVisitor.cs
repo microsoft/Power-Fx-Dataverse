@@ -79,10 +79,9 @@ namespace Microsoft.PowerFx.Dataverse
 
                 fieldName = leftField;
 
-                IList<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
+                IEnumerable<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
 
-                if ((nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) &&
-                    (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName)))
+                if (CanDelegateFilter(fieldName, nonFilterableProperties, opFunctionName, columnFilterFunction))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -93,10 +92,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
 
-                IList<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
+                IEnumerable<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
 
-                if ((nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) &&
-                    (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName)))
+                if (CanDelegateFilter(fieldName, nonFilterableProperties, opFunctionName, columnFilterFunction))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -142,6 +140,11 @@ namespace Microsoft.PowerFx.Dataverse
             node = default;
             fieldName = default;
             return false;
+        }
+
+        private static bool CanDelegateFilter(string fieldName, IList<string> nonFilterableProperties, string opFunctionName, IEnumerable<string> columnFilterFunction)
+        {
+            return (nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) && (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName));
         }
 
         /// <summary>
