@@ -89,10 +89,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var recordType = RecordType.Empty()
                 .Add("Price", FormulaType.Number);
 
-            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType);
-
-            // Hack ServiceCapabilities to only allow '<' operator on Price
-            ((ColumnCapabilities)((IExternalSupportsServiceCapabilities)tt._type.AssociatedDataSources.First()).ServiceCapabilities._columnsCapabilities["Price"]).Capabilities = new ColumnCapabilitiesDefinition(new string[] { "lt" }, null, null);
+            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType, serviceCapabilities =>
+            {
+                // Hack ServiceCapabilities to only allow '<' operator on Price
+                ((ColumnCapabilities)serviceCapabilities._columnsCapabilities["Price"]).Capabilities = new ColumnCapabilitiesDefinition(new string[] { "lt" }, null, null);
+            });
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 

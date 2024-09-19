@@ -24,19 +24,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         public CdpTable CdpTable;
 
-        public static TableType GetCDPTableType(string tableName, RecordType recordType)
+        public static TableType GetCDPTableType(string tableName, RecordType recordType, Action<ServiceCapabilities> serviceCapabilitiesUpdater = null)
         {
-            return new TestCdpDataSource("dataset", tableName, recordType).CdpTable.GetTableValue().Type;
+            return new TestCdpDataSource("dataset", tableName, recordType, serviceCapabilitiesUpdater).CdpTable.GetTableValue().Type;
         }
 
-        public TestCdpDataSource(string dataset, string tableName, RecordType recordType)
+        public TestCdpDataSource(string dataset, string tableName, RecordType recordType, Action<ServiceCapabilities> serviceCapabilitiesUpdater = null)
             : base(dataset)
         {
             RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };           
             List<RawTable> listRawTable = new List<RawTable>() { rawTable };            
             ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType);
+
+            if (serviceCapabilitiesUpdater != null)
+            {
+                serviceCapabilitiesUpdater(serviceCapabilities);
+            }
+
             CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
-            RecordType recordTypeWithAds = ConnectorType.GetRecordTypeWithADS(recordType, new DName(tableName), dataset, serviceCapabilities, false);
+            RecordType recordTypeWithAds = recordType.AddAssociatedDataSource(new DName(tableName), dataset, serviceCapabilities, false);
             CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);                      
             CdpTable = cdpTable;
         }

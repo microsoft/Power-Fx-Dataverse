@@ -7,16 +7,18 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.PowerFx.Connectors;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Interpreter;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
-using static Microsoft.PowerFx.Connectors.ServiceCapabilitiesExtensions;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -64,8 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            IList<string> nonFilterableProperties = context.CallerTableRetVal.ServiceCapabilities.GetNonFilterableProperties();
-            string opFunctionName = ODataOpFromBinaryOp(op);
+            FilterOpMetadata filterCapabilities = context.CallerTableRetVal.DelegationMetadata?.FilterDelegationMetadata;
 
             if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && !TryGetFieldName(context, right, out _, out _, out _))
             {
@@ -79,9 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 fieldName = leftField;
 
-                IEnumerable<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
-
-                if (CanDelegateFilter(fieldName, nonFilterableProperties, opFunctionName, columnFilterFunction))
+                if (CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -92,9 +91,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
 
-                IEnumerable<string> columnFilterFunction = context.CallerTableRetVal.ServiceCapabilities.GetColumnFilterFunctions(fieldName);
-
-                if (CanDelegateFilter(fieldName, nonFilterableProperties, opFunctionName, columnFilterFunction))
+                if (CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -142,9 +139,9 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private static bool CanDelegateFilter(string fieldName, IList<string> nonFilterableProperties, string opFunctionName, IEnumerable<string> columnFilterFunction)
-        {
-            return (nonFilterableProperties == null || !nonFilterableProperties.Contains(fieldName)) && (columnFilterFunction == null || columnFilterFunction.Contains(opFunctionName));
+        private static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities)
+        {            
+            return filterCapabilities != null && filterCapabilities.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName)));
         }
 
         /// <summary>
@@ -153,7 +150,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="context"></param>
         /// <param name="node"></param>
         /// <param name="fieldName">name of the field.</param>
-        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind. 
+        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind.
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
         /// <returns></returns>
@@ -299,16 +296,22 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 case UnaryOpKind.DateToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDate, node);
+
                 case UnaryOpKind.DateTimeToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDateTime, node);
+
                 case UnaryOpKind.TimeToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToTime, node);
+
                 case UnaryOpKind.DateToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDate, node);
+
                 case UnaryOpKind.DateTimeToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDateTime, node);
+
                 case UnaryOpKind.TimeToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToTime, node);
+
                 default:
                     throw new NotImplementedException($"{nameof(MaybeAddCoercion)} -> Coercion kind {coercionKind} is not implemented for coercion inversion.");
             }
@@ -321,34 +324,46 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 case UnaryOpKind.DateTimeToTime:
                     return true;
+
                 case UnaryOpKind.DateToTime:
                     return true;
+
                 case UnaryOpKind.TimeToDate:
                     return true;
+
                 case UnaryOpKind.DateTimeToDate:
                     return true;
+
                 case UnaryOpKind.TimeToDateTime:
                     return true;
+
                 case UnaryOpKind.DateToDateTime:
                     return true;
+
                 case UnaryOpKind.DateToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateTimeToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.TimeToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateToNumber:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateTimeToNumber:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.TimeToNumber:
                     invertCoercion = true;
                     return true;
+
                 default:
                     invertCoercion = false;
                     return false;
@@ -668,108 +683,108 @@ namespace Microsoft.PowerFx.Dataverse
                     invertedOp = default;
                     return false;
             }
-        }
+        }        
 
-        internal static string ODataOpFromBinaryOp(BinaryOpKind op) =>
-            op switch
+        internal static BinaryOp ToBinaryOp(BinaryOpKind opKind) =>
+            opKind switch
             {
-                BinaryOpKind.AddNumbers => "+",
-                BinaryOpKind.AddDateAndTime => "+",
-                BinaryOpKind.AddDateAndDay => "+",
-                BinaryOpKind.AddDateTimeAndDay => "+",
-                BinaryOpKind.AddTimeAndNumber => "+",
-                BinaryOpKind.DateDifference => "-",
-                BinaryOpKind.TimeDifference => "-",
-                BinaryOpKind.SubtractDateAndTime => "-",
-                BinaryOpKind.SubtractNumberAndDate => "-",
-                BinaryOpKind.SubtractNumberAndDateTime => "-",
-                BinaryOpKind.SubtractNumberAndTime => "-",
-                BinaryOpKind.DivNumbers => "/",
-
-                BinaryOpKind.MulNumbers => "*",
-
-                BinaryOpKind.AddDecimals => "+",
-                BinaryOpKind.DivDecimals => "/",
-                BinaryOpKind.MulDecimals => "*",
-
-                BinaryOpKind.EqNumbers => "eq",
-                BinaryOpKind.EqBoolean => "eq",
-                BinaryOpKind.EqText => "eq",
-                BinaryOpKind.EqDate => "eq",
-                BinaryOpKind.EqTime => "eq",
-                BinaryOpKind.EqDateTime => "eq",
-                BinaryOpKind.EqHyperlink => "eq",
-                BinaryOpKind.EqCurrency => "eq",
-                BinaryOpKind.EqImage => "eq",
-                BinaryOpKind.EqColor => "eq",
-                BinaryOpKind.EqMedia => "eq",
-                BinaryOpKind.EqBlob => "eq",
-                BinaryOpKind.EqGuid => "eq",
-                BinaryOpKind.EqOptionSetValue => "eq",
-                BinaryOpKind.EqViewValue => "eq",
-                BinaryOpKind.EqNamedValue => "eq",
-                BinaryOpKind.EqNull => "eq",
-                BinaryOpKind.EqDecimals => "eq",
-                BinaryOpKind.NeqNumbers => "ne",
-                BinaryOpKind.NeqBoolean => "ne",
-                BinaryOpKind.NeqText => "ne",
-                BinaryOpKind.NeqDate => "ne",
-                BinaryOpKind.NeqTime => "ne",
-                BinaryOpKind.NeqDateTime => "ne",
-                BinaryOpKind.NeqHyperlink => "ne",
-                BinaryOpKind.NeqCurrency => "ne",
-                BinaryOpKind.NeqImage => "ne",
-                BinaryOpKind.NeqColor => "ne",
-                BinaryOpKind.NeqMedia => "ne",
-                BinaryOpKind.NeqBlob => "ne",
-                BinaryOpKind.NeqGuid => "ne",
-                BinaryOpKind.NeqOptionSetValue => "ne",
-                BinaryOpKind.NeqViewValue => "ne",
-                BinaryOpKind.NeqNamedValue => "ne",
-                BinaryOpKind.NeqNull => "ne",
-                BinaryOpKind.NeqDecimals => "ne",
-                BinaryOpKind.LtNumbers => "lt",
-                BinaryOpKind.LeqNumbers => "le",
-                BinaryOpKind.GtNumbers => "gt",
-                BinaryOpKind.GeqNumbers => "ge",
-                BinaryOpKind.LtDecimals => "lt",
-                BinaryOpKind.LeqDecimals => "le",
-                BinaryOpKind.GtDecimals => "gt",
-                BinaryOpKind.GeqDecimals => "ge",
-                BinaryOpKind.LtDateTime => "lt",
-                BinaryOpKind.LeqDateTime => "le",
-                BinaryOpKind.GtDateTime => "gt",
-                BinaryOpKind.GeqDateTime => "ge",
-                BinaryOpKind.LtDate => "lt",
-                BinaryOpKind.LeqDate => "le",
-                BinaryOpKind.GtDate => "gt",
-                BinaryOpKind.GeqDate => "ge",
-                BinaryOpKind.LtTime => "lt",
-                BinaryOpKind.LeqTime => "le",
-                BinaryOpKind.GtTime => "gt",
-                BinaryOpKind.GeqTime => "ge",
-
-                BinaryOpKind.And => "and",
-                BinaryOpKind.Or => "or",
-
-                // BinaryOpKind.DynamicGetField => expr,
-
-                BinaryOpKind.Power => "pow",
-
-                // BinaryOpKind.Concatenate => expr,
-                // BinaryOpKind.AddTimeAndDate => expr,
-                // BinaryOpKind.AddDayAndDate => expr,
-                // BinaryOpKind.AddMillisecondsAndTime => expr,
-                // BinaryOpKind.AddDayAndDateTime => expr,
-
-                BinaryOpKind.InText => "contains",
-                
-                // BinaryOpKind.ExactInText => expr,
-                // BinaryOpKind.InScalarTable => expr,
-                // BinaryOpKind.ExactInScalarTable => expr,
-                // BinaryOpKind.InRecordTable => expr,
-
-                _ => null
+                BinaryOpKind.AddDateAndDay => BinaryOp.Add,
+                BinaryOpKind.AddDateAndTime => BinaryOp.Add,
+                BinaryOpKind.AddDateTimeAndDay => BinaryOp.Add,
+                BinaryOpKind.AddDayAndDate => BinaryOp.Add,
+                BinaryOpKind.AddDayAndDateTime => BinaryOp.Add,
+                BinaryOpKind.AddDecimals => BinaryOp.Add,
+                BinaryOpKind.AddNumberAndTime => BinaryOp.Add,
+                BinaryOpKind.AddNumbers => BinaryOp.Add,
+                BinaryOpKind.AddTimeAndDate => BinaryOp.Add,
+                BinaryOpKind.AddTimeAndNumber => BinaryOp.Add,
+                BinaryOpKind.AddTimeAndTime => BinaryOp.Add,
+                BinaryOpKind.And => BinaryOp.And,
+                BinaryOpKind.Concatenate => BinaryOp.Concat,
+                BinaryOpKind.DateDifference => BinaryOp.And,
+                BinaryOpKind.DivDecimals => BinaryOp.Div,
+                BinaryOpKind.DivNumbers => BinaryOp.Div,
+                BinaryOpKind.DynamicGetField => BinaryOp.Error,
+                BinaryOpKind.EqBlob => BinaryOp.Equal,
+                BinaryOpKind.EqBoolean => BinaryOp.Equal,
+                BinaryOpKind.EqColor => BinaryOp.Equal,
+                BinaryOpKind.EqCurrency => BinaryOp.Equal,
+                BinaryOpKind.EqDate => BinaryOp.Equal,
+                BinaryOpKind.EqDateTime => BinaryOp.Equal,
+                BinaryOpKind.EqDecimals => BinaryOp.Equal,
+                BinaryOpKind.EqGuid => BinaryOp.Equal,
+                BinaryOpKind.EqHyperlink => BinaryOp.Equal,
+                BinaryOpKind.EqImage => BinaryOp.Equal,
+                BinaryOpKind.EqMedia => BinaryOp.Equal,
+                BinaryOpKind.EqNamedValue => BinaryOp.Equal,
+                BinaryOpKind.EqNull => BinaryOp.Equal,
+                BinaryOpKind.EqNullUntyped => BinaryOp.Equal,
+                BinaryOpKind.EqNumbers => BinaryOp.Equal,
+                BinaryOpKind.EqOptionSetValue => BinaryOp.Equal,
+                BinaryOpKind.EqPolymorphic => BinaryOp.Equal,
+                BinaryOpKind.EqText => BinaryOp.Equal,
+                BinaryOpKind.EqTime => BinaryOp.Equal,
+                BinaryOpKind.EqViewValue => BinaryOp.Equal,
+                BinaryOpKind.ExactInScalarTable => BinaryOp.Exactin,
+                BinaryOpKind.ExactInText => BinaryOp.Exactin,
+                BinaryOpKind.GeqDate => BinaryOp.GreaterEqual,
+                BinaryOpKind.GeqDateTime => BinaryOp.GreaterEqual,
+                BinaryOpKind.GeqDecimals => BinaryOp.GreaterEqual,
+                BinaryOpKind.GeqNull => BinaryOp.GreaterEqual,
+                BinaryOpKind.GeqNumbers => BinaryOp.GreaterEqual,
+                BinaryOpKind.GeqTime => BinaryOp.GreaterEqual,
+                BinaryOpKind.GtDate => BinaryOp.Greater,
+                BinaryOpKind.GtDateTime => BinaryOp.Greater,
+                BinaryOpKind.GtDecimals => BinaryOp.Greater,
+                BinaryOpKind.GtNull => BinaryOp.Greater,
+                BinaryOpKind.GtNumbers => BinaryOp.Greater,
+                BinaryOpKind.GtTime => BinaryOp.Greater,
+                BinaryOpKind.InRecordTable => BinaryOp.In,
+                BinaryOpKind.InScalarTable => BinaryOp.In,
+                BinaryOpKind.InText => BinaryOp.In,
+                BinaryOpKind.Invalid => BinaryOp.Error,
+                BinaryOpKind.LeqDate => BinaryOp.LessEqual,
+                BinaryOpKind.LeqDateTime => BinaryOp.LessEqual,
+                BinaryOpKind.LeqDecimals => BinaryOp.LessEqual,
+                BinaryOpKind.LeqNull => BinaryOp.LessEqual,
+                BinaryOpKind.LeqNumbers => BinaryOp.LessEqual,
+                BinaryOpKind.LeqTime => BinaryOp.LessEqual,
+                BinaryOpKind.LtDate => BinaryOp.Less,
+                BinaryOpKind.LtDateTime => BinaryOp.Less,
+                BinaryOpKind.LtDecimals => BinaryOp.Less,
+                BinaryOpKind.LtNull => BinaryOp.Less,
+                BinaryOpKind.LtNumbers => BinaryOp.Less,
+                BinaryOpKind.LtTime => BinaryOp.Less,
+                BinaryOpKind.MulDecimals => BinaryOp.Mul,
+                BinaryOpKind.MulNumbers => BinaryOp.Mul,
+                BinaryOpKind.NeqBlob => BinaryOp.NotEqual,
+                BinaryOpKind.NeqBoolean => BinaryOp.NotEqual,
+                BinaryOpKind.NeqColor => BinaryOp.NotEqual,
+                BinaryOpKind.NeqCurrency => BinaryOp.NotEqual,
+                BinaryOpKind.NeqDate => BinaryOp.NotEqual,
+                BinaryOpKind.NeqDateTime => BinaryOp.NotEqual,
+                BinaryOpKind.NeqDecimals => BinaryOp.NotEqual,
+                BinaryOpKind.NeqGuid => BinaryOp.NotEqual,
+                BinaryOpKind.NeqHyperlink => BinaryOp.NotEqual,
+                BinaryOpKind.NeqImage => BinaryOp.NotEqual,
+                BinaryOpKind.NeqMedia => BinaryOp.NotEqual,
+                BinaryOpKind.NeqNamedValue => BinaryOp.NotEqual,
+                BinaryOpKind.NeqNull => BinaryOp.NotEqual,
+                BinaryOpKind.NeqNullUntyped => BinaryOp.NotEqual,
+                BinaryOpKind.NeqNumbers => BinaryOp.NotEqual,
+                BinaryOpKind.NeqOptionSetValue => BinaryOp.NotEqual,
+                BinaryOpKind.NeqPolymorphic => BinaryOp.NotEqual,
+                BinaryOpKind.NeqText => BinaryOp.NotEqual,
+                BinaryOpKind.NeqTime => BinaryOp.NotEqual,
+                BinaryOpKind.NeqViewValue => BinaryOp.NotEqual,
+                BinaryOpKind.Or => BinaryOp.Or,
+                BinaryOpKind.Power => BinaryOp.Power,
+                BinaryOpKind.SubtractDateAndTime => BinaryOp.Add,
+                BinaryOpKind.SubtractNumberAndDate => BinaryOp.Add,
+                BinaryOpKind.SubtractNumberAndDateTime => BinaryOp.Add,
+                BinaryOpKind.SubtractNumberAndTime => BinaryOp.Add,
+                BinaryOpKind.TimeDifference => BinaryOp.Add,
+                _ => BinaryOp.Error
             };
     }
 }

@@ -25,12 +25,11 @@ namespace Microsoft.PowerFx.Dataverse
                 // Does the resolve object refer to a dataverse Table?
                 if (node.Value is NameSymbol nameSym)
                 {                    
-                    IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);
-                    ServiceCapabilities serviceCapabilities = e is IExternalSupportsServiceCapabilities essc ? essc.ServiceCapabilities : null;
-
-                    if (e?.IsDelegatable == true && serviceCapabilities?.IsDelegable == true)
+                    IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);                                      
+                    
+                    if (e?.IsDelegatable == true)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null, serviceCapabilities: serviceCapabilities);
+                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null, delegationMetadata: e.DelegationMetadata);
                         return ret;
                     }
                 }

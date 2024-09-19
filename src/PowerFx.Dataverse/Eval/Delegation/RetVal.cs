@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -41,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
             // Table type  and original metadata for table that we're delegating to.
             public readonly TableType TableType;
 
-            public readonly ServiceCapabilities ServiceCapabilities;
+            public readonly IDelegationMetadata DelegationMetadata;
 
             private readonly IntermediateNode _filter;
 
@@ -61,14 +63,14 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsDataverseDelegation => _metadata != null;
 
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, ServiceCapabilities serviceCapabilities = null)
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, IDelegationMetadata delegationMetadata = null)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-                this.ServiceCapabilities = serviceCapabilities;
+                this.DelegationMetadata = delegationMetadata;
 
                 // topCount and filter are optional.
                 this._topCount = count;
