@@ -140,8 +140,8 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities)
-        {            
-            return filterCapabilities != null && filterCapabilities.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName)));
+        {
+            return filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false;
         }
 
         /// <summary>
