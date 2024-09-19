@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Repository for all information about an entity that will be needed to bind or generate SQL.
     /// </summary>
-    internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata, IExternalSupportsServiceCapabilities
+    internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata
     {
         public CdsTableDefinition CdsTableDefinition { get; }
 
