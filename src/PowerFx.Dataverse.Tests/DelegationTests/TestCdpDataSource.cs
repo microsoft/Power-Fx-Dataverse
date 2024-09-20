@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };           
             List<RawTable> listRawTable = new List<RawTable>() { rawTable };            
-            ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType);
+            ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType.FieldNames);
 
             if (serviceCapabilitiesUpdater != null)
             {
