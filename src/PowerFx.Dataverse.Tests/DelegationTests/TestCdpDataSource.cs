@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
 
             CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
-            RecordType recordTypeWithAds = recordType.AddAssociatedDataSource(new DName(tableName), dataset, serviceCapabilities, false);
+            RecordType recordTypeWithAds = recordType.AddAssociatedDataSource(new DName(tableName), dataset, serviceCapabilities, false, null);
             CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);                      
             CdpTable = cdpTable;
         }
