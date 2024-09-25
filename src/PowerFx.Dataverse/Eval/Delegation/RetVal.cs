@@ -59,9 +59,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsDataverseDelegation => _metadata != null;
 
-            private readonly IExternalDataSource _associateDS;
+            private readonly IExternalTabularDataSource _associateDS;
 
-            public IExternalDataSource AssociatedDS => _associateDS ?? throw new ArgumentNullException(nameof(AssociatedDS));
+            public IExternalTabularDataSource AssociatedDS => _associateDS ?? throw new ArgumentNullException(nameof(AssociatedDS));
 
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {

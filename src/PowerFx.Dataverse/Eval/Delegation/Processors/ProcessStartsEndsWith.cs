@@ -30,6 +30,9 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
+        /// <summary>
+        /// Delegates the expression which has StartsWith/EndsWith in predicate. e.g. Filter(t, StartsWith(t.name, "abc")).
+        /// </summary>
         private RetVal ProcessStartsEndsWith(CallNode node, Context context, bool isStartWith)
         {
             if (!context.IsPredicateEvalInProgress)
@@ -39,10 +42,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             IList<string> relations = null;
 
-            if ((TryGetFieldName(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out var fieldName, out var rightNode, out _) 
-                || TryGetRelationField(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out relations, out rightNode, out _)) 
-                &&
-                context.CallerTableRetVal.AssociatedDS.DoesColumnSupportStartsEndsWith(fieldName, context.CallerTableRetVal.TableType.GetFieldType(fieldName), isStartWith))
+            if (TryGetValidFieldAndRelation(context, node, out string fieldName, out IntermediateNode rightNode, out relations)
+
+                // check if the field supports starts/ends with in capabilities.
+                && context.AssociatedDS.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith))
             {
                 var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
                 
@@ -53,6 +56,23 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal arg0c = node.Args[0].Accept(this, context);
 
             return base.Visit(node, context, arg0c);
+        }
+
+        private bool TryGetValidFieldAndRelation(
+            Context context,
+            CallNode node,
+            out string fieldName,
+            out IntermediateNode rightNode,
+            out IList<string> relations)
+        {
+            // Initialize output variables
+            fieldName = null;
+            rightNode = null;
+            relations = null;
+
+            // Try to get the field name using either of the methods
+            return TryGetFieldName(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out rightNode, out _)
+                || TryGetRelationField(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out relations, out rightNode, out _);
         }
     }
 }

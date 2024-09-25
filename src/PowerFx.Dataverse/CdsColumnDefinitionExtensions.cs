@@ -97,14 +97,14 @@ namespace Microsoft.PowerFx.Dataverse
             throw new Exception("Unsupported data source");
         }
 
-        internal static bool TryGetAssociateDataSource(this FormulaType type, out IExternalDataSource ads)
+        internal static bool TryGetAssociateDataSource(this FormulaType type, out IExternalTabularDataSource ads)
         {
             return type._type.TryGetAssociateDataSource(out ads);
         }
 
-        internal static bool TryGetAssociateDataSource(this DType type, out IExternalDataSource ads)
+        internal static bool TryGetAssociateDataSource(this DType type, out IExternalTabularDataSource ads)
         {
-            if (type.AssociatedDataSources?.FirstOrDefault() is IExternalDataSource dsInfo)
+            if (type.AssociatedDataSources?.FirstOrDefault() is IExternalTabularDataSource dsInfo)
             {
                 ads = dsInfo;
                 return true;

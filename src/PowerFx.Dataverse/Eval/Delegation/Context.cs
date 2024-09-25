@@ -2,8 +2,10 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -25,6 +27,8 @@ namespace Microsoft.PowerFx.Dataverse
             public readonly RetVal CallerTableRetVal;
 
             public bool _ignoreDelegation;            
+
+            public IExternalTabularDataSource AssociatedDS => CallerTableRetVal.AssociatedDS;
 
             public Context()
             {
@@ -57,6 +61,11 @@ namespace Microsoft.PowerFx.Dataverse
             internal IDictionary<string, RetVal> PopWithScope()
             {
                 return WithScopes.Pop();
+            }
+
+            internal FormulaType GetCallerTableFieldType(string fieldName)
+            {
+                return CallerTableRetVal.TableType.GetFieldType(fieldName);
             }
         }
     }
