@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -92,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType, serviceCapabilities =>
             {
                 // Hack ServiceCapabilities to only allow '<' operator on Price
-                ((ColumnCapabilities)serviceCapabilities._columnsCapabilities["Price"]).Capabilities = new ColumnCapabilitiesDefinition(new string[] { "lt" }, null, null);
+                ((ColumnCapabilities2)((Dictionary<string, ColumnCapabilitiesBase2>)serviceCapabilities.ColumnsCapabilities)["Price"]).Capabilities = new ColumnCapabilitiesDefinition2(new string[] { "lt" }, null, null);
             });
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });

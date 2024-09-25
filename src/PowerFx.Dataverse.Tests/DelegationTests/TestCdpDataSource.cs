@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Connectors;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
@@ -24,26 +25,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         public CdpTable CdpTable;
 
-        public static TableType GetCDPTableType(string tableName, RecordType recordType, Action<ServiceCapabilities> serviceCapabilitiesUpdater = null)
+        public static TableType GetCDPTableType(string tableName, RecordType recordType, Action<ServiceCapabilities2> serviceCapabilitiesUpdater = null)
         {
             return new TestCdpDataSource("dataset", tableName, recordType, serviceCapabilitiesUpdater).CdpTable.GetTableValue().Type;
         }
 
-        public TestCdpDataSource(string dataset, string tableName, RecordType recordType, Action<ServiceCapabilities> serviceCapabilitiesUpdater = null)
+        public TestCdpDataSource(string dataset, string tableName, RecordType recordType, Action<ServiceCapabilities2> serviceCapabilitiesUpdater = null)
             : base(dataset)
         {
             RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };           
-            List<RawTable> listRawTable = new List<RawTable>() { rawTable };            
-            ServiceCapabilities serviceCapabilities = ServiceCapabilities.Default(recordType.FieldNames);
+            List<RawTable> listRawTable = new List<RawTable>() { rawTable };
+            ServiceCapabilities2 serviceCapabilities = ServiceCapabilities2.Default(recordType.FieldNames);
 
             if (serviceCapabilitiesUpdater != null)
             {
                 serviceCapabilitiesUpdater(serviceCapabilities);
             }
 
-            CdpTableDescriptor cdpTableDescriptor = new CdpTableDescriptor() { Name = tableName, DisplayName = "tableDisplayName", TableCapabilities = serviceCapabilities };           
             RecordType recordTypeWithAds = recordType.AddAssociatedDataSource(new DName(tableName), dataset, serviceCapabilities, false, null);
-            CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, cdpTableDescriptor /* TableCapabilities */, recordTypeWithAds /* SetRecordType */);                      
+            CdpTable cdpTable = new CdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, recordType, "tableDisplayName", serviceCapabilities, null, recordTypeWithAds /* SetRecordType */);                      
             CdpTable = cdpTable;
         }
 

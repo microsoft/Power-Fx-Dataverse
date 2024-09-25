@@ -20,7 +20,6 @@ using Microsoft.PowerFx.Dataverse.Parser.Importers.DataDescription;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
-using PfxConnectors = Microsoft.PowerFx.Connectors;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -345,7 +344,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 #endif
 
-            PfxConnectors.ServiceCapabilities capabilities = ParseServiceCapabilities(cdsEntityMetadata);
+            ServiceCapabilities2 capabilities = ParseServiceCapabilities(cdsEntityMetadata);
 
             var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName, capabilities);
 
@@ -356,11 +355,11 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // From C:\Data\PowerApps-Client\src\Language\PowerFx.Dataverse.Parser\Importers\DataDescription\DataverseEntityDefinitionParser.cs
-        internal static PfxConnectors.ServiceCapabilities ParseServiceCapabilities(CdsEntityMetadata tableMetadata)
+        internal static ServiceCapabilities2 ParseServiceCapabilities(CdsEntityMetadata tableMetadata)
         {
             Contracts.AssertValue(tableMetadata);
 
-            PfxConnectors.FilterRestriction filterRestriction = null;
+            FilterRestriction2 filterRestriction = null;
 
             var requiredProperties = new List<string>();
             var nonFilterableProperties = new List<string>();
@@ -389,33 +388,33 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (CdsCapabilities.Filterable)
             {
-                filterRestriction = new PfxConnectors.FilterRestriction(requiredProperties, nonFilterableProperties);
+                filterRestriction = new FilterRestriction2(requiredProperties, nonFilterableProperties);
             }
 
-            PfxConnectors.SortRestriction sortRestriction = null;
+            SortRestriction2 sortRestriction = null;
             if (CdsCapabilities.Sortable)
             {
-                sortRestriction = new PfxConnectors.SortRestriction(unsortableProperties, ascendingOnlyProperties);
+                sortRestriction = new SortRestriction2(unsortableProperties, ascendingOnlyProperties);
             }
 
-            PfxConnectors.GroupRestriction groupRestriction = null;
+            GroupRestriction2 groupRestriction = null;
             if (CdsCapabilities.Groupable)
             {
-                groupRestriction = new PfxConnectors.GroupRestriction(ungroupableProperties);
+                groupRestriction = new GroupRestriction2(ungroupableProperties);
             }
 
-            var selectionRestriction = new PfxConnectors.SelectionRestriction(CdsCapabilities.Selectable);
+            SelectionRestriction2 selectionRestriction = new SelectionRestriction2(CdsCapabilities.Selectable);
 
             string[] filterFunctions = CdsCapabilities.FilterFunctionSupport;
             string[] filterSupportedFunctions = CdsCapabilities.FilterFunctionSupport;
             string[] serverPagingOptions = null;
             bool recordPermissionCapabilities = CdsCapabilities.SupportsRecordPermission;
 
-            var pagingCapabilities = new PfxConnectors.PagingCapabilities(CdsCapabilities.IsOnlyServerPagable, serverPagingOptions);
+            PagingCapabilities2 pagingCapabilities = new PagingCapabilities2(CdsCapabilities.IsOnlyServerPagable, serverPagingOptions);
 
             bool supportsDataverseOffline = tableMetadata?.IsOfflineInMobileClient?.Value ?? false;
 
-            var serviceCapability = new PfxConnectors.ServiceCapabilities(sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline);
+            var serviceCapability = new ServiceCapabilities2(sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline, columnCapabilities: null);
 
             return serviceCapability;
         }

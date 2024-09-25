@@ -21,7 +21,6 @@ using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.UtilityDataStructures;
 using Microsoft.PowerFx.Core.Utils;
-using ServiceCapabilities = Microsoft.PowerFx.Connectors.ServiceCapabilities;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -38,9 +37,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private DelegationMetadata _delegationMetadata;
 
-        public ServiceCapabilities ServiceCapabilities { get; private set; }
+        public ServiceCapabilities2 ServiceCapabilities { get; private set; }
 
-        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null, Microsoft.PowerFx.Connectors.ServiceCapabilities serviceCapabilities = null)
+        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null, ServiceCapabilities2 serviceCapabilities = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
