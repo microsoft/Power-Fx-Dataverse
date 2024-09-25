@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -57,6 +59,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsDataverseDelegation => _metadata != null;
 
+            private readonly IExternalTabularDataSource _associateDS;
+
+            public IExternalTabularDataSource AssociatedDS => _associateDS ?? throw new ArgumentNullException(nameof(AssociatedDS));
+
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
@@ -73,6 +79,11 @@ namespace Microsoft.PowerFx.Dataverse
                 this.IsDelegating = true;
 
                 _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
+
+                if (tableType.TryGetAssociateDataSource(out var ads))
+                {
+                    _associateDS = ads;
+                }
             }
 
             // Non-delegating path

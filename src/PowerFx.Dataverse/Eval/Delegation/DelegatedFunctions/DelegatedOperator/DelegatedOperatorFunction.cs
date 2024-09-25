@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly BinaryOpKind _binaryOpKind;
 
-        public DelegatedOperatorFunction(DelegationHooks hooks, string name, BinaryOpKind binaryOpKind)
+        public DelegatedOperatorFunction(DelegationHooks hooks, string name, BinaryOpKind binaryOpKind, ParentOperation parentOperation = ParentOperation.None)
           : base(hooks, name, FormulaType.Blank)
         {
             _binaryOpKind = binaryOpKind;
@@ -59,6 +59,21 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // case insensitive
                 _op = ConditionOperator.Contains;
+            }
+            else if (_binaryOpKind == BinaryOpKind.Invalid)
+            {
+                if (parentOperation == ParentOperation.StartsWith)
+                {
+                    _op = ConditionOperator.BeginsWith;
+                }
+                else if (parentOperation == ParentOperation.EndsWith)
+                {
+                    _op = ConditionOperator.EndsWith;
+                }
+                else
+                {
+                    throw new NotSupportedException($"Unsupported operation {_op} :  {parentOperation}");
+                }
             }
             else
             {
@@ -208,6 +223,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _ => throw new NotSupportedException($"Unsupported operation {_op}"),
             };
+        }
+
+        internal enum ParentOperation
+        {
+            None,
+            StartsWith,
+            EndsWith,
         }
     }
 }

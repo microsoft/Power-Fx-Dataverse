@@ -208,6 +208,22 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
+            internal CallNode MakeStartsEndsWithCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, IntermediateNode value, ScopeSymbol callerScope, bool isStartWith)
+            {
+                DelegateFunction func;
+                if (isStartWith)
+                {
+                    func = new DelegatedStartsWith(this);
+                }
+                else
+                {
+                    func = new DelegatedEndsWith(this);
+                }
+
+                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                return node;
+            }
+
             internal CallNode MakeAndCall(FormulaType tableType, IList<IntermediateNode> args, ScopeSymbol scope)
             {
                 var func = new DelegatedAnd(this);

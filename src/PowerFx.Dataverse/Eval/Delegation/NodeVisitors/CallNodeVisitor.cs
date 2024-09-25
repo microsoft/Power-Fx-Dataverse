@@ -32,6 +32,14 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return ProcessNot(node, context);
             }
+            else if (funcName == BuiltinFunctionsCore.StartsWith.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessStartsEndsWith(node, context, isStartWith: true);
+            }
+            else if (funcName == BuiltinFunctionsCore.EndsWith.Name && context.IsPredicateEvalInProgress)
+            {
+                return ProcessStartsEndsWith(node, context, isStartWith: false);
+            }
 
             // Some functions don't require delegation.
             // Using a table diretly as arg0 here doesn't generate a warning.
