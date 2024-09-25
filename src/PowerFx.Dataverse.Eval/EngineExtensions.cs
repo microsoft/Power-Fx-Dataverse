@@ -73,7 +73,12 @@ namespace Microsoft.PowerFx.Dataverse
             {                
                 cancellationToken.ThrowIfCancellationRequested();
                 IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
-                
+
+                if (result.Any(err => err.IsError))
+                {
+                    return result.Where(err => err.IsError);
+                }
+
                 IReadOnlyDictionary<string, string> columnMap = ((DataverseDelegationParameters)delegationParameters).ColumnMap?.AsStringDictionary();
 
                 if (columnMap != null && result.Any())

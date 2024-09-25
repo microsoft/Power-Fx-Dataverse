@@ -216,7 +216,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool IsClearable => false;
 
-        public bool HasCachedCountRows => false;
+        public bool HasCachedCountRows => true;
 
         void IDataEntityMetadata.LoadClientSemantics(bool isPrimaryTable)
         {
