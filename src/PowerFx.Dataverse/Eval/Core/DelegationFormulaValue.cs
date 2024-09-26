@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -20,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         /// <summary>
         /// Filter to apply while retrieving records.
         /// </summary>
-        internal readonly FilterExpression _filter;
+        internal readonly FxFilterExpression _filter;
 
         /// <summary>
         /// Count of records to return. If null, all records are returned.
@@ -34,10 +35,10 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
-        internal DelegationFormulaValue(FilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, string partitionId = null, int? top = null)
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
-            _filter = filter ?? new FilterExpression();
+            _filter = filter ?? new FxFilterExpression();
             _orderBy = orderBy ?? new List<OrderExpression>();
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());

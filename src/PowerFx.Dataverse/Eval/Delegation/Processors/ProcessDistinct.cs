@@ -21,27 +21,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            ColumnMap map = null;
-            string fieldName = null;
-
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
-            bool canDelegate = count == null
-                && TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out fieldName, out bool invertCoercion, out _) ^ invertCoercion
-                && IsReturnTypePrimitive(node.IRContext.ResultType)
-                && !DelegationUtility.IsElasticTable(tableArg.TableType);
-
-            if (canDelegate)
-            {
-                // let's create a single column map ("Value", fieldName) with a distinct on fieldName
-                map = new ColumnMap(fieldName);
-
-                // Combine with an existing map
-                map = ColumnMap.Combine(tableArg.ColumnMap, map);                
-
-                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.DelegationMetadata?.FilterDelegationMetadata);
-            }
-
-            if (!canDelegate)
+            // $$$
+            if (count != null
+                || !(TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName, out var invertCoercion, out _, out var fieldFunctions)
+                ^ invertCoercion)
+                || !IsReturnTypePrimitive(node.IRContext.ResultType)
+                || DelegationUtility.IsElasticTable(tableArg.TableType))
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
@@ -52,6 +38,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 return Ret(node);
             }
+
+            // let's create a single column map ("Value", fieldName) with a distinct on fieldName
+            ColumnMap map = new ColumnMap(fieldName);
+
+            // Combine with an existing map
+            map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
             // change to original node to current node and appends columnSet and Distinct.
             var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);

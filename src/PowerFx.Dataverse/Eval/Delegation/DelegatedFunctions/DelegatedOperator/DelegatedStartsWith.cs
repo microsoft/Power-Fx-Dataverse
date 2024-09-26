@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -12,7 +13,7 @@ namespace Microsoft.PowerFx.Dataverse
     internal class DelegatedStartsWith : DelegatedOperatorFunction
     {
         public DelegatedStartsWith(DelegationHooks hooks)
-          : base(hooks, "__startsWith", BinaryOpKind.Invalid, ParentOperation.StartsWith)
+          : base(hooks, "__startsWith", BinaryOpKind.Invalid, FieldFunction.StartsWith)
         {
         }
     }

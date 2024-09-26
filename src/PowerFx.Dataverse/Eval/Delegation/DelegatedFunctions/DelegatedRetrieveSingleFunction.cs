@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -38,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} : found {args[0]}");
             }
 
-            FilterExpression filter;
+            FxFilterExpression filter;
             IList<OrderExpression> orderBy;
             ISet<LinkEntity> relation;
             string partitionId;

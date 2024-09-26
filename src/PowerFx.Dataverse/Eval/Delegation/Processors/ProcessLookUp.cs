@@ -168,8 +168,9 @@ namespace Microsoft.PowerFx.Dataverse
         {
             if (predicteContext.CallerTableRetVal.IsElasticTable && arg1OfAnd is BinaryOpNode arg1b && arg2OfAnd is BinaryOpNode arg2b)
             {
+                // $$$
                 if (TryMatchPrimaryId(arg1b.Left, arg1b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
-                    && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var fieldName, out var maybePartitionId, out var opKind)
+                    && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var fieldName, out var maybePartitionId, out var opKind, out var fieldFunctions)
                     && fieldName == "partitionid"
                     && IsOpKindEqualityComparison(opKind))
                 {
@@ -177,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
                 else if (TryMatchPrimaryId(arg2b.Left, arg2b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
-                    && TryGetFieldName(predicteContext, arg1b.Left, arg1b.Right, arg1b.Op, out fieldName, out maybePartitionId, out opKind)
+                    && TryGetFieldName(predicteContext, arg1b.Left, arg1b.Right, arg1b.Op, out fieldName, out maybePartitionId, out opKind, out fieldFunctions)
                     && fieldName == "partitionid"
                     && IsOpKindEqualityComparison(opKind))
                 {

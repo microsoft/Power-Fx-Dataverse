@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -41,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             int? topCount = null;
-            FilterExpression filter;
+            FxFilterExpression filter;
             IList<OrderExpression> orderBy;
             ISet<LinkEntity> relation;
             string partitionId = null;
