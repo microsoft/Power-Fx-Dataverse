@@ -3,19 +3,25 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
@@ -243,9 +249,6 @@ namespace Microsoft.PowerFx
 
                 // used by the AI functions and now we have a valid service to work with
                 var clientExecute = new DataverseService(svcClient);
-                var innerServices = new BasicServiceProvider();
-                innerServices.AddService<IDataverseExecute>(clientExecute);
-                _repl.InnerServices = innerServices;
 
                 try
                 {
@@ -256,6 +259,15 @@ namespace Microsoft.PowerFx
                     // Non-fatal error
                     Console.WriteLine($"Failed to add APIs: {e.Message}");
                 }
+                
+                var dataverseEnvironmentVariables = new DataverseEnvironmentVariables(clientExecute);
+
+                var innerServices = new BasicServiceProvider();
+                innerServices.AddService<IDataverseExecute>(clientExecute);
+                innerServices.AddService<EnvironmentVariables>(dataverseEnvironmentVariables);                
+
+                _repl.InnerServices = innerServices;
+                _repl.EnableEnvVarObject(dataverseEnvironmentVariables.Type);
 
                 return BooleanValue.New(true);
             }
@@ -303,7 +315,7 @@ namespace Microsoft.PowerFx
                     TeamsMemberId = string.Empty
                 };
 
-                _repl.UserInfo = basicUserInfo.UserInfo;
+                _repl.UserInfo = basicUserInfo.UserInfo; 
             }
         }
 
