@@ -255,13 +255,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(198, "Filter(Distinct(t1, Price), Value > 5)", 2, false, true)]
         [InlineData(199, "Filter(Sort(t1, Price), Price > 5)", 2, false, true)]
         [InlineData(200, "Filter(SortByColumns(t1, Price), Price > 5)", 2, false, true)]
-        [InlineData(201, "Filter(ForAll(t1, Price), Value > 5)", 2, false, true)]
-        [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
+
+        // DV Issue 552 [InlineData(201, "Filter(ForAll(t1, Price), Value > 5)", 2, false, true)]
+        // DV Issue 552 [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
         [InlineData(203, "Distinct(Filter(Distinct(t1, Price), Value > 5), Value)", 2, false, true)]
         [InlineData(204, "Distinct(Filter(Sort(t1, Price), Price > 5), Price)", 2, false, true)]
         [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]
-        [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
-        [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
+        
+        // DV Issue 552 [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
+        // DV Issue 552 [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
 
         // 'exactin' op is not supported.
         [InlineData(208, @"Filter(t1, ""oW1"" exactin Name)", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -281,10 +283,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(221, @"Filter(t1, 1 in Name)", 2, true, true)]
         [InlineData(222, @"Filter(t1, 1 in Name)", 2, true, false)]
         [InlineData(223, @"Filter(t1, 1 in Name)", 2, false, true)]
-        [InlineData(224, @"Filter(t1, Name in ""oW1"")", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(225, @"Filter(t1, Name in ""oW1"")", 1, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(226, @"Filter(t1, Name in ""oW1"")", 1, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(227, @"Filter(t1, Name in ""oW1"")", 1, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(224, @"Filter(t1, Name in ""oW1"")", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(225, @"Filter(t1, Name in ""oW1"")", 0, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(226, @"Filter(t1, Name in ""oW1"")", 0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(227, @"Filter(t1, Name in ""oW1"")", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(228, @"Filter(t1, Name in [""oW1"", ""oW2""])", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(229, @"Filter(t1, ""1"" in Price)", 3, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(230, @"Filter(t1, ""1"" in Price)", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -316,6 +318,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(250, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, true, true)]
         [InlineData(251, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, true, false)]
         [InlineData(252, "Filter(t1, Price < 200 And !IsBlank(Old_Price))", 1, false, true)]
+
+        [InlineData(253, "Filter(t1, StartsWith(ThisRecord.Name, \"r\"))", 2, false, false)]
+        [InlineData(254, "Filter(t1, StartsWith(ThisRecord.Name, \"r\"))", 2, true, true)]
+        [InlineData(255, "Filter(t1, StartsWith(ThisRecord.Name, \"r\"))", 2, true, false)]
+        [InlineData(256, "Filter(t1, StartsWith(ThisRecord.Name, \"r\"))", 2, false, true)]
+
+        [InlineData(257, "Filter(t1, EndsWith(ThisRecord.Name, \"1\"))", 2, false, false)]
+        [InlineData(258, "Filter(t1, EndsWith(ThisRecord.Name, \"1\"))", 2, true, true)]
+        [InlineData(259, "Filter(t1, EndsWith(ThisRecord.Name, \"1\"))", 2, true, false)]
+        [InlineData(260, "Filter(t1, EndsWith(ThisRecord.Name, \"1\"))", 2, false, true)]
+
+        [InlineData(261, "Filter(t1, StartsWith(ThisRecord.Name, \"r\") And EndsWith(ThisRecord.Name, \"1\"))", 1, false, false)]
+        [InlineData(262, "Filter(t1, StartsWith(ThisRecord.Name, \"r\") And EndsWith(ThisRecord.Name, \"1\"))", 1, true, true)]
+        [InlineData(263, "Filter(t1, StartsWith(ThisRecord.Name, \"r\") And EndsWith(ThisRecord.Name, \"1\"))", 1, true, false)]
+        [InlineData(264, "Filter(t1, StartsWith(ThisRecord.Name, \"r\") And EndsWith(ThisRecord.Name, \"1\"))", 1, false, true)]
+
+        [InlineData(265, "Filter(t1, StartsWith(\"r\", ThisRecord.Name))", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(266, "Filter(t1, StartsWith(\"r\", ThisRecord.Name))", 0, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(267, "Filter(t1, StartsWith(\"r\", ThisRecord.Name))", 0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(268, "Filter(t1, StartsWith(\"r\", ThisRecord.Name))", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(269, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(270, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(271, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(272, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

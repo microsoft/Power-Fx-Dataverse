@@ -31,6 +31,11 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessNot(CallNode node, Context context)
         {
+            if (!context.IsPredicateEvalInProgress)
+            {
+                return base.Visit(node, context);
+            }
+
             IList<string> relations = null;
 
             // Currently only supports lamda Not(IsBlank()) delegation.

@@ -80,7 +80,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 fieldName = leftField;
 
-                if (CanDelegateFilter(fieldName, op, filterCapabilities))
+                // Invalid is used for StartsWith/EndsWith
+                if (op == BinaryOpKind.Invalid || CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -91,7 +92,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
 
-                if (CanDelegateFilter(fieldName, op, filterCapabilities))
+                // Invalid is used for StartsWith/EndsWith
+                if (op == BinaryOpKind.Invalid || CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 

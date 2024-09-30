@@ -472,7 +472,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case ConditionOperator.Contains:
 
                     // case insensitive, always on strings
-                    return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);                    
+                    return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);       
+                    
+                case ConditionOperator.BeginsWith:
+                    return ((string)value).StartsWith((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);
+
+                case ConditionOperator.EndsWith:
+                    return ((string)value).EndsWith((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);
 
                 default:
                     throw new NotImplementedException($"Operator not supported: {condition.Operator.ToString()}");

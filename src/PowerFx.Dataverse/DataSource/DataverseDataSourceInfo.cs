@@ -35,17 +35,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         private CdsEntityMetadataProvider _provider;
 
-        private DelegationMetadata _delegationMetadata;
+        private DelegationMetadata _delegationMetadata;        
 
-        public ServiceCapabilities2 ServiceCapabilities { get; private set; }
-
-        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null, ServiceCapabilities2 serviceCapabilities = null)
+        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null) //, ServiceCapabilities2 serviceCapabilities = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
             _provider = provider;
             Document = provider.Document;
-            ServiceCapabilities = serviceCapabilities;
 
             // TODO: modeled from CdsDataSourceInfo.SetClientSemantics - is it worth breaking out?
 

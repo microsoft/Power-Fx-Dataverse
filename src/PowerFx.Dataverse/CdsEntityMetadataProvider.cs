@@ -344,85 +344,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 #endif            
 
-            ServiceCapabilities2 capabilities = ParseServiceCapabilities(cdsEntityMetadata);
-
-            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName, capabilities);
+            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName); //, capabilities);
 
             // add the external entity to the cache
             _cdsCache[dataSource.Name] = dataSource;
 
             return dataSource;
-        }
-
-        // From C:\Data\PowerApps-Client\src\Language\PowerFx.Dataverse.Parser\Importers\DataDescription\DataverseEntityDefinitionParser.cs
-        internal static ServiceCapabilities2 ParseServiceCapabilities(CdsEntityMetadata tableMetadata)
-        {
-            Contracts.AssertValue(tableMetadata);
-
-            FilterRestriction2 filterRestriction = null;
-
-            var requiredProperties = new List<string>();
-            var nonFilterableProperties = new List<string>();
-            var ungroupableProperties = new List<string>();
-            var unsortableProperties = new List<string>();
-            var ascendingOnlyProperties = new List<string>();
-           
-            foreach (var attribute in tableMetadata.Attributes)
-            {
-                if (attribute.IsRequired())
-                {
-                    requiredProperties.Add(attribute.LogicalName);
-                }
-
-                if (attribute.AttributeType == AttributeTypeCode.Lookup || attribute is MultiSelectPicklistAttributeMetadata || attribute.AttributeType == AttributeTypeCode.Owner || attribute.AttributeType == AttributeTypeCode.Customer)
-                {
-                    unsortableProperties.Add(attribute.LogicalName);
-                }
-
-                // Do not support group on attribute of File, Image and Lookup type.
-                if (attribute is FileAttributeMetadata || attribute is ImageAttributeMetadata || attribute is LookupAttributeMetadata)
-                {
-                    ungroupableProperties.Add(attribute.LogicalName);
-                }                
-            }
-
-            if (CdsCapabilities.Filterable)
-            {
-                filterRestriction = new FilterRestriction2(requiredProperties, nonFilterableProperties);
-            }
-
-            SortRestriction2 sortRestriction = null;
-            if (CdsCapabilities.Sortable)
-            {
-                sortRestriction = new SortRestriction2(unsortableProperties, ascendingOnlyProperties);
-            }
-
-            GroupRestriction2 groupRestriction = null;
-            if (CdsCapabilities.Groupable)
-            {
-                groupRestriction = new GroupRestriction2(ungroupableProperties);
-            }
-
-            SelectionRestriction2 selectionRestriction = new SelectionRestriction2(CdsCapabilities.Selectable);
-
-            string[] filterFunctions = CdsCapabilities.FilterFunctionSupport;
-            string[] filterSupportedFunctions = CdsCapabilities.FilterFunctionSupport;
-            string[] serverPagingOptions = null;
-            bool recordPermissionCapabilities = CdsCapabilities.SupportsRecordPermission;
-
-            PagingCapabilities2 pagingCapabilities = new PagingCapabilities2(CdsCapabilities.IsOnlyServerPagable, serverPagingOptions);
-
-            bool supportsDataverseOffline = tableMetadata?.IsOfflineInMobileClient?.Value ?? false;
-
-#pragma warning disable SA1117
-
-            var serviceCapability = new ServiceCapabilities2(
-                tableMetadata.LogicalName, false, null, "dataverse",
-                sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, 
-                recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline, columnCapabilities: null, null);
-
-            return serviceCapability;
-        }
+        }        
 
         private DataverseOptionSet RegisterDataverseOptionSet(EntityMetadata entity, IExternalOptionSet optionSet)
         {

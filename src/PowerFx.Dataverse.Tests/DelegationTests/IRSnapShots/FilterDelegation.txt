@@ -250,3 +250,23 @@ __retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_pr
 __retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
 __retrieveMultiple(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
 __retrieveMultiple(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), 999, ) | $filter=((new_price lt 200) and (old_price ne null))&$top=999
+__retrieveMultiple(local, __startsWith(local, new_name, r), __noop(), 999, ) | $filter=startswith(new_name,'r')&$top=999
+__retrieveMultiple(local, __startsWith(local, new_name, r), __noop(), 999, ) | $filter=startswith(new_name,'r')&$top=999
+__retrieveMultiple(local, __startsWith(local, new_name, r), __noop(), 999, ) | $filter=startswith(new_name,'r')&$top=999
+__retrieveMultiple(local, __startsWith(local, new_name, r), __noop(), 999, ) | $filter=startswith(new_name,'r')&$top=999
+__retrieveMultiple(local, __endsWith(local, new_name, 1), __noop(), 999, ) | $filter=endswith(new_name,'1')&$top=999
+__retrieveMultiple(local, __endsWith(local, new_name, 1), __noop(), 999, ) | $filter=endswith(new_name,'1')&$top=999
+__retrieveMultiple(local, __endsWith(local, new_name, 1), __noop(), 999, ) | $filter=endswith(new_name,'1')&$top=999
+__retrieveMultiple(local, __endsWith(local, new_name, 1), __noop(), 999, ) | $filter=endswith(new_name,'1')&$top=999
+__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
+__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
+__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
+__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
+Filter(local, (StartsWith(r, new_name)))
+Filter(local, (StartsWith(r, new_name)))
+Filter(local, (StartsWith(r, new_name)))
+Filter(local, (StartsWith(r, new_name)))
+Filter(local, (EndsWith(1, new_name)))
+Filter(local, (EndsWith(1, new_name)))
+Filter(local, (EndsWith(1, new_name)))
+Filter(local, (EndsWith(1, new_name)))

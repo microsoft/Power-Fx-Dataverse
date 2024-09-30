@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
@@ -62,15 +63,15 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
-
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, IDelegationMetadata delegationMetadata = null)
+            
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-                this.DelegationMetadata = delegationMetadata;
+                this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault().DelegationMetadata;
 
                 // topCount and filter are optional.
                 this._topCount = count;
@@ -79,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
-                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
+                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);                
             }
 
             // Non-delegating path

@@ -224,3 +224,23 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
 (__retrieveSingle(local, __and(__lt(local, new_price, Float(200)), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
 (__retrieveSingle(local, __and(__lt(local, new_price, 200), __neq(local, old_price, Blank())), __noop(), )).new_price | $filter=((new_price lt 200) and (old_price ne null))&$top=1
+(__retrieveSingle(local, __startsWith(local, new_name, r), __noop(), )).new_price | $filter=startswith(new_name,'r')&$top=1
+(__retrieveSingle(local, __startsWith(local, new_name, r), __noop(), )).new_price | $filter=startswith(new_name,'r')&$top=1
+(__retrieveSingle(local, __startsWith(local, new_name, r), __noop(), )).new_price | $filter=startswith(new_name,'r')&$top=1
+(__retrieveSingle(local, __startsWith(local, new_name, r), __noop(), )).new_price | $filter=startswith(new_name,'r')&$top=1
+(__retrieveSingle(local, __endsWith(local, new_name, 1), __noop(), )).new_price | $filter=endswith(new_name,'1')&$top=1
+(__retrieveSingle(local, __endsWith(local, new_name, 1), __noop(), )).new_price | $filter=endswith(new_name,'1')&$top=1
+(__retrieveSingle(local, __endsWith(local, new_name, 1), __noop(), )).new_price | $filter=endswith(new_name,'1')&$top=1
+(__retrieveSingle(local, __endsWith(local, new_name, 1), __noop(), )).new_price | $filter=endswith(new_name,'1')&$top=1
+(__retrieveSingle(local, __and(__startsWith(local, new_name, p), __endsWith(local, new_name, 1)), __noop(), )).new_price | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
+(__retrieveSingle(local, __and(__startsWith(local, new_name, p), __endsWith(local, new_name, 1)), __noop(), )).new_price | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
+(__retrieveSingle(local, __and(__startsWith(local, new_name, p), __endsWith(local, new_name, 1)), __noop(), )).new_price | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
+(__retrieveSingle(local, __and(__startsWith(local, new_name, p), __endsWith(local, new_name, 1)), __noop(), )).new_price | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
+(LookUp(local, (StartsWith(r, new_name)))).new_price
+(LookUp(local, (StartsWith(r, new_name)))).new_price
+(LookUp(local, (StartsWith(r, new_name)))).new_price
+(LookUp(local, (StartsWith(r, new_name)))).new_price
+(LookUp(local, (EndsWith(1, new_name)))).new_price
+(LookUp(local, (EndsWith(1, new_name)))).new_price
+(LookUp(local, (EndsWith(1, new_name)))).new_price
+(LookUp(local, (EndsWith(1, new_name)))).new_price
