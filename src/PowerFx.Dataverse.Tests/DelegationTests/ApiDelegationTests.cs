@@ -20,10 +20,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         // Delegation using direct API.
         [Theory]
-        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
-        [InlineData("First(t1).Price", null, 1, "100")]
-        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
-        public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
+        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "$filter=((Price+lt+120)+and+(Price+ge+90))&$top=1000", "Table({Price:100,opt:Blank()})")]
+        [InlineData("First(t1).Price", "$top=1", "100")]
+        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "$filter=(opt+eq+%27logical2%27)&$top=1000", "Table({Price:100,opt:Blank()})")]
+        public async Task TestDirectApi(string expr, string odataFilter, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
             {
@@ -36,19 +36,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 .Add("Price", FormulaType.Number)
                 .Add("opt", optionSet.FormulaType);
 
-            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType);
-
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            var t1 = new MyTable(tt.ToRecord());
+            TestCdpDataSource ds = TestCdpDataSource.GetCDPDataSource("t1", recordType, recordValue);
+            CdpTableValue tt = ds.CdpTable.GetTableValue();            
 
             var st = new SymbolValues("Delegable_1");
-            st.Add("t1", t1);
+            st.Add("t1", tt);
 
             Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
 
             var config = new PowerFxConfig();
             config.AddOptionSet(optionSet);
+
             var engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
@@ -63,23 +63,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var eval = check.GetEvaluator();
 
             var rc = new RuntimeConfig(st);
-            var myService = new MyService()
-                .SetResult(recordValue); // all queries expect just 1 row returned.
-
-            rc.AddService(myService);
-
             var result = await eval.EvalAsync(CancellationToken.None, rc);
 
-            string actualODataFilter = myService._parameters.GetOdataFilter();
-            Assert.Equal(odataFilter, actualODataFilter);
-            Assert.Equal(top, myService._parameters.Top);
+            string actualODataFilter = ds.CdpTable.ODataParameters.ToQueryString();
+            Assert.Equal<object>(odataFilter, actualODataFilter);            
 
             var sb = new StringBuilder();
             result.ToExpression(sb, new FormulaValueSerializerSettings { UseCompactRepresentation = true });
             var resultStr = sb.ToString();
-            Assert.Equal(expectedStr, resultStr);
-
-            Assert.NotNull(myService._parameters);
+            Assert.Equal(expectedStr, resultStr);            
         }
 
         [Theory]
@@ -90,17 +82,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var recordType = RecordType.Empty()
                 .Add("Price", FormulaType.Number);
 
-            TableType tt = TestCdpDataSource.GetCDPTableType("t1", recordType, serviceCapabilities =>
+            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
+
+            TestCdpDataSource ds = TestCdpDataSource.GetCDPDataSource("t1", recordType, recordValue, serviceCapabilities =>
             {
                 // Hack ServiceCapabilities to only allow '<' operator on Price
                 ((ColumnCapabilities2)((Dictionary<string, ColumnCapabilitiesBase2>)serviceCapabilities.ColumnsCapabilities)["Price"]).Capabilities = new ColumnCapabilitiesDefinition2(new string[] { "lt" }, null, null);
             });
+            
+            CdpTableValue cdpTable = ds.CdpTable.GetTableValue();
 
-            var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
-
-            var t1 = new MyTable(tt.ToRecord());
+            //var t1 = new MyTable(tt.ToRecord());
             var st = new SymbolValues("Delegable_1");
-            st.Add("t1", t1);
+            st.Add("t1", cdpTable);
 
             Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
 
@@ -118,48 +112,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             Assert.Equal<object>(expectedIr, ir);
         }
-    }
-
-    // Test that we can pass services through the IServiceProvider to the table.
-    // also used for test infra.
-    internal class MyService
-    {
-        public IReadOnlyCollection<DValue<RecordValue>> _result;
-
-        public MyService SetResult(RecordValue row1)
-        {
-            _result = new DValue<RecordValue>[] { DValue<RecordValue>.Of(row1) };
-            return this;
-        }
-
-        public DelegationParameters _parameters;
-    }
-
-    // An example class that implements IDelegatingTableValue
-    public class MyTable : TableValue, IDelegatableTableValue
-    {
-        public MyTable(RecordType recordType)
-            : base(recordType)
-        {
-        }
-
-        // should never get called since we're delegating
-        public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
-
-        public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
-        {
-            // Esnure service was plumbed through...
-            var myService = (MyService)services.GetService(typeof(MyService));
-            Assert.NotNull(myService);
-
-            myService._parameters = parameters;
-
-            return myService._result;
-        }
-
-        public override string ToString()
-        {
-            return "MyTable";
-        }
-    }
+    }    
 }

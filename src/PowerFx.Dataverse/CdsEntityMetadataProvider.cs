@@ -342,7 +342,7 @@ namespace Microsoft.PowerFx.Dataverse
                 Console.Out.WriteLine("Dataverse Parse Errors:");
                 Console.Out.WriteLine(JsonSerializer.Serialize(dataverseParserErrors, new JsonSerializerOptions() { WriteIndented = true }));
             }
-#endif
+#endif            
 
             ServiceCapabilities2 capabilities = ParseServiceCapabilities(cdsEntityMetadata);
 
@@ -366,7 +366,7 @@ namespace Microsoft.PowerFx.Dataverse
             var ungroupableProperties = new List<string>();
             var unsortableProperties = new List<string>();
             var ascendingOnlyProperties = new List<string>();
-
+           
             foreach (var attribute in tableMetadata.Attributes)
             {
                 if (attribute.IsRequired())
@@ -383,7 +383,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (attribute is FileAttributeMetadata || attribute is ImageAttributeMetadata || attribute is LookupAttributeMetadata)
                 {
                     ungroupableProperties.Add(attribute.LogicalName);
-                }
+                }                
             }
 
             if (CdsCapabilities.Filterable)
@@ -414,7 +414,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             bool supportsDataverseOffline = tableMetadata?.IsOfflineInMobileClient?.Value ?? false;
 
-            var serviceCapability = new ServiceCapabilities2(sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline, columnCapabilities: null);
+#pragma warning disable SA1117
+
+            var serviceCapability = new ServiceCapabilities2(
+                tableMetadata.LogicalName, false, null, "dataverse",
+                sortRestriction, filterRestriction, selectionRestriction, groupRestriction, filterFunctions, filterSupportedFunctions, pagingCapabilities, 
+                recordPermissionCapabilities, supportsDataverseOffline: supportsDataverseOffline, columnCapabilities: null, null);
 
             return serviceCapability;
         }
