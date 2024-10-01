@@ -3,12 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
-using Microsoft.AppMagic;
-using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;

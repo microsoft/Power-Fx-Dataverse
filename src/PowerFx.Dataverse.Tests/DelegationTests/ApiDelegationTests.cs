@@ -1,13 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Tests;
@@ -20,10 +18,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         // Delegation using direct API.
         [Theory]
-        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "$filter=((Price+lt+120)+and+(Price+ge+90))&$top=1000", "Table({Price:100,opt:Blank()})")]
-        [InlineData("First(t1).Price", "$top=1", "100")]
-        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "$filter=(opt+eq+%27logical2%27)&$top=1000", "Table({Price:100,opt:Blank()})")]
-        public async Task TestDirectApi(string expr, string odataFilter, string expectedStr)
+        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData("First(t1).Price", null, 1, "100")]
+        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
+        public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
             {
@@ -38,11 +36,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestCdpDataSource ds = TestCdpDataSource.GetCDPDataSource("t1", recordType, recordValue);
-            CdpTableValue tt = ds.CdpTable.GetTableValue();            
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue);
 
             var st = new SymbolValues("Delegable_1");
-            st.Add("t1", tt);
+            st.Add("t1", ttv);
 
             Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
 
@@ -65,13 +62,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var rc = new RuntimeConfig(st);
             var result = await eval.EvalAsync(CancellationToken.None, rc);
 
-            string actualODataFilter = ds.CdpTable.ODataParameters.ToQueryString();
-            Assert.Equal<object>(odataFilter, actualODataFilter);            
+            DataverseDelegationParameters ddp = (DataverseDelegationParameters)ttv.DelegationParameters;
+            string actualODataFilter = ddp.GetOdataFilter();
+
+            Assert.Equal<object>(odataFilter, actualODataFilter);
+            Assert.Equal(top, ddp.Top);
 
             var sb = new StringBuilder();
             result.ToExpression(sb, new FormulaValueSerializerSettings { UseCompactRepresentation = true });
             var resultStr = sb.ToString();
-            Assert.Equal(expectedStr, resultStr);            
+            Assert.Equal(expectedStr, resultStr);
         }
 
         [Theory]
@@ -84,17 +84,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestCdpDataSource ds = TestCdpDataSource.GetCDPDataSource("t1", recordType, recordValue, serviceCapabilities =>
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, (tp) =>
             {
-                // Hack TableParameters to only allow '<' operator on Price
-                ((ColumnCapabilities)((Dictionary<string, ColumnCapabilitiesBase>)serviceCapabilities.ColumnsCapabilities)["Price"]).Capabilities = new ColumnCapabilitiesDefinition() { FilterFunctions = new string[] { "lt" } };
+                return new TableParameters()
+                {
+                    TableName = tp.TableName,
+                    IsReadOnly = tp.IsReadOnly,
+                    RecordType = tp.RecordType,
+                    DatasetName = tp.DatasetName,
+                    SortRestriction = tp.SortRestriction,
+                    FilterRestriction = tp.FilterRestriction,
+                    SelectionRestriction = tp.SelectionRestriction,
+                    GroupRestriction = tp.GroupRestriction,
+                    FilterFunctions = tp.FilterFunctions,
+                    FilterSupportedFunctions = tp.FilterSupportedFunctions,
+                    PagingCapabilities = tp.PagingCapabilities,
+                    SupportsRecordPermission = tp.SupportsRecordPermission,
+                    SupportsDataverseOffline = tp.SupportsDataverseOffline,
+                    ColumnsCapabilities = tp.ColumnsCapabilities.Select(kvp => kvp.Key == "Price" 
+                                                                            ? new KeyValuePair<string, ColumnCapabilitiesBase>(kvp.Key, new ColumnCapabilities(new ColumnCapabilitiesDefinition() { FilterFunctions = new string[] { "lt" } }))
+                                                                            : kvp).ToList(),
+                    ColumnsWithRelationships = new Dictionary<string, string>()
+                };
             });
-            
-            CdpTableValue cdpTable = ds.CdpTable.GetTableValue();
 
-            //var t1 = new MyTable(tt.ToRecord());
             var st = new SymbolValues("Delegable_1");
-            st.Add("t1", cdpTable);
+            st.Add("t1", ttv);
 
             Assert.Equal("Delegable_1", st.SymbolTable.DebugName);
 
@@ -112,5 +127,5 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             Assert.Equal<object>(expectedIr, ir);
         }
-    }    
+    }
 }
