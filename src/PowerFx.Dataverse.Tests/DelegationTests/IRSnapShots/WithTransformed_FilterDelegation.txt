@@ -262,3 +262,12 @@ With({r:local}, (__retrieveMultiple(local, __and(__startsWith(local, new_name, r
 With({r:local}, (__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ))) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
 With({r:local}, (__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ))) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
 With({r:local}, (__retrieveMultiple(local, __and(__startsWith(local, new_name, r), __endsWith(local, new_name, 1)), __noop(), 999, ))) | $filter=(startswith(new_name,'r') and endswith(new_name,'1'))&$top=999
+
+
+
+
+
+
+
+
+With({r:local}, (__retrieveMultiple(local, __gt(local, new_datetime, DecimalToDateTime(0)), __noop(), 999, ))) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999
