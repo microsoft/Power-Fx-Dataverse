@@ -4,19 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Readers;
-using Microsoft.OpenApi.Validations;
-using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Functions;
@@ -25,7 +16,6 @@ using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Xunit;
-using Xunit.Abstractions;
 using AttributeTypeCode = Microsoft.Xrm.Sdk.Metadata.AttributeTypeCode;
 
 namespace Microsoft.PowerFx.Dataverse.Tests

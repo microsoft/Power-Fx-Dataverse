@@ -34,9 +34,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private CdsEntityMetadataProvider _provider;
 
-        private DelegationMetadata _delegationMetadata;        
+        private DelegationMetadata _delegationMetadata;
 
-        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null) //, ServiceCapabilities2 serviceCapabilities = null)
+        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
