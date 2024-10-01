@@ -28,25 +28,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         public TestCdpTable CdpTable;
 
-        public static TestCdpDataSource GetCDPDataSource(string tableName, RecordType recordType, RecordValue recordValue, Action<ServiceCapabilities2> serviceCapabilitiesUpdater = null)
+        public static TestCdpDataSource GetCDPDataSource(string tableName, RecordType recordType, RecordValue recordValue, Action<TableParameters> tableParametersUpdater = null)
         {
-            return new TestCdpDataSource("dataset", tableName, recordType, recordValue, serviceCapabilitiesUpdater);
+            return new TestCdpDataSource("dataset", tableName, recordType, recordValue, tableParametersUpdater);
         }
 
-        public TestCdpDataSource(string dataset, string tableName, RecordType recordType, RecordValue recordValue, Action<ServiceCapabilities2> serviceCapabilitiesUpdater = null)
+        public TestCdpDataSource(string dataset, string tableName, RecordType recordType, RecordValue recordValue, Action<TableParameters> tableParametersUpdater = null)
             : base(dataset)
-        {
-            RawTable rawTable = new RawTable() { Name = tableName, DisplayName = "tableDisplayName" };
-            List<RawTable> listRawTable = new List<RawTable>() { rawTable };
+        {           
+            TableParameters tableParameters = TableParameters.Default(tableName, false, recordType, dataset, recordType.FieldNames);
 
-            ServiceCapabilities2 serviceCapabilities = ServiceCapabilities2.Default(tableName, false, recordType, dataset, recordType.FieldNames);
-
-            if (serviceCapabilitiesUpdater != null)
+            if (tableParametersUpdater != null)
             {
-                serviceCapabilitiesUpdater(serviceCapabilities);
+                tableParametersUpdater(tableParameters);
             }
 
-            TestCdpTable cdpTable = new TestCdpTable(dataset, tableName, new DatasetMetadata(), listRawTable, recordType, "tableDisplayName", serviceCapabilities, null, recordValue);
+            TestCdpTable cdpTable = new TestCdpTable(dataset, tableName, new DatasetMetadata(), recordType, "tableDisplayName", tableParameters, recordValue);
             cdpTable.Init();
 
             CdpTable = cdpTable;
@@ -71,18 +68,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         private RecordValue _row1;
 
-        private ServiceCapabilities2 _tableCapabilities;
+        private TableParameters _tableParameters;
 
         public ODataParameters ODataParameters { get; private set; }
 
-        public TestCdpTable(string dataset, string tableName, DatasetMetadata datasetMetadata, IReadOnlyCollection<RawTable> tables, FormulaType formulaType, string displayName, ServiceCapabilities2 tableCapabilities,
-                            IReadOnlyDictionary<string, Relationship> relationships, RecordValue recordValue)
-            : base(dataset, tableName, datasetMetadata, tables, formulaType, displayName, tableCapabilities, relationships)
+        public TestCdpTable(string dataset, string tableName, DatasetMetadata datasetMetadata, FormulaType formulaType, string displayName, TableParameters tableParameters, RecordValue recordValue)
+            : base(dataset, tableName, datasetMetadata, formulaType, displayName, tableParameters)
         {
             _tableName = tableName;
             _recordType = formulaType as RecordType;
             _row1 = recordValue;
-            _tableCapabilities = tableCapabilities;
+            _tableParameters = tableParameters;
         }
 
         public void Init()
@@ -92,7 +88,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             // replace service capabilities
             TableType._type.AssociatedDataSources.Clear();
-            TableType._type.AssociatedDataSources.Add(new InternalTableCapabilities(_tableCapabilities));
+            TableType._type.AssociatedDataSources.Add(new InternalTableParameters(_tableParameters));
         }
 
         public override Task InitAsync(HttpClient httpClient, string uriPrefix, CancellationToken cancellationToken, ConnectorLogger logger = null)

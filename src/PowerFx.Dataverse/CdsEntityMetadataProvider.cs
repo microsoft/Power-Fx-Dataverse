@@ -238,7 +238,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetDataSource(logicalName, variableName, out DataverseDataSourceInfo dataSource))
             {
                 var dtype = dataSource.Schema.ToRecord();
-                return (RecordType)FormulaType.Build(dtype);                         
+                return (RecordType)FormulaType.Build(dtype);
             }
 
             throw new InvalidOperationException($"Entity {logicalName} not present");
@@ -342,15 +342,15 @@ namespace Microsoft.PowerFx.Dataverse
                 Console.Out.WriteLine("Dataverse Parse Errors:");
                 Console.Out.WriteLine(JsonSerializer.Serialize(dataverseParserErrors, new JsonSerializerOptions() { WriteIndented = true }));
             }
-#endif            
+#endif
 
-            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName); //, capabilities);
+            var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName);
 
             // add the external entity to the cache
             _cdsCache[dataSource.Name] = dataSource;
 
             return dataSource;
-        }        
+        }
 
         private DataverseOptionSet RegisterDataverseOptionSet(EntityMetadata entity, IExternalOptionSet optionSet)
         {
@@ -537,7 +537,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         IExternalTabularDataSource IExternalEntityScope.GetTabularDataSource(string identName)
-        {            
+        {
             throw new NotImplementedException();
         }
 

@@ -151,27 +151,23 @@ namespace Microsoft.PowerFx.Dataverse
                         // not supported on Azure tables but we don't support capabilities for now
                         return $"contains({fieldName},{EscapeOdata(value)})";
                     }
-                    
-                    if (condition.Operator == ConditionOperator.Null)
+                    else if (condition.Operator == ConditionOperator.Null)
                     {
                         return $"({fieldName} eq null)";
                     }
-                    
-                    if (condition.Operator == ConditionOperator.NotNull)
+                    else if (condition.Operator == ConditionOperator.NotNull)
                     {
                         return $"({fieldName} ne null)";
                     }
-                    
-                    if (condition.Operator == ConditionOperator.BeginsWith)
+                    else if (condition.Operator == ConditionOperator.BeginsWith)
                     {
                         return $"startswith({fieldName},{EscapeOdata(value)})";
                     }
-                    
-                    if (condition.Operator == ConditionOperator.EndsWith)
+                    else if (condition.Operator == ConditionOperator.EndsWith)
                     {
                         return $"endswith({fieldName},{EscapeOdata(value)})";
                     }
-                    
+
                     string op = condition.Operator switch
                     {
                         ConditionOperator.GreaterEqual => "ge",

@@ -86,8 +86,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             TestCdpDataSource ds = TestCdpDataSource.GetCDPDataSource("t1", recordType, recordValue, serviceCapabilities =>
             {
-                // Hack ServiceCapabilities to only allow '<' operator on Price
-                ((ColumnCapabilities2)((Dictionary<string, ColumnCapabilitiesBase2>)serviceCapabilities.ColumnsCapabilities)["Price"]).Capabilities = new ColumnCapabilitiesDefinition2(new string[] { "lt" }, null, null);
+                // Hack TableParameters to only allow '<' operator on Price
+                ((ColumnCapabilities)((Dictionary<string, ColumnCapabilitiesBase>)serviceCapabilities.ColumnsCapabilities)["Price"]).Capabilities = new ColumnCapabilitiesDefinition() { FilterFunctions = new string[] { "lt" } };
             });
             
             CdpTableValue cdpTable = ds.CdpTable.GetTableValue();
