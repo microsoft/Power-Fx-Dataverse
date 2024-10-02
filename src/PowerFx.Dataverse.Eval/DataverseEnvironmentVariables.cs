@@ -90,7 +90,6 @@ namespace Microsoft.PowerFx.Dataverse
     public class DataverseEnvironmentVariablesRecordValue : RecordValue
     {
         private readonly IDataverseServices _client;
-        private DataCollection<Entity> _entities;
         private RecordValue _inner;
 
         public DataverseEnvironmentVariablesRecordValue(IDataverseServices client) 
