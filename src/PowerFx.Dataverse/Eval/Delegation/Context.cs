@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
@@ -25,7 +26,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly RetVal CallerTableRetVal;
 
-            public bool _ignoreDelegation;            
+            public bool _ignoreDelegation;
+
+            public IDelegationMetadata DelegationMetadata => CallerTableRetVal.DelegationMetadata;
 
             public Context()
             {

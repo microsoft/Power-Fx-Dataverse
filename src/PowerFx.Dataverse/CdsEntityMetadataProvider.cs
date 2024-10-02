@@ -33,18 +33,18 @@ namespace Microsoft.PowerFx.Dataverse
         private readonly DataverseDocument _document;
 
         /// <summary>
-        /// All option sets, indexed by both display and logical name.
+        /// All option sets, indexed by both display and logical name
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseOptionSet> _optionSets = new ConcurrentDictionary<string, DataverseOptionSet>(StringComparer.Ordinal);
 
         /// <summary>
-        /// Cache of XRM entity metadata already retrieved, indexed by logical name.
+        /// Cache of XRM entity metadata already retrieved, indexed by logical name
         /// </summary>
         private readonly ConcurrentDictionary<string, EntityMetadata> _xrmCache = new ConcurrentDictionary<string, EntityMetadata>(StringComparer.Ordinal);
 
         /// <summary>
         /// Cache of processed CDS table definitions, indexed by logical name
-        /// TODO: rationalize with TabularDataManager.
+        /// TODO: rationalize with TabularDataManager
         /// </summary>
         private readonly ConcurrentDictionary<string, DataverseDataSourceInfo> _cdsCache = new ConcurrentDictionary<string, DataverseDataSourceInfo>(StringComparer.Ordinal);
 
@@ -238,6 +238,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetDataSource(logicalName, variableName, out DataverseDataSourceInfo dataSource))
             {
                 var dtype = dataSource.Schema.ToRecord();
+
                 return (RecordType)FormulaType.Build(dtype);
             }
 
@@ -324,12 +325,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             var dataverseParserErrors = new List<string>();
 
-            CdsEntityMetadata cdsEntityMetadata = ToCdsEntityMetadata(entity);
-
             var externalEntity = DataverseEntityDefinitionParser.ParseTable(
                 dataSetName,
                 "dataSource?",
-                cdsEntityMetadata,
+                ToCdsEntityMetadata(entity),
                 options,
                 optionSets,
                 dataverseParserErrors,
@@ -429,7 +428,7 @@ namespace Microsoft.PowerFx.Dataverse
         #region IDisplayNameProvider implementation
 
         /// <summary>
-        /// Get the DisplayCollectionName for an entity, based.
+        /// Get the DisplayCollectionName for an entity, based
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>

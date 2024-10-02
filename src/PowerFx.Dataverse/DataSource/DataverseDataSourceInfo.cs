@@ -3,8 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AppMagic;
+using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
+using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;
@@ -20,7 +24,7 @@ using Microsoft.PowerFx.Core.Utils;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Repository for all information about an entity that will be needed to bind or generate SQL.
+    /// Repository for all information about an entity that will be needed to bind or generate SQL
     /// </summary>
     internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata
     {
@@ -32,7 +36,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         private DelegationMetadata _delegationMetadata;
 
-        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null)
+        public DataverseDataSourceInfo(
+            CdsTableDefinition tableDefinition,
+            CdsEntityMetadataProvider provider,
+            string variableName = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();

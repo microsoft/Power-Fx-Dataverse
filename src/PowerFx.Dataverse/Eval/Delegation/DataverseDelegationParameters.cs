@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -165,7 +167,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return $"endswith({fieldName},{EscapeOdata(value)})";
                     }
-
+                    
                     string op = condition.Operator switch
                     {
                         ConditionOperator.GreaterEqual => "ge",
