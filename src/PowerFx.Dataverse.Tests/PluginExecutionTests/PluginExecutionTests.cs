@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -2745,6 +2746,40 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Contains(errorMessageContains, check.Errors.First().Message);
         }
 
+        [Theory]
+        [InlineData("Variables.'Text var'", "s")]
+        [InlineData("Variables.textvar", "s")]
+        [InlineData("Variables.'JSON var'", "O")]
+        [InlineData("Variables.jsonvar", "O")]
+        [InlineData("Variables.'Number var'", "w")]
+        [InlineData("Variables.numbervar", "w")]
+        [InlineData("Variables.'Boolean var'", "b")]
+        [InlineData("Variables.booleanvar", "b")]
+        public void EnvironmentVariablesTest(string expression, string typeStr, bool isSupported = true)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueModel();
+
+            var environmentVariables = new SymbolTable();
+
+            var slot = environmentVariables.AddVariable("Variables", new DataverseEnvironmentVariablesRecordType(el));
+            var values = environmentVariables.CreateValues();
+
+            values.Set(slot, new DataverseEnvironmentVariablesRecordValue(el));
+
+            var composed = ReadOnlySymbolTable.Compose(dv.Symbols, environmentVariables);
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expression, symbolTable: composed);
+
+            DType.TryParse(typeStr, out DType type);
+
+            Assert.True(check.IsSuccess);
+            Assert.Equal(FormulaType.Build(type), check.ReturnType);
+
+            var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, values));
+            Assert.Equal(type, result.Type._type);
+        }
+
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
@@ -2920,6 +2955,93 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
 
             entityLookup.Add(CancellationToken.None, entity1);
+
+            CdsEntityMetadataProvider metadataCache;
+            if (policy is SingleOrgPolicy policy2)
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider, policy2.AllTables)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
+            }
+            else
+            {
+                metadataCache = new CdsEntityMetadataProvider(xrmMetadataProvider)
+                {
+                    NumberIsFloat = metadataNumberIsFloat
+                };
+            }
+
+            var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
+
+            return (dvConnection, entityLookup);
+        }
+
+        private (DataverseConnection, EntityLookup) CreateEnvironmentVariableDefinitionAndValueModel(Policy policy = null, bool metadataNumberIsFloat = true)
+        {
+            var entityDefinition1 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition1.Attributes["schemaname"] = "jsonvar";
+            entityDefinition1.Attributes["displayname"] = "JSON var";
+            entityDefinition1.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000003 };
+
+            var entityDefinition2 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition2.Attributes["schemaname"] = "textvar";
+            entityDefinition2.Attributes["displayname"] = "Text var";
+            entityDefinition2.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000000 };
+
+            var entityDefinition3 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition3.Attributes["schemaname"] = "numbervar";
+            entityDefinition3.Attributes["displayname"] = "Number var";
+            entityDefinition3.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000001 };
+
+            var entityDefinition4 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition4.Attributes["schemaname"] = "booleanvar";
+            entityDefinition4.Attributes["displayname"] = "Boolean var";
+            entityDefinition4.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000002 };
+
+            var entityDefinition5 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition5.Attributes["schemaname"] = "datasourcevar";
+            entityDefinition5.Attributes["displayname"] = "Data source var";
+            entityDefinition5.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000004 };
+
+            var entityDefinition6 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition6.Attributes["schemaname"] = "secretvar";
+            entityDefinition6.Attributes["displayname"] = "Secret var";
+            entityDefinition6.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000005 };
+
+            var entityValue1 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue1.Attributes["environmentvariabledefinitionid"] = entityDefinition1.ToEntityReference();
+            entityValue1.Attributes["value"] = "[{\"a\":1},{\"a\":2}]";
+
+            var entityValue2 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue2.Attributes["environmentvariabledefinitionid"] = entityDefinition2.ToEntityReference();
+            entityValue2.Attributes["value"] = @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas egestas est lobortis tempus finibus. Duis imperdiet molestie velit eget vehicula. 
+                                                 Donec vel purus est. Nullam aliquet nisl in augue tempor fringilla. Suspendisse nec nisi malesuada diam tincidunt eleifend id in metus. 
+                                                 Cras iaculis mauris non neque cursus, vel congue magna lacinia. Integer imperdiet est ut lacus volutpat cursus.";
+
+            var entityValue3 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue3.Attributes["environmentvariabledefinitionid"] = entityDefinition3.ToEntityReference();
+            entityValue3.Attributes["value"] = "99";
+
+            var entityValue4 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue4.Attributes["environmentvariabledefinitionid"] = entityDefinition4.ToEntityReference();
+            entityValue4.Attributes["value"] = "no";
+
+            // Secret and Data source types are not supported.
+
+            var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.EnvironmentVariableDefinition, MockModels.EnvironmentVariableValue);
+            EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
+
+            entityLookup.Add(CancellationToken.None, entityDefinition1);
+            entityLookup.Add(CancellationToken.None, entityDefinition2);
+            entityLookup.Add(CancellationToken.None, entityDefinition3);
+            entityLookup.Add(CancellationToken.None, entityDefinition4);
+            entityLookup.Add(CancellationToken.None, entityDefinition5);
+            entityLookup.Add(CancellationToken.None, entityDefinition6);
+            entityLookup.Add(CancellationToken.None, entityValue1);
+            entityLookup.Add(CancellationToken.None, entityValue2);
+            entityLookup.Add(CancellationToken.None, entityValue3);
+            entityLookup.Add(CancellationToken.None, entityValue4);
 
             CdsEntityMetadataProvider metadataCache;
             if (policy is SingleOrgPolicy policy2)

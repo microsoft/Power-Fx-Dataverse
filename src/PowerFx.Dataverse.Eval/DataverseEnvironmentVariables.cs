@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -15,126 +16,177 @@ using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseEnvironmentVariables : EnvironmentVariables
+    public class DataverseEnvironmentVariablesRecordType : RecordType
+    {
+        private readonly IDataverseReader _client;
+
+        public DataverseEnvironmentVariablesRecordType(IDataverseReader client)
+            : base()
+        {
+            _client = client;
+        }
+
+        public override bool TryGetFieldType(string name, out FormulaType type)
+        {
+            return TryGetFieldDefinition(name, out type, out _);
+        }
+
+        /// <summary>
+        /// Get variable field definition ie type, definition id.
+        /// </summary>
+        /// <param name="name">Variable logical/display name.</param>
+        /// <param name="type">Variable type.</param>
+        /// <param name="variableDefinitionId">Variable definition id.</param>
+        /// <returns>True if found. False otherwise.</returns>
+        /// <exception cref="Exception">Variable not found.</exception>
+        public bool TryGetFieldDefinition(string name, out FormulaType type, out EnvironmentVariableDefinitionEntity environmentVariableDefinitionEntity)
+        {
+            environmentVariableDefinitionEntity = _client.RetrieveAsync<EnvironmentVariableDefinitionEntity>(name, CancellationToken.None, "schemaname", "displayname").Result;
+
+            if (environmentVariableDefinitionEntity == null)
+            {
+                type = null;
+                return false;
+            }
+
+            var variableType = (EnvironmentVariableType)environmentVariableDefinitionEntity.type.Value;
+
+            switch (variableType)
+            {
+                case EnvironmentVariableType.String:
+                    type = FormulaType.String;
+                    break;
+
+                case EnvironmentVariableType.Decimal:
+                    type = FormulaType.Decimal;
+                    break;
+
+                case EnvironmentVariableType.Boolean:
+                    type = FormulaType.Boolean;
+                    break;
+
+                case EnvironmentVariableType.JSON:
+                    type = FormulaType.UntypedObject;
+                    break;
+
+                default:
+                    throw new Exception($"Type {variableType} not supported.");
+            }
+
+            return true;
+        }
+
+        public override bool Equals(object other)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class DataverseEnvironmentVariablesRecordValue : RecordValue
     {
         private readonly IDataverseServices _client;
         private DataCollection<Entity> _entities;
         private RecordValue _inner;
 
-        public new RecordType Type => BuildType();
-
-        public DataverseEnvironmentVariables(IDataverseServices client) 
-            : base(RecordType.Empty())
+        public DataverseEnvironmentVariablesRecordValue(IDataverseServices client) 
+            : base(new DataverseEnvironmentVariablesRecordType(client))
         {
             _client = client;
         }
 
-        protected RecordType BuildType()
-        {
-            var queryDefinition = new QueryExpression("environmentvariabledefinition") { ColumnSet = new ColumnSet("displayname", "schemaname", "type") };
-            var entityCollectionDefinition = _client.RetrieveMultipleAsync(queryDefinition);
-            var recordType = RecordType.Empty();
-
-            if (entityCollectionDefinition.Result.HasError)
-            {
-                // !!!TODO How to handle error?
-            }
-
-            _entities = entityCollectionDefinition.Result.Response.Entities;
-
-            foreach (Entity entity in _entities)
-            {
-                var displayname = entity.Attributes["displayname"].ToString();
-                var schemaname = entity.Attributes["schemaname"].ToString();
-                var type = (OptionSetValue)entity.Attributes["type"];
-                FormulaType formulaType = null;
-                FormulaValue varValue = null;
-
-                switch (type.Value)
-                {
-                    case 100000000: // string
-                        formulaType = FormulaType.String;
-                        break;
-
-                    case 100000001: // decimal/number
-                        formulaType = FormulaType.Decimal;
-                        break;
-
-                    case 100000002: // boolean
-                        formulaType = FormulaType.Boolean;
-                        break;
-
-                    case 100000003: // JSON
-                        formulaType = FormulaType.UntypedObject;
-                        break;
-
-                    default:
-                        throw new Exception($"Type {type.Value} not supported.");
-                }
-
-                recordType = recordType.Add(schemaname, formulaType, displayname);
-            }
-
-            return recordType;
-        }
-
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
-            if (_inner == null)
+            var valid = ((DataverseEnvironmentVariablesRecordType)Type).TryGetFieldDefinition(fieldName, out _, out var environmentVariableDefinitionEntity);
+
+            if (!valid)
             {
-                var queryValue = new QueryExpression("environmentvariablevalue") { ColumnSet = new ColumnSet("value", "environmentvariabledefinitionid") };
-                var entityCollectionValue = _client.RetrieveMultipleAsync(queryValue);
-
-                var definitionValueDict = new Dictionary<Guid, string>();
-
-                foreach (Entity entity in entityCollectionValue.Result.Response.Entities)
-                {
-                    definitionValueDict[((EntityReference)entity.Attributes["environmentvariabledefinitionid"]).Id] = entity.Attributes["value"].ToString();
-                }
-
-                var fields = new List<NamedValue>();
-
-                foreach (var entity in _entities)
-                {
-                    var schemaname = entity.Attributes["schemaname"].ToString();
-                    var type = (OptionSetValue)entity.Attributes["type"];
-
-                    FormulaValue varValue = null;
-
-                    switch (type.Value)
-                    {
-                        case 100000000: // string
-                            varValue = definitionValueDict.TryGetValue(entity.Id, out var variable) ? FormulaValue.New(variable) : null;
-                            break;
-
-                        case 100000001: // decimal/number
-                            varValue = definitionValueDict.TryGetValue(entity.Id, out variable) ? FormulaValue.New(Convert.ToDecimal(variable)) : null;
-                            break;
-
-                        case 100000002: // boolean
-                            varValue = definitionValueDict.TryGetValue(entity.Id, out variable) ? FormulaValue.New(variable.ToLower() == "no" ? false : true) : null;
-                            break;
-
-                        case 100000003: // JSON
-                            varValue = definitionValueDict.TryGetValue(entity.Id, out variable) ? FormulaValueJSON.FromJson(JsonDocument.Parse(variable.ToString()).RootElement, FormulaType.UntypedObject) : null;
-                            break;
-
-                        default:
-                            throw new Exception($"Type {type.Value} not supported.");
-                    }
-
-                    if (varValue != null)
-                    {
-                        fields.Add(new NamedValue(schemaname, varValue));
-                    }
-                }
-
-                _inner = FormulaValue.NewRecordFromFields(Type, fields);
+                result = default;
+                return false;
             }
 
-            result = _inner.GetField(fieldName);
+            var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(
+                environmentVariableDefinitionEntity.environmentvariabledefinitionid, 
+                CancellationToken.None, 
+                "environmentvariabledefinitionid").Result;
 
+            var type = (EnvironmentVariableType)environmentVariableDefinitionEntity.type.Value;
+
+            FormulaValue varValue = null;
+
+            switch (type)
+            {
+                case EnvironmentVariableType.String:
+                    varValue = FormulaValue.New(environmentVariableValueEntity.value);
+                    break;
+
+                case EnvironmentVariableType.Decimal:
+                    varValue = FormulaValue.New(Convert.ToDecimal(environmentVariableValueEntity.value));
+                    break;
+
+                case EnvironmentVariableType.Boolean:
+                    varValue = FormulaValue.New(environmentVariableValueEntity.value.ToLower() == "no" ? false : true);
+                    break;
+
+                case EnvironmentVariableType.JSON:
+                    varValue = FormulaValueJSON.FromJson(JsonDocument.Parse(environmentVariableValueEntity.value.ToString()).RootElement, FormulaType.UntypedObject);
+                    break;
+
+                default:
+                    throw new Exception($"Type {type} not supported.");
+            }
+
+            result = varValue;
             return true;
         }
+    }
+
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+    [DebuggerDisplay("Environment variable definition: {uniquename}")]
+    [DataverseEntity(TableName)]
+    [DataverseEntityPrimaryId(nameof(environmentvariabledefinitionid))]
+    public class EnvironmentVariableDefinitionEntity
+    {
+        public const string TableName = "environmentvariabledefinition";
+
+        public string displayname { get; set; }
+
+        public string schemaname { get; set; }
+
+        public OptionSetValue type { get; set; }
+
+        public Guid environmentvariabledefinitionid { get; set; }
+    }
+
+    [DebuggerDisplay("Environment variable value: {uniquename}")]
+    [DataverseEntity(TableName)]
+    [DataverseEntityPrimaryId(nameof(environmentvariabledefinitionid))]
+    public class EnvironmentVariableValueEntity
+    {
+        public const string TableName = "environmentvariablevalue";
+
+        public string value { get; set; }
+
+        public EntityReference environmentvariabledefinitionid { get; set; }
+    }
+#pragma warning restore SA1300 // Element should begin with upper-case letter
+
+    public enum EnvironmentVariableType
+    {
+        String = 100000000,
+
+        Decimal = 100000001,
+
+        Boolean = 100000002,
+
+        JSON = 100000003,
+
+        DataSource = 100000004,
+
+        Secret = 100000005,
     }
 }
