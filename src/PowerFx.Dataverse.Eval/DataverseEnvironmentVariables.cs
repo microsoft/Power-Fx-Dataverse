@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -19,6 +20,27 @@ namespace Microsoft.PowerFx.Dataverse
     public class DataverseEnvironmentVariablesRecordType : RecordType
     {
         private readonly IDataverseReader _client;
+
+        public override IEnumerable<string> FieldNames => GetFieldNames();
+
+        private IEnumerable<string> GetFieldNames()
+        {
+            var filter = new FilterExpression();
+
+            // Data source and Secret types are not supported.
+            filter.FilterOperator = LogicalOperator.Or;
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Decimal);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.String);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.JSON);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Boolean);
+
+            var definitions = _client.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None).Result;
+
+            foreach (var definition in definitions)
+            {
+                yield return definition.schemaname;
+            }
+        }
 
         public DataverseEnvironmentVariablesRecordType(IDataverseReader client)
             : base()
@@ -78,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool Equals(object other)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override int GetHashCode()
@@ -89,10 +111,9 @@ namespace Microsoft.PowerFx.Dataverse
 
     public class DataverseEnvironmentVariablesRecordValue : RecordValue
     {
-        private readonly IDataverseServices _client;
-        private RecordValue _inner;
+        private readonly IDataverseReader _client;
 
-        public DataverseEnvironmentVariablesRecordValue(IDataverseServices client) 
+        public DataverseEnvironmentVariablesRecordValue(IDataverseReader client) 
             : base(new DataverseEnvironmentVariablesRecordType(client))
         {
             _client = client;

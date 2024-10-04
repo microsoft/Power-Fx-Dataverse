@@ -249,6 +249,9 @@ namespace Microsoft.PowerFx
 
                 // used by the AI functions and now we have a valid service to work with
                 var clientExecute = new DataverseService(svcClient);
+                var innerServices = new BasicServiceProvider();
+                innerServices.AddService<IDataverseExecute>(clientExecute);
+                _repl.InnerServices = innerServices;
 
                 try
                 {
@@ -259,15 +262,6 @@ namespace Microsoft.PowerFx
                     // Non-fatal error
                     Console.WriteLine($"Failed to add APIs: {e.Message}");
                 }
-                
-                var dataverseEnvironmentVariables = new DataverseEnvironmentVariables(clientExecute);
-
-                var innerServices = new BasicServiceProvider();
-                innerServices.AddService<IDataverseExecute>(clientExecute);
-                innerServices.AddService<EnvironmentVariables>(dataverseEnvironmentVariables);                
-
-                _repl.InnerServices = innerServices;
-                _repl.EnableEnvVarObject(dataverseEnvironmentVariables.Type);
 
                 return BooleanValue.New(true);
             }

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -2747,36 +2748,30 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Variables.'Text var'", "s")]
-        [InlineData("Variables.textvar", "s")]
-        [InlineData("Variables.'JSON var'", "O")]
-        [InlineData("Variables.jsonvar", "O")]
-        [InlineData("Variables.'Number var'", "w")]
-        [InlineData("Variables.numbervar", "w")]
-        [InlineData("Variables.'Boolean var'", "b")]
-        [InlineData("Variables.booleanvar", "b")]
-        public void EnvironmentVariablesTest(string expression, string typeStr, bool isSupported = true)
+        [InlineData("Environment.Variables.'Text var'", "s")]
+        [InlineData("Environment.Variables.textvar", "s")]
+        [InlineData("Environment.Variables.'JSON var'", "O")]
+        [InlineData("Environment.Variables.jsonvar", "O")]
+        [InlineData("Environment.Variables.'Number var'", "w")]
+        [InlineData("Environment.Variables.numbervar", "w")]
+        [InlineData("Environment.Variables.'Boolean var'", "b")]
+        [InlineData("Environment.Variables.booleanvar", "b")]
+        public void EnvironmentVariablesTest(string expression, string typeStr)
         {
             (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueModel();
 
-            var environmentVariables = new SymbolTable();
-
-            var slot = environmentVariables.AddVariable("Variables", new DataverseEnvironmentVariablesRecordType(el));
-            var values = environmentVariables.CreateValues();
-
-            values.Set(slot, new DataverseEnvironmentVariablesRecordValue(el));
-
-            var composed = ReadOnlySymbolTable.Compose(dv.Symbols, environmentVariables);
+            var symbolValues = new SymbolValues();
+            symbolValues.AddEnvironmentVariables(el.GetEnvironmentVariables());
 
             var engine = new RecalcEngine();
-            var check = engine.Check(expression, symbolTable: composed);
+            var check = engine.Check(expression, symbolTable: ReadOnlySymbolTable.Compose(dv.Symbols, symbolValues.SymbolTable));
 
             DType.TryParse(typeStr, out DType type);
 
             Assert.True(check.IsSuccess);
             Assert.Equal(FormulaType.Build(type), check.ReturnType);
 
-            var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, values));
+            var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, symbolValues));
             Assert.Equal(type, result.Type._type);
         }
 
