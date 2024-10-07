@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="name">Variable logical/display name.</param>
         /// <param name="type">Variable type.</param>
-        /// <param name="variableDefinitionId">Variable definition id.</param>
+        /// <param name="environmentVariableDefinitionEntity">Variable definition entity.</param>
         /// <returns>True if found. False otherwise.</returns>
         /// <exception cref="Exception">Variable not found.</exception>
         internal bool TryGetFieldDefinition(string name, out FormulaType type, out EnvironmentVariableDefinitionEntity environmentVariableDefinitionEntity)
