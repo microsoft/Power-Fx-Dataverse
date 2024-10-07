@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue);
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<string>() { "eq", "lt", "le" });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);
@@ -84,29 +84,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, (tp) =>
-            {
-                return new TableParameters()
-                {
-                    TableName = tp.TableName,
-                    IsReadOnly = tp.IsReadOnly,
-                    RecordType = tp.RecordType,
-                    DatasetName = tp.DatasetName,
-                    SortRestriction = tp.SortRestriction,
-                    FilterRestriction = tp.FilterRestriction,
-                    SelectionRestriction = tp.SelectionRestriction,
-                    GroupRestriction = tp.GroupRestriction,
-                    FilterFunctions = tp.FilterFunctions,
-                    FilterSupportedFunctions = tp.FilterSupportedFunctions,
-                    PagingCapabilities = tp.PagingCapabilities,
-                    SupportsRecordPermission = tp.SupportsRecordPermission,
-                    SupportsDataverseOffline = tp.SupportsDataverseOffline,
-                    ColumnsCapabilities = tp.ColumnsCapabilities.Select(kvp => kvp.Key == "Price" 
-                                                                            ? new KeyValuePair<string, ColumnCapabilitiesBase>(kvp.Key, new ColumnCapabilities(new ColumnCapabilitiesDefinition() { FilterFunctions = new string[] { "lt" } }))
-                                                                            : kvp).ToList(),
-                    ColumnsWithRelationships = new Dictionary<string, string>()
-                };
-            });
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<string>() { "eq", "lt" });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);

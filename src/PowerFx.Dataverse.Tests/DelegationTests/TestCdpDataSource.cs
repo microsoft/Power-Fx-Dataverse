@@ -7,6 +7,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Utils;
@@ -18,14 +19,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class TestTableValue : TableValue, IDelegatableTableValue
     {
-        private readonly RecordValue _record1;
+        private readonly RecordValue _recordValue;
 
         public DelegationParameters DelegationParameters = null;
 
-        public TestTableValue(string tableName, RecordType recordType, RecordValue record, Func<TableParameters, TableParameters> tableParametersModifier = null)
-            : base(new TestRecordType(tableName, recordType, tableParametersModifier))
+        public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<string> allowedFilters)
+            : base(new TestRecordType(tableName, recordType, allowedFilters))
         {
-            _record1 = record;
+            _recordValue = record;
         }
 
         public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
@@ -33,16 +34,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             DelegationParameters = parameters;
-            IReadOnlyCollection<DValue<RecordValue>> result = new DValue<RecordValue>[] { DValue<RecordValue>.Of(_record1) };
+            IReadOnlyCollection<DValue<RecordValue>> result = new DValue<RecordValue>[] { DValue<RecordValue>.Of(_recordValue) };
             return Task.FromResult(result);
         }
     }
 
-    public class TestRecordType : RecordType
+    public class TestRecordType : TabularRecordType
     {
-        public TestRecordType(string tableName, RecordType recordType, Func<TableParameters, TableParameters> tableParametersModifier = null)
-            : this(GetDisplayNameProvider(recordType), GetTableParameters(tableName, recordType, tableParametersModifier))
+        private readonly RecordType _recordType;
+        private readonly List<string> _allowedFilters;
+
+        public TestRecordType(string tableName, RecordType recordType, List<string> allowedFilters)
+            : this(GetDisplayNameProvider(recordType), GetTableParameters(tableName, recordType))
         {
+            _recordType = recordType;
+            _allowedFilters = allowedFilters;
         }
 
         internal TestRecordType(DisplayNameProvider displayNameProvider, TableParameters tableParameters)
@@ -50,31 +56,42 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
         }
 
+        public override bool TryGetFieldType(string fieldName, bool backingField, out FormulaType type)
+        {
+            return _recordType.TryGetFieldType(fieldName, out type);
+        }
+
+        public override ColumnCapabilitiesDefinition GetColumnCapability(string fieldName)
+        {
+            return new ColumnCapabilitiesDefinition()
+            {
+                FilterFunctions = _allowedFilters
+            };
+        }
+
         private static DisplayNameProvider GetDisplayNameProvider(RecordType recordType)
         {
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableParameters GetTableParameters(string tableName, RecordType recordType, Func<TableParameters, TableParameters> tableParametersModifier = null)
+        private static TableParameters GetTableParameters(string tableName, RecordType recordType)
         {
-            TableParameters tableParameters = TableParameters.Default(tableName, false, recordType, "dataset", recordType.FieldNames);
-
-            if (tableParametersModifier != null)
-            {
-                tableParameters = tableParametersModifier(tableParameters);
-            }
-
-            return tableParameters;
+            return TableParameters.Default(tableName, false, "dataset");
         }
 
         public override bool Equals(object other)
         {
-            throw new NotImplementedException();
+            if (other == null || other is not TestRecordType other2)
+            {
+                return false;
+            }
+
+            return _recordType == other2._recordType;
         }
 
         public override int GetHashCode()
         {
             throw new NotImplementedException();
         }
-    }
+    }    
 }

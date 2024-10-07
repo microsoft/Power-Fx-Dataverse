@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -355,7 +356,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
             RecordType rt = RecordType.Empty().Add("Date", FormulaType.Date);
-            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null).Type);
+            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, new List<string>() { "eq", "lt", "le" }).Type);
             Engine engine = new Engine(new PowerFxConfig());
             engine.EnableDelegation();
 

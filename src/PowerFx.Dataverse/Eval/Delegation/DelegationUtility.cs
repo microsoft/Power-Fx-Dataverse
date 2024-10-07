@@ -13,6 +13,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
+    // See PowerApps-Client\src\Cloud\DocumentServer.Core\Document\DataToControls\MetadataUtils.cs
     internal class DelegationUtility
     {
         public static RelationMetadata DeserializeRelatioMetadata(string serializedMetadata)
