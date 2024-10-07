@@ -5,11 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -20,23 +24,13 @@ namespace Microsoft.PowerFx.Dataverse
     public class DataverseEnvironmentVariablesRecordType : RecordType
     {
         private readonly IDataverseReader _client;
+        private readonly IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
 
         public override IEnumerable<string> FieldNames => GetFieldNames();
 
         private IEnumerable<string> GetFieldNames()
         {
-            var filter = new FilterExpression();
-
-            // Data source and Secret types are not supported.
-            filter.FilterOperator = LogicalOperator.Or;
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Decimal);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.String);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.JSON);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Boolean);
-
-            var definitions = _client.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None).Result;
-
-            foreach (var definition in definitions)
+            foreach (var definition in _definitions)
             {
                 yield return definition.schemaname;
             }
@@ -46,6 +40,30 @@ namespace Microsoft.PowerFx.Dataverse
             : base()
         {
             _client = client;
+
+            var filter = new FilterExpression();
+
+            // Data source and Secret types are not supported.
+            filter.FilterOperator = LogicalOperator.Or;
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Decimal);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.String);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.JSON);
+            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Boolean);
+
+            _definitions = _client.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None).Result;
+        }
+
+        public override bool TryGetFieldType(string displayOrLogicalName, out string logical, out FormulaType type)
+        {
+            if (!TryGetFieldDefinition(displayOrLogicalName, out type, out var environmentVariableDefinitionEntity))
+            {
+                logical = null;
+                return false;
+            }
+
+            logical = environmentVariableDefinitionEntity.schemaname;
+
+            return true;
         }
 
         public override bool TryGetFieldType(string name, out FormulaType type)
@@ -61,9 +79,9 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="variableDefinitionId">Variable definition id.</param>
         /// <returns>True if found. False otherwise.</returns>
         /// <exception cref="Exception">Variable not found.</exception>
-        public bool TryGetFieldDefinition(string name, out FormulaType type, out EnvironmentVariableDefinitionEntity environmentVariableDefinitionEntity)
+        internal bool TryGetFieldDefinition(string name, out FormulaType type, out EnvironmentVariableDefinitionEntity environmentVariableDefinitionEntity)
         {
-            environmentVariableDefinitionEntity = _client.RetrieveAsync<EnvironmentVariableDefinitionEntity>(name, CancellationToken.None, "schemaname", "displayname").Result;
+            environmentVariableDefinitionEntity = _definitions.Single(entity => entity.schemaname == name || entity.displayname == name);
 
             if (environmentVariableDefinitionEntity == null)
             {

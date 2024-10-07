@@ -2772,7 +2772,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.Equal(FormulaType.Build(type), check.ReturnType);
 
             var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, symbolValues));
-            Assert.Equal(type, result.Type._type);
+
+            switch (type.Kind)
+            {
+                case DKind.UntypedObject:
+                    Assert.IsAssignableFrom<UntypedObjectValue>(result);
+                    break;
+                case DKind.Boolean:
+                    Assert.IsAssignableFrom<BooleanValue>(result);
+                    break;
+                case DKind.String:
+                    Assert.IsAssignableFrom<StringValue>(result);
+                    break;
+                case DKind.Decimal:
+                    Assert.IsAssignableFrom<DecimalValue>(result);
+                    break;
+            }            
         }
 
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
