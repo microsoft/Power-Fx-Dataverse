@@ -2756,19 +2756,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Environment.Variables.numbervar", "w")]
         [InlineData("Environment.Variables.'Boolean var'", "b")]
         [InlineData("Environment.Variables.booleanvar", "b")]
-        public void EnvironmentVariablesTest(string expression, string typeStr)
+        public async Task EnvironmentVariablesTestAsync(string expression, string typeStr)
         {
             (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueModel();
 
             var symbolValues = new SymbolValues();
-            symbolValues.AddEnvironmentVariables(el.GetEnvironmentVariables());
+            symbolValues.AddEnvironmentVariables(await el.GetEnvironmentVariablesAsync());
 
             var engine = new RecalcEngine();
             var check = engine.Check(expression, symbolTable: ReadOnlySymbolTable.Compose(dv.Symbols, symbolValues.SymbolTable));
 
             DType.TryParse(typeStr, out DType type);
 
-            Assert.True(check.IsSuccess);
+            Assert.True(check.IsSuccess, check.Errors.Any() ? check.Errors.First().Message : string.Empty);
             Assert.Equal(FormulaType.Build(type), check.ReturnType);
 
             var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, symbolValues));

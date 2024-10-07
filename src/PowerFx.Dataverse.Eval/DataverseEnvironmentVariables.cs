@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
@@ -24,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
     public class DataverseEnvironmentVariablesRecordType : RecordType
     {
         private readonly IDataverseReader _client;
-        private readonly IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
+        private IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
 
         public override IEnumerable<string> FieldNames => GetFieldNames();
 
@@ -36,62 +37,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public DataverseEnvironmentVariablesRecordType(IDataverseReader client)
-            : base()
+        public DataverseEnvironmentVariablesRecordType(DisplayNameProvider provider, IEnumerable<EnvironmentVariableDefinitionEntity> definitions)
+            : base(provider)
         {
-            _client = client;
-
-            var filter = new FilterExpression();
-
-            // Data source and Secret types are not supported.
-            filter.FilterOperator = LogicalOperator.Or;
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Decimal);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.String);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.JSON);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Boolean);
-
-            _definitions = _client.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None).Result;
-        }
-
-        public override bool TryGetFieldType(string displayOrLogicalName, out string logical, out FormulaType type)
-        {
-            if (!TryGetFieldDefinition(displayOrLogicalName, out type, out var environmentVariableDefinitionEntity))
-            {
-                logical = null;
-                return false;
-            }
-
-            logical = environmentVariableDefinitionEntity.schemaname;
-
-            return true;
+            _definitions = definitions;
         }
 
         public override bool TryGetFieldType(string name, out FormulaType type)
         {
-            return TryGetFieldDefinition(name, out type, out _);
-        }
+            var varType = (EnvironmentVariableType)_definitions.Single(entity => entity.schemaname == name || entity.displayname == name).type.Value;
 
-        /// <summary>
-        /// Get variable field definition ie type, definition id.
-        /// </summary>
-        /// <param name="name">Variable logical/display name.</param>
-        /// <param name="type">Variable type.</param>
-        /// <param name="environmentVariableDefinitionEntity">Variable definition entity.</param>
-        /// <returns>True if found. False otherwise.</returns>
-        /// <exception cref="Exception">Variable not found.</exception>
-        internal bool TryGetFieldDefinition(string name, out FormulaType type, out EnvironmentVariableDefinitionEntity environmentVariableDefinitionEntity)
-        {
-            environmentVariableDefinitionEntity = _definitions.Single(entity => entity.schemaname == name || entity.displayname == name);
-
-            if (environmentVariableDefinitionEntity == null)
-            {
-                type = null;
-                return false;
-            }
-
-            var variableType = (EnvironmentVariableType)environmentVariableDefinitionEntity.type.Value;
-
-            switch (variableType)
+            switch (varType)
             {
                 case EnvironmentVariableType.String:
                     type = FormulaType.String;
@@ -110,10 +66,15 @@ namespace Microsoft.PowerFx.Dataverse
                     break;
 
                 default:
-                    throw new Exception($"Type {variableType} not supported.");
+                    throw new Exception($"Type {varType} not supported.");
             }
 
             return true;
+        }
+
+        public Guid GetFieldDefinitionId(string fieldName)
+        {
+            return _definitions.Single(entity => entity.schemaname == fieldName || entity.displayname == fieldName).environmentvariabledefinitionid;
         }
 
         public override bool Equals(object other)
@@ -131,51 +92,44 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly IDataverseReader _client;
 
-        public DataverseEnvironmentVariablesRecordValue(IDataverseReader client) 
-            : base(new DataverseEnvironmentVariablesRecordType(client))
+        public DataverseEnvironmentVariablesRecordValue(RecordType recordType, IDataverseReader client) 
+            : base(recordType)
         {
             _client = client;
         }
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
-            var valid = ((DataverseEnvironmentVariablesRecordType)Type).TryGetFieldDefinition(fieldName, out _, out var environmentVariableDefinitionEntity);
+            var dataverseEnvironmentVariablesRecordType = (DataverseEnvironmentVariablesRecordType)Type;
+            dataverseEnvironmentVariablesRecordType.TryGetFieldType(fieldName, out var logical, out var type);
 
-            if (!valid)
-            {
-                result = default;
-                return false;
-            }
-
+            var definitionId = dataverseEnvironmentVariablesRecordType.GetFieldDefinitionId(fieldName);
             var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(
-                environmentVariableDefinitionEntity.environmentvariabledefinitionid, 
+                definitionId, 
                 CancellationToken.None, 
                 "environmentvariabledefinitionid").Result;
 
-            var type = (EnvironmentVariableType)environmentVariableDefinitionEntity.type.Value;
-
             FormulaValue varValue = null;
 
-            switch (type)
+            if (type is StringType)
             {
-                case EnvironmentVariableType.String:
-                    varValue = FormulaValue.New(environmentVariableValueEntity.value);
-                    break;
-
-                case EnvironmentVariableType.Decimal:
-                    varValue = FormulaValue.New(Convert.ToDecimal(environmentVariableValueEntity.value));
-                    break;
-
-                case EnvironmentVariableType.Boolean:
-                    varValue = FormulaValue.New(environmentVariableValueEntity.value.ToLower() == "no" ? false : true);
-                    break;
-
-                case EnvironmentVariableType.JSON:
-                    varValue = FormulaValueJSON.FromJson(JsonDocument.Parse(environmentVariableValueEntity.value.ToString()).RootElement, FormulaType.UntypedObject);
-                    break;
-
-                default:
-                    throw new Exception($"Type {type} not supported.");
+                varValue = FormulaValue.New(environmentVariableValueEntity.value);
+            }
+            else if (type is BooleanType)
+            {
+                varValue = FormulaValue.New(environmentVariableValueEntity.value.ToLower() == "no" ? false : true);
+            }
+            else if (type is DecimalType)
+            {
+                varValue = FormulaValue.New(Convert.ToDecimal(environmentVariableValueEntity.value));
+            }
+            else if (fieldType is UntypedObjectType)
+            {
+                varValue = FormulaValueJSON.FromJson(JsonDocument.Parse(environmentVariableValueEntity.value.ToString()).RootElement, FormulaType.UntypedObject);
+            }
+            else
+            {
+                throw new Exception($"Type {type} not supported.");
             }
 
             result = varValue;
@@ -226,5 +180,41 @@ namespace Microsoft.PowerFx.Dataverse
         DataSource = 100000004,
 
         Secret = 100000005,
+    }
+
+    public class EnvironmentVariablesDisplayNameProvider : DisplayNameProvider
+    {
+        private readonly IEnumerable<KeyValuePair<DName, DName>> _logicalToDisplayPairs;
+
+        public EnvironmentVariablesDisplayNameProvider(IEnumerable<KeyValuePair<DName, DName>> logicalToDisplayPairs)
+        {
+            _logicalToDisplayPairs = logicalToDisplayPairs;
+        }
+
+        public override IEnumerable<KeyValuePair<DName, DName>> LogicalToDisplayPairs => _logicalToDisplayPairs;
+
+        public override bool TryGetDisplayName(DName logicalName, out DName displayName)
+        {
+            if (!_logicalToDisplayPairs.Any(kpv => kpv.Key.Value == logicalName))
+            {
+                displayName = default;
+                return false;
+            }
+
+            displayName = _logicalToDisplayPairs.First(kpv => kpv.Key.Value == logicalName).Value;
+            return true;
+        }
+
+        public override bool TryGetLogicalName(DName displayName, out DName logicalName)
+        {
+            if (!_logicalToDisplayPairs.Any(kpv => kpv.Value.Value == displayName))
+            {
+                displayName = default;
+                return false;
+            }
+
+            logicalName = _logicalToDisplayPairs.First(kpv => kpv.Value.Value == displayName).Key;
+            return true;
+        }
     }
 }
