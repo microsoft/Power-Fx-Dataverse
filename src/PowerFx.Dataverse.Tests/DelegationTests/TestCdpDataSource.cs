@@ -39,34 +39,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
     }
 
-    public class TestRecordType : TabularRecordType
+    public class TestRecordType : RecordType
     {
-        private readonly RecordType _recordType;
-        private readonly List<string> _allowedFilters;
+        private readonly RecordType _recordType;        
 
         public TestRecordType(string tableName, RecordType recordType, List<string> allowedFilters)
-            : this(GetDisplayNameProvider(recordType), GetTableParameters(tableName, recordType))
+            : base(GetDisplayNameProvider(recordType), GetTableParameters(tableName, recordType, allowedFilters))
         {
-            _recordType = recordType;
-            _allowedFilters = allowedFilters;
-        }
+            _recordType = recordType;            
+        }       
 
-        internal TestRecordType(DisplayNameProvider displayNameProvider, TableParameters tableParameters)
-            : base(displayNameProvider, tableParameters)
-        {
-        }
-
-        public override bool TryGetFieldType(string fieldName, bool backingField, out FormulaType type)
+        public override bool TryGetFieldType(string fieldName, out FormulaType type)
         {
             return _recordType.TryGetFieldType(fieldName, out type);
-        }
-
-        public override ColumnCapabilitiesDefinition GetColumnCapability(string fieldName)
-        {
-            return new ColumnCapabilitiesDefinition()
-            {
-                FilterFunctions = _allowedFilters
-            };
         }
 
         private static DisplayNameProvider GetDisplayNameProvider(RecordType recordType)
@@ -74,9 +59,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableParameters GetTableParameters(string tableName, RecordType recordType)
+        private static TableParameters GetTableParameters(string tableName, RecordType recordType, List<string> allowedFilters)
         {
-            return TableParameters.Default(tableName, false, "dataset");
+            return new TestTableParameters(recordType, allowedFilters)
+            {
+                TableName = tableName
+            };
         }
 
         public override bool Equals(object other)
@@ -93,5 +81,31 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             throw new NotImplementedException();
         }
-    }    
+    }
+
+    public class TestTableParameters : TableParameters
+    {
+        private readonly List<string> _allowedFilters;
+        private readonly RecordType _recordType;
+
+        public TestTableParameters(RecordType recordType, List<string> allowedFilters) 
+        { 
+            _recordType = recordType;
+            _allowedFilters = allowedFilters;
+        }
+
+        public override ColumnCapabilitiesDefinition GetColumnCapability(string fieldName)
+        {
+            // Same list for all columns
+            if (_recordType.TryGetFieldType(fieldName, out FormulaType formulaType))
+            {
+                return new ColumnCapabilitiesDefinition()
+                {
+                    FilterFunctions = _allowedFilters
+                };
+            }
+
+            return null;
+        }
+    }
 }
