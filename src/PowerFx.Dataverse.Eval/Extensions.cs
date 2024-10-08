@@ -21,10 +21,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Data source and Secret types are not supported.
             filter.FilterOperator = LogicalOperator.Or;
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Decimal);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.String);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.JSON);
-            filter.AddCondition("type", ConditionOperator.Equal, EnvironmentVariableType.Boolean);
+            filter.AddCondition("type", ConditionOperator.Equal, (int)EnvironmentVariableType.Decimal);
+            filter.AddCondition("type", ConditionOperator.Equal, (int)EnvironmentVariableType.String);
+            filter.AddCondition("type", ConditionOperator.Equal, (int)EnvironmentVariableType.JSON);
+            filter.AddCondition("type", ConditionOperator.Equal, (int)EnvironmentVariableType.Boolean);
 
             var definitions = await reader.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None);
             var logicalToDisplayNames = new Dictionary<DName, DName>();
