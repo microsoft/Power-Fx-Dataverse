@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
                     break;
 
                 default:
-                    throw new Exception($"Type {varType} not supported.");
+                    throw new NotImplementedException($"Type {varType} not supported.");
             }
 
             return true;
@@ -79,7 +79,17 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool Equals(object other)
         {
-            return false;
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (other is DataverseEnvironmentVariablesRecordType)
+            {
+                return true;
+            }
+
+            throw new InvalidOperationException();
         }
 
         public override int GetHashCode()
@@ -129,7 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new Exception($"Type {type} not supported.");
+                throw new NotImplementedException($"Type {type} not supported.");
             }
 
             result = varValue;
@@ -167,6 +177,9 @@ namespace Microsoft.PowerFx.Dataverse
     }
 #pragma warning restore SA1300 // Element should begin with upper-case letter
 
+    /// <summary>
+    /// Dataverse environment variables type enum.
+    /// </summary>
     public enum EnvironmentVariableType
     {
         String = 100000000,
