@@ -59,9 +59,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableParameters GetTableParameters(string tableName, RecordType recordType, List<string> allowedFilters)
+        private static TableDelegationInfo GetTableParameters(string tableName, RecordType recordType, List<string> allowedFilters)
         {
-            return new TestTableParameters(recordType, allowedFilters)
+            return new TestDelegationInfo(recordType, allowedFilters)
             {
                 TableName = tableName
             };
@@ -83,16 +83,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
     }
 
-    public class TestTableParameters : TableParameters
+    public class TestDelegationInfo : TableDelegationInfo
     {
         private readonly List<string> _allowedFilters;
         private readonly RecordType _recordType;
 
-        public TestTableParameters(RecordType recordType, List<string> allowedFilters) 
+        public TestDelegationInfo(RecordType recordType, List<string> allowedFilters) 
         { 
             _recordType = recordType;
             _allowedFilters = allowedFilters;
         }
+
+        public override bool IsDelegable => true;
 
         public override ColumnCapabilitiesDefinition GetColumnCapability(string fieldName)
         {
