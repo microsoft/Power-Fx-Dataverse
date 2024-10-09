@@ -72,6 +72,11 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
+        internal string GetDefaultValue(string fieldName)
+        {
+            return _definitions.Single(entity => entity.schemaname == fieldName || entity.displayname == fieldName).defaultvalue;
+        }
+
         public Guid GetFieldDefinitionId(string fieldName)
         {
             return _definitions.Single(entity => entity.schemaname == fieldName || entity.displayname == fieldName).environmentvariabledefinitionid;
@@ -79,17 +84,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool Equals(object other)
         {
-            if (other == null)
-            {
-                return false;
-            }
-
             if (other is DataverseEnvironmentVariablesRecordType)
             {
                 return true;
             }
 
-            throw new InvalidOperationException();
+            return false;
         }
 
         public override int GetHashCode()
@@ -102,7 +102,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly IDataverseReader _client;
 
-        public DataverseEnvironmentVariablesRecordValue(RecordType recordType, IDataverseReader client) 
+        public DataverseEnvironmentVariablesRecordValue(DataverseEnvironmentVariablesRecordType recordType, IDataverseReader client) 
             : base(recordType)
         {
             _client = client;
@@ -114,28 +114,78 @@ namespace Microsoft.PowerFx.Dataverse
             dataverseEnvironmentVariablesRecordType.TryGetFieldType(fieldName, out var logical, out var type);
 
             var definitionId = dataverseEnvironmentVariablesRecordType.GetFieldDefinitionId(fieldName);
-            var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(
-                definitionId, 
-                CancellationToken.None, 
-                "environmentvariabledefinitionid").Result;
+
+            string responseValue = null;
+
+            try
+            {
+                var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(
+                    definitionId,
+                    CancellationToken.None,
+                    nameof(EnvironmentVariableValueEntity.environmentvariabledefinitionid)).Result;
+
+                responseValue = environmentVariableValueEntity.value;
+            }
+            catch (AggregateException ex)
+            {
+                if (ex.InnerException is EntityCountException entityCountException && entityCountException.Count == 0)
+                {
+                    // No overwritten variable value. Get default value.
+                    responseValue = dataverseEnvironmentVariablesRecordType.GetDefaultValue(fieldName);
+                }
+                else
+                {
+                    throw ex;
+                }
+            }
 
             FormulaValue varValue = null;
 
             if (type is StringType)
             {
-                varValue = FormulaValue.New(environmentVariableValueEntity.value);
+                varValue = FormulaValue.New(responseValue);
             }
             else if (type is BooleanType)
             {
-                varValue = FormulaValue.New(environmentVariableValueEntity.value.ToLower() == "no" ? false : true);
+                var booleanStringValue = responseValue.ToLower();
+                if (booleanStringValue == "no" || booleanStringValue == "yes")
+                {
+                    booleanStringValue = booleanStringValue == "yes" ? "true" : "false";
+                }
+
+                if (bool.TryParse(booleanStringValue, out var boolResult))
+                {
+                    varValue = FormulaValue.New(boolResult);
+                }
+                else
+                {
+                    varValue = BuildErrorValue(responseValue, fieldType);
+                }                
             }
             else if (type is DecimalType)
             {
-                varValue = FormulaValue.New(Convert.ToDecimal(environmentVariableValueEntity.value));
+                if (decimal.TryParse(responseValue, out var decimalResult))
+                {
+                    varValue = FormulaValue.New(Convert.ToDecimal(responseValue));
+                }
+                else
+                {
+                    varValue = BuildErrorValue(responseValue, fieldType);
+                }
             }
             else if (fieldType is UntypedObjectType)
             {
-                varValue = FormulaValueJSON.FromJson(JsonDocument.Parse(environmentVariableValueEntity.value.ToString()).RootElement, FormulaType.UntypedObject);
+                byte[] encodedBytes = Encoding.UTF8.GetBytes(responseValue);
+                Utf8JsonReader reader = new Utf8JsonReader(encodedBytes);
+
+                if (JsonDocument.TryParseValue(ref reader, out var jsonResult))
+                {
+                    varValue = FormulaValueJSON.FromJson(jsonResult.RootElement, FormulaType.UntypedObject);
+                }
+                else
+                {
+                    varValue = BuildErrorValue(responseValue, fieldType);
+                }
             }
             else
             {
@@ -144,6 +194,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             result = varValue;
             return true;
+        }
+
+        private ErrorValue BuildErrorValue(string value, FormulaType type)
+        {
+            return FormulaValue.NewError(DataverseHelpers.GetExpressionError($"Could not convert '{value}' to {type} type."));
         }
     }
 
@@ -158,6 +213,8 @@ namespace Microsoft.PowerFx.Dataverse
         public string displayname { get; set; }
 
         public string schemaname { get; set; }
+
+        public string defaultvalue { get; set; }
 
         public OptionSetValue type { get; set; }
 
@@ -193,41 +250,5 @@ namespace Microsoft.PowerFx.Dataverse
         DataSource = 100000004,
 
         Secret = 100000005,
-    }
-
-    public class EnvironmentVariablesDisplayNameProvider : DisplayNameProvider
-    {
-        private readonly IEnumerable<KeyValuePair<DName, DName>> _logicalToDisplayPairs;
-
-        public EnvironmentVariablesDisplayNameProvider(IEnumerable<KeyValuePair<DName, DName>> logicalToDisplayPairs)
-        {
-            _logicalToDisplayPairs = logicalToDisplayPairs;
-        }
-
-        public override IEnumerable<KeyValuePair<DName, DName>> LogicalToDisplayPairs => _logicalToDisplayPairs;
-
-        public override bool TryGetDisplayName(DName logicalName, out DName displayName)
-        {
-            if (!_logicalToDisplayPairs.Any(kpv => kpv.Key.Value == logicalName))
-            {
-                displayName = default;
-                return false;
-            }
-
-            displayName = _logicalToDisplayPairs.First(kpv => kpv.Key.Value == logicalName).Value;
-            return true;
-        }
-
-        public override bool TryGetLogicalName(DName displayName, out DName logicalName)
-        {
-            if (!_logicalToDisplayPairs.Any(kpv => kpv.Value.Value == displayName))
-            {
-                displayName = default;
-                return false;
-            }
-
-            logicalName = _logicalToDisplayPairs.First(kpv => kpv.Value.Value == displayName).Key;
-            return true;
-        }
     }
 }

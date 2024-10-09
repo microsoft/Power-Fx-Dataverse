@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -2748,6 +2749,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
+        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]
         [InlineData("Environment.Variables.'Text var'", "s")]
         [InlineData("Environment.Variables.textvar", "s")]
         [InlineData("Environment.Variables.'JSON var'", "O")]
@@ -2765,11 +2767,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var engine = new RecalcEngine();
             var check = engine.Check(expression, symbolTable: ReadOnlySymbolTable.Compose(dv.Symbols, symbolValues.SymbolTable));
+            Assert.True(check.IsSuccess, check.Errors.Any() ? check.Errors.First().Message : string.Empty);
 
             DType.TryParse(typeStr, out DType type);
 
-            Assert.True(check.IsSuccess, check.Errors.Any() ? check.Errors.First().Message : string.Empty);
-            Assert.Equal(FormulaType.Build(type), check.ReturnType);
+            if (check.ReturnType is DataverseEnvironmentVariablesRecordType dataverseEnvironmentVariablesRecordType)
+            {
+                KnownRecordType knownRecordType = (KnownRecordType)FormulaType.Build(type);
+
+                var firstNotSecond = knownRecordType.FieldNames.Except(dataverseEnvironmentVariablesRecordType.FieldNames).ToList();
+                var secondNotFirst = dataverseEnvironmentVariablesRecordType.FieldNames.Except(knownRecordType.FieldNames).ToList();
+
+                Assert.True(!firstNotSecond.Any() && !secondNotFirst.Any());
+            }
+            else
+            {
+                Assert.Equal(FormulaType.Build(type), check.ReturnType);
+            }
 
             var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, symbolValues));
 
@@ -2786,6 +2800,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     break;
                 case DKind.Decimal:
                     Assert.IsAssignableFrom<DecimalValue>(result);
+                    break;
+                case DKind.Record:
+                    Assert.IsAssignableFrom<RecordValue>(result);
                     break;
             }            
         }

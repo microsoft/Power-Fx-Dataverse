@@ -27,14 +27,15 @@ namespace Microsoft.PowerFx.Dataverse
             filter.AddCondition("type", ConditionOperator.Equal, (int)EnvironmentVariableType.Boolean);
 
             var definitions = await reader.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None);
-            var logicalToDisplayNames = new Dictionary<DName, DName>();
+            var logicalToDisplayNames = new List<KeyValuePair<string, string>>();
 
             foreach (var definition in definitions)
             {
-                logicalToDisplayNames[new DName(definition.schemaname)] = new DName(definition.displayname);
+                logicalToDisplayNames.Add(new KeyValuePair<string, string>(definition.schemaname, definition.displayname));
             }
 
-            return new DataverseEnvironmentVariablesRecordValue(new DataverseEnvironmentVariablesRecordType(new EnvironmentVariablesDisplayNameProvider(logicalToDisplayNames), definitions), reader);
+            return new DataverseEnvironmentVariablesRecordValue(
+                new DataverseEnvironmentVariablesRecordType(DisplayNameUtility.MakeUnique(logicalToDisplayNames), definitions), reader);
         }
     }
 }

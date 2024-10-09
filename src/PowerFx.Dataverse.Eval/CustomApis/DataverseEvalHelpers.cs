@@ -39,7 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
               where T : class, new()
         {
             var filter = new FilterExpression();
-            filter.FilterOperator = LogicalOperator.Or;
+            
+            filter.FilterOperator = filterNames.Count() > 1 ? LogicalOperator.Or : LogicalOperator.And;
 
             foreach (var filterName in filterNames)
             {
@@ -65,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
             var entities = list.Response.Entities;
             if (entities.Count != 1)
             {
-                throw new InvalidOperationException($"{entities.Count} entities in {tableName} with provided filter.");
+                throw new EntityCountException($"{entities.Count} entities in {tableName} with provided filter.", entities.Count);
             }
 
             var entity = entities[0];
@@ -236,6 +237,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return null;
+        }
+    }
+
+    internal class EntityCountException : InvalidOperationException
+    {
+        public int Count { get; }
+
+        public EntityCountException(string message, int count)
+            : base(message)
+        {
+            Count = count;
         }
     }
 }
