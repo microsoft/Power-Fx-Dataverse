@@ -22,35 +22,10 @@ namespace Microsoft.PowerFx.Dataverse
             var filter = new FilterExpression();
             filter.AddCondition(filterName, ConditionOperator.Equal, filterValue);
 
-            return await RetrieveAsyncCore<T>(reader, filter, cancel);
+            return await RetrieveAsync<T>(reader, filter, cancel);
         }
 
-        /// <summary>
-        /// Lookup, expect exactly one. Search by multiple fields.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="reader"></param>
-        /// <param name="filterValue"></param>
-        /// <param name="cancel"></param>
-        /// <param name="filterNames">Fields to search.</param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException">Found 0 or more than 1.</exception>
-        public static async Task<T> RetrieveAsync<T>(this IDataverseReader reader, object filterValue, CancellationToken cancel, params string[] filterNames)
-              where T : class, new()
-        {
-            var filter = new FilterExpression();
-            
-            filter.FilterOperator = filterNames.Count() > 1 ? LogicalOperator.Or : LogicalOperator.And;
-
-            foreach (var filterName in filterNames)
-            {
-                filter.AddCondition(filterName, ConditionOperator.Equal, filterValue);
-            }
-
-            return await RetrieveAsyncCore<T>(reader, filter, cancel);
-        }
-
-        private static async Task<T> RetrieveAsyncCore<T>(IDataverseReader reader, FilterExpression filter, CancellationToken cancel)
+        public static async Task<T> RetrieveAsync<T>(this IDataverseReader reader, FilterExpression filter, CancellationToken cancel)
               where T : class, new()
         {
             var tableName = typeof(T).GetEntityName();

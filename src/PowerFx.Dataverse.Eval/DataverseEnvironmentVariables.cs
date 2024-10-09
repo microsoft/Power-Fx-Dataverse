@@ -22,7 +22,7 @@ using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public class DataverseEnvironmentVariablesRecordType : RecordType
+    internal class DataverseEnvironmentVariablesRecordType : RecordType
     {
         private readonly IDataverseReader _client;
         private IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
@@ -98,7 +98,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
     }
 
-    public class DataverseEnvironmentVariablesRecordValue : RecordValue
+    internal class DataverseEnvironmentVariablesRecordValue : RecordValue
     {
         private readonly IDataverseReader _client;
 
@@ -119,10 +119,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             try
             {
-                var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(
-                    definitionId,
-                    CancellationToken.None,
-                    nameof(EnvironmentVariableValueEntity.environmentvariabledefinitionid)).Result;
+                var filter = new FilterExpression();
+
+                filter.AddCondition(nameof(EnvironmentVariableValueEntity.environmentvariabledefinitionid), ConditionOperator.Equal, definitionId);
+
+                var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(filter, CancellationToken.None).Result;
 
                 responseValue = environmentVariableValueEntity.value;
             }
@@ -135,6 +136,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
+                    // Something else happened. Bubble up the exception.
                     throw ex;
                 }
             }
@@ -206,7 +208,7 @@ namespace Microsoft.PowerFx.Dataverse
     [DebuggerDisplay("Environment variable definition: {uniquename}")]
     [DataverseEntity(TableName)]
     [DataverseEntityPrimaryId(nameof(environmentvariabledefinitionid))]
-    public class EnvironmentVariableDefinitionEntity
+    internal class EnvironmentVariableDefinitionEntity
     {
         public const string TableName = "environmentvariabledefinition";
 
@@ -224,7 +226,7 @@ namespace Microsoft.PowerFx.Dataverse
     [DebuggerDisplay("Environment variable value: {uniquename}")]
     [DataverseEntity(TableName)]
     [DataverseEntityPrimaryId(nameof(environmentvariabledefinitionid))]
-    public class EnvironmentVariableValueEntity
+    internal class EnvironmentVariableValueEntity
     {
         public const string TableName = "environmentvariablevalue";
 
@@ -237,6 +239,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// <summary>
     /// Dataverse environment variables type enum.
     /// </summary>
+    // https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/environmentvariabledefinition#type-choicesoptions
     public enum EnvironmentVariableType
     {
         String = 100000000,
