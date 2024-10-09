@@ -2808,6 +2808,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }            
         }
 
+        [Theory]
+        [InlineData("Environment.Variables.mismatchtype")]
+        [InlineData("Environment.Variables.twin1")]
+        [InlineData("Environment.Variables.notsupported", true)]
+        public async Task EnvironmentVariablesErrorsTestAsync(string expression, bool compilationError = false)
+        {
+            (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueErrorsModel();
+
+            var symbolValues = new SymbolValues();
+            symbolValues.AddEnvironmentVariables(await el.GetEnvironmentVariablesAsync());
+
+            var engine = new RecalcEngine();
+            var check = engine.Check(expression, symbolTable: ReadOnlySymbolTable.Compose(dv.Symbols, symbolValues.SymbolTable));
+            Assert.True(check.IsSuccess ^ compilationError, !check.IsSuccess && check.Errors.Any() ? check.Errors.First().Message : string.Empty);
+
+            if (check.IsSuccess)
+            {
+                var result = check.GetEvaluator().Eval(ReadOnlySymbolValues.Compose(dv.SymbolValues, symbolValues));
+                Assert.IsAssignableFrom<ErrorValue>(result);
+            }
+        }
+
         // static readonly EntityMetadata _localMetadata = DataverseTests.LocalModel.ToXrm();
         // static readonly EntityMetadata _remoteMetadata = DataverseTests.RemoteModel.ToXrm();
 
@@ -3027,15 +3049,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entityDefinition4.Attributes["displayname"] = "Boolean var";
             entityDefinition4.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000002 };
 
-            var entityDefinition5 = new Entity("environmentvariabledefinition", Guid.NewGuid());
-            entityDefinition5.Attributes["schemaname"] = "datasourcevar";
-            entityDefinition5.Attributes["displayname"] = "Data source var";
-            entityDefinition5.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000004 };
+            // Not yet supported. Comments were left for future reference.
+            //var entityDefinition5 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            //entityDefinition5.Attributes["schemaname"] = "datasourcevar";
+            //entityDefinition5.Attributes["displayname"] = "Data source var";
+            //entityDefinition5.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000004 };
 
-            var entityDefinition6 = new Entity("environmentvariabledefinition", Guid.NewGuid());
-            entityDefinition6.Attributes["schemaname"] = "secretvar";
-            entityDefinition6.Attributes["displayname"] = "Secret var";
-            entityDefinition6.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000005 };
+            //var entityDefinition6 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            //entityDefinition6.Attributes["schemaname"] = "secretvar";
+            //entityDefinition6.Attributes["displayname"] = "Secret var";
+            //entityDefinition6.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000005 };
 
             var entityValue1 = new Entity("environmentvariablevalue", Guid.NewGuid());
             entityValue1.Attributes["environmentvariabledefinitionid"] = entityDefinition1.ToEntityReference();
@@ -3064,8 +3087,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entityLookup.Add(CancellationToken.None, entityDefinition2);
             entityLookup.Add(CancellationToken.None, entityDefinition3);
             entityLookup.Add(CancellationToken.None, entityDefinition4);
-            entityLookup.Add(CancellationToken.None, entityDefinition5);
-            entityLookup.Add(CancellationToken.None, entityDefinition6);
             entityLookup.Add(CancellationToken.None, entityValue1);
             entityLookup.Add(CancellationToken.None, entityValue2);
             entityLookup.Add(CancellationToken.None, entityValue3);
@@ -3090,6 +3111,55 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var dvConnection = new DataverseConnection(policy, entityLookup, metadataCache);
 
             return (dvConnection, entityLookup);
+        }
+
+        private (DataverseConnection, EntityLookup) CreateEnvironmentVariableDefinitionAndValueErrorsModel()
+        {
+            (DataverseConnection dv, EntityLookup ev) = CreateEnvironmentVariableDefinitionAndValueModel();
+
+            var entityDefinition1 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition1.Attributes["schemaname"] = "mismatchtype";
+            entityDefinition1.Attributes["displayname"] = "Mismatch type";
+            entityDefinition1.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000001 };
+
+            var entityDefinition2 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition2.Attributes["schemaname"] = "twin1";
+            entityDefinition2.Attributes["displayname"] = "Mismatch type";
+            entityDefinition2.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000001 };
+
+            // Data source type.
+            var entityDefinition3 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition3.Attributes["schemaname"] = "notsupported";
+            entityDefinition3.Attributes["displayname"] = "Not supported";
+            entityDefinition3.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000004 };
+
+            // Type mismatch. Dataverse stores all variables values as text.
+            var entityValue1 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue1.Attributes["environmentvariabledefinitionid"] = entityDefinition1.ToEntityReference();
+            entityValue1.Attributes["value"] = "mismatch";
+
+            // Cant have two values for the same variable definition.
+            var entityValue2 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue2.Attributes["environmentvariabledefinitionid"] = entityDefinition2.ToEntityReference();
+            entityValue2.Attributes["value"] = "twin 1";
+
+            var entityValue3 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue3.Attributes["environmentvariabledefinitionid"] = entityDefinition2.ToEntityReference();
+            entityValue3.Attributes["value"] = "twin 2";
+
+            var entityValue4 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue4.Attributes["environmentvariabledefinitionid"] = entityDefinition3.ToEntityReference();
+            entityValue4.Attributes["value"] = "???";
+
+            ev.Add(CancellationToken.None, entityDefinition1);
+            ev.Add(CancellationToken.None, entityDefinition2);
+            ev.Add(CancellationToken.None, entityDefinition3);
+            ev.Add(CancellationToken.None, entityValue1);
+            ev.Add(CancellationToken.None, entityValue2);
+            ev.Add(CancellationToken.None, entityValue3);
+            ev.Add(CancellationToken.None, entityValue4);
+
+            return (dv, ev);
         }
 
         // Create Entity objects to match DataverseTests.BaselineMetadata;

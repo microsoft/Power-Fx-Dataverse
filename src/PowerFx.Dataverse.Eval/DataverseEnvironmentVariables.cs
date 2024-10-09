@@ -45,6 +45,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool TryGetFieldType(string name, out FormulaType type)
         {
+            if (!_definitions.Any(entity => entity.schemaname == name || entity.displayname == name))
+            {
+                type = null;
+                return false;
+            }
+
             var varType = (EnvironmentVariableType)_definitions.Single(entity => entity.schemaname == name || entity.displayname == name).type.Value;
 
             switch (varType)
@@ -129,10 +135,18 @@ namespace Microsoft.PowerFx.Dataverse
             }
             catch (AggregateException ex)
             {
-                if (ex.InnerException is EntityCountException entityCountException && entityCountException.Count == 0)
+                if (ex.InnerException is EntityCountException entityCountException)
                 {
-                    // No overwritten variable value. Get default value.
-                    responseValue = dataverseEnvironmentVariablesRecordType.GetDefaultValue(fieldName);
+                    if (entityCountException.Count == 0)
+                    {
+                        // No overwritten variable value. Get default value.
+                        responseValue = dataverseEnvironmentVariablesRecordType.GetDefaultValue(fieldName);
+                    }
+                    else
+                    {
+                        result = BuildErrorValue($"Variable value has {entityCountException.Count} duplicated values.");
+                        return true;
+                    }
                 }
                 else
                 {
@@ -200,7 +214,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         private ErrorValue BuildErrorValue(string value, FormulaType type)
         {
-            return FormulaValue.NewError(DataverseHelpers.GetExpressionError($"Could not convert '{value}' to {type} type."));
+            return BuildErrorValue($"Could not convert '{value}' to {type} type.");
+        }
+
+        private ErrorValue BuildErrorValue(string message)
+        {
+            return FormulaValue.NewError(DataverseHelpers.GetExpressionError(message));
         }
     }
 

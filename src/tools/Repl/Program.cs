@@ -3,25 +3,19 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using OptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
