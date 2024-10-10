@@ -157,8 +157,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public static FormulaValue ParseRawValue(string rawValue, FormulaType type)
         {
-            const string yes = "Yes";
-            const string no = "No";
+            const string yes = "yes";
+            const string no = "no";
 
             if (type is StringType)
             {
