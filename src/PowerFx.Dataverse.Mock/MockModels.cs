@@ -492,5 +492,35 @@ namespace Microsoft.Dataverse.EntityMock
                 MetadataId = Guid.NewGuid()
             }
         };
+
+        public static readonly EntityMetadataModel EnvironmentVariableDefinition = new EntityMetadataModel
+        {
+            LogicalName = "environmentvariabledefinition",
+            DisplayCollectionName = "Environment Variable Definition",
+            PrimaryIdAttribute = "environmentvariabledefinitionid",
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewGuid("environmentvariabledefinitionid", "Environment variable definition id"),
+                AttributeMetadataModel.NewString("schemaname", "Schema Name"),
+                AttributeMetadataModel.NewString("displayname", "Display Name"),
+                AttributeMetadataModel.NewPicklist(
+                    "type",
+                    "Type",
+                    new OptionMetadataModel[] { new OptionMetadataModel { Label = "String", Value = 100000000 }, new OptionMetadataModel { Label = "Number", Value = 100000001 }, new OptionMetadataModel { Label = "Boolean", Value = 100000002 }, new OptionMetadataModel { Label = "JSON", Value = 100000003 }, new OptionMetadataModel { Label = "Data Source", Value = 100000004 }, new OptionMetadataModel { Label = "Secret", Value = 100000005 } }),
+            },
+        };
+
+        public static readonly EntityMetadataModel EnvironmentVariableValue = new EntityMetadataModel
+        {
+            LogicalName = "environmentvariablevalue",
+            DisplayCollectionName = "Environment Variable Value",
+            PrimaryIdAttribute = "environmentvariablevalueid",
+            Attributes = new AttributeMetadataModel[]
+            {
+                AttributeMetadataModel.NewGuid("environmentvariablevalueid", "Environment variable value id"),
+                AttributeMetadataModel.NewString("value", "Value"),
+                AttributeMetadataModel.NewLookup("environmentvariabledefinitionid", "Environment Variable Definition", new string[] { "environmentvariabledefinition" }),
+            },
+        };
     }
 }

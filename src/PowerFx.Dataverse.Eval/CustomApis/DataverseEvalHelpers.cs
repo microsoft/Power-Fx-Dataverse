@@ -22,6 +22,12 @@ namespace Microsoft.PowerFx.Dataverse
             var filter = new FilterExpression();
             filter.AddCondition(filterName, ConditionOperator.Equal, filterValue);
 
+            return await RetrieveAsync<T>(reader, filter, cancel);
+        }
+
+        public static async Task<T> RetrieveAsync<T>(this IDataverseReader reader, FilterExpression filter, CancellationToken cancel)
+              where T : class, new()
+        {
             var tableName = typeof(T).GetEntityName();
             var query = new QueryExpression(tableName)
             {
@@ -35,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse
             var entities = list.Response.Entities;
             if (entities.Count != 1)
             {
-                throw new InvalidOperationException($"{entities.Count} entities in {tableName} with {filterName} equal to {filterValue}.");
+                throw new EntityCountException($"{entities.Count} entities in {tableName} with provided filter.", entities.Count);
             }
 
             var entity = entities[0];
@@ -206,6 +212,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return null;
+        }
+    }
+
+    internal class EntityCountException : InvalidOperationException
+    {
+        public int Count { get; }
+
+        public EntityCountException(string message, int count)
+            : base(message)
+        {
+            Count = count;
         }
     }
 }

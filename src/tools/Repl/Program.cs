@@ -237,8 +237,6 @@ namespace Microsoft.PowerFx
                     _dv = SingleOrgPolicy.New(svcClient, numberIsFloat: _numberIsFloat);
                 }
 
-                _repl.ExtraSymbolValues = _dv.SymbolValues;
-
                 UpdateUserInfo(svcClient);
 
                 // used by the AI functions and now we have a valid service to work with
@@ -246,6 +244,12 @@ namespace Microsoft.PowerFx
                 var innerServices = new BasicServiceProvider();
                 innerServices.AddService<IDataverseExecute>(clientExecute);
                 _repl.InnerServices = innerServices;
+
+                var symbolValue = new SymbolValues();
+
+                symbolValue.AddEnvironmentVariables(clientExecute.GetEnvironmentVariablesAsync().Result);
+                
+                _repl.ExtraSymbolValues = ReadOnlySymbolValues.Compose(symbolValue, _dv.SymbolValues);
 
                 try
                 {
@@ -303,7 +307,7 @@ namespace Microsoft.PowerFx
                     TeamsMemberId = string.Empty
                 };
 
-                _repl.UserInfo = basicUserInfo.UserInfo;
+                _repl.UserInfo = basicUserInfo.UserInfo; 
             }
         }
 
