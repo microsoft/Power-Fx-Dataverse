@@ -24,7 +24,6 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal class DataverseEnvironmentVariablesRecordType : RecordType
     {
-        private readonly IDataverseReader _client;
         private IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
 
         public override IEnumerable<string> FieldNames => GetFieldNames();
