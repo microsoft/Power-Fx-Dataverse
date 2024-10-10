@@ -13,7 +13,7 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    public static class Extensions
+    internal static class Extensions
     {
         public static async Task<RecordValue> GetEnvironmentVariablesAsync(this IDataverseReader reader)
         {
