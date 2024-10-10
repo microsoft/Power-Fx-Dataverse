@@ -257,7 +257,7 @@ namespace Microsoft.PowerFx.Dataverse
     /// Dataverse environment variables type enum.
     /// </summary>
     // https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/environmentvariabledefinition#type-choicesoptions
-    public enum EnvironmentVariableType
+    internal enum EnvironmentVariableType
     {
         String = 100000000,
 
