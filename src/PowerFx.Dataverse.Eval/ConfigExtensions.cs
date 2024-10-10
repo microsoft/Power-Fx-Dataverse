@@ -73,14 +73,16 @@ namespace Microsoft.PowerFx.Dataverse
 
             var definitions = await reader.RetrieveMultipleAsync<EnvironmentVariableDefinitionEntity>(filter, CancellationToken.None);
             var logicalToDisplayNames = new List<KeyValuePair<string, string>>();
+            var logicalNameToDefinitions = new Dictionary<string, EnvironmentVariableDefinitionEntity>();
 
             foreach (var definition in definitions)
             {
+                logicalNameToDefinitions.Add(definition.schemaname, definition);
                 logicalToDisplayNames.Add(new KeyValuePair<string, string>(definition.schemaname, definition.displayname));
             }
 
             return new DataverseEnvironmentVariablesRecordValue(
-                new DataverseEnvironmentVariablesRecordType(DisplayNameUtility.MakeUnique(logicalToDisplayNames), definitions), reader);
+                new DataverseEnvironmentVariablesRecordType(DisplayNameUtility.MakeUnique(logicalToDisplayNames), logicalNameToDefinitions), reader);
         }
     }
 }

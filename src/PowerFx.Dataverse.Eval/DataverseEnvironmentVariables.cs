@@ -24,19 +24,16 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal class DataverseEnvironmentVariablesRecordType : RecordType
     {
-        private IEnumerable<EnvironmentVariableDefinitionEntity> _definitions;
+        private readonly IReadOnlyDictionary<string, EnvironmentVariableDefinitionEntity> _definitions;
 
         public override IEnumerable<string> FieldNames => GetFieldNames();
 
         private IEnumerable<string> GetFieldNames()
         {
-            foreach (var definition in _definitions)
-            {
-                yield return definition.schemaname;
-            }
+            return _definitions.Keys;
         }
 
-        public DataverseEnvironmentVariablesRecordType(DisplayNameProvider provider, IEnumerable<EnvironmentVariableDefinitionEntity> definitions)
+        public DataverseEnvironmentVariablesRecordType(DisplayNameProvider provider, IReadOnlyDictionary<string, EnvironmentVariableDefinitionEntity> definitions)
             : base(provider)
         {
             _definitions = definitions;
@@ -44,15 +41,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool TryGetFieldType(string name, out FormulaType type)
         {
-            if (!_definitions.Any(entity => entity.schemaname == name || entity.displayname == name))
+            if (!_definitions.TryGetValue(name, out var definition))
             {
                 type = null;
                 return false;
             }
 
-            var varType = (EnvironmentVariableType)_definitions.Single(entity => entity.schemaname == name || entity.displayname == name).type.Value;
-
-            switch (varType)
+            switch ((EnvironmentVariableType)definition.type.Value)
             {
                 case EnvironmentVariableType.String:
                     type = FormulaType.String;
@@ -71,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
                     break;
 
                 default:
-                    throw new NotImplementedException($"Type {varType} not supported.");
+                    throw new NotImplementedException($"Type {(EnvironmentVariableType)definition.type.Value} not supported.");
             }
 
             return true;
@@ -79,12 +74,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal string GetDefaultValue(string fieldName)
         {
-            return _definitions.Single(entity => entity.schemaname == fieldName || entity.displayname == fieldName).defaultvalue;
+            return _definitions[fieldName].defaultvalue;
         }
 
         public Guid GetFieldDefinitionId(string fieldName)
         {
-            return _definitions.Single(entity => entity.schemaname == fieldName || entity.displayname == fieldName).environmentvariabledefinitionid;
+            return _definitions[fieldName].environmentvariabledefinitionid;
         }
 
         public override bool Equals(object other)
@@ -146,6 +141,12 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     // No overwritten variable value. Get default value.
                     var defaultValue = type.GetDefaultValue(fieldName);
+
+                    if (defaultValue == null)
+                    {
+                        return BuildErrorValue($"Variable has value assigned.");
+                    }
+
                     return FormulaValue.New(defaultValue);
                 }
                 else

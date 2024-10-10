@@ -2749,15 +2749,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]
-        [InlineData("Environment.Variables.'Text var'", "s")]
+        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]        
         [InlineData("Environment.Variables.textvar", "s")]
-        [InlineData("Environment.Variables.'JSON var'", "O")]
-        [InlineData("Environment.Variables.jsonvar", "O")]
-        [InlineData("Environment.Variables.'Number var'", "w")]
-        [InlineData("Environment.Variables.numbervar", "w")]
-        [InlineData("Environment.Variables.'Boolean var'", "b")]
         [InlineData("Environment.Variables.booleanvar", "b")]
+        [InlineData("Environment.Variables.jsonvar", "O")]
+        [InlineData("Environment.Variables.numbervar", "w")]
+        [InlineData("Environment.Variables.'JSON var'", "O")]        
+        [InlineData("Environment.Variables.'Number var'", "w")]        
+        [InlineData("Environment.Variables.'Boolean var'", "b")]
+        [InlineData("Environment.Variables.'Text var'", "s")]
+
         public async Task EnvironmentVariablesTestAsync(string expression, string typeStr)
         {
             (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueModel();
@@ -2811,6 +2812,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Environment.Variables.mismatchtype")]
         [InlineData("Environment.Variables.twin1")]
         [InlineData("Environment.Variables.notsupported", true)]
+        [InlineData("Environment.Variables.nodefaultvalue", true)]
         public async Task EnvironmentVariablesErrorsTestAsync(string expression, bool compilationError = false)
         {
             (DataverseConnection dv, EntityLookup el) = CreateEnvironmentVariableDefinitionAndValueErrorsModel();
@@ -3132,6 +3134,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             entityDefinition3.Attributes["displayname"] = "Not supported";
             entityDefinition3.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000004 };
 
+            var entityDefinition4 = new Entity("environmentvariabledefinition", Guid.NewGuid());
+            entityDefinition4.Attributes["schemaname"] = "nodefaultvalue";
+            entityDefinition4.Attributes["displayname"] = "No default value";
+            entityDefinition4.Attributes["type"] = new Xrm.Sdk.OptionSetValue() { Value = 100000000 };
+
             // Type mismatch. Dataverse stores all variables values as text.
             var entityValue1 = new Entity("environmentvariablevalue", Guid.NewGuid());
             entityValue1.Attributes["environmentvariabledefinitionid"] = entityDefinition1.ToEntityReference();
@@ -3149,6 +3156,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var entityValue4 = new Entity("environmentvariablevalue", Guid.NewGuid());
             entityValue4.Attributes["environmentvariabledefinitionid"] = entityDefinition3.ToEntityReference();
             entityValue4.Attributes["value"] = "???";
+
+            var entityValue5 = new Entity("environmentvariablevalue", Guid.NewGuid());
+            entityValue5.Attributes["environmentvariabledefinitionid"] = entityDefinition4.ToEntityReference();
+            entityValue5.Attributes["value"] = null;
 
             ev.Add(CancellationToken.None, entityDefinition1);
             ev.Add(CancellationToken.None, entityDefinition2);
