@@ -44,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         private readonly RecordType _recordType;        
 
         public TestRecordType(string tableName, RecordType recordType, List<string> allowedFilters)
-            : base(GetDisplayNameProvider(recordType), GetTableParameters(tableName, recordType, allowedFilters))
+            : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allowedFilters))
         {
             _recordType = recordType;            
         }       
@@ -59,7 +59,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableDelegationInfo GetTableParameters(string tableName, RecordType recordType, List<string> allowedFilters)
+        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<string> allowedFilters)
         {
             return new TestDelegationInfo(recordType, allowedFilters)
             {
