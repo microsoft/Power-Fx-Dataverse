@@ -3076,7 +3076,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var entityValue4 = new Entity("environmentvariablevalue", Guid.NewGuid());
             entityValue4.Attributes["environmentvariabledefinitionid"] = entityDefinition4.ToEntityReference();
-            entityValue4.Attributes["value"] = "no";
+            entityValue4.Attributes["value"] = "No";
 
             // Secret and Data source types are not supported.
 

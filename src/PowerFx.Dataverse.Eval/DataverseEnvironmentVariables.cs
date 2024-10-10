@@ -90,12 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool Equals(object other)
         {
-            if (other is DataverseEnvironmentVariablesRecordType)
-            {
-                return true;
-            }
-
-            return false;
+            return ReferenceEquals(this, other);
         }
 
         public override int GetHashCode()
@@ -116,10 +111,23 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
-            var dataverseEnvironmentVariablesRecordType = (DataverseEnvironmentVariablesRecordType)Type;
-            dataverseEnvironmentVariablesRecordType.TryGetFieldType(fieldName, out var logical, out var type);
+            var rawFormulaValue = GetRawValueAsync(_client, (DataverseEnvironmentVariablesRecordType)Type, fieldName).Result;
 
-            var definitionId = dataverseEnvironmentVariablesRecordType.GetFieldDefinitionId(fieldName);
+            if (rawFormulaValue is ErrorValue)
+            {
+                result = rawFormulaValue;
+            }
+            else
+            {
+                result = ParseRawValue(((StringValue)rawFormulaValue).Value, fieldType);
+            }
+
+            return true;
+        }
+
+        public static async Task<FormulaValue> GetRawValueAsync(IDataverseReader reader, DataverseEnvironmentVariablesRecordType type, string fieldName)
+        {
+            var definitionId = type.GetFieldDefinitionId(fieldName);
 
             string responseValue = null;
 
@@ -129,95 +137,86 @@ namespace Microsoft.PowerFx.Dataverse
 
                 filter.AddCondition(nameof(EnvironmentVariableValueEntity.environmentvariabledefinitionid), ConditionOperator.Equal, definitionId);
 
-                var environmentVariableValueEntity = _client.RetrieveAsync<EnvironmentVariableValueEntity>(filter, CancellationToken.None).Result;
+                var environmentVariableValueEntity = await reader.RetrieveAsync<EnvironmentVariableValueEntity>(filter, CancellationToken.None).ConfigureAwait(false);
 
-                responseValue = environmentVariableValueEntity.value;
+                return FormulaValue.New(environmentVariableValueEntity.value);
             }
-            catch (AggregateException ex)
+            catch (EntityCountException ex)
             {
-                if (ex.InnerException is EntityCountException entityCountException)
+                if (ex.Count == 0)
                 {
-                    if (entityCountException.Count == 0)
-                    {
-                        // No overwritten variable value. Get default value.
-                        responseValue = dataverseEnvironmentVariablesRecordType.GetDefaultValue(fieldName);
-                    }
-                    else
-                    {
-                        result = BuildErrorValue($"Variable value has {entityCountException.Count} duplicated values.");
-                        return true;
-                    }
+                    // No overwritten variable value. Get default value.
+                    var defaultValue = type.GetDefaultValue(fieldName);
+                    return FormulaValue.New(defaultValue);
                 }
                 else
                 {
-                    // Something else happened. Bubble up the exception.
-                    throw ex;
+                    return BuildErrorValue($"Variable value has {ex.Count} duplicated values.");
                 }
             }
+        }
 
-            FormulaValue varValue = null;
+        public static FormulaValue ParseRawValue(string rawValue, FormulaType type)
+        {
+            const string yes = "Yes";
+            const string no = "No";
 
             if (type is StringType)
             {
-                varValue = FormulaValue.New(responseValue);
+                return FormulaValue.New(rawValue);
             }
             else if (type is BooleanType)
             {
-                var booleanStringValue = responseValue.ToLower();
-                if (booleanStringValue == "no" || booleanStringValue == "yes")
+                if (rawValue == no)
                 {
-                    booleanStringValue = booleanStringValue == "yes" ? "true" : "false";
+                    return FormulaValue.New(false);
                 }
-
-                if (bool.TryParse(booleanStringValue, out var boolResult))
+                else if (rawValue == yes)
                 {
-                    varValue = FormulaValue.New(boolResult);
+                    return FormulaValue.New(true);
                 }
                 else
                 {
-                    varValue = BuildErrorValue(responseValue, fieldType);
-                }                
+                    return BuildErrorValue(rawValue, type);
+                }
             }
             else if (type is DecimalType)
             {
-                if (decimal.TryParse(responseValue, out var decimalResult))
+                if (decimal.TryParse(rawValue, out var decimalResult))
                 {
-                    varValue = FormulaValue.New(Convert.ToDecimal(responseValue));
+                    return FormulaValue.New(Convert.ToDecimal(rawValue));
                 }
                 else
                 {
-                    varValue = BuildErrorValue(responseValue, fieldType);
+                    return BuildErrorValue(rawValue, type);
                 }
             }
-            else if (fieldType is UntypedObjectType)
+            else if (type is UntypedObjectType)
             {
-                byte[] encodedBytes = Encoding.UTF8.GetBytes(responseValue);
+                byte[] encodedBytes = Encoding.UTF8.GetBytes(rawValue);
                 Utf8JsonReader reader = new Utf8JsonReader(encodedBytes);
 
                 if (JsonDocument.TryParseValue(ref reader, out var jsonResult))
                 {
-                    varValue = FormulaValueJSON.FromJson(jsonResult.RootElement, FormulaType.UntypedObject);
+                    return FormulaValueJSON.FromJson(jsonResult.RootElement, FormulaType.UntypedObject);
                 }
                 else
                 {
-                    varValue = BuildErrorValue(responseValue, fieldType);
+                    return BuildErrorValue(rawValue, type);
                 }
             }
             else
             {
                 throw new NotImplementedException($"Type {type} not supported.");
             }
-
-            result = varValue;
-            return true;
         }
 
-        private ErrorValue BuildErrorValue(string value, FormulaType type)
+        private static ErrorValue BuildErrorValue(string value, FormulaType type)
         {
             return BuildErrorValue($"Could not convert '{value}' to {type} type.");
         }
 
-        private ErrorValue BuildErrorValue(string message)
+        private static ErrorValue BuildErrorValue(string message)
         {
             return FormulaValue.NewError(DataverseHelpers.GetExpressionError(message));
         }
