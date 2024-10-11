@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 
@@ -23,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         public DelegationParameters DelegationParameters = null;
 
-        public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<string> allowedFilters)
+        public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<DelegationOperator> allowedFilters)
             : base(new TestRecordType(tableName, recordType, allowedFilters))
         {
             _recordValue = record;
@@ -43,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         private readonly RecordType _recordType;        
 
-        public TestRecordType(string tableName, RecordType recordType, List<string> allowedFilters)
+        public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> allowedFilters)
             : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allowedFilters))
         {
             _recordType = recordType;            
@@ -59,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<string> allowedFilters)
+        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> allowedFilters)
         {
             return new TestDelegationInfo(recordType, allowedFilters)
             {
@@ -85,10 +86,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
     public class TestDelegationInfo : TableDelegationInfo
     {
-        private readonly List<string> _allowedFilters;
+        private readonly List<DelegationOperator> _allowedFilters;
         private readonly RecordType _recordType;
 
-        public TestDelegationInfo(RecordType recordType, List<string> allowedFilters) 
+        public TestDelegationInfo(RecordType recordType, List<DelegationOperator> allowedFilters) 
         { 
             _recordType = recordType;
             _allowedFilters = allowedFilters;

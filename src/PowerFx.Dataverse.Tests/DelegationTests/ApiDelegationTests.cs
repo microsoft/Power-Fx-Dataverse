@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -36,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<string>() { "eq", "lt", "le" });
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);
@@ -84,7 +85,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<string>() { "eq", "lt" });
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);

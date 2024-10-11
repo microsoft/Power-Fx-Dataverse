@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
 using Xunit;
@@ -356,7 +357,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
             RecordType rt = RecordType.Empty().Add("Date", FormulaType.Date);
-            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, new List<string>() { "eq", "lt", "le" }).Type);
+            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le }).Type);
             Engine engine = new Engine(new PowerFxConfig());
             engine.EnableDelegation();
 
