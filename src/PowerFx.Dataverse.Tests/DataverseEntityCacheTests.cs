@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         public void EntityCache_TestCacheLimits()
         {
             Entity[] entities = Enumerable.Range(0, 5).Select((i) => new Entity("entity", Guid.NewGuid())).ToArray();
-            DataverseEntityCache cache = new DataverseEntityCache(new TestOrganizationService(), 3, new TimeSpan(0, 0, 0, 0, 80));
+            DataverseEntityCache cache = new DataverseEntityCache(new TestOrganizationService(), 3, new TimeSpan(0, 0, 0, 0, 500));
 
             cache.AddCacheEntry(entities[0]);
             Assert.Equal(1, cache.CacheSize); // cache: 0
@@ -41,8 +41,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             Assert.NotNull(cache.GetEntityFromCache(entities[3].Id));
             Assert.NotNull(cache.GetEntityFromCache(entities[4].Id));
 
-            // cache life time is 80ms, so all entries should be invalid after this point
-            Thread.Sleep(100);
+            // cache life time is 500ms, so all entries should be invalid after this point
+            Thread.Sleep(700);
 
             Assert.Null(cache.GetEntityFromCache(entities[2].Id));
             Assert.Null(cache.GetEntityFromCache(entities[3].Id));
