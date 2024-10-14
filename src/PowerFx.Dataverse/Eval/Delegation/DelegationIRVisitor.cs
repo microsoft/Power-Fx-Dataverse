@@ -6,13 +6,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -61,11 +64,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && 
-                !TryGetFieldName(context, right, out _, out _, out _))
+            FilterOpMetadata filterCapabilities = context.CallerTableRetVal.DelegationMetadata?.FilterDelegationMetadata;
+
+            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && !TryGetFieldName(context, right, out _, out _, out _))
             {
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
-                                                  left.IRContext.ResultType == FormulaType.String)
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
                 {
                     opKind = default;
                     node = default;
@@ -74,33 +77,38 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
-                opKind = op;
-                return true;
-            }
-            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) 
-                && !TryGetFieldName(context, left, out _, out _, out _))
-            {
-                fieldName = rightField;
-                node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
-                                                  left.IRContext.ResultType == FormulaType.String)
+                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
+                    node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
                     return true;
                 }
+            }
+            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) && !TryGetFieldName(context, left, out _, out _, out _))
+            {
+                fieldName = rightField;
 
-                if (TryInvertLeftRight(op, out var invertedOp))
+                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities))
                 {
-                    opKind = invertedOp;
-                    return true;
+                    node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
+
+                    if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
+                    {
+                        opKind = op;
+                        return true;
+                    }
+
+                    if (TryInvertLeftRight(op, out var invertedOp))
+                    {
+                        opKind = invertedOp;
+                        return true;
+                    }
                 }
 
                 // will return false
             }
-            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && 
-                TryGetFieldName(context, right, out var rightField2, out _, out _))
+            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && TryGetFieldName(context, right, out var rightField2, out _, out _))
             {
                 if (leftField2 == rightField2)
                 {
@@ -135,7 +143,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="context"></param>
         /// <param name="node"></param>
         /// <param name="fieldName">name of the field.</param>
-        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind. 
+        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind.
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
         /// <returns></returns>
@@ -281,16 +289,22 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 case UnaryOpKind.DateToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDate, node);
+
                 case UnaryOpKind.DateTimeToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDateTime, node);
+
                 case UnaryOpKind.TimeToDecimal:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToTime, node);
+
                 case UnaryOpKind.DateToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDate, node);
+
                 case UnaryOpKind.DateTimeToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDateTime, node);
+
                 case UnaryOpKind.TimeToNumber:
                     return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToTime, node);
+
                 default:
                     throw new NotImplementedException($"{nameof(MaybeAddCoercion)} -> Coercion kind {coercionKind} is not implemented for coercion inversion.");
             }
@@ -303,34 +317,46 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 case UnaryOpKind.DateTimeToTime:
                     return true;
+
                 case UnaryOpKind.DateToTime:
                     return true;
+
                 case UnaryOpKind.TimeToDate:
                     return true;
+
                 case UnaryOpKind.DateTimeToDate:
                     return true;
+
                 case UnaryOpKind.TimeToDateTime:
                     return true;
+
                 case UnaryOpKind.DateToDateTime:
                     return true;
+
                 case UnaryOpKind.DateToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateTimeToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.TimeToDecimal:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateToNumber:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.DateTimeToNumber:
                     invertCoercion = true;
                     return true;
+
                 case UnaryOpKind.TimeToNumber:
                     invertCoercion = true;
                     return true;
+
                 default:
                     invertCoercion = false;
                     return false;
@@ -505,11 +531,11 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
-                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) &&
                             fieldName == primaryKeyFieldName)
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
-                            if (context.IsDataverseDelegation && 
+                            if (context.IsDataverseDelegation &&
                                 context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
                             {
                                 fieldName = relation2.ReferencingAttribute;

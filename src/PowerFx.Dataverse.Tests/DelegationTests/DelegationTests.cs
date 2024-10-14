@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
@@ -278,8 +277,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             engine.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
         }
 
-        [Fact]
-        [TestPriority(2)]
+        [Fact(Skip= "// DV Issue 552 //")]
+        [TestPriority(2)]               
         public void CheckDelegationExpressions()
         {
 #if false

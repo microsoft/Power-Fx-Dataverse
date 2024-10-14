@@ -1,30 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types.Enums;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Metadata;
-using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
-using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using Span = Microsoft.PowerFx.Syntax.Span;
-using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -45,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetValidFieldAndRelation(context, node, out string fieldName, out IntermediateNode rightNode, out relations)
 
                 // check if the field supports starts/ends with in capabilities.
-                && context.AssociatedDS.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith))
+                && context.DelegationMetadata.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith))
             {
                 var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
                 

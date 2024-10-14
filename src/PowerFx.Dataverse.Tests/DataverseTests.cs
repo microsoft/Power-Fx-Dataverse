@@ -1941,12 +1941,12 @@ END
 
         // "Main Entity"
         [InlineData("Price * Quantity", "new_price,new_quantity")]
-        
+
         // "Main Entity ThisRecord"
         [InlineData("ThisRecord.Price + Quantity", "new_price,new_quantity")]
-        
+
         // "Lookup"
-        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")] 
+        [InlineData("Price + Other.Data", "new_price,otherid", "remote=>data", "local=>local_remote")]
 
         // "Multiple levels of lookup"
         [InlineData("Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "otherid", "remote=>otherotherid|doubleremote=>data2,otherotherotherid|tripleremote=>data3", "local=>local_remote|remote=>remote_doubleremote|doubleremote=>doubleremote_tripleremote")]
@@ -1958,7 +1958,7 @@ END
         [InlineData("'Logical Lookup'.Data", "localid,logicalid", "remote=>data", "local=>logical")]
 
         // "Literals"
-        [InlineData("7 + 2", "")] 
+        [InlineData("7 + 2", "")]
         public void CompileIdentifiers(string expr, string topLevelFields, string relatedFields = null, string relationships = null)
         {
             var provider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
@@ -3004,7 +3004,7 @@ END
             Assert.True(dv.MetadataCache.TryGetOptionSet(new Core.Utils.DName("Rating (Locals)"), out var optionSet));
 
             // Simulates IExternalOptionSetDocument.RegisterOrRefreshOptionSet
-            var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", string.Empty, "Rating", string.Empty, string.Empty, string.Empty, new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false);
+            var refreshedOptionSet = new DataverseOptionSet("rating_optionSet", "dataSet?", "local", "rating", string.Empty, "Rating", string.Empty, string.Empty, string.Empty, new Dictionary<int, string> { { 1, "Hot" }, { 2, "Warm" }, { 3, "Cold" } }, false, false) { DisplayName = "rating2" };
             Assert.NotSame(refreshedOptionSet, optionSet);
 
             // $$$ This call will fail in DEBUG mode as 'Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal)' will throw
@@ -3012,7 +3012,7 @@ END
 
             check = engine1.Check(expr, options: opts, symbolTable: symbols);
             Assert.True(check.IsSuccess);
-        }
+        }                     
     }
 
     public class MockXrmMetadataProvider : IXrmMetadataProvider

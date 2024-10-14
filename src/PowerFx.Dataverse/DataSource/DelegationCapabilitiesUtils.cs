@@ -1,28 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics.Contracts;
-using System.Text;
-using Microsoft;
-using Microsoft.PowerFx;
-using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse;
-using Microsoft.PowerFx.Dataverse.DataSource;
-using Microsoft.PowerFx.Dataverse.Eval;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse.DataSource
 {
     internal static class DelegationCapabilitiesUtils
     {
-        public static bool DoesColumnSupportStartsEndsWith(this IExternalDataSource ds, string col, FormulaType colType, bool isStartsWith)
+        public static bool DoesColumnSupportStartsEndsWith(this IDelegationMetadata ds, string col, FormulaType colType, bool isStartsWith)
         {
             Contracts.AssertValue(col);
             Contracts.AssertValue(ds);
@@ -32,13 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.DataSource
                 return false;
             }
 
-            // If datasource is not delegatable then no need to check capabilities.
-            if (!ds.IsDelegatable)
-            {
-                return true;
-            }
-
-            var metadata = ds.DelegationMetadata.FilterDelegationMetadata;
+            var metadata = ds.FilterDelegationMetadata;
             if (metadata == null)
             {
                 return false;

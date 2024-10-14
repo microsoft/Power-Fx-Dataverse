@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System.Linq;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Types;
@@ -21,14 +23,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Does the resolve object refer to a dataverse Table?
                 if (node.Value is NameSymbol nameSym)
-                {
-                    var symbolTable = nameSym.Owner;
-
-                    // We need to tell the difference between a direct table,
-                    // and another global variable that has that table's type (such as global := Filter(table, true).
-                    bool isRealTable = _hooks.IsDelegableSymbolTable(symbolTable);
-
-                    if (isRealTable)
+                {                    
+                    IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);                                      
+                    
+                    if (e?.IsDelegatable == true)
                     {
                         var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
                         return ret;
@@ -36,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Just a regular variable, don't bother delegating.
+            // Just a regular variable or non-delegable table, don't bother delegating.
             return Ret(node);
         }
     }

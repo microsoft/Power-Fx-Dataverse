@@ -2718,8 +2718,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine = new RecalcEngine(new PowerFxConfig());
 
             // Decimal is a restricted type in UDF.
-            // https://github.com/microsoft/Power-Fx/pull/2141
-            Assert.False(engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols).IsSuccess);
+            // https://github.com/microsoft/Power-Fx/pull/2141, https://github.com/microsoft/Power-Fx/pull/2559
+            DefinitionsCheckResult dcr = engine.AddUserDefinedFunction(script, CultureInfo.InvariantCulture, dv.Symbols);
+            Assert.False(dcr.IsSuccess);
         }
 
         [Theory]

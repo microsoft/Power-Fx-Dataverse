@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
@@ -26,9 +26,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public readonly RetVal CallerTableRetVal;
 
-            public bool _ignoreDelegation;            
+            public bool _ignoreDelegation;
 
-            public IExternalTabularDataSource AssociatedDS => CallerTableRetVal.AssociatedDS;
+            public IDelegationMetadata DelegationMetadata => CallerTableRetVal.DelegationMetadata;
 
             public Context()
             {
@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
                 WithScopes = withScopes;
                 CallerNode = callerNode;
                 CallerTableNode = callerTableRetVal._sourceTableIRNode;
-                CallerTableRetVal = callerTableRetVal;
+                CallerTableRetVal = callerTableRetVal; // contains TabularDataSource, if defined
                 _ignoreDelegation = ignoreDelegation;
             }
 

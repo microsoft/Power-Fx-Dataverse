@@ -270,7 +270,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(179, "LookUp(t1, Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
 
         [InlineData(180, "LookUp(SortByColumns(t1, Price, SortOrder.Descending), Quantity = 20).'Elastic Ref'.Field1", 200.0, false, true)]
-        [InlineData(181, "LookUp(ForAll(t1, {a: Price, b: Quantity}), b = 20).a", 100.0, false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
+        
+        // DV Issue 552 [InlineData(181, "LookUp(ForAll(t1, {a: Price, b: Quantity}), b = 20).a", 100.0, false, true, "Warning 14-16: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         [InlineData(182, "LookUp(t1, DateAdd(DateTime, -2) < DateTime)", null, true, true, "Warning 33-34: Can't delegate LtDateTime: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 

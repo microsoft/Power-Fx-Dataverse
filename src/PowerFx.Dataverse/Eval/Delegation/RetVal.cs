@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.PowerFx.Core.Entities;
+using System.Linq;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -41,6 +41,8 @@ namespace Microsoft.PowerFx.Dataverse
             // Table type  and original metadata for table that we're delegating to.
             public readonly TableType TableType;
 
+            public readonly IDelegationMetadata DelegationMetadata;
+
             private readonly IntermediateNode _filter;
 
             private readonly IntermediateNode _orderBy;
@@ -50,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly NumberLiteralNode _maxRows;
 
             // Null if not dataverse
-            private readonly EntityMetadata _metadata;            
+            private readonly EntityMetadata _metadata;
 
             /// <summary>
             /// Will be null for non-dataverse tables.
@@ -58,11 +60,7 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
-
-            private readonly IExternalTabularDataSource _associateDS;
-
-            public IExternalTabularDataSource AssociatedDS => _associateDS ?? throw new ArgumentNullException(nameof(AssociatedDS));
-
+            
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
@@ -70,6 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
+                this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault().DelegationMetadata;
 
                 // topCount and filter are optional.
                 this._topCount = count;
@@ -78,12 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
-                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
-
-                if (tableType.TryGetAssociateDataSource(out var ads))
-                {
-                    _associateDS = ads;
-                }
+                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);                
             }
 
             // Non-delegating path
