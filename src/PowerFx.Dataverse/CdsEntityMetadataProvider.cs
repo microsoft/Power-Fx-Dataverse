@@ -342,7 +342,7 @@ namespace Microsoft.PowerFx.Dataverse
                 Console.Out.WriteLine(JsonSerializer.Serialize(dataverseParserErrors, new JsonSerializerOptions() { WriteIndented = true }));
             }
 #endif
-
+            
             var dataSource = new DataverseDataSourceInfo(externalEntity, this, variableName);
 
             // add the external entity to the cache
