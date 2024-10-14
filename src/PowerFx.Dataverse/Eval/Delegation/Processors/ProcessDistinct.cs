@@ -23,10 +23,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
             if (count != null
-                || !(TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName, out var invertCoercion, out _)
-                ^ invertCoercion)
+                || !(TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName, out var invertCoercion, out _) ^ invertCoercion)
                 || !IsReturnTypePrimitive(node.IRContext.ResultType)
-                || DelegationUtility.IsElasticTable(tableArg.TableType))
+                || DelegationUtility.IsElasticTable(tableArg.TableType)
+                || !DelegationUtility.CanDelegateDistinct(fieldName, context.CallerTableRetVal.DelegationMetadata.FilterDelegationMetadata))                
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
