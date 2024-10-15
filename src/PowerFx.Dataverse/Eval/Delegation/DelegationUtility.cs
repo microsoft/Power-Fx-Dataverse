@@ -74,8 +74,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return filterCapabilities.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Distinct);
         }
 
-        public static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities)
-        {
+        public static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, ColumnMap columnMap)
+        {            
+            if (columnMap?.Map.TryGetValue(new DName(fieldName), out IntermediateNode logicalName) == true)
+            {
+                fieldName = ColumnMap.GetString(logicalName);
+            }
+
             return op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
         }
 
