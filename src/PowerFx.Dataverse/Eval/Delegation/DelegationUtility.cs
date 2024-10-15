@@ -3,6 +3,7 @@
 
 using System.Linq;
 using System.Text.Json;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types;
@@ -66,6 +67,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             }
 
             return false;
+        }
+
+        public static bool CanDelegateDistinct(string fieldName, FilterOpMetadata filterCapabilities)
+        {
+            return filterCapabilities.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Distinct);
         }
 
         public static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities)

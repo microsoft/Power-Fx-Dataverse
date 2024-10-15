@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AppMagic;
@@ -62,11 +63,16 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             Schema = DType.AttachDataSourceInfo(Schema, this);
-
             QueryOptions = new TabularDataQueryOptions(this);
 
+            // Ensure "distinct" capability is added
+            ServiceCapabilities updatedServiceCapabilities = EnsureCapability(
+                tableDefinition.ServiceCapabilities,
+                DelegationMetadataOperatorConstants.Distinct);
+
             // If delegable then set delegation metadata and delegatable attribute.
-            var delegationMetadataDef = JsonSerializer.Serialize(tableDefinition.ServiceCapabilities);
+            var delegationMetadataDef = JsonSerializer.Serialize(updatedServiceCapabilities);
+
             Contracts.AssertValue(delegationMetadataDef);
 
             _delegationMetadata = new DelegationMetadata(Schema, delegationMetadataDef);
@@ -79,6 +85,37 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Default values
             this.EntityName = new DName(variableName ?? CdsTableDefinition.Name);
+        }
+
+        private static ServiceCapabilities EnsureCapability(ServiceCapabilities serviceCapabilities, params string[] operationCapabilities)
+        {
+            List<string> filterFunction = serviceCapabilities.FilterFunctions.ToList();
+            List<string> filterSupportedFunctions = serviceCapabilities.FilterSupportedFunctions.ToList();
+
+            foreach (string capability in operationCapabilities)
+            {
+                if (!filterFunction.Contains(capability))
+                {
+                    filterFunction.Add(capability);
+                }
+
+                if (!filterSupportedFunctions.Contains(capability))
+                {
+                    filterSupportedFunctions.Add(capability);
+                }
+            }
+
+            return new ServiceCapabilities(
+                serviceCapabilities.SortRestriction,
+                serviceCapabilities.FilterRestriction,
+                serviceCapabilities.SelectionRestriction,
+                serviceCapabilities.GroupRestriction,
+                filterFunction.ToArray(),
+                filterSupportedFunctions.ToArray(),
+                serviceCapabilities.PagingCapabilities,
+                serviceCapabilities.SupportsRecordPermission,
+                serviceCapabilities.ODataVersion,
+                serviceCapabilities.SupportsDataverseOffline);
         }
 
         public string PrimaryNameField => CdsTableDefinition.PrimaryNameColumn;
