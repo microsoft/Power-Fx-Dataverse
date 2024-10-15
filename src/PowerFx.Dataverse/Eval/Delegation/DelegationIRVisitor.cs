@@ -76,9 +76,9 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
 
-                fieldName = leftField;
+                fieldName = leftField;                
 
-                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities))
+                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -89,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 fieldName = rightField;
 
-                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities))
+                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -183,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
                         if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
                         {
                             fieldName = context.CallerTableRetVal.ColumnMap.Distinct;
-                        }
+                        }                        
 
                         return true;
                     }
