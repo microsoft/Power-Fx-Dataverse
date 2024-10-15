@@ -26,12 +26,12 @@ namespace Microsoft.PowerFx.Dataverse
             string fieldName = null;
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
-            bool cantDelegate = count != null
-                || !(TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out fieldName, out bool invertCoercion, out _) ^ invertCoercion)
-                || !IsReturnTypePrimitive(node.IRContext.ResultType)
-                || DelegationUtility.IsElasticTable(tableArg.TableType);
+            bool canDelegate = count == null
+                && TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out fieldName, out bool invertCoercion, out _) ^ invertCoercion
+                && IsReturnTypePrimitive(node.IRContext.ResultType)
+                && !DelegationUtility.IsElasticTable(tableArg.TableType);
 
-            if (!cantDelegate)
+            if (canDelegate)
             {
                 // let's create a single column map ("Value", fieldName) with a distinct on fieldName
                 map = new ColumnMap(fieldName);
@@ -39,10 +39,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // Combine with an existing map
                 map = ColumnMap.Combine(tableArg.ColumnMap, map);                
 
-                cantDelegate |= !DelegationUtility.CanDelegateDistinct(map.Distinct, context.CallerTableRetVal.DelegationMetadata.FilterDelegationMetadata);
+                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.CallerTableRetVal.DelegationMetadata.FilterDelegationMetadata);
             }
 
-            if (cantDelegate)
+            if (!canDelegate)
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
