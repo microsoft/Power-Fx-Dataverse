@@ -28,7 +28,7 @@
   <Import Project="..\Build.props" />
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="6.0.8" />
+    <PackageReference Include="System.Text.Json" Version="6.0.10" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
     <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
