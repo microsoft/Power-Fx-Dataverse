@@ -257,15 +257,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(198, "Filter(Distinct(t1, Price), Value > 5)", 2, false, true)]
         [InlineData(199, "Filter(Sort(t1, Price), Price > 5)", 2, false, true)]
         [InlineData(200, "Filter(SortByColumns(t1, Price), Price > 5)", 2, false, true)]
-
-        // DV Issue 552 [InlineData(201, "Filter(ForAll(t1, Price), Value > 5)", 2, false, true)]
-        // DV Issue 552 [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
+        [InlineData(201, "Filter(ForAll(t1, Price), Value > 5)", 2, false, true)]
+        [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
         [InlineData(203, "Distinct(Filter(Distinct(t1, Price), Value > 5), Value)", 2, false, true)]
         [InlineData(204, "Distinct(Filter(Sort(t1, Price), Price > 5), Price)", 2, false, true)]
-        [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]
-        
-        // DV Issue 552 [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
-        // DV Issue 552 [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
+        [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]        
+        [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
+        [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
 
         // 'exactin' op is not supported.
         [InlineData(208, @"Filter(t1, ""oW1"" exactin Name)", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]

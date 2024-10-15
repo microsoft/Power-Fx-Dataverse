@@ -184,6 +184,10 @@ namespace Microsoft.PowerFx.Dataverse
                         {
                             fieldName = context.CallerTableRetVal.ColumnMap.Distinct;
                         }
+                        else if (context.CallerTableRetVal.ColumnMap?.Map.TryGetValue(new DName(fieldName), out IntermediateNode logicalName) == true)
+                        {
+                            fieldName = ColumnMap.GetString(logicalName);
+                        }
 
                         return true;
                     }

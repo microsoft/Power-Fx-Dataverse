@@ -277,7 +277,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             engine.UpdateVariable("_gMissing", FormulaValue.New(Guid.Parse("00000000-0000-0000-9999-000000000001"))); // no match
         }
 
-        [Fact(Skip= "// DV Issue 552 //")]
+        [Fact]
         [TestPriority(2)]               
         public void CheckDelegationExpressions()
         {
