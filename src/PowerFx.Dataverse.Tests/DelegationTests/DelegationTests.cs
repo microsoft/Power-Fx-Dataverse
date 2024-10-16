@@ -61,12 +61,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             RecalcEngine engine = new RecalcEngine(config);
             ConfigureEngine(dv, engine, true);
 
-            // Add a variable with same table type.
-            // But it's not in the same symbol table, so we can't delegate this.
-            // Previously this was UpdateVariable, but UpdateVariable no longer supports dataverse tables (by design).
-            var tableT1Type = dv.GetRecordType("local");
+            // Make fakeT1 non delegable
+            var tableT1Type = dv.GetRecordType("local").SetNonDelegable();
             var fakeSymbolTable = new SymbolTable();
-            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", tableT1Type.ToTable());
+            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", (TableType)tableT1Type.ToTable());
             var fakeTableValue = new TestDataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
             var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
 
@@ -344,6 +342,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
 
             Assert.True(missing == 0, $"Missing {missing} tests");
+        }
+    }
+
+    public static class AdsExtensions
+    {   
+        public static RecordType SetNonDelegable(this RecordType recordType)            
+        {            
+            DataverseDataSourceInfo previous = (DataverseDataSourceInfo)recordType._type.AssociatedDataSources.First();
+
+            // Make a copy to now alter the original data source
+            DataverseDataSourceInfo newDS = new DataverseDataSourceInfo(
+                (Microsoft.AppMagic.Authoring.Importers.DataDescription.CdsTableDefinition)previous.TableDefinition, 
+                (Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider)previous.DataEntityMetadataProvider,
+                previous.EntityName);
+
+            newDS._isDelegable = false;
+
+            return (RecordType)FormulaType.Build(newDS.Schema.ToRecord());
         }
     }
 

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core.IR;
@@ -39,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Combine with an existing map
                 map = ColumnMap.Combine(tableArg.ColumnMap, map);                
 
-                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.CallerTableRetVal.DelegationMetadata.FilterDelegationMetadata);
+                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.DelegationMetadata.FilterDelegationMetadata);
             }
 
             if (!canDelegate)

@@ -4,12 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using Microsoft.AppMagic;
-using Microsoft.AppMagic.Authoring;
 using Microsoft.AppMagic.Authoring.Importers.DataDescription;
-using Microsoft.AppMagic.Common;
 using Microsoft.PowerFx.Core.App;
 using Microsoft.PowerFx.Core.App.Controls;
 using Microsoft.PowerFx.Core.Entities;
@@ -136,7 +132,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool IsSelectable => true;
 
-        public bool IsDelegatable => true;
+        public bool IsDelegatable => _isDelegable;
+
+        internal bool _isDelegable = true;
 
         public bool RequiresAsync => throw new NotImplementedException();
 
