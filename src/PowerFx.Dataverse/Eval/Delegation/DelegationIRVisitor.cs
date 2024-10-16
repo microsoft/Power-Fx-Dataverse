@@ -12,10 +12,8 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -64,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
         {
-            FilterOpMetadata filterCapabilities = context.CallerTableRetVal.DelegationMetadata?.FilterDelegationMetadata;
+            FilterOpMetadata filterCapabilities = context.DelegationMetadata?.FilterDelegationMetadata;
 
             if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && !TryGetFieldName(context, right, out _, out _, out _))
             {

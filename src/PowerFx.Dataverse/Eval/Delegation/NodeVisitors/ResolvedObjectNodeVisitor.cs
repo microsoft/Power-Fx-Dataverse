@@ -23,9 +23,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Does the resolve object refer to a dataverse Table?
                 if (node.Value is NameSymbol nameSym)
-                {                    
-                    IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault(ads => ads.EntityName == nameSym.Name);                                      
-                    
+                {
+                    IExternalTabularDataSource e = node.IRContext.ResultType._type.AssociatedDataSources?.FirstOrDefault();
+
                     if (e?.IsDelegatable == true)
                     {
                         var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, _maxRows, columnMap: null);
