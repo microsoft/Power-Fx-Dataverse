@@ -351,7 +351,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {            
             DataverseDataSourceInfo previous = (DataverseDataSourceInfo)recordType._type.AssociatedDataSources.First();
 
-            // Make a copy to now alter the original data source
+            // Make a copy to not alter the original data source
             DataverseDataSourceInfo newDS = new DataverseDataSourceInfo(
                 (Microsoft.AppMagic.Authoring.Importers.DataDescription.CdsTableDefinition)previous.TableDefinition, 
                 (Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider)previous.DataEntityMetadataProvider,

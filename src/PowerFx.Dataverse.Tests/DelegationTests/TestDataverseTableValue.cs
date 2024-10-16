@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal TestDataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
             : base(recordType, connection, metadata)
-        {            
+        {
         }
 
         public override Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
