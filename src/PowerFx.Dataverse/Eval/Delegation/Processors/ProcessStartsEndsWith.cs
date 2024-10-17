@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetValidFieldAndRelation(context, node, out string fieldName, out IntermediateNode rightNode, out relations)
 
                 // check if the field supports starts/ends with in capabilities.
-                && context.DelegationMetadata.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith))
+                && context.DelegationMetadata?.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith) == true)
             {
                 var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
                 

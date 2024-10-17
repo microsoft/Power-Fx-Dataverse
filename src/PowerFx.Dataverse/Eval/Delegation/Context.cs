@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool _ignoreDelegation;
 
-            public IDelegationMetadata DelegationMetadata => CallerTableRetVal.DelegationMetadata;
+            public IDelegationMetadata DelegationMetadata => CallerTableRetVal?.DelegationMetadata;
 
             public Context()
             {

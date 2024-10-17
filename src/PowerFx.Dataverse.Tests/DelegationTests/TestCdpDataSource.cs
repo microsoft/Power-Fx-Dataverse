@@ -22,15 +22,21 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         private readonly RecordValue _recordValue;
 
-        public DelegationParameters DelegationParameters = null;
+        public DelegationParameters DelegationParameters = null;        
 
-        public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<DelegationOperator> allowedFilters)
-            : base(new TestRecordType(tableName, recordType, allowedFilters))
+        public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<DelegationOperator> filterFunctions, List<DelegationOperator> allowedColumnFilters)
+            : base(new TestRecordType(tableName, recordType, filterFunctions, allowedColumnFilters))
         {
             _recordValue = record;
         }
 
-        public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
+        public override IEnumerable<DValue<RecordValue>> Rows
+        {
+            get
+            {
+                return GetRowsAsync(null, null, CancellationToken.None).Result;
+            }
+        }
 
         public Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
@@ -44,8 +50,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         private readonly RecordType _recordType;        
 
-        public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> allowedFilters)
-            : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allowedFilters))
+        public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> filterFunctions, List<DelegationOperator> allowedColumnFilters)
+            : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, filterFunctions, allowedColumnFilters))
         {
             _recordType = recordType;            
         }       
@@ -60,9 +66,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
         }
 
-        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> allowedFilters)
+        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> filterFunctions, List<DelegationOperator> allowedColumnFilters)
         {
-            return new TestDelegationInfo(recordType, allowedFilters)
+            return new TestDelegationInfo(recordType, filterFunctions, allowedColumnFilters)
             {
                 TableName = tableName
             };
@@ -86,17 +92,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
     public class TestDelegationInfo : TableDelegationInfo
     {
-        private readonly List<DelegationOperator> _allowedFilters;
+        private readonly List<DelegationOperator> _allowedColumnFilters;
         private readonly RecordType _recordType;
 
-        public TestDelegationInfo(RecordType recordType, List<DelegationOperator> allowedFilters) 
+        public TestDelegationInfo(RecordType recordType, List<DelegationOperator> filterFunctions, List<DelegationOperator> allowedColumnFilters) 
         { 
             _recordType = recordType;
-            _allowedFilters = allowedFilters;
+            _allowedColumnFilters = allowedColumnFilters;
+
+            FilterFunctions = filterFunctions;
+            FilterSupportedFunctions = filterFunctions;
+
+            // Makes the table sortable (= First, OrderBy... can be delegated)
+            SortRestriction = new SortRestrictions();            
         }
 
-        public override bool IsDelegable => true;
-
+        public override bool IsDelegable => true;        
+                
         public override ColumnCapabilitiesDefinition GetColumnCapability(string fieldName)
         {
             // Same list for all columns
@@ -104,7 +116,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             {
                 return new ColumnCapabilitiesDefinition()
                 {
-                    FilterFunctions = _allowedFilters
+                    FilterFunctions = _allowedColumnFilters
                 };
             }
 

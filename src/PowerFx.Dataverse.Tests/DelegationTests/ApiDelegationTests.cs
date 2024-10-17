@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -19,10 +18,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         // Delegation using direct API.
         [Theory]
-        [InlineData("Filter(t1, Price < 120 And 90 <= Price)", "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
-        [InlineData("First(t1).Price", null, 1, "100")]
-        [InlineData("Filter(t1, ThisRecord.opt = Opt.display2)", "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
-        public async Task TestDirectApi(string expr, string odataFilter, int top, string expectedStr)
+        [InlineData(1, "Filter(t1, Price < 120 And 90 <= Price)", true, "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData(2, "Filter(t1, Price < 120 Or 90 <= Price)", false, null, null, "Table({Price:100,opt:Blank()})")] // Or not delegated
+        [InlineData(3, "Filter(t1, Price > 120 And 90 <= Price)", false, null, null, "Table()")] // Gt not delegated
+        [InlineData(4, "First(t1).Price", true, null, 1, "100")]
+        [InlineData(5, "Filter(t1, ThisRecord.opt = Opt.display2)", true, "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData(6, "Filter(t1, IsBlank(Price))", false, null, null, "Table()")] // Null not delegated
+        [InlineData(7, "Filter(t1, Not(Price < 120) = true)", false, null, null, "Table()")] // Not not delegated
+        [InlineData(8, "ShowColumns(t1, Price)", false, null, null, "Table({Price:100})")] // table not selectable
+        public async Task TestDirectApi(int id, string expr, bool delegation, string odataFilter, int? top, string expectedStr)
         {
             var dnp = DisplayNameUtility.MakeUnique(new Dictionary<string, string>()
             {
@@ -37,7 +41,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le });
+            TestTableValue ttv = new TestTableValue(
+                "t1", 
+                recordType, 
+                recordValue, 
+                filterFunctions: new List<DelegationOperator>() { DelegationOperator.And },
+                allowedColumnFilters: new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);
@@ -64,10 +73,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var result = await eval.EvalAsync(CancellationToken.None, rc);
 
             DataverseDelegationParameters ddp = (DataverseDelegationParameters)ttv.DelegationParameters;
-            string actualODataFilter = ddp.GetOdataFilter();
+            string actualODataFilter = ddp?.GetOdataFilter();
 
+            Assert.Equal(delegation, ddp != null);
             Assert.Equal<object>(odataFilter, actualODataFilter);
-            Assert.Equal(top, ddp.Top);
+            Assert.Equal(top, ddp?.Top);
 
             var sb = new StringBuilder();
             result.ToExpression(sb, new FormulaValueSerializerSettings { UseCompactRepresentation = true });
@@ -85,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt });
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);

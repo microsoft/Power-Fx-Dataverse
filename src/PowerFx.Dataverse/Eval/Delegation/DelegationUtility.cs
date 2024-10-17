@@ -71,7 +71,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 
         public static bool CanDelegateDistinct(string fieldName, FilterOpMetadata filterCapabilities)
         {
-            return filterCapabilities.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Distinct);
+            return filterCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Distinct) == true;
         }
 
         public static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, ColumnMap columnMap)
