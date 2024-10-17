@@ -3,6 +3,7 @@
 
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
@@ -14,7 +15,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
-            if (tableArg.DelegationMetadata?.SortDelegationMetadata == null)
+            if (!DelegationUtility.CanDelegateFirst(tableArg.DelegationMetadata))
             {
                 return ProcessOtherCall(node, tableArg, context);
             }

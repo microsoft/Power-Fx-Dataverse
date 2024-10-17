@@ -84,6 +84,45 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
         }
 
+        public static bool CanDelegateSort(string fieldName, bool isAscending, SortOpMetadata sortCapabilities)
+        {
+            bool? canSortCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Sort);
+            bool? canSortAscendingOnlyCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.SortAscendingOnly);
+
+            // if we can't get capabilities, we can't delegate
+            if (canSortCapability == null || canSortAscendingOnlyCapability == null)
+            {
+                return false;
+            }
+            else if (isAscending)
+            {
+                // if ascending order, either Sort or SortAscendingOnly are OK
+                if (canSortCapability == false && canSortAscendingOnlyCapability == false)
+                {
+                    return false;
+                }
+            }
+            else if (canSortAscendingOnlyCapability == true)
+            {
+                // if descending order with SortAscendingOnly, we can't delegate 
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool CanDelegateFirst(IDelegationMetadata delegationMetadata)
+        {
+            // [MS-ODATA]
+            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-odata/505b6322-c57f-4c37-94ef-daf8b6e2abd3
+            // If the data service URI contains a $top query option, but does not contain an $orderby option,
+            // then the entities in the set MUST first be fully ordered by the data service.
+            // Such a full order SHOULD be obtained by sorting the entities based on their EntityKey values.
+            // While no ordering semantics are mandated, a data service MUST always use the same semantics to obtain
+            // a full ordering across requests.
+            return delegationMetadata?.SortDelegationMetadata != null;
+        }
+
         internal static BinaryOp ToBinaryOp(BinaryOpKind opKind) =>
             opKind switch
             {

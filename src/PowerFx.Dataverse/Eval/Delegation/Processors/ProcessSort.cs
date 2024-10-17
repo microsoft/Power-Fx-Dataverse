@@ -9,6 +9,7 @@ using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -68,27 +69,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
-                bool? canSortCapability = tableArg.DelegationMetadata?.SortDelegationMetadata?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Sort);
-                bool? canSortAscendingOnlyCapability = tableArg.DelegationMetadata?.SortDelegationMetadata?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.SortAscendingOnly);
-
-                // if we can't get capabilities, we can't delegate
-                if (canSortCapability == null || canSortAscendingOnlyCapability == null)
-                {
-                    canDelegate = false;
-                }
-                else if (isAscending)
-                {
-                    // if ascending order, either Sort or SortAscendingOnly are OK
-                    if (canSortCapability == false && canSortAscendingOnlyCapability == false)
-                    {
-                        canDelegate = false;
-                    }
-                }
-                else if (canSortAscendingOnlyCapability == true)
-                {
-                    // if descending order with SortAscendingOnly, we can't delegate 
-                    canDelegate = false;
-                }                
+                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);          
 
                 arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
             }
