@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // Combine with an existing map
                 map = ColumnMap.Combine(tableArg.ColumnMap, map);                
 
-                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.DelegationMetadata.FilterDelegationMetadata);
+                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.DelegationMetadata?.FilterDelegationMetadata);
             }
 
             if (!canDelegate)

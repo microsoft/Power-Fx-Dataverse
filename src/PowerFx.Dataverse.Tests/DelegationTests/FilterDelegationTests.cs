@@ -355,7 +355,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
             RecordType rt = RecordType.Empty().Add("Date", FormulaType.Date);
-            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le }).Type);
+            st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le }).Type);
             Engine engine = new Engine(new PowerFxConfig());
             engine.EnableDelegation();
 

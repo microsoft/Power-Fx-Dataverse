@@ -3,27 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Localization;
-using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types.Enums;
-using Microsoft.PowerFx.Core.Utils;
-using Microsoft.PowerFx.Dataverse.Eval.Core;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
-using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk.Metadata;
-using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
-using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
+using Microsoft.PowerFx.Syntax;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
-using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
-using Span = Microsoft.PowerFx.Syntax.Span;
-using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -37,8 +20,8 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (var arg in node.Args)
             {
                 var delegatedArg = arg is LazyEvalNode lazyEvalNode
-                ? lazyEvalNode.Child.Accept(this, context)
-                : arg.Accept(this, context);
+                                    ? lazyEvalNode.Child.Accept(this, context)
+                                    : arg.Accept(this, context);
 
                 if (delegatedArg.IsDelegating)
                 {
@@ -66,12 +49,22 @@ namespace Microsoft.PowerFx.Dataverse
 
         public RetVal ProcessOr(CallNode node, Context context)
         {
+            if (context.DelegationMetadata?.FilterDelegationMetadata.IsBinaryOpSupportedByTable(BinaryOp.Or) != true)
+            {
+                return new RetVal(node);
+            }
+
             var callerReturnType = context.CallerNode.IRContext.ResultType;
             return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeOrCall(callerReturnType, delegatedChildren, node.Scope));
         }
 
         public RetVal ProcessAnd(CallNode node, Context context)
         {
+            if (context.DelegationMetadata?.FilterDelegationMetadata.IsBinaryOpSupportedByTable(Syntax.BinaryOp.And) != true)
+            {
+                return new RetVal(node);
+            }
+
             var callerReturnType = context.CallerNode.IRContext.ResultType;
             return ProcessAndOr(node, context, delegatedChildren => _hooks.MakeAndCall(callerReturnType, delegatedChildren, node.Scope));
         }

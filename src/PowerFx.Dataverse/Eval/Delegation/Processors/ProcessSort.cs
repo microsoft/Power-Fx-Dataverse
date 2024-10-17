@@ -4,9 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types.Enums;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -19,6 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+            bool canDelegate = true;
 
             List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
 
@@ -65,15 +69,20 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
+                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);          
+
                 arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
             }
 
-            var sortFunc = new DelegatedSort(_hooks);
-            IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
+            if (canDelegate)
+            {
+                var sortFunc = new DelegatedSort(_hooks);
+                IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap);
+                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap);
+            }
 
-            return resultingTable;
+            return ProcessOtherCall(node, tableArg, context);
         }
 
         private RetVal NoTransform(CallNode node, RetVal tableArg)
