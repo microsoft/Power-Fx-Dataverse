@@ -560,7 +560,9 @@ namespace Microsoft.PowerFx.Dataverse
                     }
 
                     var varName = context.GetVarName(path, scope, node.IRContext.SourceContext, scopeNavType);
-                    return RetVal.FromVar(varName, context.GetReturnType(node));
+                    Context.VarDetails varDetails = context.GetVarDetails(varName);
+
+                    return RetVal.FromVar(varName, varDetails.VarType);
                 }
             }
             else if (node.From is RecordFieldAccessNode)

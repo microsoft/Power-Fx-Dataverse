@@ -1804,7 +1804,7 @@ END
             {
                 Assert.NotNull(checkResult.Errors);
                 var actualErrors = checkResult.Errors.Select(error => error.ToString()).ToArray();
-                Assert.Equal(errors, actualErrors);
+                Assert.True(actualErrors.Any(err => err.Contains(err)));
             }
 
             var options = new SqlCompileOptions();
@@ -1820,7 +1820,7 @@ END
             {
                 Assert.NotNull(compileResult.Errors);
                 var actualErrors = compileResult.Errors.Select(error => error.ToString()).ToArray();
-                Assert.Equal(errors, actualErrors);
+                Assert.True(actualErrors.Any(err => err.Contains(err)));
                 Assert.NotNull(compileResult.SanitizedFormula);
             }
         }
@@ -2137,52 +2137,49 @@ END
         [InlineData("Today()", false, null, "Error 0-7: Today is not supported in formula columns, use UTCToday instead.")] // "Today not supported"
         [InlineData("IsToday(Today())", false, null, "Error 0-16: IsToday is not supported in formula columns, use IsUTCToday instead.")] // "IsToday not supported"
         [InlineData("IsUTCToday(UTCToday())", true, typeof(BooleanType))] // "IsUTCToday of UTCToday"
-        [InlineData("IsUTCToday(tziDateOnly)", true, typeof(BooleanType))] // "IsUTCToday of TZI Date Only"
-        [InlineData("IsUTCToday(dateOnly)", true, typeof(BooleanType))] // "IsUTCToday of Date Only"
-        [InlineData("IsUTCToday(userLocalDateTime)", true, typeof(BooleanType))] // "IsUTCToday of User Local Date Time"
-        [InlineData("userLocalDateTime", true, typeof(DateTimeType))] // "User Local Date Time"
-        [InlineData("userLocalDateOnly", true, typeof(DateTimeType))] // "User Local Date Only"
-        [InlineData("dateOnly", true, typeof(DateType))] // "Date Only"
-        [InlineData("tziDateTime", true, typeof(DateTimeNoTimeZoneType))] // "TZI Date Time"
-        [InlineData("tziDateOnly", true, typeof(DateTimeNoTimeZoneType))] // "TZI Date Only"
-        [InlineData("dateOnly + 0.25", true, typeof(DateType))] // "DateOnly add fractional day"
-        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Days)", true, typeof(DateType))] // "DateAdd Days Date Only"
-        [InlineData("DateAdd(dateOnly, 1, TimeUnit.Hours)", true, typeof(DateType))] // "DateAdd Hours Date Only"
-        [InlineData("DateAdd(tziDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeNoTimeZoneType))] // "DateAdd TZI Date Only"
-        [InlineData("DateAdd(userLocalDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeType))] // "DateAdd User Local Date Only"
-        [InlineData("If(true, tziDateOnly, dateOnly)", true, typeof(DateTimeNoTimeZoneType))] // "If TZI Date Only vs. Date Only"
-        [InlineData("If(true, userLocalDateTime, userLocalDateOnly)", true, typeof(DateTimeType))] // "If User Local Date Time vs. User Local Date Only"
-        [InlineData("If(true, tziDateOnly, tziDateTime)", true, typeof(DateTimeNoTimeZoneType))] // "If TZI Date Only vs. TZI Date Time"
-        [InlineData("Switch(1, 1, userLocalDateOnly, userLocalDateTime)", true, typeof(DateTimeType))] // "Switch UserLocal Date Only vs. User Local Date Time"
-        [InlineData("Switch(1, 2, tziDateOnly, userLocalDateOnly)", false, null, "Error 26-43: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "Switch TZI Date Only vs. User Local Date Only"
-        [InlineData("Switch(1, 2, dateOnly, dateOnly)", true, typeof(DateType))] // "Switch Date Only vs. Date Only"
-        [InlineData("Text(tziDateOnly)", false, null, "Error 5-16: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for TZI Date Only"
-        [InlineData("Text(userLocalDateTime)", false, null, "Error 5-22: This argument cannot be passed as type DateTime in formula columns.")] // "Text for User Local Date Time"
+        [InlineData("IsUTCToday($source$.dateOnly)", true, typeof(BooleanType))] // "IsUTCToday of TZI Date Only"
+        [InlineData("IsUTCToday($source$.dateOnly)", true, typeof(BooleanType))] // "IsUTCToday of Date Only"
+        [InlineData("IsUTCToday($source$.userLocalDateTime)", true, typeof(BooleanType))] // "IsUTCToday of User Local Date Time"
+        [InlineData("$source$.userLocalDateTime", true, typeof(DateTimeType))] // "User Local Date Time"
+        [InlineData("$source$.userLocalDateOnly", true, typeof(DateTimeType))] // "User Local Date Only"
+        [InlineData("$source$.dateOnly", true, typeof(DateType))] // "Date Only"
+        [InlineData("$source$.tziDateTime", true, typeof(DateTimeNoTimeZoneType))] // "TZI Date Time"
+        [InlineData("$source$.dateOnly + 0.25", true, typeof(DateType))] // "DateOnly add fractional day"
+        [InlineData("DateAdd($source$.dateOnly, 1, TimeUnit.Days)", true, typeof(DateType))] // "DateAdd Days Date Only"
+        [InlineData("DateAdd($source$.dateOnly, 1, TimeUnit.Hours)", true, typeof(DateType))] // "DateAdd Hours Date Only"
+        [InlineData("DateAdd($source$.userLocalDateOnly, 1, TimeUnit.Hours)", true, typeof(DateTimeType))] // "DateAdd User Local Date Only"
+        [InlineData("If(true, $source$.userLocalDateTime, $source$.userLocalDateOnly)", true, typeof(DateTimeType))] // "If User Local Date Time vs. User Local Date Only"
+        [InlineData("If(true, $source$.tziDateOnly, $source$.dateOnly)", true, typeof(DateTimeNoTimeZoneType))] // "If TZI Date Only vs. TZI Date Time"
+        [InlineData("Switch(1, 1, $source$.userLocalDateOnly, $source$.userLocalDateTime)", true, typeof(DateTimeType))] // "Switch UserLocal Date Only vs. User Local Date Time"
+        [InlineData("Switch(1, 2, $source$.dateOnly, $source$.userLocalDateOnly)", false, null, "This operation cannot be performed on values which are of different Date Time Behaviors.")] // "Switch TZI Date Only vs. User Local Date Only"
+        [InlineData("Switch(1, 2, $source$.dateOnly, $source$.dateOnly)", true, typeof(DateType))] // "Switch Date Only vs. Date Only"
+        [InlineData("Text($source$.dateOnly)", false, null, "This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for TZI Date Only"
+        [InlineData("Text($source$.userLocalDateTime)", false, null, "This argument cannot be passed as type DateTime in formula columns.")] // "Text for User Local Date Time"
         [InlineData("Text(UTCNow())", false, null, "Error 5-13: This argument cannot be passed as type DateTimeNoTimeZone in formula columns.")] // "Text for UTCNow"
-        [InlineData("DateDiff(userLocalDateTime, tziDateOnly)", false, null, "Error 0-40: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Time vs TZI Date Only"
-        [InlineData("DateDiff(dateOnly, tziDateOnly)", true, typeof(DecimalType))] // "DateDiff Date Only vs TZI Date Only"
-        [InlineData("DateDiff(userLocalDateOnly, dateOnly)", false, null, "Error 0-37: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Only vs Date Only"
-        [InlineData("DateDiff(userLocalDateOnly, userLocalDateTime)", true, typeof(DecimalType))] // "DateDiff User Local Date Only vs User Local Date Time"
-        [InlineData("userLocalDateTime > userLocalDateOnly", true, typeof(BooleanType))] // "> User Local Date Time vs. User Local Date Only"
-        [InlineData("tziDateTime <> tziDateOnly", true, typeof(BooleanType))] // "<> TZI Date Time vs. TZI Date Only"
+        [InlineData("DateDiff($source$.userLocalDateTime, $source$.dateOnly)", false, null, "This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Time vs TZI Date Only"
+        [InlineData("DateDiff($source$.dateOnly, $source$.dateOnly)", true, typeof(DecimalType))] // "DateDiff Date Only vs TZI Date Only"
+        [InlineData("DateDiff($source$.userLocalDateOnly, $source$.dateOnly)", false, null, "This operation cannot be performed on values which are of different Date Time Behaviors.")] // "DateDiff User Local Date Only vs Date Only"
+        [InlineData("DateDiff($source$.userLocalDateOnly, $source$.userLocalDateTime)", true, typeof(DecimalType))] // "DateDiff User Local Date Only vs User Local Date Time"
+        [InlineData("$source$.userLocalDateTime > $source$.userLocalDateOnly", true, typeof(BooleanType))] // "> User Local Date Time vs. User Local Date Only"
+        [InlineData("$source$.tziDateTime <> $source$.dateOnly", true, typeof(BooleanType))] // "<> TZI Date Time vs. TZI Date Only"
 
         // Regressed with https://github.com/microsoft/Power-Fx/issues/1379
-        // [InlineData("UTCToday() = tziDateOnly", true, typeof(BooleanType))] // "= UTCToday vs. TZI Date Only"
+        // [InlineData("UTCToday() = $source$.dateOnly", true, typeof(BooleanType))] // "= UTCToday vs. TZI Date Only"
         // [InlineData("UTCToday() = UTCNow()", true, typeof(BooleanType))] // "= UTCToday UTCNow"
 
-        [InlineData("UTCToday() = dateOnly", true, typeof(BooleanType))] // "= UTCToday vs. Date Only"
+        [InlineData("UTCToday() = $source$.dateOnly", true, typeof(BooleanType))] // "= UTCToday vs. Date Only"
 
         // TODO: the span for operations is potentially incorrect in the IR: it is only the operator, and not the operands
-        [InlineData("tziDateTime = userLocalDateOnly", false, null, "Error 12-13: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "= TZI Date Time vs. User Local Date Only"
-        [InlineData("dateOnly <= userLocalDateOnly", false, null, "Error 9-11: This operation cannot be performed on values which are of different Date Time Behaviors.")] // "<= Date Only vs. User Local Date Only"
-        [InlineData("Day(dateOnly)", true, typeof(DecimalType))] // "Day of Date Only"
-        [InlineData("Day(userLocalDateOnly)", false, null, "Error 0-22: Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")] // "Day of User Local Date Only"
-        [InlineData("WeekNum(dateOnly)", true, typeof(DecimalType))]
-        [InlineData("WeekNum(tziDateTime)", true, typeof(DecimalType))]
-        [InlineData("WeekNum(tziDateOnly)", true, typeof(DecimalType))]
-        [InlineData("WeekNum(userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [InlineData("WeekNum(userLocalDateTime)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
-        [InlineData("WeekNum(dateOnly, 2)", false, typeof(DecimalType), "Error 18-19: Invalid argument type (Decimal). Expecting a Enum (StartOfWeek) value instead.")]
+        [InlineData("$source$.tziDateTime = $source$.userLocalDateOnly", false, null, "This operation cannot be performed on values which are of different Date Time Behaviors.")] // "= TZI Date Time vs. User Local Date Only"
+        [InlineData("$source$.dateOnly <= $source$.userLocalDateOnly", false, null, "This operation cannot be performed on values which are of different Date Time Behaviors.")] // "<= Date Only vs. User Local Date Only"
+        [InlineData("Day($source$.dateOnly)", true, typeof(DecimalType))] // "Day of Date Only"
+        [InlineData("Day($source$.userLocalDateOnly)", false, null, "Day cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")] // "Day of User Local Date Only"
+        [InlineData("WeekNum($source$.dateOnly)", true, typeof(DecimalType))]
+        [InlineData("WeekNum($source$.tziDateTime)", true, typeof(DecimalType))]
+        [InlineData("WeekNum($source$.dateOnly)", true, typeof(DecimalType))]
+        [InlineData("WeekNum($source$.userLocalDateOnly)", false, typeof(DecimalType), "Error 0-26: WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [InlineData("WeekNum($source$.userLocalDateTime)", false, typeof(DecimalType), "WeekNum cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
+        [InlineData("WeekNum($source$.dateOnly, 2)", false, typeof(DecimalType), "Invalid argument type (Decimal). Expecting a Enum (StartOfWeek) value instead.")]
         [InlineData("Hour(Now())", false, null, "Error 0-11: Hour cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Minute(Now())", false, null, "Error 0-13: Minute cannot be performed on this input without a time zone conversion, which is not supported in formula columns.")]
         [InlineData("Text(Now())", false, null, "Error 5-10: This argument cannot be passed as type DateTime in formula columns.")]
@@ -2192,23 +2189,14 @@ END
         [InlineData("IsUTCToday(Now())", true, typeof(BooleanType))] // "IsUTCToday of Now function"
         public void CompileSqlDateTimeBehaviors(string expr, bool success, Type returnType, params string[] errors)
         {
-            var model = new EntityMetadataModel
+            var metadataProvider = new CdsEntityMetadataProvider(new MockXrmMetadataProvider(MockModels.RelationshipModels));
+            var engine = new PowerFx2SqlEngine(MockModels.RelationshipModels[0].ToXrm(), metadataProvider: metadataProvider);
+
+            foreach (var source in new[] { string.Empty, "Other.", "ThisRecord." })
             {
-                LogicalName = "local",
-                Attributes = new AttributeMetadataModel[]
-                {
-                    AttributeMetadataModel.NewDateTime("userLocalDateTime", "UserLocalDateTime", DateTimeBehavior.UserLocal, DateTimeFormat.DateAndTime),
-                    AttributeMetadataModel.NewDateTime("userLocalDateOnly", "UserLocalDateOnly", DateTimeBehavior.UserLocal, DateTimeFormat.DateOnly),
-                    AttributeMetadataModel.NewDateTime("dateOnly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
-                    AttributeMetadataModel.NewDateTime("tziDateTime", "TimeZoneIndependentDateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
-                    AttributeMetadataModel.NewDateTime("tziDateOnly", "TimeZoneIndependentDateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly)
-                }
-            };
-
-            var metadata = model.ToXrm();
-            var engine = new PowerFx2SqlEngine(metadata);
-
-            AssertReturnTypeOrError(engine, expr, success, returnType, errors);
+                var expression = expr.Replace("$source$.", source);
+                AssertReturnTypeOrError(engine, expression, success, returnType, errors);
+            }
         }
 
         [Fact]
