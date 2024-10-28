@@ -49,6 +49,11 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewPicklist("global_pick", "Global Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "High", Value = 1 }, new OptionMetadataModel { Label = "Medium", Value = 2 }, new OptionMetadataModel { Label = "Low", Value = 3 } }, isGlobal: true),
                 AttributeMetadataModel.NewPicklist("new_status", "Status", new OptionMetadataModel[] { new OptionMetadataModel { Label = "New", Value = 1 }, new OptionMetadataModel { Label = "Active", Value = 2 }, new OptionMetadataModel { Label = "Resolved", Value = 3 } }, attributeType: AttributeTypeCode.Status, isGlobal: true),
                 AttributeMetadataModel.NewPicklist("new_state", "State", new OptionMetadataModel[] { new OptionMetadataModel { Label = "In Active", Value = 0 }, new OptionMetadataModel { Label = "Active", Value = 1 } }, attributeType: AttributeTypeCode.State),
+                AttributeMetadataModel.NewDateTime("userLocalDateTime", "UserLocalDateTime", DateTimeBehavior.UserLocal, DateTimeFormat.DateAndTime),
+                AttributeMetadataModel.NewDateTime("userLocalDateOnly", "UserLocalDateOnly", DateTimeBehavior.UserLocal, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewDateTime("dateOnly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewDateTime("tziDateTime", "TimeZoneIndependentDateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
+                AttributeMetadataModel.NewDateTime("tziDateOnly", "TimeZoneIndependentDateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly)
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
@@ -155,7 +160,12 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewDouble("actual_float", "Actual Float"),
                 AttributeMetadataModel.NewPicklist("rating", "Rating", new OptionMetadataModel[] { new OptionMetadataModel { Label = "Small", Value = 1 }, new OptionMetadataModel { Label = "Medium", Value = 2 }, new OptionMetadataModel { Label = "Large", Value = 3 } }),
                 AttributeMetadataModel.NewLookup("otherotherid", "Other Other", new string[] { "doubleremote" }),
-                AttributeMetadataModel.NewDouble("other", "Other")
+                AttributeMetadataModel.NewDouble("other", "Other"),
+                AttributeMetadataModel.NewDateTime("userLocalDateTime", "UserLocalDateTime", DateTimeBehavior.UserLocal, DateTimeFormat.DateAndTime),
+                AttributeMetadataModel.NewDateTime("userLocalDateOnly", "UserLocalDateOnly", DateTimeBehavior.UserLocal, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewDateTime("dateOnly", "DateOnly", DateTimeBehavior.DateOnly, DateTimeFormat.DateOnly),
+                AttributeMetadataModel.NewDateTime("tziDateTime", "TimeZoneIndependentDateTime", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateAndTime),
+                AttributeMetadataModel.NewDateTime("tziDateOnly", "TimeZoneIndependentDateOnly", DateTimeBehavior.TimeZoneIndependent, DateTimeFormat.DateOnly)
             },
             ManyToOneRelationships = new OneToManyRelationshipMetadataModel[]
             {
