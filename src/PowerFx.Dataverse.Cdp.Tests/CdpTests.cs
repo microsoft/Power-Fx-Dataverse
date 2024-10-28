@@ -111,7 +111,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
             string query = Assert.Single(actual);
 
             // Validate OData query is present
-            Assert.Equal(@" x-ms-request-url: /apim/sql/2cc03a388d38465fba53f05cd2c76181/v2/datasets/default,default/tables/%5bSalesLT%5d.%5bProduct%5d/items?api-version=2015-09-01&$filter=(ProductID+eq+680)&$top=1", query);
+            Assert.Equal(@" x-ms-request-url: /apim/sql/2cc03a388d38465fba53f05cd2c76181/v2/datasets/default,default/tables/%5BSalesLT%5D.%5BProduct%5D/items?api-version=2015-09-01&$filter=%28ProductID%20eq%20680%29&$top=1", query);
         }
 
         [Fact]
@@ -173,7 +173,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
             string query = Assert.Single(actual);
 
             // OData query - note $filter is present but $top=1000
-            Assert.Equal<object>(@" x-ms-request-url: /apim/sql/2cc03a388d38465fba53f05cd2c76181/v2/datasets/default,default/tables/%5bSalesLT%5d.%5bProduct%5d/items?api-version=2015-09-01&$filter=(ProductID+eq+680)&$top=1000", query);
+            Assert.Equal<object>(@" x-ms-request-url: /apim/sql/2cc03a388d38465fba53f05cd2c76181/v2/datasets/default,default/tables/%5BSalesLT%5D.%5BProduct%5D/items?api-version=2015-09-01&$filter=%28ProductID%20eq%20680%29&$top=1000", query);
         }
     }
 }
