@@ -44,9 +44,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             TestTableValue ttv = new TestTableValue(
                 "t1", 
                 recordType, 
-                recordValue, 
-                filterFunctions: new List<DelegationOperator>() { DelegationOperator.And },
-                allowedColumnFilters: new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le });
+                recordValue,                 
+                allColumnFilters: new List<DelegationOperator>() { DelegationOperator.And, DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);
@@ -95,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var recordValue = FormulaValue.NewRecordFromFields(recordType, new NamedValue[] { new NamedValue("Price", FormulaValue.New(100f)) });
 
-            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt });
+            TestTableValue ttv = new TestTableValue("t1", recordType, recordValue, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt });
 
             var st = new SymbolValues("Delegable_1");
             st.Add("t1", ttv);
