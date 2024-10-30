@@ -286,22 +286,22 @@ namespace Microsoft.PowerFx.Dataverse
             switch (coercionKind)
             {
                 case UnaryOpKind.DateToDecimal:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDate, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Date), UnaryOpKind.DecimalToDate, node);
 
                 case UnaryOpKind.DateTimeToDecimal:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDateTime, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.DateTime), UnaryOpKind.DecimalToDateTime, node);
 
                 case UnaryOpKind.TimeToDecimal:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToTime, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Time), UnaryOpKind.DecimalToTime, node);
 
                 case UnaryOpKind.DateToNumber:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDate, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Date), UnaryOpKind.NumberToDate, node);
 
                 case UnaryOpKind.DateTimeToNumber:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDateTime, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.DateTime), UnaryOpKind.NumberToDateTime, node);
 
                 case UnaryOpKind.TimeToNumber:
-                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToTime, node);
+                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Time), UnaryOpKind.NumberToTime, node);
 
                 default:
                     throw new NotImplementedException($"{nameof(MaybeAddCoercion)} -> Coercion kind {coercionKind} is not implemented for coercion inversion.");
