@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Oraindik ez da onartzen moneta-eremuen erabilera zuzena. Erabil ezazu hamartarra(CurrencyField) konponbide gisa, baina kontuan izan hamartarrak monetak baino barruti txikiagoa duela.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Erlazionatutako tauletako {0} izeneko aukera multzoa ez da onartzen formula-zutabeetan une honetan.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Ez dira aurkitu {0} izeneko aukera multzoaren metadatuak.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Eragiketa ezin da egin hainbat aukera multzotan. Erabili aukera multzoa emaitza mota gisa.</value>
     
   </data>
 </root>

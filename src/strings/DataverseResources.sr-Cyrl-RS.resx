@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Директна употреба поља валуте још увек није подржана. Користите формат Decimal(CurrencyField) као заобилазно решење, али имајте у виду да децимални број има мањи опсег од валуте.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Скуп опција са називом {0} из повезаних табела тренутно није подржан у колонама са формулама.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Метаподаци за скуп опција са називом {0} нису пронађени.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Операцију није могуће извршити на више скупова опција. Користите један скуп опција као тип резултата.</value>
     
   </data>
 </root>

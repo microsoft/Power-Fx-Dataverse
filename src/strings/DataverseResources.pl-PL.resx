@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Bezpośrednie używanie pól walutowych nie jest jeszcze obsługiwane. Ten problem można obejść, używając typu „Liczba dziesiętna (pole walutowe)”, ale należy pamiętać, że typ Liczba dziesiętna ma mniejszy zakres niż typ Waluta.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Zestaw opcji o nazwie {0} z powiązanych tabel nie jest aktualnie obsługiwany w kolumnach formuł.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Nie znaleziono metadanych zestawu opcji o nazwie {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Nie można wykonać operacji w odniesieniu do wielu zestawów opcji. Użyj jednego zestawu opcji jako typu wyniku.</value>
     
   </data>
 </root>

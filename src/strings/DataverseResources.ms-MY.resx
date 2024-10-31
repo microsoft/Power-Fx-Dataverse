@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -217,7 +218,19 @@
     
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
-    <value>Penggunaan langsung medan mata wang belum disokong. Gunakan Perpuluhan (CurrencyField) sebagai penyelesaian, tetapi ambil perhatian bahawa perpuluhan mempunyai julat yang lebih kecil daripada mata wang.</value>
+    <value>Penggunaan langsung medan mata wang belum disokong. Gunakan Decimal(CurrencyField) sebagai penyelesaian, tetapi ambil perhatian bahawa perpuluhan mempunyai julat yang lebih kecil daripada mata wang.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Set Pilihan dengan nama {0} daripada jadual berkaitan tidak disokong pada masa ini dalam lajur formula.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metadata untuk Set Pilihan dengan nama {0} tidak ditemukan.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operasi tidak boleh dilakukan pada berbilang Set Pilihan. Sila gunakan Set Pilihan tunggal sebagai jenis hasil.</value>
     
   </data>
 </root>
