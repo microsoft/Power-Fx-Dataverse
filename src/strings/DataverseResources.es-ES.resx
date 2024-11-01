@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Todavía no se admite el uso directo de campos de moneda. Use Decimal(CurrencyField) como solución alternativa, pero tenga en cuenta que decimal tiene un intervalo menor que la moneda.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>No se admite actualmente el Conjunto de opciones con el nombre {0} de tablas relacionadas en las columnas de fórmula.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>No se han encontrado los metadatos del conjunto de opciones con el nombre {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>La operación no se puede realizar en varios conjuntos de opciones. Use el Conjunto de opciones único como tipo de resultado.</value>
     
   </data>
 </root>

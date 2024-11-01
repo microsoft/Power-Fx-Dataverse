@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Direkte brug af valutafelter understøttes endnu ikke. Brug Decimal(CurrencyField) som løsning, men bemærk, at decimal har et mindre interval end currency.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Den grupperede indstilling med navn {0} fra relaterede tabeller understøttes i øjeblikket ikke i formelkolonner.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metadataene for den grupperede indstilling med navn {0} blev ikke fundet.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Handlingen kan ikke udføres på flere grupperede indstillinger. Brug en enkelt grupperet indstilling som resultattype.</value>
     
   </data>
 </root>

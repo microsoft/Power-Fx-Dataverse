@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Utilizarea directă a câmpurilor monetare nu are încă suport. Utilizați Decimal(CurrencyField) ca soluție temporară, dar rețineți că valoarea zecimală are un interval mai mic decât moneda.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Setul de opțiuni cu numele {0} din tabelele corelate nu este acceptat în prezent în coloanele de formule.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metadatele setului de opțiuni cu numele {0} nu s-au găsit.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operațiunea nu poate fi efectuată pe mai multe seturi de opțiuni. Utilizați un singur set de opțiuni ca tip de rezultat.</value>
     
   </data>
 </root>

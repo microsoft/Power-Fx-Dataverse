@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Chưa hỗ trợ sử dụng trực tiếp các trường tiền tệ. Hãy dùng Decimal(CurrencyField) làm giải pháp thay thế nhưng lưu ý rằng số thập phân có phạm vi nhỏ hơn tiền tệ.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Bộ tùy chọn có tên {0} từ các bảng liên quan hiện không được hỗ trợ trong các cột công thức.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Không tìm thấy siêu dữ liệu cho Bộ tùy chọn có tên {0}.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Không thể thực hiện thao tác trên nhiều Bộ tùy chọn. Vui lòng sử dụng một Bộ tùy chọn làm loại kết quả.</value>
     
   </data>
 </root>

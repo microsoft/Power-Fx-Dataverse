@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Přímé použití polí měny zatím není podporováno. Jako alternativní řešení použijte Decimal(CurrencyField), ale všimněte si, že desítková soustava má menší rozsah než měna.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Sada možností s názvem {0} ze souvisejících tabulek není v současné době podporována ve sloupcích vzorců.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metadata pro sadu možností s názvem {0} nebyla nalezena.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Operaci nelze provést pro více sad možností. Jako typ výsledku použijte jednu sadu možností.</value>
     
   </data>
 </root>

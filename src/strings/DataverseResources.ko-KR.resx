@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>통화 필드를 직접 사용할 수 없습니다. 10진수(CurrencyField)를 해결로 사용하지만 10진수의 범위는 통화보다 작습니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>관련 테이블의 {0} 이름을 가진 옵션 집합은 현재 수식 열에서 지원되지 않습니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>이름이 {0}인 옵션 집합의 메타데이터를 찾을 수 없습니다.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>이 작업은 여러 옵션 집합에서 수행할 수 없습니다. 결과 유형으로 단일 옵션 집합을 사용하세요.</value>
     
   </data>
 </root>

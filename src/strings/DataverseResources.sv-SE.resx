@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Direkt användning av valutafält stöds inte ännu. Använd Decimal(CurrencyField) som en tillfällig lösning, men observera att decimal har ett mindre intervall än valuta.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Alternativuppsättningen med namnet {0} från relaterade tabeller stöds för närvarande inte i formelkolumner.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Metadata för alternativuppsättningen med namnet {0} hittades inte.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Det går inte att utföra åtgärden på flera alternativuppsättningar. Använd en enda alternativuppsättning som resultattyp.</value>
     
   </data>
 </root>

@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -218,6 +219,18 @@
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Valuuttakenttien suoraa käyttöä ei vielä tueta. Käytä ratkaisuna kenttää Desimaali (CurrencyField). Huomaa, että desimaalilla on pienempi kattavuusalue kuin valuutalla.</value>
+    
+  </data>
+  <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
+    <value>Liittyvien taulukkojen asetusjoukkoa nimellä {0} ei tueta tällä hetkellä kaavasarakkeissa.</value>
+    
+  </data>
+  <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
+    <value>Asetusjoukon metatietoja nimellä {0} ei löytynyt.</value>
+    
+  </data>
+  <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
+    <value>Toimintoa ei voi suorittaa useille asetusjoukoille. Käytä yhtä asetusjoukkoa tulostyyppinä.</value>
     
   </data>
 </root>
