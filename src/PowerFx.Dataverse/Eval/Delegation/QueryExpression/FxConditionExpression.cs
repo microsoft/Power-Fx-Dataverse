@@ -67,6 +67,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
+    /// <summary>
+    /// Do not change enums values as they are used in serialization and name as it needs to match with Fx Function.
+    /// </summary>
     internal enum FieldFunction
     {
         None = 0,

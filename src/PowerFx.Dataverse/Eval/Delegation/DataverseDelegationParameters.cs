@@ -145,6 +145,22 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var condition in filter.Conditions)
                 {
                     var fieldName = condition.AttributeName;
+
+                    if (!condition.FieldFunctions.IsNullOrEmpty())
+                    {
+                        if (condition.FieldFunctions.Count() > 1)
+                        {
+                            throw new NotSupportedException($"Multiple field functions are not supported in DataverseDelegationParameters: {condition.FieldFunctions.Count()}");
+                        }
+
+                        var fieldFunction = condition.FieldFunctions.First();
+
+                        if (fieldFunction != FieldFunction.None)
+                        {
+                            fieldName = $"{condition.FieldFunctions.First().ToString().ToLower()}({fieldName})";
+                        }
+                    }
+
                     var value = condition.Values.FirstOrDefault();
 
                     // OData spec: https://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part2-url-conventions/odata-v4.0-errata03-os-part2-url-conventions-complete.html (chapters 5.1.1 and next)
