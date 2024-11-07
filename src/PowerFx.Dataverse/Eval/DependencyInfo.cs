@@ -199,7 +199,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 }
                             }
 
-                            // Arg1 is the field which is being compared on the target entity.
+                            // Arg1 is the field FieldInfoRecord being compared on the target entity.
                             var infoRecord = (RecordNode)node.Args[1];
 
                             var fieldName = ((TextLiteralNode)infoRecord.Fields.First(field => field.Key.Value == FieldInfoRecord.FieldNameColumnName).Value).LiteralValue;

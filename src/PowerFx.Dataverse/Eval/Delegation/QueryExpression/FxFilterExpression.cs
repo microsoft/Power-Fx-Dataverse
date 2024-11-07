@@ -12,7 +12,6 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
-    //[Obsolete("Preview")]
     internal class FxFilterExpression
     {
         private IList<FxConditionExpression> _conditions;

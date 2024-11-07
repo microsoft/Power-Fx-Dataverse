@@ -9,6 +9,9 @@ using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
+    /// <summary>
+    /// metadata for FieldInforecord. {fieldName: "fieldToComapre", fieldFunctions: ["enum"]}. <see cref="FieldFunction"/> }.
+    /// </summary>
     internal static class FieldInfoRecord
     {
         public const string FieldNameColumnName = "fieldName";

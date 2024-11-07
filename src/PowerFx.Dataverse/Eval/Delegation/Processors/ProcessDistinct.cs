@@ -51,14 +51,22 @@ namespace Microsoft.PowerFx.Dataverse
                 && IsReturnTypePrimitive(distinctCallNode.IRContext.ResultType)
                 && !DelegationUtility.IsElasticTable(tableArg.TableType);
 
-            if (canDelegate && DelegationUtility.CanDelegateDistinct(fieldName, context.DelegationMetadata?.FilterDelegationMetadata))
+            if (canDelegate)
             {
                 // let's create a single column map ("Value", fieldName) with a distinct on fieldName
                 columnMap = new ColumnMap(fieldName);
 
                 // Combine with an existing map
                 columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap);
-                return true;
+
+                if (DelegationUtility.CanDelegateDistinct(columnMap.Distinct, context.DelegationMetadata?.FilterDelegationMetadata))
+                {
+                    return true;
+                }
+                else
+                {
+                    canDelegate = false;
+                }
             }
             else
             {

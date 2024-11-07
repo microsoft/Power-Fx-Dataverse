@@ -203,8 +203,8 @@ __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_pri
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), 999, new_price, {Value:new_price}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), 999, new_price, {Value:new_price}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), 999, new_price, {Value:new_price}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
-Distinct(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), 999, , {Value:new_price}), (Value)) | $filter=(new_price gt 5)&$select=new_price&$top=999
-Distinct(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), 999, , {Xyz:new_price}), (Xyz)) | $filter=(new_price gt 5)&$select=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), 999, new_price, {Value:new_price}) | $filter=(new_price gt 5)&$select=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), 999, new_price, {Value:new_price}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 Filter(local, (ExactInText(oW1,new_name)))
 Filter(local, (ExactInText(oW1,new_name)))
 Filter(local, (ExactInText(oW1,new_name)))
@@ -270,4 +270,5 @@ Filter(local, (EndsWith(1, new_name)))
 Filter(local, (EndsWith(1, new_name)))
 Filter(local, (EndsWith(1, new_name)))
 Filter(local, (EndsWith(1, new_name)))
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_datetime}, DecimalToDateTime(0)), __noop(), 999, ) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999
 Filter(local, (EqDecimals(Hour(DateToDateTime(new_date)),2)))
