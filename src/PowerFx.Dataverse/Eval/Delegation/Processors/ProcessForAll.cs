@@ -22,9 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // check if we have a simple field name here
-            // $$$
-            if (TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName, out var invertCoercion, out _, out _) &&
-                !invertCoercion)
+            if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
             {
                 TextLiteralNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
 
@@ -47,9 +45,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     string newFieldName = kvp.Key.Value;
 
-                    // $$$
-                    if (TryGetFieldName(context, kvp.Value, out string currentFieldName, out invertCoercion, out _, out _) &&
-                        !invertCoercion)
+                    if (TryGetSimpleFieldName(context, kvp.Value, out string currentFieldName))
                     {
                         TextLiteralNode currentColumn = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), currentFieldName);
                         dic.Add(new DName(newFieldName), currentColumn);

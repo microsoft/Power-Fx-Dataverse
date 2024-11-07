@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
                 "Microsoft.PowerFx.Dataverse.DataverseEntityPrimaryIdAttribute",
                 "Microsoft.PowerFx.Dataverse.ICustomApiParameterMarshaller",
-                "Microsoft.PowerFx.Dataverse.IParameterType"
+                "Microsoft.PowerFx.Dataverse.IParameterType",
             };
 
             Verify(allowed, asm);

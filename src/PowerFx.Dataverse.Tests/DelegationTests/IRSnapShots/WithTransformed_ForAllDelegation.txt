@@ -14,16 +14,16 @@ With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, , {Price:new_p
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, , {Xyz:new_price}))) | $select=new_price&$top=2
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 2, , {Price:new_price, Price2:new_price}))) | $select=new_price,new_price&$top=2
 With({r:local}, (FirstN(ForAll(r, ({Price:MulNumbers(new_price,2)})), 2)))
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __orderBy(__or(__lt(local, new_price, 0), __gt(local, new_price, 90)), new_price, True), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __orderBy(r, new_price, True), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __noop(), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(__or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), new_price, True), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(r, new_price, True), 999, , {Value:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 3, , {Price:new_price, Price2:new_price}))) | $select=new_price,new_price&$top=3
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 3, , {Price:new_price, Price2:new_price}))) | $select=new_price,new_price&$top=3
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 0)&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 0)&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __noop(), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __orderBy(__or(__lt(local, new_price, 0), __gt(local, new_price, 90)), new_price, True), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
-With({r:local}, (__retrieveMultiple(local, __or(__lt(local, new_price, 0), __gt(local, new_price, 90)), __orderBy(r, new_price, True), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 0)&$select=new_price&$top=999
+With({r:local}, (Distinct(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), 999, , {Value:new_price}), (Value)))) | $filter=(new_price gt 0)&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __noop(), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(__or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), new_price, True), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
+With({r:local}, (__retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(r, new_price, True), 999, , {x:new_price}))) | $filter=((new_price lt 0) or (new_price gt 90))&$orderby=new_price&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 3, , {Price:new_price, Price2:new_price}))) | $select=new_price,new_price&$top=3
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 3, , {Price:new_price, Price2:new_price}))) | $select=new_price,new_price&$top=3
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 999, , {Value:new_price}))) | $select=new_price&$top=999
@@ -38,9 +38,9 @@ With({r:local}, (ForAll(__retrieveMultiple(local, __noop(), __noop(), 999, , {Va
 
 
 
-With({r:local}, (ForAll(Distinct(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value)))) | $filter=(new_price gt 0)&$top=999
-With({r:local}, (Distinct(ForAll(__retrieveMultiple(local, __gt(local, new_price, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value)))) | $filter=(new_price gt 0)&$top=999
-With({r:local}, (__retrieveMultiple(local, __gt(local, new_price, (__retrieveSingle(local, __gt(local, new_price, 0), __noop(), , {a:old_price})).a), __noop(), 999, new_price, {Value:new_price}))) | $filter=(new_price gt 200)&$select=new_price&$top=999
+With({r:local}, (ForAll(Distinct(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value)))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (Distinct(ForAll(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), 999, ), (MulNumbers(new_price,2))), (Value)))) | $filter=(new_price gt 0)&$top=999
+With({r:local}, (Distinct(__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, (__retrieveSingle(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), , {a:old_price})).a), __noop(), 999, , {b:new_price}), (b)))) | $filter=(new_price gt 200)&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 999, new_price, {Value:new_price}))) | $select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __noop(), __orderBy(r, new_price, True), 999, , {Value:new_price}))) | $orderby=new_price&$select=new_price&$top=999
 With({r:local}, (__retrieveMultiple(local, __noop(), __orderBy(r, new_price, True), 999, , {Value:new_price}))) | $orderby=new_price&$select=new_price&$top=999

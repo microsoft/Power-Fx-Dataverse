@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new NotSupportedException($"Unsupported operation {_op} :  {parentOperation}");
                 }
             }
-            else
+            else 
             {
                 throw new NotSupportedException($"Unsupported operation {_op}");
             }
@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return args[0];
             }
 
-            var field = ((StringValue)args[1]).Value;
+            var field = ((StringValue)await ((RecordValue)args[1]).GetFieldAsync("fieldName", cancellationToken)).Value;
             var value = MaybeReplaceBlank(args[2]);
 
             if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))

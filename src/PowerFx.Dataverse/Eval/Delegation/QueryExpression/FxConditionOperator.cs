@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
-    public enum FxConditionOperator
+    internal enum FxConditionOperator
     {
         /// <summary>
         /// The values are compared for equality. Value = 0.

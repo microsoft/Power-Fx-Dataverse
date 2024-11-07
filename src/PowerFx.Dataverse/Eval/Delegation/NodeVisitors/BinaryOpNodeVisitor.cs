@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Localization;
@@ -91,7 +93,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             RetVal ret;
 
-            // pass fieldOperation to below functions.
             if (IsOpKindEqualityComparison(operation))
             {
                 var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
@@ -203,8 +204,7 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode arg0 = call.Args[0];
             IntermediateNode arg1 = call.Args[1];
 
-            // $$$ revisit fieldFunctions here.
-            if (TryGetFieldName(context, arg0, out _, out var invertCoercion, out var coercionKind, out var fieldFunctions))
+            if (TryGetFieldName(context, arg0, out _, out var invertCoercion, out var coercionKind, out var fieldFunctions) && fieldFunctions.IsNullOrEmpty())
             {
                 // arg0 = datetime
                 // arg1 = end
@@ -235,7 +235,7 @@ namespace Microsoft.PowerFx.Dataverse
                     nodeLeft = arg0;
                 }
             }
-            else if (TryGetFieldName(context, arg1, out _, out invertCoercion, out coercionKind, out fieldFunctions))
+            else if (TryGetFieldName(context, arg1, out _, out invertCoercion, out coercionKind, out fieldFunctions) && fieldFunctions.IsNullOrEmpty())
             {
                 // arg0 = start
                 // arg1 = datetime

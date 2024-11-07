@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -62,6 +64,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
+            FilterOpMetadata filterCapabilities = context.DelegationMetadata?.FilterDelegationMetadata;
+
             if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind, out fieldFunctions) && 
                 !TryGetFieldName(context, right, out _, out _, out _, out _))
             {
@@ -75,27 +79,33 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
-                opKind = op;
-                return true;
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                {
+                    node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
+                    opKind = op;
+                    return true;
+                }
             }
             else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind, out fieldFunctions) 
                 && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
                 fieldName = rightField;
-                node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
-
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
-                                                  left.IRContext.ResultType == FormulaType.String)
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
                 {
-                    opKind = op;
-                    return true;
-                }
+                    node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
-                if (TryInvertLeftRight(op, out var invertedOp))
-                {
-                    opKind = invertedOp;
-                    return true;
+                    if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
+                                                      left.IRContext.ResultType == FormulaType.String)
+                    {
+                        opKind = op;
+                        return true;
+                    }
+
+                    if (TryInvertLeftRight(op, out var invertedOp))
+                    {
+                        opKind = invertedOp;
+                        return true;
+                    }
                 }
 
                 // will return false
@@ -141,62 +151,140 @@ namespace Microsoft.PowerFx.Dataverse
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
         /// <returns></returns>
-        public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName, out bool invertCoercion, out UnaryOpKind coercionOpKind, out IEnumerable<FieldFunction> fieldFunctions)
+        public bool TryGetFieldName(
+            Context context,
+            IntermediateNode node,
+            out string fieldName,
+            out bool invertCoercion,
+            out UnaryOpKind coercionOpKind,
+            out IEnumerable<FieldFunction> fieldFunctions)
         {
-            IntermediateNode maybeScopeAccessNode;
             invertCoercion = false;
             coercionOpKind = default;
-            fieldFunctions = Array.Empty<FieldFunction>();
+            fieldFunctions = Enumerable.Empty<FieldFunction>();
 
-            if (node is CallNode fieldOperationCall 
+            // Extract field functions from the node
+            if (TryGetFieldFunctions(node, out fieldFunctions))
+            {
+                // extract the child node which holds the field name
+                node = ((CallNode)node).Args[0];
+            }
+
+            // Get the scope access node, considering coercions
+            IntermediateNode maybeScopeAccessNode = GetScopeAccessNode(node, out invertCoercion, out coercionOpKind);
+
+            // Try to get the field name from the scope node
+            if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
+            {
+                // Adjust field name if it's "Value" and ColumnMap has Distinct
+                fieldName = AdjustFieldNameIfValue(context, fieldName);
+
+                // Check capabilities for field functions
+                if (fieldFunctions.Any())
+                {
+                    if (!CheckFieldFunctionCapabilities(context, fieldFunctions, fieldName))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            fieldName = default;
+            return false;
+        }
+
+        private static bool TryGetFieldFunctions(IntermediateNode node, out IEnumerable<FieldFunction> fieldFunctions)
+        {
+            if (node is CallNode fieldOperationCall
                 && Enum.TryParse(fieldOperationCall.Function.Name, out FieldFunction fieldFunction))
             {
-                // e.g. Hour(coercion(dateField)) -> FieldOperation { Function = FieldFunction.Hour } & node = coercion(dateField)
-                node = fieldOperationCall.Args[0];
-                if (fieldFunction == FieldFunction.Hour)
+                if (fieldFunction != FieldFunction.StartsWith && fieldFunction != FieldFunction.EndsWith && fieldFunction != FieldFunction.None)
                 {
-                    fieldFunctions = new FieldFunction[] { FieldFunction.Hour };
+                    fieldFunctions = new[] { fieldFunction };
+                    return true;
                 }
             }
 
-            // If the node had injected float coercion, then we need to pull scope access node from it.
+            fieldFunctions = Enumerable.Empty<FieldFunction>();
+            return false;
+        }
+
+        private static IntermediateNode GetScopeAccessNode(IntermediateNode node, out bool invertCoercion, out UnaryOpKind coercionOpKind)
+        {
+            invertCoercion = false;
+            coercionOpKind = default;
+
             if (node is CallNode functionCall &&
                 (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
                 functionCall.Args.Count == 1)
             {
-                maybeScopeAccessNode = functionCall.Args[0];
+                return functionCall.Args[0];
             }
             else if (node is UnaryOpNode unaryOp && AllowedCoercions(unaryOp, out invertCoercion))
             {
-                maybeScopeAccessNode = unaryOp.Child;
                 coercionOpKind = unaryOp.Op;
+                return unaryOp.Child;
             }
             else
             {
-                maybeScopeAccessNode = node;
+                return node;
             }
+        }
 
+        private static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
                 if (scopeAccessNode.Value is ScopeAccessSymbol scopeAccessSymbol)
                 {
                     var callerScope = context.CallerNode.Scope;
-                    var callerId = callerScope.Id;
-                    if (scopeAccessSymbol.Parent.Id == callerId)
+                    if (scopeAccessSymbol.Parent.Id == callerScope.Id)
                     {
                         fieldName = scopeAccessSymbol.Name;
-
-                        if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
-                        {
-                            fieldName = context.CallerTableRetVal.ColumnMap.Distinct;
-                        }
-
                         return true;
                     }
                 }
             }
 
             fieldName = default;
+            return false;
+        }
+
+        private static string AdjustFieldNameIfValue(Context context, string fieldName)
+        {
+            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
+            {
+                return context.CallerTableRetVal.ColumnMap.Distinct;
+            }
+
+            return fieldName;
+        }
+
+        private static bool CheckFieldFunctionCapabilities(Context context, IEnumerable<FieldFunction> fieldFunctions, string fieldName)
+        {
+            foreach (var ff in fieldFunctions)
+            {
+                if (context.DelegationMetadata?.DoesColumnSupportFunction(ff, fieldName) == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public bool TryGetSimpleFieldName(Context context, IntermediateNode node, out string fieldName)
+        {
+            if (TryGetFieldName(context, node, out fieldName, out var invertCoercion, out _, out var fieldFunctions))
+            {
+                if (!invertCoercion && !fieldFunctions.Any())
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 

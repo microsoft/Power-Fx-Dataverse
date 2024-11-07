@@ -261,7 +261,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(202, "Filter(ForAll(t1, { Xyz: Price }), Xyz > 5)", 2, false, true)]
         [InlineData(203, "Distinct(Filter(Distinct(t1, Price), Value > 5), Value)", 2, false, true)]
         [InlineData(204, "Distinct(Filter(Sort(t1, Price), Price > 5), Price)", 2, false, true)]
-        [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]        
+        [InlineData(205, "Distinct(Filter(SortByColumns(t1, Price), Price > 5), Price)", 2, false, true)]
         [InlineData(206, "Distinct(Filter(ForAll(t1, Price), Value > 5), Value)", 2, false, true)]
         [InlineData(207, "Distinct(Filter(ForAll(t1, { Xyz: Price }), Xyz > 5), Xyz)", 2, false, true)]
 
@@ -292,7 +292,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(230, @"Filter(t1, ""1"" in Price)", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(231, @"Filter(t1, ""1"" in Price)", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(232, @"Filter(t1, ""1"" in Price)", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
+        
         [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
@@ -344,7 +344,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(271, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(272, "Filter(t1, EndsWith(\"1\", ThisRecord.Name))", 0, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        [InlineData(273, "Filter(t1, new_datetime > 0)", 1, false, false)]
+        [InlineData(273, "Filter(t1, Hour(Date) = 2)", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
@@ -356,6 +356,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             SymbolTable st = new SymbolTable() { DebugName = "Delegable_1" }; // Hack on DebugName to make delegation work
             RecordType rt = RecordType.Empty().Add("Date", FormulaType.Date);
             st.AddVariable("MyTable", new TestTableValue("MyTable", rt, null, new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.Lt, DelegationOperator.Le }).Type);
+
             Engine engine = new Engine(new PowerFxConfig());
             engine.EnableDelegation();
 
@@ -364,7 +365,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.Empty(checkResult.Errors);
             var actualIr = checkResult.GetCompactIRString();
 
-            Assert.Equal<object>("__retrieveMultiple(MyTable, __lt(MyTable, Date, DateAdd(Now(), Float(30), (TimeUnit).Days)), __noop(), 1000, )", actualIr);
+            Assert.Equal<object>("__retrieveMultiple(MyTable, __lt(MyTable, {fieldFunctions:Table(), fieldName:Date}, DateAdd(Now(), Float(30), (TimeUnit).Days)), __noop(), 1000, )", actualIr);
         }
     }
 }

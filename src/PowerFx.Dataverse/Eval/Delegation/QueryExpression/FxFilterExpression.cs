@@ -13,7 +13,7 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
     //[Obsolete("Preview")]
-    public class FxFilterExpression
+    internal class FxFilterExpression
     {
         private IList<FxConditionExpression> _conditions;
 
@@ -66,8 +66,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
                 // Convert FxConditionOperator to ConditionOperator if necessary
                 ConditionOperator dataverseConditionOperator = (ConditionOperator)condition.Operator;
 
+                var dvCondition = new ConditionExpression(condition.AttributeName, dataverseConditionOperator, condition.Values);
+                dvCondition.EntityName = condition.TableName;
+
                 // Create the ConditionExpression and add it to the Dataverse FilterExpression
-                dataverseFilter.AddCondition(new ConditionExpression(condition.AttributeName, dataverseConditionOperator, condition.Values));
+                dataverseFilter.AddCondition(dvCondition);
             }
 
             // Add nested filters (if any) to the Dataverse FilterExpression
@@ -81,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
-    public enum FxFilterOperator
+    internal enum FxFilterOperator
     {
         And,
         Or

@@ -178,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (node.Args[3] is CallNode maybeTableArg && maybeTableArg.Function is TableFunction tableArg && maybeTableArg.Args.Count == 1)
                     {
                         var arg0 = (RecordNode)maybeTableArg.Args[0];
-                        if (arg0.Fields.TryGetValue(new Core.Utils.DName("Value"), out var valueNode) && valueNode is TextLiteralNode textNode)
+                        if (arg0.Fields.TryGetValue(FieldInfoRecord.SingleColumnTableColumnDName, out var valueNode) && valueNode is TextLiteralNode textNode)
                         {
                             var relationshipObj = DelegationUtility.DeserializeRelatioMetadata(textNode.LiteralValue);
                             AddFieldRead(tableLogicalName, relationshipObj.ReferencingFieldName);
@@ -200,7 +200,10 @@ namespace Microsoft.PowerFx.Dataverse
                             }
 
                             // Arg1 is the field which is being compared on the target entity.
-                            AddFieldRead(referencedEntityName, ((TextLiteralNode)node.Args[1]).LiteralValue);
+                            var infoRecord = (RecordNode)node.Args[1];
+
+                            var fieldName = ((TextLiteralNode)infoRecord.Fields.First(field => field.Key.Value == FieldInfoRecord.FieldNameColumnName).Value).LiteralValue;
+                            AddFieldRead(referencedEntityName, fieldName);
                         }
                         else
                         {
@@ -214,7 +217,9 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    if (node.Args[1] is TextLiteralNode field)
+                    if (node.Args[1] is RecordNode fieldInfoRecord 
+                        && fieldInfoRecord.Fields.TryGetValue(new Core.Utils.DName(FieldInfoRecord.FieldNameColumnName), out var maybeField)
+                        && maybeField is TextLiteralNode field)
                     {
                         string fieldName = field.LiteralValue;
 
@@ -227,7 +232,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a text literal");
+                        throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a field Info record");
                     }
                 }
             }

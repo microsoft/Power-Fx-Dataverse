@@ -10,7 +10,7 @@ using static Microsoft.PowerFx.Dataverse.DelegatedOperatorFunction;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
-    public class FxConditionExpression
+    internal class FxConditionExpression
     {
         private readonly string _attributeName;
 
@@ -67,11 +67,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
-    public enum FieldFunction
+    internal enum FieldFunction
     {
-        None,
-        StartsWith,
-        EndsWith,
-        Hour
+        None = 0,
+        StartsWith = 1,
+        EndsWith = 2,
+        Year = 3,
+        Month = 4,
+        Hour = 5,
     }
 }

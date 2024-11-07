@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
         public const string Odata_Top = "$top";
 
         // Systems can get the filter expression directrly and translate.
-        public FxFilterExpression Filter { get; init; }
+        internal FxFilterExpression Filter { get; init; }
 
         public IList<OrderExpression> OrderBy { get; init; }
 
@@ -36,6 +36,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
+
+        public DataverseDelegationParameters()
+        {
+        }
 
         public override DelegationParameterFeatures Features
         {
