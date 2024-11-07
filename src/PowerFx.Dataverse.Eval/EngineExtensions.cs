@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var filter = new FxFilterExpression();
                         filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, FxConditionOperator.Equal, id);
 #pragma warning disable CS0618 // Type or member is obsolete
-                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { Filter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
+                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { FxFilter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CS0618 // Type or member is obsolete
                         result = rows.FirstOrDefault();
                     }

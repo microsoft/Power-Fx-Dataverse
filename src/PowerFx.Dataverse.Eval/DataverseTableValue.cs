@@ -199,7 +199,7 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnSet = hasDistinct
                                 ? new ColumnSet(delegationParameters.ColumnMap.Distinct)
                                 : ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
-                Criteria = delegationParameters.Filter.GetDataverseFilterExpression() ?? new FilterExpression(),
+                Criteria = delegationParameters.FxFilter.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
 

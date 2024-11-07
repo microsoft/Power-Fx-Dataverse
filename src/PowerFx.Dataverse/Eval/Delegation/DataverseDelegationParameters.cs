@@ -26,7 +26,9 @@ namespace Microsoft.PowerFx.Dataverse
         public const string Odata_Top = "$top";
 
         // Systems can get the filter expression directrly and translate.
-        internal FxFilterExpression Filter { get; init; }
+        internal FxFilterExpression FxFilter { get; init; }
+
+        public FilterExpression Filter => FxFilter.GetDataverseFilterExpression();
 
         public IList<OrderExpression> OrderBy { get; init; }
 
@@ -47,7 +49,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 DelegationParameterFeatures features = 0;
 
-                if (Filter != null)
+                if (FxFilter != null)
                 {
                     features |= DelegationParameterFeatures.Filter | DelegationParameterFeatures.Columns;
                 }
@@ -66,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override string GetOdataFilter() => ToOdataFilter(Filter);
+        public override string GetOdataFilter() => ToOdataFilter(FxFilter);
 
         public IReadOnlyDictionary<string, string> ODataElements
         {

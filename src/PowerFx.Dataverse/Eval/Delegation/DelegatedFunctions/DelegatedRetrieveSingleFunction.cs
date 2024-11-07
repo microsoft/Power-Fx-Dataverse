@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters
             {
-                Filter = filter,
+                FxFilter = filter,
                 OrderBy = orderBy,
                 Top = 1,
 
