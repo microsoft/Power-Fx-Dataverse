@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
                 if (partitionId != null && partitionId != siblingPartitionId)
                 {
-                    siblingFilter = DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, siblingPartitionId);
+                    siblingFilter = DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, siblingPartitionId, FieldFunction.None);
                     appendPartitionIdFilter = true;
                 }
                 else
@@ -53,7 +53,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (appendPartitionIdFilter)
             {
-                filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, partitionId));
+                // Partition ID of elastic table, does not support FieldFunction.
+                filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, partitionId, FieldFunction.None));
             }
 
             // OrderBy makes no sense here

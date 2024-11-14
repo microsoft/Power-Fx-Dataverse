@@ -82,6 +82,29 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
+        private static async Task<FieldFunction> GetFieldFunctionAsync(RecordValue infoRecord, CancellationToken cancellationToken)
+        {
+            var tableFieldFunction = (TableValue)await infoRecord.GetFieldAsync(FieldInfoRecord.FieldFunctionColumnName, cancellationToken);
+
+            FieldFunction fieldFunction = default;
+            if (tableFieldFunction.Count() == 1)
+            {
+                var fieldFunctionDoubleValue = ((NumberValue)(await tableFieldFunction.Rows.First().Value.GetFieldAsync(FieldInfoRecord.SingleColumnTableColumnName, cancellationToken))).Value;
+
+                fieldFunction = (FieldFunction)((int)fieldFunctionDoubleValue);
+            }
+            else if (tableFieldFunction.Count() > 1)
+            {
+                throw new InvalidOperationException("Multiple field functions are not supported");
+            }
+            else
+            {
+                fieldFunction = FieldFunction.None;
+            }
+
+            return fieldFunction;
+        }
+
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             // propagate args[0] if it's not a table (e.g. Blank/Error)
@@ -90,7 +113,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return args[0];
             }
 
-            var field = ((StringValue)await ((RecordValue)args[1]).GetFieldAsync("fieldName", cancellationToken)).Value;
+            var arg1 = (RecordValue)args[1];
+            var field = ((StringValue)await arg1.GetFieldAsync(FieldInfoRecord.FieldNameColumnName, cancellationToken)).Value;
+            var tableFieldFunction = (TableValue)await ((RecordValue)args[1]).GetFieldAsync(FieldInfoRecord.FieldFunctionColumnName, cancellationToken);
+
+            var fieldFunction = await GetFieldFunctionAsync((RecordValue)args[1], cancellationToken);
+
             var value = MaybeReplaceBlank(args[2]);
 
             if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
@@ -110,7 +138,7 @@ namespace Microsoft.PowerFx.Dataverse
                 relation = _hooks.RetrieveManyToOneRelation(table, links);
                 dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
 
-                var filter = GenerateFilterExpression(field, _op, dvValue);
+                var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
                 filter.Conditions[0].TableName = relation.EntityAlias;
 
                 result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation }, null);
@@ -124,7 +152,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    var filter = GenerateFilterExpression(field, _op, dvValue);
+                    var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
                     result = new DelegationFormulaValue(filter, relation: null, orderBy: null);
                 }
             }
@@ -132,7 +160,7 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        internal static FxFilterExpression GenerateFilterExpression(string field, FxConditionOperator op, object dataverseValue, FieldFunction fieldFunction = default)
+        internal static FxFilterExpression GenerateFilterExpression(string field, FxConditionOperator op, object dataverseValue, FieldFunction fieldFunction)
         {
             var filter = new FxFilterExpression();
 
