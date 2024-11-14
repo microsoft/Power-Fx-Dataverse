@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             foreach (var condition in _conditions)
             {
                 // Convert FxConditionOperator to ConditionOperator if necessary
-                ConditionOperator dataverseConditionOperator = (ConditionOperator)condition.Operator;
+                ConditionOperator dataverseConditionOperator = DelegationUtility.ConvertToXRMConditionOperator(condition.Operator);
 
                 var dvCondition = new ConditionExpression(condition.AttributeName, dataverseConditionOperator, condition.Values);
                 dvCondition.EntityName = condition.TableName;

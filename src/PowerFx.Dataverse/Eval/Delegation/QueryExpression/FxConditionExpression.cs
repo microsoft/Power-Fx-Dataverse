@@ -60,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public ConditionExpression GetDataverseConditionExpression()
         {
-            var condition = new ConditionExpression(AttributeName, (ConditionOperator)Operator, Values);
+            var condition = new ConditionExpression(AttributeName, DelegationUtility.ConvertToXRMConditionOperator(Operator), Values);
             condition.EntityName = TableName;
 
             return condition;
