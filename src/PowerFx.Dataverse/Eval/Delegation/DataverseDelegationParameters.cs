@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -25,7 +26,9 @@ namespace Microsoft.PowerFx.Dataverse
         public const string Odata_Top = "$top";
 
         // Systems can get the filter expression directrly and translate.
-        public FilterExpression Filter { get; init; }
+        internal FxFilterExpression FxFilter { get; init; }
+
+        public FilterExpression Filter => FxFilter.GetDataverseFilterExpression();
 
         public IList<OrderExpression> OrderBy { get; init; }
 
@@ -36,13 +39,17 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
+        public DataverseDelegationParameters()
+        {
+        }
+
         public override DelegationParameterFeatures Features
         {
             get
             {
                 DelegationParameterFeatures features = 0;
 
-                if (Filter != null)
+                if (FxFilter != null)
                 {
                     features |= DelegationParameterFeatures.Filter | DelegationParameterFeatures.Columns;
                 }
@@ -61,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override string GetOdataFilter() => ToOdataFilter(Filter);
+        public override string GetOdataFilter() => ToOdataFilter(FxFilter);
 
         public IReadOnlyDictionary<string, string> ODataElements
         {
@@ -101,14 +108,14 @@ namespace Microsoft.PowerFx.Dataverse
         public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Columns;
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
-        private static string ToOdataFilter(FilterExpression filter)
+        private static string ToOdataFilter(FxFilterExpression filter)
         {
             if (filter.Filters?.Count > 0)
             {
                 var op = filter.FilterOperator switch
                 {
-                    LogicalOperator.And => "and",
-                    LogicalOperator.Or => "or",
+                    FxFilterOperator.And => "and",
+                    FxFilterOperator.Or => "or",
                     _ => throw new NotSupportedException($"Unsupported filter operator: {filter.FilterOperator}"),
                 };
 
@@ -140,42 +147,58 @@ namespace Microsoft.PowerFx.Dataverse
                 foreach (var condition in filter.Conditions)
                 {
                     var fieldName = condition.AttributeName;
+
+                    if (!condition.FieldFunctions.IsNullOrEmpty())
+                    {
+                        if (condition.FieldFunctions.Count() > 1)
+                        {
+                            throw new NotSupportedException($"Multiple field functions are not supported in DataverseDelegationParameters: {condition.FieldFunctions.Count()}");
+                        }
+
+                        var fieldFunction = condition.FieldFunctions.First();
+
+                        if (fieldFunction != FieldFunction.None)
+                        {
+                            fieldName = $"{condition.FieldFunctions.First().ToString().ToLower()}({fieldName})";
+                        }
+                    }
+
                     var value = condition.Values.FirstOrDefault();
 
                     // OData spec: https://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part2-url-conventions/odata-v4.0-errata03-os-part2-url-conventions-complete.html (chapters 5.1.1 and next)
                     // Azure tables: https://learn.microsoft.com/en-us/rest/api/storageservices/querying-tables-and-entities#supported-comparison-operators
 
                     // OData spec, chapter 5.1.1.5.2
-                    if (condition.Operator == ConditionOperator.Contains)
+                    if (condition.Operator == FxConditionOperator.Contains)
                     {
                         // not supported on Azure tables but we don't support capabilities for now
                         return $"contains({fieldName},{EscapeOdata(value)})";
                     }
-                    else if (condition.Operator == ConditionOperator.Null)
+                    else if (condition.Operator == FxConditionOperator.Null)
                     {
                         return $"({fieldName} eq null)";
                     }
-                    else if (condition.Operator == ConditionOperator.NotNull)
+                    else if (condition.Operator == FxConditionOperator.NotNull)
                     {
                         return $"({fieldName} ne null)";
                     }
-                    else if (condition.Operator == ConditionOperator.BeginsWith)
+                    else if (condition.Operator == FxConditionOperator.BeginsWith)
                     {
                         return $"startswith({fieldName},{EscapeOdata(value)})";
                     }
-                    else if (condition.Operator == ConditionOperator.EndsWith)
+                    else if (condition.Operator == FxConditionOperator.EndsWith)
                     {
                         return $"endswith({fieldName},{EscapeOdata(value)})";
                     }
                     
                     string op = condition.Operator switch
                     {
-                        ConditionOperator.GreaterEqual => "ge",
-                        ConditionOperator.GreaterThan => "gt",
-                        ConditionOperator.LessEqual => "le",
-                        ConditionOperator.LessThan => "lt",
-                        ConditionOperator.Equal => "eq",
-                        ConditionOperator.NotEqual => "ne",
+                        FxConditionOperator.GreaterEqual => "ge",
+                        FxConditionOperator.GreaterThan => "gt",
+                        FxConditionOperator.LessEqual => "le",
+                        FxConditionOperator.LessThan => "lt",
+                        FxConditionOperator.Equal => "eq",
+                        FxConditionOperator.NotEqual => "ne",
                         _ => throw new NotImplementedException($"DataverseDelegationParameters don't support: {condition.Operator} operator"),
                     };
 

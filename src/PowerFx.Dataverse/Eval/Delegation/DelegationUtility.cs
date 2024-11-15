@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.PowerFx.Core.Functions.Delegation;
@@ -8,9 +9,11 @@ using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
@@ -74,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return filterCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Distinct) == true;
         }
 
-        public static bool CanDelegateFilter(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, ColumnMap columnMap)
+        public static bool CanDelegateBinaryOp(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, ColumnMap columnMap)
         {            
             if (columnMap?.Map.TryGetValue(new DName(fieldName), out IntermediateNode logicalName) == true)
             {
@@ -121,6 +124,34 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             // While no ordering semantics are mandated, a data service MUST always use the same semantics to obtain
             // a full ordering across requests.
             return delegationMetadata?.SortDelegationMetadata != null;
+        }
+
+        internal static ConditionOperator ConvertToXRMConditionOperator(FxConditionOperator fxOperator)
+        {
+            return fxOperator switch
+            {
+                FxConditionOperator.Equal => ConditionOperator.Equal,
+                FxConditionOperator.NotEqual => ConditionOperator.NotEqual,
+                FxConditionOperator.GreaterThan => ConditionOperator.GreaterThan,
+                FxConditionOperator.LessThan => ConditionOperator.LessThan,
+                FxConditionOperator.GreaterEqual => ConditionOperator.GreaterEqual,
+                FxConditionOperator.LessEqual => ConditionOperator.LessEqual,
+                FxConditionOperator.Like => ConditionOperator.Like,
+                FxConditionOperator.NotLike => ConditionOperator.NotLike,
+                FxConditionOperator.In => ConditionOperator.In,
+                FxConditionOperator.NotIn => ConditionOperator.NotIn,
+                FxConditionOperator.Between => ConditionOperator.Between,
+                FxConditionOperator.NotBetween => ConditionOperator.NotBetween,
+                FxConditionOperator.Null => ConditionOperator.Null,
+                FxConditionOperator.NotNull => ConditionOperator.NotNull,
+                FxConditionOperator.Contains => ConditionOperator.Contains,
+                FxConditionOperator.DoesNotContain => ConditionOperator.DoesNotContain,
+                FxConditionOperator.BeginsWith => ConditionOperator.BeginsWith,
+                FxConditionOperator.DoesNotBeginWith => ConditionOperator.DoesNotBeginWith,
+                FxConditionOperator.EndsWith => ConditionOperator.EndsWith,
+                FxConditionOperator.DoesNotEndWith => ConditionOperator.DoesNotEndWith,
+                _ => throw new ArgumentOutOfRangeException(nameof(fxOperator), fxOperator, null)
+            };
         }
 
         internal static BinaryOp ToBinaryOp(BinaryOpKind opKind) =>

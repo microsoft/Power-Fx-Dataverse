@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -27,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filter = new FilterExpression(LogicalOperator.And);
+            var filter = new FxFilterExpression(FxFilterOperator.And);
             var relations = new HashSet<LinkEntity>(new LinkEntityComparer());
             string partitionId = null;
             bool appendPartitionIdFilter = false;
@@ -42,7 +43,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (partitionId != null && partitionId != siblingPartitionId)
                     {
-                        siblingFilter = DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, siblingPartitionId);
+                        siblingFilter = DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, siblingPartitionId, FieldFunction.None);
                         appendPartitionIdFilter = true;
                     }
                     else
@@ -57,7 +58,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (appendPartitionIdFilter)
             {
-                filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", ConditionOperator.Equal, partitionId));
+                // Partition ID of elastic table, does not support FieldFunction.
+                filter.AddFilter(DelegatedOperatorFunction.GenerateFilterExpression("partitionid", FxConditionOperator.Equal, partitionId, FieldFunction.None));
             }
 
             // OrderBy makes no sense here

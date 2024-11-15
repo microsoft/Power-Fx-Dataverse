@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -36,10 +37,10 @@ namespace Microsoft.PowerFx.Dataverse
                     // If the table is elastic and partitionId is null we need to use RetrieveMultipleAsync api to retrieve using guid.
                     if (partitionId == null)
                     {
-                        var filter = new FilterExpression();
-                        filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
+                        var filter = new FxFilterExpression();
+                        filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, FxConditionOperator.Equal, id);
 #pragma warning disable CS0618 // Type or member is obsolete
-                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { Filter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
+                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters() { FxFilter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CS0618 // Type or member is obsolete
                         result = rows.FirstOrDefault();
                     }

@@ -45,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     fieldName = tln.LiteralValue;
                 }
-                else if (!TryGetFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName, out var invertCoercion, out _) || invertCoercion)
+                else if (!TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
                 {
                     return NoTransform(node, tableArg);
                 }

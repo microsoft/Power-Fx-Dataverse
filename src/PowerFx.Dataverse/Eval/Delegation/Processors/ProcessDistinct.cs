@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -17,31 +18,11 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            ColumnMap map = null;
-            string fieldName = null;
-
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
-            bool canDelegate = count == null
-                && TryGetFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out fieldName, out bool invertCoercion, out _) ^ invertCoercion
-                && IsReturnTypePrimitive(node.IRContext.ResultType)
-                && !DelegationUtility.IsElasticTable(tableArg.TableType);
-
-            if (canDelegate)
-            {
-                // let's create a single column map ("Value", fieldName) with a distinct on fieldName
-                map = new ColumnMap(fieldName);
-
-                // Combine with an existing map
-                map = ColumnMap.Combine(tableArg.ColumnMap, map);                
-
-                canDelegate &= DelegationUtility.CanDelegateDistinct(map.Distinct, context.DelegationMetadata?.FilterDelegationMetadata);
-            }
-
-            if (!canDelegate)
+            if (!TryDelegateDistinct(tableArg, node, context, out var fieldName, out var count, out var columnMap))
             {
                 var materializeTable = Materialize(tableArg);
                 if (!ReferenceEquals(node.Args[0], materializeTable))
@@ -54,9 +35,45 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap);
 
             return resultingTable;
+        }
+
+        private bool TryDelegateDistinct(RetVal tableArg, CallNode distinctCallNode, Context context, out string fieldName, out IntermediateNode count, out ColumnMap columnMap)
+        {
+            columnMap = null;
+            fieldName = null;
+            count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+
+            var canDelegate = count == null
+                && TryGetSimpleFieldName(context, ((LazyEvalNode)distinctCallNode.Args[1]).Child, out fieldName)
+                && IsReturnTypePrimitive(distinctCallNode.IRContext.ResultType)
+                && !DelegationUtility.IsElasticTable(tableArg.TableType);
+
+            if (canDelegate)
+            {
+                // let's create a single column map ("Value", fieldName) with a distinct on fieldName
+                columnMap = new ColumnMap(fieldName);
+
+                // Combine with an existing map
+                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap);
+
+                if (DelegationUtility.CanDelegateDistinct(columnMap.Distinct, context.DelegationMetadata?.FilterDelegationMetadata))
+                {
+                    return true;
+                }
+                else
+                {
+                    canDelegate = false;
+                }
+            }
+            else
+            {
+                canDelegate = false;
+            }
+
+            return canDelegate;
         }
 
         // $$$ We should block this at Authoring time.

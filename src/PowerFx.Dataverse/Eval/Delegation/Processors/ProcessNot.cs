@@ -23,19 +23,20 @@ namespace Microsoft.PowerFx.Dataverse
             IList<string> relations = null;
 
             // Currently only supports lamda Not(IsBlank()) delegation.
+
             if (node.Args[0] is CallNode callNode && 
                 callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name && 
-                ((TryGetFieldName(context, callNode, out string fieldName, out bool invertCoercion, out _) && !invertCoercion) ||
-                 (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _) && !invertCoercion)))
+                    ((TryGetFieldName(context, callNode, out var fieldName, out var invertCoercion, out _, out var fieldOperation) && !invertCoercion)
+                    || (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _, out fieldOperation) && !invertCoercion)))
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 
+                // BinaryOpKind doesn't matter for Not(IsBlank()) because all value will be compared to null, so just use NeqText.
                 if (context.DelegationMetadata?.FilterDelegationMetadata.IsUnaryOpSupportedByTable(UnaryOp.Not) == true)
                 {
-                    // BinaryOpKind doesn't matter for Not(IsBlank()) because all value will be compared to null, so just use NeqText.
-                    CallNode neqNode = _hooks.MakeNeqCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, BinaryOpKind.NeqText, blankNode, context.CallerNode.Scope);
-                    
-                    return CreateBinaryOpRetVal(context, node, neqNode);                    
+                    var neqNode = _hooks.MakeNeqCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldOperation, fieldName, BinaryOpKind.NeqText, blankNode, context.CallerNode.Scope);
+                    var ret = CreateBinaryOpRetVal(context, node, neqNode);
+                    return ret;
                 }
             }
 

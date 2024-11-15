@@ -12,8 +12,10 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Dataverse.DataSource;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
@@ -60,13 +62,15 @@ namespace Microsoft.PowerFx.Dataverse
             return ret.OriginalNode;
         }
 
-        public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind)
+        public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
             FilterOpMetadata filterCapabilities = context.DelegationMetadata?.FilterDelegationMetadata;
 
-            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind) && !TryGetFieldName(context, right, out _, out _, out _))
+            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind, out fieldFunctions) && 
+                !TryGetFieldName(context, right, out _, out _, out _, out _))
             {
-                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
+                if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
+                                                  left.IRContext.ResultType == FormulaType.String)
                 {
                     opKind = default;
                     node = default;
@@ -74,24 +78,24 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
 
-                fieldName = leftField;                
-
-                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                fieldName = leftField;
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
                     return true;
                 }
             }
-            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind) && !TryGetFieldName(context, left, out _, out _, out _))
+            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind, out fieldFunctions) 
+                && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
                 fieldName = rightField;
-
-                if (DelegationUtility.CanDelegateFilter(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
-                    if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String && left.IRContext.ResultType == FormulaType.String)
+                    if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
+                                                      left.IRContext.ResultType == FormulaType.String)
                     {
                         opKind = op;
                         return true;
@@ -106,7 +110,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // will return false
             }
-            else if (TryGetFieldName(context, left, out var leftField2, out _, out _) && TryGetFieldName(context, right, out var rightField2, out _, out _))
+            else if (TryGetFieldName(context, left, out var leftField2, out _, out _, out _) && 
+                TryGetFieldName(context, right, out var rightField2, out _, out _, out _))
             {
                 if (leftField2 == rightField2)
                 {
@@ -132,6 +137,7 @@ namespace Microsoft.PowerFx.Dataverse
             opKind = default;
             node = default;
             fieldName = default;
+            fieldFunctions = default;
             return false;
         }
 
@@ -141,54 +147,144 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="context"></param>
         /// <param name="node"></param>
         /// <param name="fieldName">name of the field.</param>
-        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind.
+        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind. 
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
         /// <returns></returns>
-        public bool TryGetFieldName(Context context, IntermediateNode node, out string fieldName, out bool invertCoercion, out UnaryOpKind coercionOpKind)
+        public bool TryGetFieldName(
+            Context context,
+            IntermediateNode node,
+            out string fieldName,
+            out bool invertCoercion,
+            out UnaryOpKind coercionOpKind,
+            out IEnumerable<FieldFunction> fieldFunctions)
         {
-            IntermediateNode maybeScopeAccessNode;
+            invertCoercion = false;
+            coercionOpKind = default;
+            fieldFunctions = Enumerable.Empty<FieldFunction>();
+
+            // Extract field functions from the node
+            if (TryGetFieldFunctions(node, out fieldFunctions))
+            {
+                // extract the child node which holds the field name
+                node = ((CallNode)node).Args[0];
+            }
+
+            // Get the scope access node, considering coercions
+            IntermediateNode maybeScopeAccessNode = GetScopeAccessNode(node, out invertCoercion, out coercionOpKind);
+
+            // Try to get the field name from the scope node
+            if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
+            {
+                // Adjust field name if it's "Value" and ColumnMap has Distinct
+                fieldName = AdjustFieldNameIfValue(context, fieldName);
+
+                // Check capabilities for field functions
+                if (fieldFunctions.Any())
+                {
+                    if (!CheckFieldFunctionCapabilities(context, fieldFunctions, fieldName))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            fieldName = default;
+            return false;
+        }
+
+        private static bool TryGetFieldFunctions(IntermediateNode node, out IEnumerable<FieldFunction> fieldFunctions)
+        {
+            if (node is CallNode fieldOperationCall
+                && Enum.TryParse(fieldOperationCall.Function.Name, out FieldFunction fieldFunction))
+            {
+                if (fieldFunction != FieldFunction.StartsWith && fieldFunction != FieldFunction.EndsWith && fieldFunction != FieldFunction.None)
+                {
+                    fieldFunctions = new[] { fieldFunction };
+                    return true;
+                }
+            }
+
+            fieldFunctions = Enumerable.Empty<FieldFunction>();
+            return false;
+        }
+
+        private static IntermediateNode GetScopeAccessNode(IntermediateNode node, out bool invertCoercion, out UnaryOpKind coercionOpKind)
+        {
             invertCoercion = false;
             coercionOpKind = default;
 
-            // If the node had injected float coercion, then we need to pull scope access node from it.
             if (node is CallNode functionCall &&
                 (functionCall.Function == BuiltinFunctionsCore.Float || functionCall.Function == BuiltinFunctionsCore.Value || functionCall.Function.Name == BuiltinFunctionsCore.IsBlank.Name) &&
                 functionCall.Args.Count == 1)
             {
-                maybeScopeAccessNode = functionCall.Args[0];
+                return functionCall.Args[0];
             }
             else if (node is UnaryOpNode unaryOp && AllowedCoercions(unaryOp, out invertCoercion))
             {
-                maybeScopeAccessNode = unaryOp.Child;
                 coercionOpKind = unaryOp.Op;
+                return unaryOp.Child;
             }
             else
             {
-                maybeScopeAccessNode = node;
+                return node;
             }
+        }
 
+        private static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
                 if (scopeAccessNode.Value is ScopeAccessSymbol scopeAccessSymbol)
                 {
                     var callerScope = context.CallerNode.Scope;
-                    var callerId = callerScope.Id;
-                    if (scopeAccessSymbol.Parent.Id == callerId)
+                    if (scopeAccessSymbol.Parent.Id == callerScope.Id)
                     {
                         fieldName = scopeAccessSymbol.Name;
-
-                        if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
-                        {
-                            fieldName = context.CallerTableRetVal.ColumnMap.Distinct;
-                        }                        
-
                         return true;
                     }
                 }
             }
 
             fieldName = default;
+            return false;
+        }
+
+        private static string AdjustFieldNameIfValue(Context context, string fieldName)
+        {
+            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
+            {
+                return context.CallerTableRetVal.ColumnMap.Distinct;
+            }
+
+            return fieldName;
+        }
+
+        private static bool CheckFieldFunctionCapabilities(Context context, IEnumerable<FieldFunction> fieldFunctions, string fieldName)
+        {
+            foreach (var ff in fieldFunctions)
+            {
+                if (context.DelegationMetadata?.DoesColumnSupportFunction(ff, fieldName) == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public bool TryGetSimpleFieldName(Context context, IntermediateNode node, out string fieldName)
+        {
+            if (TryGetFieldName(context, node, out fieldName, out var invertCoercion, out _, out var fieldFunctions))
+            {
+                if (!invertCoercion && !fieldFunctions.Any())
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -286,23 +382,17 @@ namespace Microsoft.PowerFx.Dataverse
             switch (coercionKind)
             {
                 case UnaryOpKind.DateToDecimal:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Date), UnaryOpKind.DecimalToDate, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDate, node);
                 case UnaryOpKind.DateTimeToDecimal:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.DateTime), UnaryOpKind.DecimalToDateTime, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToDateTime, node);
                 case UnaryOpKind.TimeToDecimal:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Time), UnaryOpKind.DecimalToTime, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.DecimalToTime, node);
                 case UnaryOpKind.DateToNumber:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Date), UnaryOpKind.NumberToDate, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDate, node);
                 case UnaryOpKind.DateTimeToNumber:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.DateTime), UnaryOpKind.NumberToDateTime, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToDateTime, node);
                 case UnaryOpKind.TimeToNumber:
-                    return new UnaryOpNode(IRContext.NotInSource(FormulaType.Time), UnaryOpKind.NumberToTime, node);
-
+                    return new UnaryOpNode(node.IRContext, UnaryOpKind.NumberToTime, node);
                 default:
                     throw new NotImplementedException($"{nameof(MaybeAddCoercion)} -> Coercion kind {coercionKind} is not implemented for coercion inversion.");
             }
@@ -315,46 +405,34 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 case UnaryOpKind.DateTimeToTime:
                     return true;
-
                 case UnaryOpKind.DateToTime:
                     return true;
-
                 case UnaryOpKind.TimeToDate:
                     return true;
-
                 case UnaryOpKind.DateTimeToDate:
                     return true;
-
                 case UnaryOpKind.TimeToDateTime:
                     return true;
-
                 case UnaryOpKind.DateToDateTime:
                     return true;
-
                 case UnaryOpKind.DateToDecimal:
                     invertCoercion = true;
                     return true;
-
                 case UnaryOpKind.DateTimeToDecimal:
                     invertCoercion = true;
                     return true;
-
                 case UnaryOpKind.TimeToDecimal:
                     invertCoercion = true;
                     return true;
-
                 case UnaryOpKind.DateToNumber:
                     invertCoercion = true;
                     return true;
-
                 case UnaryOpKind.DateTimeToNumber:
                     invertCoercion = true;
                     return true;
-
                 case UnaryOpKind.TimeToNumber:
                     invertCoercion = true;
                     return true;
-
                 default:
                     invertCoercion = false;
                     return false;
@@ -499,7 +577,7 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations, out bool invertCoercion, out UnaryOpKind coercionOpKind)
+        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations, out bool invertCoercion, out UnaryOpKind coercionOpKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
             relations = new List<string>();
 
@@ -522,18 +600,18 @@ namespace Microsoft.PowerFx.Dataverse
             if (maybeFieldAccessNode is RecordFieldAccessNode fieldAccess)
             {
                 fieldName = fieldAccess.Field;
-                if (TryGetFieldName(context, fieldAccess.From, out var fromField, out invertCoercion, out coercionOpKind))
+                if (TryGetFieldName(context, fieldAccess.From, out var fromField, out invertCoercion, out coercionOpKind, out fieldFunctions))
                 {
                     // fetch the primary key name on relation here. If current is 1 depth relation, then we can delegate without fetching the related record. e.g. LookUp(t1, relationField.PrimaryKey = GUID).
                     if (relations.Count == 0)
                     {
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
-                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) &&
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
                             fieldName == primaryKeyFieldName)
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
-                            if (context.IsDataverseDelegation &&
+                            if (context.IsDataverseDelegation && 
                                 context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
                             {
                                 fieldName = relation2.ReferencingAttribute;
@@ -558,7 +636,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     if (TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out _))
                     {
-                        TryGetFieldName(context, callNode.Args[0], out fromField, out invertCoercion, out coercionOpKind);
+                        TryGetFieldName(context, callNode.Args[0], out fromField, out invertCoercion, out coercionOpKind, out fieldFunctions);
                         AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
                         var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
 
@@ -569,6 +647,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            fieldFunctions = default;
             fieldName = default;
             return false;
         }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.DataSource;
@@ -52,8 +53,8 @@ namespace Microsoft.PowerFx.Dataverse
             relations = null;
 
             // Try to get the field name using either of the methods
-            return TryGetFieldName(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out rightNode, out _)
-                || TryGetRelationField(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out relations, out rightNode, out _);
+            return (TryGetFieldName(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out rightNode, out _, out var fieldFunctions) && fieldFunctions.IsNullOrEmpty())
+                || (TryGetRelationField(context: context, left: node.Args[0], right: node.Args[1], op: BinaryOpKind.Invalid, out fieldName, out relations, out rightNode, out _, out fieldFunctions) && !fieldFunctions.Any());
         }
     }
 }

@@ -187,7 +187,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
-        private string GetODataString(DataverseDelegationParameters dp)
+        internal static string GetODataString(DataverseDelegationParameters dp)
         {
             void AddSeparatorIfNeeded(StringBuilder sb)
             {

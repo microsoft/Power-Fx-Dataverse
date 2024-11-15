@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -22,63 +23,86 @@ namespace Microsoft.PowerFx.Dataverse
     // As such, the actual function name doesn't matter and is just used for diagnostics.
     internal abstract class DelegatedOperatorFunction : DelegateFunction
     {
-        private readonly ConditionOperator _op;
+        private readonly FxConditionOperator _op;
 
         private readonly BinaryOpKind _binaryOpKind;
 
-        public DelegatedOperatorFunction(DelegationHooks hooks, string name, BinaryOpKind binaryOpKind, ParentOperation parentOperation = ParentOperation.None)
+        public DelegatedOperatorFunction(DelegationHooks hooks, string name, BinaryOpKind binaryOpKind, FieldFunction parentOperation = FieldFunction.None)
           : base(hooks, name, FormulaType.Blank)
         {
             _binaryOpKind = binaryOpKind;
 
             if (DelegationIRVisitor.IsOpKindEqualityComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.Equal;
+                _op = FxConditionOperator.Equal;
             }
             else if (DelegationIRVisitor.IsOpKindInequalityComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.NotEqual;
+                _op = FxConditionOperator.NotEqual;
             }
             else if (DelegationIRVisitor.IsOpKindLessThanComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.LessThan;
+                _op = FxConditionOperator.LessThan;
             }
             else if (DelegationIRVisitor.IsOpKindLessThanEqualComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.LessEqual;
+                _op = FxConditionOperator.LessEqual;
             }
             else if (DelegationIRVisitor.IsOpKindGreaterThanComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.GreaterThan;
+                _op = FxConditionOperator.GreaterThan;
             }
             else if (DelegationIRVisitor.IsOpKindGreaterThanEqalComparison(_binaryOpKind))
             {
-                _op = ConditionOperator.GreaterEqual;
+                _op = FxConditionOperator.GreaterEqual;
             }
             else if (_binaryOpKind == BinaryOpKind.InText)
             {
                 // case insensitive
-                _op = ConditionOperator.Contains;
+                _op = FxConditionOperator.Contains;
             }
             else if (_binaryOpKind == BinaryOpKind.Invalid)
             {
-                if (parentOperation == ParentOperation.StartsWith)
+                if (parentOperation == FieldFunction.StartsWith)
                 {
-                    _op = ConditionOperator.BeginsWith;
+                    _op = FxConditionOperator.BeginsWith;
                 }
-                else if (parentOperation == ParentOperation.EndsWith)
+                else if (parentOperation == FieldFunction.EndsWith)
                 {
-                    _op = ConditionOperator.EndsWith;
+                    _op = FxConditionOperator.EndsWith;
                 }
                 else
                 {
                     throw new NotSupportedException($"Unsupported operation {_op} :  {parentOperation}");
                 }
             }
-            else
+            else 
             {
                 throw new NotSupportedException($"Unsupported operation {_op}");
             }
+        }
+
+        private static async Task<FieldFunction> GetFieldFunctionAsync(RecordValue infoRecord, CancellationToken cancellationToken)
+        {
+            var tableFieldFunction = (TableValue)await infoRecord.GetFieldAsync(FieldInfoRecord.FieldFunctionColumnName, cancellationToken);
+
+            FieldFunction fieldFunction = default;
+            if (tableFieldFunction.Count() == 1)
+            {
+                var fieldFunctionDoubleValue = ((NumberValue)(await tableFieldFunction.Rows.First().Value.GetFieldAsync(FieldInfoRecord.SingleColumnTableColumnName, cancellationToken))).Value;
+
+                fieldFunction = (FieldFunction)((int)fieldFunctionDoubleValue);
+            }
+            else if (tableFieldFunction.Count() > 1)
+            {
+                throw new InvalidOperationException("Multiple field functions are not supported");
+            }
+            else
+            {
+                fieldFunction = FieldFunction.None;
+            }
+
+            return fieldFunction;
         }
 
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
@@ -89,7 +113,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return args[0];
             }
 
-            var field = ((StringValue)args[1]).Value;
+            var arg1 = (RecordValue)args[1];
+            var field = ((StringValue)await arg1.GetFieldAsync(FieldInfoRecord.FieldNameColumnName, cancellationToken)).Value;
+            var tableFieldFunction = (TableValue)await ((RecordValue)args[1]).GetFieldAsync(FieldInfoRecord.FieldFunctionColumnName, cancellationToken);
+
+            var fieldFunction = await GetFieldFunctionAsync((RecordValue)args[1], cancellationToken);
+
             var value = MaybeReplaceBlank(args[2]);
 
             if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
@@ -109,21 +138,21 @@ namespace Microsoft.PowerFx.Dataverse
                 relation = _hooks.RetrieveManyToOneRelation(table, links);
                 dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
 
-                var filter = GenerateFilterExpression(field, _op, dvValue);
-                filter.Conditions[0].EntityName = relation.EntityAlias;
+                var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
+                filter.Conditions[0].TableName = relation.EntityAlias;
 
                 result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation }, null);
             }
             else
             {
                 dvValue = _hooks.RetrieveAttribute(table, field, value);
-                if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == ConditionOperator.Equal)
+                if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == FxConditionOperator.Equal)
                 {
                     result = new DelegationFormulaValue(filter: null, relation: null, partitionId: (string)dvValue, orderBy: null);
                 }
                 else
                 {
-                    var filter = GenerateFilterExpression(field, _op, dvValue);
+                    var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
                     result = new DelegationFormulaValue(filter, relation: null, orderBy: null);
                 }
             }
@@ -131,20 +160,20 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        internal static FilterExpression GenerateFilterExpression(string field, ConditionOperator op, object dataverseValue)
+        internal static FxFilterExpression GenerateFilterExpression(string field, FxConditionOperator op, object dataverseValue, FieldFunction fieldFunction)
         {
-            var filter = new FilterExpression();
+            var filter = new FxFilterExpression();
 
             if (dataverseValue == null)
             {
                 switch (op)
                 {
-                    case ConditionOperator.Equal:
-                        filter.AddCondition(field, ConditionOperator.Null);
+                    case FxConditionOperator.Equal:
+                        filter.AddCondition(field, FxConditionOperator.Null);
                         break;
 
-                    case ConditionOperator.NotEqual:
-                        filter.AddCondition(field, ConditionOperator.NotNull);
+                    case FxConditionOperator.NotEqual:
+                        filter.AddCondition(field, FxConditionOperator.NotNull);
                         break;
 
                     default:
@@ -153,7 +182,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                filter.AddCondition(field, op, dataverseValue);
+                filter.AddCondition(field, op, dataverseValue, fieldFunction);
             }
 
             return filter;
@@ -223,13 +252,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _ => throw new NotSupportedException($"Unsupported operation {_op}"),
             };
-        }
-
-        internal enum ParentOperation
-        {
-            None,
-            StartsWith,
-            EndsWith,
         }
     }
 }

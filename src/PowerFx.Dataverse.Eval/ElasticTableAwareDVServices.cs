@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -67,10 +68,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
             var reference = new EntityReference(entityName, id);
-            var filter = new FilterExpression();
-            filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, ConditionOperator.Equal, reference.Id);
+            var filter = new FxFilterExpression();
+            filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, FxConditionOperator.Equal, reference.Id);
 #pragma warning disable CS0618 // Type or member is obsolete
-            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters() { Filter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) });
+            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters() { FxFilter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) });
 #pragma warning restore CS0618 // Type or member is obsolete
             var rows = await _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
 

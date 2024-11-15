@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Functions;
@@ -11,6 +12,8 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -124,11 +127,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return rt;
             }
 
-            internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IEnumerable<string> relations, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
+            internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IEnumerable<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, IntermediateNode value, IntermediateNode callerSourceTable, ScopeSymbol scope)
             {
-                var field = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
+                var fieldInfoRecord = MakeFieldInfoRecord(fieldName, fieldFunctions);
 
-                var args = new List<IntermediateNode> { callerSourceTable, field, value };
+                var args = new List<IntermediateNode> { callerSourceTable, fieldInfoRecord, value };
                 if (relations != null)
                 {
                     args.Add(MakeStringSingleColumnTable(relations));
@@ -136,6 +139,56 @@ namespace Microsoft.PowerFx.Dataverse
 
                 var node = MakeCallNode(func, tableType, args, scope);
                 return node;
+            }
+
+            /// <summary>
+            /// It will create a RecordNode with structure: { fieldName: "fieldName", fieldFunctions: Table({ Value: 1 }, { Value: 2 }) } Where fieldFunctions is collection of enum <see cref="FieldFunction"/>.
+            /// </summary>
+            /// <param name="fieldName"></param>
+            /// <param name="fieldFunctions"></param>
+            /// <returns></returns>
+            private static IntermediateNode MakeFieldInfoRecord(string fieldName, IEnumerable<FieldFunction> fieldFunctions)
+            {
+                // Define the type for records within the fieldFunctions table
+                fieldFunctions = fieldFunctions ?? Enumerable.Empty<FieldFunction>();
+                var fieldFunctionsRecordType = RecordType.Empty().Add(FieldInfoRecord.SingleColumnTableColumnName, FormulaType.Number);
+                var fieldFunctionsTableType = fieldFunctionsRecordType.ToTable();
+
+                // Build the list of record nodes for the fieldFunctions table
+                var recordNodes = new List<IntermediateNode>();
+                foreach (var ff in fieldFunctions)
+                {
+                    var numberNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), (double)ff);
+                    var recordNode = new RecordNode(
+                        IRContext.NotInSource(fieldFunctionsRecordType),
+                        new Dictionary<DName, IntermediateNode> { { FieldInfoRecord.SingleColumnTableColumnDName, numberNode } });
+                    recordNodes.Add(recordNode);
+                }
+
+                // Create the table call node for fieldFunctions
+                var fieldFunctionsTableNode = new CallNode(
+                    IRContext.NotInSource(fieldFunctionsTableType),
+                    BuiltinFunctionsCore.Table,
+                    recordNodes);
+
+                // Define the result record type
+                var resultRecordType = RecordType.Empty()
+                    .Add(FieldInfoRecord.FieldNameColumnName, FormulaType.String)
+                    .Add(FieldInfoRecord.FieldFunctionColumnName, fieldFunctionsTableType);
+
+                // Create the fieldName node
+                var fieldNameNode = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
+
+                // Build the result record node
+                var resultRecordNode = new RecordNode(
+                    IRContext.NotInSource(resultRecordType),
+                    new Dictionary<DName, IntermediateNode>
+                    {
+                        { new DName(FieldInfoRecord.FieldNameColumnName), fieldNameNode },
+                        { new DName(FieldInfoRecord.FieldFunctionColumnName), fieldFunctionsTableNode }
+                    });
+
+                return resultRecordNode;
             }
 
             internal CallNode MakeCallNode(TexlFunction func, FormulaType tableType, IList<IntermediateNode> args, ScopeSymbol scope)
@@ -159,52 +212,52 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeEqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedEq(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeNeqCall(IntermediateNode callerSourceTable, TableType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedNeq(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGt(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeGeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedGeq(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLtCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLt(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeLeqCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedLeq(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
-            internal CallNode MakeInCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
+            internal CallNode MakeInCall(IntermediateNode callerSourceTable, FormulaType tableType, IList<string> relations, IEnumerable<FieldFunction> fieldFunctions, string fieldName, BinaryOpKind operation, IntermediateNode value, ScopeSymbol callerScope)
             {
                 var func = new DelegatedIn(this, operation);
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
@@ -220,7 +273,7 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedEndsWith(this);
                 }
 
-                var node = MakeCallNode(func, tableType, relations, fieldName, value, callerSourceTable, callerScope);
+                var node = MakeCallNode(func, tableType, relations, fieldFunctions: default, fieldName, value, callerSourceTable, callerScope);
                 return node;
             }
 
