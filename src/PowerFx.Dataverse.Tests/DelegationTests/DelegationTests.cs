@@ -55,6 +55,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             ParserOptions opts = parserNumberIsFloatOption ? PluginExecutionTests._parserAllowSideEffects_NumberIsFloat : PluginExecutionTests._parserAllowSideEffects;
 
             PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
+
+            Assert.Equal(config.Features.SupportColumnNamesAsIdentifiers, true);
+
             config.SymbolTable.EnableMutationFunctions();
             extraConfig?.Invoke(config);
 
