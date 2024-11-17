@@ -15,7 +15,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public class CoreValidation
     {
         [Fact]
-        public void ConfigTest()
+        public void ConfigTest1()
+        {
+            // If this fails, we're hitting a bug in .Net static initialization.
+            var features = Features.PowerFxV1;
+            Assert.True(features.SupportColumnNamesAsIdentifiers);
+        }
+
+        [Fact]
+        public void ConfigTest2()
         {
             var config = new PowerFxConfig();
             Assert.True(config.Features.SupportColumnNamesAsIdentifiers);

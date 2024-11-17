@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
 
-            Assert.Equal(config.Features.SupportColumnNamesAsIdentifiers, true);
+            Assert.True(config.Features.SupportColumnNamesAsIdentifiers, "config broken");
 
             config.SymbolTable.EnableMutationFunctions();
             extraConfig?.Invoke(config);
