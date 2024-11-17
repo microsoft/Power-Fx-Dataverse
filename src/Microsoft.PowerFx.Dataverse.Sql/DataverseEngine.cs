@@ -151,7 +151,7 @@ namespace Microsoft.PowerFx.Dataverse
             // This hook requires we manually include other symbols:
             // - Config.SymbolTable includes custom added functions (for interpreted case)
             // - this.SupportedFunctions is the functions builtin for SQL engine.
-            var functionList = ReadOnlySymbolTable.Compose(Config.SymbolTable, this.SupportedFunctions);
+            var functionList = ReadOnlySymbolTable.Compose(Config.InternalConfigSymbols, this.SupportedFunctions);
             var resolver = new DataverseResolver(_metadataCache, functionList);
             return resolver;
         }

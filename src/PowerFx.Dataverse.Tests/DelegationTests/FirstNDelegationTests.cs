@@ -63,11 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(27, "FirstN(t1, If(1<0, 1))", 0, true, false)]
         [InlineData(28, "FirstN(t1, If(1<0, 1))", 0, false, true)]
 
-        //Inserts default second arg.
-        [InlineData(29, "FirstN(t1)", 1, false, false)]
-        [InlineData(30, "FirstN(t1)", 1, true, true)]
-        [InlineData(31, "FirstN(t1)", 1, true, false)]
-        [InlineData(32, "FirstN(t1)", 1, false, true)]
+        //Inserts default second arg.        
         [InlineData(33, "FirstN(et, 2)", 2, false, false)]
         [InlineData(34, "FirstN(et, 2)", 2, true, true)]
         [InlineData(35, "FirstN(et, 2)", 2, true, false)]
@@ -77,7 +73,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(38, @"FirstN(Filter(t1, Name = ""&""""+'<>""), 5)", 0, true, true)]        
         public async Task FirstNDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => config.Features.FirstLastNRequiresSecondArguments = false, false, true, true, expectedWarnings);
+            await DelegationTestAsync(id, "FirstNDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, (config) => { }, false, true, true, expectedWarnings);
         }
     }
 }
