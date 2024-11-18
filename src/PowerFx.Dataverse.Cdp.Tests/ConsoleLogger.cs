@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Connectors;
@@ -39,7 +40,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
                 _ => "??"
             };
 
-            return $"[{cat}] {connectorLog.Message}";
+            return $"{DateTime.UtcNow.ToString("O")} [{cat}] {connectorLog.Message}";
         }
 
         protected override void Log(ConnectorLog log)
