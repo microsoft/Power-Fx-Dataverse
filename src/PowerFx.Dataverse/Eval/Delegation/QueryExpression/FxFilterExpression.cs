@@ -12,7 +12,8 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
-    internal class FxFilterExpression
+    [Obsolete("preview")]
+    public class FxFilterExpression
     {
         private IList<FxConditionExpression> _conditions;
 
@@ -38,9 +39,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _filters = new List<FxFilterExpression>();
         }
 
-        internal void AddCondition(string field, FxConditionOperator op)
+        public void AddCondition(string field, FxConditionOperator op)
         {
             _conditions.Add(new FxConditionExpression(field, op));
+        }
+
+        public void AddCondition(FxConditionExpression condition)
+        {
+            _conditions.Add(condition);
         }
 
         internal void AddCondition(string field, FxConditionOperator op, object value, FieldFunction fieldFunction = default)
@@ -83,7 +89,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
-    internal enum FxFilterOperator
+    [Obsolete("preview")]
+    public enum FxFilterOperator
     {
         And,
         Or

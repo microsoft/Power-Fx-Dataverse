@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
         public const string Odata_Top = "$top";
 
         // Systems can get the filter expression directrly and translate.
-        internal FxFilterExpression FxFilter { get; init; }
+        public FxFilterExpression FxFilter { get; init; }
 
         public FilterExpression Filter => FxFilter.GetDataverseFilterExpression();
 
