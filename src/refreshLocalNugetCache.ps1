@@ -3,10 +3,10 @@ if (! $localCache) {
  $localCache = $Env:USERPROFILE + "\.nuget\packages"
 }
 
-Write-Host "Deleting Microsoft.PowerFx.Dataverse*\1.0.0 from nuget cache. This will cause the newly built packages to be downloaded."
+Write-Host "Deleting Microsoft.PowerFx.Dataverse*\1.99.0-local from nuget cache. This will cause the newly built packages to be downloaded."
 
 Get-ChildItem $localCache Microsoft.PowerFx.Dataverse.* | ForEach-Object {
-    $path = ($_.FullName + "\1.0.0")
+    $path = ($_.FullName + "\1.99.0-local")
 
     if (Test-Path $path) {
       Remove-Item $path -Recurse

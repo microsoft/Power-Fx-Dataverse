@@ -2,6 +2,10 @@
 <Project>
 
   <PropertyGroup>
+    <LocalPackageVersion>1.99.0-local</LocalPackageVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- https://github.com/microsoft/Power-Fx/commit/f4232bf481f54958f60d6269f2f2d7607c018e90 -->
     <PowerFxVersion>1.3.0-build.20241116-1001</PowerFxVersion>    
     
@@ -18,6 +22,10 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>powerfx;dataverse</PackageTags>
     <RepositoryType />    
+    <Version Condition=" '$(ReleasePackageVersion)' == '' ">$(LocalPackageVersion)</Version>
+    <Version Condition=" '$(ReleasePackageVersion)' != '' ">$(ReleasePackageVersion)</Version>
+    <PackageVersion Condition=" '$(ReleasePackageVersion)' == '' ">$(LocalPackageVersion)</PackageVersion>
+    <PackageVersion Condition=" '$(ReleasePackageVersion)' != '' ">$(ReleasePackageVersion)</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>

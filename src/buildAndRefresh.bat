@@ -12,4 +12,4 @@ copy /y %~dp0Microsoft.PowerFx.AzureStorage\bin\Debug\*.nupkg  %~dp0outputpackag
 @echo  ^<add key="LocalFxDataverse" value="%~dp0outputpackages" /^>
 @echo .
 @echo 2) Set your current PowerFx version to
-@echo  0.3.0-local
+@echo  1.99.0-local
