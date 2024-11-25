@@ -97,10 +97,11 @@ namespace PowerFx.Dataverse.Cdp.Tests
             StringValue address = Assert.IsType<StringValue>(result);
             Assert.Equal("HL Road Frame - Black, 58", address.Value);
 
-            bool b = sqlTable.RecordType.TryGetFieldExternalTableName("ProductModelID", out string externalTableName, out string foreignKey);
+            bool b = sqlTable.RecordType.TryGetFieldRelationships("ProductModelID", out IEnumerable<ConnectorRelationship> relationships);
             Assert.True(b);
-            Assert.Equal("[SalesLT].[ProductModel]", externalTableName); // Logical Name
-            Assert.Equal("ProductModelID", foreignKey);
+            Assert.Single(relationships);
+            Assert.Equal("[SalesLT].[ProductModel]", relationships.First().ForeignTable); // Logical Name
+            Assert.Equal("ProductModelID", relationships.First().ForeignKey);
 
             testConnector.SetResponseFromFiles(@"Responses\SQL GetSchema ProductModel.json", @"Responses\SQL GetRelationships SampleDB.json");
             b = sqlTable.RecordType.TryGetFieldType("ProductModelID", out FormulaType productModelID);
@@ -164,10 +165,11 @@ namespace PowerFx.Dataverse.Cdp.Tests
             StringValue address = Assert.IsType<StringValue>(result);
             Assert.Equal("HL Road Frame - Black, 58", address.Value);
 
-            bool b = sqlTable.RecordType.TryGetFieldExternalTableName("ProductModelID", out string externalTableName, out string foreignKey);
+            bool b = sqlTable.RecordType.TryGetFieldRelationships("ProductModelID", out IEnumerable<ConnectorRelationship> relationships);
             Assert.True(b);
-            Assert.Equal("[SalesLT].[ProductModel]", externalTableName); // Logical Name
-            Assert.Equal("ProductModelID", foreignKey);         
+            Assert.Single(relationships);
+            Assert.Equal("[SalesLT].[ProductModel]", relationships.First().ForeignTable); // Logical Name
+            Assert.Equal("ProductModelID", relationships.First().ForeignKey);         
 
             IEnumerable<string> actual = testConnector._log.ToString().Split("\r\n").Where(x => x.Contains("/items?"));
             string query = Assert.Single(actual);
