@@ -101,6 +101,13 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DelegationEngineExtensions",
                 "Microsoft.PowerFx.Dataverse.DVSymbolTable",
                 
+                // Query trees. 
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxConditionExpression",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FieldFunction",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxConditionOperator",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterExpression",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterOperator",
+
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
                 "Microsoft.PowerFx.Dataverse.ColumnMap",
