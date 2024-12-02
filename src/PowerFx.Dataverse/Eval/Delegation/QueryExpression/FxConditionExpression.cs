@@ -10,7 +10,8 @@ using static Microsoft.PowerFx.Dataverse.DelegatedOperatorFunction;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
-    internal class FxConditionExpression
+    [Obsolete("preview")]
+    public class FxConditionExpression
     {
         private readonly string _attributeName;
 
@@ -70,7 +71,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
     /// <summary>
     /// Do not change enums values as they are used in serialization and name as it needs to match with Fx Function.
     /// </summary>
-    internal enum FieldFunction
+    [Obsolete("preview")]
+    public enum FieldFunction
     {
         None = 0,
         StartsWith = 1,
