@@ -4,10 +4,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using Microsoft.OData.UriParser;
+using Microsoft.OData.UriParser.Aggregation;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -51,6 +57,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly NumberLiteralNode _maxRows;
 
+            internal NumberLiteralNode MaxRows => _maxRows;
+
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
 
@@ -60,8 +68,12 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
-            
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
+
+            private GroupByTransformationNode _groupByNode;
+
+            internal GroupByTransformationNode GroupByNode => _groupByNode;
+
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, GroupByTransformationNode groupByNode = null)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -74,6 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
+                this._groupByNode = groupByNode;
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 

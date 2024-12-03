@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -35,6 +36,8 @@ namespace Microsoft.PowerFx.Dataverse
         internal ISet<LinkEntity> Relation { get; init; }
 
         public ColumnMap ColumnMap { get; init; }
+
+        internal GroupByTransformationNode GroupByTransformationNode { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;

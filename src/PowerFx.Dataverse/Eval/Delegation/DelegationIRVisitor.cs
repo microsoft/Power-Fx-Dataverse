@@ -233,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        internal static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
         {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {

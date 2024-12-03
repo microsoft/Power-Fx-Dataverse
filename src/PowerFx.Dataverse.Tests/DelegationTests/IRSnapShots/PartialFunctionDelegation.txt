@@ -1,4 +1,4 @@
-Concat(__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), 999, ), (Concatenate(DecimalToText(new_price), ,))) | $filter=(new_price lt 120)&$top=999
-Concat(__retrieveMultiple(local, __noop(), __noop(), Float(2), ), (Concatenate(DecimalToText(new_price), ,))) | $top=2
-Concat(__retrieveMultiple(local, __noop(), __noop(), 999, , {new_price:new_price}), (Concatenate(DecimalToText(new_price), ,))) | $select=new_price&$top=999
+Concat(__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), 999, __noopGroupBy(), ), (Concatenate(DecimalToText(new_price), ,))) | $filter=(new_price lt 120)&$top=999
+Concat(__retrieveMultiple(local, __noop(), __noop(), Float(2), __noopGroupBy(), ), (Concatenate(DecimalToText(new_price), ,))) | $top=2
+Concat(__retrieveMultiple(local, __noop(), __noop(), 999, __noopGroupBy(), , {new_price:new_price}), (Concatenate(DecimalToText(new_price), ,))) | $select=new_price&$top=999
 Concat(local, (Concatenate(DecimalToText(new_price), ,)))
