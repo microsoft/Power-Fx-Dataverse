@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         private static DisplayNameProvider GetDisplayNameProvider(RecordType recordType)
         {
-            return DisplayNameProvider.New(recordType.FieldNames.Select(f => new KeyValuePair<DName, DName>(new DName(f), new DName(f))));
+            return DisplayNameProvider.New(recordType.GetFieldTypes().Select(fType => new KeyValuePair<DName, DName>(new DName(fType.Name), fType.DisplayName != default ? new DName(fType.DisplayName) : new DName(fType.Name))));
         }
 
         private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters)

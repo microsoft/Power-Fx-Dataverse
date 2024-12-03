@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -16,6 +17,7 @@ using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
+using static Microsoft.PowerFx.Dataverse.DelegationIRVisitor.RetVal;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -63,6 +65,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
+            private static IntermediateNode GenerateGroupByIR(GroupByTransformationNode groupByNode)
+            {
+                // convert _groupByNode to IR
+                var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode);
+                var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
+                return groupByIRNode;
+            }
+
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
@@ -76,13 +86,13 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
 
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, GenerateGroupByIR(query.GroupByNode) };
                     returnType = recordReturnType;
                 }
                 else if (query.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault, GenerateGroupByIR(query.GroupByNode) };
                     returnType = tableReturnType;
                 }
                 else if (query.OriginalNode is CallNode callNode)
