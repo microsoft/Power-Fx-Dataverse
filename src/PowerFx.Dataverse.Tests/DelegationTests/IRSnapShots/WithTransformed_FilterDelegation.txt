@@ -270,4 +270,4 @@ With({r:local}, (__retrieveMultiple(local, __and(__startsWith(local, {fieldFunct
 
 
 
-With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_datetime}, DecimalToDateTime(0)), __noop(), 999, ))) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_datetime}, DecimalToDateTime(0)), __noop(), 999, __noopGroupBy(), ))) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999

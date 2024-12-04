@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.Differencing;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Tests;
 using Microsoft.PowerFx.Types;
@@ -30,6 +31,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // nested Summarize not supported.
         [InlineData(5, "Summarize(Summarize(t1, name, Sum(ThisGroup, amount) As TotalAmount), name)", new DelegationOperator[] { })]
+
+        // Summarize with column manipulation not supported.
+        [InlineData(6, "Summarize(t1, name, Sum(ThisGroup, amount * 2) As TotalAmount)", new DelegationOperator[] { })]
+
+        // Sqrt can not be delegated.
+        [InlineData(7, "Summarize(t1, Name, credit, Sum(ThisGroup, Sqrt(amount)) As TotalAmount)", new DelegationOperator[] { })]
 
         // Nested Summarize.
         public async Task SummarizeDelegationAsync(int id, string expression, DelegationOperator[] delegationOperator)
