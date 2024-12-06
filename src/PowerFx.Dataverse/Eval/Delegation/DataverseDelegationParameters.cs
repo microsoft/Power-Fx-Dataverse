@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Microsoft.OData.UriParser;
 using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -19,6 +20,8 @@ namespace Microsoft.PowerFx.Dataverse
     public class DataverseDelegationParameters : DelegationParameters
     {
         public const string Odata_Filter = "$filter";
+
+        public const string Odata_Apply = "$apply";
 
         public const string Odata_OrderBy = "$orderby";
 
@@ -73,6 +76,82 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override string GetOdataFilter() => ToOdataFilter(FxFilter);
 
+        public string GetGroupBy()
+        {
+            var sb = new StringBuilder();
+            var groupByNode = GroupByTransformationNode;
+
+            if (groupByNode == null)
+            {
+                return string.Empty;
+            }
+
+            // Start building the $apply parameter
+            sb.Append("groupby(");
+
+            // List of grouping properties
+            sb.Append("(");
+            var groupingProperties = groupByNode.GroupingProperties.Select(p => p.Name);
+            sb.Append(string.Join(",", groupingProperties));
+            sb.Append(")");
+
+            // Check if there are child transformations (e.g., aggregations)
+            if (groupByNode.ChildTransformations != null && groupByNode.ChildTransformations is AggregateTransformationNode at)
+            {
+                sb.Append(",");
+
+                sb.Append("aggregate(");
+
+                var aggregateClauses = new List<string>();
+                foreach (var aggExpression in at.AggregateExpressions)
+                {
+                    string expression = TranslateNode(aggExpression);
+                    aggregateClauses.Add(expression);
+                }
+
+                sb.Append(string.Join(",", aggregateClauses));
+
+                sb.Append(")");
+            }
+            else
+            {
+                throw new NotSupportedException($"Transformation type '{groupByNode.ChildTransformations.GetType().Name}' is not supported for translation.");
+            }
+
+            sb.Append(")");
+
+            return sb.ToString();
+        }
+
+        private static string TranslateNode(AggregateExpressionBase aggregateExpressionBase)
+        {
+            if (aggregateExpressionBase is AggregateExpression aggregateExpression)
+            {
+                var prop = TranslateNode(aggregateExpression.Expression);
+                var method = aggregateExpression.Method.ToString().ToLower();
+                var alias = aggregateExpression.Alias;
+                var result = $"{prop} with {method} as {alias}";
+                return result;
+            }
+            else
+            {
+                throw new NotSupportedException($"Node type '{aggregateExpressionBase.GetType().Name}' is not supported for translation.");
+            }
+        }
+
+        // Helper method to translate SingleValueNode to string
+        private static string TranslateNode(SingleValueNode node)
+        {
+            if (node is SingleValueOpenPropertyAccessNode propertyAccessNode)
+            {
+                return propertyAccessNode.Name;
+            }
+            else
+            {
+                throw new NotSupportedException($"Node type '{node.GetType().Name}' is not supported for translation.");
+            }
+        }
+
         public IReadOnlyDictionary<string, string> ODataElements
         {
             get
@@ -83,10 +162,16 @@ namespace Microsoft.PowerFx.Dataverse
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+                string groupBy = GetGroupBy();
 
                 if (!string.IsNullOrEmpty(filter))
                 {
                     ode.Add(Odata_Filter, filter);
+                }
+
+                if (!string.IsNullOrEmpty(groupBy))
+                {
+                    ode.Add(Odata_Apply, groupBy);
                 }
 
                 if (orderBy != null && orderBy.Any())

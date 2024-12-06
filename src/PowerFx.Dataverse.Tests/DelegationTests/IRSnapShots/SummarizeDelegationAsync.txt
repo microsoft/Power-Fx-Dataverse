@@ -1,5 +1,5 @@
-__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, Sum(amount) As TotalAmount), ) | $top=1000
-__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, Sum(amount) As TotalAmount, Sum(credit) As T Credit), ) | $top=1000
-__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, credit, Sum(amount) As TotalAmount), ) | $top=1000
-__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), 1000, __groupBy(name, credit, Sum(amount) As TotalAmount), ) | $filter=(name eq 'test')&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, Sum(amount) As TotalAmount), ) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, Sum(amount) As TotalAmount, Sum(credit) As T Credit), ) | $apply=groupby((name),aggregate(amount with sum as TotalAmount,credit with sum as T Credit))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, credit, Sum(amount) As TotalAmount), ) | $apply=groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), 1000, __groupBy(name, credit, Sum(amount) As TotalAmount), ) | $apply=$filter=(name eq 'test')/groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
 Summarize(Summarize(t1, name, ({TotalAmount:Sum(ThisGroup, (amount))})), name)
