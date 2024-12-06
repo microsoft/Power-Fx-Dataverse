@@ -13,7 +13,8 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessFilter(CallNode node, RetVal tableArg, Context context)
         {
-            if (node.Args.Count != 2)
+            // Filter with group by is not supported. Ie Filter(Summarize(...), ...), other way around is supported.
+            if (node.Args.Count != 2 || tableArg.GroupByNode != null)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }

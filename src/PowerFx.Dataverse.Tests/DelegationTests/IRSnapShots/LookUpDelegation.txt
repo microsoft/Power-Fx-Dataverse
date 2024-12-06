@@ -244,3 +244,4 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 (LookUp(local, (EndsWith(1, new_name)))).new_price
+LookUp(Summarize(local, new_name, ({TotalPrice:Sum(ThisGroup, (new_price))})), (EqText(new_name,test)))

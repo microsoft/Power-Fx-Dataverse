@@ -383,7 +383,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_scopeTypes.TryGetValue(sym.Parent.Id, out var type))
                 {
-                    if (type is TableType tableType)
+                    if (type is TableType tableType && sym.Name != "ThisGroup")
                     {
                         var tableLogicalName = tableType.TableSymbolName;
 

@@ -19,7 +19,9 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessLookUp(CallNode node, RetVal tableArg, Context context)
         {
             RetVal result;
-            if (node.Args.Count != 2)
+
+            // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
+            if (node.Args.Count != 2 || tableArg.GroupByNode != null)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
