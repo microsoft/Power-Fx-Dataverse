@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             FilterOpMetadata filterCapabilities = context.DelegationMetadata?.FilterDelegationMetadata;
 
-            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind, out fieldFunctions) && 
+            if (TryGetFieldName(context, left, out var leftField, out var invertCoercion, out var coercionOpKind, out fieldFunctions) &&
                 !TryGetFieldName(context, right, out _, out _, out _, out _))
             {
                 if (op == BinaryOpKind.InText && right.IRContext.ResultType == FormulaType.String &&
@@ -86,7 +86,7 @@ namespace Microsoft.PowerFx.Dataverse
                     return true;
                 }
             }
-            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind, out fieldFunctions) 
+            else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind, out fieldFunctions)
                 && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
                 fieldName = rightField;
@@ -110,7 +110,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 // will return false
             }
-            else if (TryGetFieldName(context, left, out var leftField2, out _, out _, out _) && 
+            else if (TryGetFieldName(context, left, out var leftField2, out _, out _, out _) &&
                 TryGetFieldName(context, right, out var rightField2, out _, out _, out _))
             {
                 if (leftField2 == rightField2)
@@ -147,7 +147,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <param name="context"></param>
         /// <param name="node"></param>
         /// <param name="fieldName">name of the field.</param>
-        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind. 
+        /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind.
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
         /// <returns></returns>
@@ -607,11 +607,11 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
-                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
-                            fieldName == primaryKeyFieldName)
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out IEnumerable<string> primaryKeyFieldNames) &&
+                            fieldName == primaryKeyFieldNames.FirstOrDefault())
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
-                            if (context.IsDataverseDelegation && 
+                            if (context.IsDataverseDelegation &&
                                 context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
                             {
                                 fieldName = relation2.ReferencingAttribute;
