@@ -154,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new List<DValue<RecordValue>>() { entityCollectionResponse.DValueError("RetrieveMultiple") };
             }
 
-            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters.ColumnMap, cancellationToken).ConfigureAwait(false);
+            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters, cancellationToken).ConfigureAwait(false);
 
             return result;
         }
@@ -184,7 +184,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             EntityCollection entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
-            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters.ColumnMap, cancellationToken).ConfigureAwait(false);
+            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -202,6 +202,11 @@ namespace Microsoft.PowerFx.Dataverse
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
+
+            if (delegationParameters.Join != null)
+            {
+                query.LinkEntities.Add(delegationParameters.Join);
+            }
 
             if (delegationParameters.Top != null)
             {
@@ -375,7 +380,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, ColumnMap columnMap, CancellationToken cancellationToken)
+        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
         {
             if (entityCollection == null)
             {
@@ -385,9 +390,11 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
 
+            RecordType recordType = ColumnMapRecordValue.ApplyMap(Type.ToRecord(), false, delegationParameters);
+
             foreach (Entity entity in entityCollection.Entities)
             {
-                DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, Type.ToRecord(), _connection);
+                DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
                 
                 list.Add(DValue<RecordValue>.Of(dvRecordValue));
             }

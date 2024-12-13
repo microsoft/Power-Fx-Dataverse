@@ -16,16 +16,17 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
             IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             if (tableArg.TableType._type.AssociatedDataSources.First().IsSelectable)
             {
                 // ShowColumns is only a column selector, so let's create a map with (column, column) entries
                 ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
 
-                map = ColumnMap.Combine(tableArg.ColumnMap, map);
+                map = ColumnMap.Combine(tableArg.ColumnMap, map, tableArg.TableType);
 
                 // change to original node to current node and appends columnSet.
-                var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
+                var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, join: join, _maxRows, map);
 
                 if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
                 {

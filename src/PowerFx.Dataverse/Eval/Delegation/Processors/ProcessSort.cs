@@ -22,6 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
             bool canDelegate = true;
 
             List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
@@ -79,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var sortFunc = new DelegatedSort(_hooks);
                 IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap);
+                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, join: join, _maxRows, tableArg.ColumnMap);
             }
 
             return ProcessOtherCall(node, tableArg, context);

@@ -14,6 +14,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessFirstN(CallNode node, RetVal tableArg, Context context)
         {
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             if (!DelegationUtility.CanDelegateFirst(tableArg.DelegationMetadata))
             {
@@ -30,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg.ColumnMap);
+            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], join: join, _maxRows, tableArg.ColumnMap);
         }
     }
 }

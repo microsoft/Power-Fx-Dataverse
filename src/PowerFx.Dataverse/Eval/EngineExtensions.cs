@@ -23,6 +23,12 @@ namespace Microsoft.PowerFx.Dataverse
     {
         internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
 
+        // LinkEntities use suffixes to better identify them
+        // N-1 relations (aka. dot-walking) are simple lookup operations
+        // Join relations are real $apply=join(...) operations
+        internal const string LinkEntityN1RelationSuffix = "_N1";
+        internal const string LinkEntityJoinSuffix = "_J";
+
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.
         internal class DelegationHooks
@@ -63,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
+            internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal retVal)
             {
                 DelegateFunction func;
                 CallNode node;
@@ -71,38 +77,38 @@ namespace Microsoft.PowerFx.Dataverse
                 List<IntermediateNode> args;
 
                 // If original node was returning record type, execute retrieveSingle. Otherwise, execute retrieveMultiple.
-                if (query.OriginalNode.IRContext.ResultType is RecordType recordReturnType)
+                if (retVal.OriginalNode.IRContext.ResultType is RecordType recordReturnType)
                 {
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
 
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy };
+                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.Join };
                     returnType = recordReturnType;
                 }
-                else if (query.OriginalNode.IRContext.ResultType is TableType tableReturnType)
+                else if (retVal.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
+                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.Join, retVal.TopCountOrDefault };
                     returnType = tableReturnType;
                 }
-                else if (query.OriginalNode is CallNode callNode)
+                else if (retVal.OriginalNode is CallNode callNode)
                 {
                     return callNode;
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unexpected return type: {query.OriginalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
+                    throw new InvalidOperationException($"Unexpected return type: {retVal.OriginalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(query.ColumnMap) ? query.ColumnMap.Distinct : string.Empty);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(retVal.ColumnMap) ? retVal.ColumnMap.Distinct : string.Empty);
                 args.Add(isDistinctArg);
 
-                if (query.HasColumnMap)
+                if (retVal.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(retVal)), retVal.ColumnMap.Map));
                 }
 
-                if (query.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
+                if (retVal.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
                 {
                     var scopeSymbol = originalCallNode.Scope;
                     node = new CallNode(IRContext.NotInSource(returnType), func, scopeSymbol, args);

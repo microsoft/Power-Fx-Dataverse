@@ -21,7 +21,7 @@ using Microsoft.PowerFx.Core.Utils;
 namespace Microsoft.PowerFx.Dataverse
 {
     /// <summary>
-    /// Repository for all information about an entity that will be needed to bind or generate SQL
+    /// Repository for all information about an entity that will be needed to bind or generate SQL.
     /// </summary>
     internal class DataverseDataSourceInfo : IExternalCdsDataSource, IDataEntityMetadata
     {
@@ -33,10 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private DelegationMetadata _delegationMetadata;
 
-        public DataverseDataSourceInfo(
-            CdsTableDefinition tableDefinition,
-            CdsEntityMetadataProvider provider,
-            string variableName = null)
+        public DataverseDataSourceInfo(CdsTableDefinition tableDefinition, CdsEntityMetadataProvider provider, string variableName = null)
         {
             CdsTableDefinition = tableDefinition;
             _columnDisplayNameMapping = tableDefinition.RegisterDisplayNameMapping();
@@ -62,9 +59,7 @@ namespace Microsoft.PowerFx.Dataverse
             QueryOptions = new TabularDataQueryOptions(this);
 
             // Ensure "distinct" capability is added
-            ServiceCapabilities updatedServiceCapabilities = EnsureCapability(
-                tableDefinition.ServiceCapabilities,
-                DelegationMetadataOperatorConstants.Distinct);
+            ServiceCapabilities updatedServiceCapabilities = EnsureCapability(tableDefinition.ServiceCapabilities, DelegationMetadataOperatorConstants.Distinct);
 
             // If delegable then set delegation metadata and delegatable attribute.
             var delegationMetadataDef = JsonSerializer.Serialize(updatedServiceCapabilities);
@@ -115,6 +110,8 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public string PrimaryNameField => CdsTableDefinition.PrimaryNameColumn;
+
+        public string PrimaryKeyName => CdsTableDefinition.PrimaryKeyColumn;
 
         public string DatasetName => CdsTableDefinition.DatasetName;
 

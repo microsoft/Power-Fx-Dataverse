@@ -18,6 +18,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
@@ -35,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, join: join, _maxRows, columnMap);
 
             return resultingTable;
         }
@@ -57,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
                 columnMap = new ColumnMap(fieldName);
 
                 // Combine with an existing map
-                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap);
+                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap, tableArg.TableType);
 
                 if (DelegationUtility.CanDelegateDistinct(columnMap.Distinct, context.DelegationMetadata?.FilterDelegationMetadata))
                 {

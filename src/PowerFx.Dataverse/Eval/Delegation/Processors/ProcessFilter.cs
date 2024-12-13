@@ -20,6 +20,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             IntermediateNode predicate = node.Args[1];
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
@@ -46,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, join: join, _maxRows, tableArg.ColumnMap);
             }
 
             return result;

@@ -25,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             var predicate = node.Args[1];
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
@@ -116,7 +117,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, join: join, _maxRows, tableArg.ColumnMap);
             }
             else
             {

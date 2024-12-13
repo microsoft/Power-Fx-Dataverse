@@ -14,7 +14,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
     /// <summary>
     /// This class is used to "smuggle" a FilterExpression into a FormulaValue. So another function can use it
-    /// to combine or execute FilterExpressions. e.g. <see cref="DelegatedAnd"/>"/> or <see cref="DelegatedRetrieveMultipleFunction"/>"/>
+    /// to combine or execute FilterExpressions. e.g. <see cref="DelegatedAnd"/>"/> or <see cref="DelegatedRetrieveMultipleFunction"/>"/>.
     /// </summary>
     internal class DelegationFormulaValue : ValidFormulaValue
     {

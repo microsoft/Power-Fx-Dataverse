@@ -71,7 +71,7 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
-            {                
+            {
                 cancellationToken.ThrowIfCancellationRequested();
                 IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
 
@@ -85,12 +85,12 @@ namespace Microsoft.PowerFx.Dataverse
                 if (columnMap != null && result.Any())
                 {
                     TableType innerTableType = ((TableValue)table).Type;
-                    RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), columnMap);
+                    RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), true, (DataverseDelegationParameters)delegationParameters);
 
                     List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
 
                     foreach (DValue<RecordValue> record in result)
-                    {
+                    {                        
                         list.Add(DValue<RecordValue>.Of(new ColumnMapRecordValue(record.Value, recordType, columnMap)));
                     }
 
@@ -181,7 +181,8 @@ namespace Microsoft.PowerFx.Dataverse
                     LinkToAttributeName = relation.ReferencedAttribute,
 
                     // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
-                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N"),
+                    // Add '_N1' (LinkEntityN1RelationSuffix) suffix to identify relation as N-1 relationship
+                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N") + DelegationEngineExtensions.LinkEntityN1RelationSuffix,
                     JoinOperator = JoinOperator.LeftOuter
                 };
 

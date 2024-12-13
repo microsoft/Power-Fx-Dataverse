@@ -71,18 +71,13 @@ namespace Microsoft.PowerFx.Dataverse
                 return base.Visit(node, context);
             }
 
-            RetVal tableArg;
+            if (funcName == "Join")
+            {
+                return ProcessJoin(node, context);
+            }
 
             // special casing Scope access for With()
-            if (node.Args[0] is ScopeAccessNode scopedFirstArg && scopedFirstArg.IRContext.ResultType is TableType && scopedFirstArg.Value is ScopeAccessSymbol scopedSymbol
-                && TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out var scopedNode))
-            {
-                tableArg = scopedNode;
-            }
-            else
-            {
-                tableArg = node.Args[0].Accept(this, context);
-            }
+            RetVal tableArg = GetTable(node.Args[0], context);                        
 
             if (!tableArg.IsDelegating)
             {
@@ -105,6 +100,25 @@ namespace Microsoft.PowerFx.Dataverse
             };
 
             return ret;
+        }
+
+        private RetVal GetTable(IntermediateNode arg, Context context)
+        {
+            RetVal table;
+
+            if (arg is ScopeAccessNode scopedArg &&
+                scopedArg.IRContext.ResultType is TableType &&
+                scopedArg.Value is ScopeAccessSymbol scopedSymbol &&
+                TryGetScopedVariable(context.WithScopes, scopedSymbol.Name, out RetVal scopedNode))
+            {
+                table = scopedNode;
+            }
+            else
+            {
+                table = arg.Accept(this, context);
+            }
+
+            return table;
         }
     }
 }

@@ -25,6 +25,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public const string Odata_Top = "$top";
 
+        public const string Odata_Apply = "$apply";
+
         // Systems can get the filter expression directrly and translate.
         internal FxFilterExpression FxFilter { get; init; }
 
@@ -35,6 +37,10 @@ namespace Microsoft.PowerFx.Dataverse
         internal ISet<LinkEntity> Relation { get; init; }
 
         public ColumnMap ColumnMap { get; init; }
+
+        public LinkEntity Join { get; init; }
+
+        public IEnumerable<NamedValue> JoinColumns { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -76,10 +82,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<string, string> ode = new Dictionary<string, string>();
 
+                string apply = GetApply();
                 string filter = GetOdataFilter();
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+
+                if (!string.IsNullOrEmpty(apply))
+                {
+                    ode.Add(Odata_Apply, apply);
+                }
 
                 if (!string.IsNullOrEmpty(filter))
                 {
@@ -242,9 +254,19 @@ namespace Microsoft.PowerFx.Dataverse
             return "'" + str.Replace("'", "''") + "'";
         }
 
+        private string GetApply()
+        {
+            if (Join == null)
+            {
+                return null;
+            }
+
+            return $"join({Join.LinkToEntityName} as {Join.EntityAlias})";
+        }
+
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {
             return OrderBy?.Select(oe => (oe.AttributeName, oe.OrderType == OrderType.Ascending)).ToList();
-        }
+        }        
     }
 }

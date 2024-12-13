@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using Xunit.Abstractions;
+using static Microsoft.PowerFx.PowerFxConfigExtensions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -55,6 +56,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             ParserOptions opts = parserNumberIsFloatOption ? PluginExecutionTests._parserAllowSideEffects_NumberIsFloat : PluginExecutionTests._parserAllowSideEffects;
 
             PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
+            config.EnableJoinFunction();
 
             Assert.True(config.Features.SupportColumnNamesAsIdentifiers, "config broken");
 
@@ -116,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 for (int j = 0; j < errorList.Length; j++)
                 {
-                    Assert.Equal(expectedWarnings[j], errorList[j]);
+                    Assert.Equal<object>(expectedWarnings[j], errorList[j]);
                 }
 
                 IExpressionEvaluator run = check.GetEvaluator();
@@ -240,6 +242,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 sb.Append(top);
             }
 
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
+            {
+                AddSeparatorIfNeeded(sb);
+                sb.Append(DataverseDelegationParameters.Odata_Apply);
+                AddEqual(sb);
+                sb.Append(apply);
+            }
+
             return sb.ToString();
         }
 
@@ -269,8 +279,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         private static void ConfigureEngine(DataverseConnection dv, RecalcEngine engine, bool enableDelegation)
         {
             if (enableDelegation)
-            {
-                engine.EnableDelegation(dv.MaxRows);
+            {                
+                engine.EnableDelegation(dv.MaxRows);                
             }
 
             engine.UpdateVariable("_count", FormulaValue.New(100m));

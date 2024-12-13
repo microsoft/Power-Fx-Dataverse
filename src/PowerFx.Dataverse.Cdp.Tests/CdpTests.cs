@@ -88,7 +88,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
 
             // Verify delegation is working (__retrieveSingle)
             string ir = Regex.Replace(check.PrintIR(), "RuntimeValues_[0-9]+", "RuntimeValues_XXXX");
-            Assert.Equal<object>(@"FieldAccess(__retrieveSingle:r!(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), """":s), Name)", ir);
+            Assert.Equal<object>(@"FieldAccess(__retrieveSingle:r!(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), , """":s), Name)", ir);
 
             // Use tabular connector. Internally we'll call CdpTableValue.GetRowsInternal to get the data
             testConnector.SetResponseFromFile(@"Responses\SQL GetItems Products.json");
@@ -98,10 +98,8 @@ namespace PowerFx.Dataverse.Cdp.Tests
             Assert.Equal("HL Road Frame - Black, 58", address.Value);
 
             bool b = sqlTable.RecordType.TryGetFieldExternalTableName("ProductModelID", out string tableName, out string foreignKey);
-            Assert.True(b);            
-            Assert.Equal("[SalesLT].[ProductModel]", tableName); // Logical Name
-            Assert.Equal("ProductModelID", foreignKey);
-
+            Assert.False(b);            
+            
             testConnector.SetResponseFromFiles(@"Responses\SQL GetSchema ProductModel.json", @"Responses\SQL GetRelationships SampleDB.json");
             b = sqlTable.RecordType.TryGetFieldType("ProductModelID", out FormulaType productModelID);
 
@@ -156,7 +154,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
 
             // Table is not sortable but we can delegate the inner Filter part
             string ir = Regex.Replace(check.PrintIR(), "RuntimeValues_[0-9]+", "RuntimeValues_XXXX");
-            Assert.Equal<object>(@"FieldAccess(First:r!(FirstN:r*(__retrieveMultiple:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), 1000:n, """":s), Float:n(2:w))), Name)", ir);
+            Assert.Equal<object>(@"FieldAccess(First:r!(FirstN:r*(__retrieveMultiple:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), , 1000:n, """":s), Float:n(2:w))), Name)", ir);
             
             testConnector.SetResponseFromFile(@"Responses\SQL GetItems Products.json");
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
@@ -165,10 +163,8 @@ namespace PowerFx.Dataverse.Cdp.Tests
             Assert.Equal("HL Road Frame - Black, 58", address.Value);
 
             bool b = sqlTable.RecordType.TryGetFieldExternalTableName("ProductModelID", out string tableName, out string foreignKey); 
-            Assert.True(b);
-            Assert.Equal("[SalesLT].[ProductModel]", tableName); // Logical Name
-            Assert.Equal("ProductModelID", foreignKey);         
-
+            Assert.False(b);
+            
             IEnumerable<string> actual = testConnector._log.ToString().Split("\r\n").Where(x => x.Contains("/items?"));
             string query = Assert.Single(actual);
 

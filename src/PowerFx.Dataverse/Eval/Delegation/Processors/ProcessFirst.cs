@@ -14,6 +14,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessFirst(CallNode node, RetVal tableArg, Context context)
         {
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
+            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
 
             if (!DelegationUtility.CanDelegateFirst(tableArg.DelegationMetadata))
             {
@@ -21,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg.ColumnMap);
+            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, countOne, join: join, _maxRows, tableArg.ColumnMap);
             return res;
         }
     }

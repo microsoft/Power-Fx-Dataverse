@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -461,7 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, _maxRows, columnMap: null);
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
@@ -538,7 +538,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
-        private bool TryGetScopedVariable(Stack<IDictionary<string, RetVal>> withScopes, string variable, out RetVal node)
+        private static bool TryGetScopedVariable(Stack<IDictionary<string, RetVal>> withScopes, string variable, out RetVal node)
         {
             if (withScopes.Count() == 0)
             {
@@ -607,8 +607,8 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
-                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out var primaryKeyFieldName) && 
-                            fieldName == primaryKeyFieldName)
+                            fromFieldRelation.TryGetPrimaryKeyFieldName2(out IEnumerable<string> primaryKeyNames) &&                            
+                            fieldName == primaryKeyNames.FirstOrDefault())
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
                             if (context.IsDataverseDelegation && 

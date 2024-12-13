@@ -1,38 +1,38 @@
-__retrieveMultiple(local, __noop(), __noop(), Float(2), ) | $top=2
-__retrieveMultiple(local, __noop(), __noop(), 2, ) | $top=2
-__retrieveMultiple(local, __noop(), __noop(), Float(2), ) | $top=2
-__retrieveMultiple(local, __noop(), __noop(), 2, ) | $top=2
-__retrieveMultiple(local, __noop(), __noop(), Float(_count), ) | $top=100
-__retrieveMultiple(local, __noop(), __noop(), Value(_count), ) | $top=100
-__retrieveMultiple(local, __noop(), __noop(), Float(_count), ) | $top=100
-__retrieveMultiple(local, __noop(), __noop(), Value(_count), ) | $top=100
-__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), ) | $top=1
-__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ) | $top=1
-__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (_count), (1))), ) | $top=1
-__retrieveMultiple(local, __noop(), __noop(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ) | $top=1
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), Float(10), ) | $filter=(new_price gt 90)&$top=10
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), 10, ) | $filter=(new_price gt 90)&$top=10
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(90)), __noop(), Float(10), ) | $filter=(new_price gt 90)&$top=10
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), 10, ) | $filter=(new_price gt 90)&$top=10
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(100), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 100, ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), Float(100), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 100, ))) | $top=100
-__retrieveMultiple(local, __noop(), __noop(), Float(DivDecimals(1,0)), )
-__retrieveMultiple(local, __noop(), __noop(), DivNumbers(1,0), )
-__retrieveMultiple(local, __noop(), __noop(), Float(DivDecimals(1,0)), )
-__retrieveMultiple(local, __noop(), __noop(), DivNumbers(1,0), )
-__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (1))), )
-__retrieveMultiple(local, __noop(), __noop(), If(LtNumbers(1,0), (1)), )
-__retrieveMultiple(local, __noop(), __noop(), Float(If(LtDecimals(1,0), (1))), )
-__retrieveMultiple(local, __noop(), __noop(), If(LtNumbers(1,0), (1)), )
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(2), ) | $top=2
+__retrieveMultiple(local, __noop(), __noop(), {}, 2, ) | $top=2
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(2), ) | $top=2
+__retrieveMultiple(local, __noop(), __noop(), {}, 2, ) | $top=2
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(_count), ) | $top=100
+__retrieveMultiple(local, __noop(), __noop(), {}, Value(_count), ) | $top=100
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(_count), ) | $top=100
+__retrieveMultiple(local, __noop(), __noop(), {}, Value(_count), ) | $top=100
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(If(LtDecimals(1,0), (_count), (1))), ) | $top=1
+__retrieveMultiple(local, __noop(), __noop(), {}, Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ) | $top=1
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(If(LtDecimals(1,0), (_count), (1))), ) | $top=1
+__retrieveMultiple(local, __noop(), __noop(), {}, Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ) | $top=1
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), {}, Float(10), ) | $filter=(new_price gt 90)&$top=10
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), {}, 10, ) | $filter=(new_price gt 90)&$top=10
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(90)), __noop(), {}, Float(10), ) | $filter=(new_price gt 90)&$top=10
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), {}, 10, ) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), {}, Float(100), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), {}, 100, ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), {}, Float(100), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), {}, 100, ))) | $top=100
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(DivDecimals(1,0)), )
+__retrieveMultiple(local, __noop(), __noop(), {}, DivNumbers(1,0), )
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(DivDecimals(1,0)), )
+__retrieveMultiple(local, __noop(), __noop(), {}, DivNumbers(1,0), )
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(If(LtDecimals(1,0), (1))), )
+__retrieveMultiple(local, __noop(), __noop(), {}, If(LtNumbers(1,0), (1)), )
+__retrieveMultiple(local, __noop(), __noop(), {}, Float(If(LtDecimals(1,0), (1))), )
+__retrieveMultiple(local, __noop(), __noop(), {}, If(LtNumbers(1,0), (1)), )
 __retrieveMultiple(local, __noop(), __noop(), 1, ) | $top=1
 __retrieveMultiple(local, __noop(), __noop(), 1, ) | $top=1
 __retrieveMultiple(local, __noop(), __noop(), 1, ) | $top=1
 __retrieveMultiple(local, __noop(), __noop(), 1, ) | $top=1
-__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), ) | $top=2
-__retrieveMultiple(elastictable, __noop(), __noop(), 2, ) | $top=2
-__retrieveMultiple(elastictable, __noop(), __noop(), Float(2), ) | $top=2
-__retrieveMultiple(elastictable, __noop(), __noop(), 2, ) | $top=2
-__retrieveMultiple(elastictable, __noop(), __noop(), 2, ) | $top=2
-__retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_name}, &"+'<>), __noop(), 5, ) | $filter=(new_name eq '&"+''<>')&$top=5
+__retrieveMultiple(elastictable, __noop(), __noop(), {}, Float(2), ) | $top=2
+__retrieveMultiple(elastictable, __noop(), __noop(), {}, 2, ) | $top=2
+__retrieveMultiple(elastictable, __noop(), __noop(), {}, Float(2), ) | $top=2
+__retrieveMultiple(elastictable, __noop(), __noop(), {}, 2, ) | $top=2
+__retrieveMultiple(elastictable, __noop(), __noop(), {}, 2, ) | $top=2
+__retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_name}, &"+'<>), __noop(), {}, 5, ) | $filter=(new_name eq '&"+''<>')&$top=5

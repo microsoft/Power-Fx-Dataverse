@@ -366,7 +366,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.Empty(checkResult.Errors);
             var actualIr = checkResult.GetCompactIRString();
 
-            Assert.Equal<object>("__retrieveMultiple(MyTable, __lt(MyTable, {fieldFunctions:Table(), fieldName:Date}, DateAdd(Now(), Float(30), (TimeUnit).Days)), __noop(), 1000, )", actualIr);
+            Assert.Equal<object>("__retrieveMultiple(MyTable, __lt(MyTable, {fieldFunctions:Table(), fieldName:Date}, DateAdd(Now(), Float(30), (TimeUnit).Days)), __noop(), {}, 1000, )", actualIr);
         }
     }
 }

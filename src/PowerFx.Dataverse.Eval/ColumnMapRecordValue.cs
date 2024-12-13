@@ -3,12 +3,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -30,18 +33,52 @@ namespace Microsoft.PowerFx.Dataverse
             _recordValue = recordValue;
         }
 
-        public static RecordType ApplyMap(RecordType recordType, IReadOnlyDictionary<string, string> columnMap = null)
+        // identify real field name when used in Join type link entities
+        // validate they have the following format: '<anything>_<guid_without_dashes>_J.<fieldName>'
+        private static Regex joinRegex = new Regex(@$"_[0-9a-fA-F]{{32}}{DelegationEngineExtensions.LinkEntityJoinSuffix}\.(?<n>.+)$", RegexOptions.Compiled);
+
+        private static string GetRealFieldName(string fieldName)
         {
-            if (columnMap != null)
+            Match m = joinRegex.Match(fieldName);
+            return m.Success ? m.Groups["n"].Value : fieldName;
+        }
+
+        public static RecordType ApplyMap(RecordType recordType, bool returnNewName, DataverseDelegationParameters delegationParameters)
+        {
+            if (delegationParameters.ColumnMap != null)
             {
                 RecordType rt = RecordType.Empty();
 
-                foreach (KeyValuePair<string, string> kvp in columnMap)
+                foreach (KeyValuePair<string, string> kvp in delegationParameters.ColumnMap.AsStringDictionary())
                 {
                     string newName = kvp.Key;
                     string oldName = kvp.Value;
 
-                    rt = rt.Add(newName, recordType.GetFieldType(oldName));
+                    if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType))
+                    {
+                        oldName = GetRealFieldName(oldName);
+                        oldNameType = delegationParameters.JoinColumns.First(nv => nv.Name == oldName).Value.Type;                        
+                    }
+
+                    string fieldName = null;
+
+                    if (returnNewName)
+                    {
+                        fieldName = newName;
+                    }
+                    else
+                    {
+                        if (recordType.TryGetFieldType(oldName, out _))
+                        {
+                            fieldName = oldName;
+                        }
+                        else
+                        {
+                            fieldName = $"{delegationParameters.Join.EntityAlias}.{oldName}";
+                        }
+                    }
+
+                    rt = rt.Add(fieldName, oldNameType);
                 }
 
                 recordType = rt;
@@ -75,8 +112,25 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
-        {
-            throw new InvalidOperationException($"ToExpression not supported on {nameof(DataverseRecordValue)} with column map");
+        {            
+            NamedValue[] fields = Fields.ToArray();
+
+            foreach (KeyValuePair<string, string> kvp in this._columnMap)
+            {
+                string newName = kvp.Key;
+                string oldName = kvp.Value;
+
+                int i = Array.FindIndex(fields, fld => fld.Name == newName);
+               
+                FormulaType fieldType = Type.GetFieldType(newName);
+                FormulaValue fv = _recordValue.GetField(oldName);
+
+                fields[i] = new NamedValue(newName, fv);
+            }
+
+            RecordValue newRecordValue = RecordValue.NewRecordFromFields(fields);
+
+            newRecordValue.ToExpression(sb, settings);
         }
 
         public override void ShallowCopyFieldInPlace(string fieldName)

@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             _dic = recordNode.Fields.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             _distinctColumn = textLiteralNode.LiteralValue;
-        }      
+        }
 
         // Constructor used for Distinct
         internal ColumnMap(string distinctColumn)
@@ -88,9 +88,9 @@ namespace Microsoft.PowerFx.Dataverse
                ? tln.LiteralValue
                : throw new InvalidOperationException($"Invalid {nameof(IntermediateNode)}, expexting {nameof(TextLiteralNode)} and received {i.GetType().Name}");
 
-        internal static ColumnMap Combine(ColumnMap first, ColumnMap second)
+        internal static ColumnMap Combine(ColumnMap first, ColumnMap second, TableType tableType)
         {
-            if (first == null)
+            if (first == null || !first.Map.Any())
             {
                 return second;
             }
@@ -111,6 +111,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), first._distinctColumn));
                     distinctColumn = first._distinctColumn;
+                }
+                else if (tableType.FieldNames.Contains(secondValue))
+                {                    
+                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), secondValue));
                 }
                 else
                 {
@@ -138,6 +142,30 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return new ColumnMap(newDic, distinctColumn);
+        }
+
+        internal static ColumnMap Merge(ColumnMap first, ColumnMap second)
+        {
+            if (!string.IsNullOrEmpty(first._distinctColumn) || !string.IsNullOrEmpty(second._distinctColumn))
+            {
+                throw new InvalidOperationException("Cannot merge two column maps when at least one has a Distinct parameter");
+            }
+
+            if (first == null || !first.Map.Any())
+            {
+                return second;
+            }
+
+            if (second == null || !second.Map.Any())
+            {
+                return first;
+            }
+
+            Dictionary<DName, IntermediateNode> newDic = new Dictionary<DName, IntermediateNode>();
+            first._dic.ToList().ForEach(kvp => newDic.Add(kvp.Key, kvp.Value));
+            second._dic.ToList().ForEach(kvp => newDic.Add(kvp.Key, kvp.Value));
+
+            return new ColumnMap(newDic, null);
         }
 
         internal IReadOnlyDictionary<DName, IntermediateNode> Map => _dic;

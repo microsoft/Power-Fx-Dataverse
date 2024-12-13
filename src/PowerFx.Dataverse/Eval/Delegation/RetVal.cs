@@ -8,6 +8,7 @@ using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -38,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
             // From here, we can downcast at get the services. Ideally would be either Scope node or ResolvedObjectNode
             public readonly DelegableIntermediateNode _sourceTableIRNode;
 
-            // Table type  and original metadata for table that we're delegating to.
+            // Table type and original metadata for table that we're delegating to.
             public readonly TableType TableType;
 
             public readonly IDelegationMetadata DelegationMetadata;
@@ -48,6 +49,8 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly IntermediateNode _orderBy;
 
             private readonly IntermediateNode _topCount;
+
+            private readonly IntermediateNode _join;
 
             private readonly NumberLiteralNode _maxRows;
 
@@ -60,8 +63,18 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
-            
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
+
+            public RetVal(
+                DelegationHooks hooks,
+                IntermediateNode originalNode,
+                IntermediateNode sourceTableIRNode,
+                TableType tableType,
+                IntermediateNode filter,
+                IntermediateNode orderBy,
+                IntermediateNode count,
+                IntermediateNode join,
+                int maxRows,
+                ColumnMap columnMap)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -74,10 +87,11 @@ namespace Microsoft.PowerFx.Dataverse
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
+                this._join = join;
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
-                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);                
+                _ = DelegationUtility.TryGetEntityMetadata(tableType, out this._metadata);
             }
 
             // Non-delegating path
@@ -93,11 +107,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool HasTopCount => _topCount != null;
 
+            public bool HasJoin => _join != null;
+
             public bool HasColumnMap => ColumnMap != null;
 
             public IntermediateNode Filter => _filter ?? MakeBlankCall(Hooks);
 
             public IntermediateNode OrderBy => _orderBy ?? MakeBlankCall(Hooks);
+
+            public IntermediateNode Join => _join ?? MakeBlankRecordNode();
 
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
@@ -147,6 +165,11 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedBlank(hooks);
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
+            }
+
+            internal RecordNode MakeBlankRecordNode()
+            {
+                return new RecordNode(IRContext.NotInSource(RecordType.Empty()), new Dictionary<DName, IntermediateNode>());
             }
         }
     }

@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-//#define REGENERATE_SNAPSHOT
+// #define REGENERATE_SNAPSHOT
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -75,6 +76,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Array.Resize(ref allLines, index + 1);
             }
 
+            // rename linkEntity aliases
+            inputString = rex.Replace(inputString, "_uniqueId$2");
+
 #if REGENERATE_SNAPSHOT
 
             // Update or add the specified line with the input string
@@ -83,10 +87,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 #else
 
             // Compare the specified line with the input string, considering new lines as empty
-            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;
+            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;            
+
             Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
 #endif
         }
+
+        private static Regex rex = new Regex(@$"_([0-9a-fA-F]{{32}}({DelegationEngineExtensions.LinkEntityJoinSuffix}|{DelegationEngineExtensions.LinkEntityN1RelationSuffix}))", RegexOptions.Compiled);
 
         private static string ShowDifference(string target, string input)
         {

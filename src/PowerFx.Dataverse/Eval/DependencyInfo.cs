@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -386,9 +387,13 @@ namespace Microsoft.PowerFx.Dataverse
                     if (type is TableType tableType)
                     {
                         var tableLogicalName = tableType.TableSymbolName;
-
                         var fieldLogicalName = sym.Name.Value;
-                        AddFieldRead(tableLogicalName, fieldLogicalName);
+                        
+                        if (fieldLogicalName != FunctionJoinScopeInfo.LeftRecord.Value && fieldLogicalName != FunctionJoinScopeInfo.RightRecord.Value)
+                        {
+                            AddFieldRead(tableLogicalName, fieldLogicalName);
+                        }
+
                         return null;
                     }
                 }
