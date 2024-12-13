@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -65,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            private static IntermediateNode GenerateGroupByIR(GroupByTransformationNode groupByNode)
+            private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode)
             {
                 // convert _groupByNode to IR
                 var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode);

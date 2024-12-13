@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using Microsoft.OData.UriParser;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -40,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public ColumnMap ColumnMap { get; init; }
 
-        internal GroupByTransformationNode GroupByTransformationNode { get; init; }
+        public FxGroupByNode GroupBy { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -70,16 +68,21 @@ namespace Microsoft.PowerFx.Dataverse
                     features |= DelegationParameterFeatures.Top;
                 }
 
+                if (GroupBy != null)
+                {
+                    features |= DelegationParameterFeatures.Apply;
+                }
+
                 return features;
             }
         }
 
         public override string GetOdataFilter() => ToOdataFilter(FxFilter);
 
-        public string GetGroupBy()
+        public string GetODataGroupBy()
         {
             var sb = new StringBuilder();
-            var groupByNode = GroupByTransformationNode;
+            var groupByNode = GroupBy;
 
             if (groupByNode == null)
             {
@@ -91,19 +94,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             // List of grouping properties
             sb.Append("(");
-            var groupingProperties = groupByNode.GroupingProperties.Select(p => p.Name);
-            sb.Append(string.Join(",", groupingProperties));
+            sb.Append(string.Join(",", groupByNode.GroupingProperties));
             sb.Append(")");
 
             // Check if there are child transformations (e.g., aggregations)
-            if (groupByNode.ChildTransformations != null && groupByNode.ChildTransformations is AggregateTransformationNode at)
+            if (groupByNode.FxAggregateExpressions != null)
             {
                 sb.Append(",");
 
                 sb.Append("aggregate(");
 
                 var aggregateClauses = new List<string>();
-                foreach (var aggExpression in at.AggregateExpressions)
+                foreach (var aggExpression in groupByNode.FxAggregateExpressions)
                 {
                     string expression = TranslateNode(aggExpression);
                     aggregateClauses.Add(expression);
@@ -113,43 +115,18 @@ namespace Microsoft.PowerFx.Dataverse
 
                 sb.Append(")");
             }
-            else
-            {
-                throw new NotSupportedException($"Transformation type '{groupByNode.ChildTransformations.GetType().Name}' is not supported for translation.");
-            }
 
             sb.Append(")");
 
             return sb.ToString();
         }
 
-        private static string TranslateNode(AggregateExpressionBase aggregateExpressionBase)
+        private static string TranslateNode(FxAggregateExpression aggExpression)
         {
-            if (aggregateExpressionBase is AggregateExpression aggregateExpression)
-            {
-                var prop = TranslateNode(aggregateExpression.Expression);
-                var method = aggregateExpression.Method.ToString().ToLower();
-                var alias = aggregateExpression.Alias;
-                var result = $"{prop} with {method} as {alias}";
-                return result;
-            }
-            else
-            {
-                throw new NotSupportedException($"Node type '{aggregateExpressionBase.GetType().Name}' is not supported for translation.");
-            }
-        }
-
-        // Helper method to translate SingleValueNode to string
-        private static string TranslateNode(SingleValueNode node)
-        {
-            if (node is SingleValueOpenPropertyAccessNode propertyAccessNode)
-            {
-                return propertyAccessNode.Name;
-            }
-            else
-            {
-                throw new NotSupportedException($"Node type '{node.GetType().Name}' is not supported for translation.");
-            }
+            var method = aggExpression.AggregateType; // e.g., "sum", "min", "max", etc.
+            var propertyName = aggExpression.PropertyName;
+            var alias = aggExpression.Alias;
+            return $"{propertyName} with {method.ToString().ToLower()} as {alias}";
         }
 
         public IReadOnlyDictionary<string, string> ODataElements
@@ -162,7 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
-                string groupBy = GetGroupBy();
+                string groupBy = GetODataGroupBy();
 
                 if (!string.IsNullOrEmpty(filter))
                 {

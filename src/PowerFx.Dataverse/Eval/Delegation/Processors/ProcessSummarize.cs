@@ -4,15 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.OData.Edm;
-using Microsoft.OData.UriParser;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Syntax;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
@@ -30,8 +28,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Initialize GroupBy and Aggregate collections
-            var groupByProperties = new List<GroupByPropertyNode>();
-            var aggregateExpressions = new List<AggregateExpression>();
+            var groupByProperties = new List<string>();
+            var aggregateExpressions = new List<FxAggregateExpression>();
 
             // Process arguments for group by or aggregate logic
             foreach (var arg in node.Args.Skip(1))
@@ -39,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (arg is TextLiteralNode columnName)
                 {
                     // Handle GroupBy column
-                    groupByProperties.Add(new GroupByPropertyNode(columnName.LiteralValue, null));
+                    groupByProperties.Add(columnName.LiteralValue);
                 }
                 else if (arg is LazyEvalNode lazyEvalNode 
                     && lazyEvalNode.Child is RecordNode scope
@@ -49,9 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            // Create transformations for aggregation and group by
-            var aggregateNode = new AggregateTransformationNode(aggregateExpressions);
-            var groupByNode = new GroupByTransformationNode(groupByProperties, aggregateNode, null);
+            var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
 
             // Return a new RetVal with updated transformations, it should include all the previous transformations.
             var result = new RetVal(
@@ -74,7 +70,7 @@ namespace Microsoft.PowerFx.Dataverse
             RecordNode scope,
             Context context,
             RetVal sourceTable,
-            List<AggregateExpression> aggregateExpressions)
+            IList<FxAggregateExpression> aggregateExpressions)
         {
             var aliasName = scope.Fields.First().Key.Value;
 
@@ -102,17 +98,14 @@ namespace Microsoft.PowerFx.Dataverse
             Context context,
             RetVal sourceTable,
             string aliasName,
-            List<AggregateExpression> aggregateExpressions)
+            IList<FxAggregateExpression> aggregateExpressions)
         {
             var sumArg = callNode.Args[1] as LazyEvalNode;
             var predicateContext = context.GetContextForPredicateEval(callNode, sourceTable);
 
             if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, sumArg.Child, out var fieldName))
             {
-                var sourceTableName = sourceTable.TableType.TableSymbolName;
-                var sourceNode = new NonResourceRangeVariableReferenceNode(sourceTableName, new NonResourceRangeVariable(sourceTableName, null, null));
-                var propertyNode = new SingleValueOpenPropertyAccessNode(sourceNode, fieldName);
-                aggregateExpressions.Add(new AggregateExpression(propertyNode, AggregationMethod.Sum, aliasName, typeReference: null));
+                aggregateExpressions.Add(new FxAggregateExpression(fieldName, FxAggregateType.Sum, aliasName));
                 return true;
             }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -33,6 +34,8 @@ namespace Microsoft.PowerFx.Dataverse
         public Dictionary<string, HashSet<string>> FieldWrites { get; set; }
 
         public bool HasWrites => FieldWrites != null && FieldWrites.Count > 0;
+
+        private const string ThisGroupScopeSymbolName = "ThisGroup";
 
         public override string ToString()
         {
@@ -383,7 +386,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_scopeTypes.TryGetValue(sym.Parent.Id, out var type))
                 {
-                    if (type is TableType tableType && sym.Name != "ThisGroup")
+                    // Ignore ThisRecord scopeaccess node. e.g. Summarize(table, f1, Sum(ThisGroup, f2)) where ThisGroup should be ignored.
+                    if (type is TableType tableType && sym.Name != FunctionThisGroupScopeInfo.ThisGroup.Value)
                     {
                         var tableLogicalName = tableType.TableSymbolName;
 

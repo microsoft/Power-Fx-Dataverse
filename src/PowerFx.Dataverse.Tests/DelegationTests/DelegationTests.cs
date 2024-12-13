@@ -8,8 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.OData.UriParser;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
@@ -200,7 +198,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             IReadOnlyDictionary<string, string> ode = dp.ODataElements;
 
             // Check if GroupByTransformationNode is present
-            if (dp.GroupByTransformationNode != null)
+            if (dp.GroupBy != null)
             {
                 // Generate the $apply parameter based on the GroupByTransformationNode
                 sb.Append("$apply");

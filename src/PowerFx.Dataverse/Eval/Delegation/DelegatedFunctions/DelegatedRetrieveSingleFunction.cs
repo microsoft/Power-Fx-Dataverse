@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -66,10 +65,10 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg2 should always be of type {nameof(delegationFormulaValue)}");
             }
 
-            GroupByTransformationNode groupBy = null;
+            FxGroupByNode groupBy = null;
             if (args[3] is GroupByObjectFormulaValue groupByObject)
             {
-                groupBy = groupByObject.GroupByTransformationNode;
+                groupBy = groupByObject.GroupBy;
             }
             else
             {
@@ -105,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation,
-                GroupByTransformationNode = groupBy
+                GroupBy = groupBy
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

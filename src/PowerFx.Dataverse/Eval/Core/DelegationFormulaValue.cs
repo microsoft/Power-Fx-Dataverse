@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -36,9 +35,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
-        internal readonly GroupByTransformationNode _groupBy;
+        internal readonly FxGroupByNode _groupBy;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, GroupByTransformationNode groupBy = null, string partitionId = null, int? top = null)
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();

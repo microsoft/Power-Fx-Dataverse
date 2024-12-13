@@ -5,34 +5,33 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.OData.UriParser;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
     internal class GroupByObjectFormulaValue : ValidFormulaValue
     {
-        private readonly GroupByTransformationNode _groupByTransformationNode;
+        private readonly FxGroupByNode _groupBy;
 
-        internal GroupByTransformationNode GroupByTransformationNode => _groupByTransformationNode;
+        internal FxGroupByNode GroupBy => _groupBy;
 
-        public GroupByObjectFormulaValue(GroupByTransformationNode groupByTransformationNode)
+        public GroupByObjectFormulaValue(FxGroupByNode groupBy)
             : base(IRContext.NotInSource(FormulaType.Void))
         {
-            _groupByTransformationNode = groupByTransformationNode;
+            _groupBy = groupBy;
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
         {
-            sb.Append(DescribeGroupByTransformationNode(_groupByTransformationNode));
+            sb.Append(DescribeGroupByTransformationNode(_groupBy));
         }
 
         public override object ToObject()
         {
-            return _groupByTransformationNode;
+            return _groupBy;
         }
 
         public override void Visit(IValueVisitor visitor)
@@ -40,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             throw new NotImplementedException();
         }
 
-        private static string DescribeGroupByTransformationNode(GroupByTransformationNode groupByNode)
+        private static string DescribeGroupByTransformationNode(FxGroupByNode groupByNode)
         {
             if (groupByNode == null)
             {
@@ -53,73 +52,22 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             // Extract grouping columns
             foreach (var property in groupByNode.GroupingProperties)
             {
-                ExtractGroupingPropertyNames(property, groupingColumns);
+                groupingColumns.Add(property);
             }
 
             // Extract aggregate expressions
-            if (groupByNode.ChildTransformations is AggregateTransformationNode aggregateNode)
+            foreach (var expr in groupByNode.FxAggregateExpressions)
             {
-                foreach (var expr in aggregateNode.Expressions)
-                {
-                    if (expr is AggregateExpression aggregateExpr)
-                    {
-                        var method = aggregateExpr.Method; // e.g., "sum", "min", "max", etc.
-                        var propertyName = GetPropertyName(aggregateExpr.Expression);
-                        aggregateExpressions.Add($"{method}({propertyName}) As {aggregateExpr.Alias}");
-                    }
-                }
+                var method = expr.AggregateType; // e.g., "sum", "min", "max", etc.
+                var propertyName = expr.PropertyName;
+                var alias = expr.Alias;
+                aggregateExpressions.Add($"{method}({propertyName}) As {alias}");
             }
 
             // Construct the result string
             var allExpressions = groupingColumns.Concat(aggregateExpressions);
             string result = $"__groupBy({string.Join(", ", allExpressions)})";
             return result;
-        }
-
-        private static void ExtractGroupingPropertyNames(GroupByPropertyNode groupingProperty, IList<string> names)
-        {
-            if (groupingProperty.Expression is SingleValuePropertyAccessNode propertyAccessNode)
-            {
-                names.Add(propertyAccessNode.Property.Name);
-            }
-            else if (groupingProperty.Expression is SingleValueOpenPropertyAccessNode openPropertyAccessNode)
-            {
-                names.Add(openPropertyAccessNode.Name);
-            }
-            else if (groupingProperty.Expression is SingleComplexNode complexNode)
-            {
-                // Handle nested properties if necessary
-                names.Add(groupingProperty.Name);
-            }
-            else
-            {
-                names.Add(groupingProperty.Name);
-            }
-        }
-
-        private static string GetPropertyName(SingleValueNode node)
-        {
-            if (node is SingleValuePropertyAccessNode propertyAccessNode)
-            {
-                return propertyAccessNode.Property.Name;
-            }
-            else if (node is SingleValueOpenPropertyAccessNode openPropertyAccessNode)
-            {
-                return openPropertyAccessNode.Name;
-            }
-            else if (node is SingleValueFunctionCallNode functionCallNode)
-            {
-                // Handle function calls if necessary
-                return functionCallNode.Name;
-            }
-            else if (node is ConstantNode constantNode)
-            {
-                return constantNode.LiteralText;
-            }
-            else
-            {
-                return node.ToString();
-            }
         }
     }
 }

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.OData.UriParser.Aggregation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
@@ -84,10 +83,10 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
             }
 
-            GroupByTransformationNode groupByTransformationNode = null;
+            FxGroupByNode groupBy = null;
             if (args[4] is GroupByObjectFormulaValue groupByObjectFormula)
             {
-                groupByTransformationNode = groupByObjectFormula.GroupByTransformationNode;
+                groupBy = groupByObjectFormula.GroupBy;
             }
             else
             {
@@ -123,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation,
-                GroupByTransformationNode = groupByTransformationNode
+                GroupBy = groupBy
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
