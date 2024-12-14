@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal result;
 
             // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
-            if (node.Args.Count != 2 || tableArg.GroupByNode != null)
+            if (node.Args.Count != 2 || tableArg.HasGroupByNode)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }

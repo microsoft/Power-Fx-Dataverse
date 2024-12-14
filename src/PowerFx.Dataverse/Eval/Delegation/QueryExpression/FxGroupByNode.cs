@@ -7,6 +7,7 @@ using System.Text;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
+    [Obsolete("preview")]
     public class FxGroupByNode
     {
         private readonly IEnumerable<string> _groupingProperties;
@@ -24,6 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
+    [Obsolete("preview")]
     public class FxAggregateExpression
     {
         private readonly string _propertyName;
@@ -46,6 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         }
     }
 
+    [Obsolete("preview")]
     public enum FxAggregateType
     {
         None,

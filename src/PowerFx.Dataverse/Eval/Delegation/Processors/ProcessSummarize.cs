@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -22,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
             // nested summarize is not supported.
-            if (tableArg.GroupByNode != null)
+            if (tableArg.HasGroupByNode)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
@@ -89,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
                    && aggregateExpressionNode.Args[0] is ScopeAccessNode scopeNode
                    && aggregateExpressionNode.Args[1] is LazyEvalNode
                    && scopeNode.Value is ScopeAccessSymbol scopeSymbol
-                   && scopeSymbol.Name == "ThisGroup"
+                   && scopeSymbol.Name == FunctionThisGroupScopeInfo.ThisGroup.Value
                    && scopeSymbol.Parent.Id == groupByNode.Scope.Id;
         }
 

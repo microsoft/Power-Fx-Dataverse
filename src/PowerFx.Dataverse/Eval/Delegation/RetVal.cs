@@ -70,7 +70,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             private FxGroupByNode _groupByNode;
 
-            internal FxGroupByNode GroupByNode => _groupByNode;
+            internal bool HasGroupByNode => _groupByNode != null;
+
+            internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
 
             public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, FxGroupByNode groupByNode = null)
             {
@@ -159,6 +161,14 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedBlank(hooks);
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
+            }
+
+            private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode, TableType tableType)
+            {
+                // convert _groupByNode to IR
+                var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode, tableType);
+                var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
+                return groupByIRNode;
             }
         }
     }

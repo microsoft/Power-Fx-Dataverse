@@ -231,11 +231,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             sb.Append('=');
         }
 
-        private static void AddSeparatorIfNeeded(StringBuilder sb, bool isGroupBySeprator)
+        private static void AddSeparatorIfNeeded(StringBuilder sb, bool isApplySeprator)
         {
             if (sb.Length > 0)
             {
-                if (isGroupBySeprator)
+                if (isApplySeprator)
                 {
                     sb.Append('/');
                 }
@@ -246,17 +246,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
-        private static void AppendFilterParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isGroupBySeprator)
+        private static void AppendFilterParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
         {
             if (ode.TryGetValue(DataverseDelegationParameters.Odata_Filter, out string filter))
             {
                 // in group by, filter is part of apply and is first element.
-                if (!isGroupBySeprator)
+                string filterParamString = null;
+                if (!isApplySeprator)
                 {
-                    AddSeparatorIfNeeded(sb, isGroupBySeprator);
+                    AddSeparatorIfNeeded(sb, isApplySeprator);
+                    filterParamString = DataverseDelegationParameters.Odata_Filter;
+                }
+                else
+                {
+                    filterParamString = DataverseDelegationParameters.Odata_Filter.Substring(1);
                 }
 
-                sb.Append(DataverseDelegationParameters.Odata_Filter);
+                sb.Append(filterParamString);
                 AddEqual(sb);
                 sb.Append(filter);
             }

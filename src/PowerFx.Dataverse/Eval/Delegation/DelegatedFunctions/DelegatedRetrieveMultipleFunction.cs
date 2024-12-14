@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[2]}");
             }
 
             FxGroupByNode groupBy = null;

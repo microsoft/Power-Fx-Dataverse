@@ -64,14 +64,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode)
-            {
-                // convert _groupByNode to IR
-                var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode);
-                var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
-                return groupByIRNode;
-            }
-
             internal CallNode MakeQueryExecutorCall(DelegationIRVisitor.RetVal query)
             {
                 DelegateFunction func;
@@ -85,13 +77,13 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
 
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, GenerateGroupByIR(query.GroupByNode) };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.GroupByNode };
                     returnType = recordReturnType;
                 }
                 else if (query.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault, GenerateGroupByIR(query.GroupByNode) };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault, query.GroupByNode };
                     returnType = tableReturnType;
                 }
                 else if (query.OriginalNode is CallNode callNode)

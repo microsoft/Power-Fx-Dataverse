@@ -18,8 +18,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 
         internal FxGroupByNode GroupBy => _groupBy;
 
-        public GroupByObjectFormulaValue(FxGroupByNode groupBy)
-            : base(IRContext.NotInSource(FormulaType.Void))
+        public GroupByObjectFormulaValue(FxGroupByNode groupBy, TableType tableType)
+            : base(IRContext.NotInSource(tableType))
         {
             _groupBy = groupBy;
         }
@@ -37,6 +37,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         public override void Visit(IValueVisitor visitor)
         {
             throw new NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            return DescribeGroupByTransformationNode(_groupBy);
         }
 
         private static string DescribeGroupByTransformationNode(FxGroupByNode groupByNode)

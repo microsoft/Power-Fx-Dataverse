@@ -11,6 +11,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -34,8 +35,6 @@ namespace Microsoft.PowerFx.Dataverse
         public Dictionary<string, HashSet<string>> FieldWrites { get; set; }
 
         public bool HasWrites => FieldWrites != null && FieldWrites.Count > 0;
-
-        private const string ThisGroupScopeSymbolName = "ThisGroup";
 
         public override string ToString()
         {
@@ -150,6 +149,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
 
+        private readonly ISet<int> _summarizeScopeIDs = new HashSet<int>();
+
         public override RetVal Visit(CallNode node, Context context)
         {
             // Scope is created against type of arg0
@@ -157,6 +158,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var arg0 = node.Args[0];
                 _scopeTypes[node.Scope.Id] = arg0.IRContext.ResultType;
+
+                if (node.Function.Name == "Summarize")
+                {
+                    _summarizeScopeIDs.Add(node.Scope.Id);
+                }
             }
 
             // If arg0 is a write-only arg, then skip it for reading.
@@ -243,6 +249,24 @@ namespace Microsoft.PowerFx.Dataverse
             // Patch, Collect
             // Set
             var func = node.Function.Name;
+
+            if (func == "Summarize")
+            {
+                var tableName = ((AggregateType)node.Args[0].IRContext.ResultType).TableSymbolName;
+                foreach (var arg in node.Args.Skip(1))
+                {
+                    if (arg is TextLiteralNode columnNode)
+                    {
+                        AddFieldRead(tableName, columnNode.LiteralValue);
+                    }
+                    else 
+                    {
+                        arg.Accept(this, context);
+                    }
+                }
+
+                return null;
+            }
 
             if (func == "Set")
             {
@@ -387,7 +411,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_scopeTypes.TryGetValue(sym.Parent.Id, out var type))
                 {
                     // Ignore ThisRecord scopeaccess node. e.g. Summarize(table, f1, Sum(ThisGroup, f2)) where ThisGroup should be ignored.
-                    if (type is TableType tableType && sym.Name != FunctionThisGroupScopeInfo.ThisGroup.Value)
+                    if (type is TableType tableType && !IsSummarizeThisGroupSymbol(sym))
                     {
                         var tableLogicalName = tableType.TableSymbolName;
 
@@ -400,6 +424,16 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Any symbol access here is some temporary local, and not a field.
             return null;
+        }
+
+        private bool IsSummarizeThisGroupSymbol(ScopeAccessSymbol scopeAccessSymbol)
+        {
+            if (scopeAccessSymbol.Name == FunctionThisGroupScopeInfo.ThisGroup.Value && _summarizeScopeIDs.Contains(scopeAccessSymbol.Parent.Id))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         // field              // IR will implicity recognize as ThisRecod.field
@@ -456,6 +490,20 @@ namespace Microsoft.PowerFx.Dataverse
                     var fieldLogicalName = sym.Name;
 
                     AddFieldRead(tableLogicalName, fieldLogicalName);
+                }
+            }
+            else if (obj is GroupByObjectFormulaValue groupByFV && groupByFV.GroupBy != null)
+            {
+                var groupByNode = groupByFV.GroupBy;
+                var tableName = ((AggregateType)node.IRContext.ResultType).TableSymbolName;
+                foreach (var tableField in groupByNode.GroupingProperties)
+                {
+                    AddFieldRead(tableName, tableField);
+                }
+
+                foreach (var aggregateExpr in groupByNode.FxAggregateExpressions)
+                {
+                    AddFieldRead(tableName, aggregateExpr.PropertyName);
                 }
             }
 
