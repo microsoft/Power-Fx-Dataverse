@@ -38,7 +38,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Sqrt can not be delegated.
         [InlineData(7, "Summarize(t1, Name, credit, Sum(ThisGroup, Sqrt(amount)) As TotalAmount)", new DelegationOperator[] { })]
 
-        // Nested Summarize.
+        [InlineData(8, "Summarize(t1, Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
         public async Task SummarizeDelegationAsync(int id, string expression, DelegationOperator[] delegationOperator)
         {
             var file = "SummarizeDelegationAsync.txt";

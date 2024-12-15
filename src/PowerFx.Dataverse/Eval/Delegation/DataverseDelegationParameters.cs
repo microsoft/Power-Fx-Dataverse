@@ -126,6 +126,12 @@ namespace Microsoft.PowerFx.Dataverse
             var method = aggExpression.AggregateType; // e.g., "sum", "min", "max", etc.
             var propertyName = aggExpression.PropertyName;
             var alias = aggExpression.Alias;
+
+            if (method == FxAggregateType.Count)
+            {
+                return $"$count as {alias}";
+            }
+
             return $"{propertyName} with {method.ToString().ToLower()} as {alias}";
         }
 

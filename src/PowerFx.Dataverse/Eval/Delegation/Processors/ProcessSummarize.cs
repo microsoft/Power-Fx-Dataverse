@@ -46,6 +46,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     return CreateNotSupportedErrorAndReturn(node, tableArg);
                 }
+                else
+                {
+                    return CreateNotSupportedErrorAndReturn(node, tableArg);
+                }
             }
 
             var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
@@ -75,11 +79,18 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var aliasName = scope.Fields.First().Key.Value;
 
-            if (scope.Fields.First().Value is CallNode callNode && IsSumFunction(callNode, node))
+            if (scope.Fields.First().Value is CallNode callNode)
             {
-                return TryAddSumAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions);
+                if (IsSumFunction(callNode, node))
+                {
+                    return TryAddSumAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions);
+                }
+                else if (IsCountIfFunction(callNode, node))
+                {
+                    return TryAddCountIfAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions);
+                }
             }
-                
+
             return false;
         }
 
@@ -88,7 +99,16 @@ namespace Microsoft.PowerFx.Dataverse
             return aggregateExpressionNode.Function.Name == BuiltinFunctionsCore.SumT.Name
                    && aggregateExpressionNode.Args.Count == 2
                    && aggregateExpressionNode.Args[0] is ScopeAccessNode scopeNode
-                   && aggregateExpressionNode.Args[1] is LazyEvalNode
+                   && scopeNode.Value is ScopeAccessSymbol scopeSymbol
+                   && scopeSymbol.Name == FunctionThisGroupScopeInfo.ThisGroup.Value
+                   && scopeSymbol.Parent.Id == groupByNode.Scope.Id;
+        }
+
+        private static bool IsCountIfFunction(CallNode aggregateExpressionNode, CallNode groupByNode)
+        {
+            return aggregateExpressionNode.Function.Name == BuiltinFunctionsCore.CountIf.Name
+                   && aggregateExpressionNode.Args.Count == 2
+                   && aggregateExpressionNode.Args[0] is ScopeAccessNode scopeNode
                    && scopeNode.Value is ScopeAccessSymbol scopeSymbol
                    && scopeSymbol.Name == FunctionThisGroupScopeInfo.ThisGroup.Value
                    && scopeSymbol.Parent.Id == groupByNode.Scope.Id;
@@ -108,6 +128,32 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 aggregateExpressions.Add(new FxAggregateExpression(fieldName, FxAggregateType.Sum, aliasName));
                 return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryAddCountIfAggregateExpression(
+            CallNode callNode,
+            Context context,
+            RetVal sourceTable,
+            string aliasName,
+            IList<FxAggregateExpression> aggregateExpressions)
+        {
+            var maybeNotCall = callNode.Args[1] as LazyEvalNode;
+
+            if (maybeNotCall?.Child is CallNode maybeNotCallNode && maybeNotCallNode.Function.Name == BuiltinFunctionsCore.Not.Name)
+            {
+                if (maybeNotCallNode.Args[0] is CallNode maybeIsBlankCallNode && maybeIsBlankCallNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name)
+                {
+                    var countIfArg = maybeIsBlankCallNode.Args[0] as LazyEvalNode;
+                    var predicateContext = context.GetContextForPredicateEval(callNode, sourceTable);
+                    if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldName))
+                    {
+                        aggregateExpressions.Add(new FxAggregateExpression(fieldName, FxAggregateType.Count, aliasName));
+                        return true;
+                    }
+                }
             }
 
             return false;

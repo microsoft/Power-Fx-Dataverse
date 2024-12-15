@@ -5,3 +5,4 @@ __retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test),
 Summarize(Summarize(t1, name, ({TotalAmount:Sum(ThisGroup, (amount))})), name)
 Summarize(t1, name, ({TotalAmount:Sum(ThisGroup, (MulNumbers(amount,Float(2))))}))
 Summarize(t1, name, credit, ({TotalAmount:Sum(ThisGroup, (Sqrt(Coalesce(amount, 0))))}))
+__retrieveMultiple(t1, __noop(), __noop(), 1000, __groupBy(name, Count(amount) As TCount), ) | $apply=groupby((name),aggregate($count as TCount))&$top=1000
