@@ -32,6 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
         private const int JoinArg = 3;
         private const int DistinctArg = 4;
         private const int ColumnRenameArg = 5;
+        private const int ColumnRenameArg1 = 6;
 
         // args[0]: table
         // args[1]: filter
@@ -144,7 +145,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override bool IsUsingColumnMap(Core.IR.Nodes.CallNode node, out ColumnMap columnMap)
         {
-            if (node.Args.Count == ColumnRenameArg + 1 &&
+            if (node.Args.Count == ColumnRenameArg1 &&
                 node.Args[DistinctArg] is Core.IR.Nodes.TextLiteralNode distinctNode &&
                 node.Args[ColumnRenameArg] is Core.IR.Nodes.RecordNode columnMapNode)
             {

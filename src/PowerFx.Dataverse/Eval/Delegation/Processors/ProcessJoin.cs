@@ -67,6 +67,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 joinType = rfan.Field.Value;
             }
+            else
+            {
+                throw new InvalidOperationException($"Unknown JoinType");
+            }
 
             string leftRecordName = null;
             string rightRecordName = null;
