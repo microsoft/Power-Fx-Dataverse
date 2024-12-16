@@ -377,7 +377,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override RetVal Visit(ScopeAccessNode node, Context context)
-        {
+        {            
             // Could be a symbol from RowScope.
             // Price in "LookUp(t1,Price=255)"
             if (node.Value is ScopeAccessSymbol sym)
@@ -388,11 +388,8 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var tableLogicalName = tableType.TableSymbolName;
                         var fieldLogicalName = sym.Name.Value;
-                        
-                        if (fieldLogicalName != FunctionJoinScopeInfo.LeftRecord.Value && fieldLogicalName != FunctionJoinScopeInfo.RightRecord.Value)
-                        {
-                            AddFieldRead(tableLogicalName, fieldLogicalName);
-                        }
+                                                
+                        AddFieldRead(tableLogicalName, fieldLogicalName);                        
 
                         return null;
                     }
@@ -408,7 +405,10 @@ namespace Microsoft.PowerFx.Dataverse
         // First(Remote).Data // IR will get type on left of dot.
         public override RetVal Visit(RecordFieldAccessNode node, Context context)
         {
-            node.From.Accept(this, context);
+            if (node.From is not ScopeAccessNode)
+            { 
+                node.From.Accept(this, context);
+            }            
 
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)

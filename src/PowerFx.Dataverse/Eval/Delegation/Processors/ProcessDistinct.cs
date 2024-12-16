@@ -16,10 +16,6 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessDistinct(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
-
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
@@ -36,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, join: join, _maxRows, columnMap);
+            var resultingTable = tableArg.With(node, count: count, map: columnMap);
 
             return resultingTable;
         }

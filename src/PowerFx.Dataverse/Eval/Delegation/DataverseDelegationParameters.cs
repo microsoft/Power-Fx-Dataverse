@@ -40,6 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public LinkEntity Join { get; init; }
 
+        // JoinColumns = <field name, field type> representing the right columns that are added in JOIN function        
         public IEnumerable<NamedValue> JoinColumns { get; init; }
 
         // Use for dataverse elastic tables.
@@ -68,6 +69,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (Top > 0)
                 {
                     features |= DelegationParameterFeatures.Top;
+                }
+
+                if (Join != null)
+                {
+                    features |= DelegationParameterFeatures.Apply;
                 }
 
                 return features;

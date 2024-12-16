@@ -45,8 +45,13 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal rightTable = GetTable(node.Args[RightTableArg], context);
 
             // both tables need to support delegation
-            // if they already have $top, $filter or $orderby, let's not delegate            
-            if (!leftTable.IsDelegating || !rightTable.IsDelegating || leftTable.HasTopCount || rightTable.HasTopCount || leftTable.HasOrderBy || rightTable.HasOrderBy || leftTable.HasFilter || rightTable.HasFilter)
+            // if they already have $top, $filter, $orderby..., let's not delegate            
+            if (!leftTable.IsDelegating || !rightTable.IsDelegating || 
+                leftTable.HasTopCount || rightTable.HasTopCount ||
+                leftTable.HasOrderBy || rightTable.HasOrderBy || 
+                leftTable.HasFilter || rightTable.HasFilter ||
+                leftTable.HasJoin || rightTable.HasJoin ||
+                leftTable.ColumnMap != null || rightTable.ColumnMap != null)
             {
                 return base.Visit(node, context, leftTable);
             }
@@ -134,8 +139,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                     // Join recordNode to transport all parameters we need 
                     RecordNode joinNode = GetJoinRecordNode(leftTable.TableType.TableSymbolName, rightTable.TableType.TableSymbolName, fromAttribute, toAttribute, joinType, entityAlias, rightColumns);
-
-                    return new RetVal(_hooks, node, leftTable._sourceTableIRNode, joinReturnType, null, null, null, joinNode, _maxRows, mergedMap);
+                    
+                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap);
                 }
             }
 

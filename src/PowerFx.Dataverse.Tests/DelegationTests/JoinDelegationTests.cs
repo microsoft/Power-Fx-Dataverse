@@ -144,12 +144,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(32, "ShowColumns(Join(remote, local, RightRecord.rtid = LeftRecord.remoteid, JoinType.Full,  RightRecord.new_name As other2), remoteid, data, other)", 5, FullJoin3)]
 
         // join with left column renames
-
         [InlineData(33, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2)", 3, InnerJoin4)]
 
         // join with First()
-
         [InlineData(34, "First(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2))", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
+
+        // Validate no Join delegation
+        [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {

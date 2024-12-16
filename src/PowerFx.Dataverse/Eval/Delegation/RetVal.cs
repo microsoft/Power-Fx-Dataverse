@@ -52,7 +52,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly IntermediateNode _join;
 
-            private readonly NumberLiteralNode _maxRows;
+            private NumberLiteralNode MaxRows => new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
+
+            private readonly int _maxRows;
 
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
@@ -76,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse
                 int maxRows,
                 ColumnMap columnMap)
             {
-                this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
+                this._maxRows = maxRows;
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
@@ -101,6 +103,11 @@ namespace Microsoft.PowerFx.Dataverse
                 IsDelegating = isDelegating;
             }
 
+            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, IntermediateNode join = null, ColumnMap map = null)
+            {
+                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, _maxRows, map ?? ColumnMap);
+            }
+
             public bool HasFilter => _filter != null;
 
             public bool HasOrderBy => _orderBy != null;
@@ -117,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode Join => _join ?? MakeBlankRecordNode();
 
-            public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
+            public IntermediateNode TopCountOrDefault => _topCount ?? MaxRows;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
             public bool IsDelegating { get; init; }

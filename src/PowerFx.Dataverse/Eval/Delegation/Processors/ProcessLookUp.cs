@@ -24,9 +24,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
-
             var predicate = node.Args[1];
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
 
@@ -85,6 +82,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var partitionIdRetVal = partitionIdArg.Accept(this, context);
                         var materializedGuid = Materialize(guidRetVal);
                         var materializedPartitionId = Materialize(partitionIdRetVal);
+
                         if (IsTableArgLookUpDelegable(context, tableArg))
                         {
                             var newNode = _hooks.MakeElasticRetrieveCall(tableArg, materializedGuid, materializedPartitionId);
@@ -117,7 +115,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, join: join, _maxRows, tableArg.ColumnMap);
+                result = tableArg.With(node, filter: filterCombined);
             }
             else
             {

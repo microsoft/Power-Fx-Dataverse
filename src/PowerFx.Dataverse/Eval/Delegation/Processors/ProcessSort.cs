@@ -20,12 +20,9 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
-            IntermediateNode join = tableArg.HasJoin ? tableArg.Join : null;
             bool canDelegate = true;
 
-            List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
+            List<IntermediateNode> arguments = new List<IntermediateNode>() { tableArg.HasFilter ? tableArg.Filter : node.Args[0] };
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
@@ -70,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
-                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);          
+                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);
 
                 arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
             }
@@ -80,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var sortFunc = new DelegatedSort(_hooks);
                 IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, join: join, _maxRows, tableArg.ColumnMap);
+                return tableArg.With(node, orderby: orderByNode);
             }
 
             return ProcessOtherCall(node, tableArg, context);
