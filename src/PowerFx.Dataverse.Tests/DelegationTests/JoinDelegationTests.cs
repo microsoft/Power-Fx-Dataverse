@@ -90,6 +90,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),n4:If(false,""""),other2:Float(49)})";
 
+        private const string InnerJoin5 = @"Table(" +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)})";
+
         [Theory]
         [TestPriority(1)]
 
@@ -152,6 +156,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Validate no Join delegation
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(36, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
+        [InlineData(37, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {

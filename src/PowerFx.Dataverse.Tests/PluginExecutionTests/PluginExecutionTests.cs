@@ -1040,8 +1040,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
-        [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")
-            ]
+        [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
