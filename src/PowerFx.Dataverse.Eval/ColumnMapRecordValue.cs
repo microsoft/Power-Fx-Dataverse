@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType))
                     {
                         oldName = GetRealFieldName(oldName);
-                        oldNameType = delegationParameters.JoinColumns.First(nv => nv.Name == oldName).Value.Type;                        
+                        oldNameType = delegationParameters.Join.JoinColumns.GetFieldType(oldName);
                     }
 
                     string fieldName = null;

@@ -104,19 +104,15 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{DistinctArg} should always be of type {nameof(StringValue)} : found {args[DistinctArg]}");
             }
 
-            LinkEntity join = null;
-            IEnumerable<NamedValue> joinColumns = null;
+            FxJoinNode join = null;
 
-            if (args[JoinArg] is RecordValue rvj)
+            if (args[JoinArg] is JoinFormulaValue jv)
             {
-                if (rvj.Fields.Any())
-                {
-                    join = rvj.GetLinkEntity(out joinColumns);
-                }
+                join = jv.JoinNode;
             }
-            else if (args[JoinArg] is not BlankValue)
+            else
             {
-                throw new InvalidOperationException($"args{JoinArg} should always be of type {nameof(RecordValue)} : found {args[JoinArg]}");
+                throw new InvalidOperationException($"args{JoinArg} should always be of type {nameof(JoinFormulaValue)} : found {args[JoinArg]}");
             }
 
             ColumnMap columnMap = null;
@@ -135,7 +131,6 @@ namespace Microsoft.PowerFx.Dataverse
                 OrderBy = orderBy,
                 Top = topCount,
                 Join = join,
-                JoinColumns = joinColumns,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation

@@ -14,6 +14,7 @@ using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Rest.Serialization;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -134,15 +135,12 @@ namespace Microsoft.PowerFx.Dataverse
                     // list of column renamed from right table
                     // we use 'entityAlias.' prefix for columns as DV will return it for right table columns we have selected
                     ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => GetColumnName(f.Key, entityAlias)));
-
-                    // get column names to be renamed with their types
-                    RecordNode rightColumns = GetColumnsWithTypes(node.Args[RightTableColumnArg] as RecordNode, rightTable);
-
+                   
                     // cumulate left and right maps
                     ColumnMap mergedMap = ColumnMap.Merge(leftMap, rightMap);
-
-                    // Join recordNode to transport all parameters we need 
-                    RecordNode joinNode = GetJoinRecordNode(leftTable.TableType.TableSymbolName, rightTable.TableType.TableSymbolName, fromAttribute, toAttribute, joinType, entityAlias, rightColumns);
+                    
+                    // Join node with all parameters
+                    FxJoinNode joinNode = new FxJoinNode(leftTable.TableType.TableSymbolName, rightTable.TableType.TableSymbolName, fromAttribute, toAttribute, joinType, entityAlias, (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value), rightTable.TableType);
                     
                     return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap);
                 }
@@ -150,26 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             return ProcessOtherCall(node, leftTable, rightTable, context);
         }
-
-        // Gets a RecordNode with types
-        private static RecordNode GetColumnsWithTypes(RecordNode node, RetVal table)
-        {
-            RecordType recordType = RecordType.Empty();
-            Dictionary<DName, IntermediateNode> rrn = new Dictionary<DName, IntermediateNode>();
-            foreach (KeyValuePair<DName, IntermediateNode> rf in node.Fields)
-            {
-                string name = rf.Key.Value;
-
-                if (table.TableType.TryGetFieldType(name, out FormulaType fType))
-                {
-                    recordType = recordType.Add(name, fType);
-                    rrn.Add(rf.Key, new CallNode(IRContext.NotInSource(fType), BuiltinFunctionsCore.Blank));
-                }
-            }
-
-            return new RecordNode(IRContext.NotInSource(recordType), rrn);
-        }
-
+        
         private static TextLiteralNode GetColumnName(DName name, string alias)
         {
             if (string.IsNullOrEmpty(alias))
@@ -178,35 +157,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return new TextLiteralNode(IRContext.NotInSource(FormulaType.String), $"{alias}.{name.Value}");
-        }
-
-        private static RecordNode GetJoinRecordNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string entityAlias, RecordNode foreignTableColumns)
-        {
-            RecordType rt = RecordType.Empty();
-            Dictionary<DName, IntermediateNode> dic = new Dictionary<DName, IntermediateNode>();
-
-            rt = rt.Add("sourceTable", FormulaType.String);
-            dic[new DName("sourceTable")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), sourceTable);
-
-            rt = rt.Add("foreignTable", FormulaType.String);
-            dic[new DName("foreignTable")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), foreignTable);
-
-            rt = rt.Add("fromAttribute", FormulaType.String);
-            dic[new DName("fromAttribute")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fromAttribute);
-
-            rt = rt.Add("toAttribute", FormulaType.String);
-            dic[new DName("toAttribute")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), toAttribute);
-
-            rt = rt.Add("joinType", FormulaType.String);
-            dic[new DName("joinType")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), joinType);
-
-            rt = rt.Add("entityAlias", FormulaType.String);
-            dic[new DName("entityAlias")] = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), entityAlias);
-
-            rt = rt.Add("foreignTableColumns", foreignTableColumns.IRContext.ResultType);
-            dic[new DName("foreignTableColumns")] = foreignTableColumns;
-
-            return new RecordNode(IRContext.NotInSource(rt), dic);
-        }
+        }       
     }
 }

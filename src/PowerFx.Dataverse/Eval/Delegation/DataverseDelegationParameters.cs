@@ -38,10 +38,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public ColumnMap ColumnMap { get; init; }
 
-        public LinkEntity Join { get; init; }
-
-        // JoinColumns = <field name, field type> representing the right columns that are added in JOIN function        
-        public IEnumerable<NamedValue> JoinColumns { get; init; }
+        public FxJoinNode Join { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -208,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return $"endswith({fieldName},{EscapeOdata(value)})";
                     }
-                    
+
                     string op = condition.Operator switch
                     {
                         FxConditionOperator.GreaterEqual => "ge",
@@ -273,6 +270,6 @@ namespace Microsoft.PowerFx.Dataverse
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {
             return OrderBy?.Select(oe => (oe.AttributeName, oe.OrderType == OrderType.Ascending)).ToList();
-        }        
+        }
     }
 }

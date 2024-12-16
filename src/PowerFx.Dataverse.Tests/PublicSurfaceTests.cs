@@ -107,6 +107,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxConditionOperator",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterExpression",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterOperator",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxJoinNode",
 
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",

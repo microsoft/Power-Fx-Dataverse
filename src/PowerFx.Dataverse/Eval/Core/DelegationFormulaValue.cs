@@ -35,13 +35,16 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, string partitionId = null, int? top = null)
+        internal readonly FxJoinNode _join;
+
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxJoinNode join = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();
             _orderBy = orderBy ?? new List<OrderExpression>();
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
+            _join = join;
             _partitionId = partitionId;
         }
 

@@ -205,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (delegationParameters.Join != null)
             {
-                query.LinkEntities.Add(delegationParameters.Join);
+                query.LinkEntities.Add(delegationParameters.Join.LinkEntity);
             }
 
             if (delegationParameters.Top != null)

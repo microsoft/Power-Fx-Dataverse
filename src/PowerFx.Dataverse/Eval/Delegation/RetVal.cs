@@ -10,6 +10,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -49,8 +50,8 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly IntermediateNode _orderBy;
 
             private readonly IntermediateNode _topCount;
-
-            private readonly IntermediateNode _join;
+            
+            private FxJoinNode _join;
 
             private NumberLiteralNode MaxRows => new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
 
@@ -74,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
                 IntermediateNode filter,
                 IntermediateNode orderBy,
                 IntermediateNode count,
-                IntermediateNode join,
+                FxJoinNode join,
                 int maxRows,
                 ColumnMap columnMap)
             {
@@ -103,7 +104,7 @@ namespace Microsoft.PowerFx.Dataverse
                 IsDelegating = isDelegating;
             }
 
-            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, IntermediateNode join = null, ColumnMap map = null)
+            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, ColumnMap map = null)
             {
                 return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, _maxRows, map ?? ColumnMap);
             }
@@ -122,7 +123,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode OrderBy => _orderBy ?? MakeBlankCall(Hooks);
 
-            public IntermediateNode Join => _join ?? MakeBlankRecordNode();
+            public FxJoinNode Join => _join;
+
+            public IntermediateNode JoinNode => GenerateJoinIR(_join, TableType);
 
             public IntermediateNode TopCountOrDefault => _topCount ?? MaxRows;
 
@@ -172,6 +175,13 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedBlank(hooks);
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
+            }
+
+            private static IntermediateNode GenerateJoinIR(FxJoinNode joinNode, TableType tableType)
+            {                
+                var joinFormulaValue = new JoinFormulaValue(joinNode, tableType);
+                var joinIRNode = new ResolvedObjectNode(IRContext.NotInSource(joinFormulaValue.Type), joinFormulaValue);
+                return joinIRNode;
             }
 
             internal RecordNode MakeBlankRecordNode()

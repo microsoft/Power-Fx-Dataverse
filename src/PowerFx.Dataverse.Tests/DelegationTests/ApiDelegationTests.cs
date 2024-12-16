@@ -85,7 +85,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
 
         [Theory]
-        [InlineData("Filter(t1, Price < 120)", "__retrieveMultiple(t1, __lt(t1, {fieldFunctions:Table(), fieldName:Price}, Float(120)), __noop(), {}, 1000, )")]
+        [InlineData("Filter(t1, Price < 120)", "__retrieveMultiple(t1, __lt(t1, {fieldFunctions:Table(), fieldName:Price}, Float(120)), __noop(), __noJoin(), 1000, )")]
         [InlineData("Filter(t1, Price <= 120)", "Filter(t1, (LeqNumbers(Price,Float(120))))")]
         public async Task CapabilitiesTest(string expr, string expectedIr)
         {
