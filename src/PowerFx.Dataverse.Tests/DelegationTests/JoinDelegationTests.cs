@@ -151,6 +151,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // Validate no Join delegation
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
+        [InlineData(36, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
