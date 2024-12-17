@@ -21,6 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
+            // $$$ Can we delegate distinct and Summarize()? If not, we should block this at Authoring time.
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
             if (!TryDelegateDistinct(tableArg, node, context, out var fieldName, out var count, out var columnMap))
             {
@@ -35,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap, groupByNode: tableArg._groupByNode);
 
             return resultingTable;
         }

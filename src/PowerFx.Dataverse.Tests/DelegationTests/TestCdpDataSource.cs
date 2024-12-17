@@ -70,7 +70,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             return new TestDelegationInfo(recordType, allColumnFilters)
             {
-                TableName = tableName
+                TableName = tableName,
+                SelectionRestriction = new SelectionRestrictions() { IsSelectable = true }
             };
         }
 

@@ -42,9 +42,9 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (arg is LazyEvalNode lazyEvalNode 
                     && lazyEvalNode.Child is RecordNode scope
-                    && !TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions))
+                    && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions))
                 {
-                    return CreateNotSupportedErrorAndReturn(node, tableArg);
+                    continue;
                 }
                 else
                 {
@@ -53,6 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
+            var topCount = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
             // Return a new RetVal with updated transformations, it should include all the previous transformations.
             var result = new RetVal(
@@ -62,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
                 tableArg.TableType,
                 filter: tableArg.Filter,
                 orderBy: tableArg.OrderBy,
-                count: tableArg.TopCountOrDefault,
+                count: topCount,
                 (int)tableArg.MaxRows.LiteralValue,
                 tableArg.ColumnMap,
                 groupByNode);

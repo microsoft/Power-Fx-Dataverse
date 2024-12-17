@@ -68,13 +68,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool IsDataverseDelegation => _metadata != null;
 
-            private FxGroupByNode _groupByNode;
+            internal readonly FxGroupByNode _groupByNode;
 
             internal bool HasGroupByNode => _groupByNode != null;
 
             internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
 
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, FxGroupByNode groupByNode = null)
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, FxGroupByNode groupByNode)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -113,6 +113,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode OrderBy => _orderBy ?? MakeBlankCall(Hooks);
 
+            /// <summary>
+            /// Only use it in final query generation.
+            /// </summary>
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.

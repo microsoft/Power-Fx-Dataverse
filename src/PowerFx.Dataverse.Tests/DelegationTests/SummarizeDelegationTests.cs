@@ -39,6 +39,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(7, "Summarize(t1, Name, credit, Sum(ThisGroup, Sqrt(amount)) As TotalAmount)", new DelegationOperator[] { })]
 
         [InlineData(8, "Summarize(t1, Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
+
+        [InlineData(9, "Summarize(ShowColumns(t1, Name, amount), Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
+
+        [InlineData(10, "Summarize(ForAll(t1, {Name: Name, amount: amount}), Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
+
+        [InlineData(11, "FirstN(SortByColumns(Summarize(ForAll(Filter(t1, ThisRecord.Name = \"test\"), { Name:ThisRecord.Name, amount:ThisRecord.amount }), Name, CountIf(ThisGroup, Not(IsBlank(amount))) As COUNT_Id), COUNT_Id, SortOrder.Descending), 5)  ", new DelegationOperator[] { DelegationOperator.Eq, DelegationOperator.Count, DelegationOperator.Top })]
         public async Task SummarizeDelegationAsync(int id, string expression, DelegationOperator[] delegationOperator)
         {
             var file = "SummarizeDelegationAsync.txt";

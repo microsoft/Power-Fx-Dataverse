@@ -411,7 +411,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (_scopeTypes.TryGetValue(sym.Parent.Id, out var type))
                 {
                     // Ignore ThisRecord scopeaccess node. e.g. Summarize(table, f1, Sum(ThisGroup, f2)) where ThisGroup should be ignored.
-                    if (type is TableType tableType && !IsSummarizeThisGroupSymbol(sym))
+                    if (type is TableType tableType && node.IRContext.ResultType is not AggregateType)
                     {
                         var tableLogicalName = tableType.TableSymbolName;
 
