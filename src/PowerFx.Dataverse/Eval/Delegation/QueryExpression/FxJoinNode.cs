@@ -94,12 +94,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             sb.Append('.');
             sb.Append(_fromAttribute);
             sb.Append('=');
-            sb.Append(_foreignTable);
+            sb.Append(_foreignTable);            
             sb.Append('.');
             sb.Append(_toAttribute);
             sb.Append(',');
             sb.Append(_joinType);
-            sb.Append(' ');
+            sb.Append(" [");            
+            sb.Append(_entityAlias);
+            sb.Append("] ");
             sb.Append(_rightColumns._type.ToString());
             sb.Append('}');
 
