@@ -1041,6 +1041,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
         [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")]
+
+        // Join
+        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: ;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1055,6 +1058,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
+            config.EnableJoinFunction();
+
             var engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
@@ -2755,13 +2760,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]        
+        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]
         [InlineData("Environment.Variables.textvar", "s")]
         [InlineData("Environment.Variables.booleanvar", "b")]
         [InlineData("Environment.Variables.jsonvar", "O")]
         [InlineData("Environment.Variables.numbervar", "w")]
-        [InlineData("Environment.Variables.'JSON var'", "O")]        
-        [InlineData("Environment.Variables.'Number var'", "w")]        
+        [InlineData("Environment.Variables.'JSON var'", "O")]
+        [InlineData("Environment.Variables.'Number var'", "w")]
         [InlineData("Environment.Variables.'Boolean var'", "b")]
         [InlineData("Environment.Variables.'Text var'", "s")]
 
@@ -2811,7 +2816,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case DKind.Record:
                     Assert.IsAssignableFrom<RecordValue>(result);
                     break;
-            }            
+            }
         }
 
         [Theory]
@@ -2856,7 +2861,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Create Entity objects to match DataverseTests.RelationshipModels;
         internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false, bool withExtraEntity = false)
-        {            
+        {
             var remote2 = new Entity("remote", _g2);
             remote2.Attributes["remoteid"] = _g2;
 
