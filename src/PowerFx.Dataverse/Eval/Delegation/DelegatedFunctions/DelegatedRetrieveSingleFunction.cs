@@ -95,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters((RecordType)ReturnFormulaType)
             {
                 FxFilter = filter,
                 OrderBy = orderBy,

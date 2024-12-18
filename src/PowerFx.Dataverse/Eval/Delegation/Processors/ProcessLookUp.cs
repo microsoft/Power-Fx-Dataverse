@@ -20,10 +20,15 @@ namespace Microsoft.PowerFx.Dataverse
         {
             RetVal result;
 
-            // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
-            if (node.Args.Count != 2 || tableArg.HasGroupByNode)
+            if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
+            }
+
+            // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
+            if (tableArg.HasGroupByNode)
+            {
+                return ProcessOtherCall(node, tableArg , context);
             }
 
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;

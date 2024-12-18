@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public DelegationParameters DelegationParameters = null;        
 
         public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<DelegationOperator> allColumnFilters)
-            : base(new TestRecordType(tableName, recordType, allColumnFilters))
+            : base(new TestRecordType(tableName, recordType, allColumnFilters, false))
         {
             _recordValue = record;
         }
@@ -48,12 +48,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
     public class TestRecordType : RecordType
     {
-        private readonly RecordType _recordType;        
+        private readonly RecordType _recordType;
 
-        public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters)
-            : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allColumnFilters))
+        public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters, bool isSelectable = true)
+            : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allColumnFilters, isSelectable))
         {
-            _recordType = recordType;            
+            _recordType = recordType;
         }       
 
         public override bool TryGetFieldType(string fieldName, out FormulaType type)
@@ -66,13 +66,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             return DisplayNameProvider.New(recordType.GetFieldTypes().Select(fType => new KeyValuePair<DName, DName>(new DName(fType.Name), fType.DisplayName != default ? new DName(fType.DisplayName) : new DName(fType.Name))));
         }
 
-        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters)
+        private static TableDelegationInfo GetDelegationInfo(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters, bool isSelectable)
         {
             return new TestDelegationInfo(recordType, allColumnFilters)
             {
                 TableName = tableName,
-                SelectionRestriction = new SelectionRestrictions() { IsSelectable = true }
+                SelectionRestriction = new SelectionRestrictions() { IsSelectable = isSelectable },
+                SummarizeCapabilities = new MockSummarizeCapabilities()
             };
+        }
+
+        private class MockSummarizeCapabilities : SummarizeCapabilities
+        {
+            public override bool IsSummarizableMethod(SummarizeMethod method)
+            {
+                return true;
+            }
+
+            public override bool IsSummarizableProperty(string columnName)
+            {
+                return true;
+            }
         }
 
         public override bool Equals(object other)

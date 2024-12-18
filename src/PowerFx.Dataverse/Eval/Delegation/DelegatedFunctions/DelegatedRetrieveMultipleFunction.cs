@@ -113,7 +113,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters(((TableType)this.ReturnFormulaType).ToRecord())
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
@@ -122,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation,
-                GroupBy = groupBy
+                GroupBy = groupBy,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

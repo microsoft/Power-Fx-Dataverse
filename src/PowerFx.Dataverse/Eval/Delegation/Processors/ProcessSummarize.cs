@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -13,6 +14,7 @@ using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Syntax;
+using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 
@@ -23,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
             // nested summarize is not supported.
-            if (tableArg.HasGroupByNode)
+            if (tableArg.HasGroupByNode || tableArg.HasColumnMap)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
@@ -32,17 +34,26 @@ namespace Microsoft.PowerFx.Dataverse
             var groupByProperties = new List<string>();
             var aggregateExpressions = new List<FxAggregateExpression>();
 
+            var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capbilities);
+
             // Process arguments for group by or aggregate logic
             foreach (var arg in node.Args.Skip(1))
             {
                 if (arg is TextLiteralNode columnName)
                 {
-                    // Handle GroupBy column
-                    groupByProperties.Add(columnName.LiteralValue);
+                    var columnNameString = columnName.LiteralValue;
+                    if (capbilities.CanDelegateSummarize(columnNameString, tableArg.IsDataverseDelegation))
+                    {
+                        groupByProperties.Add(columnNameString);
+                    }
+                    else
+                    {
+                        return CreateNotSupportedErrorAndReturn(node, tableArg);
+                    }
                 }
-                else if (arg is LazyEvalNode lazyEvalNode 
+                else if (arg is LazyEvalNode lazyEvalNode
                     && lazyEvalNode.Child is RecordNode scope
-                    && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions))
+                    && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capbilities))
                 {
                     continue;
                 }
@@ -76,7 +87,8 @@ namespace Microsoft.PowerFx.Dataverse
             RecordNode scope,
             Context context,
             RetVal sourceTable,
-            IList<FxAggregateExpression> aggregateExpressions)
+            IList<FxAggregateExpression> aggregateExpressions,
+            TableDelegationInfo capbilities)
         {
             var aliasName = scope.Fields.First().Key.Value;
 
@@ -84,11 +96,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (IsSumFunction(callNode, node))
                 {
-                    return TryAddSumAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions);
+                    return TryAddSumAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions, capbilities, sourceTable);
                 }
                 else if (IsCountIfFunction(callNode, node))
                 {
-                    return TryAddCountIfAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions);
+                    return TryAddCountIfAggregateExpression(callNode, context, sourceTable, aliasName, aggregateExpressions, capbilities, sourceTable);
                 }
             }
 
@@ -120,26 +132,32 @@ namespace Microsoft.PowerFx.Dataverse
             Context context,
             RetVal sourceTable,
             string aliasName,
-            IList<FxAggregateExpression> aggregateExpressions)
+            IList<FxAggregateExpression> aggregateExpressions,
+            TableDelegationInfo capbilities,
+            RetVal tableArg)
         {
             var sumArg = callNode.Args[1] as LazyEvalNode;
             var predicateContext = context.GetContextForPredicateEval(callNode, sourceTable);
 
-            if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, sumArg.Child, out var fieldName))
+            if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, sumArg.Child, out var fieldName) &&
+                capbilities.CanDelegateSummarize(fieldName, SummarizeMethod.Sum, tableArg.IsDataverseDelegation))
             {
-                aggregateExpressions.Add(new FxAggregateExpression(fieldName, FxAggregateType.Sum, aliasName));
+                aggregateExpressions.Add(new FxAggregateExpression(fieldName, SummarizeMethod.Sum, aliasName));
                 return true;
             }
 
             return false;
         }
 
+        // CountIf(ThisGroup, Not(IsBlank(fieldName)))
         private static bool TryAddCountIfAggregateExpression(
             CallNode callNode,
             Context context,
             RetVal sourceTable,
             string aliasName,
-            IList<FxAggregateExpression> aggregateExpressions)
+            IList<FxAggregateExpression> aggregateExpressions,
+            TableDelegationInfo capbilities,
+            RetVal tableArg)
         {
             var maybeNotCall = callNode.Args[1] as LazyEvalNode;
 
@@ -149,9 +167,10 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var countIfArg = maybeIsBlankCallNode.Args[0] as LazyEvalNode;
                     var predicateContext = context.GetContextForPredicateEval(callNode, sourceTable);
-                    if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldName))
+                    if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldName) &&
+                        capbilities.CanDelegateSummarize(fieldName, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
                     {
-                        aggregateExpressions.Add(new FxAggregateExpression(fieldName, FxAggregateType.Count, aliasName));
+                        aggregateExpressions.Add(new FxAggregateExpression(fieldName, SummarizeMethod.Count, aliasName));
                         return true;
                     }
                 }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -43,8 +44,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        public DataverseDelegationParameters()
+        private readonly RecordType _expectedReturnType;
+
+        /// <summary>
+        /// This is the expected RecordType Host needs to return after it performed delegation.
+        /// </summary>
+        public RecordType ExpectedReturnType => _expectedReturnType;
+
+        internal DataverseDelegationParameters(RecordType expectedReturnType)
         {
+            _expectedReturnType = expectedReturnType;
         }
 
         public override DelegationParameterFeatures Features
@@ -70,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (GroupBy != null)
                 {
-                    features |= DelegationParameterFeatures.Apply;
+                    features |= DelegationParameterFeatures.ApplyAggregate;
                 }
 
                 return features;
@@ -123,11 +132,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static string TranslateNode(FxAggregateExpression aggExpression)
         {
-            var method = aggExpression.AggregateType; // e.g., "sum", "min", "max", etc.
+            var method = aggExpression.AggregateMethod; // e.g., "sum", "min", "max", etc.
             var propertyName = aggExpression.PropertyName;
             var alias = aggExpression.Alias;
 
-            if (method == FxAggregateType.Count)
+            if (method == SummarizeMethod.Count)
             {
                 return $"$count as {alias}";
             }

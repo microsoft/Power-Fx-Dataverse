@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
@@ -32,30 +34,19 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public string PropertyName => _propertyName;
 
-        private readonly FxAggregateType _aggregateType;
+        private readonly SummarizeMethod _aggregateMethod;
 
-        public FxAggregateType AggregateType => _aggregateType;
+        public SummarizeMethod AggregateMethod => _aggregateMethod;
 
         private readonly string _alias;
 
         public string Alias => _alias;
 
-        public FxAggregateExpression(string propertyName, FxAggregateType aggregateType, string alias)
+        public FxAggregateExpression(string propertyName, SummarizeMethod aggregateMethod, string alias)
         {
             _propertyName = propertyName;
-            _aggregateType = aggregateType;
+            _aggregateMethod = aggregateMethod;
             _alias = alias;
         }
-    }
-
-    [Obsolete("preview")]
-    public enum FxAggregateType
-    {
-        None,
-        Sum,
-        Average,
-        Min,
-        Max,
-        Count
     }
 }

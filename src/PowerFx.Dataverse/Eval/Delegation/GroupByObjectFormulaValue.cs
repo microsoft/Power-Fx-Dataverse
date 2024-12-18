@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             // Extract aggregate expressions
             foreach (var expr in groupByNode.FxAggregateExpressions)
             {
-                var method = expr.AggregateType; // e.g., "sum", "min", "max", etc.
+                var method = expr.AggregateMethod; // e.g., "sum", "min", "max", etc.
                 var propertyName = expr.PropertyName;
                 var alias = expr.Alias;
                 aggregateExpressions.Add($"{method}({propertyName}) As {alias}");

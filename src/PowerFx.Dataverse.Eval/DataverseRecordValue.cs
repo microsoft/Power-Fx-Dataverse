@@ -128,6 +128,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return (false, result);
             }
 
+            if (value is AliasedValue aliasedValue)
+            {
+                value = aliasedValue.Value;
+            }
+
             if (value is OneToManyRelationshipMetadata relationshipMetadata)
             {
                 result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken).ConfigureAwait(false);

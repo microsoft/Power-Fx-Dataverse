@@ -19,6 +19,11 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
+            if (tableArg.HasGroupByNode)
+            {
+                ProcessOtherCall(node, tableArg, context);
+            }
+
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // $$$ Can we delegate distinct and Summarize()? If not, we should block this at Authoring time.
