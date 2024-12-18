@@ -84,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-                this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault().DelegationMetadata;
+                this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
 
                 // topCount and filter are optional.
                 this._topCount = count;

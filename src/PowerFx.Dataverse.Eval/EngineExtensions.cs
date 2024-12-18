@@ -83,9 +83,8 @@ namespace Microsoft.PowerFx.Dataverse
                 IReadOnlyDictionary<string, string> columnMap = ((DataverseDelegationParameters)delegationParameters).ColumnMap?.AsStringDictionary();
 
                 if (columnMap != null && result.Any())
-                {
-                    TableType innerTableType = ((TableValue)table).Type;
-                    RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), true, (DataverseDelegationParameters)delegationParameters);
+                {                    
+                    RecordType recordType = ((DataverseDelegationParameters)delegationParameters).ExpectedReturnType;
 
                     List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
 

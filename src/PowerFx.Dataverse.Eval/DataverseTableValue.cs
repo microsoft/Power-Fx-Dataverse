@@ -388,9 +388,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            List<DValue<RecordValue>> list = new ();
-
-            RecordType recordType = ColumnMapRecordValue.ApplyMap(Type.ToRecord(), false, delegationParameters);
+            List<DValue<RecordValue>> list = new ();           
+            RecordType recordType = delegationParameters.Join?.IntermediateType as RecordType ?? Type.ToRecord();
 
             foreach (Entity entity in entityCollection.Entities)
             {

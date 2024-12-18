@@ -43,6 +43,8 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
+        internal RecordType ExpectedReturnType { get; init; }
+
         public DataverseDelegationParameters()
         {
         }

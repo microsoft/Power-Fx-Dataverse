@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
                     errors.Add(error);
                 }
             }
-
+            
             if (errors.Any())
             {
                 return Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));

@@ -46,10 +46,10 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal rightTable = GetTable(node.Args[RightTableArg], context);
 
             // both tables need to support delegation
-            // if they already have $top, $filter, $orderby..., let's not delegate            
-            if (!leftTable.IsDelegating || !rightTable.IsDelegating || 
+            // if they already have $top, $filter, $orderby..., let's not delegate
+            if (!leftTable.IsDelegating || !rightTable.IsDelegating ||
                 leftTable.HasTopCount || rightTable.HasTopCount ||
-                leftTable.HasOrderBy || rightTable.HasOrderBy || 
+                leftTable.HasOrderBy || rightTable.HasOrderBy ||
                 leftTable.HasFilter || rightTable.HasFilter ||
                 leftTable.HasJoin || rightTable.HasJoin ||
                 leftTable.ColumnMap != null || rightTable.ColumnMap != null)
@@ -89,9 +89,9 @@ namespace Microsoft.PowerFx.Dataverse
             // Will delegate only if
             // - equality comparison
             // - between simple Left/Right record fields
-            // - primary key is used and not composed             
+            // - primary key is used and not composed
             if (!string.IsNullOrEmpty(joinType) &&
-                node.Args[PredicateArg] is LazyEvalNode len && len.Child is BinaryOpNode bon && 
+                node.Args[PredicateArg] is LazyEvalNode len && len.Child is BinaryOpNode bon &&
                 IsOpKindEqualityComparison(bon.Op) &&
                 bon.Left is RecordFieldAccessNode leftrfan && leftrfan.From is ScopeAccessNode leftsan && leftsan.Value is ScopeAccessSymbol leftsas &&
                 bon.Right is RecordFieldAccessNode rightrfan && rightrfan.From is ScopeAccessNode rightsan && rightsan.Value is ScopeAccessSymbol rightsas)
@@ -135,20 +135,28 @@ namespace Microsoft.PowerFx.Dataverse
                     // list of column renamed from right table
                     // we use 'entityAlias.' prefix for columns as DV will return it for right table columns we have selected
                     ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => GetColumnName(f.Key, entityAlias)));
-                   
+
                     // cumulate left and right maps
                     ColumnMap mergedMap = ColumnMap.Merge(leftMap, rightMap);
-                    
+
                     // Join node with all parameters
-                    FxJoinNode joinNode = new FxJoinNode(leftTable.TableType.TableSymbolName, rightTable.TableType.TableSymbolName, fromAttribute, toAttribute, joinType, entityAlias, (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value), rightTable.TableType);
-                    
+                    FxJoinNode joinNode = new FxJoinNode(
+                        leftTable.TableType.TableSymbolName,
+                        rightTable.TableType.TableSymbolName,
+                        fromAttribute,
+                        toAttribute,
+                        joinType,
+                        entityAlias,                        
+                        (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value),
+                        rightTable.TableType);
+
                     return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap);
                 }
             }
 
             return ProcessOtherCall(node, leftTable, rightTable, context);
         }
-        
+
         private static TextLiteralNode GetColumnName(DName name, string alias)
         {
             if (string.IsNullOrEmpty(alias))
@@ -157,6 +165,6 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return new TextLiteralNode(IRContext.NotInSource(FormulaType.String), $"{alias}.{name.Value}");
-        }       
+        }
     }
 }

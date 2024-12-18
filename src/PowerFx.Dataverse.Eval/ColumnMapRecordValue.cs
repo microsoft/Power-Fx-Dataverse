@@ -33,60 +33,6 @@ namespace Microsoft.PowerFx.Dataverse
             _recordValue = recordValue;
         }
 
-        // identify real field name when used in Join type link entities
-        // validate they have the following format: '<anything>_<guid_without_dashes>_J.<fieldName>'
-        private static Regex joinRegex = new Regex(@$"_[0-9a-fA-F]{{32}}{DelegationEngineExtensions.LinkEntityJoinSuffix}\.(?<n>.+)$", RegexOptions.Compiled);
-
-        private static string GetRealFieldName(string fieldName)
-        {
-            Match m = joinRegex.Match(fieldName);
-            return m.Success ? m.Groups["n"].Value : fieldName;
-        }
-
-        public static RecordType ApplyMap(RecordType recordType, bool returnNewName, DataverseDelegationParameters delegationParameters)
-        {
-            if (delegationParameters.ColumnMap != null)
-            {
-                RecordType rt = RecordType.Empty();
-
-                foreach (KeyValuePair<string, string> kvp in delegationParameters.ColumnMap.AsStringDictionary())
-                {
-                    string newName = kvp.Key;
-                    string oldName = kvp.Value;
-
-                    if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType))
-                    {
-                        oldName = GetRealFieldName(oldName);
-                        oldNameType = delegationParameters.Join.JoinColumns.GetFieldType(oldName);
-                    }
-
-                    string fieldName = null;
-
-                    if (returnNewName)
-                    {
-                        fieldName = newName;
-                    }
-                    else
-                    {
-                        if (recordType.TryGetFieldType(oldName, out _))
-                        {
-                            fieldName = oldName;
-                        }
-                        else
-                        {
-                            fieldName = $"{delegationParameters.Join.EntityAlias}.{oldName}";
-                        }
-                    }
-
-                    rt = rt.Add(fieldName, oldNameType);
-                }
-
-                recordType = rt;
-            }
-
-            return recordType;
-        }
-
         protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
         {
             (bool isSuccess, FormulaValue value) = TryGetFieldAsync(fieldType, fieldName, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -112,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
-        {            
+        {
             NamedValue[] fields = Fields.ToArray();
 
             foreach (KeyValuePair<string, string> kvp in this._columnMap)
@@ -121,7 +67,7 @@ namespace Microsoft.PowerFx.Dataverse
                 string oldName = kvp.Value;
 
                 int i = Array.FindIndex(fields, fld => fld.Name == newName);
-               
+
                 FormulaType fieldType = Type.GetFieldType(newName);
                 FormulaValue fv = _recordValue.GetField(oldName);
 

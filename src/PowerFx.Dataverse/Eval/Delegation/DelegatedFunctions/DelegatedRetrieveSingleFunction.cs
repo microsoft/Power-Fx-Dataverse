@@ -104,6 +104,8 @@ namespace Microsoft.PowerFx.Dataverse
                     : throw new InvalidOperationException($"Expecting args{ColumnRenameArg} to be a {nameof(RecordValue)} : found {args[ColumnRenameArg].GetType().Name}");
             }
 
+            join?.ProcessMap((args[TableArg] as TableValue).Type, columnMap);
+
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters
             {
@@ -114,6 +116,7 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation,
+                ExpectedReturnType = ReturnFormulaType as RecordType
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
