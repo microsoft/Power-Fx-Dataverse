@@ -228,8 +228,6 @@ namespace Microsoft.PowerFx.Dataverse
                         AttributeName = groupByProp,
                         HasGroupBy = true,
                         Alias = groupByProp
-
-                        // can also add Alias here.
                     };
                     columnSet.AttributeExpressions.Add(att);
                 }
@@ -430,7 +428,16 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
 
-            var recordType = expectedReturnType ?? Type.ToRecord();
+            RecordType recordType = null;
+            if (columnMap != null)
+            {
+                // have to keep it till we cleanup columnMap.
+                recordType = Type.ToRecord();
+            }
+            else
+            {
+                recordType = expectedReturnType ?? Type.ToRecord();
+            }
 
             foreach (Entity entity in entityCollection.Entities)
             {

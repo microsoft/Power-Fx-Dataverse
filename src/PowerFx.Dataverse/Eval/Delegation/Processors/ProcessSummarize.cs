@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
-            // nested summarize is not supported.
+            // nested summarize is not supported and renames are not supported.
             if (tableArg.HasGroupByNode || tableArg.HasColumnMap)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
@@ -34,7 +34,7 @@ namespace Microsoft.PowerFx.Dataverse
             var groupByProperties = new List<string>();
             var aggregateExpressions = new List<FxAggregateExpression>();
 
-            var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capbilities);
+            var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capabilities);
 
             // Process arguments for group by or aggregate logic
             foreach (var arg in node.Args.Skip(1))
@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (arg is TextLiteralNode columnName)
                 {
                     var columnNameString = columnName.LiteralValue;
-                    if (capbilities.CanDelegateSummarize(columnNameString, tableArg.IsDataverseDelegation))
+                    if (capabilities.CanDelegateSummarize(columnNameString, tableArg.IsDataverseDelegation))
                     {
                         groupByProperties.Add(columnNameString);
                     }
@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (arg is LazyEvalNode lazyEvalNode
                     && lazyEvalNode.Child is RecordNode scope
-                    && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capbilities))
+                    && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities))
                 {
                     continue;
                 }
@@ -68,7 +68,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Return a new RetVal with updated transformations, it should include all the previous transformations.
             var result = new RetVal(
-                tableArg.Hooks,
+                _hooks,
                 node,
                 tableArg._sourceTableIRNode,
                 tableArg.TableType,

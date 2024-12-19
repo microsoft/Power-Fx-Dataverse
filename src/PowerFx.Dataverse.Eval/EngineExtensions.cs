@@ -87,6 +87,11 @@ namespace Microsoft.PowerFx.Dataverse
                     TableType innerTableType = ((TableValue)table).Type;
                     RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), columnMap);
 
+                    //if (recordType.Equals(result.First().Value.Type))
+                    //{
+                    //    return result;
+                    //}
+
                     List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
 
                     foreach (DValue<RecordValue> record in result)

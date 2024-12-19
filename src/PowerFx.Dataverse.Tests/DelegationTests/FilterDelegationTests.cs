@@ -346,7 +346,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [InlineData(273, "Filter(t1, new_datetime > 0)", 1, false, false)]
         [InlineData(274, "Filter(t1, Hour(Date) = 2)", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        [InlineData(275, "Filter(Summarize(t1, new_name, Sum(ThisGroup, Price) As TotalPrice), new_name = \"test\")", 0, false, false, "Warning 17-19: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(275, "Filter(Summarize(t1, new_name, Sum(ThisGroup, Price) As TotalPrice), new_name = \"test\")", 0, false, false)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

@@ -15,6 +15,8 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse
 {
     // DelegationParameters implemented using Xrm filter classes.
+
+    // Summarize( Fi
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
@@ -79,7 +81,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (GroupBy != null)
                 {
-                    features |= DelegationParameterFeatures.ApplyAggregate;
+                    features |= DelegationParameterFeatures.ApplyGroupBy;
                 }
 
                 return features;
@@ -102,30 +104,44 @@ namespace Microsoft.PowerFx.Dataverse
             sb.Append("groupby(");
 
             // List of grouping properties
-            sb.Append("(");
-            sb.Append(string.Join(",", groupByNode.GroupingProperties));
-            sb.Append(")");
+            sb.Append('(');
+
+            bool isFirst = true;
+            foreach (var prop in groupByNode.GroupingProperties)
+            {
+                if (!isFirst)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append(prop);
+                isFirst = false;
+            }
+
+            sb.Append(')');
 
             // Check if there are child transformations (e.g., aggregations)
             if (groupByNode.FxAggregateExpressions != null)
             {
-                sb.Append(",");
+                sb.Append(",aggregate(");
 
-                sb.Append("aggregate(");
-
-                var aggregateClauses = new List<string>();
+                isFirst = true;
                 foreach (var aggExpression in groupByNode.FxAggregateExpressions)
                 {
                     string expression = TranslateNode(aggExpression);
-                    aggregateClauses.Add(expression);
+                    if (!isFirst)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append(expression);
+                    isFirst = false;
                 }
 
-                sb.Append(string.Join(",", aggregateClauses));
-
-                sb.Append(")");
+                sb.Append(')');
             }
 
-            sb.Append(")");
+            sb.Append(')');
 
             return sb.ToString();
         }
@@ -141,7 +157,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return $"$count as {alias}";
             }
 
-            return $"{propertyName} with {method.ToString().ToLower()} as {alias}";
+            return $"{propertyName} with {method.ToString().ToLowerInvariant()} as {alias}";
         }
 
         public IReadOnlyDictionary<string, string> ODataElements
@@ -203,7 +219,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 int count = 0;
 
-                sb.Append("(");
+                sb.Append('(');
                 foreach (var sub in filter.Filters)
                 {
                     if (count > 0)

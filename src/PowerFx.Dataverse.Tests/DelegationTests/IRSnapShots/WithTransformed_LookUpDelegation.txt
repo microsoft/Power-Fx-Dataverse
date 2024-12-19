@@ -236,3 +236,12 @@ With({r:local}, ((__retrieveSingle(local, __and(__startsWith(local, {fieldFuncti
 With({r:local}, ((__retrieveSingle(local, __and(__startsWith(local, {fieldFunctions:Table(), fieldName:new_name}, p), __endsWith(local, {fieldFunctions:Table(), fieldName:new_name}, 1)), __noop(), __noopGroupBy(), )).new_price)) | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
 With({r:local}, ((__retrieveSingle(local, __and(__startsWith(local, {fieldFunctions:Table(), fieldName:new_name}, p), __endsWith(local, {fieldFunctions:Table(), fieldName:new_name}, 1)), __noop(), __noopGroupBy(), )).new_price)) | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
 With({r:local}, ((__retrieveSingle(local, __and(__startsWith(local, {fieldFunctions:Table(), fieldName:new_name}, p), __endsWith(local, {fieldFunctions:Table(), fieldName:new_name}, 1)), __noop(), __noopGroupBy(), )).new_price)) | $filter=(startswith(new_name,'p') and endswith(new_name,'1'))&$top=1
+
+
+
+
+
+
+
+
+With({r:local}, (LookUp(__retrieveMultiple(local, __noop(), __noop(), 999, __groupBy(new_name, Sum(new_price) As TotalPrice), ), (EqText(new_name,test))))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999

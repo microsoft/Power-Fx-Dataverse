@@ -21,12 +21,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (tableArg.HasGroupByNode)
             {
-                ProcessOtherCall(node, tableArg, context);
+                return ProcessOtherCall(node, tableArg, context);
             }
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
-            // $$$ Can we delegate distinct and Summarize()? If not, we should block this at Authoring time.
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
             if (!TryDelegateDistinct(tableArg, node, context, out var fieldName, out var count, out var columnMap))
             {

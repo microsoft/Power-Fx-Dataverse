@@ -18,7 +18,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 return true;
             }
 
-            if (tableDelegationInfo == null || tableDelegationInfo.SummarizeCapabilities == null)
+            if (tableDelegationInfo?.SummarizeCapabilities == null)
             {
                 return false;
             }

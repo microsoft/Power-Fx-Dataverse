@@ -98,7 +98,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return Ret(delegatedSort);
             }
 
-            return CreateNotSupportedErrorAndReturn(node, tableArg);
+            return Ret(node);
         }
 
         private bool TryGetEnumValue(IntermediateNode arg, string enumName, out string val)

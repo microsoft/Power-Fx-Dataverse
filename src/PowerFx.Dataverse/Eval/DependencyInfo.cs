@@ -149,8 +149,6 @@ namespace Microsoft.PowerFx.Dataverse
 
         private readonly Dictionary<int, FormulaType> _scopeTypes = new Dictionary<int, FormulaType>();
 
-        private readonly ISet<int> _summarizeScopeIDs = new HashSet<int>();
-
         public override RetVal Visit(CallNode node, Context context)
         {
             // Scope is created against type of arg0
@@ -158,11 +156,6 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var arg0 = node.Args[0];
                 _scopeTypes[node.Scope.Id] = arg0.IRContext.ResultType;
-
-                if (node.Function.Name == "Summarize")
-                {
-                    _summarizeScopeIDs.Add(node.Scope.Id);
-                }
             }
 
             // If arg0 is a write-only arg, then skip it for reading.
@@ -424,16 +417,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Any symbol access here is some temporary local, and not a field.
             return null;
-        }
-
-        private bool IsSummarizeThisGroupSymbol(ScopeAccessSymbol scopeAccessSymbol)
-        {
-            if (scopeAccessSymbol.Name == FunctionThisGroupScopeInfo.ThisGroup.Value && _summarizeScopeIDs.Contains(scopeAccessSymbol.Parent.Id))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         // field              // IR will implicity recognize as ThisRecod.field

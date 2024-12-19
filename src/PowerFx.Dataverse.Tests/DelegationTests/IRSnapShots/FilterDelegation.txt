@@ -272,4 +272,4 @@ Filter(local, (EndsWith(1, new_name)))
 Filter(local, (EndsWith(1, new_name)))
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_datetime}, DecimalToDateTime(0)), __noop(), 999, __noopGroupBy(), ) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999
 Filter(local, (EqDecimals(Hour(DateToDateTime(new_date)),2)))
-Filter(Summarize(local, new_name, ({TotalPrice:Sum(ThisGroup, (new_price))})), (EqText(new_name,test)))
+Filter(__retrieveMultiple(local, __noop(), __noop(), 999, __groupBy(new_name, Sum(new_price) As TotalPrice), ), (EqText(new_name,test))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999
