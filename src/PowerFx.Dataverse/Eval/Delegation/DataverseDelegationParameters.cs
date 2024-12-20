@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static string TranslateNode(FxAggregateExpression aggExpression)
         {
-            var method = aggExpression.AggregateMethod; // e.g., "sum", "min", "max", etc.
+            var method = aggExpression.AggregateMethod; // e.g., "sum", "min", etc.
             var propertyName = aggExpression.PropertyName;
             var alias = aggExpression.Alias;
 
