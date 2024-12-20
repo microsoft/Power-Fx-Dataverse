@@ -1,20 +1,20 @@
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata eq 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata gt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata gt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata gt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata gt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata lt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata lt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata lt 10)&$top=1
-AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))) | $filter=(vdata lt 10)&$top=1
-Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))), (LeqNumbers(new_price,10))) | $filter=(vdata lt 10)&$top=1
-Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))), (LeqNumbers(new_price,Float(10)))) | $filter=(vdata lt 10)&$top=1
-Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))), (LeqNumbers(Value(new_price),10))) | $filter=(vdata lt 10)&$top=1
-Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), ))), (LeqDecimals(new_price,10))) | $filter=(vdata lt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __eq(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata eq 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata gt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata gt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata gt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __gt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata gt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata lt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata lt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata lt 10)&$top=1
+AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))) | $filter=(vdata lt 10)&$top=1
+Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))), (LeqNumbers(new_price,10))) | $filter=(vdata lt 10)&$top=1
+Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))), (LeqNumbers(new_price,Float(10)))) | $filter=(vdata lt 10)&$top=1
+Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))), (LeqNumbers(Value(new_price),10))) | $filter=(vdata lt 10)&$top=1
+Filter(AddColumns(local, XXX, (__retrieveSingle(virtualremote, __lt(virtualremote, {fieldFunctions:Table(), fieldName:vdata}, new_price), __noop(), __noopGroupBy(), ))), (LeqDecimals(new_price,10))) | $filter=(vdata lt 10)&$top=1

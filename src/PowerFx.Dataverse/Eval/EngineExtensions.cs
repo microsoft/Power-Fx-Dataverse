@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
+using static Microsoft.PowerFx.Dataverse.DelegationIRVisitor.RetVal;
 
 namespace Microsoft.PowerFx.Dataverse
 {
@@ -76,13 +77,13 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
 
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.GroupByNode };
                     returnType = recordReturnType;
                 }
                 else if (query.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault };
+                    args = new List<IntermediateNode> { query._sourceTableIRNode, query.Filter, query.OrderBy, query.TopCountOrDefault, query.GroupByNode };
                     returnType = tableReturnType;
                 }
                 else if (query.OriginalNode is CallNode callNode)

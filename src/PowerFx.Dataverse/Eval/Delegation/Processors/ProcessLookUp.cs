@@ -19,9 +19,16 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessLookUp(CallNode node, RetVal tableArg, Context context)
         {
             RetVal result;
+
             if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
+            }
+
+            // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
+            if (tableArg.HasGroupByNode)
+            {
+                return ProcessOtherCall(node, tableArg, context);
             }
 
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
@@ -116,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
             }
             else
             {

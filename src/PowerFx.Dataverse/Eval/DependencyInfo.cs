@@ -5,11 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -241,6 +243,24 @@ namespace Microsoft.PowerFx.Dataverse
             // Set
             var func = node.Function.Name;
 
+            if (func == "Summarize")
+            {
+                var tableName = ((AggregateType)node.Args[0].IRContext.ResultType).TableSymbolName;
+                foreach (var arg in node.Args.Skip(1))
+                {
+                    if (arg is TextLiteralNode columnNode)
+                    {
+                        AddFieldRead(tableName, columnNode.LiteralValue);
+                    }
+                    else 
+                    {
+                        arg.Accept(this, context);
+                    }
+                }
+
+                return null;
+            }
+
             if (func == "Set")
             {
                 firstArgIsWrite = true;
@@ -383,7 +403,8 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (_scopeTypes.TryGetValue(sym.Parent.Id, out var type))
                 {
-                    if (type is TableType tableType)
+                    // Ignore ThisRecord scopeaccess node. e.g. Summarize(table, f1, Sum(ThisGroup, f2)) where ThisGroup should be ignored.
+                    if (type is TableType tableType && node.IRContext.ResultType is not AggregateType)
                     {
                         var tableLogicalName = tableType.TableSymbolName;
 
@@ -452,6 +473,20 @@ namespace Microsoft.PowerFx.Dataverse
                     var fieldLogicalName = sym.Name;
 
                     AddFieldRead(tableLogicalName, fieldLogicalName);
+                }
+            }
+            else if (obj is GroupByObjectFormulaValue groupByFV && groupByFV.GroupBy != null)
+            {
+                var groupByNode = groupByFV.GroupBy;
+                var tableName = ((AggregateType)node.IRContext.ResultType).TableSymbolName;
+                foreach (var tableField in groupByNode.GroupingProperties)
+                {
+                    AddFieldRead(tableName, tableField);
+                }
+
+                foreach (var aggregateExpr in groupByNode.FxAggregateExpressions)
+                {
+                    AddFieldRead(tableName, aggregateExpr.PropertyName);
                 }
             }
 

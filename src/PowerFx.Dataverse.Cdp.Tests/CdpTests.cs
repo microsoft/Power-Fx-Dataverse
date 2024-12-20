@@ -88,7 +88,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
 
             // Verify delegation is working (__retrieveSingle)
             string ir = Regex.Replace(check.PrintIR(), "RuntimeValues_[0-9]+", "RuntimeValues_XXXX");
-            Assert.Equal<object>(@"FieldAccess(__retrieveSingle:r!(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), """":s), Name)", ir);
+            Assert.Equal<object>(@"FieldAccess(__retrieveSingle:r!(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), ResolvedObject(__noopGroupBy()), """":s), Name)", ir);
 
             // Use tabular connector. Internally we'll call CdpTableValue.GetRowsInternal to get the data
             testConnector.SetResponseFromFile(@"Responses\SQL GetItems Products.json");
@@ -155,7 +155,7 @@ namespace PowerFx.Dataverse.Cdp.Tests
 
             // Table is not sortable but we can delegate the inner Filter part
             string ir = Regex.Replace(check.PrintIR(), "RuntimeValues_[0-9]+", "RuntimeValues_XXXX");
-            Assert.Equal<object>(@"FieldAccess(First:r!(FirstN:r*(__retrieveMultiple:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), 1000:n, """":s), Float:n(2:w))), Name)", ir);
+            Assert.Equal<object>(@"FieldAccess(First:r!(FirstN:r*(__retrieveMultiple:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), __eq:r*, Scope 1(Delegable(ResolvedObject('Products:RuntimeValues_XXXX'), {fieldName: ""ProductID"":s}, {fieldFunctions: Table:*[Value:n]()}, 680:w), __noop:N(), 1000:n, ResolvedObject(__noopGroupBy()), """":s), Float:n(2:w))), Name)", ir);
             
             testConnector.SetResponseFromFile(@"Responses\SQL GetItems Products.json");
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);

@@ -11,6 +11,9 @@ namespace Microsoft.PowerFx.Dataverse
 {
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
+        /// <summary>
+        /// Use it to delegate subqueries when whole function can't be delegated.
+        /// </summary>
         private RetVal ProcessOtherCall(CallNode node, RetVal tableArg, Context context)
         {
             var maybeDelegableTable = Materialize(tableArg);

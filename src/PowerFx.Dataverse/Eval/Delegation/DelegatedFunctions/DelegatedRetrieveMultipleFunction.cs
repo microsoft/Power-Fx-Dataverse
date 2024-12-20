@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
@@ -79,30 +80,40 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[2]}");
+            }
+
+            FxGroupByNode groupBy = null;
+            if (args[4] is GroupByObjectFormulaValue groupByObjectFormula)
+            {
+                groupBy = groupByObjectFormula.GroupBy;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args4 should always be of type {nameof(GroupByObjectFormulaValue)} : found {args[4]}");
             }
 
             string distinctColumn = null;
-            if (args[4] is StringValue sv)
+            if (args[5] is StringValue sv)
             {
                 distinctColumn = sv.Value;
             }
-            else if (args[4] is not BlankValue)
+            else if (args[5] is not BlankValue)
             {
-                throw new InvalidOperationException($"args4 should always be of type {nameof(StringValue)} : found {args[4]}");
+                throw new InvalidOperationException($"args5 should always be of type {nameof(StringValue)} : found {args[5]}");
             }
 
             ColumnMap columnMap = null;
 
-            if (args.Length > 5)
+            if (args.Length > 6)
             {
-                columnMap = args[5] is RecordValue rv
+                columnMap = args[6] is RecordValue rv
                     ? new ColumnMap(rv, distinctColumn)
-                    : throw new InvalidOperationException($"Expecting args5 to be a {nameof(RecordValue)} : found {args[5].GetType().Name}");
+                    : throw new InvalidOperationException($"Expecting args6 to be a {nameof(RecordValue)} : found {args[6].GetType().Name}");
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters(((TableType)this.ReturnFormulaType).ToRecord())
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
@@ -110,7 +121,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation
+                Relation = relation,
+                GroupBy = groupBy,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -233,7 +234,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        internal static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
         {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
@@ -461,7 +462,7 @@ namespace Microsoft.PowerFx.Dataverse
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null, groupByNode: null);
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)

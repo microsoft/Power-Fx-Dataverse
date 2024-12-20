@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -13,9 +14,16 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessFilter(CallNode node, RetVal tableArg, Context context)
         {
+            // Filter with group by is not supported. Ie Filter(Summarize(...), ...), other way around is supported.
             if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
+            }
+
+            // Can't Filter() on Group By.
+            if (tableArg.HasGroupByNode)
+            {
+                return ProcessOtherCall(node, tableArg, context);
             }
 
             IntermediateNode predicate = node.Args[1];
@@ -46,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap);
+                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
             }
 
             return result;

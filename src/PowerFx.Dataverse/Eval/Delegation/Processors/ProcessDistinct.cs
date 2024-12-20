@@ -19,6 +19,11 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
+            if (tableArg.HasGroupByNode)
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
+
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
@@ -35,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap);
+            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap, groupByNode: tableArg._groupByNode);
 
             return resultingTable;
         }

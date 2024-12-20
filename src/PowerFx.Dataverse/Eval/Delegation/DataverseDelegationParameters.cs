@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
@@ -14,10 +15,14 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse
 {
     // DelegationParameters implemented using Xrm filter classes.
+
+    // Summarize( Fi
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
         public const string Odata_Filter = "$filter";
+
+        public const string Odata_Apply = "$apply";
 
         public const string Odata_OrderBy = "$orderby";
 
@@ -36,11 +41,21 @@ namespace Microsoft.PowerFx.Dataverse
 
         public ColumnMap ColumnMap { get; init; }
 
+        public FxGroupByNode GroupBy { get; init; }
+
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        public DataverseDelegationParameters()
+        private readonly RecordType _expectedReturnType;
+
+        /// <summary>
+        /// This is the expected RecordType Host needs to return after it performed delegation.
+        /// </summary>
+        public RecordType ExpectedReturnType => _expectedReturnType;
+
+        internal DataverseDelegationParameters(RecordType expectedReturnType)
         {
+            _expectedReturnType = expectedReturnType;
         }
 
         public override DelegationParameterFeatures Features
@@ -64,11 +79,86 @@ namespace Microsoft.PowerFx.Dataverse
                     features |= DelegationParameterFeatures.Top;
                 }
 
+                if (GroupBy != null)
+                {
+                    features |= DelegationParameterFeatures.ApplyGroupBy;
+                }
+
                 return features;
             }
         }
 
         public override string GetOdataFilter() => ToOdataFilter(FxFilter);
+
+        public string GetODataGroupBy()
+        {
+            var sb = new StringBuilder();
+            var groupByNode = GroupBy;
+
+            if (groupByNode == null)
+            {
+                return string.Empty;
+            }
+
+            // Start building the $apply parameter
+            sb.Append("groupby(");
+
+            // List of grouping properties
+            sb.Append('(');
+
+            bool isFirst = true;
+            foreach (var prop in groupByNode.GroupingProperties)
+            {
+                if (!isFirst)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append(prop);
+                isFirst = false;
+            }
+
+            sb.Append(')');
+
+            // Check if there are child transformations (e.g., aggregations)
+            if (groupByNode.FxAggregateExpressions != null)
+            {
+                sb.Append(",aggregate(");
+
+                isFirst = true;
+                foreach (var aggExpression in groupByNode.FxAggregateExpressions)
+                {
+                    string expression = TranslateNode(aggExpression);
+                    if (!isFirst)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append(expression);
+                    isFirst = false;
+                }
+
+                sb.Append(')');
+            }
+
+            sb.Append(')');
+
+            return sb.ToString();
+        }
+
+        private static string TranslateNode(FxAggregateExpression aggExpression)
+        {
+            var method = aggExpression.AggregateMethod; // e.g., "sum", "min", "max", etc.
+            var propertyName = aggExpression.PropertyName;
+            var alias = aggExpression.Alias;
+
+            if (method == SummarizeMethod.Count)
+            {
+                return $"$count as {alias}";
+            }
+
+            return $"{propertyName} with {method.ToString().ToLowerInvariant()} as {alias}";
+        }
 
         public IReadOnlyDictionary<string, string> ODataElements
         {
@@ -80,10 +170,16 @@ namespace Microsoft.PowerFx.Dataverse
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+                string groupBy = GetODataGroupBy();
 
                 if (!string.IsNullOrEmpty(filter))
                 {
                     ode.Add(Odata_Filter, filter);
+                }
+
+                if (!string.IsNullOrEmpty(groupBy))
+                {
+                    ode.Add(Odata_Apply, groupBy);
                 }
 
                 if (orderBy != null && orderBy.Any())
@@ -123,7 +219,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 int count = 0;
 
-                sb.Append("(");
+                sb.Append('(');
                 foreach (var sub in filter.Filters)
                 {
                     if (count > 0)

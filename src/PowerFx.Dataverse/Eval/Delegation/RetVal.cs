@@ -4,11 +4,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -51,6 +56,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly NumberLiteralNode _maxRows;
 
+            internal NumberLiteralNode MaxRows => _maxRows;
+
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
 
@@ -60,8 +67,14 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
-            
-            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap)
+
+            internal readonly FxGroupByNode _groupByNode;
+
+            internal bool HasGroupByNode => _groupByNode != null;
+
+            internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
+
+            public RetVal(DelegationHooks hooks, IntermediateNode originalNode, IntermediateNode sourceTableIRNode, TableType tableType, IntermediateNode filter, IntermediateNode orderBy, IntermediateNode count, int maxRows, ColumnMap columnMap, FxGroupByNode groupByNode)
             {
                 this._maxRows = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), maxRows);
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
@@ -74,6 +87,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
+                this._groupByNode = groupByNode;
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
 
@@ -99,6 +113,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public IntermediateNode OrderBy => _orderBy ?? MakeBlankCall(Hooks);
 
+            /// <summary>
+            /// Only use it in final query generation.
+            /// </summary>
             public IntermediateNode TopCountOrDefault => _topCount ?? _maxRows;
 
             // If set, we're attempting to delegate the current expression specifeid by _node.
@@ -147,6 +164,14 @@ namespace Microsoft.PowerFx.Dataverse
                 var func = new DelegatedBlank(hooks);
                 var node = new CallNode(IRContext.NotInSource(FormulaType.Blank), func);
                 return node;
+            }
+
+            private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode, TableType tableType)
+            {
+                // convert _groupByNode to IR
+                var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode, tableType);
+                var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
+                return groupByIRNode;
             }
         }
     }

@@ -35,7 +35,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, string partitionId = null, int? top = null)
+        internal readonly FxGroupByNode _groupBy;
+
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();
@@ -43,6 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
             _partitionId = partitionId;
+            _groupBy = groupBy;
         }
 
         public override void Visit(IValueVisitor visitor)

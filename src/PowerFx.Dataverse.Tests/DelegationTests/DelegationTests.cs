@@ -16,6 +16,7 @@ using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using Xunit.Abstractions;
+using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -192,55 +193,114 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
-            void AddSeparatorIfNeeded(StringBuilder sb)
-            {
-                if (sb.Length > 0)
-                {
-                    sb.Append('&');
-                }
-            }
-
-            void AddEqual(StringBuilder sb)
-            {
-                sb.Append('=');
-            }
-
             StringBuilder sb = new StringBuilder();
 
             IReadOnlyDictionary<string, string> ode = dp.ODataElements;
 
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Filter, out string filter))
+            // Check if GroupByTransformationNode is present
+            if (dp.GroupBy != null)
             {
-                sb.Append(DataverseDelegationParameters.Odata_Filter);
+                // Generate the $apply parameter based on the GroupByTransformationNode
+                sb.Append("$apply");
                 AddEqual(sb);
-                sb.Append(filter);
-            }
 
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_OrderBy, out string orderBy))
-            {
-                AddSeparatorIfNeeded(sb);
-                sb.Append(DataverseDelegationParameters.Odata_OrderBy);
-                AddEqual(sb);
-                sb.Append(orderBy);
+                AppendFilterParam(dp.ODataElements, sb, true);
+                AppendGroupByParam(dp.ODataElements, sb);
+                AppendOrderByParam(dp.ODataElements, sb, true);
             }
-
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Select, out string select))
+            else
             {
-                AddSeparatorIfNeeded(sb);
-                sb.Append(DataverseDelegationParameters.Odata_Select);
-                AddEqual(sb);
-                sb.Append(select);
+                AppendFilterParam(ode, sb, false);
+                AppendOrderByParam(ode, sb, false);
+                AppendSelectParam(ode, sb);
             }
 
             if (ode.TryGetValue(DataverseDelegationParameters.Odata_Top, out string top))
             {
-                AddSeparatorIfNeeded(sb);
+                AddSeparatorIfNeeded(sb, false);
                 sb.Append(DataverseDelegationParameters.Odata_Top);
                 AddEqual(sb);
                 sb.Append(top);
             }
 
             return sb.ToString();
+        }
+
+        private static void AddEqual(StringBuilder sb)
+        {
+            sb.Append('=');
+        }
+
+        private static void AddSeparatorIfNeeded(StringBuilder sb, bool isApplySeprator)
+        {
+            if (sb.Length > 0)
+            {
+                if (isApplySeprator)
+                {
+                    sb.Append('/');
+                }
+                else
+                {
+                    sb.Append('&');
+                }
+            }
+        }
+
+        private static void AppendFilterParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Filter, out string filter))
+            {
+                // in group by, filter is part of apply and is first element.
+                string filterParamString = null;
+                if (!isApplySeprator)
+                {
+                    AddSeparatorIfNeeded(sb, isApplySeprator);
+                    filterParamString = DataverseDelegationParameters.Odata_Filter;
+                }
+                else
+                {
+                    filterParamString = DataverseDelegationParameters.Odata_Filter.Substring(1);
+                }
+
+                sb.Append(filterParamString);
+                AddEqual(sb);
+                sb.Append(filter);
+            }
+        }
+
+        private static void AppendOrderByParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isGroupBySeprator)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_OrderBy, out string orderBy))
+            {
+                AddSeparatorIfNeeded(sb, isGroupBySeprator);
+                sb.Append(DataverseDelegationParameters.Odata_OrderBy);
+                AddEqual(sb);
+                sb.Append(orderBy);
+            }
+        }
+
+        private static void AppendSelectParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Select, out string select))
+            {
+                AddSeparatorIfNeeded(sb, false);
+                sb.Append(DataverseDelegationParameters.Odata_Select);
+                AddEqual(sb);
+                sb.Append(select);
+            }
+        }
+
+        private static void AppendGroupByParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
+        {
+            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string groupBy))
+            {
+                if (oDataElements.ContainsKey(DataverseDelegationParameters.Odata_Filter))
+                {
+                    AddSeparatorIfNeeded(sb, true);
+                }
+
+                sb.Append(groupBy);
+            }
         }
 
         public class HelperClock : IClockService

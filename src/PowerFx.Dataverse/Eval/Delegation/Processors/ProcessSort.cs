@@ -79,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var sortFunc = new DelegatedSort(_hooks);
                 IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap);
+                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap, groupByNode: tableArg._groupByNode);
             }
 
             return ProcessOtherCall(node, tableArg, context);

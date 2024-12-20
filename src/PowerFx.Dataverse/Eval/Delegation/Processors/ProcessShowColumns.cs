@@ -17,6 +17,11 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
             IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
+            if (tableArg.HasGroupByNode)
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
+
             if (tableArg.TableType._type.AssociatedDataSources.First().IsSelectable)
             {
                 // ShowColumns is only a column selector, so let's create a map with (column, column) entries
@@ -25,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
                 map = ColumnMap.Combine(tableArg.ColumnMap, map);
 
                 // change to original node to current node and appends columnSet.
-                var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map);
+                var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map, groupByNode: tableArg._groupByNode);
 
                 if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
                 {
