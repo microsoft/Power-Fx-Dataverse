@@ -24,6 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return ProcessOtherCall(node, tableArg, context);
             }
 
+            // test
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.
