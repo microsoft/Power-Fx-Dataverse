@@ -224,8 +224,7 @@ namespace Microsoft.PowerFx
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
                 IOrganizationService svcClient;
-                var localTokenCache = @"C:\MyTokenCache\toks.dat";
-                var connectionString = $"AuthType=OAuth;Username=aurorauser01@aurorafinanceintegration02.onmicrosoft.com;redirectUri=http://localhost;Url=https://aurorabapenv748c5.crm10.dynamics.com/;TokenCacheStorePath={localTokenCache};LoginPrompt=Auto";
+                var connectionString = connectionSV.Value;
                 svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 
                 if (multiOrg.Value)
