@@ -154,6 +154,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (method == SummarizeMethod.Count)
             {
+                throw new NotSupportedException("Count(Column) is not supported in DataverseDelegationParameters");
+            }
+            else if (method == SummarizeMethod.CountRows)
+            {
                 return $"$count as {alias}";
             }
 

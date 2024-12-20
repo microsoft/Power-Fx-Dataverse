@@ -68,6 +68,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // Distinct on Summarize() not supported.
         [InlineData(20, "Distinct(Summarize(t1, name, Sum(ThisGroup, amount) As TotalAmount), TotalAmount)", new DelegationOperator[] { })]
+
+        // *************** Delegation with other scalers ****************
+
+        [InlineData(21, "Summarize(t1, name, Min(ThisGroup, amount) As MinAmount)", new DelegationOperator[] { })]
+        [InlineData(22, "Summarize(t1, name, Max(ThisGroup, amount) As MaxAmount)", new DelegationOperator[] { })]
+        [InlineData(23, "Summarize(t1, name, Average(ThisGroup, amount) As AvgAmount)", new DelegationOperator[] { })]
+        [InlineData(24, "Summarize(t1, name, CountRows(ThisGroup) As TotalRows)", new DelegationOperator[] { })]
         public async Task SummarizeDelegationAsync(int id, string expression, DelegationOperator[] delegationOperator)
         {
             var file = "SummarizeDelegationAsync.txt";
@@ -96,7 +103,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var result = await check.GetEvaluator().EvalAsync(CancellationToken.None, runtimeConfig: new RuntimeConfig(symbolValues));
 
             var oDataStrings = string.Empty;
-            if (testTableValue.DelegationParameters != null)
+            var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
+            if (delegationParameter != null && !delegationParameter.GroupBy.FxAggregateExpressions.Any(e => e.AggregateMethod == Core.Entities.SummarizeMethod.Count))
             {
                 oDataStrings = DelegationTests.GetODataString((DataverseDelegationParameters)testTableValue.DelegationParameters);
             }
