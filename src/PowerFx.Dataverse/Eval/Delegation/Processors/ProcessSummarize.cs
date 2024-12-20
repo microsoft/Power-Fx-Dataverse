@@ -170,6 +170,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (DelegationIRVisitor.TryGetFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldName) &&
                         capbilities.CanDelegateSummarize(fieldName, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
                     {
+                        // test.
                         aggregateExpressions.Add(new FxAggregateExpression(fieldName, SummarizeMethod.Count, aliasName));
                         return true;
                     }
