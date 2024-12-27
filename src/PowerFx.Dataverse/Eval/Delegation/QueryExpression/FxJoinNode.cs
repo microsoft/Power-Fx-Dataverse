@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -23,13 +24,10 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         private string _fromAttribute;
         private string _toAttribute;
         private string _joinType;
-        private string _entityAlias;
+        private string _entityAlias;        
 
         // used to store the list of right columns with their types
         private RecordType _rightColumns;
-
-        // contains the JOIN return type processed by the binder
-        private TableType _joinReturnType;
 
         // constains the interim type containing right column names with entity alias prefix
         private RecordType _joinIntermediateType;
@@ -44,15 +42,15 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public FormulaType IntermediateType => _joinIntermediateType;
 
-        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string entityAlias, IEnumerable<string> rightColumnNames, TableType rightTableType)
+        public FxJoinNode(string sourceTable, TableType rightTableType, string fromAttribute, string toAttribute, string joinType, string entityAlias, IEnumerable<string> rightColumnNames)
         {
             _sourceTable = sourceTable;
-            _foreignTable = foreignTable;
+            _foreignTable = rightTableType.TableSymbolName;
             _fromAttribute = fromAttribute;
             _toAttribute = toAttribute;
             _joinType = joinType;
             _entityAlias = entityAlias;
-            _rightColumns = GetColumnsWithTypes(rightColumnNames, rightTableType);
+            _rightColumns = GetColumnsWithTypes(rightColumnNames, rightTableType);            
         }
 
         internal void ProcessMap(TableType leftTableType, ColumnMap map)

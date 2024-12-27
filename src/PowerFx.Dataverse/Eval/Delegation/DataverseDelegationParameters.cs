@@ -266,6 +266,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return null;
             }
 
+            // $$$ when we'll have multiple operations in $apply, join must be first
             return $"join({Join.LinkToEntityName} as {Join.EntityAlias})";
         }
 

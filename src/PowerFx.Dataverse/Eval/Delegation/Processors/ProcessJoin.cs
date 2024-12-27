@@ -3,14 +3,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 using Microsoft.PowerFx.Core.Functions;
+using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
+using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -139,18 +143,24 @@ namespace Microsoft.PowerFx.Dataverse
                     // cumulate left and right maps
                     ColumnMap mergedMap = ColumnMap.Merge(leftMap, rightMap);
 
+                    // right column names
+                    IEnumerable<string> rightColumns = (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value);
+
+                    IDelegationMetadata leftDelegationMetadata = leftTable.TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
+                    IDelegationMetadata rightDelegationMetadata = rightTable.TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;                                       
+                    DelegationMetadata joinDelegationMetadata = new DelegationMetadata(joinReturnType, leftDelegationMetadata, rightDelegationMetadata, rightColumns, mergedMap.AsStringDictionary());
+
                     // Join node with all parameters
                     FxJoinNode joinNode = new FxJoinNode(
                         leftTable.TableType.TableSymbolName,
-                        rightTable.TableType.TableSymbolName,
+                        rightTable.TableType,
                         fromAttribute,
                         toAttribute,
                         joinType,
-                        entityAlias,                        
-                        (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value),
-                        rightTable.TableType);
+                        entityAlias,
+                        rightColumns);                    
 
-                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap);
+                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap, delegationMetadata: joinDelegationMetadata);
                 }
             }
 

@@ -2,6 +2,9 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
@@ -59,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     // Combine with an existing map
                     ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic), tableArg.TableType);
-
+                    
                     return tableArg.With(node, map: map);
                 }
             }

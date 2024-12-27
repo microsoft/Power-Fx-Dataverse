@@ -1,9 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -32,7 +35,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = tableArg.With(node, count: count, map: columnMap);
+            var resultingTable = tableArg.With(node, count: count, map: columnMap); 
 
             return resultingTable;
         }
@@ -49,19 +52,25 @@ namespace Microsoft.PowerFx.Dataverse
                 && !DelegationUtility.IsElasticTable(tableArg.TableType);
 
             if (canDelegate)
-            {
-                // let's create a single column map ("Value", fieldName) with a distinct on fieldName
-                columnMap = new ColumnMap(fieldName);
-
-                // Combine with an existing map
-                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap, tableArg.TableType);
-
-                if (DelegationUtility.CanDelegateDistinct(columnMap.Distinct, context.DelegationMetadata?.FilterDelegationMetadata))
+            {             
+                if (ColumnMap.HasDistinct(tableArg.ColumnMap))
                 {
+                    string f = fieldName;
+                    fieldName = tableArg.ColumnMap.AsStringDictionary().FirstOrDefault(kvp => kvp.Value == f).Key;
+                }
+
+                if (DelegationUtility.CanDelegateDistinct(fieldName, context.DelegationMetadata?.FilterDelegationMetadata))
+                {
+                    // let's create a single column map ("Value", fieldName) with a distinct on fieldName
+                    columnMap = new ColumnMap(fieldName);
+
+                    // Combine with an existing map
+                    columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap, tableArg.TableType);
+
                     return true;
                 }
                 else
-                {
+                {                    
                     canDelegate = false;
                 }
             }

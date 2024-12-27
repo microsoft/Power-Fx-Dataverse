@@ -227,9 +227,16 @@ namespace Microsoft.PowerFx.Dataverse
                         if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
                         {
                             fieldName = realFieldName;
-                        }
+                        }                        
 
-                        AddFieldRead(tableLogicalName, fieldName);
+                        if (DelegationUtility.TryGetJoinElements(fieldName, out string remoteTable, out string remoteFieldName))
+                        {
+                            AddFieldRead(remoteTable, remoteFieldName);
+                        }
+                        else
+                        {
+                            AddFieldRead(tableLogicalName, fieldName);
+                        }
                     }
                     else
                     {

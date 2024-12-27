@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Schema;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -102,13 +103,26 @@ namespace Microsoft.PowerFx.Dataverse
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {
+                if (DelegationUtility.TryGetJoinElements(fieldName, out string remoteTable, out string remoteField))
+                {
+                    return value switch
+                    {
+                        StringValue sv => sv.Value,
+                        DecimalValue dv => dv.Value,
+                        NumberValue nv => nv.Value,
+                        GuidValue gv => gv.Value,
+                        BooleanValue bv => bv.Value,
+                        _ => throw new Exception($"Field {fieldName} has an unsupported type {value.GetType().Name} in JOIN operation")
+                    };
+                }
+
                 // Binder should have enforced that this always succeeds.
                 if (table is DataverseTableValue t2)
                 {
                     if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                     {
                         return amd.ToAttributeObject(value, true);
-                    }
+                    }                    
 
                     throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
                 }

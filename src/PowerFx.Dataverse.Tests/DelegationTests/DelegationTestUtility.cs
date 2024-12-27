@@ -93,6 +93,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 #endif
         }
 
+        //$$$
         private static Regex rex = new Regex(@$"_([0-9a-fA-F]{{32}}({DelegationEngineExtensions.LinkEntityJoinSuffix}|{DelegationEngineExtensions.LinkEntityN1RelationSuffix}))", RegexOptions.Compiled);
 
         private static string ShowDifference(string target, string input)

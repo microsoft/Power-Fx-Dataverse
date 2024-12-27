@@ -158,6 +158,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(36, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
         [InlineData(37, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
 
+        [InlineData(38, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
+        [InlineData(39, @"LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => result.ToExpression().ToString(), false, false, null, true, true, false, expectedWarnings);

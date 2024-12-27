@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -77,14 +78,29 @@ namespace Microsoft.PowerFx.Dataverse
                 IntermediateNode count,
                 FxJoinNode join,
                 int maxRows,
-                ColumnMap columnMap)
+                ColumnMap columnMap,
+                IDelegationMetadata delegationMetadata)
             {
                 this._maxRows = maxRows;
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
                 this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
-                this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
+                this.DelegationMetadata = delegationMetadata ?? tableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
+
+#if DEBUG
+                if (columnMap != null)
+                {
+                    IReadOnlyDictionary<string, string> map = columnMap.AsStringDictionary();
+                    List<string> tt = TableType.FieldNames.Select(fn => map.FirstOrDefault(kvp => kvp.Value == fn).Key ?? fn).OrderBy(x => x, StringComparer.Ordinal).ToList();
+                    List<string> dm = DelegationMetadata.Schema.GetRootFieldNames().Select(dn => dn.Value).ToList();
+
+                    if (!Enumerable.SequenceEqual(tt, dm))
+                    {
+                        throw new InvalidOperationException($"Oups!\r\n{string.Join(", ", tt)}\r\n---\r\n{string.Join(", ", dm)}");
+                    }
+                }
+#endif
 
                 // topCount and filter are optional.
                 this._topCount = count;
@@ -104,9 +120,15 @@ namespace Microsoft.PowerFx.Dataverse
                 IsDelegating = isDelegating;
             }
 
-            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, ColumnMap map = null)
+            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, ColumnMap map = null, IDelegationMetadata delegationMetadata = null)
             {
-                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, _maxRows, map ?? ColumnMap);
+                if (map != null && delegationMetadata == null)
+                {
+                    // adjust delegation capabilities to the new columnMap
+                    delegationMetadata = new DelegationMetadata(TableType, TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata, null, null, map.AsStringDictionary());
+                }
+
+                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, _maxRows, map ?? ColumnMap, delegationMetadata ?? DelegationMetadata);
             }
 
             public bool HasFilter => _filter != null;

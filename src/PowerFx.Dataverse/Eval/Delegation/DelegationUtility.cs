@@ -79,12 +79,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 
         public static bool CanDelegateBinaryOp(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, ColumnMap columnMap)
         {            
-            if (columnMap?.Map.TryGetValue(new DName(fieldName), out IntermediateNode logicalName) == true)
-            {
-                fieldName = ColumnMap.GetString(logicalName);
-            }
+            fieldName = columnMap?.AsStringDictionary().FirstOrDefault(kvp => kvp.Value == fieldName).Key ?? fieldName;
 
-            return op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
+            bool b = op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
+
+            return b;
         }
 
         public static bool CanDelegateSort(string fieldName, bool isAscending, SortOpMetadata sortCapabilities)
@@ -255,5 +254,27 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 BinaryOpKind.TimeDifference => BinaryOp.Add,
                 _ => BinaryOp.Error
             };
+
+        internal static bool TryGetJoinElements(string fieldName, out string tableName, out string realFieldName)
+        {
+            string[] parts = fieldName.Split('.');
+
+            if (parts.Length == 2 && parts[0].EndsWith(DelegationEngineExtensions.LinkEntityJoinSuffix, StringComparison.Ordinal))
+            {
+                string[] parts2 = parts[0].Split('_');
+
+                if (parts2.Length >= 3)
+                {
+                    tableName = parts2[parts2.Length - 3];
+                    realFieldName = parts[1];
+
+                    return true;
+                }
+            }
+
+            tableName = null;
+            realFieldName = null;
+            return false;
+        }
     }
 }
