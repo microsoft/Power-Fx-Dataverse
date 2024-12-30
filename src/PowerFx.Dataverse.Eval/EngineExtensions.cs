@@ -102,7 +102,7 @@ namespace Microsoft.PowerFx.Dataverse
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {
-                if (DelegationUtility.TryGetJoinElements(fieldName, out string remoteTable, out string remoteField))
+                if (DelegationUtility.TryGetFieldName(fieldName, out string remoteTable, out string remoteField))
                 {
                     return value switch
                     {

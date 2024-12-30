@@ -135,6 +135,7 @@ namespace Microsoft.PowerFx.Dataverse
                     : throw new InvalidOperationException($"Expecting args5 to be a {nameof(RecordValue)} : found {args[ColumnRenameArg].GetType().Name}");
             }
 
+            // When a JOIN operation occurs, we need to recalculate the intermediate type
             join?.ProcessMap((args[TableArg] as TableValue).Type, columnMap);
 
 #pragma warning disable CS0618 // Type or member is obsolete

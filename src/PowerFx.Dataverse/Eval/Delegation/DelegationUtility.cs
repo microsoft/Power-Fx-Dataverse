@@ -255,7 +255,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 _ => BinaryOp.Error
             };
 
-        internal static bool TryGetJoinElements(string fieldName, out string tableName, out string realFieldName)
+        internal static bool TryGetFieldName(string fieldName, out string tableName, out string realFieldName)
         {
             string[] parts = fieldName.Split('.');
 

@@ -228,7 +228,7 @@ namespace Microsoft.PowerFx.Dataverse
                             fieldName = realFieldName;
                         }                        
 
-                        if (DelegationUtility.TryGetJoinElements(fieldName, out string remoteTable, out string remoteFieldName))
+                        if (DelegationUtility.TryGetFieldName(fieldName, out string remoteTable, out string remoteFieldName))
                         {
                             AddFieldRead(remoteTable, remoteFieldName);
                         }

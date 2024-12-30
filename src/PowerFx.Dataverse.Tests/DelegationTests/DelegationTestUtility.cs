@@ -92,8 +92,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
 #endif
         }
-
-        //$$$
+        
         private static Regex rex = new Regex(@$"_([0-9a-fA-F]{{32}}({DelegationEngineExtensions.LinkEntityJoinSuffix}|{DelegationEngineExtensions.LinkEntityN1RelationSuffix}))", RegexOptions.Compiled);
 
         private static string ShowDifference(string target, string input)

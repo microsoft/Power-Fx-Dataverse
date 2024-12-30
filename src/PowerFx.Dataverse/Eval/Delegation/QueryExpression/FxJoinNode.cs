@@ -5,12 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using Microsoft.PowerFx.Core.Functions.Delegation;
-using Microsoft.PowerFx.Core.IR;
-using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Core.IR.Symbols;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -19,12 +13,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
     [Obsolete("preview")]
     public class FxJoinNode
     {
-        private string _sourceTable;
-        private string _foreignTable;
-        private string _fromAttribute;
-        private string _toAttribute;
-        private string _joinType;
-        private string _entityAlias;        
+        private readonly string _sourceTable;
+        private readonly string _foreignTable;
+        private readonly string _fromAttribute;
+        private readonly string _toAttribute;
+        private readonly string _joinType;
+        private readonly string _entityAlias;
 
         // used to store the list of right columns with their types
         private RecordType _rightColumns;
@@ -40,7 +34,10 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public string EntityAlias => _entityAlias;
 
-        public FormulaType IntermediateType => _joinIntermediateType;
+        // When a JOIN operation occurs, there will potentially be column conflicts and to avoid them we'll use the LinkEntity.EntityAlias for that
+        // This RecordType is the one containing the right columns as they come from the datasource, with the alias prefix
+        // It is computed in calling ProcessMap method below (all left columns + the right columns from the map)
+        public RecordType IntermediateType => _joinIntermediateType;
 
         public FxJoinNode(string sourceTable, TableType rightTableType, string fromAttribute, string toAttribute, string joinType, string entityAlias, IEnumerable<string> rightColumnNames)
         {
@@ -50,10 +47,10 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _toAttribute = toAttribute;
             _joinType = joinType;
             _entityAlias = entityAlias;
-            _rightColumns = GetColumnsWithTypes(rightColumnNames, rightTableType);            
+            _rightColumns = GetColumnsWithTypes(rightColumnNames, rightTableType);
         }
 
-        internal void ProcessMap(TableType leftTableType, ColumnMap map)
+        public void ProcessMap(TableType leftTableType, ColumnMap map)
         {
             RecordType recordType = leftTableType.ToRecord();
             RecordType rt = RecordType.Empty();
@@ -63,9 +60,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
                 string newName = kvp.Key;
                 string oldName = kvp.Value;
 
-                if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType))
+                if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType) && DelegationUtility.TryGetFieldName(oldName, out _, out string realOldName))
                 {
-                    oldName = GetRealFieldName(oldName);
+                    oldName = realOldName;
                     oldNameType = _rightColumns.GetFieldType(oldName);
                 }
 
@@ -84,16 +81,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             }
 
             _joinIntermediateType = rt;
-        }
-
-        // identify real field name when used in Join type link entities
-        // validate they have the following format: '<anything>_<guid_without_dashes>_J.<fieldName>'
-        private static Regex joinRegex = new Regex(@$"_[0-9a-fA-F]{{32}}{DelegationEngineExtensions.LinkEntityJoinSuffix}\.(?<n>.+)$", RegexOptions.Compiled);
-
-        private static string GetRealFieldName(string fieldName)
-        {
-            Match m = joinRegex.Match(fieldName);
-            return m.Success ? m.Groups["n"].Value : fieldName;
         }
 
         private static RecordType GetColumnsWithTypes(IEnumerable<string> columnNames, TableType tableType)

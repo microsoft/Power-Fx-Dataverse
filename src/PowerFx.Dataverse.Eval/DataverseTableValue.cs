@@ -431,18 +431,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();           
-            RecordType recordType = delegationParameters.Join?.IntermediateType as RecordType ?? Type.ToRecord();
-
-            //RecordType recordType = null;
-            //if (columnMap != null)
-            //{
-            //    // have to keep it till we cleanup columnMap.
-            //    recordType = Type.ToRecord();
-            //}
-            //else
-            //{
-            //    recordType = expectedReturnType ?? Type.ToRecord();
-            //}
+            RecordType recordType = delegationParameters.Join?.IntermediateType ?? Type.ToRecord();
 
             foreach (Entity entity in entityCollection.Entities)
             {
