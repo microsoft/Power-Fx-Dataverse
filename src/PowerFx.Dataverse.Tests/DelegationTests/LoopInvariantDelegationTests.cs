@@ -2,11 +2,8 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;

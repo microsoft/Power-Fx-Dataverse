@@ -50,6 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
                 leftTable.HasOrderBy || rightTable.HasOrderBy ||
                 leftTable.HasFilter || rightTable.HasFilter ||
                 leftTable.HasJoin || rightTable.HasJoin ||
+                leftTable.HasGroupBy || rightTable.HasGroupBy ||
                 leftTable.ColumnMap != null || rightTable.ColumnMap != null)
             {
                 return base.Visit(node, context, leftTable);

@@ -334,19 +334,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                                 newEntity.Attributes[GetAttributePrefix(join) + column] = val;
                             }
 
-                            innerRows.Add(newEntity);
+                            innerRows.Add(newEntity);                            
 
                             inner.Add(leftEntity);
                             inner.Add(rightEntity);
 
                             if (includeLeft && outer.Contains(leftEntity))
                             {
+                                take--;
                                 outer.Remove(leftEntity);
                             }
 
                             if (includeRight && outer.Contains(rightEntity))
                             {
+                                take--;
                                 outer.Remove(rightEntity);
+                            }
+
+                            if (--take == 0)
+                            {
+                                break;
                             }
                         }
                         else
@@ -354,13 +361,28 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             if (includeLeft && !inner.Contains(leftEntity))
                             {
                                 outer.Add(leftEntity);
+
+                                if (--take == 0)
+                                {
+                                    break;
+                                }
                             }
 
                             if (includeRight && !inner.Contains(rightEntity))
                             {
                                 outer.Add(rightEntity);
+
+                                if (--take == 0)
+                                {
+                                    break;
+                                }
                             }
                         }
+                    }
+
+                    if (take == 0)
+                    {
+                        break;
                     }
                 }
             }

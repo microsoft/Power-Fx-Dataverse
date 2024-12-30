@@ -22,7 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
             // nested summarize is not supported and renames are not supported.
             if (tableArg.HasGroupBy || tableArg.HasColumnMap)
             {
-                return CreateNotSupportedErrorAndReturn(node, tableArg);
+                // if tableArg is delegating, let's delegate that part
+                return ProcessOtherCall(node, tableArg, context);                
             }
 
             var groupByProperties = new List<string>();

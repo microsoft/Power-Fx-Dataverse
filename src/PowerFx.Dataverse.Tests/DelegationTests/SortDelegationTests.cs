@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Types;
 using Xunit;

@@ -126,7 +126,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(20, "ShowColumns(Join(local As l, remote As r, r.remoteid = l.rtid, JoinType.Full,  r.other As other2), localid, new_name, other2)", 5, FullJoin2)]
 
         // Now trying when remote is left and local is right
-
         [InlineData(21, "ShowColumns(Join(remote, local, LeftRecord.remoteid = RightRecord.rtid, JoinType.Inner, RightRecord.new_name As other2), remoteid, data, other)", 3, InnerJoin3)]
         [InlineData(22, "ShowColumns(Join(remote, local, LeftRecord.remoteid = RightRecord.rtid, JoinType.Left,  RightRecord.new_name As other2), remoteid, data, other)", 4, LeftJoin3)]
         [InlineData(23, "ShowColumns(Join(remote, local, LeftRecord.remoteid = RightRecord.rtid, JoinType.Right, RightRecord.new_name As other2), remoteid, data, other)", 4, RightJoin3)]
@@ -148,18 +147,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // join with First()
         [InlineData(34, "First(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2))", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
 
-        // Validate no Join delegation
+        // Validate no Join delegation as either left or right is not a direct table
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
-        [InlineData(36, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
-        [InlineData(37, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
+        [InlineData(36, "ShowColumns(Join(local, FirstN(remote, 10), LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
+        [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
+        [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
 
-        // Join + LookUp
-        [InlineData(38, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
-        [InlineData(39, @"LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
+        // Join + ShowColumns +LookUp
+        [InlineData(39, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
+        [InlineData(40, @"LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
 
-        // Join + Filter
-        [InlineData(40, "Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 3, InnerJoin4)]
-        [InlineData(41, @"Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 3, InnerJoin4)]
+        // Join + ShowColumns +Filter
+        [InlineData(41, "Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 3, InnerJoin4)]
+        [InlineData(42, @"Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 3, InnerJoin4)]
+
+        // Join + ShowColumns + FirstN
+        [InlineData(43, "FirstN(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), 2)", 2, @"Table({localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)},{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)})")]
+
+        // Join + ForAll
+        [InlineData(44, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4)", 3, @"Table({Value:""p1""},{Value:""row4""},{Value:If(false,"""")})")]
+        [InlineData(45, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), {n5: n4})", 3, @"Table({n5:""p1""},{n5:""row4""},{n5:If(false,"""")})")]
+
+        // no delegation of SortByColumns as a ColumnMap is used in Join 
+        [InlineData(46, "ShowColumns(SortByColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
+        [InlineData(47, "SortByColumns(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
+
+        // no delegation of Summarize as a ColumnMap is used in Join
+        [InlineData(48, "Summarize(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2), localid, Average(ThisGroup, other2) As avg)", 3, @"Table({avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000003"")},{avg:Float(44),localid:GUID(""00000000-0000-0000-0000-000000000004"")},{avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000005"")})")]
+
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => result.ToExpression().ToString(), false, false, null, true, true, false, expectedWarnings);

@@ -101,7 +101,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var oDataStrings = string.Empty;
             var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
-            if (delegationParameter != null && !delegationParameter.GroupBy.FxAggregateExpressions.Any(e => e.AggregateMethod == Core.Entities.SummarizeMethod.Count))
+            if (delegationParameter != null && !delegationParameter.GroupBy?.FxAggregateExpressions.Any(e => e.AggregateMethod == Core.Entities.SummarizeMethod.Count) == true)
             {
                 oDataStrings = DelegationTests.GetODataString((DataverseDelegationParameters)testTableValue.DelegationParameters);
             }
