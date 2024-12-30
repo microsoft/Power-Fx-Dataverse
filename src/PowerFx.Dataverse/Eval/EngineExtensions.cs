@@ -82,13 +82,13 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedRetrieveSingleFunction(this, recordReturnType);
 
                     // $$$ Change args to single record, instead of list of separate args.
-                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode };
+                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode };
                     returnType = recordReturnType;
                 }
                 else if (retVal.OriginalNode.IRContext.ResultType is TableType tableReturnType)
                 {
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
-                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.TopCountOrDefault };
+                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault };
                     returnType = tableReturnType;
                 }
                 else if (retVal.OriginalNode is CallNode callNode)

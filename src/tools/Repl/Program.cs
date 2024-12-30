@@ -224,7 +224,6 @@ namespace Microsoft.PowerFx
             public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
                 IOrganizationService svcClient;
-
                 var connectionString = connectionSV.Value;
                 svcClient = new ServiceClient(connectionString) { UseWebApi = false };
 

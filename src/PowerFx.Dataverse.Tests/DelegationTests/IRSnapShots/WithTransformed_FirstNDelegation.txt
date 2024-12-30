@@ -1,38 +1,38 @@
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(2), ))) | $top=2
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), 2, ))) | $top=2
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(2), ))) | $top=2
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), 2, ))) | $top=2
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(_count), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Value(_count), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(_count), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Value(_count), ))) | $top=100
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
-With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
-With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), 10, ))) | $filter=(new_price gt 90)&$top=10
-With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(90)), __noop(), __noJoin(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
-With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), 10, ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Value(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Value(_count), ))) | $top=100
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(If(LtDecimals(1,0), (_count), (1))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Value(If(LtNumbers(1,0), (_count), (Decimal(1)))), ))) | $top=1
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), __noopGroupBy(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), __noopGroupBy(), 10, ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(90)), __noop(), __noJoin(), __noopGroupBy(), Float(10), ))) | $filter=(new_price gt 90)&$top=10
+With({r:local}, (__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90), __noop(), __noJoin(), __noopGroupBy(), 10, ))) | $filter=(new_price gt 90)&$top=10
 
 
 
 
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(DivDecimals(1,0)), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), DivNumbers(1,0), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(DivDecimals(1,0)), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), DivNumbers(1,0), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(If(LtDecimals(1,0), (1))), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), If(LtNumbers(1,0), (1)), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), Float(If(LtDecimals(1,0), (1))), )))
-With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), If(LtNumbers(1,0), (1)), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(DivDecimals(1,0)), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), DivNumbers(1,0), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(DivDecimals(1,0)), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), DivNumbers(1,0), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(If(LtDecimals(1,0), (1))), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), If(LtNumbers(1,0), (1)), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(If(LtDecimals(1,0), (1))), )))
+With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), If(LtNumbers(1,0), (1)), )))
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), 1, ))) | $top=1
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), Float(2), ))) | $top=2
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), 2, ))) | $top=2
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), Float(2), ))) | $top=2
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), 2, ))) | $top=2
-With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), 2, ))) | $top=2
-With({r:local}, (__retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_name}, &"+'<>), __noop(), __noJoin(), 5, ))) | $filter=(new_name eq '&"+''<>')&$top=5
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(2), ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ))) | $top=2
+With({r:local}, (__retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_name}, &"+'<>), __noop(), __noJoin(), __noopGroupBy(), 5, ))) | $filter=(new_name eq '&"+''<>')&$top=5

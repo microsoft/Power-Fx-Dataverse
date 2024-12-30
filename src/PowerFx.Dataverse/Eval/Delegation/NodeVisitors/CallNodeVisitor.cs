@@ -95,6 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "Sort" or
                 "SortByColumns" => ProcessSort(node, tableArg, context),
                 "ShowColumns" => ProcessShowColumns(node, tableArg, context),
+                "Summarize" => ProcessSummarize(node, tableArg, context),
 
                 _ => ProcessOtherCall(node, tableArg, context)
             };

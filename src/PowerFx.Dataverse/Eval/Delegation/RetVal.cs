@@ -58,6 +58,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly int _maxRows;
 
+            internal readonly FxGroupByNode _groupByNode;                        
+
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
 
@@ -77,6 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
                 IntermediateNode orderBy,
                 IntermediateNode count,
                 FxJoinNode join,
+                FxGroupByNode groupby,                
                 int maxRows,
                 ColumnMap columnMap,
                 IDelegationMetadata delegationMetadata)
@@ -106,6 +109,7 @@ namespace Microsoft.PowerFx.Dataverse
                 this._topCount = count;
                 this._filter = filter;
                 this._orderBy = orderBy;
+                this._groupByNode = groupby;
                 this._join = join;
                 this.ColumnMap = columnMap;
                 this.IsDelegating = true;
@@ -120,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse
                 IsDelegating = isDelegating;
             }
 
-            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, ColumnMap map = null, IDelegationMetadata delegationMetadata = null)
+            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, FxGroupByNode groupby = null, ColumnMap map = null, IDelegationMetadata delegationMetadata = null)
             {
                 if (map != null && delegationMetadata == null)
                 {
@@ -128,7 +132,7 @@ namespace Microsoft.PowerFx.Dataverse
                     delegationMetadata = new DelegationMetadata(TableType, TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata, null, null, map.AsStringDictionary());
                 }
 
-                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, _maxRows, map ?? ColumnMap, delegationMetadata ?? DelegationMetadata);
+                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, groupby ?? _groupByNode, _maxRows, map ?? ColumnMap, delegationMetadata ?? DelegationMetadata);
             }
 
             public bool HasFilter => _filter != null;
@@ -139,6 +143,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             public bool HasJoin => _join != null;
 
+            public bool HasGroupBy => _groupByNode != null;
+
             public bool HasColumnMap => ColumnMap != null;
 
             public IntermediateNode Filter => _filter ?? MakeBlankCall(Hooks);
@@ -147,7 +153,9 @@ namespace Microsoft.PowerFx.Dataverse
 
             public FxJoinNode Join => _join;
 
-            public IntermediateNode JoinNode => GenerateJoinIR(_join, TableType);
+            internal IntermediateNode JoinNode => GenerateJoinIR(_join, TableType);
+
+            internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
 
             public IntermediateNode TopCountOrDefault => _topCount ?? MaxRows;
 
@@ -209,6 +217,14 @@ namespace Microsoft.PowerFx.Dataverse
             internal RecordNode MakeBlankRecordNode()
             {
                 return new RecordNode(IRContext.NotInSource(RecordType.Empty()), new Dictionary<DName, IntermediateNode>());
+            }
+
+            private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode, TableType tableType)
+            {
+                // convert _groupByNode to IR
+                var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode, tableType);
+                var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
+                return groupByIRNode;
             }
         }
     }

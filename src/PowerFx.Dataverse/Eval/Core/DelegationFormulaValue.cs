@@ -37,7 +37,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 
         internal readonly FxJoinNode _join;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxJoinNode join = null, string partitionId = null, int? top = null)
+        internal readonly FxGroupByNode _groupBy;
+
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, FxJoinNode join = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();
@@ -45,6 +47,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
             _join = join;
+            _groupBy = groupBy;
             _partitionId = partitionId;
         }
 

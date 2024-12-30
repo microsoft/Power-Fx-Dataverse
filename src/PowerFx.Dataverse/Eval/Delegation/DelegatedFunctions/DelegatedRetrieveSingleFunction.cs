@@ -30,9 +30,10 @@ namespace Microsoft.PowerFx.Dataverse
         private const int FilterArg = 1;
         private const int OrderbyArg = 2;
         private const int JoinArg = 3;
-        private const int DistinctArg = 4;
-        private const int ColumnRenameArg = 5;
-        private const int ColumnRenameArg1 = 6;
+        private const int GroupByArg = 4;
+        private const int DistinctArg = 5;
+        private const int ColumnRenameArg = 6;
+        private const int ColumnRenameArg1 = ColumnRenameArg + 1;
 
         // args[0]: table
         // args[1]: filter
@@ -74,6 +75,16 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg{OrderbyArg} should always be of type {nameof(delegationFormulaValue)}");
             }
 
+            FxGroupByNode groupBy = null;
+            if (args[GroupByArg] is GroupByObjectFormulaValue groupByObject)
+            {
+                groupBy = groupByObject.GroupBy;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Input arg{GroupByArg} should always be of type {nameof(GroupByObjectFormulaValue)}");
+            }
+
             string distinctColumn = null;
             if (args[DistinctArg] is StringValue sv)
             {
@@ -107,15 +118,16 @@ namespace Microsoft.PowerFx.Dataverse
             join?.ProcessMap((args[TableArg] as TableValue).Type, columnMap);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters()
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
                 Top = 1,
                 Join = join,
+                GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,
+                Relation = relation,                
                 ExpectedReturnType = ReturnFormulaType as RecordType
             };
 #pragma warning restore CS0618 // Type or member is obsolete

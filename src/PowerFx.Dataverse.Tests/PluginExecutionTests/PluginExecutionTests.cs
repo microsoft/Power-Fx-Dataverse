@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -12,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -1041,6 +1039,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
         [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")]
+
+        // Summarize is special, becuase of ThisGroup.
+        // Summarize that's delegated.
+        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price) As TPrice)", "Read local: new_name, new_price;")]
+
+        // Summarize that's not delegated.
+        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price * 2) As TPrice)", "Read local: new_name, new_price;")]
 
         // Join
         [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: ;")]

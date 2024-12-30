@@ -12,7 +12,12 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessShowColumns(CallNode node, RetVal tableArg, Context context)
-        {
+        {            
+            if (tableArg.HasGroupBy)
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
+
             if (tableArg.TableType._type.AssociatedDataSources.First().IsSelectable)
             {
                 // ShowColumns is only a column selector, so let's create a map with (column, column) entries

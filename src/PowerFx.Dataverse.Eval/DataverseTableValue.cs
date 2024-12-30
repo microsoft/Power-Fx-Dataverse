@@ -184,7 +184,20 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             EntityCollection entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
-            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
+            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);            
+        }
+
+        private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
+        {
+            return aggregateType switch
+            {
+                SummarizeMethod.Average => XrmAggregateType.Avg,
+                SummarizeMethod.Count => XrmAggregateType.Count,
+                SummarizeMethod.Max => XrmAggregateType.Max,
+                SummarizeMethod.Min => XrmAggregateType.Min,
+                SummarizeMethod.Sum => XrmAggregateType.Sum,
+                _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
+            };            
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -202,6 +215,35 @@ namespace Microsoft.PowerFx.Dataverse
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
+
+            if (delegationParameters.GroupBy != null)
+            {
+                var columnSet = new ColumnSet(false);
+                foreach (var groupByProp in delegationParameters.GroupBy.GroupingProperties)
+                {
+                    var att = new XrmAttributeExpression()
+                    {
+                        AggregateType = XrmAggregateType.None,
+                        AttributeName = groupByProp,
+                        HasGroupBy = true,
+                        Alias = groupByProp
+                    };
+                    columnSet.AttributeExpressions.Add(att);
+                }
+
+                foreach (var aggregate in delegationParameters.GroupBy.FxAggregateExpressions)
+                {
+                    var att = new XrmAttributeExpression()
+                    {
+                        AggregateType = FxToXRMAggregateType(aggregate.AggregateMethod),
+                        AttributeName = aggregate.PropertyName,
+                        Alias = aggregate.Alias ?? aggregate.PropertyName
+                    };
+                    columnSet.AttributeExpressions.Add(att);
+                }
+
+                query.ColumnSet = columnSet;
+            }
 
             if (delegationParameters.Join != null)
             {
@@ -390,6 +432,17 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();           
             RecordType recordType = delegationParameters.Join?.IntermediateType as RecordType ?? Type.ToRecord();
+
+            //RecordType recordType = null;
+            //if (columnMap != null)
+            //{
+            //    // have to keep it till we cleanup columnMap.
+            //    recordType = Type.ToRecord();
+            //}
+            //else
+            //{
+            //    recordType = expectedReturnType ?? Type.ToRecord();
+            //}
 
             foreach (Entity entity in entityCollection.Entities)
             {

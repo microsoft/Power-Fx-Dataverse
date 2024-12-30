@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -19,9 +18,16 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessLookUp(CallNode node, RetVal tableArg, Context context)
         {
             RetVal result;
+
             if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
+            }
+
+            // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
+            if (tableArg.HasGroupBy)
+            {
+                return ProcessOtherCall(node, tableArg, context);
             }
 
             var predicate = node.Args[1];

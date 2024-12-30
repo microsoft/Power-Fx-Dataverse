@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupBy))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -233,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        internal static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
         {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
@@ -461,7 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, _maxRows, columnMap: null, delegationMetadata: null);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null, delegationMetadata: null);
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)

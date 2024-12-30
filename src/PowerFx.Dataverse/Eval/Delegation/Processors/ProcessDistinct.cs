@@ -1,12 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
-using Microsoft.PowerFx.Core.Functions.Delegation;
-using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -18,7 +14,12 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessDistinct(CallNode node, RetVal tableArg, Context context)
-        {
+        {            
+            if (tableArg.HasGroupBy)
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
+
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // Distinct can't be delegated if: Return type is not primitive, or if the field is not a direct field of the table.

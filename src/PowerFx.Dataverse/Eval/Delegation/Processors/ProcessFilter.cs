@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -13,9 +12,16 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessFilter(CallNode node, RetVal tableArg, Context context)
         {
+            // Filter with group by is not supported. Ie Filter(Summarize(...), ...), other way around is supported.
             if (node.Args.Count != 2)
             {
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
+            }
+
+            // Can't Filter() on Group By.
+            if (tableArg.HasGroupBy)
+            {
+                return ProcessOtherCall(node, tableArg, context);
             }
 
             IntermediateNode predicate = node.Args[1];

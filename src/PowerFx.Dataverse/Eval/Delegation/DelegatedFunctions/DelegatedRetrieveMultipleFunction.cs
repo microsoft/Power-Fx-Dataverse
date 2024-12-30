@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
@@ -32,18 +31,20 @@ namespace Microsoft.PowerFx.Dataverse
         private const int FilterArg = 1;
         private const int OrderbyArg = 2;
         private const int JoinArg = 3;
-        private const int CountArg = 4;
-        private const int DistinctArg = 5;
-        private const int ColumnRenameArg = 6;
+        private const int GroupByArg = 4;
+        private const int CountArg = 5;
+        private const int DistinctArg = 6;
+        private const int ColumnRenameArg = 7;
         private const int ColumnRenameArg1 = ColumnRenameArg + 1;
 
         // args[0]: table
         // args[1]: filter
         // args[2]: orderby
         // args[3]: join
-        // args[4]: count
-        // args[5]: distinct column
-        // args[6]: columns with renames (in Record)
+        // args[4]: groupby
+        // args[5]: count
+        // args[6]: distinct column
+        // args[7]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -94,6 +95,16 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{OrderbyArg} should always be of type {nameof(delegationFormulaValue)} : found {args[OrderbyArg]}");
             }
 
+            FxGroupByNode groupBy = null;
+            if (args[GroupByArg] is GroupByObjectFormulaValue groupByObjectFormula)
+            {
+                groupBy = groupByObjectFormula.GroupBy;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args{GroupByArg} should always be of type {nameof(GroupByObjectFormulaValue)} : found {args[GroupByArg]}");
+            }
+
             string distinctColumn = null;
             if (args[DistinctArg] is StringValue sv)
             {
@@ -127,12 +138,13 @@ namespace Microsoft.PowerFx.Dataverse
             join?.ProcessMap((args[TableArg] as TableValue).Type, columnMap);
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters
+            var delegationParameters = new DataverseDelegationParameters()
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
                 Top = topCount,
                 Join = join,
+                GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
                 Relation = relation,
