@@ -210,6 +210,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
             else
             {
+                AppendJoinParam(ode, sb);
                 AppendFilterParam(ode, sb, false);
                 AppendOrderByParam(ode, sb, false);
                 AppendSelectParam(ode, sb);
@@ -298,17 +299,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 {
                     AddSeparatorIfNeeded(sb, true);
                 }
-            }
 
+                sb.Append(groupBy);
+            }
+        }
+
+        private static void AppendJoinParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
+        {
             if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
             {
                 AddSeparatorIfNeeded(sb, true);
                 sb.Append(DataverseDelegationParameters.Odata_Apply);
                 AddEqual(sb);
                 sb.Append(apply);
-            }
-
-            //return sb.ToString();
+            }        
         }
 
         public class HelperClock : IClockService
