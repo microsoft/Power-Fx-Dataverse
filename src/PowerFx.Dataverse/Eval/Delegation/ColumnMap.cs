@@ -118,11 +118,11 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     string firstValue = GetString(firstNode);
                     newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));
-                }
-                else if (first._distinctColumn == secondValue)
-                {
-                    newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), first._distinctColumn));
-                    distinctColumn = first._distinctColumn;
+
+                    if (secondValue == second._distinctColumn)
+                    {
+                        distinctColumn = firstValue;
+                    }
                 }
                 else if (tableType.FieldNames.Contains(secondValue))
                 {                    
@@ -134,17 +134,24 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            if (!string.IsNullOrEmpty(second._distinctColumn))
+            if (string.IsNullOrEmpty(distinctColumn))
             {
-                if (first._dic.TryGetValue(new DName(second._distinctColumn), out IntermediateNode firstNode))
+                if (!string.IsNullOrEmpty(second._distinctColumn) && string.IsNullOrEmpty(first._distinctColumn))
                 {
-                    distinctColumn = GetString(firstNode);
+                    distinctColumn = second._distinctColumn;
                 }
-            }
-
-            if (!string.IsNullOrEmpty(first._distinctColumn) && string.IsNullOrEmpty(distinctColumn))
-            {
-                distinctColumn = first._distinctColumn;
+                else if (!string.IsNullOrEmpty(first._distinctColumn) && string.IsNullOrEmpty(second._distinctColumn))
+                {
+                    distinctColumn = first._distinctColumn;
+                }
+                else if (first._distinctColumn == second._distinctColumn)
+                {
+                    distinctColumn = first._distinctColumn;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Distinct column is present in both ColumnMaps");
+                }
             }
 
             // verify that distinct column name is present in the new dictionary

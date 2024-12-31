@@ -28,7 +28,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            return tableArg.With(node, count: node.Args[1]);
+            if (tableArg.TryAddTopCount(node.Args[1], node, out RetVal result))
+            {
+                return result;
+            }
+            else
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
         }
     }
 }

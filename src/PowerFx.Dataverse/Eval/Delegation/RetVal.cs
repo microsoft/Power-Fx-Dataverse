@@ -4,13 +4,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Xml.Linq;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
+using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -58,8 +63,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             private readonly int _maxRows;
 
-            internal readonly FxGroupByNode _groupByNode;
-
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
 
@@ -69,6 +72,14 @@ namespace Microsoft.PowerFx.Dataverse
             public EntityMetadata Metadata => _metadata ?? throw new ArgumentNullException(nameof(Metadata));
 
             public bool IsDataverseDelegation => _metadata != null;
+
+            internal readonly FxGroupByNode _groupByNode;
+
+            internal bool HasGroupByNode => _groupByNode != null;
+
+            internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
+
+            internal IntermediateNode JoinNode => GenerateJoinIR(_join, TableType);
 
             public RetVal(
                 DelegationHooks hooks,
@@ -109,11 +120,6 @@ namespace Microsoft.PowerFx.Dataverse
                 IsDelegating = isDelegating;
             }
 
-            public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, FxGroupByNode groupby = null, ColumnMap map = null)
-            {
-                return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, groupby ?? _groupByNode, _maxRows, map ?? ColumnMap);
-            }
-
             public bool HasFilter => _filter != null;
 
             public bool HasOrderBy => _orderBy != null;
@@ -131,10 +137,6 @@ namespace Microsoft.PowerFx.Dataverse
             public IntermediateNode OrderBy => _orderBy ?? MakeBlankCall(Hooks);
 
             public FxJoinNode Join => _join;
-
-            internal IntermediateNode JoinNode => GenerateJoinIR(_join, TableType);
-
-            internal IntermediateNode GroupByNode => GenerateGroupByIR(_groupByNode, TableType);
 
             public IntermediateNode TopCountOrDefault => _topCount ?? MaxRows;
 
@@ -167,18 +169,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            internal IntermediateNode AddFilter(IntermediateNode newFilter, ScopeSymbol scope)
-            {
-                if (_filter != null)
-                {
-                    var combinedFilter = new List<IntermediateNode> { _filter, newFilter };
-                    var result = Hooks.MakeAndCall(TableType, combinedFilter, scope);
-                    return result;
-                }
-
-                return newFilter;
-            }
-
             internal CallNode MakeBlankCall(DelegationHooks hooks)
             {
                 var func = new DelegatedBlank(hooks);
@@ -199,6 +189,200 @@ namespace Microsoft.PowerFx.Dataverse
                 var groupByFormulaValue = new GroupByObjectFormulaValue(groupByNode, tableType);
                 var groupByIRNode = new ResolvedObjectNode(IRContext.NotInSource(groupByFormulaValue.Type), groupByFormulaValue);
                 return groupByIRNode;
+            }
+
+            internal bool TryAddTopCount(IntermediateNode count, CallNode node, out RetVal result)
+            {
+                if (_topCount == null || 
+                    (count is NumberLiteralNode countLiteral && countLiteral.LiteralValue == 1) || 
+                    (_topCount is NumberLiteralNode numLit && count is NumberLiteralNode cLiteral && numLit.LiteralValue > cLiteral.LiteralValue))
+                {
+                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, count, _join, _groupByNode, (int)_maxRows, ColumnMap);
+                    return true;
+                }
+
+                result = null;
+                return false;
+            }
+
+            internal static RetVal New(DelegationHooks hooks, ResolvedObjectNode node, int maxRows)
+            {
+                var tableType = (TableType)node.IRContext.ResultType;
+                var result = new RetVal(hooks, node, node, tableType, filter: null, orderBy: null, count: null, join: null, groupby: null, maxRows, columnMap: null);
+                return result;
+            }
+
+            internal bool TryAddFilter(IntermediateNode filter, CallNode node, out RetVal result)
+            {
+                if (HasTopCount || HasGroupByNode || HasJoin)
+                {
+                    result = null;
+                    return false;
+                }
+
+                // LookUp can't nest to Filter or ForAll
+                if (node.Function == BuiltinFunctionsCore.LookUp && 
+                    this.OriginalNode is CallNode maybeFilter && 
+                    (maybeFilter.Function == BuiltinFunctionsCore.Filter || maybeFilter.Function == BuiltinFunctionsCore.ForAll))
+                {
+                    result = null;
+                    return false;
+                }
+
+                if (HasFilter)
+                {
+                    var combinedFilter = new List<IntermediateNode> { _filter, filter };
+                    var combinedFilterCall = Hooks.MakeAndCall(TableType, combinedFilter, node.Scope);
+                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, combinedFilterCall, _orderBy, _topCount, _join, _groupByNode, _maxRows, ColumnMap);
+                    return true;
+                }
+                else
+                {
+                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, filter, _orderBy, _topCount, _join, _groupByNode, (int)_maxRows, ColumnMap);
+                    return true;
+                }
+            }
+
+            internal bool TryAddDistinct(string fieldName, CallNode distinctCallNode, out RetVal result)
+            {
+                var canDelegate = !DelegationUtility.IsElasticTable(TableType) &&
+                    _topCount == null &&
+                    _groupByNode == null &&
+                    IsReturnTypePrimitive(distinctCallNode.IRContext.ResultType);
+
+                ColumnMap columnMap = null;
+
+                // check if distinct was applied on renamed column.
+                if (ColumnMap != null)
+                {
+                    if (ColumnMap.Map.TryGetValue(new DName(fieldName), out var realFieldNameNode))
+                    {
+                        var realFieldName = ((TextLiteralNode)realFieldNameNode).LiteralValue;
+
+                        if (!DelegationUtility.CanDelegateDistinct(realFieldName, DelegationMetadata?.FilterDelegationMetadata))
+                        {
+                            result = null;
+                            return false;
+                        }
+
+                        columnMap = ColumnMap.Combine(ColumnMap, new ColumnMap(fieldName), TableType);
+                    }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    columnMap = new ColumnMap(fieldName);
+                    if (!DelegationUtility.CanDelegateDistinct(fieldName, DelegationMetadata?.FilterDelegationMetadata))
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+
+                if (canDelegate)
+                {
+                    result = new RetVal(
+                        hooks: Hooks,
+                        originalNode: distinctCallNode,
+                        sourceTableIRNode: _sourceTableIRNode,
+                        tableType: TableType,
+                        filter: _filter,
+                        orderBy: _orderBy,
+                        count: _topCount,
+                        join: null,
+                        groupby: _groupByNode,
+                        maxRows: _maxRows,
+                        columnMap: columnMap);
+
+                    return true;
+                }
+
+                result = null;
+                return false;
+            }
+
+            internal static RetVal NewBinaryOp(DelegationHooks hooks, DelegableIntermediateNode callerTable, IntermediateNode filterNode, int maxRows)
+            {
+                var tableType = (TableType)callerTable.IRContext.ResultType;
+                var result = new RetVal(hooks, filterNode, callerTable, tableType, filter: filterNode, orderBy: null, count: null, join: null, groupby: null, maxRows, columnMap: null);
+                return result;
+            }
+
+            internal bool TryAddColumnMap(ColumnMap map, CallNode node, out RetVal result)
+            {
+                if (HasGroupByNode ||
+                    !TableType._type.AssociatedDataSources.First().IsSelectable)
+                {
+                    result = null;
+                    return false;
+                }
+
+                ColumnMap combinedMap = null;
+                if (HasColumnMap)
+                {
+                    combinedMap = ColumnMap.Combine(ColumnMap, map, TableType);
+                }
+                else
+                {
+                    combinedMap = map;
+                }
+
+                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, _groupByNode, _maxRows, combinedMap);
+                return true;
+            }
+
+            /// <summary>
+            /// Try to add OrderBy to the current RetVal.
+            /// </summary>
+            /// <param name="sortColumns">column names, boolean pair enumerable with boolean representing isAscending boolean.</param>
+            /// <param name="node"></param>
+            /// <param name="result"></param>
+            internal bool TryAddOrderBy(IEnumerable<(string, bool)> sortColumns, CallNode node, out RetVal result)
+            {
+                // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
+                if (HasGroupByNode || HasColumnMap || HasTopCount || HasOrderBy)
+                {
+                    result = null;
+                    return false;
+                }
+
+                IList<IntermediateNode> orderByArgs = new List<IntermediateNode>();
+                orderByArgs.Add(_filter ?? node.Args[0]);
+
+                foreach (var (fieldName, isAscending) in sortColumns)
+                {
+                    if (!DelegationUtility.CanDelegateSort(fieldName, isAscending, DelegationMetadata?.SortDelegationMetadata))
+                    {
+                        result = null;
+                        return false;
+                    }
+
+                    orderByArgs.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
+                    orderByArgs.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
+                }
+
+                var sortFunc = new DelegatedSort(Hooks);
+                var orderByNode = new CallNode(node.IRContext, sortFunc, orderByArgs);
+
+                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, orderByNode, _topCount, _join, _groupByNode, _maxRows, ColumnMap);
+                return true;
+            }
+
+            internal bool TryAddGroupBy(FxGroupByNode groupByNode, CallNode node, out RetVal result)
+            {
+                if (HasGroupByNode || HasJoin || HasColumnMap || HasOrderBy)
+                {
+                    result = null;
+                    return false;
+                }
+
+                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, groupByNode, _maxRows, ColumnMap);
+
+                return true;
             }
         }
     }

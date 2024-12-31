@@ -143,7 +143,9 @@ namespace Microsoft.PowerFx.Dataverse
                         rightRecordName, // foreign table alias                        
                         rightMap);
 
-                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: leftMap);
+                    return Ret(node);
+
+                    //return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: leftMap);
                 }
             }
 
