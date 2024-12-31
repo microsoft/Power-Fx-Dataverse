@@ -43,21 +43,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            RetVal result;
-
             // If tableArg has top count, that means we need to materialize the tableArg and can't delegate.
-            if (tableArg.HasTopCount)
+            RetVal result;
+            if (tableArg.TryAddFilter(pr.Filter, node, out result))
             {
-                result = MaterializeTableAndAddWarning(tableArg, node);
+                return result;
             }
             else
             {
-                // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
-                var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
+               return MaterializeTableAndAddWarning(tableArg, node);
             }
-
-            return result;
         }
     }
 }

@@ -30,7 +30,14 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, node.Args[1], _maxRows, tableArg.ColumnMap, groupByNode: tableArg._groupByNode);
+            if (tableArg.TryAddTopCount(node.Args[1], node, out RetVal result))
+            {
+                return result;
+            }
+            else
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
         }
     }
 }

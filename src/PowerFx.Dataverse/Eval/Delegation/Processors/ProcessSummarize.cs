@@ -24,12 +24,6 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
-            // nested summarize is not supported and renames are not supported.
-            if (tableArg.HasGroupByNode || tableArg.HasColumnMap)
-            {
-                return CreateNotSupportedErrorAndReturn(node, tableArg);
-            }
-
             var groupByProperties = new List<string>();
             var aggregateExpressions = new List<FxAggregateExpression>();
 
@@ -61,9 +55,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
-            var topCount = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
 
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter: tableArg.Filter, orderBy: tableArg.OrderBy, count: topCount, (int)tableArg.MaxRows.LiteralValue, tableArg.ColumnMap, groupByNode);
+            if (tableArg.TryAddGroupBy(groupByNode, node, out RetVal result))
+            {
+                return result;
+            }
+
+            return CreateNotSupportedErrorAndReturn(node, tableArg);
         }
 
         private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxAggregateExpression> aggregateExpressions, TableDelegationInfo capabilities)

@@ -54,7 +54,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasGroupByNode))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -178,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
             {
                 // Adjust field name if it's "Value" and ColumnMap has Distinct
-                fieldName = AdjustFieldNameIfValue(context, fieldName);
+                //fieldName = AdjustFieldNameIfValue(context, fieldName);
 
                 // Check capabilities for field functions
                 if (fieldFunctions.Any())
@@ -457,12 +457,13 @@ namespace Microsoft.PowerFx.Dataverse
             return CreateNotSupportedErrorAndReturn(newCall, tableArg);
         }
 
-        private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode eqNode)
+        private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode filterNode)
         {
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
+            var result = RetVal.NewBinaryOp(_hooks, callerTable, filterNode, _maxRows);
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null, groupByNode: null);
+            return result;
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)

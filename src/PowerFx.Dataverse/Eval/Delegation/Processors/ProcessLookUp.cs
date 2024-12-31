@@ -120,18 +120,15 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // if tableArg was DV Table, delegate the call.
-            if (IsTableArgLookUpDelegable(context, tableArg))
+            if (tableArg.TryAddFilter(pr.Filter, node, out result))
             {
-                var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
+                return result;
             }
             else
             {
                 // if tableArg was a other delegation (e.g. Filter()), then we need to Materialize the call and can't delegate lookup.
-                result = MaterializeTableAndAddWarning(tableArg, node);
+                return MaterializeTableAndAddWarning(tableArg, node);
             }
-
-            return result;
         }
 
         // Does this match: primaryKey=value

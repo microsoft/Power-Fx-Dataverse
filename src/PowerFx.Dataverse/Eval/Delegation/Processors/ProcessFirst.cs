@@ -21,8 +21,17 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg.ColumnMap, groupByNode: tableArg._groupByNode);
-            return res;
+
+            RetVal result;
+            if (tableArg.TryAddTopCount(countOne, node, out result))
+            {
+                // materialize the table if it is not already materialized
+                return result;
+            }
+            else
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
         }
     }
 }
