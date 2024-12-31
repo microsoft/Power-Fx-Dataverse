@@ -19,13 +19,6 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
-            // nested summarize is not supported and renames are not supported.
-            if (tableArg.HasGroupBy || tableArg.HasColumnMap)
-            {
-                // if tableArg is delegating, let's delegate that part
-                return ProcessOtherCall(node, tableArg, context);                
-            }
-
             var groupByProperties = new List<string>();
             var aggregateExpressions = new List<FxAggregateExpression>();
 
@@ -43,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        return CreateNotSupportedErrorAndReturn(node, tableArg);
+                        return ProcessOtherCall(node, tableArg, context);
                     }
                 }
                 else if (arg is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordNode scope && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities))
@@ -52,13 +45,18 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    return CreateNotSupportedErrorAndReturn(node, tableArg);
+                    return ProcessOtherCall(node, tableArg, context);
                 }
             }
 
             var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
-            
-            return tableArg.With(node, groupby: groupByNode);
+
+            if (tableArg.TryAddGroupBy(groupByNode, node, out RetVal result))
+            {
+                return result;
+            }
+
+            return ProcessOtherCall(node, tableArg, context);
         }
 
         private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxAggregateExpression> aggregateExpressions, TableDelegationInfo capabilities)

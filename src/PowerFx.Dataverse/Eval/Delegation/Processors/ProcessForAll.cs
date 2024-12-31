@@ -25,14 +25,14 @@ namespace Microsoft.PowerFx.Dataverse
                 // Create a map with ("Value", fieldName)
                 ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
 
-                // Combine with an existing map
-                map = ColumnMap.Combine(tableArg.ColumnMap, map, tableArg.TableType);
-
-                return tableArg.With(node, map: map);
+                if (tableArg.TryAddColumnMap(map, node, out var result))
+                {
+                    return result;
+                }
             }
 
             // check if we have a record of (newName: oldName)
-            if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
+            else if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
             {
                 Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
                 bool canDelegate = true;
@@ -57,10 +57,12 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (canDelegate)
                 {
-                    // Combine with an existing map
-                    ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic), tableArg.TableType);
-                    
-                    return tableArg.With(node, map: map);
+                    var map = new ColumnMap(dic);
+
+                    if (tableArg.TryAddColumnMap(map, node, out var result))
+                    {
+                        return result;
+                    }
                 }
             }
 

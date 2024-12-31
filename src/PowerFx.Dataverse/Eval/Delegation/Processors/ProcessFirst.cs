@@ -19,8 +19,16 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var res = tableArg.With(node, count: countOne);
-            return res;
+
+            RetVal result;
+            if (tableArg.TryAddTopCount(countOne, node, out result))
+            {
+                return result;
+            }
+            else
+            {
+                return ProcessOtherCall(node, tableArg, context);
+            }
         }
     }
 }
