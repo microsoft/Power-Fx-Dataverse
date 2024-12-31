@@ -25,7 +25,6 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal result;
             if (tableArg.TryAddTopCount(countOne, node, out result))
             {
-                // materialize the table if it is not already materialized
                 return result;
             }
             else
