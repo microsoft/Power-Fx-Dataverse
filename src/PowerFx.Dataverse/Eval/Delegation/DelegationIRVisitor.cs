@@ -176,9 +176,6 @@ namespace Microsoft.PowerFx.Dataverse
             // Try to get the field name from the scope node
             if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
             {
-                // Adjust field name if it's "Value" and ColumnMap has Distinct
-                //fieldName = AdjustFieldNameIfValue(context, fieldName);
-
                 // Check capabilities for field functions
                 if (fieldFunctions.Any())
                 {
