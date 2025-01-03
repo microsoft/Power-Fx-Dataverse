@@ -217,7 +217,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    if (node.Args[1] is RecordNode fieldInfoRecord 
+                    if (node.Args[1] is RecordNode fieldInfoRecord
                         && fieldInfoRecord.Fields.TryGetValue(new Core.Utils.DName(FieldInfoRecord.FieldNameColumnName), out var maybeField)
                         && maybeField is TextLiteralNode field)
                     {
@@ -226,16 +226,9 @@ namespace Microsoft.PowerFx.Dataverse
                         if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
                         {
                             fieldName = realFieldName;
-                        }                        
+                        }
 
-                        if (DelegationUtility.TryGetFieldName(fieldName, out string remoteTable, out string remoteFieldName))
-                        {
-                            AddFieldRead(remoteTable, remoteFieldName);
-                        }
-                        else
-                        {
-                            AddFieldRead(tableLogicalName, fieldName);
-                        }
+                        AddFieldRead(tableLogicalName, fieldName);
                     }
                     else
                     {
@@ -257,7 +250,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         AddFieldRead(tableName, columnNode.LiteralValue);
                     }
-                    else 
+                    else
                     {
                         arg.Accept(this, context);
                     }
@@ -401,7 +394,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override RetVal Visit(ScopeAccessNode node, Context context)
-        {            
+        {
             // Could be a symbol from RowScope.
             // Price in "LookUp(t1,Price=255)"
             if (node.Value is ScopeAccessSymbol sym)
@@ -413,8 +406,8 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         var tableLogicalName = tableType.TableSymbolName;
                         var fieldLogicalName = sym.Name.Value;
-                                                
-                        AddFieldRead(tableLogicalName, fieldLogicalName);                        
+
+                        AddFieldRead(tableLogicalName, fieldLogicalName);
 
                         return null;
                     }
@@ -431,9 +424,9 @@ namespace Microsoft.PowerFx.Dataverse
         public override RetVal Visit(RecordFieldAccessNode node, Context context)
         {
             if (node.From is not ScopeAccessNode)
-            { 
+            {
                 node.From.Accept(this, context);
-            }            
+            }
 
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)

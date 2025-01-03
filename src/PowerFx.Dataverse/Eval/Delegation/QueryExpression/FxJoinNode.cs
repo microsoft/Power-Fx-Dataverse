@@ -19,83 +19,23 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         private readonly string _toAttribute;
         private readonly string _joinType;
         private readonly string _entityAlias;
-
-        // used to store the list of right columns with their types
-        private RecordType _rightColumns;
-
-        // constains the interim type containing right column names with entity alias prefix
-        private RecordType _joinIntermediateType;
+        private readonly ColumnMap _rightMap;
 
         public LinkEntity LinkEntity => GetLinkEntity();
-
-        public RecordType JoinColumns => _rightColumns;
 
         public string LinkToEntityName => _foreignTable;
 
         public string EntityAlias => _entityAlias;
 
-        // When a JOIN operation occurs, there will potentially be column conflicts and to avoid them we'll use the LinkEntity.EntityAlias for that
-        // This RecordType is the one containing the right columns as they come from the datasource, with the alias prefix
-        // It is computed in calling ProcessMap method below (all left columns + the right columns from the map)
-        public RecordType IntermediateType => _joinIntermediateType;
-
-        public FxJoinNode(string sourceTable, TableType rightTableType, string fromAttribute, string toAttribute, string joinType, string entityAlias, IEnumerable<string> rightColumnNames)
+        public FxJoinNode(string sourceTable, TableType rightTableType, string fromAttribute, string toAttribute, string joinType, string entityAlias, ColumnMap rightMap)
         {
             _sourceTable = sourceTable;
             _foreignTable = rightTableType.TableSymbolName;
             _fromAttribute = fromAttribute;
             _toAttribute = toAttribute;
-            _joinType = joinType;
-            _entityAlias = entityAlias;
-            _rightColumns = GetColumnsWithTypes(rightColumnNames, rightTableType);
-        }
-
-        public void ProcessMap(TableType leftTableType, ColumnMap map)
-        {
-            RecordType recordType = leftTableType.ToRecord();
-            RecordType rt = RecordType.Empty();
-
-            foreach (KeyValuePair<string, string> kvp in map.AsStringDictionary())
-            {
-                string newName = kvp.Key;
-                string oldName = kvp.Value;
-
-                if (!recordType.TryGetFieldType(oldName, out FormulaType oldNameType) && DelegationUtility.TryGetFieldName(oldName, out _, out string realOldName))
-                {
-                    oldName = realOldName;
-                    oldNameType = _rightColumns.GetFieldType(oldName);
-                }
-
-                string fieldName = null;
-
-                if (recordType.TryGetFieldType(oldName, out _))
-                {
-                    fieldName = oldName;
-                }
-                else
-                {
-                    fieldName = $"{_entityAlias}.{oldName}";
-                }
-
-                rt = rt.Add(fieldName, oldNameType);
-            }
-
-            _joinIntermediateType = rt;
-        }
-
-        private static RecordType GetColumnsWithTypes(IEnumerable<string> columnNames, TableType tableType)
-        {
-            RecordType recordType = RecordType.Empty();
-
-            foreach (string name in columnNames)
-            {
-                if (tableType.TryGetFieldType(name, out FormulaType fType))
-                {
-                    recordType = recordType.Add(name, fType);
-                }
-            }
-
-            return recordType;
+            _joinType = joinType;            
+            _rightMap = rightMap;
+            _entityAlias = entityAlias;            
         }
 
         public static JoinOperator ToJoinOperator(string joinType)
@@ -119,7 +59,15 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             // hence the need to rename columns with a columnMap afterwards
             LinkEntity linkEntity = new LinkEntity(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, joinOperator);
             linkEntity.EntityAlias = _entityAlias;
-            linkEntity.Columns = new ColumnSet(_rightColumns.FieldNames.ToArray());
+
+            ColumnSet columnSet = new ColumnSet();
+
+            foreach (KeyValuePair<string, string> column in _rightMap.AsStringDictionary())
+            {
+                columnSet.AttributeExpressions.Add(new XrmAttributeExpression(column.Value) { Alias = column.Key });
+            }
+
+            linkEntity.Columns = columnSet;
 
             return linkEntity;
         }
@@ -140,9 +88,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             sb.Append(_joinType);
             sb.Append(" [");
             sb.Append(_entityAlias);
-            sb.Append("] ");
-            sb.Append(_rightColumns._type.ToString());
-            sb.Append('}');
+            sb.Append("] <");
+            sb.Append(_rightMap.ToString());
+            sb.Append(">}");
 
             return sb.ToString();
         }

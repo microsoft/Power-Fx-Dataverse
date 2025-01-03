@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Can't Filter() on Group By.
-            if (tableArg.HasGroupBy)
+            if (tableArg.HasGroupBy || tableArg.HasJoin)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }

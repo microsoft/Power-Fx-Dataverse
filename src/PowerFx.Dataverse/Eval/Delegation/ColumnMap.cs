@@ -74,7 +74,19 @@ namespace Microsoft.PowerFx.Dataverse
             _dic = new Dictionary<DName, IntermediateNode>() { { new DName("Value"), new TextLiteralNode(IRContext.NotInSource(FormulaType.String), _distinctColumn) } };
         }
 
-        internal static ColumnSet GetColumnSet(ColumnMap map) => map == null ? new ColumnSet(true) : new ColumnSet(map.Columns);
+        internal static ColumnSet GetColumnSet(ColumnMap map) => map == null ? new ColumnSet(true) : map.GetColumnSet();
+
+        private ColumnSet GetColumnSet()
+        {
+            ColumnSet columnSet = new ColumnSet();
+
+            foreach (KeyValuePair<DName, IntermediateNode> kvp in _dic)
+            {
+                columnSet.AttributeExpressions.Add(new XrmAttributeExpression(GetString(kvp.Value)) { Alias = kvp.Key.Value });
+            }
+
+            return columnSet;
+        }
 
         internal static ColumnSet GetColumnSet(IEnumerable<string> columns) => columns == null ? new ColumnSet(true) : new ColumnSet(columns.ToArray());
 
@@ -180,6 +192,8 @@ namespace Microsoft.PowerFx.Dataverse
         public override string ToString()
             => _dic == null
                ? "<null>"
+               : !_dic.Any()
+               ? "\x2205" // ∅
                : string.Join(", ", this.AsStringDictionary().Select(kvp => $"{kvp.Key}:{kvp.Value}{(_distinctColumn != default && kvp.Value == _distinctColumn ? "*" : string.Empty)}"));
     }
 }

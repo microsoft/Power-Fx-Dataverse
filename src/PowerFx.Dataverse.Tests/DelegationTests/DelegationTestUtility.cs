@@ -76,9 +76,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Array.Resize(ref allLines, index + 1);
             }
 
-            // rename linkEntity aliases
-            inputString = rex.Replace(inputString, "_uniqueId$2");
-
 #if REGENERATE_SNAPSHOT
 
             // Update or add the specified line with the input string
@@ -93,8 +90,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 #endif
         }
         
-        private static Regex rex = new Regex(@$"_([0-9a-fA-F]{{32}}({DelegationEngineExtensions.LinkEntityJoinSuffix}|{DelegationEngineExtensions.LinkEntityN1RelationSuffix}))", RegexOptions.Compiled);
-
         private static string ShowDifference(string target, string input)
         {
             target ??= string.Empty;

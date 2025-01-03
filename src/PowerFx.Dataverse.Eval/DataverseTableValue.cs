@@ -65,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected virtual async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new ();
+            List<DValue<RecordValue>> list = new();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)
@@ -184,7 +184,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             EntityCollection entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
-            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);            
+            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
         }
 
         private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
@@ -197,7 +197,7 @@ namespace Microsoft.PowerFx.Dataverse
                 SummarizeMethod.Min => XrmAggregateType.Min,
                 SummarizeMethod.Sum => XrmAggregateType.Sum,
                 _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
-            };            
+            };
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -209,9 +209,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = hasDistinct
-                                ? new ColumnSet(delegationParameters.ColumnMap.Distinct)
-                                : ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
+                ColumnSet = ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
@@ -247,6 +245,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (delegationParameters.Join != null)
             {
+                /* right table renames in LinkEntity */
                 query.LinkEntities.Add(delegationParameters.Join.LinkEntity);
             }
 
@@ -262,7 +261,28 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (delegationParameters.OrderBy != null && delegationParameters.OrderBy.Any())
             {
-                query.Orders.AddRange(delegationParameters.OrderBy);
+                if (delegationParameters.ColumnMap != null)
+                {
+                    IReadOnlyDictionary<string, string> map = delegationParameters.ColumnMap.AsStringDictionary();
+
+                    foreach (OrderExpression oe in delegationParameters.OrderBy)
+                    {
+                        KeyValuePair<string, string> kvp = map.FirstOrDefault(kvp => kvp.Value == oe.AttributeName);
+
+                        if (kvp.Key != null)
+                        {
+                            query.Orders.Add(new OrderExpression(kvp.Key, oe.OrderType, oe.Alias, oe.EntityName));
+                        }
+                        else
+                        {
+                            query.Orders.Add(oe);
+                        }
+                    }
+                }
+                else
+                {
+                    query.Orders.AddRange(delegationParameters.OrderBy);
+                }
             }
 
             return query;
@@ -430,13 +450,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            List<DValue<RecordValue>> list = new ();           
-            RecordType recordType = delegationParameters.Join?.IntermediateType ?? Type.ToRecord();
+            List<DValue<RecordValue>> list = new ();
+            RecordType recordType = delegationParameters.ExpectedReturnType;
 
             foreach (Entity entity in entityCollection.Entities)
             {
                 DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
-                
+
                 list.Add(DValue<RecordValue>.Of(dvRecordValue));
             }
 

@@ -1,7 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk;
 using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
@@ -14,10 +19,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)})";
 
         private const string LeftJoin = @"Table(" +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),other:If(false,Float(""0""))}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),other:Float(49)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),other:Float(44)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),other:If(false,Float(""0""))})";
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)})";
 
         private const string RightJoin = @"Table(" +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),other:Float(49)}," +
@@ -26,10 +31,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:If(false,GUID(""00000000000000000000000000000000"")),other:If(false,Float(""0""))})";
 
         private const string FullJoin = @"Table(" +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),other:If(false,Float(""0""))}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),other:Float(49)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),other:Float(44)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),other:If(false,Float(""0""))}," +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)}," +                               
                                 @"{localid:If(false,GUID(""00000000000000000000000000000000"")),other:If(false,Float(""0""))})";
 
         private const string InnerJoin2 = @"Table(" + 
@@ -153,13 +158,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
         [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
 
-        // Join + ShowColumns +LookUp
-        [InlineData(39, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
+        // Join + ShowColumns + LookUp        
+        [InlineData(39, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)}", "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.")]                
         [InlineData(40, @"LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
 
-        // Join + ShowColumns +Filter
-        [InlineData(41, "Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 3, InnerJoin4)]
-        [InlineData(42, @"Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 3, InnerJoin4)]
+        // Join + ShowColumns + Filter
+        [InlineData(41, "Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"Table({localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)})")]
+        [InlineData(42, @"Filter(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"Table({localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)})")]
 
         // Join + ShowColumns + FirstN
         [InlineData(43, "FirstN(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), 2)", 2, @"Table({localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)},{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)})")]
@@ -177,7 +182,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => result.ToExpression().ToString(), false, false, null, true, true, false, expectedWarnings);
+            await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => GetResult(result), false, false, null, true, true, false, expectedWarnings);
         }
+
+        private static string GetResult(FormulaValue fv)
+        {
+            if (fv is RecordValue rv)
+            {                
+                return RecordValue.NewRecordFromFields(rv.Fields.ToArray()).ToExpression().ToString();
+            }
+
+            IEnumerable<DValue<RecordValue>> rows = (fv as TableValue).Rows;
+
+            if (!rows.Any())
+            {
+                return "<empty>";
+            }
+
+            return FormulaValue.NewTable(rows.First().Value.IRContext.ResultType as RecordType, rows.Select(r => RecordValue.NewRecordFromFields(r.Value.Fields.ToArray())).ToArray()).ToExpression().ToString();
+        }        
     }
 }

@@ -24,10 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
 
         // LinkEntities use suffixes to better identify them
-        // N-1 relations (aka. dot-walking) are simple lookup operations
-        // Join relations are real $apply=join(...) operations
-        internal const string LinkEntityN1RelationSuffix = "_N1";
-        internal const string LinkEntityJoinSuffix = "_J";
+        internal const string LinkEntityN1RelationSuffix = "_N1";               
 
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.

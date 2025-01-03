@@ -13,6 +13,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -260,7 +261,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             List<Entity> entityList = new List<Entity>();
 
             IEnumerable<LinkEntity> n1LinkEntities = qe.LinkEntities.Where(le => le.EntityAlias.EndsWith(DelegationEngineExtensions.LinkEntityN1RelationSuffix)); // _N1
-            IEnumerable<LinkEntity> joinLinkEntities = qe.LinkEntities.Where(le => le.EntityAlias.EndsWith(DelegationEngineExtensions.LinkEntityJoinSuffix));     // _J            
+            IEnumerable<LinkEntity> joinLinkEntities = qe.LinkEntities.Where(le => le.EntityAlias == null || !le.EntityAlias.EndsWith(DelegationEngineExtensions.LinkEntityN1RelationSuffix));             
 
             JoinOperator joinType;
             bool includeLeft = false;
@@ -271,7 +272,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             LinkEntity join = joinLinkEntities.FirstOrDefault();
             IEnumerable<Entity> leftEntities = FindEntities(qe.EntityName).ToList();
-            IEnumerable<Entity> rightEntities = null;
+            IEnumerable<Entity> rightEntities = null;            
 
             if (join != null)
             {
@@ -285,6 +286,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 // Full  = L + I + R  \       X       /
                 //                     °-----° °-----°
                 // ~~
+
+                // linkEntity.Columns.Columns is always null on Join LinkEntities, as we always rename right columns                         
+                // and this is stored in AttributeExpressions where an alias is defined, per column.
+                Assert.Empty(join.Columns.Columns);
 
                 joinType = join.JoinOperator;
                 includeLeft =  joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.LeftOuter /* Left  */;
@@ -325,13 +330,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         if (isMatch)
                         {
                             Entity newEntity = Clone(leftEntity, qe.ColumnSet, cancellationToken);
-
-                            // linkEntity.Columns.AllColumns is never set on Join LinkEntities, so we can enumerate the columns
-                            // and propagate the fields we need from the rightEntity
-                            foreach (string column in join.Columns.Columns)
+                            
+                            foreach (XrmAttributeExpression column in join.Columns.AttributeExpressions)
                             {
-                                rightEntity.TryGetAttributeValue(column, out object val);
-                                newEntity.Attributes[GetAttributePrefix(join) + column] = val;
+                                rightEntity.TryGetAttributeValue(column.AttributeName, out object val);
+                                newEntity.Attributes[column.Alias ?? (GetAttributePrefix(join) + column)] = val;
                             }
 
                             innerRows.Add(newEntity);                            
@@ -747,6 +750,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return;
                 }
 
+                if (columnSet.AttributeExpressions.Count() == 1)
+                {
+                    _column = columnSet.AttributeExpressions.First().Alias;
+                    return;
+                }
+
                 throw new NotImplementedException();
             }
 
@@ -818,11 +827,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             cancellationToken.ThrowIfCancellationRequested();
 
             var columnFilter = columnSet.Columns.ToHashSet();
-
+            
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {
-                if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
+                IEnumerable<XrmAttributeExpression> xael = columnSet.AttributeExpressions?.Where(ae => ae.AttributeName == attr.Key);
+
+                if (xael != null && xael.Any())
+                {
+                    foreach (XrmAttributeExpression xae in xael)
+                    {
+                        newEntity.Attributes[xae.Alias] = attr.Value;
+                    }
+                }
+                else if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
                 {
                     newEntity.Attributes[attr.Key] = attr.Value;
                 }

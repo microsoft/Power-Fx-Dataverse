@@ -123,27 +123,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!string.IsNullOrEmpty(toAttribute) && !string.IsNullOrEmpty(fromAttribute))
                 {
-                    // Aliasing entity is important to avoid collision
-                    // Add '_J' suffix to identify relation as coming from JOIN relationship
-                    string entityAlias = $"{rightTable.TableType.TableSymbolName}_{Guid.NewGuid().ToString("N")}{DelegationEngineExtensions.LinkEntityJoinSuffix}";
-
                     // list of column renames from left table, if any
                     // by default, all columns from left table are included
-                    ColumnMap leftMap = new ColumnMap((node.Args[LeftTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => GetColumnName(f.Key, null)));
+                    ColumnMap leftMap = new ColumnMap((node.Args[LeftTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
 
                     // list of column renamed from right table
                     // we use 'entityAlias.' prefix for columns as DV will return it for right table columns we have selected
-                    ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => GetColumnName(f.Key, entityAlias)));
-
-                    // cumulate left and right maps
-                    ColumnMap mergedMap = ColumnMap.Merge(leftMap, rightMap);
-
-                    // right column names
-                    IEnumerable<string> rightColumns = (node.Args[RightTableColumnArg] as RecordNode).Fields.Keys.Select(dn => dn.Value);
-
-                    IDelegationMetadata leftDelegationMetadata = leftTable.TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
-                    IDelegationMetadata rightDelegationMetadata = rightTable.TableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;                                       
-                    DelegationMetadata joinDelegationMetadata = new DelegationMetadata(joinReturnType, leftDelegationMetadata, rightDelegationMetadata, rightColumns, mergedMap.AsStringDictionary());
+                    ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
 
                     // Join node with all parameters
                     FxJoinNode joinNode = new FxJoinNode(
@@ -152,24 +138,14 @@ namespace Microsoft.PowerFx.Dataverse
                         fromAttribute,
                         toAttribute,
                         joinType,
-                        entityAlias,
-                        rightColumns);                    
+                        rightRecordName, // entity alias                        
+                        rightMap);
 
-                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: mergedMap, delegationMetadata: joinDelegationMetadata);
+                    return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: leftMap);
                 }
             }
 
             return ProcessOtherCall(node, leftTable, rightTable, context);
-        }
-
-        private static TextLiteralNode GetColumnName(DName name, string alias)
-        {
-            if (string.IsNullOrEmpty(alias))
-            {
-                return new TextLiteralNode(IRContext.NotInSource(FormulaType.String), name.Value);
-            }
-
-            return new TextLiteralNode(IRContext.NotInSource(FormulaType.String), $"{alias}.{name.Value}");
         }
     }
 }

@@ -2873,6 +2873,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var doubleremote5 = new Entity("doubleremote", _g5);
 
             var local3 = new Entity("local", _g3);
+            local3.Attributes["localid"] = _g3;
             local3.Attributes["new_price"] = Convert.ToDecimal(10);
             local3.Attributes["old_price"] = null;
             local3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
@@ -2882,6 +2883,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             local3.Attributes["rtid"] = _g10;
 
             var local4 = new Entity("local", _g4);
+            local4.Attributes["localid"] = _g4;
             local4.Attributes["new_price"] = Convert.ToDecimal(-10);
             local4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             local4.Attributes["new_polyfield"] = null;
@@ -2890,6 +2892,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             local4.Attributes["rtid"] = _g11;
 
             var local5 = new Entity("local", _g5);
+            local5.Attributes["localid"] = _g5;
             local5.Attributes["new_price"] = Convert.ToDecimal(10);
             local5.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
             local5.Attributes["new_polyfield"] = null;
@@ -2897,6 +2900,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             local5.Attributes["rtid"] = _g10;
 
             var local1 = new Entity("local", _g1);
+            local1.Attributes["localid"] = _g1;
             local1.Attributes["new_price"] = Convert.ToDecimal(100);
             local1.Attributes["old_price"] = Convert.ToDecimal(200);
             local1.Attributes["new_date"] = new DateTime(2023, 6, 1);

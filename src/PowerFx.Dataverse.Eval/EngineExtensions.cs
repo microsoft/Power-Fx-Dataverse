@@ -78,43 +78,14 @@ namespace Microsoft.PowerFx.Dataverse
                 if (result.Any(err => err.IsError))
                 {
                     return result.Where(err => err.IsError);
-                }
-
-                IReadOnlyDictionary<string, string> columnMap = ((DataverseDelegationParameters)delegationParameters).ColumnMap?.AsStringDictionary();
-
-                if (columnMap != null && result.Any())
-                {                    
-                    RecordType recordType = ((DataverseDelegationParameters)delegationParameters).ExpectedReturnType;
-
-                    List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
-
-                    foreach (DValue<RecordValue> record in result)
-                    {                        
-                        list.Add(DValue<RecordValue>.Of(new ColumnMapRecordValue(record.Value, recordType, columnMap)));
-                    }
-
-                    result = list;
-                }
+                }             
 
                 return result;
             }
 
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
-            {
-                if (DelegationUtility.TryGetFieldName(fieldName, out string remoteTable, out string remoteField))
-                {
-                    return value switch
-                    {
-                        StringValue sv => sv.Value,
-                        DecimalValue dv => dv.Value,
-                        NumberValue nv => nv.Value,
-                        GuidValue gv => gv.Value,
-                        BooleanValue bv => bv.Value,
-                        _ => throw new Exception($"Field {fieldName} has an unsupported type {value.GetType().Name} in JOIN operation")
-                    };
-                }
-
+            {               
                 // Binder should have enforced that this always succeeds.
                 if (table is DataverseTableValue t2)
                 {

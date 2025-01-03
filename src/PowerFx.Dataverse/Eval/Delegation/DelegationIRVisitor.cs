@@ -461,7 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null, delegationMetadata: null);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null);
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)

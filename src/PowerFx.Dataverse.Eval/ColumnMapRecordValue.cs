@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             result = value;
             return isSuccess;
-        }
+        }      
 
         protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
         {
@@ -58,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
-        {
+        {            
             NamedValue[] fields = Fields.ToArray();
 
             foreach (KeyValuePair<string, string> kvp in this._columnMap)

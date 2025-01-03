@@ -378,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
-        {
+        {            
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
             var keyName = GetPrimaryKeyName();
