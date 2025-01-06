@@ -44,10 +44,16 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        internal RecordType ExpectedReturnType { get; init; }
+        private readonly RecordType _expectedReturnType;
 
-        public DataverseDelegationParameters()
-        {           
+        /// <summary>
+        /// This is the expected RecordType Host needs to return after it performed delegation.
+        /// </summary>
+        public RecordType ExpectedReturnType => _expectedReturnType;
+
+        internal DataverseDelegationParameters(RecordType expectedReturnType)
+        {
+            _expectedReturnType = expectedReturnType;
         }
 
         public override DelegationParameterFeatures Features
@@ -353,7 +359,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // $$$ when we'll have multiple operations in $apply, join must be first
-            return $"join({Join.LinkToEntityName} as {Join.EntityAlias})";
+            return $"join({Join.LinkToEntityName} as {Join.ForeignTableAlias})";
         }
 
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()

@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// The unique display name for the option set as managed by the document
+        /// The unique display name for the option set as managed by the document.
         /// </summary>
         public string DisplayName { get; set; }
 

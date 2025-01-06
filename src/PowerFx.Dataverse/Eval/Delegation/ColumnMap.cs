@@ -156,30 +156,6 @@ namespace Microsoft.PowerFx.Dataverse
             return new ColumnMap(newDic, distinctColumn);
         }
 
-        internal static ColumnMap Merge(ColumnMap first, ColumnMap second)
-        {
-            if (!string.IsNullOrEmpty(first._distinctColumn) || !string.IsNullOrEmpty(second._distinctColumn))
-            {
-                throw new InvalidOperationException("Cannot merge two column maps when at least one has a Distinct parameter");
-            }
-
-            if (first == null || !first.Map.Any())
-            {
-                return second;
-            }
-
-            if (second == null || !second.Map.Any())
-            {
-                return first;
-            }
-
-            Dictionary<DName, IntermediateNode> newDic = new Dictionary<DName, IntermediateNode>();
-            first._dic.ToList().ForEach(kvp => newDic.Add(kvp.Key, kvp.Value));
-            second._dic.ToList().ForEach(kvp => newDic.Add(kvp.Key, kvp.Value));
-
-            return new ColumnMap(newDic, null);
-        }
-
         internal IReadOnlyDictionary<DName, IntermediateNode> Map => _dic;
 
         internal string Distinct => !string.IsNullOrEmpty(_distinctColumn) ? _distinctColumn : throw new InvalidOperationException("Cannot access Distinct property without checking ColumnMap.HasDistinct() first");

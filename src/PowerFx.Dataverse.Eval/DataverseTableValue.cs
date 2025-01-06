@@ -65,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected virtual async Task<List<DValue<RecordValue>>> GetRowsAsync()
         {
-            List<DValue<RecordValue>> list = new();
+            List<DValue<RecordValue>> list = new ();
             DataverseResponse<EntityCollection> entities = await _connection.Services.QueryAsync(_entityMetadata.LogicalName, _connection.MaxRows).ConfigureAwait(false);
 
             if (entities.HasError)

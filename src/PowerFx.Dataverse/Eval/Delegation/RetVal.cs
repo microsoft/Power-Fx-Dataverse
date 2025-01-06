@@ -193,11 +193,6 @@ namespace Microsoft.PowerFx.Dataverse
                 return joinIRNode;
             }
 
-            internal RecordNode MakeBlankRecordNode()
-            {
-                return new RecordNode(IRContext.NotInSource(RecordType.Empty()), new Dictionary<DName, IntermediateNode>());
-            }
-
             private static IntermediateNode GenerateGroupByIR(FxGroupByNode groupByNode, TableType tableType)
             {
                 // convert _groupByNode to IR

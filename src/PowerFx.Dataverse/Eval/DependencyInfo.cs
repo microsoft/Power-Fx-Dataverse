@@ -9,7 +9,9 @@ using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl.Builtins;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -334,6 +336,19 @@ namespace Microsoft.PowerFx.Dataverse
                 firstArgIsWrite = true;
                 argRecordWrite = 1;
             }
+            else if (func == "Join")
+            {                
+                var remote = ((AggregateType)node.Args[1].IRContext.ResultType).TableSymbolName;
+
+                // Right column fields
+                if (node.Args[6] is RecordNode rn)
+                {
+                    foreach (KeyValuePair<DName, IntermediateNode> kvp in rn.Fields)
+                    {                        
+                        AddFieldRead(remote, kvp.Key.Value);                        
+                    }
+                }
+            }
 
             if (argRecordWrite > 0)
             {
@@ -367,15 +382,28 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
+                     ? context.WithColumnMap(columnMap)
+                     : context;
+
             // Find all dependencies in args
             // This will catch reads.
             foreach (var arg in node.Args.Skip(firstArgIsWrite ? 1 : 0))
             {
-                Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
-                                     ? context.WithColumnMap(columnMap)
-                                     : context;
-
                 arg.Accept(this, newContext);
+            }
+
+            if (node.Function is DelegateFunction df2 && df2.IsUsingJoinNode(node, out FxJoinNode joinNode))
+            {
+                // Predicate
+                AddFieldRead(joinNode.LinkEntity.LinkFromEntityName, joinNode.LinkEntity.LinkFromAttributeName);
+                AddFieldRead(joinNode.LinkEntity.LinkToEntityName, joinNode.LinkEntity.LinkToAttributeName);
+
+                // Right column map
+                foreach (string rightField in joinNode.RightFields)
+                {
+                    AddFieldRead(joinNode.LinkEntity.LinkToEntityName, rightField);
+                }
             }
 
             return null;
@@ -422,11 +450,8 @@ namespace Microsoft.PowerFx.Dataverse
         // ThisRecord.field   // IR will get type of ThisRecord
         // First(Remote).Data // IR will get type on left of dot.
         public override RetVal Visit(RecordFieldAccessNode node, Context context)
-        {
-            if (node.From is not ScopeAccessNode)
-            {
-                node.From.Accept(this, context);
-            }
+        {                           
+            node.From.Accept(this, context);         
 
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)

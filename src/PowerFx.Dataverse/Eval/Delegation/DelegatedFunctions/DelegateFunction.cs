@@ -12,6 +12,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
 
@@ -77,6 +78,12 @@ namespace Microsoft.PowerFx.Dataverse
         internal virtual bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
         {
             columnMap = null;
+            return false;
+        }
+
+        internal virtual bool IsUsingJoinNode(CallNode node, out FxJoinNode joinNode)
+        {
+            joinNode = null;
             return false;
         }
     }

@@ -18,24 +18,26 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         private readonly string _fromAttribute;
         private readonly string _toAttribute;
         private readonly string _joinType;
-        private readonly string _entityAlias;
+        private readonly string _foreignTableAlias;
         private readonly ColumnMap _rightMap;
 
         public LinkEntity LinkEntity => GetLinkEntity();
 
         public string LinkToEntityName => _foreignTable;
 
-        public string EntityAlias => _entityAlias;
+        public string ForeignTableAlias => _foreignTableAlias;
 
-        public FxJoinNode(string sourceTable, TableType rightTableType, string fromAttribute, string toAttribute, string joinType, string entityAlias, ColumnMap rightMap)
+        internal IEnumerable<string> RightFields => _rightMap.AsStringDictionary().Values;
+
+        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, ColumnMap rightMap)
         {
             _sourceTable = sourceTable;
-            _foreignTable = rightTableType.TableSymbolName;
+            _foreignTable = foreignTable;
             _fromAttribute = fromAttribute;
             _toAttribute = toAttribute;
             _joinType = joinType;            
             _rightMap = rightMap;
-            _entityAlias = entityAlias;            
+            _foreignTableAlias = foreignTableAlias;            
         }
 
         public static JoinOperator ToJoinOperator(string joinType)
@@ -58,7 +60,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             // EntityAlias is used in OData $apply=join(foreignTable as <entityAlias>) and DV Entity attribute names will be prefixed with this alias
             // hence the need to rename columns with a columnMap afterwards
             LinkEntity linkEntity = new LinkEntity(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, joinOperator);
-            linkEntity.EntityAlias = _entityAlias;
+            linkEntity.EntityAlias = _foreignTableAlias;
 
             ColumnSet columnSet = new ColumnSet();
 
@@ -87,7 +89,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             sb.Append(',');
             sb.Append(_joinType);
             sb.Append(" [");
-            sb.Append(_entityAlias);
+            sb.Append(_foreignTableAlias);
             sb.Append("] <");
             sb.Append(_rightMap.ToString());
             sb.Append(">}");

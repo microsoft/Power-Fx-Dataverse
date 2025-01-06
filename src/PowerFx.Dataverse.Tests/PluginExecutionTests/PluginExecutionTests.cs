@@ -1048,7 +1048,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price * 2) As TPrice)", "Read local: new_name, new_price;")]
 
         // Join
-        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: ;")]
+        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: remoteid; Read local: rtid, new_name;")]
+        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Read remote: other, data; Read local: new_price;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1086,7 +1087,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
 
-            Assert.Equal(expected, actual);
+            Assert.Equal<object>(expected, actual);
         }
 
         [Fact]

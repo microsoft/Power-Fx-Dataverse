@@ -134,11 +134,11 @@ namespace Microsoft.PowerFx.Dataverse
                     // Join node with all parameters
                     FxJoinNode joinNode = new FxJoinNode(
                         leftTable.TableType.TableSymbolName,
-                        rightTable.TableType,
+                        rightTable.TableType.TableSymbolName,
                         fromAttribute,
                         toAttribute,
                         joinType,
-                        rightRecordName, // entity alias                        
+                        rightRecordName, // foreign table alias                        
                         rightMap);
 
                     return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: leftMap);

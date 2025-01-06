@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -116,7 +118,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters()
+            var delegationParameters = new DataverseDelegationParameters((RecordType)ReturnFormulaType)
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
@@ -125,8 +127,7 @@ namespace Microsoft.PowerFx.Dataverse
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,                
-                ExpectedReturnType = ReturnFormulaType as RecordType
+                Relation = relation,                                
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -162,6 +163,19 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             columnMap = null;
+            return false;
+        }
+
+        internal override bool IsUsingJoinNode(CallNode node, out FxJoinNode joinNode)
+        {
+            if (node.Args[JoinArg] is ResolvedObjectNode ron &&
+                ron.Value is JoinFormulaValue jfv)
+            {
+                joinNode = jfv.JoinNode;
+                return joinNode != null;
+            }
+
+            joinNode = null;
             return false;
         }
     }
