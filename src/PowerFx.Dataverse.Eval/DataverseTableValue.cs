@@ -388,7 +388,6 @@ namespace Microsoft.PowerFx.Dataverse
                 cancellationToken.ThrowIfCancellationRequested();
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
-
                 if (fv is not GuidValue id)
                 {
                     if (fv is BlankValue)
