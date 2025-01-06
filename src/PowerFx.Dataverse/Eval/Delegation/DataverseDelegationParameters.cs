@@ -173,16 +173,16 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<string, string> ode = new Dictionary<string, string>();
 
-                string apply = GetApply();
+                string joinApply = GetJoinApply();
                 string filter = GetOdataFilter();
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
                 string groupBy = GetODataGroupBy();
 
-                if (!string.IsNullOrEmpty(apply))
+                if (!string.IsNullOrEmpty(joinApply))
                 {
-                    ode.Add(Odata_Apply, apply);
+                    ode.Add(Odata_Apply, joinApply);
                 }
 
                 if (!string.IsNullOrEmpty(filter))
@@ -351,16 +351,24 @@ namespace Microsoft.PowerFx.Dataverse
             return "'" + str.Replace("'", "''") + "'";
         }
 
-        private string GetApply()
+        private string GetJoinApply()
         {
             if (Join == null)
             {
                 return null;
             }
 
-            // $$$ when we'll have multiple operations in $apply, join must be first
-            return $"join({Join.LinkToEntityName} as {Join.ForeignTableAlias})";
-        }
+            return Join.LinkEntity.JoinOperator switch
+            {
+                JoinOperator.Inner => $"join({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                JoinOperator.LeftOuter => $"outerjoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                JoinOperator.In => throw new InvalidOperationException("Right join not supported yet"),
+
+                // $$$ this operation isn't part of OData specifications
+                JoinOperator.All => $"fulljoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                _ => throw new InvalidOperationException("Invalid Join operator")
+            };
+        }            
 
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {

@@ -295,6 +295,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 includeLeft =  joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.LeftOuter /* Left  */;
                 includeRight = joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.In        /* Right */;
 
+                // $$$ We don't want to support Right join for now as it's not supported by DV JoinOperator
+                Assert.NotEqual(JoinOperator.In, joinType);
+
                 rightEntities = FindEntities(join.LinkToEntityName).ToList();
             }
 
@@ -390,7 +393,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
 
-            entityList.AddRange(innerRows.Concat(outer.Select(o => MakeLeft(qe.EntityName, o))));
+            entityList.AddRange(innerRows.Concat(outer.Select(o => MakeLeft(qe.EntityName, o, metadata.PrimaryIdAttribute))));
 
             if (qe.Orders != null && qe.Orders.Any())
             {
@@ -415,7 +418,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return entityList;
         }
 
-        private Entity MakeLeft(string leftName, Entity rightEntity)
+        private Entity MakeLeft(string leftName, Entity rightEntity, string leftPrimaryId)
         {
             if (rightEntity.LogicalName == leftName)
             {
@@ -428,6 +431,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             {
                 leftEntity.Attributes[attribute.Key] = attribute.Value;
             }
+
+            // leftEntity.Attributes[leftPrimaryId] = null;
 
             return leftEntity;
         }

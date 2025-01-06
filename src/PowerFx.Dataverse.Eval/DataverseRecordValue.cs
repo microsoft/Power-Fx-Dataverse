@@ -117,6 +117,12 @@ namespace Microsoft.PowerFx.Dataverse
             // If primary key is missing from Attributes, still get it from the entity.
             if (fieldName == GetPrimaryKeyName())
             {
+                // This occurs in left outer join
+                if (_entity.Id == Guid.Empty)
+                {
+                    return (true, FormulaValue.NewBlank(FormulaType.Guid));
+                }
+                    
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
             }

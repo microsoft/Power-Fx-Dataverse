@@ -58,8 +58,13 @@ namespace Microsoft.PowerFx.Dataverse
             Schema = DType.AttachDataSourceInfo(Schema, this);
             QueryOptions = new TabularDataQueryOptions(this);
 
-            // Ensure "distinct" capability is added
-            ServiceCapabilities updatedServiceCapabilities = EnsureCapability(tableDefinition.ServiceCapabilities, DelegationMetadataOperatorConstants.Distinct);
+            // Ensure "distinct" capability is added, as well as "joininner", "joinleft", "joinfull" but not "joinright" which isn't supported by DV
+            ServiceCapabilities updatedServiceCapabilities = EnsureCapability(
+                tableDefinition.ServiceCapabilities, 
+                DelegationMetadataOperatorConstants.Distinct,
+                DelegationMetadataOperatorConstants.JoinInner, 
+                DelegationMetadataOperatorConstants.JoinLeft, 
+                DelegationMetadataOperatorConstants.JoinFull);
 
             // If delegable then set delegation metadata and delegatable attribute.
             var delegationMetadataDef = JsonSerializer.Serialize(updatedServiceCapabilities);

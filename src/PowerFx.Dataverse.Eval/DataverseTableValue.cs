@@ -349,12 +349,20 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
-
+            
             if (fieldFormulaValue is not GuidValue id)
             {
-                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+                if (fieldFormulaValue is BlankValue)
+                {
+                    // blank Id is possible in left outer join case
+                    id = GuidValue.New(Guid.Empty);
+                }
+                else
+                {
+                    return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+                }
             }
-
+            
             var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
@@ -380,19 +388,26 @@ namespace Microsoft.PowerFx.Dataverse
                 cancellationToken.ThrowIfCancellationRequested();
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
-                if (fv.Type == FormulaType.Blank || fv is not GuidValue id)
-                {
-                    return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
-                }
-                else
-                {
-                    DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
 
-                    if (response.HasError)
+                if (fv is not GuidValue id)
+                {
+                    if (fv is BlankValue)
                     {
-                        return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
+                        // blank Id is possible in left outer join case
+                        id = GuidValue.New(Guid.Empty);
+                    }
+                    else
+                    {
+                        return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
                     }
                 }
+               
+                DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
+
+                if (response.HasError)
+                {
+                    return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
+                }                
             }
 
             // After mutation, lazely refresh Rows from server.

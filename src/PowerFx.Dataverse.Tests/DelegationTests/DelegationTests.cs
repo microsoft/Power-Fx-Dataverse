@@ -210,6 +210,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
             else
             {
+                // Join 
                 AppendJoinParam(ode, sb);
                 AppendFilterParam(ode, sb, false);
                 AppendOrderByParam(ode, sb, false);
@@ -307,8 +308,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         private static void AppendJoinParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
         {
             if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
-            {
-                AddSeparatorIfNeeded(sb, true);
+            {                
                 sb.Append(DataverseDelegationParameters.Odata_Apply);
                 AddEqual(sb);
                 sb.Append(apply);

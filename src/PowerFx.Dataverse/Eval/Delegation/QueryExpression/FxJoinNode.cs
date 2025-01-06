@@ -46,6 +46,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             {
                 "Inner" => JoinOperator.Inner,
                 "Left" => JoinOperator.LeftOuter,
+
+                // $$$ There is no Right join in DV operator, this will have to be replaced later
                 "Right" => JoinOperator.In,
                 "Full" => JoinOperator.All,
                 _ => throw new InvalidOperationException($"Unknown JoinType {joinType}")

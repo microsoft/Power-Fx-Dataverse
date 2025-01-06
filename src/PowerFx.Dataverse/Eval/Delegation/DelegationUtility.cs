@@ -116,6 +116,20 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return true;
         }
 
+        public static bool CanDelegateJoin(string joinType, IDelegationMetadata delegationCapability)
+        {
+            DelegationCapability joinTypeCapability = joinType.ToLowerInvariant() switch
+            {
+                "inner" => DelegationCapability.JoinInner,
+                "left" => DelegationCapability.JoinLeft,
+                "right" => DelegationCapability.JoinRight,
+                "full" => DelegationCapability.JoinFull,
+                _ => throw new InvalidOperationException($"Invalid joinType {joinType}")
+            };
+
+            return delegationCapability.TableCapabilities.HasCapability(joinTypeCapability.Capabilities);
+        }
+
         public static bool CanDelegateFirst(IDelegationMetadata delegationMetadata)
         {
             // [MS-ODATA]
