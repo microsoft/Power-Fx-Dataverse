@@ -274,6 +274,23 @@ namespace Microsoft.PowerFx.Dataverse
             return value;
         }
 
+        public TableValue Marshal(EntityCollection entities)
+        {
+            if (entities == null)
+            {
+                throw new ArgumentNullException(nameof(entities));
+            }
+
+            if (!_metadataCache.TryGetXrmEntityMetadata(entities.EntityName, out EntityMetadata metadata))
+            {
+                throw new InvalidOperationException($"No metadata for {entities.EntityName}");
+            }
+
+            RecordType type = this.GetRecordType(metadata.LogicalName);
+            DataverseTableValue value = new DataverseTableValue(type, this, metadata);
+            return value;
+        }
+
         /// <summary>
         /// Retrieves an Entity by localname and Id.
         /// </summary>
