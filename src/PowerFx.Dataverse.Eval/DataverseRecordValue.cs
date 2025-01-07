@@ -233,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!filteredEntityCollection.HasError)
             {
-                List<RecordValue> list = new();
+                List<RecordValue> list = new ();
                 var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
