@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupByNode))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupBy))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -471,7 +471,7 @@ namespace Microsoft.PowerFx.Dataverse
             var reason = new ExpressionError()
             {
                 MessageArgs = new object[] { tableName, _maxRows },
-                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
+                Span = tableArg?._sourceTableIRNode?.IRContext.SourceContext ?? tableArg.OriginalNode.IRContext.SourceContext,
                 Severity = ErrorSeverity.Warning,
                 ResourceKey = TexlStrings.WrnDelegationTableNotSupported
             };

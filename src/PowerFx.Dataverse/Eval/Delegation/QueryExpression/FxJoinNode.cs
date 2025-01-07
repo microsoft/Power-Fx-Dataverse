@@ -17,9 +17,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         private readonly string _foreignTable;
         private readonly string _fromAttribute;
         private readonly string _toAttribute;
+
+        // $$$ this should be enum.
         private readonly string _joinType;
         private readonly string _foreignTableAlias;
         private readonly ColumnMap _rightMap;
+
+        internal ColumnMap RightTablColumnMap => _rightMap;
 
         public LinkEntity LinkEntity => GetLinkEntity();
 

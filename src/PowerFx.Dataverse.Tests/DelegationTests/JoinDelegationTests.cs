@@ -155,7 +155,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Validate no Join delegation as either left or right is not a direct table
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(36, "ShowColumns(Join(local, FirstN(remote, 10), LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
-        [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
+        [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 17-36: This operation on table 'table' may not work if it has more than 999 rows.", "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
         [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
 
         // Join + ShowColumns + LookUp        

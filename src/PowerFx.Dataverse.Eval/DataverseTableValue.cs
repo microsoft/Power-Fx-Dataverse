@@ -470,7 +470,17 @@ namespace Microsoft.PowerFx.Dataverse
                     foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
                     {
                         entity.Attributes.TryGetValue(nft.Name.Value, out object val);
-                        FormulaValue fv = PrimitiveValueConversions.Marshal(val, nft.Type);
+                        FormulaValue fv;
+                        
+                        try
+                        {
+                            fv = PrimitiveValueConversions.Marshal(val, nft.Type);
+                        }
+                        catch
+                        {
+                            fv = FormulaValue.NewBlank(nft.Type);
+                        }
+
                         namedValues.Add(new NamedValue(nft.Name.Value, fv));
                     }
 

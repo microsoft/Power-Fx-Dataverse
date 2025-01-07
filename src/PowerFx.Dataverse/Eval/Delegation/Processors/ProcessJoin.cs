@@ -43,17 +43,9 @@ namespace Microsoft.PowerFx.Dataverse
             RetVal leftTable = GetTable(node.Args[LeftTableArg], context);
             RetVal rightTable = GetTable(node.Args[RightTableArg], context);
 
-            // both tables need to support delegation
-            // if they already have $top, $filter, $orderby..., let's not delegate
-            if (!leftTable.IsDelegating || !rightTable.IsDelegating ||
-                leftTable.HasTopCount || rightTable.HasTopCount ||
-                leftTable.HasOrderBy || rightTable.HasOrderBy ||
-                leftTable.HasFilter || rightTable.HasFilter ||
-                leftTable.HasJoin || rightTable.HasJoin ||
-                leftTable.HasGroupBy || rightTable.HasGroupBy ||
-                leftTable.ColumnMap != null || rightTable.ColumnMap != null)
+            if (!leftTable.IsDelegating || !rightTable.IsDelegating)
             {
-                return base.Visit(node, context, leftTable);
+                return ProcessOtherCall(node, leftTable, rightTable, context);
             }
 
             // Get primary keys
@@ -122,30 +114,25 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 if (!string.IsNullOrEmpty(toAttribute) &&
-                    !string.IsNullOrEmpty(fromAttribute) &&
-                    DelegationUtility.CanDelegateJoin(joinType, leftTable.DelegationMetadata))
+                    !string.IsNullOrEmpty(fromAttribute))
                 {
+                    // Join pulls in all column from left table.
+                    var leftMap = new ColumnMap(leftTable.TableType.FieldNames.ToDictionary(f => new DName(f), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f)));
+
                     // list of column renames from left table, if any
                     // by default, all columns from left table are included
-                    ColumnMap leftMap = new ColumnMap((node.Args[LeftTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
+                    ColumnMap leftRenameMap = new ColumnMap((node.Args[LeftTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
+
+                    leftMap = ColumnMap.Combine(leftMap, leftRenameMap, leftTable.TableType);
 
                     // list of column renamed from right table
                     // we use 'entityAlias.' prefix for columns as DV will return it for right table columns we have selected
                     ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
 
-                    // Join node with all parameters
-                    FxJoinNode joinNode = new FxJoinNode(
-                        leftTable.TableType.TableSymbolName,
-                        rightTable.TableType.TableSymbolName,
-                        fromAttribute,
-                        toAttribute,
-                        joinType,
-                        rightRecordName, // foreign table alias                        
-                        rightMap);
-
-                    return Ret(node);
-
-                    //return leftTable.With(node, tableType: joinReturnType, join: joinNode, map: leftMap);
+                    if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, joinType, rightRecordName, leftMap, rightMap, node, out var result))
+                    {
+                        return result;
+                    }
                 }
             }
 

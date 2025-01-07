@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -40,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // Constructor used by Combine static method
-        private ColumnMap(Dictionary<DName, IntermediateNode> dic, string distinctColumn)
+        internal ColumnMap(Dictionary<DName, IntermediateNode> dic, string distinctColumn)
         {
             _dic = dic;
             _distinctColumn = distinctColumn;
@@ -131,6 +132,22 @@ namespace Microsoft.PowerFx.Dataverse
                 else
                 {
                     throw new InvalidOperationException("Missing element in first ColumnMap");
+                }
+            }
+
+            foreach (var kvp in first._dic)
+            {
+                // Use the same string extraction as before
+                string firstValue = GetString(kvp.Value);
+
+                // Only add if no existing entry in 'newDic' has the same text value
+                // (Alternatively, you might check for matching keys instead.)
+                bool alreadyPresent =
+                    newDic.Values.Any(i => GetString(i).Equals(firstValue, StringComparison.OrdinalIgnoreCase));
+
+                if (!alreadyPresent)
+                {
+                    newDic.Add(kvp.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));
                 }
             }
 
