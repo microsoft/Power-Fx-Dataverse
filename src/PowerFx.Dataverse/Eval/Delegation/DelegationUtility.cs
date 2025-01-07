@@ -84,7 +84,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 fieldName = ColumnMap.GetString(logicalName);
             }
 
-            return op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
+            bool b = op == BinaryOpKind.Invalid /* Starts/EndsWith */ || (filterCapabilities?.IsBinaryOpInDelegationSupportedByColumn(ToBinaryOp(op), DPath.Root.Append(new DName(fieldName))) != false);
+
+            return b;
         }
 
         public static bool CanDelegateSort(string fieldName, bool isAscending, SortOpMetadata sortCapabilities)
@@ -112,6 +114,20 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             }
 
             return true;
+        }
+
+        public static bool CanDelegateJoin(string joinType, IDelegationMetadata delegationCapability)
+        {
+            DelegationCapability joinTypeCapability = joinType.ToLowerInvariant() switch
+            {
+                "inner" => DelegationCapability.JoinInner,
+                "left" => DelegationCapability.JoinLeft,
+                "right" => DelegationCapability.JoinRight,
+                "full" => DelegationCapability.JoinFull,
+                _ => throw new InvalidOperationException($"Invalid joinType {joinType}")
+            };
+
+            return delegationCapability.TableCapabilities.HasCapability(joinTypeCapability.Capabilities);
         }
 
         public static bool CanDelegateFirst(IDelegationMetadata delegationMetadata)

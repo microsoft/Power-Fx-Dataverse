@@ -15,10 +15,6 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessForAll(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // check if we have a simple field name here
@@ -30,9 +26,9 @@ namespace Microsoft.PowerFx.Dataverse
                 ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
 
                 // Combine with an existing map
-                map = ColumnMap.Combine(tableArg.ColumnMap, map);
+                map = ColumnMap.Combine(tableArg.ColumnMap, map, tableArg.TableType);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map, groupByNode: tableArg._groupByNode);
+                return tableArg.With(node, map: map);
             }
 
             // check if we have a record of (newName: oldName)
@@ -62,11 +58,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (canDelegate)
                 {
                     // Combine with an existing map
-                    ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic));
-
-                    return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy, count, _maxRows, map, groupByNode: tableArg._groupByNode);
+                    ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic), tableArg.TableType);
+                    
+                    return tableArg.With(node, map: map);
                 }
-            }            
+            }
 
             return ProcessOtherCall(node, tableArg, context);
         }

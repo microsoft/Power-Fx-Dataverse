@@ -71,50 +71,28 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
-            {                
+            {
                 cancellationToken.ThrowIfCancellationRequested();
                 IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
 
                 if (result.Any(err => err.IsError))
                 {
                     return result.Where(err => err.IsError);
-                }
-
-                IReadOnlyDictionary<string, string> columnMap = ((DataverseDelegationParameters)delegationParameters).ColumnMap?.AsStringDictionary();
-
-                if (columnMap != null && result.Any())
-                {
-                    TableType innerTableType = ((TableValue)table).Type;
-                    RecordType recordType = ColumnMapRecordValue.ApplyMap(innerTableType.ToRecord(), columnMap);
-
-                    //if (recordType.Equals(result.First().Value.Type))
-                    //{
-                    //    return result;
-                    //}
-
-                    List<DValue<RecordValue>> list = new List<DValue<RecordValue>>();
-
-                    foreach (DValue<RecordValue> record in result)
-                    {
-                        list.Add(DValue<RecordValue>.Of(new ColumnMapRecordValue(record.Value, recordType, columnMap)));
-                    }
-
-                    result = list;
-                }
+                }             
 
                 return result;
             }
 
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
-            {
+            {               
                 // Binder should have enforced that this always succeeds.
                 if (table is DataverseTableValue t2)
                 {
                     if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                     {
                         return amd.ToAttributeObject(value, true);
-                    }
+                    }                    
 
                     throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
                 }
@@ -186,7 +164,8 @@ namespace Microsoft.PowerFx.Dataverse
                     LinkToAttributeName = relation.ReferencedAttribute,
 
                     // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
-                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N"),
+                    // Add '_N1' (LinkEntityN1RelationSuffix) suffix to identify relation as N-1 relationship
+                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N") + DelegationEngineExtensions.LinkEntityN1RelationSuffix,
                     JoinOperator = JoinOperator.LeftOuter
                 };
 

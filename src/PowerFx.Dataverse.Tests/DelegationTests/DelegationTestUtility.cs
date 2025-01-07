@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-//#define REGENERATE_SNAPSHOT
+// #define REGENERATE_SNAPSHOT
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -83,11 +84,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 #else
 
             // Compare the specified line with the input string, considering new lines as empty
-            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;
+            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;            
+
             Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
 #endif
         }
-
+        
         private static string ShowDifference(string target, string input)
         {
             target ??= string.Empty;

@@ -13,6 +13,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests
 {
@@ -138,6 +139,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             throw new InvalidOperationException($"Entity {entityRef.LogicalName}:{entityRef.Id} not found");
         }
 
+        internal IEnumerable<Entity> FindEntities(string tableName)
+        {
+            foreach (var entity in _list)
+            {
+                if (entity.LogicalName == tableName)
+                {
+                    yield return entity;
+                }
+            }
+        }
+
         public bool Exists(EntityReference entityRef)
         {
             foreach (var entity in _list)
@@ -240,25 +252,148 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return new DataverseResponse<EntityCollection>(new EntityCollection(entityList));
         }
 
+#pragma warning disable SA1025 // Code should not contain multiple white spaces in a row        
+
         private IList<Entity> ProcessEntity(IEnumerable<Entity> data, QueryExpression qe, int take, CancellationToken cancellationToken)
         {
+            static string GetAttributePrefix(LinkEntity le) => string.IsNullOrEmpty(le.EntityAlias) ? "_" + le.LinkToEntityName + "_" : le.EntityAlias + ".";
+
             List<Entity> entityList = new List<Entity>();
 
-            foreach (Entity entity in data)
+            IEnumerable<LinkEntity> n1LinkEntities = qe.LinkEntities.Where(le => le.EntityAlias.EndsWith(DelegationEngineExtensions.LinkEntityN1RelationSuffix)); // _N1
+            IEnumerable<LinkEntity> joinLinkEntities = qe.LinkEntities.Where(le => le.EntityAlias == null || !le.EntityAlias.EndsWith(DelegationEngineExtensions.LinkEntityN1RelationSuffix));             
+
+            JoinOperator joinType;
+            bool includeLeft = false;
+            bool includeRight = false;
+            List<Entity> innerRows = new List<Entity>();
+            HashSet<Entity> outer = new HashSet<Entity>();
+            HashSet<Entity> inner = new HashSet<Entity>();
+
+            LinkEntity join = joinLinkEntities.FirstOrDefault();
+            IEnumerable<Entity> leftEntities = FindEntities(qe.EntityName).ToList();
+            IEnumerable<Entity> rightEntities = null;            
+
+            if (join != null)
+            {
+                // ~~ JOIN ~~
+                //
+                // JoinType            .-----. .-----.
+                //                    /       X       \
+                // Inner = I         /       / \       \
+                // Left  = L + I    (    L  ( I )  R    )
+                // Right = I + R     \       \ /       / 
+                // Full  = L + I + R  \       X       /
+                //                     °-----° °-----°
+                // ~~
+
+                // linkEntity.Columns.Columns is always null on Join LinkEntities, as we always rename right columns                         
+                // and this is stored in AttributeExpressions where an alias is defined, per column.
+                Assert.Empty(join.Columns.Columns);
+
+                joinType = join.JoinOperator;
+                includeLeft =  joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.LeftOuter /* Left  */;
+                includeRight = joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.In        /* Right */;
+
+                // $$$ We don't want to support Right join for now as it's not supported by DV JoinOperator
+                Assert.NotEqual(JoinOperator.In, joinType);
+
+                rightEntities = FindEntities(join.LinkToEntityName).ToList();
+            }
+
+            EntityMetadata metadata = LookupMetadata(qe.EntityName, cancellationToken);
+
+            foreach (Entity leftEntity in leftEntities)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                EntityMetadata metadata = LookupMetadata(entity.LogicalName, cancellationToken);
 
-                if (entity.LogicalName == qe.EntityName && IsCriteriaMatching(entity, qe.Criteria, qe.LinkEntities, metadata))
+                if (join == null)
                 {
-                    entityList.Add(Clone(entity, qe.ColumnSet, cancellationToken));
+                    if (IsCriteriaMatching(leftEntity, qe.Criteria, n1LinkEntities, metadata, cancellationToken))
+                    {
+                        Entity newEntity = Clone(leftEntity, qe.ColumnSet, cancellationToken);
+                        entityList.Add(newEntity);
 
-                    if (--take == 0)
+                        if (--take == 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Entity rightEntity in rightEntities)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        bool isLeftValue = leftEntity.TryGetAttributeValue(join.LinkFromAttributeName, out object leftValue);
+                        bool isRightValue = rightEntity.TryGetAttributeValue(join.LinkToAttributeName, out object rightValue);
+                        bool isMatch = isLeftValue && isRightValue && object.Equals(leftValue, rightValue);
+
+                        if (isMatch)
+                        {
+                            Entity newEntity = Clone(leftEntity, qe.ColumnSet, cancellationToken);
+                            
+                            foreach (XrmAttributeExpression column in join.Columns.AttributeExpressions)
+                            {
+                                rightEntity.TryGetAttributeValue(column.AttributeName, out object val);
+                                newEntity.Attributes[column.Alias ?? (GetAttributePrefix(join) + column)] = val;
+                            }
+
+                            innerRows.Add(newEntity);                            
+
+                            inner.Add(leftEntity);
+                            inner.Add(rightEntity);
+
+                            if (includeLeft && outer.Contains(leftEntity))
+                            {
+                                take--;
+                                outer.Remove(leftEntity);
+                            }
+
+                            if (includeRight && outer.Contains(rightEntity))
+                            {
+                                take--;
+                                outer.Remove(rightEntity);
+                            }
+
+                            if (--take == 0)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (includeLeft && !inner.Contains(leftEntity))
+                            {
+                                outer.Add(leftEntity);
+
+                                if (--take == 0)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (includeRight && !inner.Contains(rightEntity))
+                            {
+                                outer.Add(rightEntity);
+
+                                if (--take == 0)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (take == 0)
                     {
                         break;
                     }
                 }
             }
+
+            entityList.AddRange(innerRows.Concat(outer.Select(o => MakeLeft(qe.EntityName, o, metadata.PrimaryIdAttribute))));
 
             if (qe.Orders != null && qe.Orders.Any())
             {
@@ -283,11 +418,32 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return entityList;
         }
 
-        private bool IsCriteriaMatching(Entity entity, FilterExpression criteria, DataCollection<LinkEntity> linkEntities, EntityMetadata metadata)
+        private Entity MakeLeft(string leftName, Entity rightEntity, string leftPrimaryId)
         {
-            if (linkEntities != null && linkEntities.Count > 0)
+            if (rightEntity.LogicalName == leftName)
             {
-                entity = AttachRelationship(entity, linkEntities);
+                return rightEntity;
+            }
+
+            Entity leftEntity = new Entity(leftName);
+
+            foreach (KeyValuePair<string, object> attribute in rightEntity.Attributes)
+            {
+                leftEntity.Attributes[attribute.Key] = attribute.Value;
+            }
+
+            // leftEntity.Attributes[leftPrimaryId] = null;
+
+            return leftEntity;
+        }
+
+        private bool IsCriteriaMatching(Entity entity, FilterExpression criteria, IEnumerable<LinkEntity> linkEntities, EntityMetadata metadata, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (linkEntities != null && linkEntities.Any())
+            {
+                entity = AttachRelationship(entity, linkEntities, cancellationToken);
                 linkEntities = null;
             }
 
@@ -296,7 +452,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case LogicalOperator.Or:
                     foreach (var filter in criteria.Filters)
                     {
-                        if (IsCriteriaMatching(entity, filter, linkEntities, metadata))
+                        if (IsCriteriaMatching(entity, filter, linkEntities, metadata, cancellationToken))
                         {
                             return true;
                         }
@@ -315,7 +471,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case LogicalOperator.And:
                     foreach (var filter in criteria.Filters)
                     {
-                        if (!IsCriteriaMatching(entity, filter, linkEntities, metadata))
+                        if (!IsCriteriaMatching(entity, filter, linkEntities, metadata, cancellationToken))
                         {
                             return false;
                         }
@@ -336,20 +492,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             }
         }
 
-        private Entity AttachRelationship(Entity currentEntity, DataCollection<LinkEntity> linkEntities)
+        private Entity AttachRelationship(Entity currentEntity, IEnumerable<LinkEntity> linkEntities, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (linkEntities == null)
             {
                 return currentEntity;
             }
 
-            if (linkEntities.Count > 1)
+            if (linkEntities.Count() > 1)
             {
                 throw new NotImplementedException("Multiple LinkEntities not supported");
             }
 
-            var linkEntity = linkEntities[0];
-            var linkEntityMetadata = LookupMetadata(linkEntity.LinkToEntityName, CancellationToken.None);
+            var linkEntity = linkEntities.First();
+            var linkEntityMetadata = LookupMetadata(linkEntity.LinkToEntityName, cancellationToken);
 
             foreach (var attribute in linkEntityMetadata.Attributes)
             {
@@ -365,7 +523,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 return currentEntity;
             }
 
-            var foreignEntity = LookupRef((EntityReference)fromValue, CancellationToken.None);
+            var foreignEntity = LookupRef((EntityReference)fromValue, cancellationToken);
 
             foreach (var attribute in foreignEntity.Attributes)
             {
@@ -377,16 +535,23 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public bool IsSatisfyingCondition(ConditionExpression condition, Entity entity, EntityMetadata metadata)
         {
-            // this means condition was on relationship.
-            if (condition.EntityName != null && condition.EntityName != entity.LogicalName)
+            string entityName = condition.EntityName;
+
+            if (entityName?.EndsWith(DelegationEngineExtensions.LinkEntityN1RelationSuffix) == true)
             {
-                _rawProvider.TryGetEntityMetadata(condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")), out metadata);
+                entityName = entityName.Substring(0, entityName.Length - DelegationEngineExtensions.LinkEntityN1RelationSuffix.Length);
+            }
+
+            // this means condition was on relationship.
+            if (entityName != null && entityName != entity.LogicalName)
+            {
+                _rawProvider.TryGetEntityMetadata(condition.EntityName.Substring(0, entityName.LastIndexOf("_")), out metadata);
             }
 
             metadata.TryGetAttribute(condition.AttributeName, out var amd);
-            var comparer = new AttributeComparer(amd);            
+            var comparer = new AttributeComparer(amd);
 
-            var fieldName = condition.EntityName != null ? "_" + condition.EntityName.Substring(0, condition.EntityName.LastIndexOf("_")) + "_" + condition.AttributeName : condition.AttributeName;
+            var fieldName = condition.EntityName != null ? "_" + condition.EntityName.Substring(0, entityName.LastIndexOf("_")) + "_" + condition.AttributeName : condition.AttributeName;
             if (!TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value))
             {
                 return false;
@@ -472,8 +637,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case ConditionOperator.Contains:
 
                     // case insensitive, always on strings
-                    return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);       
-                    
+                    return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);
+
                 case ConditionOperator.BeginsWith:
                     return ((string)value).StartsWith((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);
 
@@ -590,6 +755,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     return;
                 }
 
+                if (columnSet.AttributeExpressions.Count() == 1)
+                {
+                    _column = columnSet.AttributeExpressions.First().Alias;
+                    return;
+                }
+
                 throw new NotImplementedException();
             }
 
@@ -661,11 +832,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             cancellationToken.ThrowIfCancellationRequested();
 
             var columnFilter = columnSet.Columns.ToHashSet();
-
+            
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {
-                if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
+                IEnumerable<XrmAttributeExpression> xael = columnSet.AttributeExpressions?.Where(ae => ae.AttributeName == attr.Key);
+
+                if (xael != null && xael.Any())
+                {
+                    foreach (XrmAttributeExpression xae in xael)
+                    {
+                        newEntity.Attributes[xae.Alias] = attr.Value;
+                    }
+                }
+                else if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")
                 {
                     newEntity.Attributes[attr.Key] = attr.Value;
                 }
