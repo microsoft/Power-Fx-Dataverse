@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
-            if (tableArg.HasGroupBy)
+            if (tableArg.HasGroupBy || tableArg.HasJoin)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
