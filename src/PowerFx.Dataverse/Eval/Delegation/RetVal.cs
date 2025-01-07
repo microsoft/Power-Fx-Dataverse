@@ -51,14 +51,14 @@ namespace Microsoft.PowerFx.Dataverse
             private readonly IntermediateNode _orderBy;
 
             private readonly IntermediateNode _topCount;
-            
+
             private FxJoinNode _join;
 
             private NumberLiteralNode MaxRows => new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), _maxRows);
 
             private readonly int _maxRows;
 
-            internal readonly FxGroupByNode _groupByNode;                        
+            internal readonly FxGroupByNode _groupByNode;
 
             // Null if not dataverse
             private readonly EntityMetadata _metadata;
@@ -79,15 +79,15 @@ namespace Microsoft.PowerFx.Dataverse
                 IntermediateNode orderBy,
                 IntermediateNode count,
                 FxJoinNode join,
-                FxGroupByNode groupby,                
+                FxGroupByNode groupby,
                 int maxRows,
-                ColumnMap columnMap)                
+                ColumnMap columnMap)
             {
                 this._maxRows = maxRows;
                 this._sourceTableIRNode = new DelegableIntermediateNode(sourceTableIRNode ?? throw new ArgumentNullException(nameof(sourceTableIRNode)));
                 this.TableType = tableType ?? throw new ArgumentNullException(nameof(tableType));
                 this.OriginalNode = originalNode ?? throw new ArgumentNullException(nameof(originalNode));
-                this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));                
+                this.Hooks = hooks ?? throw new ArgumentNullException(nameof(hooks));
                 this.DelegationMetadata = tableType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
 
                 // topCount and filter are optional.
@@ -110,7 +110,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             public RetVal With(IntermediateNode node, TableType tableType = null, IntermediateNode filter = null, IntermediateNode orderby = null, IntermediateNode count = null, FxJoinNode join = null, FxGroupByNode groupby = null, ColumnMap map = null)
-            {               
+            {
                 return new RetVal(Hooks, node, _sourceTableIRNode, tableType ?? TableType, filter ?? _filter, orderby ?? _orderBy, count ?? _topCount, join ?? _join, groupby ?? _groupByNode, _maxRows, map ?? ColumnMap);
             }
 
@@ -187,7 +187,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             private static IntermediateNode GenerateJoinIR(FxJoinNode joinNode, TableType tableType)
-            {                
+            {
                 var joinFormulaValue = new JoinFormulaValue(joinNode, tableType);
                 var joinIRNode = new ResolvedObjectNode(IRContext.NotInSource(joinFormulaValue.Type), joinFormulaValue);
                 return joinIRNode;

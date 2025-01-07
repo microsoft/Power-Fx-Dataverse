@@ -117,12 +117,6 @@ namespace Microsoft.PowerFx.Dataverse
             // If primary key is missing from Attributes, still get it from the entity.
             if (fieldName == GetPrimaryKeyName())
             {
-                // This occurs in left outer join
-                if (_entity.Id == Guid.Empty)
-                {
-                    return (true, FormulaValue.NewBlank(FormulaType.Guid));
-                }
-                    
                 result = FormulaValue.New(_entity.Id);
                 return (true, result);
             }
@@ -239,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!filteredEntityCollection.HasError)
             {
-                List<RecordValue> list = new ();
+                List<RecordValue> list = new();
                 var referencingMetadata = _connection.GetMetadataOrThrow(refernecingTable);
                 foreach (var entity in filteredEntityCollection.Response.Entities)
                 {
@@ -384,7 +378,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override void ToExpression(StringBuilder sb, FormulaValueSerializerSettings settings)
-        {            
+        {
             var tableName = _connection.GetSerializationName(_entity.LogicalName);
             var id = _entity.Id.ToString("D");
             var keyName = GetPrimaryKeyName();

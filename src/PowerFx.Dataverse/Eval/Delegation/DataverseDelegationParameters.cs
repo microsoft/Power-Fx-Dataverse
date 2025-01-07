@@ -173,7 +173,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<string, string> ode = new Dictionary<string, string>();
 
-                string joinApply = GetJoinApply();
+                string joinApply = GetOdataJoinApply();
                 string filter = GetOdataFilter();
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
@@ -351,7 +351,7 @@ namespace Microsoft.PowerFx.Dataverse
             return "'" + str.Replace("'", "''") + "'";
         }
 
-        private string GetJoinApply()
+        private string GetOdataJoinApply()
         {
             if (Join == null)
             {

@@ -349,20 +349,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"record doesn't contain primary Id", nameof(PatchCoreAsync));
             }
-            
+
             if (fieldFormulaValue is not GuidValue id)
             {
-                if (fieldFormulaValue is BlankValue)
-                {
-                    // blank Id is possible in left outer join case
-                    id = GuidValue.New(Guid.Empty);
-                }
-                else
-                {
-                    return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
-                }
-            }
-            
+                return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
+            }        
+
             var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
             // After mutation, lazely refresh Rows from server.
@@ -388,25 +380,19 @@ namespace Microsoft.PowerFx.Dataverse
                 cancellationToken.ThrowIfCancellationRequested();
                 FormulaValue fv = record.GetField(_entityMetadata.PrimaryIdAttribute);
 
-                if (fv is not GuidValue id)
+                if (fv.Type == FormulaType.Blank || fv is not GuidValue id)
                 {
-                    if (fv is BlankValue)
-                    {
-                        // blank Id is possible in left outer join case
-                        id = GuidValue.New(Guid.Empty);
-                    }
-                    else
-                    {
-                        return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
-                    }
+                    return DataverseExtensions.DataverseError<BooleanValue>("Dataverse record doesn't contain primary Id, of Guid type", nameof(RemoveAsync));
                 }
-               
-                DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
-
-                if (response.HasError)
+                else
                 {
-                    return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
-                }                
+                    DataverseResponse response = await _connection.Services.DeleteAsync(_entityMetadata.LogicalName, id.Value, cancellationToken).ConfigureAwait(false);
+
+                    if (response.HasError)
+                    {
+                        return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
+                    }
+                }               
             }
 
             // After mutation, lazely refresh Rows from server.
@@ -467,11 +453,31 @@ namespace Microsoft.PowerFx.Dataverse
             List<DValue<RecordValue>> list = new ();
             RecordType recordType = delegationParameters.ExpectedReturnType;
 
+            bool returnsDVRecordValue = delegationParameters.GroupBy == null && delegationParameters.Join == null;
+
             foreach (Entity entity in entityCollection.Entities)
             {
-                DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
+                RecordValue recordValue;
 
-                list.Add(DValue<RecordValue>.Of(dvRecordValue));
+                if (returnsDVRecordValue)
+                {
+                    recordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
+                }
+                else
+                {
+                    List<NamedValue> namedValues = new List<NamedValue>();
+
+                    foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
+                    {
+                        entity.Attributes.TryGetValue(nft.Name.Value, out object val);
+                        FormulaValue fv = PrimitiveValueConversions.Marshal(val, nft.Type);
+                        namedValues.Add(new NamedValue(nft.Name.Value, fv));
+                    }
+
+                    recordValue = FormulaValue.NewRecordFromFields(namedValues.ToArray());
+                }
+
+                list.Add(DValue<RecordValue>.Of(recordValue));
             }
 
             if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)

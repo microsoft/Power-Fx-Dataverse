@@ -91,7 +91,7 @@ namespace Microsoft.PowerFx.Dataverse
             // - primary key is used and not composed
             if (!string.IsNullOrEmpty(joinType) &&
                 node.Args[PredicateArg] is LazyEvalNode len && len.Child is BinaryOpNode bon &&
-                IsOpKindEqualityComparison(bon.Op) &&                
+                IsOpKindEqualityComparison(bon.Op) &&
                 bon.Left is RecordFieldAccessNode leftrfan && leftrfan.From is ScopeAccessNode leftsan && leftsan.Value is ScopeAccessSymbol leftsas &&
                 bon.Right is RecordFieldAccessNode rightrfan && rightrfan.From is ScopeAccessNode rightsan && rightsan.Value is ScopeAccessSymbol rightsas)
             {
@@ -121,7 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
-                if (!string.IsNullOrEmpty(toAttribute) && 
+                if (!string.IsNullOrEmpty(toAttribute) &&
                     !string.IsNullOrEmpty(fromAttribute) &&
                     DelegationUtility.CanDelegateJoin(joinType, leftTable.DelegationMetadata))
                 {
