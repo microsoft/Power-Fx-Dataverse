@@ -245,5 +245,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     "method");
             }
         }
+
+        [Fact]
+        public void CustomApiTableMarshallerTest()
+        {
+            var entity = new Entity("local");
+            entity["name"] = "Test Account";
+
+            var entityCollection = new EntityCollection(new List<Entity> { entity }) { EntityName = "local" };
+
+            var xrmMetadata = new MockXrmMetadataProvider(MockModels.LocalModel);
+            var cdsEntityMetadataProvider = new CdsEntityMetadataProvider(xrmMetadata);
+
+            var dvc = new DataverseConnection(new TestOrganizationService(), cdsEntityMetadataProvider);
+            dvc.AddTable("local", "local");
+
+            var table = dvc.Marshal(entityCollection);
+
+            Assert.IsAssignableFrom<IDelegatableTableValue>(table);
+        }
     }
 }

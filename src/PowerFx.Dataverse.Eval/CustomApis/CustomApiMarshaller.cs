@@ -103,16 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else if (obj is EntityCollection inputEntityCollection)
             {
-                var records = new List<RecordValue>();
-                foreach (Entity input in inputEntityCollection.Entities)
-                {
-                    records.Add(dvc.Marshal(input));
-                }
-
-                // Handle empty input entityCollection
-                var tableValue = (records.Count != 0) ?
-                                    FormulaValue.NewTable(records[0].Type, records.ToArray()) :
-                                    FormulaValue.NewTable(RecordType.Empty(), new RecordValue[0]);
+                var tableValue = dvc.Marshal(inputEntityCollection);
                 return tableValue;
             }
 
