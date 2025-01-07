@@ -13,15 +13,13 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessFirst(CallNode node, RetVal tableArg, Context context)
         {
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-
             if (!DelegationUtility.CanDelegateFirst(tableArg.DelegationMetadata))
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
 
             var countOne = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1);
-            var res = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, tableArg.Filter, orderBy: orderBy, countOne, _maxRows, tableArg.ColumnMap, groupByNode: tableArg._groupByNode);
+            var res = tableArg.With(node, count: countOne);
             return res;
         }
     }

@@ -14,7 +14,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
 {
     /// <summary>
     /// This class is used to "smuggle" a FilterExpression into a FormulaValue. So another function can use it
-    /// to combine or execute FilterExpressions. e.g. <see cref="DelegatedAnd"/>"/> or <see cref="DelegatedRetrieveMultipleFunction"/>"/>
+    /// to combine or execute FilterExpressions. e.g. <see cref="DelegatedAnd"/>"/> or <see cref="DelegatedRetrieveMultipleFunction"/>"/>.
     /// </summary>
     internal class DelegationFormulaValue : ValidFormulaValue
     {
@@ -35,17 +35,20 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
+        internal readonly FxJoinNode _join;
+
         internal readonly FxGroupByNode _groupBy;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, string partitionId = null, int? top = null)
+        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, FxJoinNode join = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();
             _orderBy = orderBy ?? new List<OrderExpression>();
             _top = top;
             _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
-            _partitionId = partitionId;
+            _join = join;
             _groupBy = groupBy;
+            _partitionId = partitionId;
         }
 
         public override void Visit(IValueVisitor visitor)

@@ -3,9 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Microsoft.PowerFx.Core.Entities;
-using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {

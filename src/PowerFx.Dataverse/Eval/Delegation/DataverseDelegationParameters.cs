@@ -3,32 +3,28 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
-using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Microsoft.PowerFx.Dataverse
 {
-    // DelegationParameters implemented using Xrm filter classes.
-
-    // Summarize( Fi
+    // DelegationParameters implemented using Xrm filter classes.    
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
-        public const string Odata_Filter = "$filter";
-
-        public const string Odata_Apply = "$apply";
+        public const string Odata_Filter = "$filter";        
 
         public const string Odata_OrderBy = "$orderby";
 
         public const string Odata_Select = "$select";
 
         public const string Odata_Top = "$top";
+
+        public const string Odata_Apply = "$apply";
 
         // Systems can get the filter expression directrly and translate.
         public FxFilterExpression FxFilter { get; init; }
@@ -42,6 +38,8 @@ namespace Microsoft.PowerFx.Dataverse
         public ColumnMap ColumnMap { get; init; }
 
         public FxGroupByNode GroupBy { get; init; }
+
+        public FxJoinNode Join { get; init; }
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -77,6 +75,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (Top > 0)
                 {
                     features |= DelegationParameterFeatures.Top;
+                }
+
+                if (Join != null)
+                {
+                    features |= DelegationParameterFeatures.ApplyJoin;
                 }
 
                 if (GroupBy != null)
@@ -170,11 +173,17 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<string, string> ode = new Dictionary<string, string>();
 
+                string joinApply = GetOdataJoinApply();
                 string filter = GetOdataFilter();
                 int top = Top ?? 0;
                 IReadOnlyCollection<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
                 string groupBy = GetODataGroupBy();
+
+                if (!string.IsNullOrEmpty(joinApply))
+                {
+                    ode.Add(Odata_Apply, joinApply);
+                }
 
                 if (!string.IsNullOrEmpty(filter))
                 {
@@ -237,7 +246,7 @@ namespace Microsoft.PowerFx.Dataverse
                     count++;
                 }
 
-                sb.Append(")");
+                sb.Append(')');
 
                 return sb.ToString();
             }
@@ -290,7 +299,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return $"endswith({fieldName},{EscapeOdata(value)})";
                     }
-                    
+
                     string op = condition.Operator switch
                     {
                         FxConditionOperator.GreaterEqual => "ge",
@@ -341,6 +350,25 @@ namespace Microsoft.PowerFx.Dataverse
             // escaped single quote as 2 single quotes.
             return "'" + str.Replace("'", "''") + "'";
         }
+
+        private string GetOdataJoinApply()
+        {
+            if (Join == null)
+            {
+                return null;
+            }
+
+            return Join.LinkEntity.JoinOperator switch
+            {
+                JoinOperator.Inner => $"join({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                JoinOperator.LeftOuter => $"outerjoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                JoinOperator.In => throw new InvalidOperationException("Right join not supported yet"),
+
+                // $$$ this operation isn't part of OData specifications
+                JoinOperator.All => $"fulljoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
+                _ => throw new InvalidOperationException("Invalid Join operator")
+            };
+        }            
 
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {

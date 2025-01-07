@@ -1,13 +1,13 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=1.3.0-build.20241125-1001
+set pfxVer=1.3.0-build.20250103-1003
 
 set pfxRoot=C:\Data\Power-Fx
 set pfxConfig=Release
 
 set pfxSource=%pfxRoot%\src\libraries
-set pfxTest=%pfxRoot%\src\tests
+set pfxTest=%pfxRoot%\src\tests\.Net7.0
 
 set nugetDest1=%nugetRoot%\microsoft.powerfx.core\%pfxVer%\lib\netstandard2.0
 set nugetDest2=%nugetRoot%\microsoft.powerfx.connectors\%pfxVer%\lib\netstandard2.0

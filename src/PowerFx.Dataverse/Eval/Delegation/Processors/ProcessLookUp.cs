@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -26,12 +25,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // LookUp() with group by is not supported. Ie LookUp(Summarize(...), ...), other way around is supported.
-            if (tableArg.HasGroupByNode)
+            if (tableArg.HasGroupBy || tableArg.HasJoin)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
-
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             var predicate = node.Args[1];
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
@@ -91,6 +88,7 @@ namespace Microsoft.PowerFx.Dataverse
                         var partitionIdRetVal = partitionIdArg.Accept(this, context);
                         var materializedGuid = Materialize(guidRetVal);
                         var materializedPartitionId = Materialize(partitionIdRetVal);
+
                         if (IsTableArgLookUpDelegable(context, tableArg))
                         {
                             var newNode = _hooks.MakeElasticRetrieveCall(tableArg, materializedGuid, materializedPartitionId);
@@ -123,7 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (IsTableArgLookUpDelegable(context, tableArg))
             {
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
+                result = tableArg.With(node, filter: filterCombined);
             }
             else
             {

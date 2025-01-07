@@ -7,7 +7,6 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;

@@ -26,20 +26,32 @@ namespace Microsoft.PowerFx.Dataverse
           : base(hooks, "__retrieveMultiple", tableType)
         {
         }
+        
+        private const int TableArg = 0;
+        private const int FilterArg = 1;
+        private const int OrderbyArg = 2;
+        private const int JoinArg = 3;
+        private const int GroupByArg = 4;
+        private const int CountArg = 5;
+        private const int DistinctArg = 6;
+        private const int ColumnRenameArg = 7;
+        private const int ColumnRenameArg1 = ColumnRenameArg + 1;
 
         // args[0]: table
         // args[1]: filter
         // args[2]: orderby
-        // args[3]: count
-        // args[4]: distinct column
-        // args[5]: columns with renames (in Record)
+        // args[3]: join
+        // args[4]: groupby
+        // args[5]: count
+        // args[6]: distinct column
+        // args[7]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (args[0] is not IDelegatableTableValue table)
+            if (args[TableArg] is not IDelegatableTableValue table)
             {
-                throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} : found {args[0]}");
+                throw new InvalidOperationException($"args{TableArg} should always be of type {nameof(TableValue)} : found {args[TableArg]}");
             }
 
             int? topCount = null;
@@ -48,11 +60,11 @@ namespace Microsoft.PowerFx.Dataverse
             ISet<LinkEntity> relation;
             string partitionId = null;
 
-            if (args[3] is NumberValue count)
+            if (args[CountArg] is NumberValue count)
             {
                 topCount = (int)count.Value;
             }
-            else if (args[3] is BlankValue)
+            else if (args[CountArg] is BlankValue)
             {
                 // If Count is Blank(), return empty table.
                 var emptyList = new List<DValue<RecordValue>>();
@@ -60,10 +72,10 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"args3 should always be of type {nameof(NumberValue)} or {nameof(BlankValue)} : found {args[2]}");
+                throw new InvalidOperationException($"args{CountArg} should always be of type {nameof(NumberValue)} or {nameof(BlankValue)} : found {args[CountArg]}");
             }
 
-            if (args[1] is DelegationFormulaValue delegationFormulaValue)
+            if (args[FilterArg] is DelegationFormulaValue delegationFormulaValue)
             {
                 filter = delegationFormulaValue._filter;
                 relation = delegationFormulaValue._relation;
@@ -71,58 +83,69 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                throw new InvalidOperationException($"args1 should always be of type {nameof(delegationFormulaValue)} : found {args[1]}");
+                throw new InvalidOperationException($"args{FilterArg} should always be of type {nameof(delegationFormulaValue)} : found {args[FilterArg]}");
             }
 
-            if (args[2] is DelegationFormulaValue delegationFormulaValue2)
+            if (args[OrderbyArg] is DelegationFormulaValue delegationFormulaValue2)
             {
                 orderBy = delegationFormulaValue2._orderBy;
             }
             else
             {
-                throw new InvalidOperationException($"args2 should always be of type {nameof(delegationFormulaValue)} : found {args[2]}");
+                throw new InvalidOperationException($"args{OrderbyArg} should always be of type {nameof(delegationFormulaValue)} : found {args[OrderbyArg]}");
             }
 
             FxGroupByNode groupBy = null;
-            if (args[4] is GroupByObjectFormulaValue groupByObjectFormula)
+            if (args[GroupByArg] is GroupByObjectFormulaValue groupByObjectFormula)
             {
                 groupBy = groupByObjectFormula.GroupBy;
             }
             else
             {
-                throw new InvalidOperationException($"args4 should always be of type {nameof(GroupByObjectFormulaValue)} : found {args[4]}");
+                throw new InvalidOperationException($"args{GroupByArg} should always be of type {nameof(GroupByObjectFormulaValue)} : found {args[GroupByArg]}");
             }
 
             string distinctColumn = null;
-            if (args[5] is StringValue sv)
+            if (args[DistinctArg] is StringValue sv)
             {
                 distinctColumn = sv.Value;
             }
-            else if (args[5] is not BlankValue)
+            else if (args[DistinctArg] is not BlankValue)
             {
-                throw new InvalidOperationException($"args5 should always be of type {nameof(StringValue)} : found {args[5]}");
+                throw new InvalidOperationException($"args{DistinctArg} should always be of type {nameof(StringValue)} : found {args[DistinctArg]}");
+            }
+
+            FxJoinNode join = null;
+
+            if (args[JoinArg] is JoinFormulaValue jv)
+            {
+                join = jv.JoinNode;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args{JoinArg} should always be of type {nameof(JoinFormulaValue)} : found {args[JoinArg]}");
             }
 
             ColumnMap columnMap = null;
 
-            if (args.Length > 6)
+            if (args.Length > ColumnRenameArg)
             {
-                columnMap = args[6] is RecordValue rv
+                columnMap = args[ColumnRenameArg] is RecordValue rv
                     ? new ColumnMap(rv, distinctColumn)
-                    : throw new InvalidOperationException($"Expecting args6 to be a {nameof(RecordValue)} : found {args[6].GetType().Name}");
+                    : throw new InvalidOperationException($"Expecting args5 to be a {nameof(RecordValue)} : found {args[ColumnRenameArg].GetType().Name}");
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters(((TableType)this.ReturnFormulaType).ToRecord())
+            var delegationParameters = new DataverseDelegationParameters(((TableType)ReturnFormulaType).ToRecord())
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
                 Top = topCount,
-
+                Join = join,
+                GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,
-                GroupBy = groupBy,
+                Relation = relation                
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -148,15 +171,28 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal override bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
         {
-            if (node.Args.Count == 6 &&
-                node.Args[4] is TextLiteralNode distinctNode &&
-                node.Args[5] is RecordNode columnMapNode)
+            if (node.Args.Count == ColumnRenameArg1 &&
+                node.Args[DistinctArg] is TextLiteralNode distinctNode &&
+                node.Args[ColumnRenameArg] is RecordNode columnMapNode)
             {
                 columnMap = new ColumnMap(columnMapNode, distinctNode);
                 return true;
             }
 
             columnMap = null;
+            return false;
+        }
+
+        internal override bool IsUsingJoinNode(CallNode node, out FxJoinNode joinNode)
+        {
+            if (node.Args[JoinArg] is ResolvedObjectNode ron &&
+                ron.Value is JoinFormulaValue jfv)
+            {
+                joinNode = jfv.JoinNode;
+                return joinNode != null;
+            }
+
+            joinNode = null;
             return false;
         }
     }

@@ -16,7 +16,6 @@ using Microsoft.PowerFx.Functions;
 using Microsoft.PowerFx.Types;
 using Xunit;
 using Xunit.Abstractions;
-using static Microsoft.PowerFx.Dataverse.SqlCompileOptions;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
@@ -56,6 +55,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             ParserOptions opts = parserNumberIsFloatOption ? PluginExecutionTests._parserAllowSideEffects_NumberIsFloat : PluginExecutionTests._parserAllowSideEffects;
 
             PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
+            config.EnableJoinFunction();
 
             Assert.True(config.Features.SupportColumnNamesAsIdentifiers, "config broken");
 
@@ -117,7 +117,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 for (int j = 0; j < errorList.Length; j++)
                 {
-                    Assert.Equal(expectedWarnings[j], errorList[j]);
+                    Assert.Equal<object>(expectedWarnings[j], errorList[j]);
                 }
 
                 IExpressionEvaluator run = check.GetEvaluator();
@@ -210,6 +210,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
             else
             {
+                // Join 
+                AppendJoinParam(ode, sb);
                 AppendFilterParam(ode, sb, false);
                 AppendOrderByParam(ode, sb, false);
                 AppendSelectParam(ode, sb);
@@ -303,6 +305,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
+        private static void AppendJoinParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
+        {
+            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
+            {                
+                sb.Append(DataverseDelegationParameters.Odata_Apply);
+                AddEqual(sb);
+                sb.Append(apply);
+            }        
+        }
+
         public class HelperClock : IClockService
         {
             public DateTime UtcNow => new DateTime(2024, 7, 29, 21, 57, 04, DateTimeKind.Utc);
@@ -329,8 +341,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         private static void ConfigureEngine(DataverseConnection dv, RecalcEngine engine, bool enableDelegation)
         {
             if (enableDelegation)
-            {
-                engine.EnableDelegation(dv.MaxRows);
+            {                
+                engine.EnableDelegation(dv.MaxRows);                
             }
 
             engine.UpdateVariable("_count", FormulaValue.New(100m));

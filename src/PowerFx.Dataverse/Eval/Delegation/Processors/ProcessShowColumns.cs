@@ -12,12 +12,8 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessShowColumns(CallNode node, RetVal tableArg, Context context)
-        {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
-
-            if (tableArg.HasGroupByNode)
+        {            
+            if (tableArg.HasGroupBy)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
@@ -27,10 +23,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // ShowColumns is only a column selector, so let's create a map with (column, column) entries
                 ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
 
-                map = ColumnMap.Combine(tableArg.ColumnMap, map);
+                map = ColumnMap.Combine(tableArg.ColumnMap, map, tableArg.TableType);
 
                 // change to original node to current node and appends columnSet.
-                var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, map, groupByNode: tableArg._groupByNode);
+                var resultingTable = tableArg.With(node, map: map);
 
                 if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
                 {

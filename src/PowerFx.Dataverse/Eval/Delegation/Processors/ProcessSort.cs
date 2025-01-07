@@ -4,11 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types.Enums;
-using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
 using Microsoft.PowerFx.Types;
@@ -19,18 +17,16 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
-        {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode count = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
+        {           
             bool canDelegate = true;
 
-            List<IntermediateNode> arguments = new List<IntermediateNode>() { filter ?? node.Args[0] };
+            List<IntermediateNode> arguments = new List<IntermediateNode>() { tableArg.HasFilter ? tableArg.Filter : node.Args[0] };
 
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
             // When multiple Sort would occur, we cannot reliably group OrderBy commands
-            if (tableArg.HasTopCount || tableArg.HasOrderBy || tableArg.HasColumnMap)
+            if (tableArg.HasTopCount || tableArg.HasOrderBy || tableArg.HasColumnMap || tableArg.HasGroupBy)
             {
                 return NoTransform(node, tableArg);
             }
@@ -69,7 +65,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
 
-                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);          
+                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);
 
                 arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
             }
@@ -79,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
                 var sortFunc = new DelegatedSort(_hooks);
                 IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
 
-                return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderByNode, count, _maxRows, tableArg.ColumnMap, groupByNode: tableArg._groupByNode);
+                return tableArg.With(node, orderby: orderByNode); 
             }
 
             return ProcessOtherCall(node, tableArg, context);

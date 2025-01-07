@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Xml.Linq;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -54,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupBy))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -462,7 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
 
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, _maxRows, columnMap: null, groupByNode: null);
+            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null);
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
@@ -539,7 +538,7 @@ namespace Microsoft.PowerFx.Dataverse
             return new RetVal(node);
         }
 
-        private bool TryGetScopedVariable(Stack<IDictionary<string, RetVal>> withScopes, string variable, out RetVal node)
+        private static bool TryGetScopedVariable(Stack<IDictionary<string, RetVal>> withScopes, string variable, out RetVal node)
         {
             if (withScopes.Count() == 0)
             {

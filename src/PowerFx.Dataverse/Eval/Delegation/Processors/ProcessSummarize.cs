@@ -1,20 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core.Entities;
-using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Texl;
-using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
-using Microsoft.PowerFx.Syntax;
-using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 
@@ -25,9 +20,10 @@ namespace Microsoft.PowerFx.Dataverse
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
             // nested summarize is not supported and renames are not supported.
-            if (tableArg.HasGroupByNode || tableArg.HasColumnMap)
+            if (tableArg.HasGroupBy || tableArg.HasColumnMap)
             {
-                return CreateNotSupportedErrorAndReturn(node, tableArg);
+                // if tableArg is delegating, let's delegate that part
+                return ProcessOtherCall(node, tableArg, context);                
             }
 
             var groupByProperties = new List<string>();
@@ -61,9 +57,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             var groupByNode = new FxGroupByNode(groupByProperties, aggregateExpressions);
-            var topCount = tableArg.HasTopCount ? tableArg.TopCountOrDefault : null;
-
-            return new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter: tableArg.Filter, orderBy: tableArg.OrderBy, count: topCount, (int)tableArg.MaxRows.LiteralValue, tableArg.ColumnMap, groupByNode);
+            
+            return tableArg.With(node, groupby: groupByNode);
         }
 
         private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxAggregateExpression> aggregateExpressions, TableDelegationInfo capabilities)
