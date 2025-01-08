@@ -54,23 +54,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             (DataverseConnection dv, EntityLookup el) = PluginExecutionTests.CreateMemoryForRelationshipModels(numberIsFloat: cdsNumberIsFloat, policy: singleOrgPolicy, withExtraEntity: withExtraEntity);
             ParserOptions opts = parserNumberIsFloatOption ? PluginExecutionTests._parserAllowSideEffects_NumberIsFloat : PluginExecutionTests._parserAllowSideEffects;
 
-            PowerFxConfig config = new PowerFxConfig(); // Pass in per engine
-            config.EnableJoinFunction();
-
-            Assert.True(config.Features.SupportColumnNamesAsIdentifiers, "config broken");
-
-            config.SymbolTable.EnableMutationFunctions();
-            extraConfig?.Invoke(config);
-
-            RecalcEngine engine = new RecalcEngine(config);
-            ConfigureEngine(dv, engine, true);
-
-            // Make fakeT1 non delegable
-            var tableT1Type = dv.GetRecordType("local").SetNonDelegable();
-            var fakeSymbolTable = new SymbolTable();
-            var fakeSlot = fakeSymbolTable.AddVariable("fakeT1", (TableType)tableT1Type.ToTable());
-            var fakeTableValue = new TestDataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
-            var allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
+            PowerFxConfig config;
+            RecalcEngine engine;
+            SymbolTable fakeSymbolTable;
+            ISymbolSlot fakeSlot;
+            TestDataverseTableValue fakeTableValue;
+            ReadOnlySymbolTable allSymbols;
+            
+            Configure(true, extraConfig, dv, out config, out engine, out fakeSymbolTable, out fakeSlot, out fakeTableValue, out allSymbols);
 
             IList<string> inputs = DelegationTestUtility.TransformForWithFunction(expr, expectedWarnings?.Count() ?? 0);
 
@@ -138,6 +129,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 await DelegationTestUtility.CompareSnapShotAsync(id, file, string.IsNullOrEmpty(oDataStrings) ? actualIr : $"{actualIr} | {oDataStrings}", id, i == 1);
 
+                FormulaValue nonDelegatingResult = null;
+                if (resultGetter != null)
+                {
+                    // Get non-delegating version of the result to ensure consistency
+                    Configure(false, extraConfig, dv, out PowerFxConfig config2, out RecalcEngine engine2, out SymbolTable fakeSymbolTable2, out ISymbolSlot fakeSlot2, out TestDataverseTableValue fakeTableValue2, out ReadOnlySymbolTable allSymbols2);
+                    
+                    CheckResult check2 = engine2.Check(input, options: opts, symbolTable: allSymbols2);
+                    Assert.True(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => $"{er.Span.Min}-{er.Span.Lim}: {er.Message}")));
+
+                    IExpressionEvaluator run2 = check2.GetEvaluator();
+                    var fakeSymbolValues2 = new SymbolValues(fakeSymbolTable2);
+                    fakeSymbolValues2.Set(fakeSlot2, fakeTableValue2);
+                    var allValues2 = ReadOnlySymbolValues.Compose(fakeSymbolValues2, dv.SymbolValues);
+                    RuntimeConfig rc2 = new RuntimeConfig(allValues2);
+                    rc2.SetClock(new HelperClock());
+                    rc2.SetTimeZone(TimeZoneInfo.Utc);
+                    
+                    nonDelegatingResult = await run2.EvalAsync(CancellationToken.None, rc2);
+                }
+
                 _output.WriteLine(string.Empty);
                 _output.WriteLine($"OData strings: {oDataStrings}");
 
@@ -177,7 +188,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     }
                     else if (resultGetter != null)
                     {
-                        Assert.Equal(expectedResult, resultGetter(result));
+                        // Verify non-delegating first
+                        Assert.Equal(expectedResult, resultGetter(nonDelegatingResult));
+
+                        // Confirm that with delegation we have same results
+                        Assert.Equal(expectedResult, resultGetter(result));                        
                     }
                     else if (cdsNumberIsFloat && (parserNumberIsFloatOption || (cdsNumberIsFloat && !parserNumberIsFloatOption)))
                     {
@@ -189,6 +204,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     }
                 }
             }
+        }
+
+        private static void Configure(bool enableDelegation, Action<PowerFxConfig> extraConfig, DataverseConnection dv, out PowerFxConfig config, out RecalcEngine engine, out SymbolTable fakeSymbolTable, out ISymbolSlot fakeSlot, out TestDataverseTableValue fakeTableValue, out ReadOnlySymbolTable allSymbols)
+        {
+            config = new PowerFxConfig();
+            config.EnableJoinFunction();
+
+            Assert.True(config.Features.SupportColumnNamesAsIdentifiers, "config broken");
+
+            config.SymbolTable.EnableMutationFunctions();
+            extraConfig?.Invoke(config);
+
+            engine = new RecalcEngine(config);
+            ConfigureEngine(dv, engine, enableDelegation);
+
+            // Make fakeT1 non delegable
+            var tableT1Type = dv.GetRecordType("local").SetNonDelegable();
+            fakeSymbolTable = new SymbolTable();
+            fakeSlot = fakeSymbolTable.AddVariable("fakeT1", (TableType)tableT1Type.ToTable());
+            fakeTableValue = new TestDataverseTableValue(tableT1Type, dv, dv.GetMetadataOrThrow("local"));
+            allSymbols = ReadOnlySymbolTable.Compose(fakeSymbolTable, dv.Symbols);
         }
 
         internal static string GetODataString(DataverseDelegationParameters dp)

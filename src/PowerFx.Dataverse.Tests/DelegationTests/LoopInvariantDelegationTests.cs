@@ -17,24 +17,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [TestPriority(1)]
 
         // No problem to delegate here as this is (field < expression) and expression will be evaluated at runtime
-        [InlineData(1, "Filter(t1, DateTime < Today())", 1, "localid", "0001")]
-        [InlineData(2, "Filter(t1, DateTime < DateAdd(Today(), -5, TimeUnit.Days))", 1, "localid", "0001")]
+        [InlineData(1, "Filter(t1, DateTime < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(2, "Filter(t1, DateTime < DateAdd(Today(), -5, TimeUnit.Days))", 4, "localid", "0001, 0003, 0004, 0005")]
 
         // Delegation working here        
-        [InlineData(3, "Filter(t1, DateAdd(ThisRecord.DateTime, -5) < Today())", 1, "localid", "0001")]
-        [InlineData(4, "Filter(t1, DateAdd(ThisRecord.DateTime, 5) < Today())", 1, "localid", "0001")]
-        [InlineData(5, "Filter(t1, DateAdd(ThisRecord.DateTime, -5, TimeUnit.Days) < Today())", 1, "localid", "0001")]
-        [InlineData(6, "Filter(t1, DateAdd(ThisRecord.DateTime, 5, TimeUnit.Days) < Today())", 1, "localid", "0001")]
-        [InlineData(7, "Filter(t1, DateAdd(ThisRecord.DateTime, -5, TimeUnit.Hours) < Today())", 1, "localid", "0001")]
-        [InlineData(8, "Filter(t1, DateAdd(ThisRecord.DateTime, 5, TimeUnit.Hours) < Today())", 1, "localid", "0001")]
+        [InlineData(3, "Filter(t1, DateAdd(ThisRecord.DateTime, -5) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(4, "Filter(t1, DateAdd(ThisRecord.DateTime, 5) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(5, "Filter(t1, DateAdd(ThisRecord.DateTime, -5, TimeUnit.Days) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(6, "Filter(t1, DateAdd(ThisRecord.DateTime, 5, TimeUnit.Days) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(7, "Filter(t1, DateAdd(ThisRecord.DateTime, -5, TimeUnit.Hours) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(8, "Filter(t1, DateAdd(ThisRecord.DateTime, 5, TimeUnit.Hours) < Today())", 4, "localid", "0001, 0003, 0004, 0005")]
 
         // This set will delegate like previous 6 tests
-        [InlineData(9, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5))", 1, "localid", "0001")]
-        [InlineData(10, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5))", 1, "localid", "0001")]
-        [InlineData(11, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5, TimeUnit.Days))", 1, "localid", "0001")]
-        [InlineData(12, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5, TimeUnit.Days))", 1, "localid", "0001")]
-        [InlineData(13, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5, TimeUnit.Hours))", 1, "localid", "0001")]
-        [InlineData(14, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5, TimeUnit.Hours))", 1, "localid", "0001")]
+        [InlineData(9, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5))", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(10, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5))", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(11, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5, TimeUnit.Days))", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(12, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5, TimeUnit.Days))", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(13, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, -5, TimeUnit.Hours))", 4, "localid", "0001, 0003, 0004, 0005")]
+        [InlineData(14, "Filter(t1, Today() > DateAdd(ThisRecord.DateTime, 5, TimeUnit.Hours))", 4, "localid", "0001, 0003, 0004, 0005")]
 
         // Same delegation result
         [InlineData(15, "Filter(t1, DateDiff(ThisRecord.DateTime, Today()) < 5)", 0, "localid", null)]
