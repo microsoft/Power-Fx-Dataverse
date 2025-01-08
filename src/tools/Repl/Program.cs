@@ -89,7 +89,6 @@ namespace Microsoft.PowerFx
             }
 
             config.SymbolTable.EnableMutationFunctions();
-
             config.SymbolTable.EnableAIFunctions();
 
             config.EnableSetFunction();
@@ -108,6 +107,7 @@ namespace Microsoft.PowerFx
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
             config.AddOptionSet(optionsSet);
+            config.EnableJoinFunction();
 
             config.EnableRegExFunctions(new TimeSpan(0, 0, 5));
             var eng = new RecalcEngine(config);

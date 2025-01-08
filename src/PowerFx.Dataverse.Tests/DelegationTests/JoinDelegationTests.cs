@@ -34,19 +34,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),other:If(false,Float(""0""))}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),other:Float(49)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),other:Float(44)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)}," +                               
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),other:Float(49)}," +
                                 @"{localid:If(false,GUID(""00000000000000000000000000000000"")),other:If(false,Float(""0""))})";
 
-        private const string InnerJoin2 = @"Table(" + 
+        private const string InnerJoin2 = @"Table(" +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)}," + 
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),new_name:If(false,""""),other2:Float(49)})";
 
         private const string LeftJoin2 = @"Table(" +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),new_name:""row1"",other2:If(false,Float(""0""))}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),new_name:If(false,""""),other2:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),new_name:""row1"",other2:If(false,Float(""0""))})";
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),new_name:If(false,""""),other2:Float(49)})";
 
         private const string RightJoin2 = @"Table(" +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
@@ -55,33 +55,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:If(false,GUID(""00000000000000000000000000000000"")),new_name:If(false,""""),other2:If(false,Float(""0""))})";
 
         private const string FullJoin2 = @"Table(" +
+                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),new_name:""row1"",other2:If(false,Float(""0""))}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),new_name:If(false,""""),other2:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000001""),new_name:""row1"",other2:If(false,Float(""0""))}," +
                                 @"{localid:If(false,GUID(""00000000000000000000000000000000"")),new_name:If(false,""""),other2:If(false,Float(""0""))})";
 
         private const string InnerJoin3 = @"Table(" +
+                                @"{data:Decimal(-10),other:Float(44),remoteid:GUID(""00000000-0000-0000-0000-00000000000b"")}," +
                                 @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
-                                @"{data:Decimal(-10),other:Float(44),remoteid:GUID(""00000000-0000-0000-0000-00000000000b"")})";
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")})";
 
         private const string LeftJoin3 = @"Table(" +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:Decimal(-10),other:Float(44),remoteid:GUID(""00000000-0000-0000-0000-00000000000b"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:Decimal(200),other:If(false,Float(""0"")),remoteid:GUID(""00000000-0000-0000-0000-000000000002"")})";
 
         private const string RightJoin3 = @"Table(" +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:Decimal(-10),other:Float(44),remoteid:GUID(""00000000-0000-0000-0000-00000000000b"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:If(false,Decimal(""0"")),other:If(false,Float(""0"")),remoteid:If(false,GUID(""00000000000000000000000000000000""))})";
 
         private const string FullJoin3 = @"Table(" +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
-                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:Decimal(-10),other:Float(44),remoteid:GUID(""00000000-0000-0000-0000-00000000000b"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
+                                @"{data:Decimal(10),other:Float(49),remoteid:GUID(""00000000-0000-0000-0000-00000000000a"")}," +
                                 @"{data:Decimal(200),other:If(false,Float(""0"")),remoteid:GUID(""00000000-0000-0000-0000-000000000002"")}," +
                                 @"{data:If(false,Decimal(""0"")),other:If(false,Float(""0"")),remoteid:If(false,GUID(""00000000000000000000000000000000""))})";
 
@@ -90,9 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)}," +
                                 @"{localid:GUID(""00000000-0000-0000-0000-000000000005""),n4:If(false,""""),other2:Float(49)})";
 
-        private const string InnerJoin5 = @"Table(" +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)}," +
-                                @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)})";
+        private const string InnerJoin5 = @"Table({localid:GUID(""00000000-0000-0000-0000-000000000003""),new_name:""p1"",other2:Float(49)},{localid:GUID(""00000000-0000-0000-0000-000000000004""),new_name:""row4"",other2:Float(44)},{localid:GUID(""00000000-0000-0000-0000-000000000005""),new_name:If(false,""""),other2:Float(49)})";
 
         [Theory]
         [TestPriority(1)]
@@ -110,12 +108,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Right => Table({g:3,other2:49,rtid:10},{g:4,other2:44,rtid:11},{g:5,other2:49,rtid:10},{g:2,other2:Blank(),rtid:Blank()})
         // Full  => Table({g:3,other2:49,rtid:10},{g:4,other2:44,rtid:11},{g:5,other2:49,rtid:10},{g:1,other2:Blank(),rtid:12},{g:2,other2:Blank(),rtid:Blank()})
 
-        [InlineData(5, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]               
-        [InlineData(6, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Left,  RightRecord.other As other2), localid, new_name, other2)", 4, LeftJoin2)]               
-        [InlineData(7, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Right, RightRecord.other As other2), localid, new_name, other2)", 4, RightJoin2, "Warning 17-22: This operation on table 'local' may not work if it has more than 999 rows.")]        
+        [InlineData(5, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
+        [InlineData(6, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Left,  RightRecord.other As other2), localid, new_name, other2)", 4, LeftJoin2)]
+        [InlineData(7, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Right, RightRecord.other As other2), localid, new_name, other2)", 4, RightJoin2, "Warning 17-22: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(8, "ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Full,  RightRecord.other As other2), localid, new_name, other2)", 5, FullJoin2)]
 
-        [InlineData(9,  "ShowColumns(Join(local As l, remote As r, l.rtid = r.remoteid, JoinType.Inner, r.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
+        [InlineData(9, "ShowColumns(Join(local As l, remote As r, l.rtid = r.remoteid, JoinType.Inner, r.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(10, "ShowColumns(Join(local As l, remote As r, l.rtid = r.remoteid, JoinType.Left,  r.other As other2), localid, new_name, other2)", 4, LeftJoin2)]
         [InlineData(11, "ShowColumns(Join(local As l, remote As r, l.rtid = r.remoteid, JoinType.Right, r.other As other2), localid, new_name, other2)", 4, RightJoin2, "Warning 17-22: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(12, "ShowColumns(Join(local As l, remote As r, l.rtid = r.remoteid, JoinType.Full,  r.other As other2), localid, new_name, other2)", 5, FullJoin2)]
@@ -124,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(14, "ShowColumns(Join(local, remote, RightRecord.remoteid = LeftRecord.rtid, JoinType.Left, RightRecord.other As other2), localid, new_name, other2)", 4, LeftJoin2)]
         [InlineData(15, "ShowColumns(Join(local, remote, RightRecord.remoteid = LeftRecord.rtid, JoinType.Right, RightRecord.other As other2), localid, new_name, other2)", 4, RightJoin2, "Warning 17-22: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(16, "ShowColumns(Join(local, remote, RightRecord.remoteid = LeftRecord.rtid, JoinType.Full, RightRecord.other As other2), localid, new_name, other2)", 5, FullJoin2)]
-        
+
         [InlineData(17, "ShowColumns(Join(local As l, remote As r, r.remoteid = l.rtid, JoinType.Inner, r.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(18, "ShowColumns(Join(local As l, remote As r, r.remoteid = l.rtid, JoinType.Left,  r.other As other2), localid, new_name, other2)", 4, LeftJoin2)]
         [InlineData(19, "ShowColumns(Join(local As l, remote As r, r.remoteid = l.rtid, JoinType.Right, r.other As other2), localid, new_name, other2)", 4, RightJoin2, "Warning 17-22: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -156,10 +154,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(36, "ShowColumns(Join(local, FirstN(remote, 10), LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
-        [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 2, InnerJoin5)]
+        [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin5)]
 
         // Join + ShowColumns + LookUp        
-        [InlineData(39, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)}")]                
+        [InlineData(39, "LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), other2 = 44)", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000004""),n4:""row4"",other2:Float(44)}")]
         [InlineData(40, @"LookUp(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), localid, n4, other2), n4 = ""p1"")", 1, @"{localid:GUID(""00000000-0000-0000-0000-000000000003""),n4:""p1"",other2:Float(49)}")]
 
         // Join + ShowColumns + Filter
@@ -178,7 +176,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(47, "SortByColumns(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
 
         // no delegation of Summarize as a ColumnMap is used in Join
-        [InlineData(48, "Summarize(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2), localid, Average(ThisGroup, other2) As avg)", 3, @"Table({avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000003"")},{avg:Float(44),localid:GUID(""00000000-0000-0000-0000-000000000004"")},{avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000005"")})")]
+        [InlineData(48, "Summarize(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2), localid, Average(ThisGroup, other2) As avg)", 3, @"Table({avg:Float(44),localid:GUID(""00000000-0000-0000-0000-000000000004"")},{avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000003"")},{avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000005"")})")]
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
@@ -188,7 +186,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         private static string GetResult(FormulaValue fv)
         {
             if (fv is RecordValue rv)
-            {                
+            {
                 return RecordValue.NewRecordFromFields(rv.Fields.ToArray()).ToExpression().ToString();
             }
 
@@ -199,7 +197,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 return "<empty>";
             }
 
-            return FormulaValue.NewTable(rows.First().Value.IRContext.ResultType as RecordType, rows.Select(r => RecordValue.NewRecordFromFields(r.Value.Fields.ToArray())).ToArray()).ToExpression().ToString();
-        }        
+            // Reorder rows so that we can compare the tables            
+            var recordType = rows.First().Value.IRContext.ResultType as RecordType;
+
+            IOrderedEnumerable<DValue<RecordValue>> ordered = rows.OrderBy(r => r.Value.Fields.First().Value.ToExpression());
+
+            int n = rows.First().Value.Fields.Count();
+            for (int i = 1; i < n - 1; i++)
+            {
+                ordered = ordered.ThenBy(r => r.Value.Fields.Skip(i).First().Value.ToExpression());
+            }
+
+            var rows2 = ordered.Select(r => RecordValue.NewRecordFromFields(r.Value.Fields.ToArray())).ToArray();
+
+            return FormulaValue.NewTable(recordType, rows2).ToExpression().ToString();
+        }
     }
 }

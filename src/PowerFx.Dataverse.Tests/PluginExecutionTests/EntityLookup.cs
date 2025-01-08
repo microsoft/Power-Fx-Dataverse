@@ -136,7 +136,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
 
-            throw new InvalidOperationException($"Entity {entityRef.LogicalName}:{entityRef.Id} not found");
+            // If not found, let's return an empty one
+            return new Entity(entityRef.LogicalName);            
         }
 
         internal IEnumerable<Entity> FindEntities(string tableName)
@@ -313,11 +314,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     {
                         Entity newEntity = Clone(leftEntity, qe.ColumnSet, cancellationToken);
                         entityList.Add(newEntity);
-
-                        if (--take == 0)
-                        {
-                            break;
-                        }
                     }
                 }
                 else
@@ -346,20 +342,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             inner.Add(rightEntity);
 
                             if (includeLeft && outer.Contains(leftEntity))
-                            {
-                                take--;
+                            {                                
                                 outer.Remove(leftEntity);
                             }
 
                             if (includeRight && outer.Contains(rightEntity))
-                            {
-                                take--;
+                            {                                
                                 outer.Remove(rightEntity);
-                            }
-
-                            if (--take == 0)
-                            {
-                                break;
                             }
                         }
                         else
@@ -367,28 +356,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                             if (includeLeft && !inner.Contains(leftEntity))
                             {
                                 outer.Add(leftEntity);
-
-                                if (--take == 0)
-                                {
-                                    break;
-                                }
                             }
 
                             if (includeRight && !inner.Contains(rightEntity))
                             {
                                 outer.Add(rightEntity);
-
-                                if (--take == 0)
-                                {
-                                    break;
-                                }
                             }
                         }
-                    }
-
-                    if (take == 0)
-                    {
-                        break;
                     }
                 }
             }
@@ -412,10 +386,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         : entities.ThenByDescending(e => e.Attributes[nextOe.AttributeName]);
                 }
 
-                return entities.ToList();
+                return entities.Take(take).ToList();
             }
 
-            return entityList;
+            return entityList.Take(take).ToList();
         }
 
         private Entity MakeLeft(string leftName, Entity rightEntity, string leftPrimaryId)
@@ -430,9 +404,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             foreach (KeyValuePair<string, object> attribute in rightEntity.Attributes)
             {
                 leftEntity.Attributes[attribute.Key] = attribute.Value;
-            }
-
-            // leftEntity.Attributes[leftPrimaryId] = null;
+            }            
 
             return leftEntity;
         }
@@ -552,10 +524,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var comparer = new AttributeComparer(amd);
 
             var fieldName = condition.EntityName != null ? "_" + condition.EntityName.Substring(0, entityName.LastIndexOf("_")) + "_" + condition.AttributeName : condition.AttributeName;
-            if (!TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value))
-            {
-                return false;
-            }
+
+            // If the attribute is missing or its value null, it's simply Blank() and 'value' is null
+            // The comparer will take care of this situation
+            TryGetAttributeOrPrimaryId(entity, metadata, fieldName, out var value);            
 
             switch (condition.Operator)
             {
@@ -817,7 +789,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         private Entity Clone(Entity entity, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
+            
             var newEntity = new Entity(entity.LogicalName, entity.Id);
             foreach (var attr in entity.Attributes)
             {

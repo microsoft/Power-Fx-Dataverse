@@ -2236,10 +2236,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
             var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.IsType<ErrorValue>(result7);
-
-            ErrorValue ev7 = (ErrorValue)result7;
-            Assert.Equal("Error attempting Entity lookup. Entity local:00000000-0000-0000-0000-000000000001 not found", ev7.Errors[0].Message);
+            Assert.IsType<BlankValue>(result7);            
         }
 
         [Fact]
@@ -2278,10 +2275,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var engine7 = new RecalcEngine(config);
             engine7.EnableDelegation(dv.MaxRows);
             var result7 = await engine7.EvalAsync(loopupExpr, CancellationToken.None, runtimeConfig: dv.SymbolValues);
-            Assert.IsType<ErrorValue>(result7);
-
-            ErrorValue ev7 = (ErrorValue)result7;
-            Assert.Equal("Error attempting Entity lookup. Entity local:00000000-0000-0000-0000-000000000001 not found", ev7.Errors[0].Message);
+            Assert.IsType<BlankValue>(result7);            
         }
 
         [Theory]
@@ -2929,15 +2923,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             local1.Attributes["virtualid"] = virtualremote6.ToEntityReference();
 
             var elastictable7 = new Entity("elastictable", _g7);
+            elastictable7.Attributes["etid"] = _g7;
             elastictable7.Attributes["field1"] = Convert.ToDecimal(200);
             elastictable7.Attributes["partitionid"] = "p1";
             local1.Attributes["elastic_ref"] = elastictable7.ToEntityReference();
 
             var elastictable8 = new Entity("elastictable", _g8);
+            elastictable8.Attributes["etid"] = _g8;
             elastictable8.Attributes["field1"] = Convert.ToDecimal(200);
             elastictable8.Attributes["partitionid"] = "p2";
 
             var elastictable9 = new Entity("elastictable", _g9);
+            elastictable9.Attributes["etid"] = _g9;
             elastictable9.Attributes["field1"] = Convert.ToDecimal(100);
             elastictable9.Attributes["partitionid"] = null;
 

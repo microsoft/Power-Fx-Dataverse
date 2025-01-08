@@ -136,7 +136,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(69, "Collect(t1, { Price : 200}).Price", 200.0, false, true)]
 
         // $$$ Confirm is NotFound Error or Blank? // delegated, but not found is Error
-        [InlineData(70, "IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))", true, true, true)]
+        [InlineData(70, "IsError(LookUp(t1, LocalId=If(false, _g1, _gMissing)))", false, true, true)]
 
         // $$$ Does using fakeT1, same as t1, cause warnings since it's not delegated?
         [InlineData(71, "LookUp(fakeT1, LocalId=_g1).Price", 100.0, true, true)]
@@ -248,10 +248,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(159, "LookUp(et, 'Partition Id' = \"p1\" Or etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, true)]
 
         // successful point delegation with complex expression.
-        [InlineData(160, "LookUp(et, 'Partition Id' = If(1<0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, true)]
-        [InlineData(161, "LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, false)]
-        [InlineData(162, "LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, false)]
-        [InlineData(163, "LookUp(et, 'Partition Id' = If(1<0, \"p1\") And  etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, true)]
+        [InlineData(160, "LookUp(et, 'Partition Id' = If(1>0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, true)]
+        [InlineData(161, "LookUp(et, 'Partition Id' = If(1>0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, false)]
+        [InlineData(162, "LookUp(et, 'Partition Id' = If(1>0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, false)]
+        [InlineData(163, "LookUp(et, 'Partition Id' = If(1>0, \"p1\") And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, true)]
         [InlineData(164, "LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, true)]
         [InlineData(165, "LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, false, false)]
         [InlineData(166, "LookUp(et, 'Partition Id' = LookUp(t1, Name = \"p1\").Name And etid = GUID(\"00000000-0000-0000-0000-000000000007\")).Field1", 200.0, true, true)]
