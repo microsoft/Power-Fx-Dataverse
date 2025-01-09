@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            if (context.CallerTableRetVal.HasColumnMap && context.CallerTableRetVal.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+            if (context.CallerTableRetVal.HasColumnMap && context.CallerTableRetVal.LeftColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
             {
                 fieldName = realFieldName;
             }

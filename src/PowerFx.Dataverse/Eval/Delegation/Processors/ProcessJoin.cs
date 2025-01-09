@@ -116,18 +116,31 @@ namespace Microsoft.PowerFx.Dataverse
                 if (!string.IsNullOrEmpty(toAttribute) &&
                     !string.IsNullOrEmpty(fromAttribute))
                 {
+                    var leftMap = new ColumnMap(leftTable.TableType);
+
                     // Join pulls in all column from left table.
-                    var leftMap = new ColumnMap(leftTable.TableType.FieldNames.ToDictionary(f => new DName(f), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f)));
+                    foreach (var leftFieldName in leftTable.TableType.FieldNames)
+                    {
+                        leftMap.AddColumn(leftFieldName);
+                    }
 
-                    // list of column renames from left table, if any
-                    // by default, all columns from left table are included
-                    ColumnMap leftRenameMap = new ColumnMap((node.Args[LeftTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
+                    // There maybe renames on the columns from left table.
+                    var leftRenames = ((RecordNode)node.Args[LeftTableColumnArg]).Fields;
+                    foreach (var leftRename in leftRenames)
+                    {
+                        var aliasFieldName = ((TextLiteralNode)leftRename.Value).LiteralValue;
+                        var logicalFieldName = leftRename.Key.Value;
+                        leftMap.UpdateAlias(logicalFieldName, aliasFieldName);
+                    }
 
-                    leftMap = ColumnMap.Combine(leftMap, leftRenameMap, leftTable.TableType);
-
-                    // list of column renamed from right table
-                    // we use 'entityAlias.' prefix for columns as DV will return it for right table columns we have selected
-                    ColumnMap rightMap = new ColumnMap((node.Args[RightTableColumnArg] as RecordNode).Fields.ToDictionary(f => new DName((f.Value as TextLiteralNode).LiteralValue), f => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), f.Key.Value)));
+                    var rightMap = new ColumnMap(rightTable.TableType);
+                    var righRenames = ((RecordNode)node.Args[RightTableColumnArg]).Fields;
+                    foreach (var rightRename in righRenames)
+                    {
+                        var aliasFieldName = ((TextLiteralNode)rightRename.Value).LiteralValue;
+                        var logicalFieldName = rightRename.Key.Value;
+                        rightMap.AddColumn(logicalFieldName, aliasFieldName);
+                    }
 
                     if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, joinType, rightRecordName, leftMap, rightMap, node, out var result))
                     {

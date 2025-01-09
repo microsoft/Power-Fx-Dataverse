@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -33,6 +34,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal IEnumerable<string> RightFields => _rightMap.AsStringDictionary().Values;
 
+        internal RecordType JoinTableRecordType => _rightMap.SourceTableRecordType;
+
         public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, ColumnMap rightMap)
         {
             _sourceTable = sourceTable;
@@ -42,6 +45,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _joinType = joinType;            
             _rightMap = rightMap;
             _foreignTableAlias = foreignTableAlias;            
+        }
+
+        public FxJoinNode With(ColumnMap rightMap)
+        {
+            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, rightMap);
         }
 
         public static JoinOperator ToJoinOperator(string joinType)

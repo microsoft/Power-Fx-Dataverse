@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
@@ -20,12 +21,11 @@ namespace Microsoft.PowerFx.Dataverse
             // check if we have a simple field name here
             if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
             {
-                TextLiteralNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
-
-                // Create a map with ("Value", fieldName)
-                ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
-
-                if (tableArg.TryAddColumnMap(map, node, out var result))
+                // $$$ update this from Core.
+                var singleColumnFieldName = "Value";
+                var forAllColumns = new List<(string, string)>();
+                forAllColumns.Add((fieldName, singleColumnFieldName));
+                if (tableArg.TryAddColumnRenames(forAllColumns, node, out var result))
                 {
                     return result;
                 }
@@ -36,15 +36,14 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
                 bool canDelegate = true;
-
+                var forAllColumns = new List<FxColumnInfo>();
                 foreach (KeyValuePair<DName, IntermediateNode> kvp in recordNode.Fields)
                 {
                     string newFieldName = kvp.Key.Value;
 
                     if (TryGetSimpleFieldName(context, kvp.Value, out string currentFieldName))
                     {
-                        TextLiteralNode currentColumn = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), currentFieldName);
-                        dic.Add(new DName(newFieldName), currentColumn);
+                        map.UpdateAlias(currentFieldName, newFieldName);
                     }
                     else
                     {
@@ -57,8 +56,6 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (canDelegate)
                 {
-                    var map = new ColumnMap(dic);
-
                     if (tableArg.TryAddColumnMap(map, node, out var result))
                     {
                         return result;

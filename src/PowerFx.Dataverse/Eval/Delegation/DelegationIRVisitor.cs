@@ -79,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
                 && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
                 fieldName = rightField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -251,9 +251,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static string AdjustFieldNameIfValue(Context context, string fieldName)
         {
-            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
+            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.LeftColumnMap))
             {
-                return context.CallerTableRetVal.ColumnMap.Distinct;
+                return context.CallerTableRetVal.LeftColumnMap.Distinct;
             }
 
             return fieldName;

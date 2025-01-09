@@ -5,13 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using Microsoft;
+using Microsoft.PowerFx;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
 
-namespace Microsoft.PowerFx.Dataverse
+namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
     public class ColumnMap
     {
@@ -19,25 +24,164 @@ namespace Microsoft.PowerFx.Dataverse
         // Key represents the new column name, Value represents the value of that column (logical name)
         private readonly Dictionary<DName, IntermediateNode> _dic;
 
+        private bool _existsAliasing = false;
+
+        // Call this method when you need to set it, should be never set false manually.
+        public void MarkAliasingExists()
+        {
+            _existsAliasing = true;
+        }
+
+        internal bool ExistsAliasing => _existsAliasing;
+
         // When defined, this is the column named used for Distinct function
         private readonly string _distinctColumn = null;
 
-        // Public constructor (doesn't support renames or distinct)
-        public ColumnMap(IEnumerable<string> map)
+        //$$$ Does this needs to be ConcurrentDictionary?
+
+        /// <summary>
+        /// Key represents alias column name if present, else real column name.
+        /// </summary>
+        private readonly IDictionary<string, FxColumnInfo> _columns = new Dictionary<string, FxColumnInfo>();
+
+        private readonly RecordType _sourceTableRecordType;
+
+        internal RecordType SourceTableRecordType => _sourceTableRecordType;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ColumnMap"/> class.
+        /// </summary>
+        /// <param name="logicalColumns">logical name of column is Datasource.</param>
+        internal ColumnMap(IEnumerable<string> logicalColumns)
         {
-            _dic = map.ToDictionary(str => new DName(str), str => new TextLiteralNode(IRContext.NotInSource(FormulaType.String), str) as IntermediateNode);
+            _columns = logicalColumns.Select(c => new FxColumnInfo(c, c)).ToDictionary(c => c.AliasColumnName ?? c.RealColumnName);
         }
 
-        // Constructor used for ForAll (renames are possible)
-        internal ColumnMap(IReadOnlyDictionary<DName, TextLiteralNode> dic)
+        internal ColumnMap(TableType sourceTableType) 
+            : this(sourceTableType.ToRecord())
         {
-            _dic = dic.ToDictionary(kvp => kvp.Key, kvp => kvp.Value as IntermediateNode);
         }
 
-        // Constructor used for ShowColumns (no rename)
-        internal ColumnMap(IEnumerable<TextLiteralNode> list)
+        internal ColumnMap(RecordType sourceTableRecordType)
         {
-            _dic = list.ToDictionary(tln => new DName(tln.LiteralValue), tln => tln as IntermediateNode);
+            _sourceTableRecordType = sourceTableRecordType;
+        }
+
+        private string GenerateColumnInfoKey(FxColumnInfo columnInfo)
+        {
+            return columnInfo.AliasColumnName ?? columnInfo.RealColumnName;
+        }
+
+        internal bool HasDistinct()
+        {
+            if (_columns.Count() == 1)
+            {
+                return _columns.First().Value.IsDistinct;
+            }
+
+            return false;
+        }
+
+        internal ColumnMap AddColumn(string logicalColumnName, string aliasColumnName = null)
+        {
+            var columnInfo = new FxColumnInfo(logicalColumnName, aliasColumnName);
+
+            if (columnInfo.AliasColumnName != null && !ExistsAliasing)
+            {
+                MarkAliasingExists();
+            }
+
+            AddColumn(columnInfo);
+            return this;
+        }
+
+        internal void AddColumn(FxColumnInfo fxColumnInfo)
+        {
+            var columnsMapKey = GenerateColumnInfoKey(fxColumnInfo);
+
+            if (_columns.ContainsKey(columnsMapKey))
+            {
+                throw new InvalidOperationException($"Column {fxColumnInfo.RealColumnName} already exists in the column map");
+            }
+
+            if (!_sourceTableRecordType.TryGetBackingDType(fxColumnInfo.RealColumnName, out _))
+            {
+                throw new InvalidOperationException($"Column {fxColumnInfo.RealColumnName} does not exist in the table's type.");
+            }
+
+            _columns.Add(columnsMapKey, fxColumnInfo);
+        }
+
+        /// <summary>
+        /// Removes the column from the column map.
+        /// </summary>
+        /// <param name="aliasOrLogicalName">Alias name if Column was previosuly aliased in expression, else logical name of Column.</param>
+        /// <param name="columnInfo"></param>
+        /// <returns></returns>
+        internal bool TryGetColumnInfo(string aliasOrLogicalName, out FxColumnInfo columnInfo)
+        {
+            if (string.IsNullOrEmpty(aliasOrLogicalName))
+            {
+                throw new InvalidOperationException($"{nameof(aliasOrLogicalName)} cannot be null or empty");
+            }
+
+            if (!_columns.TryGetValue(aliasOrLogicalName, out columnInfo))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private FxColumnInfo RemoveColumn(string aliasOrLogicalName)
+        {
+            if (string.IsNullOrEmpty(aliasOrLogicalName))
+            {
+                throw new InvalidOperationException("Alias name cannot be null or empty");
+            }
+
+            if (!_columns.TryGetValue(aliasOrLogicalName, out var columnInfo))
+            {
+                throw new InvalidOperationException($"Column {aliasOrLogicalName} does not exist in the {nameof(ColumnMap)} and is not a logicalName.");
+            }
+
+            _columns.Remove(aliasOrLogicalName);
+            return columnInfo;
+        }
+
+        /// <summary>
+        /// Updates the alias name of the column based on <paramref name="previosAliasOrLogicalName"/> "/>.
+        /// </summary>
+        /// <param name="previosAliasOrLogicalName">Previous alias or logical name.</param>
+        /// <param name="newAliasName"></param>
+        internal void UpdateAlias(string previosAliasOrLogicalName, string newAliasName)
+        {
+            if (string.IsNullOrEmpty(previosAliasOrLogicalName) || string.IsNullOrEmpty(newAliasName))
+            {
+                throw new InvalidOperationException("Alias names cannot be null or empty");
+            }
+
+            if (_columns.ContainsKey(newAliasName))
+            {
+                throw new InvalidOperationException($"Column {newAliasName} already exists in the column map");
+            }
+
+            if (!_columns.TryGetValue(previosAliasOrLogicalName, out var columnInfo))
+            {
+                if (_sourceTableRecordType.TryGetBackingDType(previosAliasOrLogicalName, out _))
+                {
+                    var colmnInfo = new FxColumnInfo(previosAliasOrLogicalName, previosAliasOrLogicalName);
+                    _columns.Add(previosAliasOrLogicalName, colmnInfo);
+                    return;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Column {previosAliasOrLogicalName} does not exist in the {nameof(ColumnMap)} and is not a logicalName.");
+                }
+            }
+
+            RemoveColumn(previosAliasOrLogicalName);
+            AddColumn(columnInfo.RealColumnName, newAliasName);
         }
 
         // Constructor used by Combine static method
@@ -79,7 +223,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private ColumnSet GetColumnSet()
         {
-            ColumnSet columnSet = new ColumnSet();
+            var columnSet = new ColumnSet();
 
             foreach (KeyValuePair<DName, IntermediateNode> kvp in _dic)
             {
@@ -109,15 +253,15 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             string distinctColumn = null;
-            Dictionary<DName, IntermediateNode> newDic = new Dictionary<DName, IntermediateNode>();
+            var newDic = new Dictionary<DName, IntermediateNode>();
 
             foreach (KeyValuePair<DName, IntermediateNode> kvp2 in second._dic)
             {
-                string secondValue = GetString(kvp2.Value);
+                var secondValue = GetString(kvp2.Value);
 
                 if (first._dic.TryGetValue(new DName(secondValue), out IntermediateNode firstNode))
                 {
-                    string firstValue = GetString(firstNode);
+                    var firstValue = GetString(firstNode);
                     newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), firstValue));
 
                     if (secondValue == second._distinctColumn)
@@ -126,7 +270,7 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                 }
                 else if (tableType.FieldNames.Contains(secondValue))
-                {                    
+                {
                     newDic.Add(kvp2.Key, new TextLiteralNode(IRContext.NotInSource(FormulaType.String), secondValue));
                 }
                 else
@@ -138,11 +282,11 @@ namespace Microsoft.PowerFx.Dataverse
             foreach (var kvp in first._dic)
             {
                 // Use the same string extraction as before
-                string firstValue = GetString(kvp.Value);
+                var firstValue = GetString(kvp.Value);
 
                 // Only add if no existing entry in 'newDic' has the same text value
                 // (Alternatively, you might check for matching keys instead.)
-                bool alreadyPresent =
+                var alreadyPresent =
                     newDic.Values.Any(i => GetString(i).Equals(firstValue, StringComparison.OrdinalIgnoreCase));
 
                 if (!alreadyPresent)
@@ -194,6 +338,7 @@ namespace Microsoft.PowerFx.Dataverse
                ? "<null>"
                : !_dic.Any()
                ? "\x2205" // ∅
-               : string.Join(", ", this.AsStringDictionary().Select(kvp => $"{kvp.Key}:{kvp.Value}{(_distinctColumn != default && kvp.Value == _distinctColumn ? "*" : string.Empty)}"));
+               : string.Join(", ", AsStringDictionary().Select(kvp => $"{kvp.Key}:{kvp.Value}{(_distinctColumn != default && kvp.Value == _distinctColumn ? "*" : string.Empty)}"));
+
     }
 }

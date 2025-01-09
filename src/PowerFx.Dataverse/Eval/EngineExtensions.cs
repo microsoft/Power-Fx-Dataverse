@@ -97,12 +97,12 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new InvalidOperationException($"Unexpected return type: {retVal.OriginalNode.IRContext.ResultType.GetType()}; Should have been Record or TableType");
                 }
 
-                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(retVal.ColumnMap) ? retVal.ColumnMap.Distinct : string.Empty);
+                TextLiteralNode isDistinctArg = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), ColumnMap.HasDistinct(retVal.LeftColumnMap) ? retVal.LeftColumnMap.Distinct : string.Empty);
                 args.Add(isDistinctArg);
 
                 if (retVal.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(retVal)), retVal.ColumnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(retVal)), retVal.LeftColumnMap.Map));
                 }
 
                 if (retVal.OriginalNode is CallNode originalCallNode && originalCallNode.Scope != null)
@@ -122,7 +122,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 RecordType rt = RecordType.Empty();
 
-                foreach (KeyValuePair<DName, IntermediateNode> kvp in query.ColumnMap.Map)
+                foreach (KeyValuePair<DName, IntermediateNode> kvp in query.LeftColumnMap.Map)
                 {
                     rt = rt.Add(kvp.Key.Value, kvp.Value.IRContext.ResultType);
                 }
@@ -306,7 +306,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (query.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.LeftColumnMap.Map));
                 }
 
                 CallNode node;
@@ -331,7 +331,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (query.HasColumnMap)
                 {
-                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.ColumnMap.Map));
+                    args.Add(new RecordNode(IRContext.NotInSource(GetColumnMapType(query)), query.LeftColumnMap.Map));
                 }
 
                 CallNode node;
