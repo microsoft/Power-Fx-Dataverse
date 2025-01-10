@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.PowerFx.Core.Functions.Delegation;
+using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Query;
@@ -22,9 +24,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         // $$$ this should be enum.
         private readonly string _joinType;
         private readonly string _foreignTableAlias;
-        private readonly ColumnMap _rightMap;
+        private readonly FxColumnMap _rightMap;
 
-        internal ColumnMap RightTablColumnMap => _rightMap;
+        internal FxColumnMap RightTablColumnMap => _rightMap;
 
         public LinkEntity LinkEntity => GetLinkEntity();
 
@@ -32,24 +34,31 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public string ForeignTableAlias => _foreignTableAlias;
 
-        internal IEnumerable<string> RightFields => _rightMap.AsStringDictionary().Values;
+        internal IEnumerable<string> RightRealFieldNames => _rightMap.ColumnInfoMap.Values.Select(c => c.RealColumnName);
 
         internal RecordType JoinTableRecordType => _rightMap.SourceTableRecordType;
 
-        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, ColumnMap rightMap)
+        internal IDelegationMetadata RightTableDelegationMetadata => JoinTableRecordType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
+
+        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, FxColumnMap rightMap)
         {
-            _sourceTable = sourceTable;
-            _foreignTable = foreignTable;
-            _fromAttribute = fromAttribute;
-            _toAttribute = toAttribute;
-            _joinType = joinType;            
-            _rightMap = rightMap;
-            _foreignTableAlias = foreignTableAlias;            
+            _sourceTable = sourceTable ?? throw new ArgumentNullException(nameof(sourceTable));
+            _foreignTable = foreignTable ?? throw new ArgumentNullException(nameof(foreignTable));
+            _fromAttribute = fromAttribute ?? throw new ArgumentNullException(nameof(fromAttribute));
+            _toAttribute = toAttribute ?? throw new ArgumentNullException(nameof(toAttribute));
+            _joinType = joinType ?? throw new ArgumentNullException(nameof(joinType));
+            _rightMap = rightMap ?? throw new ArgumentNullException(nameof(rightMap));
+            _foreignTableAlias = foreignTableAlias ?? throw new ArgumentNullException(nameof(foreignTableAlias));
         }
 
-        public FxJoinNode With(ColumnMap rightMap)
+        public FxJoinNode With(FxColumnMap rightMap)
         {
             return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, rightMap);
+        }
+
+        public FxJoinNode WithEmptyColumnMap()
+        {
+            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, new FxColumnMap(_rightMap.SourceTableRecordType));
         }
 
         public static JoinOperator ToJoinOperator(string joinType)
@@ -76,11 +85,15 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             LinkEntity linkEntity = new LinkEntity(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, joinOperator);
             linkEntity.EntityAlias = _foreignTableAlias;
 
-            ColumnSet columnSet = new ColumnSet();
-
-            foreach (KeyValuePair<string, string> column in _rightMap.AsStringDictionary())
+            ColumnSet columnSet;
+            if (_rightMap.IsEmpty)
             {
-                columnSet.AttributeExpressions.Add(new XrmAttributeExpression(column.Value) { Alias = column.Key });
+                // if column is empty, we are joining in expression but ShowColumns/similar eliminated the right columns.
+                columnSet = new ColumnSet(_toAttribute);
+            }
+            else
+            {
+                columnSet = _rightMap.ToXRMColumnSet();
             }
 
             linkEntity.Columns = columnSet;

@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupBy))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasLeftColumnMap || ret.HasJoin || ret.HasGroupBy))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -247,16 +247,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             fieldName = default;
             return false;
-        }
-
-        private static string AdjustFieldNameIfValue(Context context, string fieldName)
-        {
-            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.LeftColumnMap))
-            {
-                return context.CallerTableRetVal.LeftColumnMap.Distinct;
-            }
-
-            return fieldName;
         }
 
         private static bool CheckFieldFunctionCapabilities(Context context, IEnumerable<FieldFunction> fieldFunctions, string fieldName)

@@ -225,9 +225,9 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         string fieldName = field.LiteralValue;
 
-                        if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+                        if (context.ColumnMap != null && context.ColumnMap.TryGetColumnInfo(fieldName, out var fieldInfo))
                         {
-                            fieldName = realFieldName;
+                            fieldName = fieldInfo.RealColumnName;
                         }
 
                         AddFieldRead(tableLogicalName, fieldName);
@@ -382,7 +382,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
+            Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out FxColumnMap columnMap)
                      ? context.WithColumnMap(columnMap)
                      : context;
 
@@ -400,7 +400,7 @@ namespace Microsoft.PowerFx.Dataverse
                 AddFieldRead(joinNode.LinkEntity.LinkToEntityName, joinNode.LinkEntity.LinkToAttributeName);
 
                 // Right column map
-                foreach (string rightField in joinNode.RightFields)
+                foreach (string rightField in joinNode.RightRealFieldNames)
                 {
                     AddFieldRead(joinNode.LinkEntity.LinkToEntityName, rightField);
                 }
@@ -551,14 +551,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         public class Context
         {
-            public ColumnMap ColumnMap { get; private set; }
+            public FxColumnMap ColumnMap { get; private set; }
 
             public Context()
             {
                 ColumnMap = null;
             }
 
-            public Context WithColumnMap(ColumnMap columnMap)
+            public Context WithColumnMap(FxColumnMap columnMap)
             {
                 // replace any existing columnMap with the new one as the context is local only
                 return new Context() { ColumnMap = columnMap };

@@ -1,44 +1,44 @@
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price desc&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price desc&$top=999
 Sort(local, (MulNumbers(new_price,2)), (SortOrder).Descending)
-Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 5, ), (new_price)) | $top=5
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 2, ) | $orderby=new_price&$top=2
-Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1, ), (new_price)) | $top=1
-__retrieveSingle(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), ) | $orderby=new_price&$top=1
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price desc&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 5, ), new_price) | $top=5
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 2, ) | $orderby=new_price&$top=2
-SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1, ), new_price) | $top=1
-__retrieveSingle(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), ) | $orderby=new_price&$top=1
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True, new_quantity, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price,new_quantity&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True, new_quantity, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price,new_quantity&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False, new_quantity, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price desc,new_quantity&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False, new_quantity, False), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price desc,new_quantity desc&$top=999
-Sort(__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), 2, ), (new_quantity)) | $filter=(new_price le 100)&$top=2
-__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(__lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), new_quantity, True), __noJoin(), __noopGroupBy(), 2, ) | $filter=(new_price le 100)&$orderby=new_quantity&$top=2
-__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(local, new_quantity, True), __noJoin(), __noopGroupBy(), 2, ) | $filter=(new_price le 100)&$orderby=new_quantity&$top=2
+Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 5, __allColumns()), (new_price)) | $top=5
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 2, __allColumns()) | $orderby=new_price&$top=2
+Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1, __allColumns()), (new_price)) | $top=1
+__retrieveSingle(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), __allColumns()) | $orderby=new_price&$top=1
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price desc&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 5, __allColumns()), new_price) | $top=5
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 2, __allColumns()) | $orderby=new_price&$top=2
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1, __allColumns()), new_price) | $top=1
+__retrieveSingle(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), __allColumns()) | $orderby=new_price&$top=1
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True, new_quantity, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price,new_quantity&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True, new_quantity, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price,new_quantity&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False, new_quantity, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price desc,new_quantity&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False, new_quantity, False), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price desc,new_quantity desc&$top=999
+Sort(__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), 2, __allColumns()), (new_quantity)) | $filter=(new_price le 100)&$top=2
+__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(__lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), new_quantity, True), __noJoin(), __noopGroupBy(), 2, __allColumns()) | $filter=(new_price le 100)&$orderby=new_quantity&$top=2
+__retrieveMultiple(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(local, new_quantity, True), __noJoin(), __noopGroupBy(), 2, __allColumns()) | $filter=(new_price le 100)&$orderby=new_quantity&$top=2
 Sort(local, (Price))
 Sort(local, (new_price))
 Sort(local, (XXXXX))
 
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ) | $orderby=new_price&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, ), new_quantity, (SortOrder).Descending) | $orderby=new_price desc&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $orderby=new_price&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, False), __noJoin(), __noopGroupBy(), 999, __allColumns()), new_quantity, (SortOrder).Descending) | $orderby=new_price desc&$top=999
 Sort(Table({Value:30}, {Value:10}, {Value:20}), (Value))
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $orderby=new_price&$select=new_price&$top=999
-__retrieveSingle(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(local, new_quantity, True), __noJoin(), __noopGroupBy(), ) | $filter=(new_price le 100)&$orderby=new_quantity&$top=1
-Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}), (Value)) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, , {localid:localid, new_price:new_price, new_quantity:new_quantity}) | $orderby=new_price&$select=localid,new_price,new_quantity&$top=999
-Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, , {localid:localid, new_price:new_price, new_quantity:new_quantity}), (new_price)) | $select=localid,new_price,new_quantity&$top=999
-Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ), (new_quantity)) | $orderby=new_price&$top=999
-Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ), (new_quantity)) | $orderby=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __orderBy(__gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), new_quantity, True), __noJoin(), __noopGroupBy(), 999, ) | $filter=(new_price gt 0)&$orderby=new_quantity&$top=999
-Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, , {Value:new_price}), (Value)) | $select=new_price&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}), Value) | $select=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __orderBy(__gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), new_quantity, True), __noJoin(), __noopGroupBy(), 999, ) | $filter=(new_price gt 0)&$orderby=new_quantity&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, ), new_quantity) | $orderby=new_price&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, , {localid:localid, new_price:new_price, new_quantity:new_quantity}), new_price) | $select=localid,new_price,new_quantity&$top=999
-SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, , {Value:new_price}), Value) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price}) | $orderby=new_price&$select=new_price&$top=999
+__retrieveSingle(local, __lte(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __orderBy(local, new_quantity, True), __noJoin(), __noopGroupBy(), __allColumns()) | $filter=(new_price le 100)&$orderby=new_quantity&$top=1
+Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}), (Value)) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {new_quantity,new_price,localid}) | $orderby=new_price&$select=new_quantity,new_price,localid&$top=999
+Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_quantity,new_price,localid}), (new_price)) | $select=new_quantity,new_price,localid&$top=999
+Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()), (new_quantity)) | $orderby=new_price&$top=999
+Sort(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()), (new_quantity)) | $orderby=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __orderBy(__gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), new_quantity, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 0)&$orderby=new_quantity&$top=999
+Sort(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}), (Value)) | $select=new_price&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}), Value) | $select=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __orderBy(__gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), new_quantity, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 0)&$orderby=new_quantity&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()), new_quantity) | $orderby=new_price&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_quantity,new_price,localid}), new_price) | $select=new_quantity,new_price,localid&$top=999
+SortByColumns(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}), Value) | $select=new_price&$top=999
 

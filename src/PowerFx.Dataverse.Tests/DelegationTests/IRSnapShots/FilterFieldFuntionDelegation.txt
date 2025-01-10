@@ -1,6 +1,6 @@
-__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:3}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, ) | $filter=(year(DateTimeColumn) eq 2)&$top=1000
+__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:3}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(year(DateTimeColumn) eq 2)&$top=1000
 Filter(t1, (EqDecimals(Year(DateTimeColumn),2)))
-__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:4}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, ) | $filter=(month(DateTimeColumn) eq 2)&$top=1000
+__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:4}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(month(DateTimeColumn) eq 2)&$top=1000
 Filter(t1, (EqDecimals(Month(DateTimeColumn),2)))
-__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:5}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, ) | $filter=(hour(DateTimeColumn) eq 2)&$top=1000
+__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:5}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(hour(DateTimeColumn) eq 2)&$top=1000
 Filter(t1, (EqDecimals(Hour(DateTimeColumn),2)))

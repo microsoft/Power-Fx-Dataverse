@@ -1,15 +1,15 @@
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_quantity, {Value:new_quantity}) | $select=new_quantity&$top=999
-Distinct(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, ), (new_quantity)) | $top=2
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, new_quantity, {Value:new_quantity}) | $select=new_quantity&$top=2
-__retrieveMultiple(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 30), __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120)), __noop(), __noJoin(), __noopGroupBy(), 999, new_quantity, {Value:new_quantity}) | $filter=((new_quantity lt 30) and (new_price lt 120))&$select=new_quantity&$top=999
-__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, new_quantity, {Value:new_quantity}) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}) | $select=new_quantity&$top=999
+Distinct(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, __allColumns()), (new_quantity)) | $top=2
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {DISTINCT(new_quantity As Value)}) | $select=new_quantity&$top=2
+__retrieveMultiple(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 30), __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120)), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}) | $filter=((new_quantity lt 30) and (new_price lt 120))&$select=new_quantity&$top=999
+__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity)}) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=999
 __retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, new_quantity, {Value:new_quantity}) | $filter=(new_quantity lt 20)&$select=new_quantity&$top=999
 Distinct(local, (_new_polyfield_value))
 Distinct(local, (refg))
 Distinct(elastictable, (field1))
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $orderby=new_price&$select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price}) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price}) | $orderby=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price)}) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Xyz)}) | $select=new_price&$top=999

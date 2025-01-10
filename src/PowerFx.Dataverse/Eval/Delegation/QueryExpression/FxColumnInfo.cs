@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft;
@@ -30,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// </summary>
         /// <param name="realColumnName">Logical name of column present in Data Source.</param>
         /// <param name="aliasColumnName">Alias for the column name, if it is same as <paramref name="realColumnName"/> it will be set to null.</param>
-        public FxColumnInfo(string realColumnName, string aliasColumnName, bool isDistinct = false)
+        public FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false)
         {
             _realColumnName = realColumnName ?? throw new ArgumentNullException("realColumnName cannot be null");
             _aliasColumnName = realColumnName == aliasColumnName ? null : aliasColumnName;
@@ -40,6 +43,31 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         public FxColumnInfo CloneAndUpdateAlias(string aliasColumnName)
         {
             return new FxColumnInfo(_realColumnName, aliasColumnName, _isDistinct);
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+
+            if (IsDistinct)
+            {
+                sb.Append("DISTINCT(");
+            }
+
+            sb.Append(RealColumnName);
+
+            if (AliasColumnName != null)
+            {
+                sb.Append(" As ");
+                sb.Append(AliasColumnName);
+            }
+
+            if (IsDistinct)
+            {
+                sb.Append(")");
+            }
+
+            return sb.ToString();
         }
     }
 }

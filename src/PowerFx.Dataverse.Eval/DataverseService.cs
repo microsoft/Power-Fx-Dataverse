@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +35,8 @@ namespace Microsoft.PowerFx.Dataverse
         public virtual async Task<DataverseResponse<Entity>> RetrieveAsync(string logicalName, Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return DataverseExtensions.DataverseCall(() => OrganizationService.Retrieve(logicalName, id, ColumnMap.GetColumnSet(columns)), $"Retrieve '{logicalName}':{id}");
+            var columnSet = columns.ToXRMColumnSet();
+            return DataverseExtensions.DataverseCall(() => OrganizationService.Retrieve(logicalName, id, columnSet), $"Retrieve '{logicalName}':{id}");
         }
 
         public virtual async Task<DataverseResponse<Guid>> CreateAsync(Entity entity, CancellationToken cancellationToken = default)

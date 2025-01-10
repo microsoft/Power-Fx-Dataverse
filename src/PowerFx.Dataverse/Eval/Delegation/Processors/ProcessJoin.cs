@@ -116,7 +116,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (!string.IsNullOrEmpty(toAttribute) &&
                     !string.IsNullOrEmpty(fromAttribute))
                 {
-                    var leftMap = new ColumnMap(leftTable.TableType);
+                    var leftMap = new FxColumnMap(leftTable.TableType);
 
                     // Join pulls in all column from left table.
                     foreach (var leftFieldName in leftTable.TableType.FieldNames)
@@ -133,7 +133,7 @@ namespace Microsoft.PowerFx.Dataverse
                         leftMap.UpdateAlias(logicalFieldName, aliasFieldName);
                     }
 
-                    var rightMap = new ColumnMap(rightTable.TableType);
+                    var rightMap = new FxColumnMap(rightTable.TableType);
                     var righRenames = ((RecordNode)node.Args[RightTableColumnArg]).Fields;
                     foreach (var rightRename in righRenames)
                     {

@@ -1,7 +1,5 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-
-// #define REGENERATE_SNAPSHOT
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,8 +11,10 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class DelegationTestUtility
+    public static class DelegationTestUtility
     {
+        private const bool RegenerateSnapshot = false;
+
         internal static IList<string> TransformForWithFunction(string expr, int warningCount)
         {
             var inputs = new List<string> { expr };
@@ -43,27 +43,25 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string path =
 
                  // Set this if you need to regenerate the snapshot files.
-#if REGENERATE_SNAPSHOT
-                 baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0"), string.Empty)
-                              .Replace(Path.Join("bin", "Release", "net7.0"), string.Empty);
-#else
-                 baseDirectory;
-#endif
+                 RegenerateSnapshot 
+                 ? baseDirectory.Replace(Path.Join("bin", "Debug", "net7.0"), string.Empty).Replace(Path.Join("bin", "Release", "net7.0"), string.Empty)
+                 : baseDirectory;
 
-#if REGENERATE_SNAPSHOT
-            if (!File.Exists(path))
+            if (RegenerateSnapshot) 
             {
-                using (var sw = new StreamWriter(path))
+                if (!File.Exists(path))
                 {
-                    for (int i = 1; i < lineNumber; i++)
+                    using (var sw = new StreamWriter(path))
                     {
-                        await sw.WriteLineAsync(string.Empty);
-                    }
+                        for (int i = 1; i < lineNumber; i++)
+                        {
+                            await sw.WriteLineAsync(string.Empty);
+                        }
 
-                    await sw.WriteLineAsync(inputString);
+                        await sw.WriteLineAsync(inputString);
+                    }
                 }
-            }            
-#endif
+            }
 
             string[] allLines = await File.ReadAllLinesAsync(path);
 
@@ -76,18 +74,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 Array.Resize(ref allLines, index + 1);
             }
 
-#if REGENERATE_SNAPSHOT
+            if (RegenerateSnapshot)
+            {
+                // Update or add the specified line with the input string
+                allLines[index] = inputString;
+                await File.WriteAllLinesAsync(path, allLines);
+            }
+            else
+            {
+                // Compare the specified line with the input string, considering new lines as empty
+                var targetLine = index < allLines.Length ? allLines[index] : string.Empty;
 
-            // Update or add the specified line with the input string
-            allLines[index] = inputString;
-            await File.WriteAllLinesAsync(path, allLines);
-#else
-
-            // Compare the specified line with the input string, considering new lines as empty
-            var targetLine = index < allLines.Length ? allLines[index] : string.Empty;            
-
-            Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
-#endif
+                Assert.True(targetLine == inputString, $"Id {id}, File {fileName2} Line {index + 1}\r\n{ShowDifference(targetLine, inputString)}");
+            }
         }
         
         private static string ShowDifference(string target, string input)
@@ -97,6 +96,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string common = string.Concat(target.TakeWhile((c, i) => i < input.Length && c == input[i]));
             string spc = new string(' ', common.Length + 10);
             return $"{spc}\u2193 Pos={common.Length}\r\nExpected: {target}\r\nActual: {input}";
+        }
+
+        [Fact]
+        public static void CheckRegenrateSnapshot()
+        {
+            Assert.False(RegenerateSnapshot, "RegenerateSnapshot is set to true. Please set it to false before running the tests.");
         }
     }
 }

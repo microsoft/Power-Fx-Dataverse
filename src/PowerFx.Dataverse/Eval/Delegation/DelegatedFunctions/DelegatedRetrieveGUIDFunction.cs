@@ -4,6 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using static Microsoft.PowerFx.Dataverse.DelegationEngineExtensions;
@@ -44,16 +45,18 @@ namespace Microsoft.PowerFx.Dataverse
                 partitionId = ((StringValue)args[2]).Value;
             }
 
-            ColumnMap columnMap = null;
+            FxColumnMap columnMap = null;
 
-            if (args.Length > 3)
+            if (args[3] is ColumnMapFormulaValue columnMapFv)
             {
-                columnMap = args[3] is RecordValue rv
-                    ? new ColumnMap(rv, null)
-                    : throw new InvalidOperationException($"Expecting args3 to be a {nameof(RecordValue)} : found {args[4].GetType().Name}");
+                columnMap = columnMapFv.ColumnMap;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Expecting args3 to be a {nameof(ColumnMapFormulaValue)} : found {args[3].GetType().Name}");
             }
 
-            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap?.Columns, cancellationToken).ConfigureAwait(false);
+            var result = await _hooks.RetrieveAsync(table, guid, partitionId, columnMap, cancellationToken).ConfigureAwait(false);
 
             if (result == null || result.IsBlank)
             {

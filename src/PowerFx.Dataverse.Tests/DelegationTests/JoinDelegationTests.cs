@@ -173,11 +173,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(44, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4)", 3, @"Table({Value:""p1""},{Value:""row4""},{Value:If(false,"""")})")]
         [InlineData(45, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), {n5: n4})", 3, @"Table({n5:""p1""},{n5:""row4""},{n5:If(false,"""")})")]
 
-        // no delegation of SortByColumns as a ColumnMap is used in Join 
+        // no delegation of SortByColumns as a FxColumnMap is used in Join 
         [InlineData(46, "ShowColumns(SortByColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
         [InlineData(47, "SortByColumns(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
 
-        // no delegation of Summarize as a ColumnMap is used in Join
+        // no delegation of Summarize as a FxColumnMap is used in Join
         [InlineData(48, "Summarize(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2), localid, Average(ThisGroup, other2) As avg)", 3, @"Table({avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000003"")},{avg:Float(44),localid:GUID(""00000000-0000-0000-0000-000000000004"")},{avg:Float(49),localid:GUID(""00000000-0000-0000-0000-000000000005"")})")]
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)

@@ -70,8 +70,9 @@ namespace Microsoft.PowerFx.Dataverse
             var reference = new EntityReference(entityName, id);
             var filter = new FxFilterExpression();
             filter.AddCondition(_metadataResolver(reference.LogicalName).PrimaryIdAttribute, FxConditionOperator.Equal, reference.Id);
+            var columnMap = columns != null ? new FxColumnMap(columns) : null;
 #pragma warning disable CS0618 // Type or member is obsolete
-            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters(null) { FxFilter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) });
+            var query = DataverseTableValue.CreateQueryExpression(reference.LogicalName, new DataverseDelegationParameters(null) { FxFilter = filter, Top = 1, ColumnMap = columnMap });
 #pragma warning restore CS0618 // Type or member is obsolete
             var rows = await _dataverseServices.RetrieveMultipleAsync(query, cancellationToken);
 
