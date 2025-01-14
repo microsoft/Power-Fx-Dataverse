@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
@@ -77,8 +79,9 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, FxColumnMap columnMap, CancellationToken cancellationToken = default)
         {
+            var columns = columnMap?.RealColumnNames;
             var result = await _connection.Services.RetrieveAsync(_entityMetadata.LogicalName, id, columns, cancellationToken).ConfigureAwait(false);
 
             if (result.HasError)
@@ -92,13 +95,13 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken = default)
+        public virtual async Task<DValue<RecordValue>> RetrieveAsync(Guid id, string partitionId, FxColumnMap columnMap, CancellationToken cancellationToken = default)
         {
             var entityReference = new EntityReference(this._entityMetadata.LogicalName, id);
 
             var request = new RetrieveRequest
             {
-                ColumnSet = ColumnMap.GetColumnSet(columns),
+                ColumnSet = columnMap.ToXRMColumnSet(),
                 Target = entityReference,
                 ["partitionId"] = partitionId
             };
@@ -205,11 +208,11 @@ namespace Microsoft.PowerFx.Dataverse
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
-            bool hasDistinct = ColumnMap.HasDistinct(delegationParameters.ColumnMap);
+            bool hasDistinct = delegationParameters.HasDistinct();
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
+                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
@@ -263,15 +266,15 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (delegationParameters.ColumnMap != null)
                 {
-                    IReadOnlyDictionary<string, string> map = delegationParameters.ColumnMap.AsStringDictionary();
+                    IReadOnlyDictionary<string, FxColumnInfo> map = delegationParameters.ColumnMap.ColumnInfoMap.Values.ToDictionary(cInfo => cInfo.RealColumnName);
 
                     foreach (OrderExpression oe in delegationParameters.OrderBy)
                     {
-                        KeyValuePair<string, string> kvp = map.FirstOrDefault(kvp => kvp.Value == oe.AttributeName);
-
-                        if (kvp.Key != null)
+                        if (map.TryGetValue(oe.AttributeName, out FxColumnInfo columnInfo))
                         {
-                            query.Orders.Add(new OrderExpression(kvp.Key, oe.OrderType, oe.Alias, oe.EntityName));
+                            var attrinuteName = columnInfo.RealColumnName;
+                            var attributeAlias = columnInfo.AliasColumnName;
+                            query.Orders.Add(new OrderExpression(attrinuteName, oe.OrderType, attributeAlias, oe.EntityName));
                         }
                         else
                         {
@@ -353,7 +356,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldFormulaValue is not GuidValue id)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
-            }        
+            }
 
             var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
@@ -392,7 +395,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
                     }
-                }               
+                }
             }
 
             // After mutation, lazely refresh Rows from server.
@@ -469,9 +472,34 @@ namespace Microsoft.PowerFx.Dataverse
 
                     foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
                     {
-                        entity.Attributes.TryGetValue(nft.Name.Value, out object val);
-                        FormulaValue fv = PrimitiveValueConversions.Marshal(val, nft.Type);
-                        namedValues.Add(new NamedValue(nft.Name.Value, fv));
+                        var fieldName = nft.Name.Value;
+                        var fieldType = nft.Type;
+                        FormulaValue fieldValue;
+
+                        if (DataverseRecordValue.TryGetAttributeOrRelationship(_entityMetadata, entity, fieldName, out var val))
+                        {
+                            // If entity Marshalling needs network request we assign blank().
+                            if (!DataverseRecordValue.TryParseDataverseValueNoNetworkRequest(fieldType, val, cancellationToken, out fieldValue))
+                            {
+                                fieldValue = FormulaValue.NewBlank(fieldType);
+                            }
+                        }
+                        else if (delegationParameters.Join != null && 
+                            delegationParameters.Join.JoinTableRecordType != null &&
+                            DelegationUtility.TryGetEntityMetadata(delegationParameters.Join.JoinTableRecordType, out var rightTableMetadata) &&
+                            DataverseRecordValue.TryGetAttributeOrRelationship(rightTableMetadata, entity, fieldName, out var rightTableVal))
+                        {
+                            if (!DataverseRecordValue.TryParseDataverseValueNoNetworkRequest(fieldType, rightTableVal, cancellationToken, out fieldValue))
+                            {
+                                fieldValue = FormulaValue.NewBlank(fieldType);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Field {fieldName} not found in {entity.LogicalName} or in right Table of the join.");
+                        }
+
+                        namedValues.Add(new NamedValue(fieldName, fieldValue));
                     }
 
                     recordValue = FormulaValue.NewRecordFromFields(namedValues.ToArray());

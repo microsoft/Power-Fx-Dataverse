@@ -18,14 +18,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            // Can't Filter() on Group By.
             if (tableArg.HasGroupBy || tableArg.HasJoin)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
 
             IntermediateNode predicate = node.Args[1];
-
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
 
@@ -40,21 +38,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return CreateNotSupportedErrorAndReturn(node, tableArg);
             }
 
-            RetVal result;
-
             // If tableArg has top count, that means we need to materialize the tableArg and can't delegate.
-            if (tableArg.HasTopCount)
+            RetVal result;
+            if (tableArg.TryAddFilter(pr.Filter, node, out result))
             {
-                result = MaterializeTableAndAddWarning(tableArg, node);
+                return result;
             }
             else
             {
-                // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
-                var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = tableArg.With(node, filter: filterCombined);
+                return MaterializeTableAndAddWarning(tableArg, node);
             }
-
-            return result;
         }
     }
 }

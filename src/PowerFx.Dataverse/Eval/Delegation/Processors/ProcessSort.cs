@@ -17,20 +17,10 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
-        {           
+        {
+            IList<(string, bool)> sortColumns = new List<(string, bool)>();
             bool canDelegate = true;
-
-            List<IntermediateNode> arguments = new List<IntermediateNode>() { tableArg.HasFilter ? tableArg.Filter : node.Args[0] };
-
             context = context.GetContextForPredicateEval(node, tableArg);
-
-            // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
-            // When multiple Sort would occur, we cannot reliably group OrderBy commands
-            if (tableArg.HasTopCount || tableArg.HasOrderBy || tableArg.HasColumnMap || tableArg.HasGroupBy)
-            {
-                return NoTransform(node, tableArg);
-            }
-
             int i = 1;
 
             while (i < node.Args.Count)
@@ -43,10 +33,8 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (!TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
                 {
-                    return NoTransform(node, tableArg);
+                    return ProcessOtherCall(node, tableArg, context);
                 }
-
-                arguments.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
 
                 i++;
                 bool isAscending = true;
@@ -61,40 +49,19 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        return NoTransform(node, tableArg);
+                        return ProcessOtherCall(node, tableArg, context);
                     }
                 }
 
-                canDelegate &= DelegationUtility.CanDelegateSort(fieldName, isAscending, tableArg.DelegationMetadata?.SortDelegationMetadata);
-
-                arguments.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
+                sortColumns.Add((fieldName, isAscending));
             }
 
-            if (canDelegate)
+            if (tableArg.TryAddOrderBy(sortColumns, node, out var result))
             {
-                var sortFunc = new DelegatedSort(_hooks);
-                IntermediateNode orderByNode = new CallNode(node.IRContext, sortFunc, arguments);
-
-                return tableArg.With(node, orderby: orderByNode); 
+                return result;
             }
 
             return ProcessOtherCall(node, tableArg, context);
-        }
-
-        private RetVal NoTransform(CallNode node, RetVal tableArg)
-        {
-            IntermediateNode materializeTable = Materialize(tableArg);
-
-            if (!ReferenceEquals(node.Args[0], materializeTable))
-            {
-                List<IntermediateNode> arguments = new List<IntermediateNode>() { materializeTable };
-                arguments.AddRange(node.Args.Skip(1));
-
-                CallNode delegatedSort = new CallNode(node.IRContext, node.Function, node.Scope, arguments);
-                return Ret(delegatedSort);
-            }
-
-            return Ret(node);
         }
 
         private bool TryGetEnumValue(IntermediateNode arg, string enumName, out string val)

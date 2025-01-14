@@ -80,20 +80,25 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool TryGetAttributeOrRelationship(string innerFieldName, out object value)
         {
+            return TryGetAttributeOrRelationship(_metadata, _entity, innerFieldName, out value);
+        }
+
+        internal static bool TryGetAttributeOrRelationship(EntityMetadata metadata, Entity entity, string fxFieldName, out object value)
+        {
             // IR should convert the fieldName from display to Logical Name.
-            if (_entity.Attributes.TryGetValue(innerFieldName, out value))
+            if (entity.Attributes.TryGetValue(fxFieldName, out value))
             {
                 return true;
             }
 
-            if (_metadata.TryGetRelationship(innerFieldName, out var realAttributeName))
+            if (metadata.TryGetRelationship(fxFieldName, out var realAttributeName))
             {
-                if (_entity.Attributes.TryGetValue(realAttributeName, out value))
+                if (entity.Attributes.TryGetValue(realAttributeName, out value))
                 {
                     return true;
                 }
             }
-            else if (_metadata.TryGetOneToManyRelationship(innerFieldName, out var relation))
+            else if (metadata.TryGetOneToManyRelationship(fxFieldName, out var relation))
             {
                 value = relation;
                 return true;
@@ -128,57 +133,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return (false, result);
             }
 
-            if (value is AliasedValue aliasedValue)
+            var parseResult = await TryParseDataverseValueAsync(fieldType, value, cancellationToken);
+            var isMarshallingSupported = parseResult.Item1;
+            result = parseResult.Item2;
+            if (isMarshallingSupported)
             {
-                value = aliasedValue.Value;
-            }
-
-            if (value is OneToManyRelationshipMetadata relationshipMetadata)
-            {
-                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken).ConfigureAwait(false);
-                return (true, result);
-            }
-
-            if (value is EntityReference reference)
-            {
-                // Blank was already handled, value would have been null.
-                result = await ResolveEntityReferenceAsync(reference, fieldType, columns: null, cancellationToken).ConfigureAwait(false);
-                return (true, result);
-            }
-
-            if (value is DateTime dt && dt.Kind == DateTimeKind.Utc)
-            {
-                // $$$ Get correct timezone from symbols
-                value = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.Local);
-            }
-
-            // For some specific column types we need to extract the primitive value.
-            if (value is Money money)
-            {
-                result = PrimitiveValueConversions.Marshal(money.Value, fieldType);
-                return (true, result);
-            }
-
-            // Handle primitives
-            if (PrimitiveValueConversions.TryMarshal(value, fieldType, out result))
-            {
-                return (true, result);
-            }
-
-            // Options, enums, etc?
-            if (fieldType is OptionSetValueType opt)
-            {
-                if (TryGetValue(opt, value, out var osResult))
-                {
-                    result = osResult;
-                    return (true, result);
-                }
-            }
-
-            // Multi-select column type
-            if (fieldType is TableType tableType && value is OptionSetValueCollection optionSetValueCollection)
-            {
-                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
                 return (true, result);
             }
 
@@ -194,6 +153,78 @@ namespace Microsoft.PowerFx.Dataverse
 
             result = NewError(expressionError);
             return (true, result);
+        }
+
+        private async Task<(bool, FormulaValue)> TryParseDataverseValueAsync(FormulaType fieldType, object dvValue, CancellationToken cancellationToken)
+        {
+            // extract AliasValue first.
+            if (dvValue is AliasedValue aliasedValue)
+            {
+                dvValue = aliasedValue.Value;
+            }
+
+            FormulaValue result;
+            if (dvValue is OneToManyRelationshipMetadata relationshipMetadata)
+            {
+                result = await ResolveOneToManyRelationship(relationshipMetadata, fieldType, cancellationToken).ConfigureAwait(false);
+                return (true, result);
+            }
+            else if (dvValue is EntityReference reference)
+            {
+                // Blank was already handled, value would have been null.
+                result = await ResolveEntityReferenceAsync(reference, fieldType, columns: null, cancellationToken).ConfigureAwait(false);
+                return (true, result);
+            }
+            else if (TryParseDataverseValueNoNetworkRequest(fieldType, dvValue, cancellationToken, out result))
+            {
+                return (true, result);
+            }
+
+            return (false, null);
+        }
+
+        internal static bool TryParseDataverseValueNoNetworkRequest(FormulaType fieldType, object dvValue, CancellationToken cancellationToken,  out FormulaValue result)
+        {
+            // extract AliasValue first.
+            if (dvValue is AliasedValue aliasedValue)
+            {
+                dvValue = aliasedValue.Value;
+            }
+
+            // Handle time Conversion.
+            if (dvValue is DateTime dt && dt.Kind == DateTimeKind.Utc)
+            {
+                // $$$ Get correct timezone from symbols
+                dvValue = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.Local);
+            }
+            else if (dvValue is Money money)
+            {
+                dvValue = money.Value;
+            }
+
+            if (PrimitiveValueConversions.TryMarshal(dvValue, fieldType, out result))
+            {
+                // Handles primitives
+                return true;
+            }
+            else if (fieldType is OptionSetValueType opt)
+            {
+                // Options, enums, etc?
+                if (TryGetValue(opt, dvValue, out var osResult))
+                {
+                    result = osResult;
+                    return true;
+                }
+            }
+            else if (fieldType is TableType tableType && dvValue is OptionSetValueCollection optionSetValueCollection)
+            {
+                // Multi-select column type
+                result = ResolveMultiSelectChoice(optionSetValueCollection, tableType, cancellationToken);
+                return true;
+            }
+
+            result = null;
+            return false;
         }
 
         private static FormulaValue ResolveMultiSelectChoice(OptionSetValueCollection optionSetValueCollection, TableType tableType, CancellationToken cancellationToken)

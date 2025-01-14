@@ -77,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // special casing Scope access for With()
-            RetVal tableArg = GetTable(node.Args[0], context);                        
+            RetVal tableArg = GetTable(node.Args[0], context);
 
             if (!tableArg.IsDelegating)
             {

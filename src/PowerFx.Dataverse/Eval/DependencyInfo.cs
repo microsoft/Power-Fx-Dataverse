@@ -225,9 +225,9 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         string fieldName = field.LiteralValue;
 
-                        if (context.ColumnMap != null && context.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+                        if (context.ColumnMap != null && context.ColumnMap.TryGetColumnInfo(fieldName, out var fieldInfo))
                         {
-                            fieldName = realFieldName;
+                            fieldName = fieldInfo.RealColumnName;
                         }
 
                         AddFieldRead(tableLogicalName, fieldName);
@@ -337,15 +337,15 @@ namespace Microsoft.PowerFx.Dataverse
                 argRecordWrite = 1;
             }
             else if (func == "Join")
-            {                
+            {
                 var remote = ((AggregateType)node.Args[1].IRContext.ResultType).TableSymbolName;
 
                 // Right column fields
                 if (node.Args[6] is RecordNode rn)
                 {
                     foreach (KeyValuePair<DName, IntermediateNode> kvp in rn.Fields)
-                    {                        
-                        AddFieldRead(remote, kvp.Key.Value);                        
+                    {
+                        AddFieldRead(remote, kvp.Key.Value);
                     }
                 }
             }
@@ -382,9 +382,20 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out ColumnMap columnMap)
+            FxColumnMap columnMap = null;
+            Context newContext = node.Function is DelegateFunction df && df.IsUsingColumnMap(node, out columnMap)
                      ? context.WithColumnMap(columnMap)
                      : context;
+
+            if (columnMap?.IsEmpty == false)
+            {
+                var columnMapTable = columnMap.SourceTableRecordType.TableSymbolName ?? "<<Bug found! empty table name in type>>";
+
+                foreach (var column in columnMap.RealColumnNames)
+                {
+                    AddFieldRead(columnMapTable, column);
+                }
+            }
 
             // Find all dependencies in args
             // This will catch reads.
@@ -400,7 +411,7 @@ namespace Microsoft.PowerFx.Dataverse
                 AddFieldRead(joinNode.LinkEntity.LinkToEntityName, joinNode.LinkEntity.LinkToAttributeName);
 
                 // Right column map
-                foreach (string rightField in joinNode.RightFields)
+                foreach (string rightField in joinNode.RightRealFieldNames)
                 {
                     AddFieldRead(joinNode.LinkEntity.LinkToEntityName, rightField);
                 }
@@ -450,8 +461,8 @@ namespace Microsoft.PowerFx.Dataverse
         // ThisRecord.field   // IR will get type of ThisRecord
         // First(Remote).Data // IR will get type on left of dot.
         public override RetVal Visit(RecordFieldAccessNode node, Context context)
-        {                           
-            node.From.Accept(this, context);         
+        {
+            node.From.Accept(this, context);
 
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)
@@ -551,14 +562,14 @@ namespace Microsoft.PowerFx.Dataverse
 
         public class Context
         {
-            public ColumnMap ColumnMap { get; private set; }
+            public FxColumnMap ColumnMap { get; private set; }
 
             public Context()
             {
                 ColumnMap = null;
             }
 
-            public Context WithColumnMap(ColumnMap columnMap)
+            public Context WithColumnMap(FxColumnMap columnMap)
             {
                 // replace any existing columnMap with the new one as the context is local only
                 return new Context() { ColumnMap = columnMap };
@@ -577,9 +588,20 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // Relationship
-                if (entityMetadata.TryGetRelationship(fieldLogicalName, out var realName))
+                else if (entityMetadata.TryGetRelationship(fieldLogicalName, out var realName))
                 {
                     return realName;
+                }
+
+                // It can be Navigation property in case of dot walking.
+                else
+                {
+                    var navigationRelation = entityMetadata.ManyToOneRelationships.FirstOrDefault(r => r.ReferencedEntityNavigationPropertyName == fieldLogicalName);
+
+                    if (navigationRelation != null)
+                    {
+                        return navigationRelation.ReferencingAttribute;
+                    }
                 }
             }
 

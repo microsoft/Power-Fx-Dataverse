@@ -153,7 +153,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // Validate no Join delegation as either left or right is not a direct table
         [InlineData(35, "ShowColumns(Join(FirstN(local, 10), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
         [InlineData(36, "ShowColumns(Join(local, FirstN(remote, 10), LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2)]
-        [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
+        [InlineData(37, @"ShowColumns(Join(Filter(local, true), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin2, "Warning 17-36: This operation on table 'table' may not work if it has more than 999 rows.", "Warning 24-29: This operation on table 'local' may not work if it has more than 999 rows.", "Warning 31-35: Warning: This predicate is a literal value and does not reference the input table.")]
         [InlineData(38, @"ShowColumns(Join(Filter(local, IsBlank(new_name) Or new_name <> ""pz""), remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2), localid, new_name, other2)", 3, InnerJoin5)]
 
         // Join + ShowColumns + LookUp        
@@ -171,7 +171,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(44, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4)", 3, @"Table({Value:""p1""},{Value:""row4""},{Value:If(false,"""")})")]
         [InlineData(45, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), {n5: n4})", 3, @"Table({n5:""p1""},{n5:""row4""},{n5:If(false,"""")})")]
 
-        // no delegation of SortByColumns as a ColumnMap is used in Join 
+        // no delegation of SortByColumns as a FxColumnMap is used in Join 
         [InlineData(46, "ShowColumns(SortByColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
         [InlineData(47, "SortByColumns(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
 

@@ -288,10 +288,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 //                     °-----° °-----°
                 // ~~
 
-                // linkEntity.Columns.Columns is always null on Join LinkEntities, as we always rename right columns                         
-                // and this is stored in AttributeExpressions where an alias is defined, per column.
-                Assert.Empty(join.Columns.Columns);
-
                 joinType = join.JoinOperator;
                 includeLeft =  joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.LeftOuter /* Left  */;
                 includeRight = joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.In        /* Right */;
@@ -329,14 +325,51 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         if (isMatch)
                         {
                             Entity newEntity = Clone(leftEntity, qe.ColumnSet, cancellationToken);
-                            
+
+                            foreach (var attr in metadata.Attributes)
+                            {
+                                if (!newEntity.Contains(attr.LogicalName))
+                                {
+                                    newEntity[attr.LogicalName] = null;
+                                }
+                            }
+
                             foreach (XrmAttributeExpression column in join.Columns.AttributeExpressions)
                             {
                                 rightEntity.TryGetAttributeValue(column.AttributeName, out object val);
-                                newEntity.Attributes[column.Alias ?? (GetAttributePrefix(join) + column)] = val;
+                                if (column.Alias != null)
+                                {
+                                    val = new AliasedValue(column.AttributeName, column.Alias, val);
+                                    newEntity.Attributes[column.Alias] = val;
+                                }
+                                else
+                                {
+                                    newEntity.Attributes[column.AttributeName ?? (GetAttributePrefix(join) + column)] = val;
+                                }
                             }
 
                             innerRows.Add(newEntity);                            
+
+                            foreach (var ae in qe.ColumnSet.AttributeExpressions)
+                            {
+                                if (ae.Alias != null)
+                                {
+                                    leftEntity.TryGetAttributeValue(ae.AttributeName, out object val);
+                                    val = new AliasedValue(ae.AttributeName, ae.Alias, val);
+                                    leftEntity.Attributes[ae.Alias] = val;
+                                    newEntity.Attributes[ae.Alias] = val;
+                                }
+                            }
+
+                            foreach (var joinCol in join.Columns.AttributeExpressions)
+                            {
+                                if (joinCol.Alias != null)
+                                {
+                                    rightEntity.TryGetAttributeValue(joinCol.AttributeName, out object val);
+                                    val = new AliasedValue(joinCol.AttributeName, joinCol.Alias, val);
+                                    rightEntity.Attributes[joinCol.Alias] = val;
+                                }
+                            }
 
                             inner.Add(leftEntity);
                             inner.Add(rightEntity);
@@ -355,11 +388,91 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                         {
                             if (includeLeft && !inner.Contains(leftEntity))
                             {
+                                foreach (var attr in metadata.Attributes)
+                                {
+                                    if (!leftEntity.Contains(attr.LogicalName))
+                                    {
+                                        leftEntity[attr.LogicalName] = null;
+                                    }
+                                }
+
+                                var leftColumnSelection = qe.ColumnSet;
+
+                                if (leftColumnSelection != null)
+                                {
+                                    foreach (var xrmAggregateExpression in leftColumnSelection.AttributeExpressions)
+                                    {
+                                        if (xrmAggregateExpression.Alias != null)
+                                        {
+                                            var aliasedVal = new AliasedValue(xrmAggregateExpression.AttributeName, xrmAggregateExpression.Alias, null);
+                                            leftEntity.Attributes[xrmAggregateExpression.Alias] = aliasedVal;
+                                        }
+                                        else
+                                        {
+                                            leftEntity.Attributes[xrmAggregateExpression.AttributeName ?? (GetAttributePrefix(join) + xrmAggregateExpression)] = null;
+                                        }
+                                    }
+                                }
+
+                                // fill all righColumns with null.
+                                foreach (var rightAttributeExpression in join.Columns.AttributeExpressions)
+                                {
+                                    if (rightAttributeExpression.Alias != null)
+                                    {
+                                        leftEntity[rightAttributeExpression.Alias] = null;
+                                    }
+                                    else
+                                    {
+                                        leftEntity[rightAttributeExpression.AttributeName] = null;
+                                    }
+                                }
+
+                                foreach (var rightCol in join.Columns.Columns)
+                                {
+                                    leftEntity[rightCol] = null;
+                                }
+
                                 outer.Add(leftEntity);
                             }
 
                             if (includeRight && !inner.Contains(rightEntity))
                             {
+                                var rightColumnSelection = qe.LinkEntities.FirstOrDefault()?.Columns;
+
+                                if (rightColumnSelection != null)
+                                {
+                                    foreach (var xrmAttributeExpression in rightColumnSelection.AttributeExpressions)
+                                    {
+                                        if (xrmAttributeExpression.Alias != null)
+                                        {
+                                            var aliasedVal = new AliasedValue(xrmAttributeExpression.AttributeName, xrmAttributeExpression.Alias, null);
+                                            rightEntity.Attributes[xrmAttributeExpression.Alias] = aliasedVal;
+                                        }
+                                        else
+                                        {
+                                            rightEntity.Attributes[xrmAttributeExpression.AttributeName ?? (GetAttributePrefix(join) + xrmAttributeExpression)] = null;
+                                        }
+                                    }
+                                }
+
+                                // fill all leftColumns with null.
+                                foreach (var leftAttributeExpression in qe.ColumnSet.AttributeExpressions)
+                                {
+                                    if (leftAttributeExpression.Alias != null)
+                                    {
+                                        rightEntity[leftAttributeExpression.Alias] = null;
+                                    }
+                                    else
+                                    {
+                                        rightEntity[leftAttributeExpression.AttributeName] = null;
+                                    }
+                                }
+
+                                foreach (var leftCol in metadata.Attributes)
+                                {
+                                    rightEntity[leftCol.LogicalName] = null;
+                                }
+
                                 outer.Add(rightEntity);
                             }
                         }
@@ -375,7 +488,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 OrderExpression oe = qe.Orders.First();
 
                 IOrderedEnumerable<Entity> entities = oe.OrderType == OrderType.Ascending
-                    ? entityList.OrderBy(e => e.Attributes[oe.AttributeName])
+                    ? entityList.OrderBy(e => e.Attributes[oe.Alias ?? oe.AttributeName])
                     : entityList.OrderByDescending(e => e.Attributes[oe.AttributeName]);
 
                 foreach (OrderExpression nextOe in qe.Orders.Skip(1))

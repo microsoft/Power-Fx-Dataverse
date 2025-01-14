@@ -64,7 +64,7 @@ namespace Microsoft.PowerFx.Dataverse
                     errors.Add(error);
                 }
             }
-            
+
             if (errors.Any())
             {
                 return Task.FromResult<FormulaValue>(ErrorValue.Combine(IRContext.NotInSource(ReturnFormulaType), errors));
@@ -75,7 +75,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected abstract Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken);
 
-        internal virtual bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
+        internal virtual bool IsUsingColumnMap(CallNode node, out FxColumnMap columnMap)
         {
             columnMap = null;
             return false;

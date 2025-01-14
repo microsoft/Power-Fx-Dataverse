@@ -33,15 +33,13 @@ namespace Microsoft.PowerFx.Dataverse
         private const int OrderbyArg = 2;
         private const int JoinArg = 3;
         private const int GroupByArg = 4;
-        private const int DistinctArg = 5;
-        private const int ColumnRenameArg = 6;
-        private const int ColumnRenameArg1 = ColumnRenameArg + 1;
+        private const int ColumnMapArg = 5;
 
         // args[0]: table
         // args[1]: filter
         // args[2]: orderby
         // args[3]: join
-        // args[4]: distinct column
+        // args[4]: GrpupBy
         // args[5]: columns with renames (in Record)
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
@@ -49,7 +47,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (args[TableArg] is not IDelegatableTableValue table)
             {
-                throw new InvalidOperationException($"args{TableArg} should always be of type {nameof(TableValue)} : found {args[TableArg]}");
+                throw new InvalidOperationException($"args{TableArg} should always be of type {nameof(IDelegatableTableValue)} : found {args[TableArg]}");
             }
 
             FxFilterExpression filter;
@@ -87,18 +85,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"Input arg{GroupByArg} should always be of type {nameof(GroupByObjectFormulaValue)}");
             }
 
-            string distinctColumn = null;
-            if (args[DistinctArg] is StringValue sv)
-            {
-                distinctColumn = sv.Value;
-            }
-            else if (args[DistinctArg] is not BlankValue)
-            {
-                throw new InvalidOperationException($"args{DistinctArg} should always be of type {nameof(StringValue)} : found {args[DistinctArg]}");
-            }
-
             FxJoinNode join = null;
-
             if (args[JoinArg] is JoinFormulaValue jv)
             {
                 join = jv.JoinNode;
@@ -108,13 +95,10 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{JoinArg} should always be of type {nameof(JoinFormulaValue)} : found {args[JoinArg]}");
             }
 
-            ColumnMap columnMap = null;
-
-            if (args.Length > ColumnRenameArg)
+            FxColumnMap columnMap = null;
+            if (args[ColumnMapArg] is ColumnMapFormulaValue columnMapFormulaValue)
             {
-                columnMap = args[ColumnRenameArg] is RecordValue rv
-                    ? new ColumnMap(rv, distinctColumn)
-                    : throw new InvalidOperationException($"Expecting args{ColumnRenameArg} to be a {nameof(RecordValue)} : found {args[ColumnRenameArg].GetType().Name}");
+                columnMap = columnMapFormulaValue.ColumnMap;
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -127,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,                                
+                Relation = relation,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -152,14 +136,16 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        internal override bool IsUsingColumnMap(Core.IR.Nodes.CallNode node, out ColumnMap columnMap)
+        internal override bool IsUsingColumnMap(Core.IR.Nodes.CallNode node, out FxColumnMap columnMap)
         {
-            if (node.Args.Count == ColumnRenameArg1 &&
-                node.Args[DistinctArg] is Core.IR.Nodes.TextLiteralNode distinctNode &&
-                node.Args[ColumnRenameArg] is Core.IR.Nodes.RecordNode columnMapNode)
+            if (node.Args[ColumnMapArg] is ResolvedObjectNode columnMapIR)
             {
-                columnMap = new ColumnMap(columnMapNode, distinctNode);
-                return true;
+                columnMap = ((ColumnMapFormulaValue)columnMapIR.Value).ColumnMap;
+
+                if (columnMap != null)
+                {
+                    return true;
+                }
             }
 
             columnMap = null;

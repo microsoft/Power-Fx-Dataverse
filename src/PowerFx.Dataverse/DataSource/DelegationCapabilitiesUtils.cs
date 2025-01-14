@@ -41,7 +41,7 @@ namespace Microsoft.PowerFx.Dataverse.DataSource
             }
 
             var capabilityToCheck = isStartsWith ? DelegationCapability.StartsWith : DelegationCapability.EndsWith;
-            
+
             return metadata.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(col)), DelegationCapability.Filter | capabilityToCheck);
         }
 

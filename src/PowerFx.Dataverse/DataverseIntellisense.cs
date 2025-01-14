@@ -17,7 +17,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private readonly CdsEntityMetadataProvider _provider;
 
-        internal DataverseIntellisense(PowerFxConfig config, CdsEntityMetadataProvider provider) 
+        internal DataverseIntellisense(PowerFxConfig config, CdsEntityMetadataProvider provider)
             : base(config, config.EnumStore, IntellisenseProvider.SuggestionHandlers)
         {
             _provider = provider;

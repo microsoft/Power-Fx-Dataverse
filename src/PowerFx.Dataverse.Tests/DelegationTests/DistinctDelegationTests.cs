@@ -20,11 +20,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(7, "Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", 1)]
 
         // non primitive types are non delegable.
-        [InlineData(8, "Distinct(t1, PolymorphicLookup)", -1)]
+        [InlineData(8, "Distinct(t1, PolymorphicLookup)", -1, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
 
         // Other is a lookup field, hence not delegable.
-        [InlineData(9, "Distinct(t1, Other)", -1)]
-        [InlineData(10, "Distinct(et, Field1)", 2)]
+        [InlineData(9, "Distinct(t1, Other)", -1, "Warning 9-11: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(10, "Distinct(et, Field1)", 2, "Warning 9-11: This operation on table 'elastictable' may not work if it has more than 999 rows.")]
         [InlineData(11, "Distinct(SortByColumns(t1, Price), Price)", 3)]
         [InlineData(12, "Distinct(Distinct(t1, Price), Value)", 3)]
         [InlineData(13, "Distinct(ShowColumns(t1, 'new_price'), 'new_price')", 3)]

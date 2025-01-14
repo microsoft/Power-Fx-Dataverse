@@ -28,7 +28,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     if (e?.IsDelegatable == true)
                     {
-                        var ret = new RetVal(_hooks, node, node, aggType, filter: null, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null);
+                        var ret = RetVal.New(_hooks, node, _maxRows);
                         return ret;
                     }
                 }

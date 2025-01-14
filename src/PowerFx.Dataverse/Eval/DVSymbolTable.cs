@@ -22,6 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         protected readonly CdsEntityMetadataProvider _metadataCache;
 
+        internal const string SingleColumnTableFieldName = "Value";
+
         IEnumerable<KeyValuePair<string, NameLookupInfo>> IGlobalSymbolNameResolver.GlobalSymbols
         {
             get

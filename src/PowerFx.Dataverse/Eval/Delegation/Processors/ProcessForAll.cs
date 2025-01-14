@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Utils;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
@@ -20,31 +21,27 @@ namespace Microsoft.PowerFx.Dataverse
             // check if we have a simple field name here
             if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
             {
-                TextLiteralNode column = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName);
-
-                // Create a map with ("Value", fieldName)
-                ColumnMap map = new ColumnMap(new Dictionary<DName, TextLiteralNode>() { { new DName("Value"), column } });
-
-                // Combine with an existing map
-                map = ColumnMap.Combine(tableArg.ColumnMap, map, tableArg.TableType);
-
-                return tableArg.With(node, map: map);
+                var forAllColumns = new List<(string, string)>();
+                forAllColumns.Add((fieldName, DVSymbolTable.SingleColumnTableFieldName));
+                if (tableArg.TryAddColumnRenames(forAllColumns, node, out var result))
+                {
+                    return result;
+                }
             }
 
             // check if we have a record of (newName: oldName)
-            if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
+            else if (((LazyEvalNode)node.Args[1]).Child is RecordNode recordNode)
             {
                 Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
                 bool canDelegate = true;
-
+                var forAllColumns = new List<(string, string)>();
                 foreach (KeyValuePair<DName, IntermediateNode> kvp in recordNode.Fields)
                 {
                     string newFieldName = kvp.Key.Value;
 
                     if (TryGetSimpleFieldName(context, kvp.Value, out string currentFieldName))
                     {
-                        TextLiteralNode currentColumn = new TextLiteralNode(IRContext.NotInSource(FormulaType.String), currentFieldName);
-                        dic.Add(new DName(newFieldName), currentColumn);
+                        forAllColumns.Add((currentFieldName, newFieldName));
                     }
                     else
                     {
@@ -57,10 +54,10 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (canDelegate)
                 {
-                    // Combine with an existing map
-                    ColumnMap map = ColumnMap.Combine(tableArg.ColumnMap, new ColumnMap(dic), tableArg.TableType);
-                    
-                    return tableArg.With(node, map: map);
+                    if (tableArg.TryAddColumnRenames(forAllColumns, node, out var result))
+                    {
+                        return result;
+                    }
                 }
             }
 

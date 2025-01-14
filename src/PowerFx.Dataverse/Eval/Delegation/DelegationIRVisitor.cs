@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override IntermediateNode Materialize(RetVal ret)
         {
             // if ret has no filter or count, then we can just return the original node.
-            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasColumnMap || ret.HasJoin || ret.HasGroupBy))
+            if (ret.IsDelegating && (ret.HasFilter || ret.HasTopCount || ret.HasOrderBy || ret.HasLeftColumnMap || ret.HasJoin || ret.HasGroupBy))
             {
                 var res = _hooks.MakeQueryExecutorCall(ret);
                 return res;
@@ -79,7 +79,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 fieldName = leftField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse
                 && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
                 fieldName = rightField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.ColumnMap))
+                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -176,9 +176,6 @@ namespace Microsoft.PowerFx.Dataverse
             // Try to get the field name from the scope node
             if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
             {
-                // Adjust field name if it's "Value" and ColumnMap has Distinct
-                fieldName = AdjustFieldNameIfValue(context, fieldName);
-
                 // Check capabilities for field functions
                 if (fieldFunctions.Any())
                 {
@@ -250,16 +247,6 @@ namespace Microsoft.PowerFx.Dataverse
 
             fieldName = default;
             return false;
-        }
-
-        private static string AdjustFieldNameIfValue(Context context, string fieldName)
-        {
-            if (fieldName == "Value" && ColumnMap.HasDistinct(context.CallerTableRetVal.ColumnMap))
-            {
-                return context.CallerTableRetVal.ColumnMap.Distinct;
-            }
-
-            return fieldName;
         }
 
         private static bool CheckFieldFunctionCapabilities(Context context, IEnumerable<FieldFunction> fieldFunctions, string fieldName)
@@ -456,12 +443,12 @@ namespace Microsoft.PowerFx.Dataverse
             return CreateNotSupportedErrorAndReturn(newCall, tableArg);
         }
 
-        private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode eqNode)
+        private RetVal CreateBinaryOpRetVal(Context context, IntermediateNode node, IntermediateNode filterNode)
         {
             var callerTable = context.CallerTableNode;
             var callerTableReturnType = callerTable.IRContext.ResultType as TableType ?? throw new InvalidOperationException("CallerTable ReturnType should always be TableType");
-
-            return new RetVal(_hooks, node, callerTable, callerTableReturnType, eqNode, orderBy: null, count: null, join: null, groupby: null, _maxRows, columnMap: null);
+            var result = RetVal.NewBinaryOp(_hooks, callerTable, filterNode, _maxRows);
+            return result;
         }
 
         private RetVal CreateNotSupportedErrorAndReturn(CallNode node, RetVal tableArg)
@@ -474,7 +461,7 @@ namespace Microsoft.PowerFx.Dataverse
             var reason = new ExpressionError()
             {
                 MessageArgs = new object[] { tableName, _maxRows },
-                Span = tableArg?._sourceTableIRNode.IRContext.SourceContext ?? new Span(1, 2),
+                Span = tableArg?._sourceTableIRNode?.IRContext.SourceContext ?? tableArg.OriginalNode.IRContext.SourceContext,
                 Severity = ErrorSeverity.Warning,
                 ResourceKey = TexlStrings.WrnDelegationTableNotSupported
             };

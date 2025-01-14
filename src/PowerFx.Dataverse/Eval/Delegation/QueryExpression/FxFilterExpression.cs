@@ -27,7 +27,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public IList<FxFilterExpression> Filters => _filters;
 
-        public FxFilterExpression() 
+        public FxFilterExpression()
             : this(FxFilterOperator.And)
         {
         }
