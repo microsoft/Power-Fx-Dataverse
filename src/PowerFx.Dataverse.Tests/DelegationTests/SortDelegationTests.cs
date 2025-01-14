@@ -24,33 +24,33 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(5, "Sort(FirstN(t1, 5), Price)", 4, "0004, 0003, 0005, 0001", false)]
 
         // Delegable fully, both FirstN and Sort
-        [InlineData(6, "FirstN(Sort(t1, Price), 2)", 2, "0004, 0003")]
+        [InlineData(6, "FirstN(Sort(t1, Price), 2)", 2, "0004, 0003", false)]
 
         // Non-delegable
-        [InlineData(7, "Sort(FirstN(t1, 1), Price)", 1, "0001")]
-        [InlineData(8, "First(Sort(t1, Price))", 1, "0004")]
-        [InlineData(9, "SortByColumns(t1, Price)", 4, "0004, 0003, 0005, 0001")]
-        [InlineData(10, "SortByColumns(t1, Price, SortOrder.Ascending)", 4, "0004, 0003, 0005, 0001")]
-        [InlineData(11, "SortByColumns(t1, Price, SortOrder.Descending)", 4, "0001, 0003, 0005, 0004")]
+        [InlineData(7, "Sort(FirstN(t1, 1), Price)", 1, "0001", false)]
+        [InlineData(8, "First(Sort(t1, Price))", 1, "0004", false)]
+        [InlineData(9, "SortByColumns(t1, Price)", 4, "0004, 0003, 0005, 0001", false)]
+        [InlineData(10, "SortByColumns(t1, Price, SortOrder.Ascending)", 4, "0004, 0003, 0005, 0001", false)]
+        [InlineData(11, "SortByColumns(t1, Price, SortOrder.Descending)", 4, "0001, 0003, 0005, 0004", false)]
 
         // Non-delegable
-        [InlineData(12, "SortByColumns(FirstN(t1, 5), Price)", 4, "0004, 0003, 0005, 0001")]
-        [InlineData(13, "FirstN(SortByColumns(t1, Price), 2)", 2, "0004, 0003")]
+        [InlineData(12, "SortByColumns(FirstN(t1, 5), Price)", 4, "0004, 0003, 0005, 0001", false)]
+        [InlineData(13, "FirstN(SortByColumns(t1, Price), 2)", 2, "0004, 0003", false)]
 
         // Non-delegable
-        [InlineData(14, "SortByColumns(FirstN(t1, 1), Price)", 1, "0001")]
-        [InlineData(15, "First(SortByColumns(t1, Price))", 1, "0004")]
-        [InlineData(16, "SortByColumns(t1, Price, SortOrder.Ascending, Quantity)", 4, "0004, 0003, 0005, 0001")]
-        [InlineData(17, "SortByColumns(t1, Price, SortOrder.Ascending, Quantity, SortOrder.Ascending)", 4, "0004, 0003, 0005, 0001")]
-        [InlineData(18, "SortByColumns(t1, Price, SortOrder.Descending, Quantity, SortOrder.Ascending)", 4, "0001, 0003, 0005, 0004")]
-        [InlineData(19, "SortByColumns(t1, Price, SortOrder.Descending, Quantity, SortOrder.Descending)", 4, "0001, 0005, 0003, 0004")]
+        [InlineData(14, "SortByColumns(FirstN(t1, 1), Price)", 1, "0001", false)]
+        [InlineData(15, "First(SortByColumns(t1, Price))", 1, "0004", false)]
+        [InlineData(16, "SortByColumns(t1, Price, SortOrder.Ascending, Quantity)", 4, "0004, 0003, 0005, 0001", false)]
+        [InlineData(17, "SortByColumns(t1, Price, SortOrder.Ascending, Quantity, SortOrder.Ascending)", 4, "0004, 0003, 0005, 0001", false)]
+        [InlineData(18, "SortByColumns(t1, Price, SortOrder.Descending, Quantity, SortOrder.Ascending)", 4, "0001, 0003, 0005, 0004", false)]
+        [InlineData(19, "SortByColumns(t1, Price, SortOrder.Descending, Quantity, SortOrder.Descending)", 4, "0001, 0005, 0003, 0004", false)]
 
         // Sort non-delegable
         [InlineData(20, "Sort(FirstN(Filter(t1, Price <= 100), 2), Quantity)", 2, "0003, 0001", false)]
 
         // Delegable fully
-        [InlineData(21, "FirstN(Sort(Filter(t1, Price <= 100), Quantity), 2)", 2, "0003, 0004")]
-        [InlineData(22, "FirstN(Filter(Sort(t1, Quantity), Price <= 100), 2)", 2, "0003, 0004")]
+        [InlineData(21, "FirstN(Sort(Filter(t1, Price <= 100), Quantity), 2)", 2, "0003, 0004", false)]
+        [InlineData(22, "FirstN(Filter(Sort(t1, Quantity), Price <= 100), 2)", 2, "0003, 0004", false)]
 
         // Non-delegable
         [InlineData(23, @"Sort(t1, ""Price"")", 4, "0001, 0003, 0004, 0005", false, "Warning 5-7: This operation on table 'local' may not work if it has more than 999 rows.")]
@@ -69,7 +69,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(29, "Sort([30, 10, 20], Value)", 3, "10, 20, 30", true)]
 
         [InlineData(30, "Distinct(Sort(t1, Price), Price)", 3, "-10, 10, 100", true)]
-        [InlineData(31, "LookUp(Sort(t1, Quantity), Price <= 100)", 1, "0003")]
+        [InlineData(31, "LookUp(Sort(t1, Quantity), Price <= 100)", 1, "0003", false)]
         [InlineData(32, "Sort(Distinct(t1, Price), Value)", 3, "-10, 10, 100", true)]
         [InlineData(33, "ShowColumns(Sort(t1, Price), 'new_quantity', 'new_price', 'localid')", 4, "0004, 0003, 0005, 0001", false)]
         [InlineData(34, "Sort(ShowColumns(t1, 'new_quantity', 'new_price', 'localid'), new_price)", 4, "0004, 0003, 0005, 0001", false)]
