@@ -29,7 +29,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool TryDelegateDistinct(RetVal tableArg, CallNode distinctCallNode, Context context, out RetVal result)
         {
-            if (TryGetSimpleFieldName(context, ((LazyEvalNode)distinctCallNode.Args[1]).Child, out var fieldName) && 
+            if (TryGetSimpleFieldName(context, ((LazyEvalNode)distinctCallNode.Args[1]).Child, out var fieldName) &&
                 tableArg.TryAddDistinct(fieldName, distinctCallNode, out result))
             {
                 return true;

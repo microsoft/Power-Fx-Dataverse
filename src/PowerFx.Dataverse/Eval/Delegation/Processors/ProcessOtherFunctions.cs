@@ -44,11 +44,11 @@ namespace Microsoft.PowerFx.Dataverse
                 // Here we check is any of the CallNode args might have been delegated
                 // and, if so, we recreate the CallNode based on these new arguments
                 if (!ReferenceEquals(rv.OriginalNode, node))
-                {                    
+                {
                     node = new CallNode(node.IRContext, node.Function, node.Scope, ((CallNode)rv.OriginalNode).Args);
                 }
             }
-            
+
             return CreateNotSupportedErrorAndReturn(node, tableArg);
         }
 

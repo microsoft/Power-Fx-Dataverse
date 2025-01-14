@@ -111,7 +111,7 @@ namespace Microsoft.PowerFx.Dataverse
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,                                
+                Relation = relation,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -141,7 +141,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (node.Args[ColumnMapArg] is ResolvedObjectNode columnMapIR)
             {
                 columnMap = ((ColumnMapFormulaValue)columnMapIR.Value).ColumnMap;
-                
+
                 if (columnMap != null)
                 {
                     return true;

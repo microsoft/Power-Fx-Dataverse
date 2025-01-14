@@ -337,15 +337,15 @@ namespace Microsoft.PowerFx.Dataverse
                 argRecordWrite = 1;
             }
             else if (func == "Join")
-            {                
+            {
                 var remote = ((AggregateType)node.Args[1].IRContext.ResultType).TableSymbolName;
 
                 // Right column fields
                 if (node.Args[6] is RecordNode rn)
                 {
                     foreach (KeyValuePair<DName, IntermediateNode> kvp in rn.Fields)
-                    {                        
-                        AddFieldRead(remote, kvp.Key.Value);                        
+                    {
+                        AddFieldRead(remote, kvp.Key.Value);
                     }
                 }
             }
@@ -461,8 +461,8 @@ namespace Microsoft.PowerFx.Dataverse
         // ThisRecord.field   // IR will get type of ThisRecord
         // First(Remote).Data // IR will get type on left of dot.
         public override RetVal Visit(RecordFieldAccessNode node, Context context)
-        {                           
-            node.From.Accept(this, context);         
+        {
+            node.From.Accept(this, context);
 
             var ltype = node.From.IRContext.ResultType;
             if (ltype is RecordType ltypeRecord)

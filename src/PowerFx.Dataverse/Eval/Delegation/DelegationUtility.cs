@@ -78,7 +78,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         }
 
         public static bool CanDelegateBinaryOp(string fieldName, BinaryOpKind op, FilterOpMetadata filterCapabilities, FxColumnMap columnMap)
-        {            
+        {
             if (columnMap?.TryGetColumnInfo(fieldName, out var columnInfo) == true)
             {
                 fieldName = columnInfo.RealColumnName;

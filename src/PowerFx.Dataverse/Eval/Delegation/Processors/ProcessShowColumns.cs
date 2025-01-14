@@ -26,18 +26,6 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             });
 
-            //foreach (var arg in node.Args.Skip(1))
-            //{
-            //    if (arg is TextLiteralNode tln)
-            //    {
-            //        map.AddColumn(tln.LiteralValue);
-            //    }
-            //    else
-            //    {
-            //        throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {arg.GetType().Name}");
-            //    }
-            //}
-
             if (tableArg.TryUpdateColumnSelection(columnNames, node, out var resultingTable))
             {
                 if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)

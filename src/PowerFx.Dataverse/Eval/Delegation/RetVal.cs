@@ -80,7 +80,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal IntermediateNode ColumnMapNode => GenerateColumnMapIR(LeftColumnMap);
 
-            public RetVal(
+            private RetVal(
                 DelegationHooks hooks,
                 IntermediateNode originalNode,
                 IntermediateNode sourceTableIRNode,
@@ -199,8 +199,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool TryAddTopCount(IntermediateNode count, CallNode node, out RetVal result)
             {
-                if (_topCount == null || 
-                    (count is NumberLiteralNode countLiteral && countLiteral.LiteralValue == 1) || 
+                if (_topCount == null ||
+                    (count is NumberLiteralNode countLiteral && countLiteral.LiteralValue == 1) ||
                     (_topCount is NumberLiteralNode numLit && count is NumberLiteralNode cLiteral && numLit.LiteralValue > cLiteral.LiteralValue))
                 {
                     result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, count, _join, _groupByNode, (int)_maxRows, LeftColumnMap);
@@ -227,8 +227,8 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 // LookUp can't nest to Filter or ForAll
-                if (node.Function == BuiltinFunctionsCore.LookUp && 
-                    this.OriginalNode is CallNode maybeFilter && 
+                if (node.Function == BuiltinFunctionsCore.LookUp &&
+                    this.OriginalNode is CallNode maybeFilter &&
                     (maybeFilter.Function == BuiltinFunctionsCore.Filter || maybeFilter.Function == BuiltinFunctionsCore.ForAll))
                 {
                     result = null;

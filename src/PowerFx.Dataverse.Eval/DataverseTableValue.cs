@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
@@ -356,7 +356,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldFormulaValue is not GuidValue id)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
-            }        
+            }
 
             var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
@@ -395,7 +395,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
                     }
-                }               
+                }
             }
 
             // After mutation, lazely refresh Rows from server.
@@ -472,19 +472,34 @@ namespace Microsoft.PowerFx.Dataverse
 
                     foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
                     {
-                        entity.Attributes.TryGetValue(nft.Name.Value, out object val);
-                        FormulaValue fv;
-                        
-                        try
+                        var fieldName = nft.Name.Value;
+                        var fieldType = nft.Type;
+                        FormulaValue fieldValue;
+
+                        if (DataverseRecordValue.TryGetAttributeOrRelationship(_entityMetadata, entity, fieldName, out var val))
                         {
-                            fv = PrimitiveValueConversions.Marshal(val, nft.Type);
+                            // If entity Marshalling needs network request we assign blank().
+                            if (!DataverseRecordValue.TryParseDataverseValueNoNetworkRequest(fieldType, val, cancellationToken, out fieldValue))
+                            {
+                                fieldValue = FormulaValue.NewBlank(fieldType);
+                            }
                         }
-                        catch
+                        else if (delegationParameters.Join != null && 
+                            delegationParameters.Join.JoinTableRecordType != null &&
+                            DelegationUtility.TryGetEntityMetadata(delegationParameters.Join.JoinTableRecordType, out var rightTableMetadata) &&
+                            DataverseRecordValue.TryGetAttributeOrRelationship(rightTableMetadata, entity, fieldName, out var rightTableVal))
                         {
-                            fv = FormulaValue.NewBlank(nft.Type);
+                            if (!DataverseRecordValue.TryParseDataverseValueNoNetworkRequest(fieldType, rightTableVal, cancellationToken, out fieldValue))
+                            {
+                                fieldValue = FormulaValue.NewBlank(fieldType);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Field {fieldName} not found in {entity.LogicalName} or in right Table of the join.");
                         }
 
-                        namedValues.Add(new NamedValue(nft.Name.Value, fv));
+                        namedValues.Add(new NamedValue(fieldName, fieldValue));
                     }
 
                     recordValue = FormulaValue.NewRecordFromFields(namedValues.ToArray());

@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse
         internal static readonly DateTime _epoch = new DateTime(1899, 12, 30, 0, 0, 0, 0);
 
         // LinkEntities use suffixes to better identify them
-        internal const string LinkEntityN1RelationSuffix = "_N1";               
+        internal const string LinkEntityN1RelationSuffix = "_N1";
 
         // Only Dataverse Eval should use this.
         // Nested class to decrease visibility.
@@ -106,7 +106,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     node = new CallNode(IRContext.NotInSource(returnType), func, args);
                 }
-                
+
                 return node;
             }
 

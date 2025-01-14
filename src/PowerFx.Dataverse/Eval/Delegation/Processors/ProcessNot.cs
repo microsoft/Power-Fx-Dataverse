@@ -24,8 +24,8 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Currently only supports lamda Not(IsBlank()) delegation.
 
-            if (node.Args[0] is CallNode callNode && 
-                callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name && 
+            if (node.Args[0] is CallNode callNode &&
+                callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name &&
                     ((TryGetFieldName(context, callNode, out var fieldName, out var invertCoercion, out _, out var fieldOperation) && !invertCoercion)
                     || (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _, out fieldOperation) && !invertCoercion)))
             {

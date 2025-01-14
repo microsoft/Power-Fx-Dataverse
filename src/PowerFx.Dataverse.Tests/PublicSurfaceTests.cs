@@ -111,6 +111,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxAggregateExpression",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxJoinNode",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxColumnMap",
+                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxColumnInfo",
 
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",

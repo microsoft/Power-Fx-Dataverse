@@ -14,7 +14,7 @@ using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
     [Obsolete("preview")]
-    internal class FxColumnInfo
+    public class FxColumnInfo
     {
         private readonly string _realColumnName;
 
@@ -33,7 +33,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// </summary>
         /// <param name="realColumnName">Logical name of column present in Data Source.</param>
         /// <param name="aliasColumnName">Alias for the column name, if it is same as <paramref name="realColumnName"/> it will be set to null.</param>
-        public FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false)
+        internal FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false)
         {
             _realColumnName = realColumnName ?? throw new ArgumentNullException("realColumnName cannot be null");
             _aliasColumnName = realColumnName == aliasColumnName ? null : aliasColumnName;

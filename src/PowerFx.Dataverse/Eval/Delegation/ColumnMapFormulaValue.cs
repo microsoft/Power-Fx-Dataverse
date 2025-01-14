@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         private readonly FxColumnMap _columnMap;
 
         /// <summary>
-        /// null means select All Columns. Empty means select No Columns.
+        /// null or empty means select All Columns.
         /// </summary>
         internal FxColumnMap ColumnMap => _columnMap;
 

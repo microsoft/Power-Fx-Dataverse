@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
     {
         public const string FieldNameColumnName = "fieldName";
         public const string FieldFunctionColumnName = "fieldFunctions";
-        
+
         public static string SingleColumnTableColumnName => TableValue.ValueName;
 
         public static DName SingleColumnTableColumnDName => TableValue.ValueDName;

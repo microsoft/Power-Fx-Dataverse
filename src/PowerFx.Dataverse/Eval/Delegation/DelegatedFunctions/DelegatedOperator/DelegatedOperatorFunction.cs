@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new NotSupportedException($"Unsupported operation {_op} :  {parentOperation}");
                 }
             }
-            else 
+            else
             {
                 throw new NotSupportedException($"Unsupported operation {_op}");
             }

@@ -26,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse
           : base(hooks, "__retrieveMultiple", tableType)
         {
         }
-        
+
         private const int TableArg = 0;
         private const int FilterArg = 1;
         private const int OrderbyArg = 2;
@@ -133,7 +133,7 @@ namespace Microsoft.PowerFx.Dataverse
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation                
+                Relation = relation
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

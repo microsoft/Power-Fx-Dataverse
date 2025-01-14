@@ -62,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _columnInfoMap = logicalColumns.Select(c => new FxColumnInfo(c, c)).ToDictionary(c => c.AliasColumnName ?? c.RealColumnName);
         }
 
-        internal FxColumnMap(TableType sourceTableType) 
+        internal FxColumnMap(TableType sourceTableType)
             : this(sourceTableType.ToRecord())
         {
         }
@@ -77,7 +77,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return columnInfo.AliasColumnName ?? columnInfo.RealColumnName;
         }
 
-        internal bool HasDistinct()
+        public bool HasDistinct()
         {
             if (_columnInfoMap.Count() == 1)
             {
@@ -123,7 +123,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// <param name="aliasOrLogicalName">Alias name if Column was previosuly aliased in expression, else logical name of Column.</param>
         /// <param name="columnInfo"></param>
         /// <returns></returns>
-        internal bool TryGetColumnInfo(string aliasOrLogicalName, out FxColumnInfo columnInfo)
+        public bool TryGetColumnInfo(string aliasOrLogicalName, out FxColumnInfo columnInfo)
         {
             if (string.IsNullOrEmpty(aliasOrLogicalName))
             {

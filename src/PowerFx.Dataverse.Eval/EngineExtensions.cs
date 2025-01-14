@@ -78,21 +78,21 @@ namespace Microsoft.PowerFx.Dataverse
                 if (result.Any(err => err.IsError))
                 {
                     return result.Where(err => err.IsError);
-                }             
+                }
 
                 return result;
             }
 
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
-            {               
+            {
                 // Binder should have enforced that this always succeeds.
                 if (table is DataverseTableValue t2)
                 {
                     if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                     {
                         return amd.ToAttributeObject(value, true);
-                    }                    
+                    }
 
                     throw new Exception($"Field {fieldName} not found on table {t2._entityMetadata.DisplayName}");
                 }

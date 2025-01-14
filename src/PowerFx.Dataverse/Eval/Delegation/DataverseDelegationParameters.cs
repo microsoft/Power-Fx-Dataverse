@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -17,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse
     [Obsolete("Preview")]
     public class DataverseDelegationParameters : DelegationParameters
     {
-        public const string Odata_Filter = "$filter";        
+        public const string Odata_Filter = "$filter";
 
         public const string Odata_OrderBy = "$orderby";
 
@@ -369,7 +368,7 @@ namespace Microsoft.PowerFx.Dataverse
                 JoinOperator.All => $"fulljoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
                 _ => throw new InvalidOperationException("Invalid Join operator")
             };
-        }            
+        }
 
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {

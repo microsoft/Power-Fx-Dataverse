@@ -30,7 +30,7 @@ namespace Microsoft.PowerFx.Dataverse
                 && context.DelegationMetadata?.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith) == true)
             {
                 var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
-                
+
                 var ret = CreateBinaryOpRetVal(context, node, startsEndsWithNode);
                 return ret;
             }
