@@ -1,4 +1,4 @@
-IsBlank(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), )) | $top=1
-IsBlank(__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), 999, , {new_price:new_price})) | $filter=(new_price lt 120)&$select=new_price&$top=999
-IsBlank(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, NegateDecimal(100)), __noop(), __noJoin(), __noopGroupBy(), )) | $filter=(new_price lt -100)&$top=1
-IsBlank(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, new_price, {Value:new_price})) | $select=new_price&$top=999
+IsBlank(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), __allColumns())) | $top=1
+IsBlank(__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price})) | $filter=(new_price lt 120)&$select=new_price&$top=999
+IsBlank(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, NegateDecimal(100)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())) | $filter=(new_price lt -100)&$top=1
+IsBlank(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)})) | $select=new_price&$top=999

@@ -22,7 +22,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
-            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, IEnumerable<string> columns, CancellationToken cancellationToken)
+            public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, FxColumnMap columnMap, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -40,19 +40,19 @@ namespace Microsoft.PowerFx.Dataverse
                         var filter = new FxFilterExpression();
                         filter.AddCondition(t2._entityMetadata.PrimaryIdAttribute, FxConditionOperator.Equal, id);
 #pragma warning disable CS0618 // Type or member is obsolete
-                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters(t2.Type.ToRecord()) { FxFilter = filter, Top = 1, ColumnMap = ColumnMap.GetColumnMap(columns) }, cancellationToken).ConfigureAwait(false);
+                        var rows = await t2.RetrieveMultipleAsync(new DataverseDelegationParameters(t2.Type.ToRecord()) { FxFilter = filter, Top = 1, ColumnMap = columnMap }, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CS0618 // Type or member is obsolete
                         result = rows.FirstOrDefault();
                     }
                     else
                     {
                         // If the table is elastic and partitionId is not null we need to use RetrieveAsync api to point retrieve using guid and partitionId which is faster.
-                        result = await t2.RetrieveAsync(id, partitionId, columns, cancellationToken).ConfigureAwait(false);
+                        result = await t2.RetrieveAsync(id, partitionId, columnMap, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    result = await t2.RetrieveAsync(id, columns, cancellationToken).ConfigureAwait(false);
+                    result = await t2.RetrieveAsync(id, columnMap, cancellationToken).ConfigureAwait(false);
                 }
 
                 return result;

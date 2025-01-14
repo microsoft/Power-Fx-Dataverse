@@ -171,7 +171,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(44, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4)", 3, @"Table({Value:""p1""},{Value:""row4""},{Value:If(false,"""")})")]
         [InlineData(45, "ForAll(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), {n5: n4})", 3, @"Table({n5:""p1""},{n5:""row4""},{n5:If(false,"""")})")]
 
-        // no delegation of SortByColumns as a ColumnMap is used in Join 
+        // no delegation of SortByColumns as a FxColumnMap is used in Join 
         [InlineData(46, "ShowColumns(SortByColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
         [InlineData(47, "SortByColumns(ShowColumns(Join(local, remote, LeftRecord.rtid = RightRecord.remoteid, JoinType.Inner, RightRecord.other As other2, LeftRecord.new_name As n4), n4), n4)", 3, @"Table({n4:""p1""},{n4:""row4""},{n4:If(false,"""")})")]
 

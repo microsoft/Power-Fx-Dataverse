@@ -33,9 +33,7 @@ namespace Microsoft.PowerFx.Dataverse
         private const int JoinArg = 3;
         private const int GroupByArg = 4;
         private const int CountArg = 5;
-        private const int DistinctArg = 6;
-        private const int ColumnRenameArg = 7;
-        private const int ColumnRenameArg1 = ColumnRenameArg + 1;
+        private const int ColumnMapArg = 6;
 
         // args[0]: table
         // args[1]: filter
@@ -43,15 +41,15 @@ namespace Microsoft.PowerFx.Dataverse
         // args[3]: join
         // args[4]: groupby
         // args[5]: count
-        // args[6]: distinct column
-        // args[7]: columns with renames (in Record)
+        // args[6]: columns with possible renames 
+
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             if (args[TableArg] is not IDelegatableTableValue table)
             {
-                throw new InvalidOperationException($"args{TableArg} should always be of type {nameof(TableValue)} : found {args[TableArg]}");
+                throw new InvalidOperationException($"args{TableArg} should always be of type {nameof(IDelegatableTableValue)} : found {args[TableArg]}");
             }
 
             int? topCount = null;
@@ -105,18 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{GroupByArg} should always be of type {nameof(GroupByObjectFormulaValue)} : found {args[GroupByArg]}");
             }
 
-            string distinctColumn = null;
-            if (args[DistinctArg] is StringValue sv)
-            {
-                distinctColumn = sv.Value;
-            }
-            else if (args[DistinctArg] is not BlankValue)
-            {
-                throw new InvalidOperationException($"args{DistinctArg} should always be of type {nameof(StringValue)} : found {args[DistinctArg]}");
-            }
-
             FxJoinNode join = null;
-
             if (args[JoinArg] is JoinFormulaValue jv)
             {
                 join = jv.JoinNode;
@@ -126,13 +113,14 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{JoinArg} should always be of type {nameof(JoinFormulaValue)} : found {args[JoinArg]}");
             }
 
-            ColumnMap columnMap = null;
-
-            if (args.Length > ColumnRenameArg)
+            FxColumnMap columnMap = null;
+            if (args[ColumnMapArg] is ColumnMapFormulaValue columnMapFormulaValue)
             {
-                columnMap = args[ColumnRenameArg] is RecordValue rv
-                    ? new ColumnMap(rv, distinctColumn)
-                    : throw new InvalidOperationException($"Expecting args5 to be a {nameof(RecordValue)} : found {args[ColumnRenameArg].GetType().Name}");
+                columnMap = columnMapFormulaValue.ColumnMap;
+            }
+            else
+            {
+                throw new InvalidOperationException($"args{ColumnMapArg} should always be of type {nameof(ColumnMapFormulaValue)} : found {args[ColumnMapArg]}");
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -169,14 +157,16 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(valueRecord);
         }
 
-        internal override bool IsUsingColumnMap(CallNode node, out ColumnMap columnMap)
+        internal override bool IsUsingColumnMap(CallNode node, out FxColumnMap columnMap)
         {
-            if (node.Args.Count == ColumnRenameArg1 &&
-                node.Args[DistinctArg] is TextLiteralNode distinctNode &&
-                node.Args[ColumnRenameArg] is RecordNode columnMapNode)
+            if (node.Args[ColumnMapArg] is ResolvedObjectNode columnMapIR)
             {
-                columnMap = new ColumnMap(columnMapNode, distinctNode);
-                return true;
+                columnMap = ((ColumnMapFormulaValue)columnMapIR.Value).ColumnMap;
+
+                if (columnMap != null)
+                {
+                    return true;
+                }
             }
 
             columnMap = null;

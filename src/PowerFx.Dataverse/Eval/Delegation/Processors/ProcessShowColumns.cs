@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -13,10 +14,31 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessShowColumns(CallNode node, RetVal tableArg, Context context)
         {
-            // ShowColumns is only a column selector, so let's create a map with (column, column) entries
-            ColumnMap map = new ColumnMap(node.Args.Skip(1).Select(i => i is TextLiteralNode tln ? tln : throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {i.GetType().Name}")));
+            var columnNames = node.Args.Skip(1).Select(arg =>
+            {
+                if (arg is TextLiteralNode tln)
+                {
+                    return tln.LiteralValue;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {arg.GetType().Name}");
+                }
+            });
 
-            if (tableArg.TryAddColumnMap(map, node, out var resultingTable))
+            //foreach (var arg in node.Args.Skip(1))
+            //{
+            //    if (arg is TextLiteralNode tln)
+            //    {
+            //        map.AddColumn(tln.LiteralValue);
+            //    }
+            //    else
+            //    {
+            //        throw new InvalidOperationException($"Expecting {nameof(TextLiteralNode)} and received {arg.GetType().Name}");
+            //    }
+            //}
+
+            if (tableArg.TryUpdateColumnSelection(columnNames, node, out var resultingTable))
             {
                 if (node is CallNode maybeGuidCall && maybeGuidCall.Function is DelegatedRetrieveGUIDFunction)
                 {

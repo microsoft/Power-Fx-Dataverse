@@ -288,10 +288,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 //                     °-----° °-----°
                 // ~~
 
-                // linkEntity.Columns.Columns is always null on Join LinkEntities, as we always rename right columns                         
-                // and this is stored in AttributeExpressions where an alias is defined, per column.
-                Assert.Empty(join.Columns.Columns);
-
                 joinType = join.JoinOperator;
                 includeLeft =  joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.LeftOuter /* Left  */;
                 includeRight = joinType == JoinOperator.All /* Full */ || joinType == JoinOperator.In        /* Right */;
@@ -375,7 +371,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 OrderExpression oe = qe.Orders.First();
 
                 IOrderedEnumerable<Entity> entities = oe.OrderType == OrderType.Ascending
-                    ? entityList.OrderBy(e => e.Attributes[oe.AttributeName])
+                    ? entityList.OrderBy(e => e.Attributes[oe.Alias ?? oe.AttributeName])
                     : entityList.OrderByDescending(e => e.Attributes[oe.AttributeName]);
 
                 foreach (OrderExpression nextOe in qe.Orders.Skip(1))

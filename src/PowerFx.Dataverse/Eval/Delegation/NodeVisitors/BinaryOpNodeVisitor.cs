@@ -57,9 +57,9 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            if (context.CallerTableRetVal.HasColumnMap && context.CallerTableRetVal.ColumnMap.AsStringDictionary().TryGetValue(fieldName, out string realFieldName))
+            if (context.CallerTableRetVal.HasLeftColumnMap && context.CallerTableRetVal.LeftColumnMap.TryGetColumnInfo(fieldName, out var fieldInfo))
             {
-                fieldName = realFieldName;
+                fieldName = fieldInfo.RealColumnName;
             }
 
             if (!IsRelationDelegationAllowed(tableType, relations))

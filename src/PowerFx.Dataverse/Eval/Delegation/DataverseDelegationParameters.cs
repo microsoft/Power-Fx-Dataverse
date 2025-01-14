@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -35,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal ISet<LinkEntity> Relation { get; init; }
 
-        public ColumnMap ColumnMap { get; init; }
+        public FxColumnMap ColumnMap { get; init; }
 
         public FxGroupByNode GroupBy { get; init; }
 
@@ -176,7 +177,7 @@ namespace Microsoft.PowerFx.Dataverse
                 string joinApply = GetOdataJoinApply();
                 string filter = GetOdataFilter();
                 int top = Top ?? 0;
-                IReadOnlyCollection<string> select = GetColumns();
+                IEnumerable<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
                 string groupBy = GetODataGroupBy();
 
@@ -214,7 +215,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Columns;
+        public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.RealColumnNames.ToArray();
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FxFilterExpression filter)
