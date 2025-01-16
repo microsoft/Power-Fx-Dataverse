@@ -90,28 +90,28 @@ namespace Microsoft.PowerFx.Dataverse
                 string leftField = leftrfan.Field.Value;
                 string rightField = rightrfan.Field.Value;
 
-                string toAttribute = null;
-                string fromAttribute = null;
+                string toAttribute = rightField;
+                string fromAttribute = leftField;
 
-                if (leftsas.Name.Value == leftRecordName && rightsas.Name.Value == rightRecordName)
-                {
-                    if ((rightPrimaryKeys.Count() == 1 && rightField == rightPrimaryKeys.First()) ||
-                        (leftPrimaryKeys.Count() == 1 && leftField == leftPrimaryKeys.First()))
-                    {
-                        toAttribute = rightField;
-                        fromAttribute = leftField;
-                    }
-                }
+                //if (leftsas.Name.Value == leftRecordName && rightsas.Name.Value == rightRecordName)
+                //{
+                //    if ((rightPrimaryKeys.Count() == 1 && rightField == rightPrimaryKeys.First()) ||
+                //        (leftPrimaryKeys.Count() == 1 && leftField == leftPrimaryKeys.First()))
+                //    {
+                //        toAttribute = rightField;
+                //        fromAttribute = leftField;
+                //    }
+                //}
 
-                if (leftsas.Name.Value == rightRecordName && rightsas.Name.Value == leftRecordName)
-                {
-                    if ((rightPrimaryKeys.Count() == 1 && leftField == rightPrimaryKeys.First()) ||
-                        (leftPrimaryKeys.Count() == 1 && rightField == leftPrimaryKeys.First()))
-                    {
-                        toAttribute = leftField;
-                        fromAttribute = rightField;
-                    }
-                }
+                //if (leftsas.Name.Value == rightRecordName && rightsas.Name.Value == leftRecordName)
+                //{
+                //    if ((rightPrimaryKeys.Count() == 1 && leftField == rightPrimaryKeys.First()) ||
+                //        (leftPrimaryKeys.Count() == 1 && rightField == leftPrimaryKeys.First()))
+                //    {
+                //        toAttribute = leftField;
+                //        fromAttribute = rightField;
+                //    }
+                //}
 
                 if (!string.IsNullOrEmpty(toAttribute) &&
                     !string.IsNullOrEmpty(fromAttribute))
@@ -121,7 +121,15 @@ namespace Microsoft.PowerFx.Dataverse
                     // Join pulls in all column from left table.
                     foreach (var leftFieldName in leftTable.TableType.FieldNames)
                     {
-                        leftMap.AddColumn(leftFieldName);
+                        if (leftFieldName == "{Attachments}")
+                        {
+                            // test
+                        }
+
+                        if (leftTable.TableType.TryGetBackingDType(leftFieldName, out var backingType) && backingType.IsPrimitive)
+                        {
+                            leftMap.AddColumn(leftFieldName);
+                        }
                     }
 
                     // There maybe renames on the columns from left table.

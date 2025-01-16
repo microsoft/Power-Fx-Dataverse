@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -149,6 +150,13 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
             QueryExpression query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
+
+            var request = new QueryExpressionToFetchXmlRequest
+            {
+                Query = query
+            };
+
+            var response = await _connection.Services.ExecuteAsync(request);
 
             DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
 
@@ -496,7 +504,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Field {fieldName} not found in {entity.LogicalName} or in right Table of the join.");
+                            fieldValue = FormulaValue.NewBlank(fieldType);
                         }
 
                         namedValues.Add(new NamedValue(fieldName, fieldValue));
