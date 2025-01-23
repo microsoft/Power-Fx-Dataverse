@@ -73,6 +73,7 @@ namespace Microsoft.PowerFx.Dataverse
             public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                delegationParameters.EnsureOnlyFeatures(table.SupportedFeatures);
                 IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
 
                 if (result.Any(err => err.IsError))
@@ -83,9 +84,18 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            public override async Task<int> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            public override async Task<FormulaValue> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
-                var count = await table.GetCountAsync(services, delegationParameters, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                delegationParameters.EnsureOnlyFeatures(table.SupportedFeatures);
+                var count = await table.ExecuteQueryAsync(services, delegationParameters, cancellationToken);
+
+                // if returned type is not number or decimal, throw exception.
+                if (count.Type != ((DataverseDelegationParameters)delegationParameters).ExpectedReturnType)
+                {
+                    throw new InvalidOperationException($"Expected return type is {((DataverseDelegationParameters)delegationParameters).ExpectedReturnType} but received {count.Type} from {nameof(table.ExecuteQueryAsync)}");
+                }
+
                 return count;
             }
 

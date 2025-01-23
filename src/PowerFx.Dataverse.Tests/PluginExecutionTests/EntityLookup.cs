@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -946,7 +947,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         public async Task<DataverseResponse<OrganizationResponse>> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken = default)
         {
-            if (!request.Parameters.TryGetValue("partitionId", out var partitionId))
+            if (!request.Parameters.TryGetValue("partitionId", out var partitionId) && request is not RetrieveTotalRecordCountRequest)
             {
                 throw new InvalidOperationException("PartitionId not found in the request.");
             }
@@ -987,6 +988,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
 
                 return new DataverseResponse<OrganizationResponse>(new RetrieveResponse() { Results = new ParameterCollection { ["Entity"] = entity } });
+            }
+            else if (request is RetrieveTotalRecordCountRequest countRequest)
+            {
+                int count = 0;
+
+                foreach (var entity in _list)
+                {
+                    if (entity.LogicalName == countRequest.EntityNames.First())
+                    {
+                        count++;
+                    }
+                }
+
+                var response = new RetrieveTotalRecordCountResponse();
+                response.Results.Add("EntityRecordCountCollection", new EntityRecordCountCollection());
+                response.EntityRecordCountCollection.Add(countRequest.EntityNames.First(), count);
+
+                return new DataverseResponse<OrganizationResponse>(response);
             }
 
             throw new NotImplementedException();

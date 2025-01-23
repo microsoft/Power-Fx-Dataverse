@@ -42,10 +42,9 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
-            public virtual async Task<int> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            public virtual async Task<FormulaValue> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
-                var result = await table.GetCountAsync(services, delegationParameters, cancellationToken);
-                return result;
+                throw new NotImplementedException();
             }
 
             /// <summary>
@@ -96,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else if (retVal.LeftColumnMap.ReturnTotalRowCount && (retVal.OriginalNode.IRContext.ResultType is NumberType || retVal.OriginalNode.IRContext.ResultType is DecimalType))
                 {
-                    func = new DelegatedRetrieveCountFunction(this);
+                    func = new DelegatedRetrieveCountFunction(this, retVal.OriginalNode.IRContext.ResultType);
                     args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault, retVal.ColumnMapNode };
                     returnType = FormulaType.Number;
                 }

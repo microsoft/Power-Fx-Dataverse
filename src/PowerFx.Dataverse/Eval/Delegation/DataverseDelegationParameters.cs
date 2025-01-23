@@ -26,6 +26,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public const string Odata_Apply = "$apply";
 
+        public const string Odata_Count = "$count";
+
         // Systems can get the filter expression directrly and translate.
         public FxFilterExpression FxFilter { get; init; }
 
@@ -50,6 +52,14 @@ namespace Microsoft.PowerFx.Dataverse
         /// This is the expected RecordType Host needs to return after it performed delegation.
         /// </summary>
         public FormulaType ExpectedReturnType => _expectedReturnType;
+
+        private bool HasNoFilter => FxFilter == null || FxFilter.Conditions.IsNullOrEmpty();
+
+        private bool HasNoJoin => Join == null;
+
+        private bool HasNoGroupBy => GroupBy == null;
+
+        private bool HasNoRelation => Relation == null || !Relation.Any();
 
         internal DataverseDelegationParameters(FormulaType expectedReturnType)
         {
@@ -85,6 +95,16 @@ namespace Microsoft.PowerFx.Dataverse
                 if (GroupBy != null)
                 {
                     features |= DelegationParameterFeatures.ApplyGroupBy;
+                }
+
+                if (ColumnMap != null)
+                {
+                    if (ColumnMap.ReturnTotalRowCount)
+                    {
+                        features |= DelegationParameterFeatures.Count;
+                    }
+
+                    features |= DelegationParameterFeatures.Columns;
                 }
 
                 return features;
@@ -208,6 +228,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (top > 0)
                 {
                     ode.Add(Odata_Top, top.ToString());
+                }
+
+                if (ColumnMap != null && ColumnMap.ReturnTotalRowCount)
+                {
+                    ode.Add(Odata_Count, "true");
                 }
 
                 return ode;
@@ -373,6 +398,19 @@ namespace Microsoft.PowerFx.Dataverse
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {
             return OrderBy?.Select(oe => (oe.AttributeName, oe.OrderType == OrderType.Ascending)).ToList();
+        }
+
+        /// <summary>
+        /// Check if the query is counting the entire table without any filter, join, etc.
+        /// </summary>
+        public bool IsCountingEntireTable()
+        {
+            if (ColumnMap?.ReturnTotalRowCount != true)
+            {
+                return false;
+            }
+
+            return HasNoFilter && HasNoJoin && HasNoGroupBy && HasNoRelation;
         }
     }
 }

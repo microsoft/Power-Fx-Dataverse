@@ -16,12 +16,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class CountRowsAndCountIfDelegationTests
     {
-        private static List<DelegationOperator> _supportedDelegationOperator = new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.And, DelegationOperator.Or, DelegationOperator.Not, DelegationOperator.Null };
+        private static List<DelegationOperator> _supportedDelegationOperator = new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.And, DelegationOperator.Or, DelegationOperator.Not, DelegationOperator.Null, DelegationOperator.JoinInner };
 
         [Theory]
         [InlineData(1, "CountRows(t1)")]
         [InlineData(2, "CountRows(Filter(t1, Name = \"test\" Or Credit = 0))")]
         [InlineData(3, "CountRows(Filter(t1, Name = \"test\" And Credit = 0))")]
+
+        // Can't delegate CountRows() becuase inner filter is non delegable due to column comaparison.
         [InlineData(4, "CountRows(Filter(t1, Name = \"test\" And Credit = Amount))")]
 
         [InlineData(5, "CountIf(t1, Name = \"test\")")]
@@ -33,13 +35,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [InlineData(11, "CountRows(Summarize(Filter(t1, Name = \"test\") , name, credit, Sum(ThisGroup, amount) As TotalAmount))")]
 
-        [InlineData(12, "CountRows(Join(t1, t1 As t2, LeftRecord.Name = t2.Name, JoinType.Inner, t2.name As newName))")]
+        [InlineData(12, "CountRows(Join(t1, t1 As t2, LeftRecord.id = t2.id, JoinType.Inner, t2.name As newName))")]
 
         // Can't delegate CountIf() with Summarize().
         [InlineData(13, "CountIf(Summarize(Filter(t1, Name = \"test\") , name, credit, Sum(ThisGroup, amount) As TotalAmount), name = \"test\")")]
 
         // Can't delegate CountIf() with Join()
-        [InlineData(14, "CountIf(Join(t1, t1 As t2, LeftRecord.Name = t2.Name, JoinType.Inner, t2.name As newName), newName = \"test\")")]
+        [InlineData(14, "CountIf(Join(t1, t1 As t2, LeftRecord.id = t2.id, JoinType.Inner, t2.name As newName), newName = \"test\")")]
         public async Task CountRowsAndCountIfDelegationAsync(int id, string expression)
         {
             var file = "CountRowsAndCountIfDelegationAsync.txt";
@@ -47,7 +49,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var recordType = RecordType.Empty()
                 .Add("name", FormulaType.String, "Name")
                 .Add("credit", FormulaType.Number, "Credit")
-                .Add("amount", FormulaType.Number, "Amount");
+                .Add("amount", FormulaType.Number, "Amount")
+                .Add("id", FormulaType.Number, "Id");
 
             var delegationRecordType = new TestRecordType("t1", recordType, _supportedDelegationOperator);
 
@@ -69,14 +72,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var oDataStrings = string.Empty;
             var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
-            if (delegationParameter != null && !delegationParameter.GroupBy?.FxAggregateExpressions.Any(e => e.AggregateMethod == Core.Entities.SummarizeMethod.Count) == true)
-            {
-                oDataStrings = DelegationTests.GetODataString((DataverseDelegationParameters)testTableValue.DelegationParameters);
-            }
-            else if (oDataStrings.Contains("__retrieve"))
-            {
-                throw new InvalidOperationException("Delegated IR should also have Delegation Parameters");
-            }
+
+            oDataStrings = DelegationTests.GetODataString(delegationParameter);
 
             await DelegationTestUtility.CompareSnapShotAsync(id, file, string.IsNullOrEmpty(oDataStrings) ? actualIr : $"{actualIr} | {oDataStrings}", id, false);
         }
