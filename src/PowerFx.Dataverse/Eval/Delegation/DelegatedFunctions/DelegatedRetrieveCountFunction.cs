@@ -22,8 +22,8 @@ namespace Microsoft.PowerFx.Dataverse
     /// </summary>
     internal class DelegatedRetrieveCountFunction : DelegateFunction
     {
-        public DelegatedRetrieveCountFunction(DelegationHooks hooks)
-          : base(hooks, "__retrieveCount", FormulaType.Number)
+        public DelegatedRetrieveCountFunction(DelegationHooks hooks, FormulaType returnType)
+          : base(hooks, "__retrieveCount", returnType)
         {
         }
 
@@ -124,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            var delegationParameters = new DataverseDelegationParameters(FormulaType.Number) 
+            var delegationParameters = new DataverseDelegationParameters(ReturnFormulaType)
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
@@ -139,20 +139,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var rowCount = await _hooks.RetrieveCount(services, table, delegationParameters, cancellationToken);
 
-            if (rowCount < 0)
-            {
-                var expressionError = new ExpressionError()
-                {
-                    Message = "Datasource could not count the rows.",
-                    Kind = ErrorKind.Custom,
-                    Severity = ErrorSeverity.Severe,
-                };
-
-                return FormulaValue.NewError(expressionError);
-            }
-
-            var countFV = FormulaValue.New(rowCount);
-            return countFV;
+            return rowCount;
         }
 
         internal static IEnumerable<DValue<RecordValue>> ToValueColumn(IEnumerable<DValue<RecordValue>> records, string column)

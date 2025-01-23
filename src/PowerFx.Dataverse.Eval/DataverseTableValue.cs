@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -38,6 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
         public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
 
         public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public DelegationParameterFeatures SupportedFeatures => DelegationParameterFeatures.Filter | DelegationParameterFeatures.Top | DelegationParameterFeatures.Columns | DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Count;
 
         public readonly EntityMetadata _entityMetadata;
 
@@ -162,9 +165,42 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        public async Task<int> GetCountAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        public async Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        {
+            // if condition expression is empty, we can call seprate function to get count of the table.
+            var delegationParameters = (DataverseDelegationParameters)parameters;
+            if (delegationParameters.ColumnMap?.ReturnTotalRowCount == true)
+            {
+                var count = await GetCountAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                if (delegationParameters.ExpectedReturnType == FormulaType.Decimal)
+                {
+                    return FormulaValue.New(count);
+                }
+                else if (delegationParameters.ExpectedReturnType == FormulaType.Number)
+                {
+                    return FormulaValue.New((float)count);
+                }
+            }
+
+            throw new InvalidOperationException("ExecuteQueryAsync encountered incorrect query.");
+        }
+
+        private async Task<long> GetCountAsync(IServiceProvider services, DataverseDelegationParameters parameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (!HasFilterConditions(parameters.Filter))
+            {
+                var response = await _connection.Services.ExecuteAsync(new RetrieveTotalRecordCountRequest() { EntityNames = new string[] { _entityMetadata.LogicalName } });
+                var response2 = (RetrieveTotalRecordCountResponse)response.Response;
+                if (response2.EntityRecordCountCollection.TryGetValue(_entityMetadata.LogicalName, out var totalCount))
+                {
+                    return totalCount;
+                }
+
+                throw new InvalidOperationException($"Response incorrect executing query in {nameof(GetCountAsync)}");
+            }
+
             var delegationParameters = (DataverseDelegationParameters)parameters;
             var query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
             query.PageInfo.ReturnTotalRecordCount = true;
@@ -172,14 +208,19 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (entityCollectionResponse.HasError)
             {
-                return -1;
+                throw new CustomFunctionErrorException($"Error while executing query in {nameof(GetCountAsync)}");
             }
             else if (entityCollectionResponse.Response.TotalRecordCountLimitExceeded)
             {
-                return -1;
+                throw new CustomFunctionErrorException($"Total record count limit exceeded in {nameof(GetCountAsync)}");
             }
 
             return entityCollectionResponse.Response.TotalRecordCount;
+        }
+
+        private static bool HasFilterConditions(FilterExpression filter)
+        {
+            return filter != null && filter.Conditions.Count > 0;
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete

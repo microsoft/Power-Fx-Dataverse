@@ -37,6 +37,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
+        private static DelegationParameterFeatures _supportedFeatures = DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Columns | DelegationParameterFeatures.Count | DelegationParameterFeatures.Filter | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Top;
+
+        public DelegationParameterFeatures SupportedFeatures => _supportedFeatures;
+
+        public Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            FormulaValue result = FormulaValue.NewBlank(((DataverseDelegationParameters)parameters).ExpectedReturnType);
+            return Task.FromResult(result);
+        }
+
         public Task<int> GetCountAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             DelegationParameters = parameters;
