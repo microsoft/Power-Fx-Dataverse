@@ -83,6 +83,12 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
+            public override async Task<int> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            {
+                var count = await table.GetCountAsync(services, delegationParameters, cancellationToken);
+                return count;
+            }
+
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
             public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
             {

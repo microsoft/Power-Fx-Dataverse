@@ -44,14 +44,14 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        private readonly RecordType _expectedReturnType;
+        private readonly FormulaType _expectedReturnType;
 
         /// <summary>
         /// This is the expected RecordType Host needs to return after it performed delegation.
         /// </summary>
-        public RecordType ExpectedReturnType => _expectedReturnType;
+        public FormulaType ExpectedReturnType => _expectedReturnType;
 
-        internal DataverseDelegationParameters(RecordType expectedReturnType)
+        internal DataverseDelegationParameters(FormulaType expectedReturnType)
         {
             _expectedReturnType = expectedReturnType;
         }

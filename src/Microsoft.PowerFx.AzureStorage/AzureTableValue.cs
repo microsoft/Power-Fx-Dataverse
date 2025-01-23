@@ -60,5 +60,10 @@ namespace Microsoft.PowerFx.AzureStorage
 
             return results;
         }
+
+        public Task<int> GetCountAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

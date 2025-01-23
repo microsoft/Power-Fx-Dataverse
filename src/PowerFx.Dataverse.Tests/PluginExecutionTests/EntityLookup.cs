@@ -250,7 +250,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 entityList = entityList.Distinct(new EntityComparer(qe.ColumnSet)).ToList();
             }
 
-            return new DataverseResponse<EntityCollection>(new EntityCollection(entityList));
+            var result = new EntityCollection(entityList) { TotalRecordCount = entityList.Count };
+            return new DataverseResponse<EntityCollection>(result);
         }
 
 #pragma warning disable SA1025 // Code should not contain multiple white spaces in a row        

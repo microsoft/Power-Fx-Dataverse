@@ -37,6 +37,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
+        public Task<int> GetCountAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            DelegationParameters = parameters;
+            return Task.FromResult(-1);
+        }
+
         public Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             DelegationParameters = parameters;
@@ -71,8 +77,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             {
                 TableName = tableName,
                 SelectionRestriction = new SelectionRestrictions() { IsSelectable = isSelectable },
-                SummarizeCapabilities = new MockSummarizeCapabilities()
+                SummarizeCapabilities = new MockSummarizeCapabilities(),
+                CountCapabilities = new MockCountCapabilities()
             };
+        }
+
+        private class MockCountCapabilities : CountCapabilities
+        {
+            public override bool IsCountableTable()
+            {
+                return true;
+            }
+
+            public override bool IsCountableAfterJoin()
+            {
+                return true;
+            }
+
+            public override bool IsCountableAfterSummarize()
+            {
+                return true;
+            }
         }
 
         private class MockSummarizeCapabilities : SummarizeCapabilities

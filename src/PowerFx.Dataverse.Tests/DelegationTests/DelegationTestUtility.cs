@@ -13,7 +13,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public static class DelegationTestUtility
     {
-        private const bool RegenerateSnapshot = false;
+        private const bool RegenerateSnapshot = true;
 
         internal static IList<string> TransformForWithFunction(string expr, int warningCount)
         {

@@ -39,9 +39,13 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 tableType = recordType.ToTable();
             }
-            else
+            else if (callerReturnType is TableType tableReturnType)
             {
                 tableType = (TableType)callerReturnType;
+            }
+            else
+            {
+                tableType = context.CallerTableRetVal.TableType;
             }
 
             IntermediateNode binaryOpNodeLeft = node.Left;

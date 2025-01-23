@@ -162,6 +162,26 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
+        public async Task<int> GetCountAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var delegationParameters = (DataverseDelegationParameters)parameters;
+            var query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
+            query.PageInfo.ReturnTotalRecordCount = true;
+            DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (entityCollectionResponse.HasError)
+            {
+                return -1;
+            }
+            else if (entityCollectionResponse.Response.TotalRecordCountLimitExceeded)
+            {
+                return -1;
+            }
+
+            return entityCollectionResponse.Response.TotalRecordCount;
+        }
+
 #pragma warning disable CS0618 // Type or member is obsolete
 
         internal virtual async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, string partitionId, CancellationToken cancellationToken)
@@ -454,7 +474,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
-            RecordType recordType = delegationParameters.ExpectedReturnType;
+            RecordType recordType = (RecordType)delegationParameters.ExpectedReturnType;
 
             bool returnsDVRecordValue = delegationParameters.GroupBy == null && delegationParameters.Join == null;
 
@@ -470,7 +490,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     List<NamedValue> namedValues = new List<NamedValue>();
 
-                    foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
+                    foreach (NamedFormulaType nft in recordType.GetFieldTypes())
                     {
                         var fieldName = nft.Name.Value;
                         var fieldType = nft.Type;
