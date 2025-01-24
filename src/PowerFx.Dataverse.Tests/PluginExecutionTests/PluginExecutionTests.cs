@@ -1038,7 +1038,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: new_price;")]
-        [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")]
+        [InlineData("Set(NewRecord.Price, 8)", "Write local: new_price;")]
 
         // Summarize is special, becuase of ThisGroup.
         // Summarize that's delegated.
@@ -1049,7 +1049,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         // Join
         [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: actual_float, calc, data, dateOnly, otherotherid, float, other, rating, remoteid, tziDateOnly, tziDateTime, userLocalDateOnly, userLocalDateTime; Read local: rtid, new_name;")]
-        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Read remote: other, data; Read local: new_price;")]
+        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Read local: new_price; Read remote: data, other;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1083,7 +1083,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 .SetText(expr, _parserAllowSideEffects)
                 .SetBindingInfo(symbols);
 
-            var info = DependencyInfo.Scan(check, dv.MetadataCache);
+            var info = check.ApplyDependencyInfoScan(dv.MetadataCache);
 
             var actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
 

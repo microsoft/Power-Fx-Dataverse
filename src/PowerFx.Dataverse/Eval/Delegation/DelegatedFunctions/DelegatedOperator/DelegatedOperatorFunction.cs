@@ -3,10 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.Texl.Builtins;
 using Microsoft.PowerFx.Dataverse.CdsUtilities;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -252,6 +255,91 @@ namespace Microsoft.PowerFx.Dataverse
 
                 _ => throw new NotSupportedException($"Unsupported operation {_op}"),
             };
+        }
+
+        public override bool ComposeDependencyInfo(CallNode node, DependencyVisitor visitor, DependencyVisitor.DependencyContext context)
+        {
+            Contract.Assert(visitor is DependencyVisitorDataverse);
+
+            var dvVisitor = (DependencyVisitorDataverse)visitor;
+
+            string tableLogicalName = null;
+            if (node.Args[0].IRContext.ResultType is AggregateType aggType)
+            {
+                tableLogicalName = aggType.TableSymbolName;
+            }
+            else
+            {
+                throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have first argument an aggregate type");
+            }
+
+            // Relationship case
+            if (node.Args.Count > 3)
+            {
+                if (node.Args[3] is CallNode maybeTableArg && maybeTableArg.Function is TableFunction tableArg && maybeTableArg.Args.Count == 1)
+                {
+                    var arg0 = (RecordNode)maybeTableArg.Args[0];
+                    if (arg0.Fields.TryGetValue(FieldInfoRecord.SingleColumnTableColumnDName, out var valueNode) && valueNode is TextLiteralNode textNode)
+                    {
+                        var relationshipObj = DelegationUtility.DeserializeRelatioMetadata(textNode.LiteralValue);
+                        visitor.AddFieldRead(tableLogicalName, relationshipObj.ReferencingFieldName);
+
+                        var referencedEntityName = relationshipObj.ReferencedEntityName;
+
+                        // referencedEntityName is null for non polymorphic relationships.
+                        if (referencedEntityName == null)
+                        {
+                            if (dvVisitor.MetadataCache.TryGetXrmEntityMetadata(tableLogicalName, out var entityMetadata) &&
+                                entityMetadata.TryGetManyToOneRelationship(relationshipObj.ReferencingFieldName, out var relation))
+                            {
+                                referencedEntityName = relation.ReferencedEntity;
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException(referencedEntityName + " is null and can't be resolved");
+                            }
+                        }
+
+                        // Arg1 is the field FieldInfoRecord being compared on the target entity.
+                        var infoRecord = (RecordNode)node.Args[1];
+
+                        var fieldName = ((TextLiteralNode)infoRecord.Fields.First(field => field.Key.Value == FieldInfoRecord.FieldNameColumnName).Value).LiteralValue;
+                        visitor.AddFieldRead(referencedEntityName, fieldName);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have fourth argument a table function with a single argument of type record with a field named Value");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have fourth argument a table function");
+                }
+            }
+            else
+            {
+                if (node.Args[1] is RecordNode fieldInfoRecord
+                    && fieldInfoRecord.Fields.TryGetValue(new Core.Utils.DName(FieldInfoRecord.FieldNameColumnName), out var maybeField)
+                    && maybeField is TextLiteralNode field)
+                {
+                    string fieldName = field.LiteralValue;
+
+                    if (dvVisitor.ColumnMap != null && dvVisitor.ColumnMap.TryGetColumnInfo(fieldName, out var fieldInfo))
+                    {
+                        fieldName = fieldInfo.RealColumnName;
+                    }
+
+                    visitor.AddFieldRead(tableLogicalName, fieldName);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"{nameof(DelegatedOperatorFunction)} IR helper must have second argument a field Info record");
+                }
+            }
+
+            base.ComposeDependencyInfo(node, dvVisitor, context);
+
+            return true;
         }
     }
 }

@@ -84,7 +84,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
                 Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => $"{er.Span.Min}-{er.Span.Lim}: {er.Message}")));
 
-                DependencyInfo scam = check.ScanDependencies(dv.MetadataCache);
+                DependencyInfo scan = check.ApplyDependencyInfoScan(dv.MetadataCache);
 
                 // compare IR to verify the delegations are happening exactly where we expect
                 IRResult irNode = check.ApplyIR();

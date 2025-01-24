@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -93,6 +95,13 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return false;
+        }
+
+        internal static DependencyInfo ApplyDependencyInfoScan(this CheckResult checkResult, CdsEntityMetadataProvider metadataProvider)
+        {
+            var visitor = new DependencyVisitorDataverse(checkResult.ApplyIR(), metadataProvider);
+
+            return visitor.Scan();
         }
     }
 }
