@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
@@ -15,11 +14,8 @@ namespace Microsoft.PowerFx.Dataverse
     internal partial class DelegationIRVisitor : RewritingIRVisitor<DelegationIRVisitor.RetVal, DelegationIRVisitor.Context>
     {
         private RetVal ProcessDistinct(CallNode node, RetVal tableArg, Context context)
-        {
-            IntermediateNode filter = tableArg.HasFilter ? tableArg.Filter : null;
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
-
-            if (tableArg.HasGroupByNode)
+        {            
+            if (tableArg.HasGroupBy)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
@@ -40,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // change to original node to current node and appends columnSet and Distinct.
-            var resultingTable = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filter, orderBy: orderBy, count, _maxRows, columnMap, groupByNode: tableArg._groupByNode);
+            var resultingTable = tableArg.With(node, count: count, map: columnMap); 
 
             return resultingTable;
         }
@@ -62,7 +58,7 @@ namespace Microsoft.PowerFx.Dataverse
                 columnMap = new ColumnMap(fieldName);
 
                 // Combine with an existing map
-                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap);
+                columnMap = ColumnMap.Combine(tableArg.ColumnMap, columnMap, tableArg.TableType);
 
                 if (DelegationUtility.CanDelegateDistinct(columnMap.Distinct, context.DelegationMetadata?.FilterDelegationMetadata))
                 {

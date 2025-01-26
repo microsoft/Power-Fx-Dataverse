@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.Entities;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Interpreter;
 using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
@@ -155,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new List<DValue<RecordValue>>() { entityCollectionResponse.DValueError("RetrieveMultiple") };
             }
 
-            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters.ColumnMap, delegationParameters.ExpectedReturnType, cancellationToken).ConfigureAwait(false);
+            List<DValue<RecordValue>> result = await EntityCollectionToRecordValuesAsync(entityCollectionResponse.Response, delegationParameters, cancellationToken).ConfigureAwait(false);
 
             return result;
         }
@@ -185,7 +184,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             EntityCollection entities = ((RetrieveMultipleResponse)response.Response).EntityCollection;
-            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters.ColumnMap, null, cancellationToken).ConfigureAwait(false);
+            return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
         }
 
         private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
@@ -210,9 +209,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = hasDistinct
-                                ? new ColumnSet(delegationParameters.ColumnMap.Distinct)
-                                : ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
+                ColumnSet = ColumnMap.GetColumnSet(delegationParameters.ColumnMap),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
@@ -246,6 +243,12 @@ namespace Microsoft.PowerFx.Dataverse
                 query.ColumnSet = columnSet;
             }
 
+            if (delegationParameters.Join != null)
+            {
+                /* right table renames in LinkEntity */
+                query.LinkEntities.Add(delegationParameters.Join.LinkEntity);
+            }
+
             if (delegationParameters.Top != null)
             {
                 query.TopCount = delegationParameters.Top;
@@ -258,7 +261,28 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (delegationParameters.OrderBy != null && delegationParameters.OrderBy.Any())
             {
-                query.Orders.AddRange(delegationParameters.OrderBy);
+                if (delegationParameters.ColumnMap != null)
+                {
+                    IReadOnlyDictionary<string, string> map = delegationParameters.ColumnMap.AsStringDictionary();
+
+                    foreach (OrderExpression oe in delegationParameters.OrderBy)
+                    {
+                        KeyValuePair<string, string> kvp = map.FirstOrDefault(kvp => kvp.Value == oe.AttributeName);
+
+                        if (kvp.Key != null)
+                        {
+                            query.Orders.Add(new OrderExpression(kvp.Key, oe.OrderType, oe.Alias, oe.EntityName));
+                        }
+                        else
+                        {
+                            query.Orders.Add(oe);
+                        }
+                    }
+                }
+                else
+                {
+                    query.Orders.AddRange(delegationParameters.OrderBy);
+                }
             }
 
             return query;
@@ -329,7 +353,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (fieldFormulaValue is not GuidValue id)
             {
                 return DataverseExtensions.DataverseError<RecordValue>($"primary Id isn't a Guid", nameof(PatchCoreAsync));
-            }
+            }        
 
             var ret = await DataverseRecordValue.UpdateEntityAsync(id.Value, record, _entityMetadata, _recordType, _connection, cancellationToken).ConfigureAwait(false);
 
@@ -368,7 +392,7 @@ namespace Microsoft.PowerFx.Dataverse
                     {
                         return DataverseExtensions.DataverseError<BooleanValue>(response.Error, nameof(RemoveAsync));
                     }
-                }
+                }               
             }
 
             // After mutation, lazely refresh Rows from server.
@@ -418,7 +442,7 @@ namespace Microsoft.PowerFx.Dataverse
             return DValue<RecordValue>.Of(row);
         }
 
-        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, ColumnMap columnMap, RecordType expectedReturnType, CancellationToken cancellationToken)
+        private async Task<List<DValue<RecordValue>>> EntityCollectionToRecordValuesAsync(EntityCollection entityCollection, DataverseDelegationParameters delegationParameters, CancellationToken cancellationToken)
         {
             if (entityCollection == null)
             {
@@ -427,23 +451,33 @@ namespace Microsoft.PowerFx.Dataverse
 
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
+            RecordType recordType = delegationParameters.ExpectedReturnType;
 
-            RecordType recordType = null;
-            if (columnMap != null)
-            {
-                // have to keep it till we cleanup columnMap.
-                recordType = Type.ToRecord();
-            }
-            else
-            {
-                recordType = expectedReturnType ?? Type.ToRecord();
-            }
+            bool returnsDVRecordValue = delegationParameters.GroupBy == null && delegationParameters.Join == null;
 
             foreach (Entity entity in entityCollection.Entities)
             {
-                DataverseRecordValue dvRecordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
-                
-                list.Add(DValue<RecordValue>.Of(dvRecordValue));
+                RecordValue recordValue;
+
+                if (returnsDVRecordValue)
+                {
+                    recordValue = new DataverseRecordValue(entity, _entityMetadata, recordType, _connection);
+                }
+                else
+                {
+                    List<NamedValue> namedValues = new List<NamedValue>();
+
+                    foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
+                    {
+                        entity.Attributes.TryGetValue(nft.Name.Value, out object val);
+                        FormulaValue fv = PrimitiveValueConversions.Marshal(val, nft.Type);
+                        namedValues.Add(new NamedValue(nft.Name.Value, fv));
+                    }
+
+                    recordValue = FormulaValue.NewRecordFromFields(namedValues.ToArray());
+                }
+
+                list.Add(DValue<RecordValue>.Of(recordValue));
             }
 
             if (_connection.MaxRows > 0 && list.Count > _connection.MaxRows)

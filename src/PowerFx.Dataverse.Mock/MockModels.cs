@@ -39,6 +39,7 @@ namespace Microsoft.Dataverse.EntityMock
                 AttributeMetadataModel.NewLookup("logicalid", "Logical Lookup", new string[] { "remote" }).SetLogical(),
                 AttributeMetadataModel.NewLookup("new_polyfield", "PolymorphicLookup", new string[] { "remote", "local" }),
                 AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                AttributeMetadataModel.NewGuid("rtid", "RtId"),
                 AttributeMetadataModel.NewDouble("float", "Float"),
                 AttributeMetadataModel.NewBoolean("new_bool", "Boolean", "true", "false"),
                 AttributeMetadataModel.NewInteger("new_int", "Integer"),

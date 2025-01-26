@@ -52,12 +52,12 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// The unique display name for the option set as managed by the document
+        /// The unique display name for the option set as managed by the document.
         /// </summary>
         public string DisplayName { get; set; }
 
         /// <summary>
-        /// The display collection name for the entity.  Will be null for a global option set
+        /// The display collection name for the entity.  Will be null for a global option set.
         /// </summary>
         public string EntityDisplayCollectionName { get; set; }
 

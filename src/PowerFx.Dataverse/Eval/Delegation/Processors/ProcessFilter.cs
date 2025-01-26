@@ -2,10 +2,8 @@
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
-using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -21,13 +19,12 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // Can't Filter() on Group By.
-            if (tableArg.HasGroupByNode)
+            if (tableArg.HasGroupBy || tableArg.HasJoin)
             {
                 return ProcessOtherCall(node, tableArg, context);
             }
 
             IntermediateNode predicate = node.Args[1];
-            IntermediateNode orderBy = tableArg.HasOrderBy ? tableArg.OrderBy : null;
 
             var predicteContext = context.GetContextForPredicateEval(node, tableArg);
             var pr = predicate.Accept(this, predicteContext);
@@ -54,7 +51,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 // Since table was delegating it potentially has filter attached to it, so also add that filter to the new filter.
                 var filterCombined = tableArg.AddFilter(pr.Filter, node.Scope);
-                result = new RetVal(_hooks, node, tableArg._sourceTableIRNode, tableArg.TableType, filterCombined, orderBy: orderBy, count: null, _maxRows, tableArg.ColumnMap, groupByNode: null);
+                result = tableArg.With(node, filter: filterCombined);
             }
 
             return result;

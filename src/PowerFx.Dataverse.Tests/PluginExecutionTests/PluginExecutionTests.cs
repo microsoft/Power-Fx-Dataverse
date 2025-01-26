@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -12,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Dataverse.EntityMock;
 using Microsoft.PowerFx.Core;
-using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Intellisense;
 using Microsoft.PowerFx.Types;
@@ -47,6 +45,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         internal static readonly Guid _g8 = new Guid("00000000-0000-0000-0000-000000000008");
 
         internal static readonly Guid _g9 = new Guid("00000000-0000-0000-0000-000000000009");
+
+        internal static readonly Guid _g10 = new Guid("00000000-0000-0000-0000-00000000000A");
+
+        internal static readonly Guid _g11 = new Guid("00000000-0000-0000-0000-00000000000B");
+
+        internal static readonly Guid _g12 = new Guid("00000000-0000-0000-0000-00000000000C");
 
         internal static readonly ParserOptions _parserAllowSideEffects = new ParserOptions
         {
@@ -1043,6 +1047,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Summarize that's not delegated.
         [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price * 2) As TPrice)", "Read local: new_name, new_price;")]
 
+        // Join
+        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: remoteid; Read local: rtid, new_name;")]
+        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Read remote: other, data; Read local: new_price;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";
@@ -1057,6 +1064,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var config = new PowerFxConfig();
             config.SymbolTable.EnableMutationFunctions();
+            config.EnableJoinFunction();
+
             var engine = new RecalcEngine(config);
             engine.EnableDelegation();
 
@@ -1078,7 +1087,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             var actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
 
-            Assert.Equal(expected, actual);
+            Assert.Equal<object>(expected, actual);
         }
 
         [Fact]
@@ -2757,13 +2766,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]        
+        [InlineData("Environment.Variables", "![jsonvar:O,textvar:s,numbervar:w,booleanvar:b]")]
         [InlineData("Environment.Variables.textvar", "s")]
         [InlineData("Environment.Variables.booleanvar", "b")]
         [InlineData("Environment.Variables.jsonvar", "O")]
         [InlineData("Environment.Variables.numbervar", "w")]
-        [InlineData("Environment.Variables.'JSON var'", "O")]        
-        [InlineData("Environment.Variables.'Number var'", "w")]        
+        [InlineData("Environment.Variables.'JSON var'", "O")]
+        [InlineData("Environment.Variables.'Number var'", "w")]
         [InlineData("Environment.Variables.'Boolean var'", "b")]
         [InlineData("Environment.Variables.'Text var'", "s")]
 
@@ -2813,7 +2822,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 case DKind.Record:
                     Assert.IsAssignableFrom<RecordValue>(result);
                     break;
-            }            
+            }
         }
 
         [Theory]
@@ -2859,79 +2868,99 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // Create Entity objects to match DataverseTests.RelationshipModels;
         internal static (DataverseConnection, IDataverseServices, EntityLookup) CreateMemoryForRelationshipModelsInternal(Policy policy = null, bool cache = false, bool numberIsFloat = false, bool withExtraEntity = false)
         {
-            var entity1 = new Entity("local", _g1);
-            var entity2 = new Entity("remote", _g2);
-            var entity5 = new Entity("doubleremote", _g5);
+            var remote2 = new Entity("remote", _g2);
+            remote2.Attributes["remoteid"] = _g2;
 
-            var entity3 = new Entity("local", _g3);
-            entity3.Attributes["new_price"] = Convert.ToDecimal(10);
-            entity3.Attributes["old_price"] = null;
-            entity3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
-            entity3.Attributes["new_polyfield"] = null;
-            entity3.Attributes["new_quantity"] = Convert.ToDecimal(10);
-            entity3.Attributes["new_name"] = "p1";
+            var doubleremote5 = new Entity("doubleremote", _g5);
 
-            var entity4 = new Entity("local", _g4);
-            entity4.Attributes["new_price"] = Convert.ToDecimal(-10);
-            entity4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
-            entity4.Attributes["new_polyfield"] = null;
-            entity4.Attributes["new_quantity"] = Convert.ToDecimal(10);
-            entity4.Attributes["new_name"] = "row4";
+            var local3 = new Entity("local", _g3);
+            local3.Attributes["localid"] = _g3;
+            local3.Attributes["new_price"] = Convert.ToDecimal(10);
+            local3.Attributes["old_price"] = null;
+            local3.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            local3.Attributes["new_polyfield"] = null;
+            local3.Attributes["new_quantity"] = Convert.ToDecimal(10);
+            local3.Attributes["new_name"] = "p1";
+            local3.Attributes["rtid"] = _g10;
 
-            var entity4a = new Entity("local", _g5);
-            entity4a.Attributes["new_price"] = Convert.ToDecimal(10);
-            entity4a.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
-            entity4a.Attributes["new_polyfield"] = null;
-            entity4a.Attributes["new_quantity"] = Convert.ToDecimal(12);
+            var local4 = new Entity("local", _g4);
+            local4.Attributes["localid"] = _g4;
+            local4.Attributes["new_price"] = Convert.ToDecimal(-10);
+            local4.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            local4.Attributes["new_polyfield"] = null;
+            local4.Attributes["new_quantity"] = Convert.ToDecimal(10);
+            local4.Attributes["new_name"] = "row4";
+            local4.Attributes["rtid"] = _g11;
 
-            entity1.Attributes["new_price"] = Convert.ToDecimal(100);
-            entity1.Attributes["old_price"] = Convert.ToDecimal(200);
-            entity1.Attributes["new_date"] = new DateTime(2023, 6, 1);
-            entity1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
-            entity1.Attributes["new_currency"] = new Money(100);
-            entity1.Attributes["new_name"] = "row1";
-            entity1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
-            entity1.Attributes["new_polyfield"] = entity2.ToEntityReference();
-            entity1.Attributes["new_quantity"] = Convert.ToDecimal(20);
-            entity1.Attributes["new_state"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
-            entity1.Attributes["new_name"] = "row1";
+            var local5 = new Entity("local", _g5);
+            local5.Attributes["localid"] = _g5;
+            local5.Attributes["new_price"] = Convert.ToDecimal(10);
+            local5.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(1); // Hot;
+            local5.Attributes["new_polyfield"] = null;
+            local5.Attributes["new_quantity"] = Convert.ToDecimal(12);
+            local5.Attributes["rtid"] = _g10;
+
+            var local1 = new Entity("local", _g1);
+            local1.Attributes["localid"] = _g1;
+            local1.Attributes["new_price"] = Convert.ToDecimal(100);
+            local1.Attributes["old_price"] = Convert.ToDecimal(200);
+            local1.Attributes["new_date"] = new DateTime(2023, 6, 1);
+            local1.Attributes["new_datetime"] = new DateTime(2023, 6, 1, 12, 0, 0);
+            local1.Attributes["new_currency"] = new Money(100);
+            local1.Attributes["new_name"] = "row1";
+            local1.Attributes["new_status"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            local1.Attributes["new_polyfield"] = remote2.ToEntityReference();
+            local1.Attributes["new_quantity"] = Convert.ToDecimal(20);
+            local1.Attributes["new_state"] = new Xrm.Sdk.OptionSetValue() { Value = 1 };
+            local1.Attributes["rtid"] = _g12;
+            local1.Attributes["new_name"] = "row1";
 
             // IR for field access for Relationship will generate the relationship name ("refg"), from ReferencingEntityNavigationPropertyName.
             // DataverseRecordValue has to decode these at runtime to match back to real field.
-            entity1.Attributes["otherid"] = entity2.ToEntityReference();
-            entity1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
+            local1.Attributes["otherid"] = remote2.ToEntityReference();
+            local1.Attributes["rating"] = new Xrm.Sdk.OptionSetValue(2); // Warm
 
             // entity1.new_quantity is intentionally blank.
 
-            entity2.Attributes["data"] = Convert.ToDecimal(200);
+            remote2.Attributes["data"] = Convert.ToDecimal(200);
 
-            var entity6 = new Entity("virtualremote", _g6);
-            entity6.Attributes["vdata"] = Convert.ToDecimal(10);
-            entity1.Attributes["virtualid"] = entity6.ToEntityReference();
+            var virtualremote6 = new Entity("virtualremote", _g6);
+            virtualremote6.Attributes["vdata"] = Convert.ToDecimal(10);
+            local1.Attributes["virtualid"] = virtualremote6.ToEntityReference();
 
-            var entity7 = new Entity("elastictable", _g7);
-            entity7.Attributes["field1"] = Convert.ToDecimal(200);
-            entity7.Attributes["partitionid"] = "p1";
-            entity1.Attributes["elastic_ref"] = entity7.ToEntityReference();
+            var elastictable7 = new Entity("elastictable", _g7);
+            elastictable7.Attributes["field1"] = Convert.ToDecimal(200);
+            elastictable7.Attributes["partitionid"] = "p1";
+            local1.Attributes["elastic_ref"] = elastictable7.ToEntityReference();
 
-            var entity8 = new Entity("elastictable", _g8);
-            entity8.Attributes["field1"] = Convert.ToDecimal(200);
-            entity8.Attributes["partitionid"] = "p2";
+            var elastictable8 = new Entity("elastictable", _g8);
+            elastictable8.Attributes["field1"] = Convert.ToDecimal(200);
+            elastictable8.Attributes["partitionid"] = "p2";
 
-            var entity9 = new Entity("elastictable", _g9);
-            entity9.Attributes["field1"] = Convert.ToDecimal(100);
-            entity9.Attributes["partitionid"] = null;
+            var elastictable9 = new Entity("elastictable", _g9);
+            elastictable9.Attributes["field1"] = Convert.ToDecimal(100);
+            elastictable9.Attributes["partitionid"] = null;
+
+            var remote10 = new Entity("remote", _g10);
+            remote10.Attributes["data"] = Convert.ToDecimal(10);
+            remote10.Attributes["other"] = Convert.ToDouble(49);
+            remote10.Attributes["remoteid"] = _g10;
+
+            var remote11 = new Entity("remote", _g11);
+            remote11.Attributes["data"] = Convert.ToDecimal(-10);
+            remote11.Attributes["other"] = Convert.ToDouble(44);
+            remote11.Attributes["remoteid"] = _g11;
 
             var xrmMetadataProvider = new MockXrmMetadataProvider(MockModels.RelationshipModels);
             EntityLookup entityLookup = new EntityLookup(xrmMetadataProvider);
 
             if (withExtraEntity)
             {
-                entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity4a, entity5, entity6, entity7, entity8, entity9);
+                entityLookup.Add(CancellationToken.None, local1, remote2, local3, local4, local5, doubleremote5, virtualremote6, elastictable7, elastictable8, elastictable9, remote10, remote11);
             }
             else
             {
-                entityLookup.Add(CancellationToken.None, entity1, entity2, entity3, entity4, entity5, entity6, entity7, entity8, entity9);
+                entityLookup.Add(CancellationToken.None, local1, remote2, local3, local4, doubleremote5, virtualremote6, elastictable7, elastictable8, elastictable9);
             }
 
             IDataverseServices ds = cache ? new DataverseEntityCache(entityLookup) : entityLookup;

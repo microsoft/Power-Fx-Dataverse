@@ -34,11 +34,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         /// <summary>
         /// Tries to convert an attribute type to a formula type.
-        /// Does not address the difference between date time behaviors or other metadata that may affect the formula type
+        /// Does not address the difference between date time behaviors or other metadata that may affect the formula type.
         /// </summary>
-        /// <param name="typeCode">The type code</param>
-        /// <param name="type">The output formula type</param>
-        /// <returns>A boolean that indicates whether the conversion is supported</returns>
+        /// <param name="typeCode">The type code.</param>
+        /// <param name="type">The output formula type.</param>
+        /// <returns>A boolean that indicates whether the conversion is supported.</returns>
         internal static bool TryGetFormulaType(this XrmAttributeTypeCode typeCode, out FormulaType type)
         {
             switch (typeCode)
