@@ -1030,8 +1030,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("With({r: t1}, LookUp(r, Currency > 0))", "Read local: new_currency;")]
 
         // Option set.
-        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
-        [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals) (rating_optionSet)'.Hot)", "Read local: rating;")]
+        [InlineData("LookUp(t1, Rating <> 'Rating (Locals) (rating_optionSet)'.Hot)", "Read local: rating;")]
         [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
         [InlineData("Distinct(t1, Price)", "Read local: ;")]
         [InlineData("Set(NewRecord.Price, 8)", "Read local: ; Write local: new_price;")]
@@ -1393,7 +1393,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("ThisRecord.Other.Data", 200.0)] // Relationship
         [InlineData("ThisRecord.Other.remoteid = GUID(\"00000000-0000-0000-0000-000000000002\")", true)] // Relationship
         [InlineData("ThisRecord.Price + 10", 110.0, true)] // Basic field lookup (RowScope)
-        [InlineData("ThisRecord.Rating = 'Rating (Locals)'.Warm", true)] // Option Sets
+        [InlineData("ThisRecord.Rating = 'Rating (Locals) (rating_optionSet)'.Warm", true)] // Option Sets
         [InlineData("Value(ThisRecord.Rating) = 1", false, true)]
         [InlineData("Value(ThisRecord.Rating) = 2", true, true)]
 
@@ -2151,7 +2151,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
         [InlineData("Price + 10")] // 110.0 // Basic field lookup
-        [InlineData("Rating = 'Rating (Locals)'.Warm")] // true // Option Sets
+        [InlineData("Rating = 'Rating (Locals) (rating_optionSet)'.Warm")] // true // Option Sets
         [InlineData("ThisRecord.Price + Other.Data")] // 300.0
         public void ExecuteViaInterpreter(string expr)
         {
@@ -2669,7 +2669,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var logicalName = "local";
             var displayName = "t1";
 
-            var expr = "Patch(t1, First(t1), {Status: Status.Resolved})";
+            var expr = "Patch(t1, First(t1), {Status:  (global_new_status_optionSet).Resolved})";
 
             (DataverseConnection dv, EntityLookup _) = CreateMemoryForRelationshipModels();
 

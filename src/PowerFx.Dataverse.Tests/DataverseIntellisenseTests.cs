@@ -92,11 +92,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Ye|", "TimeUnit.Years", "Year")] // "Only Namespaced Enums"
         
         // "TimeUnit inside DateAdd"
-        [InlineData("DateAdd(x, 1,|", "'Boolean (Locals)'", "'Global Picklist'", "'Rating (Locals)'", "'State (Locals)'", "Status", "TimeUnit.Days", "TimeUnit.Hours", "TimeUnit.Milliseconds", "TimeUnit.Minutes", "TimeUnit.Months", "TimeUnit.Quarters", "TimeUnit.Seconds", "TimeUnit.Years")]
+        [InlineData("DateAdd(x, 1,|", "'Boolean (Locals) (new_bool_optionSet)'", "'Global Picklist (global_pick_optionSet)'", "'Rating (Locals) (rating_optionSet)'", "'State (Locals) (new_state_optionSet)'", "'Status (new_status_optionSet)'", "TimeUnit.Days", "TimeUnit.Hours", "TimeUnit.Milliseconds", "TimeUnit.Minutes", "TimeUnit.Months", "TimeUnit.Quarters", "TimeUnit.Seconds", "TimeUnit.Years")]
         
         // "DateTimeFormat in Text on Date"
-        [InlineData("Text(UTCToday(),|", "'Boolean (Locals)'", "'Global Picklist'", "'Rating (Locals)'", "'State (Locals)'", "Status")] 
-        [InlineData("Locals|", "'Boolean (Locals)'", "'Rating (Locals)'", "'State (Locals)'")] // "One To Many not shown"
+        [InlineData("Text(UTCToday(),|", "'Boolean (Locals) (new_bool_optionSet)'", "'Global Picklist (global_pick_optionSet)'", "'Rating (Locals) (rating_optionSet)'", "'State (Locals) (new_state_optionSet)'", "'Status (new_status_optionSet)'")] 
+        [InlineData("Locals|", "'Boolean (Locals) (new_bool_optionSet)'", "'Rating (Locals) (rating_optionSet)'", "'State (Locals) (new_state_optionSet)'")] // "One To Many not shown"
         [InlineData("Sel|", "'Self Reference'")] // "Lookup (Many To One) is shown"
         [InlineData("Err|", "IfError", "IsError")] // "IfError and IsError are shown, but Error is excluded"
         [InlineData("Tod|", "IsUTCToday", "UTCToday")] // "Today and IsToday are not suggested"
@@ -116,12 +116,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Rat|", "'Rating (Locals)'", "Rating")] // "Picklist name with no conflict"
-        [InlineData("'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Disambiguated picklist values with no conflict"
-        [InlineData("Other.Rating + Rating|", "Rating", "'Rating (Locals)'", "'Rating (Remotes)'")] // "Picklist with conflict"
-        [InlineData("Other.Rating + 'Rating (Locals)'.|", "Cold", "Hot", "Warm")] // "Explicit Picklist one values with conflict"
-        [InlineData("Other.Rating + 'Rating (Remotes)'.|", "Large", "Medium", "Small")] // "Explicit Picklist two values with conflict"
-        [InlineData("[@'Global Picklist'].|", "High", "Low", "Medium")] // "Global picklist values"
+        [InlineData("Rat|", "'Rating (Locals) (rating_optionSet)'", "Rating")] // "Picklist name with no conflict"
+        [InlineData("'Rating (Locals) (rating_optionSet)'.|", "Cold", "Hot", "Warm")] // "Disambiguated picklist values with no conflict"
+        [InlineData("Other.Rating + Rating|", "Rating", "'Rating (Locals) (rating_optionSet)'", "'Rating (Remotes) (rating_optionSet)'")] // "Picklist with conflict"
+        [InlineData("Other.Rating + 'Rating (Locals) (rating_optionSet)'.|", "Cold", "Hot", "Warm")] // "Explicit Picklist one values with conflict"
+        [InlineData("Other.Rating + 'Rating (Remotes) (rating_optionSet)'.|", "Large", "Medium", "Small")] // "Explicit Picklist two values with conflict"
+        [InlineData("'Global Picklist (global_pick_optionSet)'.|", "High", "Low", "Medium")] // "Global picklist values"
         public void CheckOptionSetSuggestions(string expression, params string[] expectedSuggestions)
         {
             Array.Sort(expectedSuggestions, StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
@@ -131,7 +131,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         [Theory]
-        [InlineData("Global|", "[@'Global Picklist']", "'Global Picklist'")] // "Global picklist"
+        [InlineData("Global|", "'Global Picklist (global_pick_optionSet)'", "'Global Picklist'")] // "Global picklist"
         public void CheckOptionSetSuggestions2(string expression, params string[] expectedSuggestions)
         {
             // don't reorder suggestions.
@@ -148,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         {
             var engine = Engine;
 
-            List<string> expected = new List<string> { "Rating", "'Rating (Locals)'" };
+            List<string> expected = new List<string> { "Rating", "'Rating (Locals) (rating_optionSet)'" };
             expected.Sort(StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463
             Assert.Equal(2, expected.Count);
 
@@ -158,7 +158,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             // Suggestion to cache in more metadata from another table. This will bring in "'Rating (Remotes)'"
             Suggest("Other.Rating|", engine);
-            expected.Add("'Rating (Remotes)'");
+            expected.Add("'Rating (Remotes) (rating_optionSet)'");
             expected.Sort(StringComparer.Ordinal);
 
             // Now repeating the original request will get more suggestions.
@@ -178,7 +178,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         [InlineData("Mone|", "Money")] // "Currency suggested"
         [InlineData("Imag|")] // "Image not suggested"
         [InlineData("Fil|")] // "File not suggested"
-        [InlineData("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes)'")] // "MultiSelect suggested"
+        [InlineData("MultiSelec|", "MultiSelect", "'MultiSelect (All Attributes) (multiSelect_optionSet)'")] // "MultiSelect suggested"
         public void CheckUnsupportedTypeSuggestions(string expression, params string[] expectedSuggestions)
         {
             Array.Sort(expectedSuggestions, StringComparer.Ordinal); // https://github.com/microsoft/Power-Fx/issues/2463

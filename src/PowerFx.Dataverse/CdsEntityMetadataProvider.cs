@@ -204,10 +204,16 @@ namespace Microsoft.PowerFx.Dataverse
         internal static string GetOptionSetDisplayName(DataverseOptionSet optionSet, string displayCollectionName)
         {
             var uniqueName = optionSet.Name;
+
+            //if (!optionSet.IsGlobal)
+            //{
+            //    uniqueName += " " + TexlLexer.PunctuatorParenOpen + displayCollectionName + TexlLexer.PunctuatorParenClose;
+            //}
+
             if (optionSet.IsGlobal)
             {
                 uniqueName += " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
-            } 
+            }
             else
             {
                 uniqueName += " " + TexlLexer.PunctuatorParenOpen + displayCollectionName + TexlLexer.PunctuatorParenClose +

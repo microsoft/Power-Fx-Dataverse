@@ -2215,7 +2215,7 @@ END
             };
 
             var engine = new PowerFx2SqlEngine(localModel.ToXrm());
-            var result = engine.Check("'Picklist (global1)' = [@Picklist].Eeny || 'Picklist (global2)' = [@Picklist].Miney");
+            var result = engine.Check("'Picklist (global1)' = 'Picklist (global1_optionSet)'.Eeny || 'Picklist (global2)' = 'Picklist (global2_optionSet)'.Miney");
 
             Assert.True(result.IsSuccess);
         }
@@ -2236,7 +2236,7 @@ END
             };
 
             var engine = new PowerFx2SqlEngine(localModel.ToXrm());
-            var result = engine.Check("'Picklist (global1)' = [@Picklist].'4 (1)' || 'Picklist (global2)' = [@Picklist].'2 (3)'");
+            var result = engine.Check("'Picklist (global1)' = 'Picklist (global1_optionSet)'.'4 (1)' || 'Picklist (global2)' = 'Picklist (global2_optionSet)'.'2 (3)'");
 
             Assert.True(result.IsSuccess);
         }
@@ -2257,7 +2257,7 @@ END
             };
 
             var engine = new PowerFx2SqlEngine(localModel.ToXrm(), dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
-            var result = engine.Check("'Picklist (global1)' = [@Picklist].'Eeny (1)' || 'Picklist (global2)' = [@Picklist].'Eeny (3)'");
+            var result = engine.Check("'Picklist (global1)' = 'Picklist (global1_optionSet)'.'Eeny (1)' || 'Picklist (global2)' = 'Picklist (global2_optionSet)'.'Eeny (3)'");
 
             Assert.True(result.IsSuccess);
         }
@@ -2814,8 +2814,8 @@ END
         [InlineData("new_price + refg.data", "Price + Other.Data")] // "Lookup"
         [InlineData("refg.data + refg.doublerefg.data2 + refg.doublerefg.triplerefg.data3", "Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'")] // "Multiple Lookups"
         [InlineData("refg.data + self.new_price", "Other.Data + 'Self Reference'.Price")] // "Self Reference"
-        [InlineData("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)")] // "CDS Enum literal"
-        [InlineData("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)")] // "CDS Global Enum literal"
+        [InlineData("If(rating = local_rating_optionSet.'1', new_quantity, new_price)", "If(Rating = 'Rating (Locals) (rating_optionSet)'.Hot, Quantity, Price)")] // "CDS Enum literal"
+        [InlineData("If(global_pick = [@global_global_pick_optionSet].'2', new_quantity, new_price)", "If('Global Picklist' = [@'Global Picklist (global_pick_optionSet)'].Medium, Quantity, Price)")] // "CDS Global Enum literal"
         [InlineData("DateAdd(UTCToday(), new_quantity, TimeUnit.Months)", "DateAdd(UTCToday(), Quantity, TimeUnit.Months)")] // "Enum literal"
         [InlineData("/* Comment */\n\n\t  conflict1\n\n\t  \n -conflict2", "/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'")] // "Preserves whitespace and comments"
         public void Translate(string expr, string translation)
@@ -2843,7 +2843,7 @@ END
         [InlineData("Other.Data + Other.'Other Other'.'Data Two' + Other.'Other Other'.'Other Other Other'.'Data Three'", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldLookup$#.#$FieldLookup$#.#$FieldDecimal$#")] // "Multiple Lookups"
         [InlineData("Other.Data + 'Self Reference'.Price", "#$FieldLookup$#.#$FieldDecimal$# + #$FieldLookup$#.#$FieldDecimal$#")] // "Self Reference"
         [InlineData("If(true, \"random string\", Text(Price))", "If(#$boolean$#, #$string$#, Text(#$FieldDecimal$#))")] // "Function"
-        [InlineData("If(Rating = 'Rating (Locals)'.Hot, Quantity, Price)", "If(#$FieldPicklist$# = #$OptionSet$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] // "CDS Enum literal"
+        [InlineData("If(Rating = 'Rating (Locals) (rating_optionSet)'.Hot, Quantity, Price)", "If(#$FieldPicklist$# = #$OptionSet$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] // "CDS Enum literal"
         [InlineData("If('Global Picklist' = [@'Global Picklist'].Medium, Quantity, Price)", "If(#$FieldPicklist$# = #$FieldPicklist$#.#$righthandid$#, #$FieldDecimal$#, #$FieldDecimal$#)")] // "CDS Global Enum literal"
         [InlineData("DateAdd(UTCToday(), Quantity, TimeUnit.Months)", "DateAdd(UTCToday(), #$FieldDecimal$#, #$Enum$#.#$righthandid$#)")] // "Enum literal"
         [InlineData("/* Comment */\n\n\t  'Conflict (conflict1)'\n\n\t  \n -'Conflict (conflict2)'", "#$FieldDecimal$# + -#$FieldDecimal$#")] // "Preserves whitespace and comments"
