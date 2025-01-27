@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -25,6 +26,8 @@ namespace Microsoft.PowerFx.Dataverse
         public const string Odata_Top = "$top";
 
         public const string Odata_Apply = "$apply";
+
+        public const string Odata_Expand = "$expand";
 
         // Systems can get the filter expression directrly and translate.
         public FxFilterExpression FxFilter { get; init; }
@@ -80,6 +83,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (Join != null)
                 {
                     features |= DelegationParameterFeatures.ApplyJoin;
+
+                    if (!string.IsNullOrEmpty(Join.Expand))
+                    {
+                        features |= DelegationParameterFeatures.Expand;
+                    }
                 }
 
                 if (GroupBy != null)
@@ -92,6 +100,16 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public override string GetOdataFilter() => ToOdataFilter(FxFilter);
+
+        public override string GetExpand()
+        {
+            if (Join?.Expand == null)
+            {
+                return null;
+            }
+
+            return Join.Expand;
+        }
 
         public string GetODataGroupBy()
         {
@@ -175,6 +193,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 string joinApply = GetOdataJoinApply();
                 string filter = GetOdataFilter();
+                string expand = GetExpand();
                 int top = Top ?? 0;
                 IEnumerable<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
@@ -203,6 +222,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (select != null && select.Any())
                 {
                     ode.Add(Odata_Select, string.Join(",", select));
+                }
+
+                if (expand != null)
+                {
+                    ode.Add(Odata_Expand, expand);
                 }
 
                 if (top > 0)
@@ -353,7 +377,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private string GetOdataJoinApply()
         {
-            if (Join == null)
+            if (Join == null || Join.Expand != null)
             {
                 return null;
             }

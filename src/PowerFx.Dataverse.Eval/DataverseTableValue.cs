@@ -39,6 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
 
+        public DelegationParameterFeatures SupportedFeatures => throw new NotImplementedException();
+
         public readonly EntityMetadata _entityMetadata;
 
         internal DataverseTableValue(RecordType recordType, IConnectionValueContext connection, EntityMetadata metadata)
@@ -539,6 +541,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return list;
+        }
+
+        public Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            throw new NotImplementedException();
         }
     }
 }

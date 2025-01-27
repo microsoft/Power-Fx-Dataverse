@@ -127,7 +127,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 _ => throw new InvalidOperationException($"Invalid joinType {joinType}")
             };
 
-            return delegationCapability.TableCapabilities.HasCapability(joinTypeCapability.Capabilities);
+            return delegationCapability.TableCapabilities.HasCapability(joinTypeCapability.Capabilities) ||
+                delegationCapability.FilterDelegationMetadata.DefaultColumnCapabilities.HasCapability(joinTypeCapability.Capabilities);
         }
 
         public static bool CanDelegateFirst(IDelegationMetadata delegationMetadata)

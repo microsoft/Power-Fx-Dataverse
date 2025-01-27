@@ -37,6 +37,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
+        public DelegationParameterFeatures SupportedFeatures => throw new NotImplementedException();
+
+        public Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             DelegationParameters = parameters;
@@ -133,6 +140,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 };
             }
 
+            return null;
+        }
+
+        public override IReadOnlyList<INavigationProperty> GetNavigationProperties(string fieldName)
+        {
             return null;
         }
     }

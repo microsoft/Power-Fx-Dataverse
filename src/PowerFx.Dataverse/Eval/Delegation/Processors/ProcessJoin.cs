@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
@@ -99,7 +100,7 @@ namespace Microsoft.PowerFx.Dataverse
                         (leftPrimaryKeys.Count() == 1 && leftField == leftPrimaryKeys.First()))
                     {
                         toAttribute = rightField;
-                        fromAttribute = leftField;
+                        fromAttribute = leftField;                        
                     }
                 }
 
@@ -142,7 +143,20 @@ namespace Microsoft.PowerFx.Dataverse
                         rightMap.AddColumn(logicalFieldName, aliasFieldName);
                     }
 
-                    if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, joinType, rightRecordName, leftMap, rightMap, node, out var result))
+                    string expand = null;
+
+                    if (leftTable.TableType._type.AssociatedDataSources.First() is ISupportsNavigationProperties navProps)
+                    {
+                        IReadOnlyList<INavigationProperty> navigationProperties = navProps.GetNavigationProperties(fromAttribute);
+                        INavigationProperty navProp = navigationProperties?.FirstOrDefault(np => np.ForeignKey == toAttribute && np.RelationshipType == "ManyToOne");
+
+                        if (navProp != null)
+                        {
+                            expand = navProp.Name;
+                        }
+                    }
+
+                    if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, joinType, rightRecordName, leftMap, rightMap, node, expand, out RetVal result))
                     {
                         return result;
                     }
