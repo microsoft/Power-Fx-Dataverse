@@ -169,7 +169,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // if condition expression is empty, we can call seprate function to get count of the table.
             var delegationParameters = (DataverseDelegationParameters)parameters;
-            if (delegationParameters.ColumnMap?.ReturnTotalRowCount == true)
+            if (delegationParameters.ReturnTotalRowCount == true)
             {
                 var count = await GetCountAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
                 if (delegationParameters.ExpectedReturnType == FormulaType.Decimal)
@@ -193,9 +193,10 @@ namespace Microsoft.PowerFx.Dataverse
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // If it is counting entire table, we can use RetrieveTotalRecordCountRequest to get the count for entire table.
+            // If it is counting entire table, we can use RetrieveTotalRecordCountRequest to get the count for entire table. IE select count(*) from table.
             if (parameters.IsCountingEntireTable())
             {
+                // https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/retrievetotalrecordcount?view=dataverse-latest
                 var response = await _connection.Services.ExecuteAsync(new RetrieveTotalRecordCountRequest() { EntityNames = new string[] { _entityMetadata.LogicalName } });
                 var response2 = (RetrieveTotalRecordCountResponse)response.Response;
                 if (response2.EntityRecordCountCollection.TryGetValue(_entityMetadata.LogicalName, out var totalCount))
@@ -205,22 +206,28 @@ namespace Microsoft.PowerFx.Dataverse
 
                 throw new InvalidOperationException($"Response incorrect executing query in {nameof(GetCountAsync)}");
             }
-
-            var delegationParameters = (DataverseDelegationParameters)parameters;
-            var query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
-            query.PageInfo.ReturnTotalRecordCount = true;
-            DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
-
-            if (entityCollectionResponse.HasError)
+            else
             {
-                throw new CustomFunctionErrorException($"Error while executing query in {nameof(GetCountAsync)}");
-            }
-            else if (entityCollectionResponse.Response.TotalRecordCountLimitExceeded)
-            {
-                throw new CustomFunctionErrorException($"Total record count limit exceeded in {nameof(GetCountAsync)}");
-            }
+                // If it is counting based on filter, etc., we can use QueryExpression to get the count. IE select count(*) from table where filter.
+                var delegationParameters = (DataverseDelegationParameters)parameters;
+                var query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
 
-            return entityCollectionResponse.Response.TotalRecordCount;
+                // https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.entitycollection.totalrecordcount?view=dataverse-sdk-latest#microsoft-xrm-sdk-entitycollection-totalrecordcount
+                query.PageInfo.ReturnTotalRecordCount = true;
+                DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
+
+                if (entityCollectionResponse.HasError)
+                {
+                    throw new CustomFunctionErrorException($"Error while executing query in {nameof(GetCountAsync)}");
+                }
+                else if (entityCollectionResponse.Response.TotalRecordCountLimitExceeded)
+                {
+                    // https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.entitycollection.totalrecordcountlimitexceeded?view=dataverse-sdk-latest#microsoft-xrm-sdk-entitycollection-totalrecordcountlimitexceeded
+                    throw new CustomFunctionErrorException($"Total record count limit exceeded in {nameof(GetCountAsync)}");
+                }
+
+                return entityCollectionResponse.Response.TotalRecordCount;
+            }
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete

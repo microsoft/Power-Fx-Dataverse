@@ -93,7 +93,7 @@ namespace Microsoft.PowerFx.Dataverse
                     args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault, retVal.ColumnMapNode };
                     returnType = tableReturnType;
                 }
-                else if (retVal.LeftColumnMap.ReturnTotalRowCount && (retVal.OriginalNode.IRContext.ResultType is NumberType || retVal.OriginalNode.IRContext.ResultType is DecimalType))
+                else if (retVal.LeftColumnMap?.ReturnTotalRowCount == true && (retVal.OriginalNode.IRContext.ResultType is NumberType || retVal.OriginalNode.IRContext.ResultType is DecimalType))
                 {
                     func = new DelegatedRetrieveCountFunction(this, retVal.OriginalNode.IRContext.ResultType);
                     args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault, retVal.ColumnMapNode };

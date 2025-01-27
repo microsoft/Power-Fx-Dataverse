@@ -35,6 +35,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         [InlineData(11, "CountRows(Summarize(Filter(t1, Name = \"test\") , name, credit, Sum(ThisGroup, amount) As TotalAmount))")]
 
+        // $$$ Can't setup Join() capabilities for delegation in non-dv case.
         [InlineData(12, "CountRows(Join(t1, t1 As t2, LeftRecord.id = t2.id, JoinType.Inner, t2.name As newName))")]
 
         // Can't delegate CountIf() with Summarize().

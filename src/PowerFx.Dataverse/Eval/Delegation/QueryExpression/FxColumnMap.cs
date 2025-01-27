@@ -47,7 +47,10 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         private readonly bool _returnTotalRowCount;
 
-        public bool ReturnTotalRowCount => _returnTotalRowCount;
+        /// <summary>
+        /// Gets a value indicating whether to return total row count.
+        /// </summary>
+        internal bool ReturnTotalRowCount => _returnTotalRowCount;
 
         // Call this method when you need to set it, should be never set false manually.
         public void MarkAliasingExists()

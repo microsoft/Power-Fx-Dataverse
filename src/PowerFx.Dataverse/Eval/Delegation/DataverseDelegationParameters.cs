@@ -53,6 +53,11 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         public FormulaType ExpectedReturnType => _expectedReturnType;
 
+        /// <summary>
+        /// If true, Delegation will return total row count. I.e. SQL Count(*).
+        /// </summary>
+        public bool ReturnTotalRowCount => ColumnMap?.ReturnTotalRowCount ?? false;
+
         private bool HasNoFilter => FxFilter == null || FxFilter.Conditions.IsNullOrEmpty();
 
         private bool HasNoJoin => Join == null;
@@ -97,14 +102,9 @@ namespace Microsoft.PowerFx.Dataverse
                     features |= DelegationParameterFeatures.ApplyGroupBy;
                 }
 
-                if (ColumnMap != null)
+                if (ReturnTotalRowCount)
                 {
-                    if (ColumnMap.ReturnTotalRowCount)
-                    {
-                        features |= DelegationParameterFeatures.Count;
-                    }
-
-                    features |= DelegationParameterFeatures.Columns;
+                    features |= DelegationParameterFeatures.Count;
                 }
 
                 return features;
@@ -230,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
                     ode.Add(Odata_Top, top.ToString());
                 }
 
-                if (ColumnMap != null && ColumnMap.ReturnTotalRowCount)
+                if (ReturnTotalRowCount)
                 {
                     ode.Add(Odata_Count, "true");
                 }
@@ -401,11 +401,11 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         /// <summary>
-        /// Check if the query is counting the entire table without any filter, join, etc.
+        /// Check if the query is counting the entire table without any filter, join, etc. Ie pure, select count(*) from table.
         /// </summary>
         public bool IsCountingEntireTable()
         {
-            if (ColumnMap?.ReturnTotalRowCount != true)
+            if (!ReturnTotalRowCount)
             {
                 return false;
             }
