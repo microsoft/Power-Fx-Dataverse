@@ -31,6 +31,8 @@ namespace Microsoft.PowerFx.AzureStorage
         // Don't implement since we should be using delegation
         public override IEnumerable<DValue<RecordValue>> Rows => throw new NotImplementedException();
 
+        public DelegationParameterFeatures SupportedFeatures => throw new NotImplementedException();
+
         public async Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             cancel.ThrowIfCancellationRequested();
@@ -59,6 +61,11 @@ namespace Microsoft.PowerFx.AzureStorage
             }
 
             return results;
+        }
+
+        public Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            throw new NotImplementedException();
         }
     }
 }

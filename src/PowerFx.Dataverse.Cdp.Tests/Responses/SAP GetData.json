@@ -1,0 +1,5 @@
+{
+  "@odata.context": "https://066d5714-1ffc-e316-90bd-affc61d8e6fd.18.common.tip2.azure-apihub.net/apim/sapodata/1e702ce4f10c482684cee1465e686764/datasets/http%253A%252F%252Fsapecckerb.roomsofthehouse.com%253A8080%252Fsap%252Fopu%252Fodata%252Fsap%252FHRESS_TEAM_CALENDAR_SERVICE%252F/tables/TeamCalendarCollection/items?%24select=END_DATE&%24top=1",
+  "value": [
+  ]
+}

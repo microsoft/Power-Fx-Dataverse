@@ -25,7 +25,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         private readonly string _joinType;
         private readonly string _foreignTableAlias;
         private readonly FxColumnMap _rightMap;
-
+        private readonly string _expand;
+        
         internal FxColumnMap RightTablColumnMap => _rightMap;
 
         public LinkEntity LinkEntity => GetLinkEntity();
@@ -34,13 +35,15 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public string ForeignTableAlias => _foreignTableAlias;
 
+        public string Expand => _expand;
+
         internal IEnumerable<string> RightRealFieldNames => _rightMap.ColumnInfoMap.Values.Select(c => c.RealColumnName);
 
         internal RecordType JoinTableRecordType => _rightMap.SourceTableRecordType;
 
         internal IDelegationMetadata RightTableDelegationMetadata => JoinTableRecordType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
 
-        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, FxColumnMap rightMap)
+        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, FxColumnMap rightMap, string expand)
         {
             _sourceTable = sourceTable ?? throw new ArgumentNullException(nameof(sourceTable));
             _foreignTable = foreignTable ?? throw new ArgumentNullException(nameof(foreignTable));
@@ -49,16 +52,17 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _joinType = joinType ?? throw new ArgumentNullException(nameof(joinType));
             _rightMap = rightMap ?? throw new ArgumentNullException(nameof(rightMap));
             _foreignTableAlias = foreignTableAlias ?? throw new ArgumentNullException(nameof(foreignTableAlias));
+            _expand = expand;
         }
 
         public FxJoinNode With(FxColumnMap rightMap)
         {
-            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, rightMap);
+            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, rightMap, _expand);
         }
 
         public FxJoinNode WithEmptyColumnMap()
         {
-            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, new FxColumnMap(_rightMap.SourceTableRecordType));
+            return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, new FxColumnMap(_rightMap.SourceTableRecordType), _expand);
         }
 
         public static JoinOperator ToJoinOperator(string joinType)
@@ -101,6 +105,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return linkEntity;
         }
 
+        // Only used for debugging
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
@@ -119,7 +124,15 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             sb.Append(_foreignTableAlias);
             sb.Append("] <");
             sb.Append(_rightMap.ToString());
-            sb.Append(">}");
+            sb.Append('>');
+            
+            if (!string.IsNullOrEmpty(_expand))
+            {
+                sb.Append(" $expand=");
+                sb.Append(_expand);
+            }
+
+            sb.Append('}');
 
             return sb.ToString();
         }
