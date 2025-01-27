@@ -39,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return new ColumnSet(true);
             }
 
-            if (columnMap.IsEmpty)
+            if (columnMap.IsEmpty && !columnMap.ReturnTotalRowCount)
             {
                 throw new InvalidOperationException("FxColumnMap is empty, that means it will not fetch any columns... Bug found!");
             }

@@ -52,6 +52,11 @@ namespace Microsoft.PowerFx.Dataverse
             var leftPrimaryKeys = leftTable.TableType.GetPrimaryKeyNames();
             var rightPrimaryKeys = rightTable.TableType.GetPrimaryKeyNames();
 
+            if (leftPrimaryKeys == null || rightPrimaryKeys == null)
+            {
+                return ProcessOtherCall(node, leftTable, rightTable, context);
+            }
+
             string joinType = null;
 
             // Get Join type

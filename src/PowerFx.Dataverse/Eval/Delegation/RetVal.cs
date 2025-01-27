@@ -503,6 +503,94 @@ namespace Microsoft.PowerFx.Dataverse
                 result = null;
                 return false;
             }
+
+            private bool IsCountRowsDelegable(RetVal predicate)
+            {
+                if ((HasJoin || HasGroupBy) && (predicate != null && predicate.HasFilter))
+                {
+                    // Can't delegate CountIf(...) if there is a join or group by in the main table.
+                    return false;
+                }
+                else if (!IsDataverseDelegation)
+                {
+                    if (TableType.ToRecord().TryGetCapabilities(out var capabilities))
+                    {
+                        var countCapabilities = capabilities.CountCapabilities;
+                        if (countCapabilities != null &&
+                            countCapabilities.IsCountableTable() &&
+                            (!HasJoin || countCapabilities.IsCountableAfterJoin()) &&
+                            (!HasGroupBy || countCapabilities.IsCountableAfterSummarize()))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // If it has top count, then we can't delegate Count(*) for dataverse.
+                    if (HasTopCount)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            internal bool TryAddReturnRowCount(CallNode node, RetVal predicate, out RetVal result)
+            {
+                if (predicate != null && !predicate.IsDelegating)
+                {
+                    result = null;
+                    return false;
+                }
+
+                if (!IsCountRowsDelegable(predicate))
+                {
+                    result = null;
+                    return false;
+                }
+
+                // Check if we can delegate Count(*) in capabilities.
+                var predicateHasFilter = predicate?.HasFilter ?? false;
+                IntermediateNode finalFilter = null;
+                if (!HasFilter && predicateHasFilter)
+                {
+                    finalFilter = predicate.Filter;
+                }
+                else if (HasFilter && !predicateHasFilter)
+                {
+                    finalFilter = _filter;
+                }
+                else if (HasFilter && predicateHasFilter)
+                {
+                    finalFilter = Hooks.MakeAndCall(TableType, new List<IntermediateNode> { _filter, predicate.Filter }, node.Scope);
+                }
+                else
+                {
+                    finalFilter = null;
+                }
+
+                // Update LeftColumnMap to have it return just count, no need to keep previously selected columns now.
+                var newLeftColumnMap = new FxColumnMap(TableType, returnTotalRowCount: true);
+
+                var retValResult = new RetVal(Hooks, node, _sourceTableIRNode, TableType, finalFilter, _orderBy, _topCount, _join, _groupByNode, _maxRows, newLeftColumnMap);
+
+                // Terminate since Count(*) is added.
+                result = new RetVal(Hooks.MakeQueryExecutorCall(retValResult));
+
+                return true;
+            }
         }
     }
 }

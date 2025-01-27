@@ -26,6 +26,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public const string Odata_Apply = "$apply";
 
+        public const string Odata_Count = "$count";
+
         // Systems can get the filter expression directrly and translate.
         public FxFilterExpression FxFilter { get; init; }
 
@@ -44,14 +46,27 @@ namespace Microsoft.PowerFx.Dataverse
         // Use for dataverse elastic tables.
         internal string _partitionId;
 
-        private readonly RecordType _expectedReturnType;
+        private readonly FormulaType _expectedReturnType;
 
         /// <summary>
         /// This is the expected RecordType Host needs to return after it performed delegation.
         /// </summary>
-        public RecordType ExpectedReturnType => _expectedReturnType;
+        public FormulaType ExpectedReturnType => _expectedReturnType;
 
-        internal DataverseDelegationParameters(RecordType expectedReturnType)
+        /// <summary>
+        /// If true, Delegation will return total row count. I.e. SQL Count(*).
+        /// </summary>
+        public bool ReturnTotalRowCount => ColumnMap?.ReturnTotalRowCount ?? false;
+
+        private bool HasNoFilter => FxFilter == null || FxFilter.Conditions.IsNullOrEmpty();
+
+        private bool HasNoJoin => Join == null;
+
+        private bool HasNoGroupBy => GroupBy == null;
+
+        private bool HasNoRelation => Relation == null || !Relation.Any();
+
+        internal DataverseDelegationParameters(FormulaType expectedReturnType)
         {
             _expectedReturnType = expectedReturnType;
         }
@@ -85,6 +100,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (GroupBy != null)
                 {
                     features |= DelegationParameterFeatures.ApplyGroupBy;
+                }
+
+                if (ReturnTotalRowCount)
+                {
+                    features |= DelegationParameterFeatures.Count;
                 }
 
                 return features;
@@ -208,6 +228,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (top > 0)
                 {
                     ode.Add(Odata_Top, top.ToString());
+                }
+
+                if (ReturnTotalRowCount)
+                {
+                    ode.Add(Odata_Count, "true");
                 }
 
                 return ode;
@@ -373,6 +398,19 @@ namespace Microsoft.PowerFx.Dataverse
         public override IReadOnlyCollection<(string, bool)> GetOrderBy()
         {
             return OrderBy?.Select(oe => (oe.AttributeName, oe.OrderType == OrderType.Ascending)).ToList();
+        }
+
+        /// <summary>
+        /// Check if the query is counting the entire table without any filter, join, etc. Ie pure, select count(*) from table.
+        /// </summary>
+        public bool IsCountingEntireTable()
+        {
+            if (!ReturnTotalRowCount)
+            {
+                return false;
+            }
+
+            return HasNoFilter && HasNoJoin && HasNoGroupBy && HasNoRelation;
         }
     }
 }

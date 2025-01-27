@@ -45,6 +45,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         private bool _existsAliasing = false;
 
+        private readonly bool _returnTotalRowCount;
+
+        /// <summary>
+        /// Gets a value indicating whether to return total row count.
+        /// </summary>
+        internal bool ReturnTotalRowCount => _returnTotalRowCount;
+
         // Call this method when you need to set it, should be never set false manually.
         public void MarkAliasingExists()
         {
@@ -57,19 +64,21 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// Initializes a new instance of the <see cref="FxColumnMap"/> class.
         /// </summary>
         /// <param name="logicalColumns">logical name of column is Datasource.</param>
-        internal FxColumnMap(IEnumerable<string> logicalColumns)
+        internal FxColumnMap(IEnumerable<string> logicalColumns, bool returnTotalRowCount = false)
         {
             _columnInfoMap = logicalColumns.Select(c => new FxColumnInfo(c, c)).ToDictionary(c => c.AliasColumnName ?? c.RealColumnName);
+            _returnTotalRowCount = returnTotalRowCount;
         }
 
-        internal FxColumnMap(TableType sourceTableType)
-            : this(sourceTableType.ToRecord())
+        internal FxColumnMap(TableType sourceTableType, bool returnTotalRowCount = false)
+            : this(sourceTableType.ToRecord(), returnTotalRowCount)
         {
         }
 
-        internal FxColumnMap(RecordType sourceTableRecordType)
+        internal FxColumnMap(RecordType sourceTableRecordType, bool returnTotalRowCount = false)
         {
             _sourceTableRecordType = sourceTableRecordType ?? throw new ArgumentNullException(nameof(sourceTableRecordType));
+            _returnTotalRowCount = returnTotalRowCount;
         }
 
         private string GenerateColumnInfoKey(FxColumnInfo columnInfo)
