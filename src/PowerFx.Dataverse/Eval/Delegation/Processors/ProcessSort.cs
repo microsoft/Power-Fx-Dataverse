@@ -29,9 +29,13 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (node.Args[i] is TextLiteralNode tln)
                 {
-                    fieldName = tln.LiteralValue;
+                    fieldName = GetRealFieldName(tableArg, tln);
                 }
-                else if (!TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
+                else if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out var columnInfo))
+                {
+                    fieldName = columnInfo.RealColumnName;
+                }
+                else
                 {
                     return ProcessOtherCall(node, tableArg, context);
                 }

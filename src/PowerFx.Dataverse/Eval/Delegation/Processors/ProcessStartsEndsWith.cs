@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.DataSource;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse
@@ -24,12 +25,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             IList<string> relations = null;
 
-            if (TryGetValidFieldAndRelation(context, node, out string fieldName, out IntermediateNode rightNode, out relations)
+            if (TryGetValidFieldAndRelation(context, node, out var fieldName, out IntermediateNode rightNode, out relations)
 
                 // check if the field supports starts/ends with in capabilities.
-                && context.DelegationMetadata?.DoesColumnSupportStartsEndsWith(fieldName, context.GetCallerTableFieldType(fieldName), isStartWith) == true)
+                && context.DelegationMetadata?.DoesColumnSupportStartsEndsWith(fieldName.RealColumnName, context.GetCallerTableFieldType(fieldName.RealColumnName), isStartWith) == true)
             {
-                var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName, rightNode, context.CallerNode.Scope, isStartWith);
+                var startsEndsWithNode = _hooks.MakeStartsEndsWithCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldName.RealColumnName, rightNode, context.CallerNode.Scope, isStartWith);
 
                 var ret = CreateBinaryOpRetVal(context, node, startsEndsWithNode);
                 return ret;
@@ -43,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse
         private bool TryGetValidFieldAndRelation(
             Context context,
             CallNode node,
-            out string fieldName,
+            out FxColumnInfo fieldName,
             out IntermediateNode rightNode,
             out IList<string> relations)
         {

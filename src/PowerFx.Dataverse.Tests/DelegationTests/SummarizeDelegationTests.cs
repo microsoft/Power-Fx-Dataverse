@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(9, "Summarize(ShowColumns(t1, Name, amount), Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
 
         // Summarize on ForAll() not supported.
-        [InlineData(10, "Summarize(ForAll(t1, {Name: Name, amount: amount}), Name, CountIf(ThisGroup, Not(IsBlank(amount))) As TCount)", new DelegationOperator[] { })]
+        [InlineData(10, "Summarize(ForAll(t1, {AliasedName: Name, AliasedAmount: amount}), AliasedName, CountIf(ThisGroup, Not(IsBlank(AliasedAmount))) As TCount)", new DelegationOperator[] { })]
 
         // nested Summarize not supported.
         [InlineData(11, "Summarize(Summarize(t1, name, Sum(ThisGroup, amount) As TotalAmount), name)", new DelegationOperator[] { })]
@@ -101,7 +101,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var oDataStrings = string.Empty;
             var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
-            if (delegationParameter != null && !delegationParameter.GroupBy?.FxAggregateExpressions.Any(e => e.AggregateMethod == Core.Entities.SummarizeMethod.Count) == true)
+            if (delegationParameter != null && !delegationParameter.ColumnMap?.Any(c => c.AggregateMethod == Core.Entities.SummarizeMethod.Count) == true)
             {
                 oDataStrings = DelegationTests.GetODataString((DataverseDelegationParameters)testTableValue.DelegationParameters);
             }

@@ -521,11 +521,6 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     AddFieldRead(tableName, tableField);
                 }
-
-                foreach (var aggregateExpr in groupByNode.FxAggregateExpressions)
-                {
-                    AddFieldRead(tableName, aggregateExpr.PropertyName);
-                }
             }
 
             return null;

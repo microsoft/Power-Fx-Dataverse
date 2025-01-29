@@ -249,7 +249,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal bool TryAddDistinct(string fieldName, CallNode distinctCallNode, out RetVal result)
+            internal bool TryAddDistinct(FxColumnInfo fieldName, CallNode distinctCallNode, out RetVal result)
             {
                 var canDelegate = !DelegationUtility.IsElasticTable(TableType) &&
                     _topCount == null &&
@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
                 string realFieldName;
                 if (HasLeftColumnMap || HasJoin)
                 {
-                    if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(fieldName, out var leftTableColumnInfo))
+                    if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(FxColumnMap.GenerateColumnInfoKey(fieldName), out var leftTableColumnInfo))
                     {
                         // If Distinct column was present on already renamed left column map, then update that columnmap with just Distinct Column and assign Empty map to Join() selection.
                         realFieldName = leftTableColumnInfo.RealColumnName;
@@ -288,7 +288,7 @@ namespace Microsoft.PowerFx.Dataverse
                         result = new RetVal(Hooks, distinctCallNode, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, newJoinNode, _groupByNode, _maxRows, newColumnMap);
                         return true;
                     }
-                    else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(fieldName, out var joinColumnInfo))
+                    else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(FxColumnMap.GenerateColumnInfoKey(fieldName), out var joinColumnInfo))
                     {
                         // If Distinct column was present on Join() selection, then update that columnmap with just Distinct Column on Join's map and assign Empty map to left column map.
                         realFieldName = joinColumnInfo.RealColumnName;
@@ -313,7 +313,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    if (!DelegationUtility.CanDelegateDistinct(fieldName, DelegationMetadata?.FilterDelegationMetadata))
+                    if (!DelegationUtility.CanDelegateDistinct(fieldName.RealColumnName, DelegationMetadata?.FilterDelegationMetadata))
                     {
                         result = null;
                         return false;
@@ -321,7 +321,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                     // If Distinct column was present on original table, then update that columnmap with just Distinct Column.
                     var columnMap = new FxColumnMap(TableType);
-                    var columnInfo = new FxColumnInfo(realColumnName: fieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
+                    var columnInfo = new FxColumnInfo(realColumnName: fieldName.RealColumnName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
                     columnMap.AddColumn(columnInfo);
                     result = new RetVal(Hooks, distinctCallNode, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, _groupByNode, _maxRows, columnMap);
                     return true;
@@ -381,7 +381,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // (column/previousAlias, alias) pair
-            internal bool TryAddColumnRenames(IEnumerable<(string, string)> map, CallNode node, out RetVal result)
+            internal bool TryAddColumnRenames(IEnumerable<(FxColumnInfo, string)> map, CallNode node, out RetVal result)
             {
                 if (HasGroupBy ||
                     !TableType._type.AssociatedDataSources.First().IsSelectable ||
@@ -403,12 +403,12 @@ namespace Microsoft.PowerFx.Dataverse
                     // If FxColumnMap is present on either of the maps, then must update existing maps.
                     if (HasLeftColumnMap || HasJoin)
                     {
-                        if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(column.Item1, out var rootFxColumnInfo))
+                        if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(column.Item1.AliasColumnName ?? column.Item1.RealColumnName, out var rootFxColumnInfo))
                         {
                             var newRootFxColumnInfo = rootFxColumnInfo.CloneAndUpdateAlias(column.Item2);
                             newLeftTableMap.AddColumn(newRootFxColumnInfo);
                         }
-                        else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(column.Item1, out var joinColumn))
+                        else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(column.Item1.AliasColumnName ?? column.Item1.RealColumnName, out var joinColumn))
                         {
                             var newJoinColumn = joinColumn.CloneAndUpdateAlias(column.Item2);
                             newJoinMap.AddColumn(newJoinColumn);
@@ -420,7 +420,8 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        newLeftTableMap.AddColumn(new FxColumnInfo(column.Item1, column.Item2));
+                        var newColumn = column.Item1.CloneAndUpdateAlias(column.Item2);
+                        newLeftTableMap.AddColumn(newColumn);
                     }
                 }
 
@@ -466,9 +467,45 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
+            internal bool TryAddGroupBy(IEnumerable<string> groupingProperties, IEnumerable<FxColumnInfo> columnMap, CallNode node, out RetVal result)
+            {
+                if (HasGroupBy || HasJoin)
+                {
+                    result = null;
+                    return false;
+                }
+
+                var newLeftColumnMap = HasLeftColumnMap ? LeftColumnMap : new FxColumnMap(TableType);
+
+                foreach (var property in groupingProperties)
+                {
+                    if (!newLeftColumnMap.TryGetColumnInfo(property, out var columnInfo))
+                    {
+                        newLeftColumnMap.AddColumn(new FxColumnInfo(property));
+                    }
+                }
+
+                foreach (var aggregateColumn in columnMap)
+                {
+                    if (!newLeftColumnMap.TryGetColumnInfo(FxColumnMap.GenerateColumnInfoKey(aggregateColumn), out var columnInfo))
+                    {
+                        newLeftColumnMap.AddColumn(aggregateColumn);
+                    }
+                    else
+                    {
+                        newLeftColumnMap.RemoveColumn(FxColumnMap.GenerateColumnInfoKey(aggregateColumn));
+                        newLeftColumnMap.AddColumn(columnInfo.CloneAndUpdateAggregation(aggregateColumn.AggregateMethod));
+                    }
+                }
+
+                var groupByNode = new FxGroupByNode(groupingProperties);
+                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, groupByNode, _maxRows, newLeftColumnMap);
+                return true;
+            }
+
             internal bool TryAddGroupBy(FxGroupByNode groupByNode, CallNode node, out RetVal result)
             {
-                if (HasGroupBy || HasJoin || HasLeftColumnMap || HasOrderBy)
+                if (HasGroupBy || HasJoin || HasOrderBy)
                 {
                     result = null;
                     return false;

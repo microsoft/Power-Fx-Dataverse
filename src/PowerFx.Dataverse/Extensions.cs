@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -32,6 +33,20 @@ namespace Microsoft.PowerFx.Dataverse
             return type.TryGetPrimaryKeyFieldName(out primaryKeyFieldNames);
         }
 
+        private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
+        {
+            return aggregateType switch
+            {
+                SummarizeMethod.None => XrmAggregateType.None,
+                SummarizeMethod.Average => XrmAggregateType.Avg,
+                SummarizeMethod.Count => XrmAggregateType.Count,
+                SummarizeMethod.Max => XrmAggregateType.Max,
+                SummarizeMethod.Min => XrmAggregateType.Min,
+                SummarizeMethod.Sum => XrmAggregateType.Sum,
+                _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
+            };
+        }
+
         internal static ColumnSet ToXRMColumnSet(this FxColumnMap columnMap)
         {
             if (columnMap == null)
@@ -48,18 +63,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var columnInfo in columnMap.ColumnInfoMap.Values)
             {
-                if (string.IsNullOrEmpty(columnInfo.AliasColumnName))
+                columnSet.AttributeExpressions.Add(new XrmAttributeExpression()
                 {
-                    columnSet.AddColumns(columnInfo.RealColumnName);
-                }
-                else
-                {
-                    columnSet.AttributeExpressions.Add(new XrmAttributeExpression()
-                    {
-                        AttributeName = columnInfo.RealColumnName,
-                        Alias = columnInfo.AliasColumnName
-                    });
-                }
+                    AttributeName = columnInfo.RealColumnName,
+                    Alias = columnInfo.AliasColumnName ?? columnInfo.RealColumnName,
+                    HasGroupBy = columnInfo.IsGroupByProperty,
+                    AggregateType = FxToXRMAggregateType(columnInfo.AggregateMethod)
+                });
             }
 
             return columnSet;

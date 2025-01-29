@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -21,10 +22,8 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 {
     [Obsolete("preview")]
-    public class FxColumnMap
+    public class FxColumnMap : IEnumerable<FxColumnInfo>
     {
-        //$$$ Does this needs to be ConcurrentDictionary?
-
         /// <summary>
         /// Key represents alias column name if present, else real column name.
         /// </summary>
@@ -60,14 +59,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal bool ExistsAliasing => _existsAliasing;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FxColumnMap"/> class.
-        /// </summary>
-        /// <param name="logicalColumns">logical name of column is Datasource.</param>
-        internal FxColumnMap(IEnumerable<string> logicalColumns, bool returnTotalRowCount = false)
+        internal static FxColumnMap New(IEnumerable<string> logicalColumns)
         {
-            _columnInfoMap = logicalColumns.Select(c => new FxColumnInfo(c, c)).ToDictionary(c => c.AliasColumnName ?? c.RealColumnName);
-            _returnTotalRowCount = returnTotalRowCount;
+            return new FxColumnMap(logicalColumns);
         }
 
         internal FxColumnMap(TableType sourceTableType, bool returnTotalRowCount = false)
@@ -81,7 +75,17 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             _returnTotalRowCount = returnTotalRowCount;
         }
 
-        private string GenerateColumnInfoKey(FxColumnInfo columnInfo)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FxColumnMap"/> class.
+        /// </summary>
+        /// <param name="logicalColumns">logical name of column is Datasource.</param>
+        private FxColumnMap(IEnumerable<string> logicalColumns)
+        {
+            _columnInfoMap = logicalColumns.Select(c => new FxColumnInfo(c, c)).ToDictionary(c => c.AliasColumnName ?? c.RealColumnName);
+            _returnTotalRowCount = false;
+        }
+
+        internal static string GenerateColumnInfoKey(FxColumnInfo columnInfo)
         {
             return columnInfo.AliasColumnName ?? columnInfo.RealColumnName;
         }
@@ -147,7 +151,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return true;
         }
 
-        private FxColumnInfo RemoveColumn(string aliasOrLogicalName)
+        internal FxColumnInfo RemoveColumn(string aliasOrLogicalName)
         {
             if (string.IsNullOrEmpty(aliasOrLogicalName))
             {
@@ -229,6 +233,16 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             }
 
             return sb.ToString();
+        }
+
+        public IEnumerator<FxColumnInfo> GetEnumerator()
+        {
+            return _columnInfoMap.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }
