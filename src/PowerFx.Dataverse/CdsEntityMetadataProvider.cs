@@ -63,6 +63,9 @@ namespace Microsoft.PowerFx.Dataverse
         // Map logical name to display name
         private readonly Func<string, string> _displayNameLookup;
 
+        // testing
+        private readonly bool _useUpdatedOptionSetKeyWhenDisplayNameIsSame = true;
+
         private CdsEntityMetadataProvider()
         {
             // Flip Metadata parser into a mode where Hyperlink parses as String, Money parses as Number.
@@ -72,7 +75,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool NumberIsFloat { get; init; } = false;
 
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
+        // testing
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null, bool useUpdatedOptionSetKeyWhenDisplayNameIsSame = true)
             : this()
         {
             _innerProvider = provider;
@@ -87,6 +91,8 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             _document = new DataverseDocument(this);
+
+            _useUpdatedOptionSetKeyWhenDisplayNameIsSame = useUpdatedOptionSetKeyWhenDisplayNameIsSame;
         }
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, DisplayNameProvider displayNameLookup)
@@ -215,11 +221,32 @@ namespace Microsoft.PowerFx.Dataverse
             return uniqueName;
         }
 
+        internal static string GetUniqueNameWithLogicalName(DataverseOptionSet optionSet, string displayCollectionName)
+        {
+            var uniqueName = optionSet.Name;
+            if (optionSet.IsGlobal)
+            {
+                uniqueName += " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
+            }
+            else
+            {
+                uniqueName += " " + TexlLexer.PunctuatorParenOpen + displayCollectionName + TexlLexer.PunctuatorParenClose +
+                    " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
+            }
+
+            return uniqueName;
+        }
+
         internal void RegisterOptionSet(string name, DataverseOptionSet optionSet)
         {
             // register the option set.  Global option sets may be added multiple times
             Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal);
             _optionSets[name] = optionSet;
+        }
+
+        internal void RemoveOptionSet(string name)
+        {
+           _optionSets.TryRemove(name, out _);
         }
 
         /// <summary>
@@ -358,6 +385,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
             var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+
             if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
             {
                 // if the global option set is already registered, re-use the original, since binding assumes object equality
@@ -377,6 +405,24 @@ namespace Microsoft.PowerFx.Dataverse
                 // also register them with an invariant name
                 var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
                 RegisterOptionSet(logicalName, dataverseOptionSet);
+            }
+
+            if (_useUpdatedOptionSetKeyWhenDisplayNameIsSame && _optionSets.TryGetValue(uniqueName, out var existingOptionSet))
+            {
+                var optionSetUniqueName = GetUniqueNameWithLogicalName(dataverseOptionSet, entityDisplayName);
+
+                if (!_optionSets.ContainsKey(optionSetUniqueName))
+                {
+                    // saving dataverseOptionSet with updated unique name
+                    RegisterOptionSet(optionSetUniqueName, dataverseOptionSet);
+
+                    // saving already existingOptionSet with updated unique name 
+                    var updatedUniqueNameOfExistingOptionSet = GetUniqueNameWithLogicalName(existingOptionSet, entityDisplayName);
+                    RegisterOptionSet(updatedUniqueNameOfExistingOptionSet, dataverseOptionSet);
+
+                    // Todo Delete orignal saved optionSet
+                    RemoveOptionSet(uniqueName);
+                }
             }
 
             return dataverseOptionSet;
