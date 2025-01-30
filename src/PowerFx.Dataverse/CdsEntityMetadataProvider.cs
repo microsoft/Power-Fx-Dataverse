@@ -385,6 +385,26 @@ namespace Microsoft.PowerFx.Dataverse
 
             var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
             var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+            if (_useUpdatedOptionSetKeyWhenDisplayNameIsSame && _optionSets.TryGetValue(uniqueName, out var existingOptionSet))
+            {
+                var optionSetUniqueName = GetUniqueNameWithLogicalName(dataverseOptionSet, entityDisplayName);
+
+                if (!_optionSets.ContainsKey(optionSetUniqueName))
+                {
+                    // saving dataverseOptionSet with updated unique name
+                    RegisterOptionSet(optionSetUniqueName, dataverseOptionSet);
+
+                    var updatedUniqueNameOfExistingOptionSetName = GetUniqueNameWithLogicalName(existingOptionSet, entityDisplayName);
+                    if (!_optionSets.ContainsKey(updatedUniqueNameOfExistingOptionSetName))
+                    {
+                        // saving already existingOptionSet with updated unique name
+                        RegisterOptionSet(updatedUniqueNameOfExistingOptionSetName, dataverseOptionSet);
+
+                        // Delete previous saved optionSet with common unique name
+                        RemoveOptionSet(uniqueName);
+                    }
+                }
+            }
 
             if (dataverseOptionSet.IsGlobal && _optionSets.TryGetValue(uniqueName, out var globalOptionSet))
             {
@@ -405,24 +425,6 @@ namespace Microsoft.PowerFx.Dataverse
                 // also register them with an invariant name
                 var logicalName = GetOptionSetLogicalName(dataverseOptionSet);
                 RegisterOptionSet(logicalName, dataverseOptionSet);
-            }
-
-            if (_useUpdatedOptionSetKeyWhenDisplayNameIsSame && _optionSets.TryGetValue(uniqueName, out var existingOptionSet))
-            {
-                var optionSetUniqueName = GetUniqueNameWithLogicalName(dataverseOptionSet, entityDisplayName);
-
-                if (!_optionSets.ContainsKey(optionSetUniqueName))
-                {
-                    // saving dataverseOptionSet with updated unique name
-                    RegisterOptionSet(optionSetUniqueName, dataverseOptionSet);
-
-                    // saving already existingOptionSet with updated unique name 
-                    var updatedUniqueNameOfExistingOptionSet = GetUniqueNameWithLogicalName(existingOptionSet, entityDisplayName);
-                    RegisterOptionSet(updatedUniqueNameOfExistingOptionSet, dataverseOptionSet);
-
-                    // Todo Delete orignal saved optionSet
-                    RemoveOptionSet(uniqueName);
-                }
             }
 
             return dataverseOptionSet;
