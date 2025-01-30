@@ -267,7 +267,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(),
+                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(delegationParameters.GroupBy),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };

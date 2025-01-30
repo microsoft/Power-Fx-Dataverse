@@ -26,11 +26,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (args[0] is not(IDelegatableTableValue or DelegationFormulaValue))
-            {
-                throw new InvalidOperationException($"args0 should always be of type {nameof(TableValue)} or {nameof(DelegationFormulaValue)} : found {args[0]}");
-            }
-
             List<OrderExpression> orderExpressions = new List<OrderExpression>();
 
             int columns = (args.Length - 1) / 2;

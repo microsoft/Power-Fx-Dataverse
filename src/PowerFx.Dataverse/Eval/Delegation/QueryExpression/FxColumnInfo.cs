@@ -37,6 +37,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public bool IsGroupByProperty => _isGroupByProperty;
 
+        internal string AliasOrRealName => AliasColumnName ?? RealColumnName;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FxColumnInfo"/> class.
         /// </summary>
@@ -64,6 +66,25 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         internal FxColumnInfo CloneAndUpdateAggregation(SummarizeMethod aggregation)
         {
             return new FxColumnInfo(_realColumnName, _aliasColumnName, _isDistinct, _isGroupByProperty, aggregation);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is FxColumnInfo columnInfo)
+            {
+                return RealColumnName == columnInfo.RealColumnName &&
+                    AliasColumnName == columnInfo.AliasColumnName &&
+                    IsDistinct == columnInfo.IsDistinct &&
+                    AggregateMethod == columnInfo.AggregateMethod &&
+                    IsGroupByProperty == columnInfo.IsGroupByProperty;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return RealColumnName.GetHashCode();
         }
 
         public override string ToString()

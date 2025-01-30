@@ -490,21 +490,62 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 OrderExpression oe = qe.Orders.First();
 
                 IOrderedEnumerable<Entity> entities = oe.OrderType == OrderType.Ascending
-                    ? entityList.OrderBy(e => e.Attributes[oe.Alias ?? oe.AttributeName])
-                    : entityList.OrderByDescending(e => e.Attributes[oe.AttributeName]);
+                    ? entityList.OrderBy(e => GetValueOrAliased(e, oe.AttributeName))
+                    : entityList.OrderByDescending(e => GetValueOrAliased(e, oe.AttributeName));
 
                 foreach (OrderExpression nextOe in qe.Orders.Skip(1))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     entities = nextOe.OrderType == OrderType.Ascending
-                        ? entities.ThenBy(e => e.Attributes[nextOe.AttributeName])
-                        : entities.ThenByDescending(e => e.Attributes[nextOe.AttributeName]);
+                        ? entities.ThenBy(e => GetValueOrAliased(e, nextOe.AttributeName))
+                        : entities.ThenByDescending(e => GetValueOrAliased(e, nextOe.AttributeName));
                 }
 
                 return entities.Take(take).ToList();
             }
 
             return entityList.Take(take).ToList();
+        }
+
+        private static object GetValueOrAliased(Entity e, string attributeName)
+        {
+            // If the direct attribute exists, return it
+            if (TryGetValueWithAttributeName(e, attributeName, out var value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+
+        private static bool TryGetValueWithAttributeName(Entity e, string attributeName, out object value)
+        {
+            if (e.Attributes.TryGetValue(attributeName, out value))
+            {
+                if (value is AliasedValue aliasedValue)
+                {
+                    value = aliasedValue.Value;
+                }
+
+                return true;
+            }
+
+            // Otherwise, look for an AliasedValue
+            // e.Attributes is a collection of key-value pairs.
+            // The 'Value' in those pairs can be an AliasedValue.
+            var aliasedVal = e.Attributes.Values
+                .OfType<AliasedValue>()
+                .FirstOrDefault(a => a.AttributeLogicalName == attributeName);
+
+            // Return the underlying .Value from the AliasedValue, or null if not found
+            if (aliasedVal != null)
+            {
+                value = aliasedVal.Value;
+                return true;
+            }
+
+            value = null;
+            return false;
         }
 
         private Entity MakeLeft(string leftName, Entity rightEntity, string leftPrimaryId)
@@ -853,9 +894,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public bool Equals(Entity x, Entity y)
             {
-                if (x.Attributes.TryGetValue(_column, out var xValue) && y.Attributes.TryGetValue(_column, out var yValue))
+                if (TryGetValueWithAttributeName(x, _column, out var xVal) && TryGetValueWithAttributeName(y, _column, out var yVal))
                 {
-                    return xValue.Equals(yValue);
+                    return xVal.Equals(yVal);
                 }
 
                 return false;
@@ -863,7 +904,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
             public int GetHashCode([DisallowNull] Entity obj)
             {
-                if (obj.Attributes.TryGetValue(_column, out var value))
+                if (TryGetValueWithAttributeName(obj, _column, out var value))
                 {
                     return value.GetHashCode();
                 }
@@ -929,7 +970,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 {
                     foreach (XrmAttributeExpression xae in xael)
                     {
-                        newEntity.Attributes[xae.Alias] = attr.Value;
+                        if (string.IsNullOrEmpty(xae.Alias))
+                        {
+                            newEntity.Attributes[xae.AttributeName] = attr.Value;
+                        }
+                        else
+                        {
+                            newEntity.Attributes[xae.Alias] = new AliasedValue(entity.LogicalName, xae.AttributeName, attr.Value);
+                        }
                     }
                 }
                 else if (columnSet.AllColumns || columnFilter.Contains(attr.Key) || attr.Key == "partitionid")

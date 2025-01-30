@@ -340,7 +340,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var remote = ((AggregateType)node.Args[1].IRContext.ResultType).TableSymbolName;
 
-                // Right column fields
+                // Right columnInfo fields
                 if (node.Args[6] is RecordNode rn)
                 {
                     foreach (KeyValuePair<DName, IntermediateNode> kvp in rn.Fields)
@@ -391,9 +391,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var columnMapTable = columnMap.SourceTableRecordType.TableSymbolName ?? "<<Bug found! empty table name in type>>";
 
-                foreach (var column in columnMap.RealColumnNames)
+                foreach (var columnInfo in columnMap)
                 {
-                    AddFieldRead(columnMapTable, column);
+                    AddFieldRead(columnMapTable, columnInfo.RealColumnName);
                 }
             }
 
@@ -410,7 +410,7 @@ namespace Microsoft.PowerFx.Dataverse
                 AddFieldRead(joinNode.LinkEntity.LinkFromEntityName, joinNode.LinkEntity.LinkFromAttributeName);
                 AddFieldRead(joinNode.LinkEntity.LinkToEntityName, joinNode.LinkEntity.LinkToAttributeName);
 
-                // Right column map
+                // Right columnInfo map
                 foreach (string rightField in joinNode.RightRealFieldNames)
                 {
                     AddFieldRead(joinNode.LinkEntity.LinkToEntityName, rightField);

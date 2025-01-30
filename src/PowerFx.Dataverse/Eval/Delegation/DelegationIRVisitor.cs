@@ -254,19 +254,19 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        internal static string GetRealFieldName(RetVal callerTable, TextLiteralNode fieldName)
+        internal static FxColumnInfo GetRealFieldName(RetVal callerTable, TextLiteralNode fieldName)
         {
             if (callerTable.HasLeftColumnMap && callerTable.LeftColumnMap.TryGetColumnInfo(fieldName.LiteralValue, out var columnInfo))
             {
-                return columnInfo.RealColumnName;
+                return columnInfo;
             }
             else if (callerTable.HasJoin && callerTable.Join.RightTablColumnMap.TryGetColumnInfo(fieldName.LiteralValue, out var columnInfo2))
             {
-                return columnInfo2.RealColumnName;
+                return columnInfo2;
             }
             else if (callerTable.TableType.TryGetBackingDType(fieldName.LiteralValue, out _))
             {
-                return fieldName.LiteralValue;
+                return new FxColumnInfo(fieldName.LiteralValue);
             }
             else
             {
@@ -620,7 +620,7 @@ namespace Microsoft.PowerFx.Dataverse
                         if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField.RealColumnName, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
                             fromFieldRelation.TryGetPrimaryKeyFieldName2(out IEnumerable<string> primaryKeyFieldNames) &&
-                            fromField.RealColumnName == primaryKeyFieldNames.FirstOrDefault())
+                            columnInfo.RealColumnName == primaryKeyFieldNames.FirstOrDefault())
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
                             if (context.IsDataverseDelegation &&

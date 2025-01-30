@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
-            var groupByProperties = new List<string>();
+            var groupByProperties = new HashSet<FxColumnInfo>();
             var aggregateExpressions = new List<FxColumnInfo>();
 
             var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capabilities);
@@ -29,11 +29,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 if (arg is TextLiteralNode columnName)
                 {
-                    var columnNameString = GetRealFieldName(tableArg, columnName);
+                    var columnInfo = GetRealFieldName(tableArg, columnName);
 
-                    if (capabilities.CanDelegateSummarize(columnNameString, tableArg.IsDataverseDelegation))
+                    if (capabilities.CanDelegateSummarize(columnInfo, tableArg.IsDataverseDelegation))
                     {
-                        groupByProperties.Add(columnNameString);
+                        groupByProperties.Add(columnInfo);
                     }
                     else
                     {
@@ -102,17 +102,17 @@ namespace Microsoft.PowerFx.Dataverse
             var fieldArg = maybeNode.Args[1] as LazyEvalNode;
             var predicateContext = context.GetContextForPredicateEval(maybeNode, sourceTable);
 
-            if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, fieldArg.Child, out var fieldName) &&
-                capabilities.CanDelegateSummarize(fieldName.RealColumnName, method, sourceTable.IsDataverseDelegation))
+            if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, fieldArg.Child, out var fieldInfo) &&
+                capabilities.CanDelegateSummarize(fieldInfo, method, sourceTable.IsDataverseDelegation))
             {
-                aggregateExpressions.Add(new FxColumnInfo(fieldName.RealColumnName, aliasName, isDistinct: false, aggregateOperation: method));
+                aggregateExpressions.Add(new FxColumnInfo(fieldInfo.RealColumnName, aliasName, isDistinct: false, aggregateOperation: method));
                 return true;
             }
 
             return false;
         }
 
-        // CountIf(ThisGroup, Not(IsBlank(fieldName)))
+        // CountIf(ThisGroup, Not(IsBlank(fieldInfo)))
         private static bool TryAddCountIfAggregateExpression(CallNode maybeCountIfNode, CallNode node, Context context, RetVal sourceTable, string aliasName, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities, RetVal tableArg)
         {
             if (!IsAggregateFunction(maybeCountIfNode, node, BuiltinFunctionsCore.CountIf.Name, 2))
@@ -127,10 +127,10 @@ namespace Microsoft.PowerFx.Dataverse
                 if (maybeNotCallNode.Args[0] is CallNode maybeIsBlankCallNode && maybeIsBlankCallNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name)
                 {
                     var predicateContext = context.GetContextForPredicateEval(maybeCountIfNode, sourceTable);
-                    if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldName) &&
-                        capabilities.CanDelegateSummarize(fieldName.RealColumnName, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
+                    if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldInfo) &&
+                        capabilities.CanDelegateSummarize(fieldInfo, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
                     {
-                        aggregateExpressions.Add(new FxColumnInfo(fieldName.RealColumnName, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.Count));
+                        aggregateExpressions.Add(new FxColumnInfo(fieldInfo.RealColumnName, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.Count));
                         return true;
                     }
                 }
