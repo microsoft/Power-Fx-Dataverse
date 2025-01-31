@@ -249,7 +249,7 @@ namespace Microsoft.PowerFx.Dataverse
                     " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
             }
 
-            // add the new option set with a unique name
+            // updating the display name of option set with updated unique name
             optionSet.DisplayName = uniqueName;
 
             return uniqueName;
@@ -260,12 +260,7 @@ namespace Microsoft.PowerFx.Dataverse
             // register the option set.  Global option sets may be added multiple times
             Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal);
             _optionSets[name] = optionSet;
-        }
-
-        internal bool RemoveOptionSet(string name)
-        {
-           return _optionSets.TryRemove(name, out _);
-        }
+        }   
 
         /// <summary>
         /// Convert a dataverse entity metadata into a Power Fx type.
