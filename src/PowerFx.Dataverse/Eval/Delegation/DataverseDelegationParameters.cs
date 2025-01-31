@@ -144,13 +144,18 @@ namespace Microsoft.PowerFx.Dataverse
             sb.Append(')');
 
             // Check if there are child transformations (e.g., aggregations)
-            if (groupByNode.FxAggregateExpressions != null)
+            if (ColumnMap?.Any(c => c.AggregateMethod != SummarizeMethod.None) == true)
             {
                 sb.Append(",aggregate(");
 
                 isFirst = true;
-                foreach (var aggExpression in groupByNode.FxAggregateExpressions)
+                foreach (var aggExpression in ColumnMap)
                 {
+                    if (aggExpression.AggregateMethod == SummarizeMethod.None || aggExpression.AggregateMethod == SummarizeMethod.CountRows)
+                    {
+                        continue;
+                    }
+
                     string expression = TranslateNode(aggExpression);
                     if (!isFirst)
                     {
@@ -169,11 +174,11 @@ namespace Microsoft.PowerFx.Dataverse
             return sb.ToString();
         }
 
-        private static string TranslateNode(FxAggregateExpression aggExpression)
+        private static string TranslateNode(FxColumnInfo aggExpression)
         {
             var method = aggExpression.AggregateMethod; // e.g., "sum", "min", etc.
-            var propertyName = aggExpression.PropertyName;
-            var alias = aggExpression.Alias;
+            var propertyName = aggExpression.RealColumnName;
+            var alias = aggExpression.AliasColumnName;
 
             if (method == SummarizeMethod.Count)
             {
@@ -239,7 +244,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.RealColumnNames.ToArray();
+        public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Where(ci => ci.AggregateMethod == SummarizeMethod.None).Select(ci => ci.RealColumnName).ToArray();
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FxFilterExpression filter)

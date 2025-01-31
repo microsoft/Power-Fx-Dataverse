@@ -19,9 +19,9 @@ namespace Microsoft.PowerFx.Dataverse
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // check if we have a simple field name here
-            if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out string fieldName))
+            if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName))
             {
-                var forAllColumns = new List<(string, string)>();
+                var forAllColumns = new List<(FxColumnInfo, string)>();
                 forAllColumns.Add((fieldName, DVSymbolTable.SingleColumnTableFieldName));
                 if (tableArg.TryAddColumnRenames(forAllColumns, node, out var result))
                 {
@@ -34,12 +34,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 Dictionary<DName, TextLiteralNode> dic = new Dictionary<DName, TextLiteralNode>();
                 bool canDelegate = true;
-                var forAllColumns = new List<(string, string)>();
+                var forAllColumns = new List<(FxColumnInfo, string)>();
                 foreach (KeyValuePair<DName, IntermediateNode> kvp in recordNode.Fields)
                 {
                     string newFieldName = kvp.Key.Value;
 
-                    if (TryGetSimpleFieldName(context, kvp.Value, out string currentFieldName))
+                    if (TryGetSimpleFieldName(context, kvp.Value, out var currentFieldName))
                     {
                         forAllColumns.Add((currentFieldName, newFieldName));
                     }

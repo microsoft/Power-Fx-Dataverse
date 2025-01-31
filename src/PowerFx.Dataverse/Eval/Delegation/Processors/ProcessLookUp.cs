@@ -171,20 +171,20 @@ namespace Microsoft.PowerFx.Dataverse
             if (predicteContext.CallerTableRetVal.IsElasticTable && arg1OfAnd is BinaryOpNode arg1b && arg2OfAnd is BinaryOpNode arg2b)
             {
                 if (TryMatchPrimaryId(arg1b.Left, arg1b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
-                    && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var fieldName, out var maybePartitionId, out var opKind, out var fieldFunctions)
+                    && TryGetFieldName(predicteContext, arg2b.Left, arg2b.Right, arg2b.Op, out var columnInfo, out var maybePartitionId, out var opKind, out var fieldFunctions)
                     && opKind == default
                     && fieldFunctions.IsNullOrEmpty()
-                    && fieldName == "partitionid"
+                    && columnInfo.RealColumnName == "partitionid"
                     && IsOpKindEqualityComparison(opKind))
                 {
                     partitionIdArg = maybePartitionId;
                     return true;
                 }
                 else if (TryMatchPrimaryId(arg2b.Left, arg2b.Right, out _, out guidArg, predicteContext.CallerTableRetVal)
-                    && TryGetFieldName(predicteContext, arg1b.Left, arg1b.Right, arg1b.Op, out fieldName, out maybePartitionId, out opKind, out fieldFunctions)
+                    && TryGetFieldName(predicteContext, arg1b.Left, arg1b.Right, arg1b.Op, out columnInfo, out maybePartitionId, out opKind, out fieldFunctions)
                     && opKind == default
                     && fieldFunctions.IsNullOrEmpty()
-                    && fieldName == "partitionid"
+                    && columnInfo.RealColumnName == "partitionid"
                     && IsOpKindEqualityComparison(opKind))
                 {
                     partitionIdArg = maybePartitionId;

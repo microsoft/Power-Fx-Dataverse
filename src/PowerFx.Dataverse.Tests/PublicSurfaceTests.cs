@@ -108,7 +108,6 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterExpression",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxFilterOperator",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxGroupByNode",
-                "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxAggregateExpression",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxJoinNode",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxColumnMap",
                 "Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression.FxColumnInfo",

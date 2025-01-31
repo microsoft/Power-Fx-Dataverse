@@ -62,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse
             return ret.OriginalNode;
         }
 
-        public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
+        public bool TryGetFieldName(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out FxColumnInfo columnInfo, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
             FilterOpMetadata filterCapabilities = context.DelegationMetadata?.FilterDelegationMetadata;
 
@@ -74,12 +74,12 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     opKind = default;
                     node = default;
-                    fieldName = default;
+                    columnInfo = default;
                     return false;
                 }
 
-                fieldName = leftField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
+                columnInfo = leftField;
+                if (DelegationUtility.CanDelegateBinaryOp(columnInfo.RealColumnName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(right, invertCoercion, coercionOpKind);
                     opKind = op;
@@ -89,8 +89,8 @@ namespace Microsoft.PowerFx.Dataverse
             else if (TryGetFieldName(context, right, out var rightField, out invertCoercion, out coercionOpKind, out fieldFunctions)
                 && !TryGetFieldName(context, left, out _, out _, out _, out _))
             {
-                fieldName = rightField;
-                if (DelegationUtility.CanDelegateBinaryOp(fieldName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
+                columnInfo = rightField;
+                if (DelegationUtility.CanDelegateBinaryOp(columnInfo.RealColumnName, op, filterCapabilities, context.CallerTableRetVal.LeftColumnMap))
                 {
                     node = MaybeAddCoercion(left, invertCoercion, coercionOpKind);
 
@@ -136,7 +136,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             opKind = default;
             node = default;
-            fieldName = default;
+            columnInfo = default;
             fieldFunctions = default;
             return false;
         }
@@ -146,7 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// </summary>
         /// <param name="context"></param>
         /// <param name="node"></param>
-        /// <param name="fieldName">name of the field.</param>
+        /// <param name="columnInfo">name of the field.</param>
         /// <param name="invertCoercion">If this is true and parent is binary op node, the right node should apply the invert coercion specified via UNaryOpKind.
         /// e.g. Filter(t1, DateTimeToDecimal(dateField) > 0) -> Filter(t1, dateField > DecimalToDateTime(0)).</param>
         /// <param name="coercionOpKind">Coercion kind that should be inverted for right node in binary op.</param>
@@ -154,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
         public bool TryGetFieldName(
             Context context,
             IntermediateNode node,
-            out string fieldName,
+            out FxColumnInfo columnInfo,
             out bool invertCoercion,
             out UnaryOpKind coercionOpKind,
             out IEnumerable<FieldFunction> fieldFunctions)
@@ -174,12 +174,12 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode maybeScopeAccessNode = GetScopeAccessNode(node, out invertCoercion, out coercionOpKind);
 
             // Try to get the field name from the scope node
-            if (TryGetFieldNameFromScopeNode(context, maybeScopeAccessNode, out fieldName))
+            if (TryGetRealFieldNameFromScopeNode(context, maybeScopeAccessNode, out columnInfo))
             {
                 // Check capabilities for field functions
                 if (fieldFunctions.Any())
                 {
-                    if (!CheckFieldFunctionCapabilities(context, fieldFunctions, fieldName))
+                    if (!CheckFieldFunctionCapabilities(context, fieldFunctions, columnInfo.RealColumnName))
                     {
                         return false;
                     }
@@ -188,7 +188,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            fieldName = default;
+            columnInfo = default;
             return false;
         }
 
@@ -230,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        internal static bool TryGetFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out string fieldName)
+        internal static bool TryGetRealFieldNameFromScopeNode(Context context, IntermediateNode maybeScopeAccessNode, out FxColumnInfo columnInfo)
         {
             if (maybeScopeAccessNode is ScopeAccessNode scopeAccessNode)
             {
@@ -239,14 +239,39 @@ namespace Microsoft.PowerFx.Dataverse
                     var callerScope = context.CallerNode.Scope;
                     if (scopeAccessSymbol.Parent.Id == callerScope.Id)
                     {
-                        fieldName = scopeAccessSymbol.Name;
+                        if (context.CallerTableRetVal.HasLeftColumnMap && context.CallerTableRetVal.LeftColumnMap.TryGetColumnInfo(scopeAccessSymbol.Name, out columnInfo))
+                        {
+                            return true;
+                        }
+
+                        columnInfo = new FxColumnInfo(scopeAccessSymbol.Name);
                         return true;
                     }
                 }
             }
 
-            fieldName = default;
+            columnInfo = default;
             return false;
+        }
+
+        internal static FxColumnInfo GetRealFieldName(RetVal callerTable, TextLiteralNode fieldName)
+        {
+            if (callerTable.HasLeftColumnMap && callerTable.LeftColumnMap.TryGetColumnInfo(fieldName.LiteralValue, out var columnInfo))
+            {
+                return columnInfo;
+            }
+            else if (callerTable.HasJoin && callerTable.Join.RightTablColumnMap.TryGetColumnInfo(fieldName.LiteralValue, out var columnInfo2))
+            {
+                return columnInfo2;
+            }
+            else if (callerTable.TableType.TryGetBackingDType(fieldName.LiteralValue, out _))
+            {
+                return new FxColumnInfo(fieldName.LiteralValue);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Field {fieldName.LiteralValue} not found in left column map or join right column map.");
+            }
         }
 
         private static bool CheckFieldFunctionCapabilities(Context context, IEnumerable<FieldFunction> fieldFunctions, string fieldName)
@@ -262,9 +287,9 @@ namespace Microsoft.PowerFx.Dataverse
             return true;
         }
 
-        public bool TryGetSimpleFieldName(Context context, IntermediateNode node, out string fieldName)
+        public bool TryGetSimpleFieldName(Context context, IntermediateNode node, out FxColumnInfo columnInfo)
         {
-            if (TryGetFieldName(context, node, out fieldName, out var invertCoercion, out _, out var fieldFunctions))
+            if (TryGetFieldName(context, node, out columnInfo, out var invertCoercion, out _, out var fieldFunctions))
             {
                 if (!invertCoercion && !fieldFunctions.Any())
                 {
@@ -564,7 +589,7 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private bool TryGetRelationField(Context context, IntermediateNode node, out string fieldName, out IList<string> relations, out bool invertCoercion, out UnaryOpKind coercionOpKind, out IEnumerable<FieldFunction> fieldFunctions)
+        private bool TryGetRelationField(Context context, IntermediateNode node, out FxColumnInfo columnInfo, out IList<string> relations, out bool invertCoercion, out UnaryOpKind coercionOpKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
             relations = new List<string>();
 
@@ -586,26 +611,26 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (maybeFieldAccessNode is RecordFieldAccessNode fieldAccess)
             {
-                fieldName = fieldAccess.Field;
+                columnInfo = new FxColumnInfo(fieldAccess.Field.Value);
                 if (TryGetFieldName(context, fieldAccess.From, out var fromField, out invertCoercion, out coercionOpKind, out fieldFunctions))
                 {
                     // fetch the primary key name on relation here. If current is 1 depth relation, then we can delegate without fetching the related record. e.g. LookUp(t1, relationField.PrimaryKey = GUID).
                     if (relations.Count == 0)
                     {
-                        if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField, out var fromFieldType) &&
+                        if (context.CallerTableRetVal.TableType.TryGetFieldType(fromField.RealColumnName, out var fromFieldType) &&
                             fromFieldType is RecordType fromFieldRelation &&
                             fromFieldRelation.TryGetPrimaryKeyFieldName2(out IEnumerable<string> primaryKeyFieldNames) &&
-                            fieldName == primaryKeyFieldNames.FirstOrDefault())
+                            columnInfo.RealColumnName == primaryKeyFieldNames.FirstOrDefault())
                         {
                             // For Dartaverse, expression uses NavigationPropertyName and not the attibute name so we need to get the attribute name.
                             if (context.IsDataverseDelegation &&
-                                context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField, out var relation2))
+                                context.CallerTableRetVal.Metadata.TryGetManyToOneRelationship(fromField.RealColumnName, out var relation2))
                             {
-                                fieldName = relation2.ReferencingAttribute;
+                                columnInfo = new FxColumnInfo(relation2.ReferencingAttribute);
                             }
                             else
                             {
-                                fieldName = fromField;
+                                columnInfo = new FxColumnInfo(fromField.RealColumnName);
                             }
 
                             relations = null;
@@ -613,7 +638,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
                     }
 
-                    var relationMetadata = new RelationMetadata(fromField, false, null);
+                    var relationMetadata = new RelationMetadata(fromField.RealColumnName, false, null);
 
                     var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);
                     relations.Add(serializedRelationMetadata);
@@ -624,7 +649,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (TryGetEntityName(callNode.Args[1].IRContext.ResultType, out var targetEntityName) && TryGetEntityName(context.CallerTableNode.IRContext.ResultType, out _))
                     {
                         TryGetFieldName(context, callNode.Args[0], out fromField, out invertCoercion, out coercionOpKind, out fieldFunctions);
-                        AttributeUtility.TryGetLogicalNameFromOdataName(fromField, out var logicalName);
+                        AttributeUtility.TryGetLogicalNameFromOdataName(fromField.RealColumnName, out var logicalName);
                         var relationMetadata = new RelationMetadata(logicalName, true, targetEntityName);
 
                         var serializedRelationMetadata = DelegationUtility.SerializeRelationMetadata(relationMetadata);
@@ -635,7 +660,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             fieldFunctions = default;
-            fieldName = default;
+            columnInfo = default;
             return false;
         }
 
