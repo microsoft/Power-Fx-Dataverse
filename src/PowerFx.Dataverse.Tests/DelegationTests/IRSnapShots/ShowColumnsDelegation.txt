@@ -13,7 +13,7 @@ __retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {locali
 __retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {localid}) | $select=localid&$top=1
 
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $select=new_price&$top=999
-__retrieveMultiple(local, __noop(), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price}) | $orderby=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __noop(), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price}) | $orderby=new_price&$select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $select=new_price&$top=999
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As z}) | $select=new_price&$top=999

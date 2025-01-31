@@ -444,7 +444,6 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 IList<IntermediateNode> orderByArgs = new List<IntermediateNode>();
-                orderByArgs.Add(_filter ?? node.Args[0]);
 
                 foreach (var (fieldInfo, isAscending) in sortColumns)
                 {
