@@ -63,8 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
         // Map logical name to display name
         private readonly Func<string, string> _displayNameLookup;
 
-        // testing
-        private readonly bool _useUpdatedOptionSetKeyWhenDisplayNameIsSame = true;
+        private readonly bool _useUpdatedOptionSetKeyWhenDisplayNameIsSame = false;
 
         private CdsEntityMetadataProvider()
         {
@@ -75,9 +74,25 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool NumberIsFloat { get; init; } = false;
 
-        // testing
-        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null, bool useUpdatedOptionSetKeyWhenDisplayNameIsSame = true)
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
             : this()
+        {
+            _innerProvider = provider;
+            if (globalOptionSets != null)
+            {
+                _globalOptionSets = globalOptionSets;
+            }
+
+            if (displayNameLookup != null)
+            {
+                _displayNameLookup = (logicalName) => displayNameLookup.TryGetValue(logicalName, out var displayName) ? displayName : null;
+            }
+
+            _document = new DataverseDocument(this);
+        }
+
+        public CdsEntityMetadataProvider(IXrmMetadataProvider provider, bool useUpdatedOptionSetKeyWhenDisplayNameIsSame, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
+    : this()
         {
             _innerProvider = provider;
             if (globalOptionSets != null)
@@ -234,6 +249,9 @@ namespace Microsoft.PowerFx.Dataverse
                     " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
             }
 
+            // add the new option set with a unique name
+            optionSet.DisplayName = uniqueName;
+
             return uniqueName;
         }
 
@@ -244,9 +262,9 @@ namespace Microsoft.PowerFx.Dataverse
             _optionSets[name] = optionSet;
         }
 
-        internal void RemoveOptionSet(string name)
+        internal bool RemoveOptionSet(string name)
         {
-           _optionSets.TryRemove(name, out _);
+           return _optionSets.TryRemove(name, out _);
         }
 
         /// <summary>
@@ -385,6 +403,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var entityDisplayName = entity.DisplayCollectionName?.UserLocalizedLabel?.Label ?? entity.LogicalName;
             var uniqueName = GetOptionSetDisplayName(dataverseOptionSet, entityDisplayName);
+
             if (_useUpdatedOptionSetKeyWhenDisplayNameIsSame && _optionSets.TryGetValue(uniqueName, out var existingOptionSet))
             {
                 var optionSetUniqueName = GetUniqueNameWithLogicalName(dataverseOptionSet, entityDisplayName);
@@ -398,10 +417,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (!_optionSets.ContainsKey(updatedUniqueNameOfExistingOptionSetName))
                     {
                         // saving already existingOptionSet with updated unique name
-                        RegisterOptionSet(updatedUniqueNameOfExistingOptionSetName, dataverseOptionSet);
-
-                        // Delete previous saved optionSet with common unique name
-                        RemoveOptionSet(uniqueName);
+                        RegisterOptionSet(updatedUniqueNameOfExistingOptionSetName, existingOptionSet);
                     }
                 }
             }
