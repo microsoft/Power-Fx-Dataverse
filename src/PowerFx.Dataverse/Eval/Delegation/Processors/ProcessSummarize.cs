@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSummarize(CallNode node, RetVal tableArg, Context context)
         {
-            var groupByProperties = new HashSet<FxColumnInfo>();
+            var groupByProperties = new List<FxColumnInfo>();
             var aggregateExpressions = new List<FxColumnInfo>();
 
             var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capabilities);

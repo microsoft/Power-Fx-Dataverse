@@ -465,7 +465,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            internal bool TryAddGroupBy(ISet<FxColumnInfo> groupingProperties, IEnumerable<FxColumnInfo> columnMap, CallNode node, out RetVal result)
+            internal bool TryAddGroupBy(IReadOnlyList<FxColumnInfo> groupingProperties, IEnumerable<FxColumnInfo> columnMap, CallNode node, out RetVal result)
             {
                 if (HasGroupBy || HasJoin)
                 {
@@ -477,6 +477,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 foreach (var property in groupingProperties)
                 {
+                    // Since Summarize() always selects the group by columns also.
                     if (!newLeftColumnMap.TryGetColumnInfo(property.AliasOrRealName, out _))
                     {
                         newLeftColumnMap.AddColumn(property);
@@ -485,6 +486,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 foreach (var aggregateColumn in columnMap)
                 {
+                    // if column is already present in the map, then update the aggregation method.
                     if (!newLeftColumnMap.TryRemoveColumnInfo(aggregateColumn.AliasOrRealName, out var columnInfo))
                     {
                         newLeftColumnMap.AddColumn(aggregateColumn);

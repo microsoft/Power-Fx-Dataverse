@@ -70,21 +70,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public override bool Equals(object obj)
         {
-            if (obj is FxColumnInfo columnInfo)
-            {
-                return RealColumnName == columnInfo.RealColumnName &&
-                    AliasColumnName == columnInfo.AliasColumnName &&
-                    IsDistinct == columnInfo.IsDistinct &&
-                    AggregateMethod == columnInfo.AggregateMethod &&
-                    IsGroupByProperty == columnInfo.IsGroupByProperty;
-            }
-
-            return false;
+            throw new NotImplementedException();
         }
 
         public override int GetHashCode()
         {
-            return RealColumnName.GetHashCode();
+            throw new NotImplementedException();
         }
 
         public override string ToString()
