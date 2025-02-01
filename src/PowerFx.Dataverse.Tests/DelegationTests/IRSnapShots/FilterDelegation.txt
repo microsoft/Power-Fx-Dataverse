@@ -196,13 +196,13 @@ __retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_sta
 __retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_state}, If(LtDecimals(1,0), ((local_new_state_optionSet).1))), __noop(), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_state eq null)&$top=999
 __retrieveMultiple(local, __eq(local, {fieldFunctions:Table(), fieldName:new_state}, If(LtNumbers(1,0), ((local_new_state_optionSet).1))), __noop(), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_state eq null)&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$select=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_price gt 5)&$orderby=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Xyz}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$select=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
-__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(local, new_price, True), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
+__retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$orderby=new_price&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 5), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=(new_price gt 5)&$select=new_price&$top=999
 Filter(local, (ExactInText(oW1,new_name)))
@@ -272,4 +272,4 @@ Filter(local, (EndsWith(1, new_name)))
 Filter(local, (EndsWith(1, new_name)))
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_datetime}, DecimalToDateTime(0)), __noop(), __noJoin(), __noopGroupBy(), 999, __allColumns()) | $filter=(new_datetime gt 1899-12-30T00:00:00.000Z)&$top=999
 Filter(local, (EqDecimals(Hour(DateToDateTime(new_date)),2)))
-Filter(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name, Sum(new_price) As TotalPrice), 999, __allColumns()), (EqText(new_name,test))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999
+Filter(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name), 999, {new_name,SUM(new_price) As TotalPrice}), (EqText(new_name,test))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999

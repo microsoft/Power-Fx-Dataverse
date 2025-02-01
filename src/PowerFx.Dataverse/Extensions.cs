@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -32,7 +33,26 @@ namespace Microsoft.PowerFx.Dataverse
             return type.TryGetPrimaryKeyFieldName(out primaryKeyFieldNames);
         }
 
-        internal static ColumnSet ToXRMColumnSet(this FxColumnMap columnMap)
+        private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
+        {
+            return aggregateType switch
+            {
+                SummarizeMethod.None => XrmAggregateType.None,
+                SummarizeMethod.Average => XrmAggregateType.Avg,
+                SummarizeMethod.Count => XrmAggregateType.Count,
+                SummarizeMethod.Max => XrmAggregateType.Max,
+                SummarizeMethod.Min => XrmAggregateType.Min,
+                SummarizeMethod.Sum => XrmAggregateType.Sum,
+                _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
+            };
+        }
+
+        /// <summary>
+        /// Converts FxColumnMap to ColumnSet.
+        /// </summary>
+        /// <param name="columnMap"></param>
+        /// <param name="fxGroupByNode"></param>
+        internal static ColumnSet ToXRMColumnSet(this FxColumnMap columnMap, FxGroupByNode fxGroupByNode = null)
         {
             if (columnMap == null)
             {
@@ -48,17 +68,31 @@ namespace Microsoft.PowerFx.Dataverse
 
             foreach (var columnInfo in columnMap.ColumnInfoMap.Values)
             {
-                if (string.IsNullOrEmpty(columnInfo.AliasColumnName))
-                {
-                    columnSet.AddColumns(columnInfo.RealColumnName);
-                }
-                else
+                var hasGroupBy = fxGroupByNode?.Contains(columnInfo.RealColumnName) == true;
+                var hasAliasing = !string.IsNullOrEmpty(columnInfo.AliasColumnName);
+                var hasAggregate = columnInfo.AggregateMethod != SummarizeMethod.None;
+                if (hasAliasing)
                 {
                     columnSet.AttributeExpressions.Add(new XrmAttributeExpression()
                     {
                         AttributeName = columnInfo.RealColumnName,
-                        Alias = columnInfo.AliasColumnName
+                        Alias = columnInfo.AliasColumnName,
+                        HasGroupBy = fxGroupByNode?.Contains(columnInfo.RealColumnName) == true,
+                        AggregateType = FxToXRMAggregateType(columnInfo.AggregateMethod)
                     });
+                }
+                else if (hasGroupBy || hasAggregate)
+                {
+                    columnSet.AttributeExpressions.Add(new XrmAttributeExpression()
+                    {
+                        AttributeName = columnInfo.RealColumnName,
+                        HasGroupBy = fxGroupByNode?.Contains(columnInfo.RealColumnName) == true,
+                        AggregateType = FxToXRMAggregateType(columnInfo.AggregateMethod)
+                    });
+                }
+                else
+                {
+                    columnSet.AddColumns(columnInfo.RealColumnName);
                 }
             }
 

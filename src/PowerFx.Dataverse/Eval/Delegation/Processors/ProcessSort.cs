@@ -9,6 +9,7 @@ using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Types.Enums;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
@@ -18,20 +19,24 @@ namespace Microsoft.PowerFx.Dataverse
     {
         private RetVal ProcessSort(CallNode node, RetVal tableArg, Context context)
         {
-            IList<(string, bool)> sortColumns = new List<(string, bool)>();
+            IList<(FxColumnInfo, bool)> sortColumns = new List<(FxColumnInfo, bool)>();
             bool canDelegate = true;
             context = context.GetContextForPredicateEval(node, tableArg);
             int i = 1;
 
             while (i < node.Args.Count)
             {
-                string fieldName;
+                FxColumnInfo fieldName;
 
                 if (node.Args[i] is TextLiteralNode tln)
                 {
-                    fieldName = tln.LiteralValue;
+                    fieldName = GetRealFieldName(tableArg, tln);
                 }
-                else if (!TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out fieldName))
+                else if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out var columnInfo))
+                {
+                    fieldName = columnInfo;
+                }
+                else
                 {
                     return ProcessOtherCall(node, tableArg, context);
                 }

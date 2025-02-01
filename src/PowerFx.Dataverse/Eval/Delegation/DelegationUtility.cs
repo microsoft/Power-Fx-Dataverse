@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR.Nodes;
@@ -89,10 +90,16 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return b;
         }
 
-        public static bool CanDelegateSort(string fieldName, bool isAscending, SortOpMetadata sortCapabilities)
+        public static bool CanDelegateSort(FxColumnInfo fieldInfo, bool isAscending, SortOpMetadata sortCapabilities)
         {
-            bool? canSortCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.Sort);
-            bool? canSortAscendingOnlyCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldName)), DelegationCapability.SortAscendingOnly);
+            // $$$ Can't delegate sort if the field is being aggregated https://github.com/microsoft/Power-Fx-Dataverse/issues/593
+            if (fieldInfo.AggregateMethod != SummarizeMethod.None)
+            {
+                return false;
+            }
+
+            bool? canSortCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldInfo.RealColumnName)), DelegationCapability.Sort);
+            bool? canSortAscendingOnlyCapability = sortCapabilities?.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldInfo.RealColumnName)), DelegationCapability.SortAscendingOnly);
 
             // if we can't get capabilities, we can't delegate
             if (canSortCapability == null || canSortAscendingOnlyCapability == null)

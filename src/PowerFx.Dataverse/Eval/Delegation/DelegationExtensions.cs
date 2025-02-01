@@ -2,17 +2,18 @@
 // Licensed under the MIT license.
 
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
     internal static class DelegationExtensions
     {
-        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, string columnName, SummarizeMethod method, bool isDataverseDelegation)
+        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, FxColumnInfo columnInfo, SummarizeMethod method, bool isDataverseDelegation)
         {
-            return tableDelegationInfo.CanDelegateSummarize(columnName, isDataverseDelegation) && tableDelegationInfo.CanDelegateSummarize(method, isDataverseDelegation);
+            return tableDelegationInfo.CanDelegateSummarize(columnInfo, isDataverseDelegation) && tableDelegationInfo.CanDelegateSummarize(method, isDataverseDelegation);
         }
 
-        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, string columnName, bool isDataverseDelegation)
+        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, FxColumnInfo columnInfo, bool isDataverseDelegation)
         {
             if (isDataverseDelegation)
             {
@@ -25,7 +26,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             }
 
             var summarizeCapabilities = tableDelegationInfo.SummarizeCapabilities;
-            if (summarizeCapabilities.IsSummarizableProperty(columnName))
+            if (summarizeCapabilities.IsSummarizableProperty(columnInfo.RealColumnName))
             {
                 return true;
             }

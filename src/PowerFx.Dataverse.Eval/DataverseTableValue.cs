@@ -258,19 +258,6 @@ namespace Microsoft.PowerFx.Dataverse
             return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
         }
 
-        private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
-        {
-            return aggregateType switch
-            {
-                SummarizeMethod.Average => XrmAggregateType.Avg,
-                SummarizeMethod.Count => XrmAggregateType.Count,
-                SummarizeMethod.Max => XrmAggregateType.Max,
-                SummarizeMethod.Min => XrmAggregateType.Min,
-                SummarizeMethod.Sum => XrmAggregateType.Sum,
-                _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
-            };
-        }
-
 #pragma warning disable CS0618 // Type or member is obsolete
 
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
@@ -280,39 +267,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(),
+                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(delegationParameters.GroupBy),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
-
-            if (delegationParameters.GroupBy != null)
-            {
-                var columnSet = new ColumnSet(false);
-                foreach (var groupByProp in delegationParameters.GroupBy.GroupingProperties)
-                {
-                    var att = new XrmAttributeExpression()
-                    {
-                        AggregateType = XrmAggregateType.None,
-                        AttributeName = groupByProp,
-                        HasGroupBy = true,
-                        Alias = groupByProp
-                    };
-                    columnSet.AttributeExpressions.Add(att);
-                }
-
-                foreach (var aggregate in delegationParameters.GroupBy.FxAggregateExpressions)
-                {
-                    var att = new XrmAttributeExpression()
-                    {
-                        AggregateType = FxToXRMAggregateType(aggregate.AggregateMethod),
-                        AttributeName = aggregate.PropertyName,
-                        Alias = aggregate.Alias ?? aggregate.PropertyName
-                    };
-                    columnSet.AttributeExpressions.Add(att);
-                }
-
-                query.ColumnSet = columnSet;
-            }
 
             if (delegationParameters.Join != null)
             {

@@ -26,15 +26,15 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (node.Args[0] is CallNode callNode &&
                 callNode.Function.Name == BuiltinFunctionsCore.IsBlank.Name &&
-                    ((TryGetFieldName(context, callNode, out var fieldName, out var invertCoercion, out _, out var fieldOperation) && !invertCoercion)
-                    || (TryGetRelationField(context, callNode, out fieldName, out relations, out invertCoercion, out _, out fieldOperation) && !invertCoercion)))
+                    ((TryGetFieldName(context, callNode, out var columnInfo, out var invertCoercion, out _, out var fieldOperation) && !invertCoercion)
+                    || (TryGetRelationField(context, callNode, out columnInfo, out relations, out invertCoercion, out _, out fieldOperation) && !invertCoercion)))
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 
                 // BinaryOpKind doesn't matter for Not(IsBlank()) because all value will be compared to null, so just use NeqText.
                 if (context.DelegationMetadata?.FilterDelegationMetadata.IsUnaryOpSupportedByTable(UnaryOp.Not) == true)
                 {
-                    var neqNode = _hooks.MakeNeqCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldOperation, fieldName, BinaryOpKind.NeqText, blankNode, context.CallerNode.Scope);
+                    var neqNode = _hooks.MakeNeqCall(context.CallerTableNode, context.CallerTableRetVal.TableType, relations, fieldOperation, columnInfo.RealColumnName, BinaryOpKind.NeqText, blankNode, context.CallerNode.Scope);
                     var ret = CreateBinaryOpRetVal(context, node, neqNode);
                     return ret;
                 }

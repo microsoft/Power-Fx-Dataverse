@@ -51,19 +51,14 @@ namespace Microsoft.PowerFx.Dataverse
             IntermediateNode binaryOpNodeLeft = node.Left;
             IntermediateNode binaryOpNodeRight = node.Right;
 
-            if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out string fieldName, out IntermediateNode rightNode, out BinaryOpKind operation, out IList<string> relations, out var fieldFunction))
+            if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out var columnInfo, out IntermediateNode rightNode, out BinaryOpKind operation, out IList<string> relations, out var fieldFunction))
             {
                 TryRearrangeNodes(context, ref binaryOpNodeLeft, ref binaryOpNodeRight);
 
-                if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out fieldName, out rightNode, out operation, out relations, out fieldFunction))
+                if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out columnInfo, out rightNode, out operation, out relations, out fieldFunction))
                 {
                     return new RetVal(node);
                 }
-            }
-
-            if (context.CallerTableRetVal.HasLeftColumnMap && context.CallerTableRetVal.LeftColumnMap.TryGetColumnInfo(fieldName, out var fieldInfo))
-            {
-                fieldName = fieldInfo.RealColumnName;
             }
 
             if (!IsRelationDelegationAllowed(tableType, relations))
@@ -97,37 +92,37 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (IsOpKindEqualityComparison(operation))
             {
-                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var eqNode = _hooks.MakeEqCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, eqNode);
             }
             else if (IsOpKindInequalityComparison(operation))
             {
-                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var neqNode = _hooks.MakeNeqCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, neqNode);
             }
             else if (IsOpKindLessThanComparison(operation))
             {
-                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var ltNode = _hooks.MakeLtCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, ltNode);
             }
             else if (IsOpKindLessThanEqualComparison(operation))
             {
-                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var leqNode = _hooks.MakeLeqCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, leqNode);
             }
             else if (IsOpKindGreaterThanComparison(operation))
             {
-                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var gtNode = _hooks.MakeGtCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, gtNode);
             }
             else if (IsOpKindGreaterThanEqalComparison(operation))
             {
-                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var geqNode = _hooks.MakeGeqCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, geqNode);
             }
             else if (operation == BinaryOpKind.InText)
             {
-                var inNode = _hooks.MakeInCall(callerSourceTable, tableType, relations, fieldFunction, fieldName, operation, rightNode, callerScope);
+                var inNode = _hooks.MakeInCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, inNode);
             }
             else
@@ -159,7 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        private bool TryGetFieldNameOrRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IList<string> relations, out IEnumerable<FieldFunction> fieldFunctions)
+        private bool TryGetFieldNameOrRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out FxColumnInfo fieldName, out IntermediateNode node, out BinaryOpKind opKind, out IList<string> relations, out IEnumerable<FieldFunction> fieldFunctions)
         {
             relations = null;
 
@@ -315,7 +310,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
-        private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out string fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
+        private bool TryGetRelationField(Context context, IntermediateNode left, IntermediateNode right, BinaryOpKind op, out FxColumnInfo fieldName, out IList<string> relations, out IntermediateNode node, out BinaryOpKind opKind, out IEnumerable<FieldFunction> fieldFunctions)
         {
             if (TryGetRelationField(context, left, out var leftField, out var leftRelation, out var invertCoercion, out var coercionKind, out fieldFunctions) &&
                 !TryGetFieldName(context, right, out _, out _, out _, out _))
