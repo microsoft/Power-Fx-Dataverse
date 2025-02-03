@@ -57,7 +57,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal bool ExistsAliasing => _existsAliasing;
 
-        internal static FxColumnMap New(IEnumerable<string> logicalColumns)
+        public static FxColumnMap New(IEnumerable<string> logicalColumns)
         {
             return new FxColumnMap(logicalColumns);
         }
