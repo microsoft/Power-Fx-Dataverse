@@ -2277,8 +2277,10 @@ END
                 }
             };
 
-            var engine = new PowerFx2SqlEngine(localModel.ToXrm());
-            var result = engine.Check("'Picklist (global1)' = 'Picklist (placeholder)'.'4 (1)' || 'Picklist (global2)' = 'Picklist (placeholder)'.'2 (3)'");
+            var provider = new MockXrmMetadataProvider(localModel);
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+
+            var result = engine.Check("'Picklist (global1)' = 'Picklist (placeholder) (global1)'.'4 (1)' || 'Picklist (global2)' = 'Picklist (placeholder) (global2)'.'2 (3)'");
 
             Assert.True(result.IsSuccess);
         }

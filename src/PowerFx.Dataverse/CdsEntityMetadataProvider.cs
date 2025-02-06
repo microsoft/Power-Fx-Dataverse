@@ -92,21 +92,8 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         public CdsEntityMetadataProvider(IXrmMetadataProvider provider, bool useUpdatedOptionSetKeyWhenDisplayNameIsSame, IReadOnlyDictionary<string, string> displayNameLookup = null, List<OptionSetMetadata> globalOptionSets = null)
-    : this()
+    : this(provider, displayNameLookup, globalOptionSets)
         {
-            _innerProvider = provider;
-            if (globalOptionSets != null)
-            {
-                _globalOptionSets = globalOptionSets;
-            }
-
-            if (displayNameLookup != null)
-            {
-                _displayNameLookup = (logicalName) => displayNameLookup.TryGetValue(logicalName, out var displayName) ? displayName : null;
-            }
-
-            _document = new DataverseDocument(this);
-
             _useUpdatedOptionSetKeyWhenDisplayNameIsSame = useUpdatedOptionSetKeyWhenDisplayNameIsSame;
         }
 
@@ -246,7 +233,7 @@ namespace Microsoft.PowerFx.Dataverse
             else
             {
                 uniqueName += " " + TexlLexer.PunctuatorParenOpen + displayCollectionName + TexlLexer.PunctuatorParenClose +
-                    " " + TexlLexer.PunctuatorParenOpen + optionSet.InvariantName + TexlLexer.PunctuatorParenClose;
+                    " " + TexlLexer.PunctuatorParenOpen + optionSet.RelatedColumnInvariantName + TexlLexer.PunctuatorParenClose;
             }
 
             // updating the display name of option set with updated unique name
@@ -270,7 +257,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public RecordType GetRecordType(string logicalName, string variableName = null)
         {
-            if (logicalName == null)
+            if (logicalName == null)    
             {
                 throw new ArgumentNullException(nameof(logicalName));
             }
