@@ -31,7 +31,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var columnInfo = GetRealFieldName(tableArg, columnName);
 
-                    if (capabilities.CanDelegateSummarize(columnInfo, tableArg.IsDataverseDelegation))
+                    if (capabilities.CanDelegateSummarize(columnInfo.RealColumnName, SummarizeMethod.None, tableArg.IsDataverseDelegation))
                     {
                         groupByProperties.Add(columnInfo);
                     }
@@ -103,7 +103,7 @@ namespace Microsoft.PowerFx.Dataverse
             var predicateContext = context.GetContextForPredicateEval(maybeNode, sourceTable);
 
             if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, fieldArg.Child, out var fieldInfo) &&
-                capabilities.CanDelegateSummarize(fieldInfo, method, sourceTable.IsDataverseDelegation))
+                capabilities.CanDelegateSummarize(fieldInfo.RealColumnName, method, sourceTable.IsDataverseDelegation))
             {
                 aggregateExpressions.Add(new FxColumnInfo(fieldInfo.RealColumnName, aliasName, isDistinct: false, aggregateOperation: method));
                 return true;
@@ -128,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var predicateContext = context.GetContextForPredicateEval(maybeCountIfNode, sourceTable);
                     if (DelegationIRVisitor.TryGetRealFieldNameFromScopeNode(predicateContext, maybeIsBlankCallNode.Args[0], out var fieldInfo) &&
-                        capabilities.CanDelegateSummarize(fieldInfo, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
+                        capabilities.CanDelegateSummarize(fieldInfo.RealColumnName, SummarizeMethod.Count, tableArg.IsDataverseDelegation))
                     {
                         aggregateExpressions.Add(new FxColumnInfo(fieldInfo.RealColumnName, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.Count));
                         return true;
@@ -146,7 +146,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            if (capabilities.CanDelegateSummarize(SummarizeMethod.CountRows, sourceTable.IsDataverseDelegation))
+            if (capabilities.CanDelegateSummarize(null, SummarizeMethod.CountRows, sourceTable.IsDataverseDelegation))
             {
                 aggregateExpressions.Add(new FxColumnInfo(null, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.CountRows));
                 return true;
