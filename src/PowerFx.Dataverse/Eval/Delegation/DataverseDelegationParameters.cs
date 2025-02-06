@@ -66,7 +66,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool HasNoRelation => Relation == null || !Relation.Any();
 
-        internal DataverseDelegationParameters(FormulaType expectedReturnType)
+        public DataverseDelegationParameters(FormulaType expectedReturnType)
         {
             _expectedReturnType = expectedReturnType;
         }
