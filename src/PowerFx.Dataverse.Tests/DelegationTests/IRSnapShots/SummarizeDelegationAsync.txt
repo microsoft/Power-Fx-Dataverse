@@ -1,24 +1,24 @@
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount, Sum(credit) As T Credit), 1000, __allColumns()) | $apply=groupby((name),aggregate(amount with sum as TotalAmount,credit with sum as T Credit))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, credit, Sum(amount) As TotalAmount), 1000, __allColumns()) | $apply=groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
-__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), __noJoin(), __groupBy(name, credit, Sum(amount) As TotalAmount), 1000, __allColumns()) | $apply=filter=(name eq 'test')/groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Count(amount) As TCount), 1000, __allColumns())
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), Float(10), __allColumns()) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=10
-__retrieveSingle(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), __allColumns()) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1
-ShowColumns(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), TotalAmount) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-Summarize(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1000, {name,amount}), name, ({TCount:CountIf(ThisGroup, (Not(IsBlank(amount))))}))
-Summarize(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1000, {name As Name,amount}), Name, ({TCount:CountIf(ThisGroup, (Not(IsBlank(amount))))}))
-Summarize(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), name) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount,SUM(credit) As T Credit}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount,credit with sum as T Credit))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, credit), 1000, {name,credit,SUM(amount) As TotalAmount}) | $apply=groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), __noJoin(), __groupBy(name, credit), 1000, {name,credit,SUM(amount) As TotalAmount}) | $apply=filter=(name eq 'test')/groupby((name,credit),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,COUNT(amount) As TCount})
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), Float(10), {name,SUM(amount) As TotalAmount}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=10
+__retrieveSingle(t1, __noop(), __noop(), __noJoin(), __groupBy(name), {name,SUM(amount) As TotalAmount}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {SUM(amount) As TotalAmount}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,amount,COUNT(amount) As TCount})
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name As AliasedName,amount As AliasedAmount,COUNT(amount) As TCount})
+Summarize(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}), name) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
 Summarize(t1, name, ({TotalAmount:Sum(ThisGroup, (MulNumbers(amount,Float(2))))}))
 Summarize(t1, name, credit, ({TotalAmount:Sum(ThisGroup, (Sqrt(Coalesce(amount, 0))))}))
-FirstN(SortByColumns(Summarize(__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), __noJoin(), __noopGroupBy(), 1000, {name As Name,amount}), Name, ({COUNT_Id:CountIf(ThisGroup, (Not(IsBlank(amount))))})), COUNT_Id, (SortOrder).Descending), Float(5))
-Sort(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), (TotalAmount)) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-SortByColumns(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), name) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-FirstN(SortByColumns(Summarize(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __noopGroupBy(), 1000, {name As Name,amount}), Name, ({COUNT_Id:CountIf(ThisGroup, (Not(IsBlank(amount))))})), COUNT_Id, (SortOrder).Descending), Float(5))
-Filter(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), (GtNumbers(TotalAmount,Float(10)))) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-LookUp(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), (GtNumbers(TotalAmount,Float(10)))) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-Distinct(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Sum(amount) As TotalAmount), 1000, __allColumns()), (TotalAmount)) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Min(amount) As MinAmount), 1000, __allColumns()) | $apply=groupby((name),aggregate(amount with min as MinAmount))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Max(amount) As MaxAmount), 1000, __allColumns()) | $apply=groupby((name),aggregate(amount with max as MaxAmount))&$top=1000
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name, Average(amount) As AvgAmount), 1000, __allColumns()) | $apply=groupby((name),aggregate(amount with average as AvgAmount))&$top=1000
+FirstN(SortByColumns(__retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table(), fieldName:name}, test), __noop(), __noJoin(), __groupBy(name), 1000, {name As Name,amount,COUNT(amount) As COUNT_Id}), COUNT_Id, (SortOrder).Descending), Float(5))
+Sort(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}), (TotalAmount)) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __orderBy(name, True), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))/$orderby=name&$top=1000
+FirstN(SortByColumns(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name As Name,amount,COUNT(amount) As COUNT_Id}), COUNT_Id, (SortOrder).Descending), Float(5))
+Filter(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}), (GtNumbers(TotalAmount,Float(10)))) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+LookUp(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}), (GtNumbers(TotalAmount,Float(10)))) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+Distinct(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,SUM(amount) As TotalAmount}), (TotalAmount)) | $apply=groupby((name),aggregate(amount with sum as TotalAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MIN(amount) As MinAmount}) | $apply=groupby((name),aggregate(amount with min as MinAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MAX(amount) As MaxAmount}) | $apply=groupby((name),aggregate(amount with max as MaxAmount))&$top=1000
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,AVERAGE(amount) As AvgAmount}) | $apply=groupby((name),aggregate(amount with average as AvgAmount))&$top=1000
 Summarize(t1, name, ({TotalRows:CountRows(ThisGroup)}))

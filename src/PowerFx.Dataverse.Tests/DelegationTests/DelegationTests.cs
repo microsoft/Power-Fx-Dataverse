@@ -229,6 +229,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
+            if (dp == null)
+            {
+                return string.Empty;
+            }
+
             StringBuilder sb = new StringBuilder();
 
             IReadOnlyDictionary<string, string> ode = dp.ODataElements;
@@ -259,6 +264,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 sb.Append(DataverseDelegationParameters.Odata_Top);
                 AddEqual(sb);
                 sb.Append(top);
+            }
+
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out string count))
+            {
+                AddSeparatorIfNeeded(sb, false);
+                sb.Append(DataverseDelegationParameters.Odata_Count);
+                AddEqual(sb);
+                sb.Append(count);
             }
 
             return sb.ToString();

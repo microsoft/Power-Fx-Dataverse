@@ -177,7 +177,7 @@ With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), 
 With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
 With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, Float(20)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
 With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$top=1
-With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __orderBy(r, new_price, False), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$orderby=new_price desc&$top=1
+With({r:local}, (((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __orderBy(new_price, False), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1)) | $filter=(new_quantity eq 20)&$orderby=new_price desc&$top=1
 
 
 With({r:local}, ((__retrieveSingle(local, __in(local, {fieldFunctions:Table(), fieldName:new_name}, Concatenate(o, W1)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=contains(new_name,'oW1')&$top=1
@@ -244,7 +244,7 @@ With({r:local}, ((__retrieveSingle(local, __and(__lt(local, {fieldFunctions:Tabl
 With({r:local}, ((__retrieveSingle(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 200), __neq(local, {fieldFunctions:Table(), fieldName:old_price}, Blank())), __noop(), __noJoin(), )).new_price)) | $filter=((new_price lt 200) and (old_price ne null))&$top=1
 With({r:local}, ((__retrieveSingle(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(200)), __neq(local, {fieldFunctions:Table(), fieldName:old_price}, Blank())), __noop(), __noJoin(), )).new_price)) | $filter=((new_price lt 200) and (old_price ne null))&$top=1
 With({r:local}, ((__retrieveSingle(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 200), __neq(local, {fieldFunctions:Table(), fieldName:old_price}, Blank())), __noop(), __noJoin(), )).new_price)) | $filter=((new_price lt 200) and (old_price ne null))&$top=1
-With({r:local}, (LookUp(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name, Sum(new_price) As TotalPrice), 999, __allColumns()), (EqText(new_name,test))))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999
+With({r:local}, (LookUp(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name), 999, {new_name,SUM(new_price) As TotalPrice}), (EqText(new_name,test))))) | $apply=groupby((new_name),aggregate(new_price with sum as TotalPrice))&$top=999
 
 
 

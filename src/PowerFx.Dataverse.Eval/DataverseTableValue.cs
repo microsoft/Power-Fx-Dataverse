@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -38,6 +39,8 @@ namespace Microsoft.PowerFx.Dataverse
         public bool HasCachedRows => _lazyTaskRows.IsValueCreated;
 
         public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public DelegationParameterFeatures SupportedFeatures => DelegationParameterFeatures.Filter | DelegationParameterFeatures.Top | DelegationParameterFeatures.Columns | DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Count;
 
         public readonly EntityMetadata _entityMetadata;
 
@@ -162,6 +165,71 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
+        public async Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
+        {
+            // if condition expression is empty, we can call seprate function to get count of the table.
+            var delegationParameters = (DataverseDelegationParameters)parameters;
+            if (delegationParameters.ReturnTotalRowCount == true)
+            {
+                var count = await GetCountAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                if (delegationParameters.ExpectedReturnType == FormulaType.Decimal)
+                {
+                    return FormulaValue.New(count);
+                }
+                else if (delegationParameters.ExpectedReturnType == FormulaType.Number)
+                {
+                    return FormulaValue.New((float)count);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Expected type is number or decimal, found {delegationParameters.ExpectedReturnType}");
+                }
+            }
+
+            throw new InvalidOperationException("ExecuteQueryAsync encountered incorrect query.");
+        }
+
+        private async Task<long> GetCountAsync(IServiceProvider services, DataverseDelegationParameters parameters, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // If it is counting entire table, we can use RetrieveTotalRecordCountRequest to get the count for entire table. IE select count(*) from table.
+            if (parameters.IsCountingEntireTable())
+            {
+                // https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/retrievetotalrecordcount?view=dataverse-latest
+                var response = await _connection.Services.ExecuteAsync(new RetrieveTotalRecordCountRequest() { EntityNames = new string[] { _entityMetadata.LogicalName } });
+                var response2 = (RetrieveTotalRecordCountResponse)response.Response;
+                if (response2.EntityRecordCountCollection.TryGetValue(_entityMetadata.LogicalName, out var totalCount))
+                {
+                    return totalCount;
+                }
+
+                throw new InvalidOperationException($"Response incorrect executing query in {nameof(GetCountAsync)}");
+            }
+            else
+            {
+                // If it is counting based on filter, etc., we can use QueryExpression to get the count. IE select count(*) from table where filter.
+                var delegationParameters = (DataverseDelegationParameters)parameters;
+                var query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
+
+                // https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.entitycollection.totalrecordcount?view=dataverse-sdk-latest#microsoft-xrm-sdk-entitycollection-totalrecordcount
+                query.PageInfo.ReturnTotalRecordCount = true;
+                DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
+
+                if (entityCollectionResponse.HasError)
+                {
+                    throw new CustomFunctionErrorException($"Error while executing query in {nameof(GetCountAsync)}");
+                }
+                else if (entityCollectionResponse.Response.TotalRecordCountLimitExceeded)
+                {
+                    // https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.entitycollection.totalrecordcountlimitexceeded?view=dataverse-sdk-latest#microsoft-xrm-sdk-entitycollection-totalrecordcountlimitexceeded
+                    throw new CustomFunctionErrorException($"Total record count limit exceeded in {nameof(GetCountAsync)}");
+                }
+
+                return entityCollectionResponse.Response.TotalRecordCount;
+            }
+        }
+
 #pragma warning disable CS0618 // Type or member is obsolete
 
         internal virtual async Task<IReadOnlyCollection<DValue<RecordValue>>> RetrieveMultipleAsync(DataverseDelegationParameters delegationParameters, string partitionId, CancellationToken cancellationToken)
@@ -190,19 +258,6 @@ namespace Microsoft.PowerFx.Dataverse
             return await EntityCollectionToRecordValuesAsync(entities, delegationParameters, cancellationToken).ConfigureAwait(false);
         }
 
-        private static XrmAggregateType FxToXRMAggregateType(SummarizeMethod aggregateType)
-        {
-            return aggregateType switch
-            {
-                SummarizeMethod.Average => XrmAggregateType.Avg,
-                SummarizeMethod.Count => XrmAggregateType.Count,
-                SummarizeMethod.Max => XrmAggregateType.Max,
-                SummarizeMethod.Min => XrmAggregateType.Min,
-                SummarizeMethod.Sum => XrmAggregateType.Sum,
-                _ => throw new NotSupportedException($"Unsupported aggregate type {aggregateType}"),
-            };
-        }
-
 #pragma warning disable CS0618 // Type or member is obsolete
 
         internal static QueryExpression CreateQueryExpression(string entityName, DataverseDelegationParameters delegationParameters)
@@ -212,39 +267,10 @@ namespace Microsoft.PowerFx.Dataverse
 
             var query = new QueryExpression(entityName)
             {
-                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(),
+                ColumnSet = delegationParameters.ColumnMap.ToXRMColumnSet(delegationParameters.GroupBy),
                 Criteria = delegationParameters.FxFilter?.GetDataverseFilterExpression() ?? new FilterExpression(),
                 Distinct = hasDistinct
             };
-
-            if (delegationParameters.GroupBy != null)
-            {
-                var columnSet = new ColumnSet(false);
-                foreach (var groupByProp in delegationParameters.GroupBy.GroupingProperties)
-                {
-                    var att = new XrmAttributeExpression()
-                    {
-                        AggregateType = XrmAggregateType.None,
-                        AttributeName = groupByProp,
-                        HasGroupBy = true,
-                        Alias = groupByProp
-                    };
-                    columnSet.AttributeExpressions.Add(att);
-                }
-
-                foreach (var aggregate in delegationParameters.GroupBy.FxAggregateExpressions)
-                {
-                    var att = new XrmAttributeExpression()
-                    {
-                        AggregateType = FxToXRMAggregateType(aggregate.AggregateMethod),
-                        AttributeName = aggregate.PropertyName,
-                        Alias = aggregate.Alias ?? aggregate.PropertyName
-                    };
-                    columnSet.AttributeExpressions.Add(att);
-                }
-
-                query.ColumnSet = columnSet;
-            }
 
             if (delegationParameters.Join != null)
             {
@@ -454,7 +480,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             cancellationToken.ThrowIfCancellationRequested();
             List<DValue<RecordValue>> list = new ();
-            RecordType recordType = delegationParameters.ExpectedReturnType;
+            RecordType recordType = (RecordType)delegationParameters.ExpectedReturnType;
 
             bool returnsDVRecordValue = delegationParameters.GroupBy == null && delegationParameters.Join == null;
 
@@ -470,7 +496,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     List<NamedValue> namedValues = new List<NamedValue>();
 
-                    foreach (NamedFormulaType nft in delegationParameters.ExpectedReturnType.GetFieldTypes())
+                    foreach (NamedFormulaType nft in recordType.GetFieldTypes())
                     {
                         var fieldName = nft.Name.Value;
                         var fieldType = nft.Type;

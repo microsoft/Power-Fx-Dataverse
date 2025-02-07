@@ -37,6 +37,17 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
+        private static DelegationParameterFeatures _supportedFeatures = DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Columns | DelegationParameterFeatures.Count | DelegationParameterFeatures.Filter | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Top;
+
+        public DelegationParameterFeatures SupportedFeatures => _supportedFeatures;
+
+        public Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
+        {
+            DelegationParameters = parameters;
+            FormulaValue result = FormulaValue.NewBlank(((DataverseDelegationParameters)parameters).ExpectedReturnType);
+            return Task.FromResult(result);
+        }
+
         public Task<IReadOnlyCollection<DValue<RecordValue>>> GetRowsAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancel)
         {
             DelegationParameters = parameters;
@@ -48,6 +59,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public class TestRecordType : RecordType
     {
         private readonly RecordType _recordType;
+
+        public override bool TryGetPrimaryKeyFieldName(out IEnumerable<string> primaryKeyNames)
+        {
+            primaryKeyNames = new string[] { "id" };
+            return true;
+        }
 
         public TestRecordType(string tableName, RecordType recordType, List<DelegationOperator> allColumnFilters, bool isSelectable = true)
             : base(GetDisplayNameProvider(recordType), GetDelegationInfo(tableName, recordType, allColumnFilters, isSelectable))
@@ -71,18 +88,39 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             {
                 TableName = tableName,
                 SelectionRestriction = new SelectionRestrictions() { IsSelectable = isSelectable },
-                SummarizeCapabilities = new MockSummarizeCapabilities()
+                SummarizeCapabilities = new MockSummarizeCapabilities(),
+                CountCapabilities = new MockCountCapabilities(),
+                PrimaryKeyNames = new string[] { "id" },
+                SupportsJoinFunction = true,
             };
         }
 
-        private class MockSummarizeCapabilities : SummarizeCapabilities
+        private class MockCountCapabilities : CountCapabilities
         {
-            public override bool IsSummarizableMethod(SummarizeMethod method)
+            public override bool IsCountableTable()
             {
                 return true;
             }
 
-            public override bool IsSummarizableProperty(string columnName)
+            public override bool IsCountableAfterJoin()
+            {
+                return true;
+            }
+
+            public override bool IsCountableAfterFilter()
+            {
+                return true;
+            }
+
+            public override bool IsCountableAfterSummarize()
+            {
+                return true;
+            }
+        }
+
+        private class MockSummarizeCapabilities : SummarizeCapabilities
+        {
+            public override bool IsSummarizableProperty(string columnName, SummarizeMethod method)
             {
                 return true;
             }
@@ -115,9 +153,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             _allColumnFilters = allColumnFilters;
             
             FilterSupportedFunctions = allColumnFilters;
+            SupportsJoinFunction = true;
 
             // Makes the table sortable (= First, OrderBy... can be delegated)
-            SortRestriction = new SortRestrictions();            
+            SortRestriction = new SortRestrictions();       
         }
 
         public override bool IsDelegable => true;        

@@ -42,6 +42,11 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new NotImplementedException();
             }
 
+            public virtual async Task<FormulaValue> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
             /// <summary>
             /// This converts a FormulaValue to a value that can be used in a query's Filter Expression.
             /// </summary>
@@ -87,6 +92,12 @@ namespace Microsoft.PowerFx.Dataverse
                     func = new DelegatedRetrieveMultipleFunction(this, tableReturnType);
                     args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault, retVal.ColumnMapNode };
                     returnType = tableReturnType;
+                }
+                else if (retVal.LeftColumnMap?.ReturnTotalRowCount == true && (retVal.OriginalNode.IRContext.ResultType is NumberType || retVal.OriginalNode.IRContext.ResultType is DecimalType))
+                {
+                    func = new DelegatedRetrieveCountFunction(this, retVal.OriginalNode.IRContext.ResultType);
+                    args = new List<IntermediateNode> { retVal._sourceTableIRNode, retVal.Filter, retVal.OrderBy, retVal.JoinNode, retVal.GroupByNode, retVal.TopCountOrDefault, retVal.ColumnMapNode };
+                    returnType = FormulaType.Number;
                 }
                 else if (retVal.OriginalNode is CallNode callNode)
                 {

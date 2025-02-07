@@ -59,18 +59,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 groupingColumns.Add(property);
             }
 
-            // Extract aggregate expressions
-            foreach (var expr in groupByNode.FxAggregateExpressions)
-            {
-                var method = expr.AggregateMethod; // e.g., "sum", "min", "max", etc.
-                var propertyName = expr.PropertyName;
-                var alias = expr.Alias;
-                aggregateExpressions.Add($"{method}({propertyName}) As {alias}");
-            }
-
-            // Construct the result string
-            var allExpressions = groupingColumns.Concat(aggregateExpressions);
-            string result = $"__groupBy({string.Join(", ", allExpressions)})";
+            string result = $"__groupBy({string.Join(", ", groupingColumns)})";
             return result;
         }
     }

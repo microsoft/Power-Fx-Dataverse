@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var blankNode = new CallNode(IRContext.NotInSource(FormulaType.Blank), BuiltinFunctionsCore.Blank);
 
-                string fieldNameForCapabilities = fieldName;
+                string fieldNameForCapabilities = fieldName.RealColumnName;
 
                 if (relations != null && relations.Any())
                 {
@@ -36,7 +36,7 @@ namespace Microsoft.PowerFx.Dataverse
                 if (context.DelegationMetadata?.FilterDelegationMetadata.IsDelegationSupportedByColumn(DPath.Root.Append(new DName(fieldNameForCapabilities)), DelegationCapability.Null) == true)
                 {
                     // BinaryOpKind doesn't matter for IsBlank because all value will be compared to null, so just use EqText.
-                    var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, relations, fieldOperation, fieldName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
+                    var eqNode = _hooks.MakeEqCall(context.CallerTableNode, context.CallerTableNode.IRContext.ResultType, relations, fieldOperation, fieldName.RealColumnName, BinaryOpKind.EqText, blankNode, context.CallerNode.Scope);
                     var ret = CreateBinaryOpRetVal(context, node, eqNode);
                     return ret;
                 }

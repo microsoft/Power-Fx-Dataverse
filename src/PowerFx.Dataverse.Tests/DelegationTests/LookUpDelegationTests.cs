@@ -119,9 +119,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         // unsupported function, can't yet delegate
         [InlineData(59, "Last(t1).Price", -10.0, true, true, "Warning 5-7: This operation on table 'local' may not work if it has more than 999 rows.")]
 
-        // unsupported function, can't yet delegate
-        [InlineData(60, "CountRows(t1)", 3.0, true, true, "Warning 10-12: This operation on table 'local' may not work if it has more than 999 rows.")]
-
         // Functions like IsBlank, Collect,Patch, shouldn't require delegation. Ensure no warnings.
         [InlineData(61, "IsBlank(t1)", false, true, true)]
         [InlineData(62, "IsBlank(Filter(t1, 1=1))", false, true, true, "Warning 15-17: This operation on table 'local' may not work if it has more than 999 rows.")]

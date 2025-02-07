@@ -249,7 +249,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            internal bool TryAddDistinct(string fieldName, CallNode distinctCallNode, out RetVal result)
+            internal bool TryAddDistinct(FxColumnInfo columnInfo, CallNode distinctCallNode, out RetVal result)
             {
                 var canDelegate = !DelegationUtility.IsElasticTable(TableType) &&
                     _topCount == null &&
@@ -265,7 +265,7 @@ namespace Microsoft.PowerFx.Dataverse
                 string realFieldName;
                 if (HasLeftColumnMap || HasJoin)
                 {
-                    if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(fieldName, out var leftTableColumnInfo))
+                    if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(columnInfo.AliasOrRealName, out var leftTableColumnInfo))
                     {
                         // If Distinct column was present on already renamed left column map, then update that columnmap with just Distinct Column and assign Empty map to Join() selection.
                         realFieldName = leftTableColumnInfo.RealColumnName;
@@ -275,9 +275,9 @@ namespace Microsoft.PowerFx.Dataverse
                             return false;
                         }
 
-                        var fxColumnInfo = new FxColumnInfo(realColumnName: realFieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
+                        var newColumnInfo = new FxColumnInfo(realColumnName: realFieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
                         var newColumnMap = new FxColumnMap(TableType);
-                        newColumnMap.AddColumn(fxColumnInfo);
+                        newColumnMap.AddColumn(newColumnInfo);
 
                         FxJoinNode newJoinNode = null;
                         if (HasJoin)
@@ -288,7 +288,7 @@ namespace Microsoft.PowerFx.Dataverse
                         result = new RetVal(Hooks, distinctCallNode, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, newJoinNode, _groupByNode, _maxRows, newColumnMap);
                         return true;
                     }
-                    else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(fieldName, out var joinColumnInfo))
+                    else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(columnInfo.AliasOrRealName, out var joinColumnInfo))
                     {
                         // If Distinct column was present on Join() selection, then update that columnmap with just Distinct Column on Join's map and assign Empty map to left column map.
                         realFieldName = joinColumnInfo.RealColumnName;
@@ -298,9 +298,9 @@ namespace Microsoft.PowerFx.Dataverse
                             return false;
                         }
 
-                        var fxColumnInfo = new FxColumnInfo(realColumnName: realFieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
+                        var newColumnInfo = new FxColumnInfo(realColumnName: realFieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
                         var newJoinColumnMap = new FxColumnMap(_join.JoinTableRecordType);
-                        newJoinColumnMap.AddColumn(fxColumnInfo);
+                        newJoinColumnMap.AddColumn(newColumnInfo);
                         var newJoinNode = _join.With(newJoinColumnMap);
                         var newLeftColumnMap = new FxColumnMap(TableType);
                         result = new RetVal(Hooks, distinctCallNode, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, newJoinNode, _groupByNode, _maxRows, newLeftColumnMap);
@@ -313,7 +313,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
                 else
                 {
-                    if (!DelegationUtility.CanDelegateDistinct(fieldName, DelegationMetadata?.FilterDelegationMetadata))
+                    if (!DelegationUtility.CanDelegateDistinct(columnInfo.RealColumnName, DelegationMetadata?.FilterDelegationMetadata))
                     {
                         result = null;
                         return false;
@@ -321,8 +321,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                     // If Distinct column was present on original table, then update that columnmap with just Distinct Column.
                     var columnMap = new FxColumnMap(TableType);
-                    var columnInfo = new FxColumnInfo(realColumnName: fieldName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
-                    columnMap.AddColumn(columnInfo);
+                    var newColumnInfo = new FxColumnInfo(realColumnName: columnInfo.RealColumnName, aliasColumnName: DVSymbolTable.SingleColumnTableFieldName, isDistinct: true);
+                    columnMap.AddColumn(newColumnInfo);
                     result = new RetVal(Hooks, distinctCallNode, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, _groupByNode, _maxRows, columnMap);
                     return true;
                 }
@@ -337,8 +337,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             internal bool TryUpdateColumnSelection(IEnumerable<string> columnsToKeep, CallNode node, out RetVal result)
             {
-                if (HasGroupBy ||
-                    !TableType._type.AssociatedDataSources.First().IsSelectable)
+                if (!TableType._type.AssociatedDataSources.First().IsSelectable)
                 {
                     result = null;
                     return false;
@@ -381,10 +380,9 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // (column/previousAlias, alias) pair
-            internal bool TryAddColumnRenames(IEnumerable<(string, string)> map, CallNode node, out RetVal result)
+            internal bool TryAddColumnRenames(IEnumerable<(FxColumnInfo, string)> map, CallNode node, out RetVal result)
             {
-                if (HasGroupBy ||
-                    !TableType._type.AssociatedDataSources.First().IsSelectable ||
+                if (!TableType._type.AssociatedDataSources.First().IsSelectable ||
                     map.IsNullOrEmpty())
                 {
                     result = null;
@@ -403,12 +401,12 @@ namespace Microsoft.PowerFx.Dataverse
                     // If FxColumnMap is present on either of the maps, then must update existing maps.
                     if (HasLeftColumnMap || HasJoin)
                     {
-                        if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(column.Item1, out var rootFxColumnInfo))
+                        if (HasLeftColumnMap && LeftColumnMap.TryGetColumnInfo(column.Item1.AliasColumnName ?? column.Item1.RealColumnName, out var rootFxColumnInfo))
                         {
                             var newRootFxColumnInfo = rootFxColumnInfo.CloneAndUpdateAlias(column.Item2);
                             newLeftTableMap.AddColumn(newRootFxColumnInfo);
                         }
-                        else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(column.Item1, out var joinColumn))
+                        else if (HasJoin && _join.RightTablColumnMap.TryGetColumnInfo(column.Item1.AliasColumnName ?? column.Item1.RealColumnName, out var joinColumn))
                         {
                             var newJoinColumn = joinColumn.CloneAndUpdateAlias(column.Item2);
                             newJoinMap.AddColumn(newJoinColumn);
@@ -420,7 +418,8 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else
                     {
-                        newLeftTableMap.AddColumn(new FxColumnInfo(column.Item1, column.Item2));
+                        var newColumn = column.Item1.CloneAndUpdateAlias(column.Item2);
+                        newLeftTableMap.AddColumn(newColumn);
                     }
                 }
 
@@ -435,27 +434,26 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="sortColumns">column names, boolean pair enumerable with boolean representing isAscending boolean.</param>
             /// <param name="node"></param>
             /// <param name="result"></param>
-            internal bool TryAddOrderBy(IEnumerable<(string, bool)> sortColumns, CallNode node, out RetVal result)
+            internal bool TryAddOrderBy(IEnumerable<(FxColumnInfo, bool)> sortColumns, CallNode node, out RetVal result)
             {
-                // If existing First[N], Sort[ByColumns], or ShowColumns we don't delegate
-                if (HasGroupBy || HasLeftColumnMap || HasTopCount || HasOrderBy)
+                // If existing First[N], Sort[ByColumns] we don't delegate.
+                if (HasTopCount || HasOrderBy)
                 {
                     result = null;
                     return false;
                 }
 
                 IList<IntermediateNode> orderByArgs = new List<IntermediateNode>();
-                orderByArgs.Add(_filter ?? node.Args[0]);
 
-                foreach (var (fieldName, isAscending) in sortColumns)
+                foreach (var (fieldInfo, isAscending) in sortColumns)
                 {
-                    if (!DelegationUtility.CanDelegateSort(fieldName, isAscending, DelegationMetadata?.SortDelegationMetadata))
+                    if (!DelegationUtility.CanDelegateSort(fieldInfo, isAscending, DelegationMetadata?.SortDelegationMetadata))
                     {
                         result = null;
                         return false;
                     }
 
-                    orderByArgs.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldName));
+                    orderByArgs.Add(new TextLiteralNode(IRContext.NotInSource(FormulaType.String), fieldInfo.RealColumnName));
                     orderByArgs.Add(new BooleanLiteralNode(IRContext.NotInSource(FormulaType.Boolean), isAscending));
                 }
 
@@ -466,16 +464,41 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            internal bool TryAddGroupBy(FxGroupByNode groupByNode, CallNode node, out RetVal result)
+            internal bool TryAddGroupBy(IReadOnlyList<FxColumnInfo> groupingProperties, IEnumerable<FxColumnInfo> columnMap, CallNode node, out RetVal result)
             {
-                if (HasGroupBy || HasJoin || HasLeftColumnMap || HasOrderBy)
+                if (HasGroupBy || HasJoin)
                 {
                     result = null;
                     return false;
                 }
 
-                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, groupByNode, _maxRows, LeftColumnMap);
+                var newLeftColumnMap = HasLeftColumnMap ? LeftColumnMap : new FxColumnMap(TableType);
 
+                foreach (var property in groupingProperties)
+                {
+                    // Since Summarize() always selects the group by columns also.
+                    if (!newLeftColumnMap.TryGetColumnInfo(property.AliasOrRealName, out _))
+                    {
+                        newLeftColumnMap.AddColumn(property);
+                    }
+                }
+
+                foreach (var aggregateColumn in columnMap)
+                {
+                    // if column is already present in the map, then update the aggregation method.
+                    if (!newLeftColumnMap.TryRemoveColumnInfo(aggregateColumn.AliasOrRealName, out var columnInfo))
+                    {
+                        newLeftColumnMap.AddColumn(aggregateColumn);
+                    }
+                    else
+                    {
+                        var newColumnInfo = columnInfo.CloneAndUpdateAggregation(aggregateColumn.AggregateMethod);
+                        newLeftColumnMap.AddColumn(newColumnInfo);
+                    }
+                }
+
+                var groupByNode = new FxGroupByNode(groupingProperties.Select(gp => gp.RealColumnName));
+                result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, groupByNode, _maxRows, newLeftColumnMap);
                 return true;
             }
 
@@ -502,6 +525,94 @@ namespace Microsoft.PowerFx.Dataverse
 
                 result = null;
                 return false;
+            }
+
+            private bool IsCountRowsDelegable(RetVal predicate)
+            {
+                if ((HasJoin || HasGroupBy) && (predicate != null && predicate.HasFilter))
+                {
+                    // Can't delegate CountIf(...) if there is a join or group by in the main table.
+                    return false;
+                }
+                else if (!IsDataverseDelegation)
+                {
+                    if (TableType.ToRecord().TryGetCapabilities(out var capabilities))
+                    {
+                        var countCapabilities = capabilities.CountCapabilities;
+                        if (countCapabilities != null &&
+                            countCapabilities.IsCountableTable() &&
+                            (!HasJoin || countCapabilities.IsCountableAfterJoin()) &&
+                            (!HasGroupBy || countCapabilities.IsCountableAfterSummarize()))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // If it has top count, then we can't delegate Count(*) for dataverse.
+                    if (HasTopCount)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            internal bool TryAddReturnRowCount(CallNode node, RetVal predicate, out RetVal result)
+            {
+                if (predicate != null && !predicate.IsDelegating)
+                {
+                    result = null;
+                    return false;
+                }
+
+                if (!IsCountRowsDelegable(predicate))
+                {
+                    result = null;
+                    return false;
+                }
+
+                // Check if we can delegate Count(*) in capabilities.
+                var predicateHasFilter = predicate?.HasFilter ?? false;
+                IntermediateNode finalFilter = null;
+                if (!HasFilter && predicateHasFilter)
+                {
+                    finalFilter = predicate.Filter;
+                }
+                else if (HasFilter && !predicateHasFilter)
+                {
+                    finalFilter = _filter;
+                }
+                else if (HasFilter && predicateHasFilter)
+                {
+                    finalFilter = Hooks.MakeAndCall(TableType, new List<IntermediateNode> { _filter, predicate.Filter }, node.Scope);
+                }
+                else
+                {
+                    finalFilter = null;
+                }
+
+                // Update LeftColumnMap to have it return just count, no need to keep previously selected columns now.
+                var newLeftColumnMap = new FxColumnMap(TableType, returnTotalRowCount: true);
+
+                var retValResult = new RetVal(Hooks, node, _sourceTableIRNode, TableType, finalFilter, _orderBy, _topCount, _join, _groupByNode, _maxRows, newLeftColumnMap);
+
+                // Terminate since Count(*) is added.
+                result = new RetVal(Hooks.MakeQueryExecutorCall(retValResult));
+
+                return true;
             }
         }
     }

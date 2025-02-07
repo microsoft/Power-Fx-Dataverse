@@ -2,17 +2,13 @@
 // Licensed under the MIT license.
 
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
     internal static class DelegationExtensions
     {
-        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, string columnName, SummarizeMethod method, bool isDataverseDelegation)
-        {
-            return tableDelegationInfo.CanDelegateSummarize(columnName, isDataverseDelegation) && tableDelegationInfo.CanDelegateSummarize(method, isDataverseDelegation);
-        }
-
-        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, string columnName, bool isDataverseDelegation)
+        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, string columnName, SummarizeMethod summarizeMethod, bool isDataverseDelegation)
         {
             if (isDataverseDelegation)
             {
@@ -25,28 +21,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             }
 
             var summarizeCapabilities = tableDelegationInfo.SummarizeCapabilities;
-            if (summarizeCapabilities.IsSummarizableProperty(columnName))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public static bool CanDelegateSummarize(this TableDelegationInfo tableDelegationInfo, SummarizeMethod method, bool isDataverseDelegation)
-        {
-            if (isDataverseDelegation)
-            {
-                return true;
-            }
-
-            if (tableDelegationInfo == null || tableDelegationInfo.SummarizeCapabilities == null)
-            {
-                return false;
-            }
-
-            var summarizeCapabilities = tableDelegationInfo.SummarizeCapabilities;
-            if (summarizeCapabilities.IsSummarizableMethod(method))
+            if (summarizeCapabilities.IsSummarizableProperty(columnName, summarizeMethod))
             {
                 return true;
             }
