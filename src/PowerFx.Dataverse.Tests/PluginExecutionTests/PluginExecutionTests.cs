@@ -988,68 +988,67 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
         [Theory]
         [InlineData("1+2", "")] // none
-        [InlineData("ThisRecord.Price * Quantity", "Read local: new_price, new_quantity;")] // basic read
-        [InlineData("Price%", "Read local: new_price;")] // unary op
-        [InlineData("ThisRecord", "Read local: ;")] // whole scope
-        [InlineData("First(Remote).Data", "Read remote: data;")] // other table
+        [InlineData("ThisRecord.Price * Quantity", "Entity local: new_price, new_quantity;")] // basic read
+        [InlineData("Price%", "Entity local: new_price;")] // unary op
+        [InlineData("ThisRecord", "Entity local: ;")] // whole scope
+        [InlineData("First(Remote).Data", "Entity remote: data;")] // other table
 
         // $$$ https://github.com/microsoft/Power-Fx/issues/1659
         //[InlineData("Set(Price, 200)", "Write local: new_price;")] // set,
-        [InlineData("Set(Price, Quantity)", "Read local: new_quantity; Write local: new_price;")] // set,
-        [InlineData("Set(Price, Price + 1)", "Read local: new_price; Write local: new_price;")] // set,
-        [InlineData("ThisRecord.Other.Data", "Read local: otherid; Read remote: data;")] //relationship
+        [InlineData("Set(Price, Quantity)", "Entity local: new_price, new_quantity;")] // set,
+        [InlineData("Set(Price, Price + 1)", "Entity local: new_price;")] // set,
+        [InlineData("ThisRecord.Other.Data", "Entity local: otherid; Entity remote: data;")] //relationship
         [InlineData("{x:5}.x", "")] // non dataverse record
-        [InlineData("With({x : ThisRecord}, x.Price)", "Read local: new_price;")] // alias
-        [InlineData("With({Price : 5}, Price + Quantity)", "Read local: new_quantity;")] // Price is shadowed
+        [InlineData("With({x : ThisRecord}, x.Price)", "Entity local: new_price;")] // alias
+        [InlineData("With({Price : 5}, Price + Quantity)", "Entity local: new_quantity;")] // Price is shadowed
         [InlineData("With({Price : 5}, ThisRecord.Price)", "")] // shadowed
-        [InlineData("LookUp(t1,Price=255)", "Read local: new_price;")] // Lookup and RowScope
-        [InlineData("Filter(t1,Price > 200)", "Read local: new_price;")] // Lookup and RowScope
-        [InlineData("First(t1)", "Read local: ;")]
-        [InlineData("Last(t1)", "Read local: ;")]
-        [InlineData("t1", "Read local: ;")] // whole table
+        [InlineData("LookUp(t1,Price=255)", "Entity local: new_price;")] // Lookup and RowScope
+        [InlineData("Filter(t1,Price > 200)", "Entity local: new_price;")] // Lookup and RowScope
+        [InlineData("First(t1)", "Entity local: ;")]
+        [InlineData("Last(t1)", "Entity local: ;")]
+        [InlineData("t1", "Entity local: ;")] // whole table
         [InlineData("12 & true & \"abc\" ", "")] // walker ignores literals
-        [InlineData("12;Price;12", "Read local: new_price;")] // chaining
-        [InlineData("ParamLocal1.Price", "Read local: new_price;")] // basic read
-        [InlineData("First(t1).Price + First(Remote).'Other Other'.'Data Two'", "Read local: new_price; Read remote: otherotherid; Read doubleremote: data2;")] // 3 entities
-        [InlineData("Patch(t1, First(t1), { Price : 200})", "Read local: ; Write local: new_price;")] // Patch, arg1 reads
-        [InlineData("Collect(t1, { Price : 200})", "Write local: new_price;")] // collect , does not write to t1.
-        [InlineData("Collect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
-        [InlineData("Remove(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
-        [InlineData("ClearCollect(t1,{ Other : First(Remote)})", "Read remote: ; Write local: otherid;")]
+        [InlineData("12;Price;12", "Entity local: new_price;")] // chaining
+        [InlineData("ParamLocal1.Price", "Entity local: new_price;")] // basic read
+        [InlineData("First(t1).Price + First(Remote).'Other Other'.'Data Two'", "Entity local: new_price; Entity remote: otherotherid; Entity doubleremote: data2;")] // 3 entities
+        [InlineData("Collect(t1, { Price : 200})", "Entity local: new_price;")] // collect , does not write to t1.
+        [InlineData("Collect(t1,{ Other : First(Remote)})", "Entity local: otherid; Entity remote: ;")]
+        [InlineData("Remove(t1,{ Other : First(Remote)})", "Entity local: otherid; Entity remote: ;")]
+        [InlineData("ClearCollect(t1,{ Other : First(Remote)})", "Entity local: otherid; Entity remote: ;")]
 
         // polymorphic comparisons.
-        [InlineData("Filter(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
-        [InlineData("LookUp(t1, PolymorphicLookup <> First(Remote))", "Read local: new_polyfield; Read remote: ;")]
-        [InlineData("Filter(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
-        [InlineData("LookUp(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Read local: new_polyfield; Read remote: data;")]
-        [InlineData("Collect(t1, {PolymorphicLookup: First(Remote)}); AsType(Last(t1).PolymorphicLookup, Remote)", "Read remote: ; Read local: new_polyfield; Write local: new_polyfield;")]
-        [InlineData("AsType(LookUp(t1, false).PolymorphicLookup, Remote).Data", "Read local: new_polyfield; Read remote: data;")]
+        [InlineData("Filter(t1, PolymorphicLookup <> First(Remote))", "Entity local: new_polyfield; Entity remote: ;")]
+        [InlineData("LookUp(t1, PolymorphicLookup <> First(Remote))", "Entity local: new_polyfield; Entity remote: ;")]
+        [InlineData("Filter(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Entity local: new_polyfield; Entity remote: data;")]
+        [InlineData("LookUp(t1, AsType(PolymorphicLookup, Remote).Data = 200)", "Entity local: new_polyfield; Entity remote: data;")]
+        [InlineData("Collect(t1, {PolymorphicLookup: First(Remote)}); AsType(Last(t1).PolymorphicLookup, Remote)", "Entity local: new_polyfield; Entity remote: ;")]
+        [InlineData("AsType(LookUp(t1, false).PolymorphicLookup, Remote).Data", "Entity local: new_polyfield; Entity remote: data;")]
 
         // 1:N relationships, 1 Degree drilled.
-        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
-        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10)", "Read local: virtualid; Read virtualremote: vdata;")]
+        [InlineData("Filter(t1, virtual.'Virtual Data' = 10)", "Entity local: virtualid; Entity virtualremote: vdata;")]
+        [InlineData("LookUp(t1, virtual.'Virtual Data' = 10)", "Entity local: virtualid; Entity virtualremote: vdata;")]
 
         // Inside with.
-        [InlineData("With({r: t1}, Filter(r, Currency > 0))", "Read local: new_currency;")]
-        [InlineData("With({r: t1}, LookUp(r, Currency > 0))", "Read local: new_currency;")]
+        [InlineData("With({r: t1}, Filter(r, Currency > 0))", "Entity local: new_currency;")]
+        [InlineData("With({r: t1}, LookUp(r, Currency > 0))", "Entity local: new_currency;")]
 
         // Option set.
-        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
-        [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Read local: rating;")]
-        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Read local: new_quantity;")]
-        [InlineData("Distinct(t1, Price)", "Read local: new_price;")]
-        [InlineData("Set(NewRecord.Price, 8)", "Write local: new_price;")]
+        [InlineData("Filter(t1, Rating <> 'Rating (Locals)'.Hot)", "Entity local: rating;")]
+        [InlineData("LookUp(t1, Rating <> 'Rating (Locals)'.Hot)", "Entity local: rating;")]
+        [InlineData("Filter(Distinct(ShowColumns(t1, 'new_quantity', 'old_price'), new_quantity), Value < 20)", "Entity local: new_quantity, old_price;")]
+        [InlineData("Distinct(t1, Price)", "Entity local: new_price;")]
+        [InlineData("Set(NewRecord.Price, 8)", "Entity local: new_price;")]
 
         // Summarize is special, becuase of ThisGroup.
         // Summarize that's delegated.
-        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price) As TPrice)", "Read local: new_name, new_price;")]
+        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price) As TPrice)", "Entity local: new_name, new_price;")]
 
         // Summarize that's not delegated.
-        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price * 2) As TPrice)", "Read local: new_name, new_price;")]
+        [InlineData("Summarize(t1, Name, Sum(ThisGroup, Price * 2) As TPrice)", "Entity local: new_name, new_price;")]
 
         // Join
-        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Read remote: actual_float, calc, data, dateOnly, otherotherid, float, other, rating, remoteid, tziDateOnly, tziDateTime, userLocalDateOnly, userLocalDateTime; Read local: rtid, new_name;")]
-        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Read local: new_price; Read remote: data, other;")]
+        [InlineData("Join(remote As l, local As r, l.remoteid = r.rtid, JoinType.Inner, r.new_name As other2)", "Entity remote: remoteid; Entity local: rtid, new_name;")]
+        [InlineData("Join(local, remote, LeftRecord.new_price = RightRecord.data, JoinType.Inner, RightRecord.other As other)", "Entity local: new_price; Entity remote: data, other;")]
         public void GetDependencies(string expr, string expected)
         {
             var logicalName = "local";

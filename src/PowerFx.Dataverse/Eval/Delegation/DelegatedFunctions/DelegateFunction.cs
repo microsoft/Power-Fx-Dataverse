@@ -88,39 +88,5 @@ namespace Microsoft.PowerFx.Dataverse
             joinNode = null;
             return false;
         }
-
-        public override bool ComposeDependencyInfo(CallNode node, DependencyVisitor visitor, DependencyVisitor.DependencyContext context)
-        {
-            Contract.Assert(visitor is DependencyVisitorDataverse);
-            var dvVisitor = (DependencyVisitorDataverse)visitor;
-
-            if (IsUsingColumnMap(node, out var columnMap) && columnMap?.IsEmpty == false)
-            {
-                dvVisitor.ColumnMap = columnMap;
-                var columnMapTable = columnMap.SourceTableRecordType.TableSymbolName ?? "<<Bug found! empty table name in type>>";
-
-                foreach (var column in columnMap.RealColumnNames)
-                {
-                    dvVisitor.AddFieldRead(columnMapTable, column);
-                }
-            }
-
-            base.ComposeDependencyInfo(node, dvVisitor, context);
-
-            if (IsUsingJoinNode(node, out FxJoinNode joinNode))
-            {
-                // Predicate
-                dvVisitor.AddFieldRead(joinNode.LinkEntity.LinkFromEntityName, joinNode.LinkEntity.LinkFromAttributeName);
-                dvVisitor.AddFieldRead(joinNode.LinkEntity.LinkToEntityName, joinNode.LinkEntity.LinkToAttributeName);
-
-                // Right column map
-                foreach (string rightField in joinNode.RightRealFieldNames)
-                {
-                    dvVisitor.AddFieldRead(joinNode.LinkEntity.LinkToEntityName, rightField);
-                }
-            }
-
-            return true;
-        }
     }
 }

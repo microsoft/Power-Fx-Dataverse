@@ -99,9 +99,44 @@ namespace Microsoft.PowerFx.Dataverse
 
         internal static DependencyInfo ApplyDependencyInfoScan(this CheckResult checkResult, CdsEntityMetadataProvider metadataProvider)
         {
-            var visitor = new DependencyVisitorDataverse(checkResult.ApplyIR(), metadataProvider);
+            var info = checkResult.ApplyDependencyInfoScan();
+            var newInfo = new DependencyInfo();
 
-            return visitor.Scan();
+            foreach (var kvp in info.Dependencies)
+            {
+                newInfo.Dependencies[kvp.Key] = new HashSet<string>();
+
+                foreach (var fieldLogicalName in kvp.Value)
+                {
+                    if (metadataProvider.TryGetXrmEntityMetadata(kvp.Key, out var entityMetadata))
+                    {
+                        // Normal case.
+                        if (entityMetadata.TryGetAttribute(fieldLogicalName, out _))
+                        {
+                            newInfo.Dependencies[kvp.Key].Add(fieldLogicalName);
+                        }
+
+                        // Relationship
+                        else if (entityMetadata.TryGetRelationship(fieldLogicalName, out var realName))
+                        {
+                            newInfo.Dependencies[kvp.Key].Add(realName);
+                        }
+
+                        // It can be Navigation property in case of dot walking.
+                        else
+                        {
+                            var navigationRelation = entityMetadata.ManyToOneRelationships.FirstOrDefault(r => r.ReferencedEntityNavigationPropertyName == fieldLogicalName);
+
+                            if (navigationRelation != null)
+                            {
+                                newInfo.Dependencies[kvp.Key].Add(navigationRelation.ReferencingAttribute);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return newInfo;
         }
     }
 }
