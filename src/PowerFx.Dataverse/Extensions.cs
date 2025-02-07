@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Core.Entities;
+using Microsoft.PowerFx.Core.IR;
+using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -127,6 +129,48 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return false;
+        }
+
+        internal static DependencyInfo ApplyDependencyInfoScan(this CheckResult checkResult, CdsEntityMetadataProvider metadataProvider)
+        {
+            var info = checkResult.ApplyDependencyInfoScan();
+            var newInfo = new DependencyInfo();
+
+            foreach (var kvp in info.Dependencies)
+            {
+                newInfo.Dependencies[kvp.Key] = new HashSet<string>();
+
+                foreach (var fieldLogicalName in kvp.Value)
+                {
+                    if (metadataProvider.TryGetXrmEntityMetadata(kvp.Key, out var entityMetadata))
+                    {
+                        // Normal case.
+                        if (entityMetadata.TryGetAttribute(fieldLogicalName, out _))
+                        {
+                            newInfo.Dependencies[kvp.Key].Add(fieldLogicalName);
+                        }
+
+                        // Relationship
+                        else if (entityMetadata.TryGetRelationship(fieldLogicalName, out var realName))
+                        {
+                            newInfo.Dependencies[kvp.Key].Add(realName);
+                        }
+
+                        // It can be Navigation property in case of dot walking.
+                        else
+                        {
+                            var navigationRelation = entityMetadata.ManyToOneRelationships.FirstOrDefault(r => r.ReferencedEntityNavigationPropertyName == fieldLogicalName);
+
+                            if (navigationRelation != null)
+                            {
+                                newInfo.Dependencies[kvp.Key].Add(navigationRelation.ReferencingAttribute);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return newInfo;
         }
     }
 }
