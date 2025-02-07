@@ -1065,9 +1065,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             config.SymbolTable.EnableMutationFunctions();
             config.EnableJoinFunction();
 
-            var engine = new RecalcEngine(config);
-            engine.EnableDelegation();
-
             (DataverseConnection dv, EntityLookup _) = CreateMemoryForRelationshipModels(policy);
 
             // Simulate a parameter
@@ -1078,13 +1075,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             var rowScopeSymbols = dv.GetRowScopeSymbols(tableLogicalName: logicalName);
             var symbols = ReadOnlySymbolTable.Compose(rowScopeSymbols, dv.Symbols, parameterSymbols);
 
-            var check = new CheckResult(engine)
-                .SetText(expr, _parserAllowSideEffects)
-                .SetBindingInfo(symbols);
-
+            // Without delegation transformation.
+            var engine = new RecalcEngine(config);
+            var check = engine.Check(expr, options: _parserAllowSideEffects, symbolTable: symbols);
             var info = check.ApplyDependencyInfoScan(dv.MetadataCache);
-
             var actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
+
+            Assert.Equal<object>(expected, actual);
+
+            // With delegation transformation.
+            engine.EnableDelegation();
+            check = engine.Check(expr, options: _parserAllowSideEffects, symbolTable: symbols);
+            info = check.ApplyDependencyInfoScan(dv.MetadataCache);
+            actual = info.ToString().Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
 
             Assert.Equal<object>(expected, actual);
         }
