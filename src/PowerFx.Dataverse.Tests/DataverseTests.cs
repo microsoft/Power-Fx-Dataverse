@@ -2263,7 +2263,7 @@ END
         }
 
         [Fact]
-        public void CheckNonGlobalOptionSetsCollidingDisplayNames()
+        public void CheckNonGlobalOptionSetsCollidingDisplayNamesAndUpdatedOptionSetKeyAsTrue()
         {
             var localModel = new EntityMetadataModel
             {
@@ -2272,17 +2272,87 @@ END
                 Attributes = new AttributeMetadataModel[]
                 {
                     AttributeMetadataModel.NewGuid("localid", "LocalId"),
-                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: false),
-                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: false)
+                    AttributeMetadataModel.NewPicklist("nonGlobal1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: false),
+                    AttributeMetadataModel.NewPicklist("nonGlobal2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: false)
                 }
             };
 
             var provider = new MockXrmMetadataProvider(localModel);
             var engine = new PowerFx2SqlEngine(localModel.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
 
-            var result = engine.Check("'Picklist (global1)' = 'Picklist (placeholder) (global1)'.'4 (1)' || 'Picklist (global2)' = 'Picklist (placeholder) (global2)'.'2 (3)'");
+            var result = engine.Check("'Picklist (nonGlobal1)' = 'Picklist (placeholder) (nonGlobal1)'.'4 (1)' || 'Picklist (nonGlobal2)' = 'Picklist (placeholder) (nonGlobal2)'.'2 (3)'");
 
             Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public void CheckGlobalOptionSetsCollidingDisplayNamesAndUpdatedOptionSetKeyAsTrue()
+        {
+            var localModel = new EntityMetadataModel
+            {
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true)
+                }
+            };
+
+            var provider = new MockXrmMetadataProvider(localModel);
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+
+            var result = engine.Check("'Picklist (global1)' = 'Picklist (global1_optionSet)'.'4 (1)' || 'Picklist (global2)' = 'Picklist (global2_optionSet)'.'2 (3)'");
+
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public void CheckGlobalOptionSetsCollidingDisplayNamesAndUpdatedOptionSetKeyAsFalse()
+        {
+            var localModel = new EntityMetadataModel
+            {
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true)
+                }
+            };
+
+            var provider = new MockXrmMetadataProvider(localModel);
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: false));
+
+            var result = engine.Check("'Picklist (global1)' = [@Picklist].'4 (1)' || 'Picklist (global2)' = [@Picklist].'2 (3)'");
+
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public void CheckGlobalOptionWithoutCollidingDisplayNamesAndUpdatedOptionSetKeyAsTrue()
+        {
+            var localModel = new EntityMetadataModel
+            {
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("global1", "Picklist1", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("global2", "Picklist2", new OptionMetadataModel[] { new OptionMetadataModel { Label = "4", Value = 1 }, new OptionMetadataModel { Label = "3", Value = 2 }, new OptionMetadataModel { Label = "2", Value = 3 }, new OptionMetadataModel { Label = "1", Value = 4 } }, isGlobal: true)
+                }
+            };
+
+            var provider = new MockXrmMetadataProvider(localModel);
+            var engine = new PowerFx2SqlEngine(localModel.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+
+            var result = engine.Check("'Picklist1 (global1)' = [@Picklist1].'4 (1)' || 'Picklist2 (global2)' = [@Picklist2].'2 (3)'");
+
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Name isn't valid. 'Picklist1 (global1)' isn't recognized", result.Errors.First().ToString());
         }
 
         [Theory]

@@ -120,12 +120,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         private class MockSummarizeCapabilities : SummarizeCapabilities
         {
-            public override bool IsSummarizableMethod(SummarizeMethod method)
-            {
-                return true;
-            }
-
-            public override bool IsSummarizableProperty(string columnName)
+            public override bool IsSummarizableProperty(string columnName, SummarizeMethod method)
             {
                 return true;
             }

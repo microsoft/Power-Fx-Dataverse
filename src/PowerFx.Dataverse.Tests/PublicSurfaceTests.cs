@@ -91,7 +91,6 @@ namespace Microsoft.PowerFx.Tests
             {
                 "Microsoft.PowerFx.Dataverse.AttributeUtility",
                 "Microsoft.PowerFx.Dataverse.DataverseDelegationParameters",
-                "Microsoft.PowerFx.Dataverse.DependencyInfo",
 
                 // Common Entity metadata providers
                 "Microsoft.PowerFx.Dataverse.CdsEntityMetadataProvider",
