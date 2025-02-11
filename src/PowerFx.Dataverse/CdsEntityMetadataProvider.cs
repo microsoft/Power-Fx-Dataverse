@@ -247,7 +247,7 @@ namespace Microsoft.PowerFx.Dataverse
             // register the option set.  Global option sets may be added multiple times
             Contracts.Assert(!_optionSets.ContainsKey(name) || optionSet.IsGlobal);
             _optionSets[name] = optionSet;
-        }   
+        }
 
         /// <summary>
         /// Convert a dataverse entity metadata into a Power Fx type.
@@ -257,7 +257,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <returns></returns>
         public RecordType GetRecordType(string logicalName, string variableName = null)
         {
-            if (logicalName == null)    
+            if (logicalName == null)
             {
                 throw new ArgumentNullException(nameof(logicalName));
             }
@@ -392,8 +392,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!_optionSets.ContainsKey(optionSetUniqueName))
                 {
-                    // saving dataverseOptionSet with updated unique name
-                    RegisterOptionSet(optionSetUniqueName, dataverseOptionSet);
+                    // updating the uniqueName, as optionSet doesn't exist with optionSetUniqueName
+                    uniqueName = optionSetUniqueName;
 
                     var updatedUniqueNameOfExistingOptionSetName = GetUniqueNameWithLogicalName(existingOptionSet, entityDisplayName);
                     if (!_optionSets.ContainsKey(updatedUniqueNameOfExistingOptionSetName))
