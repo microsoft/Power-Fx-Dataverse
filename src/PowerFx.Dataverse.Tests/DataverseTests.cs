@@ -2350,6 +2350,11 @@ END
             result = engine.Check("'Picklist (globalField1)' = [@Picklist].'label1'");
             Assert.True(result.IsSuccess);
 
+            // label3 is not present in the PickList optionSet, as an OptionSet is already saved with the unique key as PickList (globalField1)
+            result = engine.Check("'Picklist (globalField2)' = [@Picklist].'label3'");
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Name isn't valid. 'label3' isn't recognized.", result.Errors.First().ToString());
+
             // Testing global option sets without colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as false
             provider = new MockXrmMetadataProvider(localModelWithoutCollidingDisplayNames);
             engine = new PowerFx2SqlEngine(localModelWithoutCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));

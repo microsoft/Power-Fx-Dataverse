@@ -392,7 +392,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (!_optionSets.ContainsKey(optionSetUniqueName))
                 {
-                    // updating the uniqueName, as optionSet doesn't exist with optionSetUniqueName
+                    // updating the uniqueName, so that optionset can be saved with optionSetUniqueName
                     uniqueName = optionSetUniqueName;
 
                     var updatedUniqueNameOfExistingOptionSetName = GetUniqueNameWithLogicalName(existingOptionSet, entityDisplayName);
