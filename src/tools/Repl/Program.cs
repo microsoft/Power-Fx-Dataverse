@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Dataverse;
+using Microsoft.PowerFx.Repl;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -144,6 +145,7 @@ namespace Microsoft.PowerFx
                 InnerServices = innerServices
             };
             repl.EnableSampleUserObject();
+            repl.AddPseudoFunction(new IRPseudoFunction());
             repl.Engine.EnableDelegation();
             _repl = repl;
             return repl;
