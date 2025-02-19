@@ -2299,8 +2299,8 @@ END
 
             // Testing nonGlobal option sets with colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as false
             engine = new PowerFx2SqlEngine(localModelWithCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: false));
-            result = engine.Check("'Picklist (nonGlobalField1)' = 'local_nonGlobalField1_optionSet'.'label1' || 'Picklist (nonGlobalField2)' = 'local_nonGlobalField2_optionSet'.'label3'");
-            Assert.True(result.IsSuccess);
+            result = engine.Check("'Picklist (nonGlobalField1)' = 'Picklist (entityLogicalName) (nonGlobalField1)'.'label1' || 'Picklist (nonGlobalField2)' = 'Picklist (entityLogicalName) (nonGlobalField2)'.'label3'");
+            Assert.False(result.IsSuccess);
 
             // Testing nonGlobal option sets without colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as true
             provider = new MockXrmMetadataProvider(localModelWithoutCollidingDisplayNames);
