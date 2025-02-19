@@ -33,10 +33,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         public SummarizeMethod AggregateMethod => _aggregateOperation;
 
-        private readonly bool _isGroupByProperty;
-
-        public bool IsGroupByProperty => _isGroupByProperty;
-
         internal string AliasOrRealName => AliasColumnName ?? RealColumnName;
 
         /// <summary>
@@ -44,18 +40,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// </summary>
         /// <param name="realColumnName">Logical name of column present in Data Source.</param>
         /// <param name="aliasColumnName">Alias for the column name, if it is same as <paramref name="realColumnName"/> it will be set to null.</param>
-        internal FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false, bool isGroupByProperty = false, SummarizeMethod aggregateOperation = SummarizeMethod.None)
+        internal FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false, SummarizeMethod aggregateOperation = SummarizeMethod.None)
         {
-            if (realColumnName == null && aggregateOperation != SummarizeMethod.CountRows)
-            {
-                throw new ArgumentNullException($"{nameof(realColumnName)} cannot be null.");
-            }
-
-            _realColumnName = realColumnName;
+            _realColumnName = realColumnName ?? throw new ArgumentNullException($"{nameof(realColumnName)} cannot be null.");
             _aliasColumnName = realColumnName == aliasColumnName ? null : aliasColumnName;
             _isDistinct = isDistinct;
             _aggregateOperation = aggregateOperation;
-            _isGroupByProperty = isGroupByProperty;
         }
 
         public FxColumnInfo CloneAndUpdateAlias(string aliasColumnName)
@@ -65,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal FxColumnInfo CloneAndUpdateAggregation(SummarizeMethod aggregation)
         {
-            return new FxColumnInfo(_realColumnName, _aliasColumnName, _isDistinct, _isGroupByProperty, aggregation);
+            return new FxColumnInfo(_realColumnName, _aliasColumnName, _isDistinct, aggregation);
         }
 
         public override bool Equals(object obj)
