@@ -62,22 +62,22 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var aliasName = scope.Fields.First().Key.Value;
             isReturningTotalCount = false;
-            if (scope.Fields.First().Value is CallNode ggregationCallNode)
+            if (scope.Fields.First().Value is CallNode aggregationCallNode)
             {
                 // Try single-field aggregations (Sum, Min, Max, Avg)
-                if (TryAddSingleFieldAggregateExpression(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Sum, BuiltinFunctionsCore.SumT.Name) ||
-                    TryAddSingleFieldAggregateExpression(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Min, BuiltinFunctionsCore.MinT.Name) ||
-                    TryAddSingleFieldAggregateExpression(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Max, BuiltinFunctionsCore.MaxT.Name) ||
-                    TryAddSingleFieldAggregateExpression(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Average, BuiltinFunctionsCore.AverageT.Name))
+                if (TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Sum, BuiltinFunctionsCore.SumT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Min, BuiltinFunctionsCore.MinT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Max, BuiltinFunctionsCore.MaxT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Average, BuiltinFunctionsCore.AverageT.Name))
                 {
                     return true;
                 }
-                else if (TryAddCountIfAggregateExpression(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, sourceTable))
+                else if (TryAddCountIfAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, sourceTable))
                 {
                     // CountIf() is a special case, as it requires a predicate with IsBlank() and Not() functions
                     return true;
                 }
-                else if (HasCountRowsAggregation(ggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities))
+                else if (HasCountRowsAggregation(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities))
                 {
                     // CountRows() is a special case, as it doesn't require a field name.s
                     isReturningTotalCount = true;
