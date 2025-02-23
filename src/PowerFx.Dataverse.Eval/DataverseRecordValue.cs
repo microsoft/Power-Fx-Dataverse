@@ -90,8 +90,12 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 return true;
             }
-
-            if (metadata.TryGetRelationship(fxFieldName, out var realAttributeName))
+            else if (metadata.TryGetAttribute(fxFieldName, out _))
+            {
+                value = null;
+                return true;
+            }
+            else if (metadata.TryGetRelationship(fxFieldName, out var realAttributeName))
             {
                 if (entity.Attributes.TryGetValue(realAttributeName, out value))
                 {

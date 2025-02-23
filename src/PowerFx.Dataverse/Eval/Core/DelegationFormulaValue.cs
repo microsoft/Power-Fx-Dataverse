@@ -28,25 +28,29 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Core
         /// </summary>
         internal readonly int? _top;
 
-        internal readonly ISet<LinkEntity> _relation;
-
         internal readonly string _partitionId;
 
         // OrderBy commands
         internal readonly IList<OrderExpression> _orderBy;
 
-        internal readonly FxJoinNode _join;
+        // Multiple Joins is needed in case there is and condition on two different tables dot walking. Today we only support one join.
+        internal readonly ISet<FxJoinNode> _join;
 
         internal readonly FxGroupByNode _groupBy;
 
-        internal DelegationFormulaValue(FxFilterExpression filter, ISet<LinkEntity> relation, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, FxJoinNode join = null, string partitionId = null, int? top = null)
+        internal DelegationFormulaValue(FxFilterExpression filter, IList<OrderExpression> orderBy, FxGroupByNode groupBy = null, ISet<FxJoinNode> join = null, string partitionId = null, int? top = null)
             : base(IRContext.NotInSource(FormulaType.Blank))
         {
             _filter = filter ?? new FxFilterExpression();
             _orderBy = orderBy ?? new List<OrderExpression>();
             _top = top;
-            _relation = relation ?? new HashSet<LinkEntity>(new LinkEntityComparer());
-            _join = join;
+            _join = join ?? new HashSet<FxJoinNode>(new JoinComparer());
+
+            if (_join.Count > 1)
+            {
+                throw new InvalidOperationException("Multiple joins not supported");
+            }
+
             _groupBy = groupBy;
             _partitionId = partitionId;
         }

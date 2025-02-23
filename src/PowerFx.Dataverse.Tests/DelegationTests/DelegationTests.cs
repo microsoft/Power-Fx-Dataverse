@@ -391,7 +391,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             if (enableDelegation)
             {                
-                engine.EnableDelegation(dv.MaxRows);                
+                engine.EnableTestDelegation(dv.MaxRows);                
             }
 
             engine.UpdateVariable("_count", FormulaValue.New(100m));

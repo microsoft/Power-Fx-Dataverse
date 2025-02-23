@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.DelegatedFunctions
                 orderExpressions.Add(new OrderExpression(column, ordering ? OrderType.Ascending : OrderType.Descending));
             }
 
-            return new DelegationFormulaValue(null, null, orderExpressions);
+            return new DelegationFormulaValue(null, orderExpressions);
         }
     }
 }
