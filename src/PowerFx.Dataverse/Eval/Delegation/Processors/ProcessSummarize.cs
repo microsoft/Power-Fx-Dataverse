@@ -21,7 +21,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             var groupByProperties = new List<FxColumnInfo>();
             var aggregateExpressions = new List<FxColumnInfo>();
-
+            var isReturningTotalCount = false;
             var delegationInfo = tableArg.TableType.ToRecord().TryGetCapabilities(out var capabilities);
 
             // Process arguments for group by or aggregate logic
@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return ProcessOtherCall(node, tableArg, context);
                     }
                 }
-                else if (arg is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordNode scope && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities))
+                else if (arg is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordNode scope && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities, out isReturningTotalCount))
                 {
                     continue;
                 }
@@ -50,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            if (tableArg.TryAddGroupBy(groupByProperties, aggregateExpressions, node, out RetVal result))
+            if (tableArg.TryAddGroupBy(groupByProperties, aggregateExpressions, isReturningTotalCount, node, out RetVal result))
             {
                 return result;
             }
@@ -58,24 +58,29 @@ namespace Microsoft.PowerFx.Dataverse
             return ProcessOtherCall(node, tableArg, context);
         }
 
-        private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
+        private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities, out bool isReturningTotalCount)
         {
             var aliasName = scope.Fields.First().Key.Value;
-
-            if (scope.Fields.First().Value is CallNode callNode)
+            isReturningTotalCount = false;
+            if (scope.Fields.First().Value is CallNode aggregationCallNode)
             {
                 // Try single-field aggregations (Sum, Min, Max, Avg)
-                if (TryAddSingleFieldAggregateExpression(callNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Sum, BuiltinFunctionsCore.SumT.Name) ||
-                    TryAddSingleFieldAggregateExpression(callNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Min, BuiltinFunctionsCore.MinT.Name) ||
-                    TryAddSingleFieldAggregateExpression(callNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Max, BuiltinFunctionsCore.MaxT.Name) ||
-                    TryAddSingleFieldAggregateExpression(callNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Average, BuiltinFunctionsCore.AverageT.Name))
+                if (TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Sum, BuiltinFunctionsCore.SumT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Min, BuiltinFunctionsCore.MinT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Max, BuiltinFunctionsCore.MaxT.Name) ||
+                    TryAddSingleFieldAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, SummarizeMethod.Average, BuiltinFunctionsCore.AverageT.Name))
                 {
                     return true;
                 }
-
-                // Try CountIf
-                if (TryAddCountIfAggregateExpression(callNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, sourceTable))
+                else if (TryAddCountIfAggregateExpression(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities, sourceTable))
                 {
+                    // CountIf() is a special case, as it requires a predicate with IsBlank() and Not() functions
+                    return true;
+                }
+                else if (HasCountRowsAggregation(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities))
+                {
+                    // CountRows() is a special case, as it doesn't require a field name.s
+                    isReturningTotalCount = true;
                     return true;
                 }
             }
@@ -139,16 +144,11 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private static bool TryAddCountRowsAggregateExpression(CallNode maybeCountRowsNode, CallNode node, Context context, RetVal sourceTable, string aliasName, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
+        private static bool HasCountRowsAggregation(CallNode maybeCountRowsNode, CallNode node, Context context, RetVal sourceTable, string aliasName, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
         {
-            if (!IsAggregateFunction(maybeCountRowsNode, node, BuiltinFunctionsCore.CountRows.Name, 1))
+            if (IsAggregateFunction(maybeCountRowsNode, node, BuiltinFunctionsCore.CountRows.Name, 1) &&
+                capabilities.CanDelegateSummarize(null, SummarizeMethod.CountRows, sourceTable.IsDataverseDelegation))
             {
-                return false;
-            }
-
-            if (capabilities.CanDelegateSummarize(null, SummarizeMethod.CountRows, sourceTable.IsDataverseDelegation))
-            {
-                aggregateExpressions.Add(new FxColumnInfo(null, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.CountRows));
                 return true;
             }
 

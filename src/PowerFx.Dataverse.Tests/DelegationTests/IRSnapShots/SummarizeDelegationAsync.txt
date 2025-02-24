@@ -21,4 +21,4 @@ Distinct(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name),
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MIN(amount) As MinAmount}) | $apply=groupby((name),aggregate(amount with min as MinAmount))&$top=1000
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MAX(amount) As MaxAmount}) | $apply=groupby((name),aggregate(amount with max as MaxAmount))&$top=1000
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,AVERAGE(amount) As AvgAmount}) | $apply=groupby((name),aggregate(amount with average as AvgAmount))&$top=1000
-Summarize(t1, name, ({TotalRows:CountRows(ThisGroup)}))
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,Count(*)}) | $apply=groupby((name))&$top=1000&$count=true

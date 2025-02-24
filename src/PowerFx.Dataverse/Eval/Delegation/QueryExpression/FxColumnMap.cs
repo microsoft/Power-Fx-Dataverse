@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         private bool _existsAliasing = false;
 
-        private readonly bool _returnTotalRowCount;
+        private bool _returnTotalRowCount;
 
         /// <summary>
         /// Gets a value indicating whether to return total row count.
@@ -109,6 +109,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
             AddColumn(columnInfo);
             return this;
+        }
+
+        internal void MarkReturnTotalRowCount()
+        {
+            _returnTotalRowCount = true;
         }
 
         internal void AddColumn(FxColumnInfo fxColumnInfo)
@@ -233,6 +238,21 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
                 }
 
                 sb.Append(columnInfo.ToString());
+            }
+
+            if (ReturnTotalRowCount)
+            {
+                if (!isFirst)
+                {
+                    sb.Append(",");
+                }
+                else
+                {
+                    isFirst = false;
+                    sb.Append("{");
+                }
+
+                sb.Append("Count(*)");
             }
 
             if (sb.Length > 0)
