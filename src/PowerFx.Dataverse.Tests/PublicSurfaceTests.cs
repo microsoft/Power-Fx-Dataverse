@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Tests
                 "Microsoft.PowerFx.Dataverse.DataverseEntityAttribute",
                 "Microsoft.PowerFx.Dataverse.DataverseEntityPrimaryIdAttribute",
                 "Microsoft.PowerFx.Dataverse.ICustomApiParameterMarshaller",
-                "Microsoft.PowerFx.Dataverse.IParameterType",
+                "Microsoft.PowerFx.Dataverse.IParameterType",                
             };
 
             Verify(allowed, asm);
@@ -115,6 +115,7 @@ namespace Microsoft.PowerFx.Tests
                 // Other
                 "Microsoft.AppMagic.Common.Telemetry.Log",
                 "Microsoft.PowerFx.Dataverse.DataverseHelpers",
+                "Microsoft.PowerFx.Dataverse.IRExtensions",
                 "Microsoft.PowerFx.Dataverse.XrmUtility"
             };
 
