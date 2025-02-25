@@ -23,7 +23,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected override async Task<FormulaValue> ExecuteAsync(IServiceProvider services, FormulaValue[] args, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return new DelegationFormulaValue(null, null, null);
+            return new DelegationFormulaValue(null, null);
         }
     }
 }

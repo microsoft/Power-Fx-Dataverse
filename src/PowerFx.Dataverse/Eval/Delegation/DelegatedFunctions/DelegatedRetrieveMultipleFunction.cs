@@ -55,7 +55,7 @@ namespace Microsoft.PowerFx.Dataverse
             int? topCount = null;
             FxFilterExpression filter;
             IList<OrderExpression> orderBy;
-            ISet<LinkEntity> relation;
+            ISet<FxJoinNode> joins;
             string partitionId = null;
 
             if (args[CountArg] is NumberValue count)
@@ -76,7 +76,7 @@ namespace Microsoft.PowerFx.Dataverse
             if (args[FilterArg] is DelegationFormulaValue delegationFormulaValue)
             {
                 filter = delegationFormulaValue._filter;
-                relation = delegationFormulaValue._relation;
+                joins = delegationFormulaValue._join;
                 partitionId = delegationFormulaValue._partitionId;
             }
             else
@@ -107,6 +107,10 @@ namespace Microsoft.PowerFx.Dataverse
             if (args[JoinArg] is JoinFormulaValue jv)
             {
                 join = jv.JoinNode;
+                if (join != null)
+                {
+                    joins.Add(join);
+                }
             }
             else
             {
@@ -123,17 +127,21 @@ namespace Microsoft.PowerFx.Dataverse
                 throw new InvalidOperationException($"args{ColumnMapArg} should always be of type {nameof(ColumnMapFormulaValue)} : found {args[ColumnMapArg]}");
             }
 
+            if (joins.Count > 1)
+            {
+                throw new InvalidOperationException("Multiple joins not supported");
+            }
+
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters(((TableType)ReturnFormulaType).ToRecord())
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
                 Top = topCount,
-                Join = join,
+                Joins = joins,
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
-                _partitionId = partitionId,
-                Relation = relation
+                _partitionId = partitionId
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

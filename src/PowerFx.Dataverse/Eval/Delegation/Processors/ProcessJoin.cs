@@ -15,6 +15,7 @@ using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
+using Microsoft.Xrm.Sdk.Query;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 using RecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 
@@ -147,7 +148,7 @@ namespace Microsoft.PowerFx.Dataverse
                         rightMap.AddColumn(logicalFieldName, aliasFieldName);
                     }
 
-                    if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, joinType, rightRecordName, leftMap, rightMap, node, out var result))
+                    if (leftTable.TryAddJoinNode(rightTable, fromAttribute, toAttribute, ToFxJoinType(joinType), rightRecordName, leftMap, rightMap, node, out var result))
                     {
                         return result;
                     }
@@ -155,6 +156,18 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return ProcessOtherCall(node, leftTable, rightTable, context);
+        }
+
+        private static FxJoinType ToFxJoinType(string joinType)
+        {
+            return joinType switch
+            {
+                "Inner" => FxJoinType.Inner,
+                "Left" => FxJoinType.Left,
+                "Right" => FxJoinType.Right,
+                "Full" => FxJoinType.Full,
+                _ => throw new InvalidOperationException($"Unknown JoinType {joinType}")
+            };
         }
     }
 }

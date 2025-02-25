@@ -130,33 +130,39 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             IEnumerable<string> links = null;
-            LinkEntity relation = null;
+            FxJoinNode join = null;
             object dvValue = null;
             DelegationFormulaValue result = null;
 
             if (args.Length > 3)
             {
-                // If arguments have relation information, then we need to use that to generate the filter.
+                // If arguments have join information, then we need to use that to generate the filter.
                 links = ((TableValue)args[3]).Rows.Select(row => ((StringValue)row.Value.GetField("Value")).Value);
-                relation = _hooks.RetrieveManyToOneRelation(table, links);
-                dvValue = _hooks.RetrieveRelationAttribute(table, relation, field, value);
+
+                if (links.Count() > 1)
+                {
+                    throw new InvalidOperationException("Multiple links are not supported");
+                }
+
+                join = _hooks.RetrieveManyToOneRelation(table, links.First());
+                dvValue = _hooks.RetrieveRelationAttribute(table, join.ToXRMLinkEntity(), field, value);
 
                 var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
-                filter.Conditions[0].TableName = relation.EntityAlias;
+                filter.Conditions[0].TableName = join.ForeignTableAlias;
 
-                result = new DelegationFormulaValue(filter, new HashSet<LinkEntity>(new LinkEntityComparer()) { relation }, null);
+                result = new DelegationFormulaValue(filter, null, join: new HashSet<FxJoinNode>(new JoinComparer()) { join });
             }
             else
             {
                 dvValue = _hooks.RetrieveAttribute(table, field, value);
                 if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == FxConditionOperator.Equal)
                 {
-                    result = new DelegationFormulaValue(filter: null, relation: null, partitionId: (string)dvValue, orderBy: null);
+                    result = new DelegationFormulaValue(filter: null, partitionId: (string)dvValue, orderBy: null);
                 }
                 else
                 {
                     var filter = GenerateFilterExpression(field, _op, dvValue, fieldFunction);
-                    result = new DelegationFormulaValue(filter, relation: null, orderBy: null);
+                    result = new DelegationFormulaValue(filter, orderBy: null);
                 }
             }
 

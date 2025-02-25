@@ -272,20 +272,15 @@ namespace Microsoft.PowerFx.Dataverse
                 Distinct = hasDistinct
             };
 
-            if (delegationParameters.Join != null)
+            if (!delegationParameters.Joins.IsNullOrEmpty())
             {
                 /* right table renames in LinkEntity */
-                query.LinkEntities.Add(delegationParameters.Join.LinkEntity);
+                query.LinkEntities.AddRange(delegationParameters.Joins.Select(join => join.ToXRMLinkEntity()));
             }
 
             if (delegationParameters.Top != null)
             {
                 query.TopCount = delegationParameters.Top;
-            }
-
-            if (delegationParameters.Relation != null && delegationParameters.Relation.Any())
-            {
-                query.LinkEntities.AddRange(delegationParameters.Relation);
             }
 
             if (delegationParameters.OrderBy != null && delegationParameters.OrderBy.Any())
@@ -519,6 +514,11 @@ namespace Microsoft.PowerFx.Dataverse
                             {
                                 fieldValue = FormulaValue.NewBlank(fieldType);
                             }
+                        }
+                        else if (fieldType is AggregateType)
+                        {
+                            // one to many relationship case.
+                            fieldValue = FormulaValue.NewBlank(fieldType);
                         }
                         else
                         {

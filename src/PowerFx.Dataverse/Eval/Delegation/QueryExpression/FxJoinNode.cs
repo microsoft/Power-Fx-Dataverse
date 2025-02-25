@@ -17,22 +17,32 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
     public class FxJoinNode
     {
         private readonly string _sourceTable;
+
+        public string SourceTable => _sourceTable;
+
         private readonly string _foreignTable;
+
+        public string ForeignTable => _foreignTable;
+
         private readonly string _fromAttribute;
+
+        public string FromAttribute => _fromAttribute;
+
         private readonly string _toAttribute;
 
-        // $$$ this should be enum.
-        private readonly string _joinType;
+        public string ToAttribute => _toAttribute;
+
+        private readonly FxJoinType _joinType;
+
+        public FxJoinType JoinType => _joinType;
+
         private readonly string _foreignTableAlias;
-        private readonly FxColumnMap _rightMap;
-
-        internal FxColumnMap RightTablColumnMap => _rightMap;
-
-        public LinkEntity LinkEntity => GetLinkEntity();
-
-        public string LinkToEntityName => _foreignTable;
 
         public string ForeignTableAlias => _foreignTableAlias;
+
+        private readonly FxColumnMap _rightMap;
+
+        public FxColumnMap RightTablColumnMap => _rightMap;
 
         internal IEnumerable<string> RightRealFieldNames => _rightMap.ColumnInfoMap.Values.Select(c => c.RealColumnName);
 
@@ -40,13 +50,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal IDelegationMetadata RightTableDelegationMetadata => JoinTableRecordType._type.AssociatedDataSources.FirstOrDefault()?.DelegationMetadata;
 
-        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, string joinType, string foreignTableAlias, FxColumnMap rightMap)
+        public FxJoinNode(string sourceTable, string foreignTable, string fromAttribute, string toAttribute, FxJoinType joinType, string foreignTableAlias, FxColumnMap rightMap)
         {
             _sourceTable = sourceTable ?? throw new ArgumentNullException(nameof(sourceTable));
             _foreignTable = foreignTable ?? throw new ArgumentNullException(nameof(foreignTable));
             _fromAttribute = fromAttribute ?? throw new ArgumentNullException(nameof(fromAttribute));
             _toAttribute = toAttribute ?? throw new ArgumentNullException(nameof(toAttribute));
-            _joinType = joinType ?? throw new ArgumentNullException(nameof(joinType));
+            _joinType = joinType;
             _rightMap = rightMap ?? throw new ArgumentNullException(nameof(rightMap));
             _foreignTableAlias = foreignTableAlias ?? throw new ArgumentNullException(nameof(foreignTableAlias));
         }
@@ -59,46 +69,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         public FxJoinNode WithEmptyColumnMap()
         {
             return new FxJoinNode(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, _joinType, _foreignTableAlias, new FxColumnMap(_rightMap.SourceTableRecordType));
-        }
-
-        public static JoinOperator ToJoinOperator(string joinType)
-        {
-            return joinType switch
-            {
-                "Inner" => JoinOperator.Inner,
-                "Left" => JoinOperator.LeftOuter,
-
-                // $$$ There is no Right join in DV operator, this will have to be replaced later
-                "Right" => JoinOperator.In,
-                "Full" => JoinOperator.All,
-                _ => throw new InvalidOperationException($"Unknown JoinType {joinType}")
-            };
-        }
-
-        public LinkEntity GetLinkEntity()
-        {
-            JoinOperator joinOperator = ToJoinOperator(_joinType);
-
-            // Join between source & foreign table, using equality comparison between 'from' & 'to' attributes, with specified JOIN operator
-            // EntityAlias is used in OData $apply=join(foreignTable as <entityAlias>) and DV Entity attribute names will be prefixed with this alias
-            // hence the need to rename columns with a columnMap afterwards
-            LinkEntity linkEntity = new LinkEntity(_sourceTable, _foreignTable, _fromAttribute, _toAttribute, joinOperator);
-            linkEntity.EntityAlias = _foreignTableAlias;
-
-            ColumnSet columnSet;
-            if (_rightMap.IsEmpty)
-            {
-                // if column is empty, we are joining in expression but ShowColumns/similar eliminated the right columns.
-                columnSet = new ColumnSet(_toAttribute);
-            }
-            else
-            {
-                columnSet = _rightMap.ToXRMColumnSet();
-            }
-
-            linkEntity.Columns = columnSet;
-
-            return linkEntity;
         }
 
         public override string ToString()
@@ -123,5 +93,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
             return sb.ToString();
         }
+    }
+
+    [Obsolete("preview")]
+    public enum FxJoinType
+    {
+        Inner,
+        Left,
+        Right,
+        Full
     }
 }

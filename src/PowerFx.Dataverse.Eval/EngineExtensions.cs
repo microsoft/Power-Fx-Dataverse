@@ -22,6 +22,21 @@ namespace Microsoft.PowerFx.Dataverse
         {
             public override int DefaultMaxRows => DataverseConnection.DefaultMaxRows;
 
+            private readonly Func<Guid> _aliasGUIDSuffixProvider;
+
+            // aliasGUIDSuffixProvider should only be provided to make test deterministic.
+            internal DelegationHooksImpl(Func<Guid> aliasGUIDSuffixProvider = null)
+            {
+                if (aliasGUIDSuffixProvider == null)
+                {
+                    _aliasGUIDSuffixProvider = () => Guid.NewGuid();
+                }
+                else
+                {
+                    _aliasGUIDSuffixProvider = aliasGUIDSuffixProvider;
+                }
+            }
+
             public override async Task<DValue<RecordValue>> RetrieveAsync(TableValue table, Guid id, string partitionId, FxColumnMap columnMap, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -155,11 +170,11 @@ namespace Microsoft.PowerFx.Dataverse
                 return isRealTable;
             }
 
-            internal override LinkEntity RetrieveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            internal override FxJoinNode RetrieveManyToOneRelation(TableValue table, string link)
             {
                 var dvTable = (DataverseTableValue)table;
 
-                var relationMetadata = DelegationUtility.DeserializeRelatioMetadata(links.First());
+                var relationMetadata = DelegationUtility.DeserializeRelatioMetadata(link);
 
                 OneToManyRelationshipMetadata relation;
                 if (relationMetadata.isPolymorphic)
@@ -171,21 +186,20 @@ namespace Microsoft.PowerFx.Dataverse
                     dvTable._entityMetadata.TryGetManyToOneRelationship(relationMetadata.ReferencingFieldName, out relation);
                 }
 
-                var linkEntity = new LinkEntity()
-                {
-                    Columns = new ColumnSet(true),
-                    LinkFromEntityName = relation.ReferencingEntity,
-                    LinkToEntityName = relation.ReferencedEntity,
-                    LinkFromAttributeName = relation.ReferencingAttribute,
-                    LinkToAttributeName = relation.ReferencedAttribute,
+                // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
+                // Add '_N1' (LinkEntityN1RelationSuffix) suffix to identify relation as N-1 relationship
+                var foreignEntityAlias = relation.ReferencedEntity + "_" + _aliasGUIDSuffixProvider.Invoke().ToString("N") + DelegationEngineExtensions.LinkEntityN1RelationSuffix;
 
-                    // Aliasing entity is important to avoid collision with the main entity when it comes to self join.
-                    // Add '_N1' (LinkEntityN1RelationSuffix) suffix to identify relation as N-1 relationship
-                    EntityAlias = relation.ReferencedEntity + "_" + Guid.NewGuid().ToString("N") + DelegationEngineExtensions.LinkEntityN1RelationSuffix,
-                    JoinOperator = JoinOperator.LeftOuter
-                };
+                var joinNode = new FxJoinNode(
+                    sourceTable: relation.ReferencingEntity,
+                    foreignTable: relation.ReferencedEntity,
+                    fromAttribute: relation.ReferencingAttribute,
+                    toAttribute: relation.ReferencedAttribute,
+                    joinType: FxJoinType.Left,
+                    foreignTableAlias: foreignEntityAlias,
+                    rightMap: new FxColumnMap(dvTable.Type.ToRecord()));
 
-                return linkEntity;
+                return joinNode;
             }
         }
 
@@ -206,6 +220,12 @@ namespace Microsoft.PowerFx.Dataverse
         public static void EnableDelegation(this Engine engine, int maxRows)
         {
             engine.EnableDelegationCore(new DelegationHooksImpl(), maxRows);
+        }
+
+        [Obsolete("Only for test purposes")]
+        internal static void EnableTestDelegation(this Engine engine, int maxRows)
+        {
+            engine.EnableDelegationCore(new DelegationHooksImpl(() => new Guid("382c74c3-721d-4f34-80e5-57657b6cbc27")), maxRows);
         }
     }
 }

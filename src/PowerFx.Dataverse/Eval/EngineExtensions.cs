@@ -329,7 +329,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return node;
             }
 
-            internal virtual LinkEntity RetrieveManyToOneRelation(TableValue table, IEnumerable<string> links)
+            internal virtual FxJoinNode RetrieveManyToOneRelation(TableValue table, string link)
             {
                 throw new NotImplementedException();
             }

@@ -41,7 +41,12 @@ namespace Microsoft.PowerFx.Dataverse
 
         public FxGroupByNode GroupBy { get; init; }
 
-        public FxJoinNode Join { get; init; }
+        public ISet<FxJoinNode> Joins { get; init; }
+
+        /// <summary>
+        /// Currently we only support one join, so this is a helper.
+        /// </summary>
+        internal FxJoinNode Join => Joins?.FirstOrDefault();
 
         // Use for dataverse elastic tables.
         internal string _partitionId;
@@ -60,11 +65,9 @@ namespace Microsoft.PowerFx.Dataverse
 
         private bool HasNoFilter => FxFilter == null || FxFilter.Conditions.IsNullOrEmpty();
 
-        private bool HasNoJoin => Join == null;
+        private bool HasNoJoin => Joins == null || Joins.IsNullOrEmpty();
 
         private bool HasNoGroupBy => GroupBy == null;
-
-        private bool HasNoRelation => Relation == null || !Relation.Any();
 
         public DataverseDelegationParameters(FormulaType expectedReturnType)
         {
@@ -92,7 +95,7 @@ namespace Microsoft.PowerFx.Dataverse
                     features |= DelegationParameterFeatures.Top;
                 }
 
-                if (Join != null)
+                if (!Joins.IsNullOrEmpty())
                 {
                     features |= DelegationParameterFeatures.ApplyJoin;
                 }
@@ -388,15 +391,15 @@ namespace Microsoft.PowerFx.Dataverse
                 return null;
             }
 
-            return Join.LinkEntity.JoinOperator switch
+            return Join.JoinType switch
             {
-                JoinOperator.Inner => $"join({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
-                JoinOperator.LeftOuter => $"outerjoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
-                JoinOperator.In => throw new InvalidOperationException("Right join not supported yet"),
+                FxJoinType.Inner => $"join({Join.ForeignTable} as {Join.ForeignTableAlias})",
+                FxJoinType.Left => $"outerjoin({Join.ForeignTable} as {Join.ForeignTableAlias})",
+                FxJoinType.Right => throw new InvalidOperationException("Right join not supported yet"),
 
                 // $$$ this operation isn't part of OData specifications
-                JoinOperator.All => $"fulljoin({Join.LinkToEntityName} as {Join.ForeignTableAlias})",
-                _ => throw new InvalidOperationException("Invalid Join operator")
+                FxJoinType.Full => $"fulljoin({Join.ForeignTable} as {Join.ForeignTableAlias})",
+                _ => throw new InvalidOperationException("Invalid Joins operator")
             };
         }
 
@@ -415,7 +418,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return false;
             }
 
-            return HasNoFilter && HasNoJoin && HasNoGroupBy && HasNoRelation;
+            return HasNoFilter && HasNoJoin && HasNoGroupBy;
         }
     }
 }

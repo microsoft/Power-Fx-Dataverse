@@ -172,5 +172,42 @@ namespace Microsoft.PowerFx.Dataverse
 
             return newInfo;
         }
+
+        internal static LinkEntity ToXRMLinkEntity(this FxJoinNode fxJoinNode)
+        {
+            JoinOperator joinOperator = ToJoinOperator(fxJoinNode.JoinType);
+
+            // Joins between source & foreign table, using equality comparison between 'from' & 'to' attributes, with specified JOIN operator
+            // EntityAlias is used in OData $apply=join(foreignTable as <entityAlias>) and DV Entity attribute names will be prefixed with this alias
+            // hence the need to rename columns with a columnMap afterwards
+            LinkEntity linkEntity = new LinkEntity(fxJoinNode.SourceTable, fxJoinNode.ForeignTable, fxJoinNode.FromAttribute, fxJoinNode.ToAttribute, joinOperator);
+            linkEntity.EntityAlias = fxJoinNode.ForeignTableAlias;
+
+            ColumnSet columnSet;
+            if (fxJoinNode.RightTablColumnMap.IsEmpty)
+            {
+                // if column is empty, we are joining in expression but ShowColumns/similar eliminated the right columns.
+                columnSet = new ColumnSet(fxJoinNode.ToAttribute);
+            }
+            else
+            {
+                columnSet = fxJoinNode.RightTablColumnMap.ToXRMColumnSet();
+            }
+
+            linkEntity.Columns = columnSet;
+            return linkEntity;
+        }
+
+        private static JoinOperator ToJoinOperator(FxJoinType joinType)
+        {
+            return joinType switch
+            {
+                FxJoinType.Inner => JoinOperator.Inner,
+                FxJoinType.Left => JoinOperator.LeftOuter,
+                FxJoinType.Right => JoinOperator.In,
+                FxJoinType.Full => JoinOperator.All,
+                _ => throw new InvalidOperationException($"Unknown JoinType {joinType}")
+            };
+        }
     }
 }
