@@ -52,13 +52,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             FxFilterExpression filter;
             IList<OrderExpression> orderBy;
-            ISet<LinkEntity> relation;
+            ISet<FxJoinNode> joins;
             string partitionId;
 
             if (args[FilterArg] is DelegationFormulaValue delegationFormulaValue)
             {
                 filter = delegationFormulaValue._filter;
-                relation = delegationFormulaValue._relation;
+                joins = delegationFormulaValue._join;
                 partitionId = delegationFormulaValue._partitionId;
             }
             else
@@ -89,6 +89,10 @@ namespace Microsoft.PowerFx.Dataverse
             if (args[JoinArg] is JoinFormulaValue jv)
             {
                 join = jv.JoinNode;
+                if (join != null)
+                {
+                    joins.Add(join);
+                }
             }
             else
             {
@@ -101,17 +105,21 @@ namespace Microsoft.PowerFx.Dataverse
                 columnMap = columnMapFormulaValue.ColumnMap;
             }
 
+            if (joins.Count > 1)
+            {
+                throw new InvalidOperationException($"Multiple joins not supported");
+            }
+
 #pragma warning disable CS0618 // Type or member is obsolete
             var delegationParameters = new DataverseDelegationParameters((RecordType)ReturnFormulaType)
             {
                 FxFilter = filter,
                 OrderBy = orderBy,
                 Top = 1,
-                Join = join,
+                Joins = joins,
                 GroupBy = groupBy,
                 ColumnMap = columnMap,
                 _partitionId = partitionId,
-                Relation = relation,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 

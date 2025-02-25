@@ -29,14 +29,14 @@ namespace Microsoft.PowerFx.Dataverse
             cancellationToken.ThrowIfCancellationRequested();
 
             var filter = new FxFilterExpression(FxFilterOperator.And);
-            var relations = new HashSet<LinkEntity>(new LinkEntityComparer());
+            var joins = new HashSet<FxJoinNode>(new JoinComparer());
             string partitionId = null;
             bool appendPartitionIdFilter = false;
 
             foreach (var arg in args)
             {
                 var siblingFilter = ((DelegationFormulaValue)arg)._filter;
-                var siblingRelation = ((DelegationFormulaValue)arg)._relation;
+                var siblingRelation = ((DelegationFormulaValue)arg)._join;
                 var siblingPartitionId = ((DelegationFormulaValue)arg)._partitionId;
 
                 if (siblingPartitionId != null)
@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 filter.AddFilter(siblingFilter);
-                relations.UnionWith(siblingRelation);
+                joins.UnionWith(siblingRelation);
             }
 
             if (appendPartitionIdFilter)
@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // OrderBy makes no sense here
-            return new DelegationFormulaValue(filter, relations, orderBy: null, partitionId: partitionId);
+            return new DelegationFormulaValue(filter, orderBy: null, partitionId: partitionId, join: joins);
         }
     }
 }

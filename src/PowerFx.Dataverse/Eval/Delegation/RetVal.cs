@@ -507,7 +507,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            internal bool TryAddJoinNode(RetVal rightTable, string fromAttribute, string toAttribute, string joinType, string rightTableAlias, FxColumnMap leftMap, FxColumnMap rightMap, CallNode node, out RetVal result)
+            internal bool TryAddJoinNode(RetVal rightTable, string fromAttribute, string toAttribute, FxJoinType joinType, string rightTableAlias, FxColumnMap leftMap, FxColumnMap rightMap, CallNode node, out RetVal result)
             {
                 if (!IsDelegating || HasJoin || HasGroupBy || HasOrderBy || HasLeftColumnMap || HasTopCount || HasFilter ||
                     !rightTable.IsDelegating || rightTable.HasJoin || rightTable.HasGroupBy || rightTable.HasGroupBy || rightTable.HasLeftColumnMap || rightTable.HasTopCount || rightTable.HasFilter)

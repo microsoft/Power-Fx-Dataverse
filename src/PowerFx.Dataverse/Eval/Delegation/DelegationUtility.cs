@@ -123,14 +123,14 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             return true;
         }
 
-        public static bool CanDelegateJoin(string joinType, IDelegationMetadata delegationCapability)
+        public static bool CanDelegateJoin(FxJoinType joinType, IDelegationMetadata delegationCapability)
         {
-            DelegationCapability joinTypeCapability = joinType.ToLowerInvariant() switch
+            DelegationCapability joinTypeCapability = joinType switch
             {
-                "inner" => DelegationCapability.JoinInner,
-                "left" => DelegationCapability.JoinLeft,
-                "right" => DelegationCapability.JoinRight,
-                "full" => DelegationCapability.JoinFull,
+                FxJoinType.Inner => DelegationCapability.JoinInner,
+                FxJoinType.Left => DelegationCapability.JoinLeft,
+                FxJoinType.Right => DelegationCapability.JoinRight,
+                FxJoinType.Full => DelegationCapability.JoinFull,
                 _ => throw new InvalidOperationException($"Invalid joinType {joinType}")
             };
 
