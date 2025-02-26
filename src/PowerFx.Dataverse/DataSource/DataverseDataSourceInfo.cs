@@ -60,11 +60,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             // Ensure "distinct" capability is added, as well as "joininner", "joinleft", "joinfull" but not "joinright" which isn't supported by DV
             ServiceCapabilities updatedServiceCapabilities = EnsureCapability(
-                tableDefinition.ServiceCapabilities, 
+                tableDefinition.ServiceCapabilities,
                 DelegationMetadataOperatorConstants.Distinct,
-                DelegationMetadataOperatorConstants.JoinInner, 
-                DelegationMetadataOperatorConstants.JoinLeft, 
-                DelegationMetadataOperatorConstants.JoinFull);
+                DelegationMetadataOperatorConstants.JoinInner,
+                DelegationMetadataOperatorConstants.JoinLeft,
+                DelegationMetadataOperatorConstants.JoinFull,
+                DelegationMetadataOperatorConstants.Year,
+                DelegationMetadataOperatorConstants.Month);
 
             // If delegable then set delegation metadata and delegatable attribute.
             var delegationMetadataDef = JsonSerializer.Serialize(updatedServiceCapabilities);

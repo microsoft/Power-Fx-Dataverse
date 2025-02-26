@@ -154,7 +154,23 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                dvValue = _hooks.RetrieveAttribute(table, field, value);
+                // !!!TODO This does not looks right.
+                if (fieldFunction != null && IsFieldFunctionNumerical(fieldFunction))
+                {
+                    if (value is DecimalValue decimalValue)
+                    {
+                        dvValue = decimalValue.Value;
+                    }
+                    else
+                    {
+                        dvValue = ((NumberValue)value).Value;
+                    }
+                }
+                else
+                {
+                    dvValue = _hooks.RetrieveAttribute(table, field, value);
+                }
+
                 if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == FxConditionOperator.Equal)
                 {
                     result = new DelegationFormulaValue(filter: null, partitionId: (string)dvValue, orderBy: null);
@@ -167,6 +183,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return result;
+        }
+
+        private static bool IsFieldFunctionNumerical(FieldFunction fieldFunction)
+        {
+            return fieldFunction == FieldFunction.Year || fieldFunction == FieldFunction.Month || fieldFunction == FieldFunction.Hour;
         }
 
         internal static FxFilterExpression GenerateFilterExpression(string field, FxConditionOperator op, object dataverseValue, FieldFunction fieldFunction)

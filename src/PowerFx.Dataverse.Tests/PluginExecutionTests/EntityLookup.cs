@@ -762,6 +762,34 @@ namespace Microsoft.PowerFx.Dataverse.Tests
 
                     break;
 
+                case ConditionOperator.ThisYear:
+                    foreach (var v in condition.Values)
+                    {
+                        if (v == null || value == null)
+                        {
+                            return default;
+                        }
+
+                        var year = ((DateTime)value).Year;
+                        return (decimal)year == (decimal)v;
+                    }
+
+                    break;
+
+                case ConditionOperator.ThisMonth:
+                    foreach (var v in condition.Values)
+                    {
+                        if (v == null || value == null)
+                        {
+                            return default;
+                        }
+
+                        var month = ((DateTime)value).Month;
+                        return (decimal)month == (decimal)v;
+                    }
+
+                    break;
+
                 case ConditionOperator.Contains:
 
                     // case insensitive, always on strings

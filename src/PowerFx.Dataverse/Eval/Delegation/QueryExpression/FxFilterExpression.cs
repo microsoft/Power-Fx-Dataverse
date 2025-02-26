@@ -69,13 +69,27 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             foreach (var condition in _conditions)
             {
                 // Convert FxConditionOperator to ConditionOperator if necessary
-                ConditionOperator dataverseConditionOperator = DelegationUtility.ConvertToXRMConditionOperator(condition.Operator);
-
-                var dvCondition = new ConditionExpression(condition.AttributeName, dataverseConditionOperator, condition.Values);
-                dvCondition.EntityName = condition.TableName;
+                ConditionExpression conditionExpression = null;
+                foreach (var function in condition.FieldFunctions)
+                {
+                    switch (function)
+                    {
+                        case FieldFunction.Year:
+                            conditionExpression = new ConditionExpression(condition.AttributeName, ConditionOperator.ThisYear, condition.Values.First());
+                            break;
+                        case FieldFunction.Month:
+                            conditionExpression = new ConditionExpression(condition.AttributeName, ConditionOperator.ThisMonth, condition.Values.First());
+                            break;
+                        default:
+                            var dataverseConditionOperator = DelegationUtility.ConvertToXRMConditionOperator(condition.Operator);
+                            conditionExpression = new ConditionExpression(condition.AttributeName, dataverseConditionOperator, condition.Values);
+                            conditionExpression.EntityName = condition.TableName;
+                            break;
+                    }
+                }
 
                 // Create the ConditionExpression and add it to the Dataverse FilterExpression
-                dataverseFilter.AddCondition(dvCondition);
+                dataverseFilter.AddCondition(conditionExpression);
             }
 
             // Add nested filters (if any) to the Dataverse FilterExpression
