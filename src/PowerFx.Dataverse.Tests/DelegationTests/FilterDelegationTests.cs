@@ -353,6 +353,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(277, "Filter(t1, Month(Date) = 6)", 1, false, false)]
         [InlineData(278, "Filter(t1, Year(Date) = 2023 && Month(Date) = 6)", 1, false, false)]
         [InlineData(279, "Filter(t1, Year(Date) = 2023 && Month(Date) = 5)", 0, false, false)]
+        [InlineData(280, "Filter(t1, Year(Date) = 2022 + 1)", 1, false, false)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
