@@ -170,11 +170,6 @@ namespace Microsoft.PowerFx.Dataverse
             return result;
         }
 
-        private static bool IsFieldFunctionNumerical(FieldFunction fieldFunction)
-        {
-            return fieldFunction == FieldFunction.Year || fieldFunction == FieldFunction.Month || fieldFunction == FieldFunction.Hour;
-        }
-
         internal static FxFilterExpression GenerateFilterExpression(string field, FxConditionOperator op, object dataverseValue, FieldFunction fieldFunction)
         {
             var filter = new FxFilterExpression();
