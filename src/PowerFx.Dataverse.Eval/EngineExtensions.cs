@@ -115,10 +115,11 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             // This gets back the attribute in a way that is strictly typed to table's underlying datasources's fieldName's type.
-            public override object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            public override object CoerceObjectValue(TableValue table, string fieldName, FieldFunction fieldFunction, FormulaValue value)
             {
                 // Binder should have enforced that this always succeeds.
-                if (table is DataverseTableValue t2)
+                // If there is field function, the value refers to the function return type and not the table field.
+                if (table is DataverseTableValue t2 && fieldFunction == FieldFunction.None)
                 {
                     if (t2._entityMetadata.TryGetAttribute(fieldName, out var amd))
                     {

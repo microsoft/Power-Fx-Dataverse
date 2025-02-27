@@ -154,22 +154,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                // !!!TODO This does not looks right.
-                if (fieldFunction != null && IsFieldFunctionNumerical(fieldFunction))
-                {
-                    if (value is DecimalValue decimalValue)
-                    {
-                        dvValue = decimalValue.Value;
-                    }
-                    else
-                    {
-                        dvValue = ((NumberValue)value).Value;
-                    }
-                }
-                else
-                {
-                    dvValue = _hooks.RetrieveAttribute(table, field, value);
-                }
+                dvValue = _hooks.CoerceObjectValue(table, field, fieldFunction, value);
 
                 if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == FxConditionOperator.Equal)
                 {

@@ -52,10 +52,11 @@ namespace Microsoft.PowerFx.Dataverse
             /// </summary>
             /// <param name="table">Table that the field belongs to.</param>
             /// <param name="fieldName">Field Name.</param>
+            /// <param name="fieldFunction">Field function.</param>
             /// <param name="value">Field Formula Value.</param>
             /// <returns>converted object.</returns>
             /// <exception cref="NotImplementedException">.</exception>
-            public virtual object RetrieveAttribute(TableValue table, string fieldName, FormulaValue value)
+            public virtual object CoerceObjectValue(TableValue table, string fieldName, FieldFunction fieldFunction, FormulaValue value)
             {
                 throw new NotImplementedException();
             }
