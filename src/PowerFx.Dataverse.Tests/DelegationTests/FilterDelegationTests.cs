@@ -347,6 +347,18 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(273, "Filter(t1, new_datetime > 0)", 1, false, false)]
         [InlineData(274, "Filter(t1, Hour(Date) = 2)", 0, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(275, "Filter(Summarize(t1, new_name, Sum(ThisGroup, Price) As TotalPrice), new_name = \"test\")", 0, false, false)]
+
+        // Year
+        [InlineData(276, "Filter(t1, Year(Date) = 2023)", 1, false, false)]
+        [InlineData(277, "Filter(t1, Year(Date) = 2022 + 1)", 1, false, false)]
+        [InlineData(278, "Filter(t1, Year(Date) = If(true, 2023))", 1, false, false)]
+        [InlineData(279, "Filter(t1, If(true,Year(Date)) = If(true, 2023))", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        [InlineData(280, "Filter(t1, Year(Date) > 2023)", 0, false, false)]
+        [InlineData(281, "Filter(t1, Year(Date) >= 2023)", 1, false, false)]
+        [InlineData(282, "Filter(t1, Year(Date) < 2023)", 2, false, false)]
+        [InlineData(283, "Filter(t1, Year(Date) <= 2023)", 3, false, false)]
+        [InlineData(284, "Filter(t1, Year(Date) <> 2023)", 2, false, false)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

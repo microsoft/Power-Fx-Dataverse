@@ -7,7 +7,9 @@ using System.Text.Json;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -15,6 +17,7 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using IRCallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
@@ -147,6 +150,53 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             // While no ordering semantics are mandated, a data service MUST always use the same semantics to obtain
             // a full ordering across requests.
             return delegationMetadata?.SortDelegationMetadata != null;
+        }
+
+        /// <summary>
+        /// Creates a Datetime call node.
+        /// </summary>
+        /// <param name="yearNode">Year IR node.</param>
+        /// <param name="month">Month value.</param>
+        /// <param name="day">Day value.</param>
+        /// <param name="hour">Hour value.</param>
+        /// <param name="minute">Minute value.</param>
+        /// <param name="second">Second value.</param>
+        /// <param name="millisecond">Millisencond value.</param>
+        /// <returns></returns>
+        private static IRCallNode CreateDateTimeCallNode(IntermediateNode yearNode, int month, int day, int hour, int minute, int second, int millisecond)
+        {
+            var zeroLitNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0d);
+
+            return new IRCallNode(
+                    IRContext.NotInSource(FormulaType.DateTime),
+                    BuiltinFunctionsCore.DateTime,
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, yearNode), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), month), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), day), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), hour), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), minute), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), second), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), millisecond), zeroLitNode));
+        }
+
+        /// <summary>
+        /// Creates the earliest possible date  and time of a year.
+        /// </summary>
+        /// <param name="yearNode">Year value.</param>
+        /// <returns></returns>
+        public static IRCallNode CreateEarliestDateTime(IntermediateNode yearNode)
+        {
+            return CreateDateTimeCallNode(yearNode, 1, 1, 0, 0, 0, 0);
+        }
+
+        /// <summary>
+        /// Creates the latest possible date and time of a year.
+        /// </summary>
+        /// <param name="yearNode">Year value.</param>
+        /// <returns></returns>
+        public static IRCallNode CreateLatestDateTime(IntermediateNode yearNode)
+        {
+            return CreateDateTimeCallNode(yearNode, 12, 31, 23, 59, 59, 999);
         }
 
         internal static ConditionOperator ConvertToXRMConditionOperator(FxConditionOperator fxOperator)
