@@ -147,7 +147,8 @@ namespace Microsoft.PowerFx
             repl.EnableSampleUserObject();
             repl.AddPseudoFunction(new IRPseudoFunction());
             repl.AddPseudoFunction(new CIRPseudoFunction());
-            repl.Engine.EnableDelegation();
+            
+            //repl.Engine.EnableDelegation();
             _repl = repl;
             return repl;
         }

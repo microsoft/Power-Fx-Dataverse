@@ -165,7 +165,20 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (call.Function == BuiltinFunctionsCore.Year)
                 {
-                    newNode = ProcessYear(call, isCallOnLeft ? nodeRight : nodeLeft, kind);
+                    if ((isCallOnLeft && nodeRight is CallNode rightCallNode && rightCallNode.Function == BuiltinFunctionsCore.Year) ||
+                        (isCallOnRight && nodeLeft is CallNode leftCallNode && leftCallNode.Function == BuiltinFunctionsCore.Year))
+                    {
+                        return;
+                    }
+
+                    if ((call.Args[0] is UnaryOpNode unaryOpNode && unaryOpNode.Child is ScopeAccessNode) || call.Args[0] is ScopeAccessNode)
+                    {
+                        newNode = ProcessYear(call, isCallOnLeft ? nodeRight : nodeLeft, kind);
+                    }
+                    else
+                    {
+                        return;
+                    }                    
                 }
             }
         }
@@ -183,7 +196,7 @@ namespace Microsoft.PowerFx.Dataverse
         private static void ProcessDateAdd(ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, CallNode call, bool isCallOnLeft, bool isCallOnRight)
         {
             IntermediateNode arg0 = call.Args[0];            // datetime
-            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration            
+            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration
 
             if (isCallOnLeft)
             {
@@ -281,22 +294,22 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static IntermediateNode CreateAndCallNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
         {
-            // column >= Date(arg, 1, 1) && column <= Date(arg, 12, 31)
+            // column >= Date(arg, 1, 1) && column < Date(arg + 1, 1, 1)
             return new CallNode(
                 IRContext.NotInSource(FormulaType.Boolean),
                 BuiltinFunctionsCore.And,
                 new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode)),
-                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
         }
 
         private static IntermediateNode CreateOrCallNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
         {
-            // column < Date(arg, 1, 1) || column > Date(arg, 12, 31)
+            // column < Date(arg, 1, 1) || column >= Date(arg + 1, 1, 1)
             return new CallNode(
                 IRContext.NotInSource(FormulaType.Boolean),
                 BuiltinFunctionsCore.Or,
                 new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode)),
-                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
         }
 
         private static IntermediateNode CreateLtDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
@@ -307,8 +320,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static IntermediateNode CreateLeqDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
         {
-            // column <= Date(arg, 12, 31)
-            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
+            // column < Date(arg + 1, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
         }
 
         private static IntermediateNode CreateGtDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)

@@ -292,7 +292,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(230, @"Filter(t1, ""1"" in Price)", 3, true, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(231, @"Filter(t1, ""1"" in Price)", 3, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(232, @"Filter(t1, ""1"" in Price)", 3, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-        
+
         [InlineData(233, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(234, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
         [InlineData(235, @"Filter(t1, Not(IsBlank(Price)))", 3, false, true)]
@@ -359,6 +359,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(282, "Filter(t1, Year(Date) < 2023)", 2, false, false)]
         [InlineData(283, "Filter(t1, Year(Date) <= 2023)", 3, false, false)]
         [InlineData(284, "Filter(t1, Year(Date) <> 2023)", 2, false, false)]
+
+        [InlineData(285, "Filter(t1, Year(Date) = Year(Date))", 3, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(286, "Filter(t1, 2023 = Year(Date + 1))", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+        [InlineData(287, "Filter(t1, Year(Date) = Price)", 0, false, false, "Warning 22-23: Can't delegate EqDecimals: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // This test case produces a similar IR as the one at 276 line.
+        [InlineData(288, "Filter(t1, Date >= DateTime(2023,1,1,0,0,0,0) && Date < DateTime(2024,1,1,0,0,0,0))", 1, false, false)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);

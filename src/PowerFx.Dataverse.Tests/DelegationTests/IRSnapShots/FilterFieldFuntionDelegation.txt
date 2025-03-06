@@ -1,5 +1,5 @@
 __retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:3}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(year(DateTimeColumn) eq 2)&$top=1000
-Filter(t1, (EqDecimals(Year(DateTimeColumn),2)))
+Filter(t1, (And(GeqDateTime(DateTimeColumn,DateTime(Coalesce(Float(2), 0), Coalesce(1, 0), Coalesce(1, 0), Coalesce(0, 0), Coalesce(0, 0), Coalesce(0, 0), Coalesce(0, 0))), LtDateTime(DateTimeColumn,DateTime(Coalesce(Float(AddNumbers(Float(2),1)), 0), Coalesce(1, 0), Coalesce(1, 0), Coalesce(0, 0), Coalesce(0, 0), Coalesce(0, 0), Coalesce(0, 0))))))
 __retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:4}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(month(DateTimeColumn) eq 2)&$top=1000
 Filter(t1, (EqDecimals(Month(DateTimeColumn),2)))
 __retrieveMultiple(t1, __eq(t1, {fieldFunctions:Table({Value:5}), fieldName:DateTimeColumn}, 2), __noop(), __noJoin(), __noopGroupBy(), 1000, __allColumns()) | $filter=(hour(DateTimeColumn) eq 2)&$top=1000
