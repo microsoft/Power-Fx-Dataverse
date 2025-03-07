@@ -7,7 +7,9 @@ using System.Text.Json;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
+using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
@@ -15,6 +17,8 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using IRBinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
+using IRCallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
 
 namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
 {
@@ -147,6 +151,52 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             // While no ordering semantics are mandated, a data service MUST always use the same semantics to obtain
             // a full ordering across requests.
             return delegationMetadata?.SortDelegationMetadata != null;
+        }
+
+        /// <summary>
+        /// Creates a Datetime call node.
+        /// </summary>
+        /// <param name="yearNode">Year IR node.</param>
+        /// <returns></returns>
+        private static IRCallNode CreateDateTimeCallNode(IntermediateNode yearNode)
+        {
+            var zeroLitNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0d);
+            var zeroFloatNode = new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, zeroLitNode);
+            var oneLitNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1d);            
+            var oneFloatNode = new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, oneLitNode);
+
+            return new IRCallNode(
+                    IRContext.NotInSource(FormulaType.DateTime),
+                    BuiltinFunctionsCore.DateTime,
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, yearNode), zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, oneFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, oneFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode));
+        }
+
+        /// <summary>
+        /// Creates the earliest possible date  and time of a year.
+        /// </summary>
+        /// <param name="yearNode">Year value.</param>
+        /// <returns></returns>
+        public static IRCallNode CreateEarliestDateTime(IntermediateNode yearNode)
+        {
+            return CreateDateTimeCallNode(yearNode);
+        }
+
+        /// <summary>
+        /// Creates the latest possible date and time of a year.
+        /// </summary>
+        /// <param name="yearNode">Year value.</param>
+        /// <returns></returns>
+        public static IRCallNode CreateLatestDateTime(IntermediateNode yearNode)
+        {
+            var nextYearNode = new IRBinaryOpNode(IRContext.NotInSource(FormulaType.Decimal), BinaryOpKind.AddDecimals, yearNode, new DecimalLiteralNode(IRContext.NotInSource(FormulaType.Number), 1));
+            
+            return CreateDateTimeCallNode(nextYearNode);
         }
 
         internal static ConditionOperator ConvertToXRMConditionOperator(FxConditionOperator fxOperator)

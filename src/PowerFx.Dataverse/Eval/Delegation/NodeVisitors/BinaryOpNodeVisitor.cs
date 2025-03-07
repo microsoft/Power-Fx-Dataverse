@@ -5,12 +5,15 @@ using System;
 using System.Collections.Generic;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
+using Microsoft.PowerFx.Core.IR.Symbols;
 using Microsoft.PowerFx.Core.Localization;
 using Microsoft.PowerFx.Core.Texl;
 using Microsoft.PowerFx.Core.Types;
+using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
+using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
@@ -53,7 +56,13 @@ namespace Microsoft.PowerFx.Dataverse
 
             if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out var columnInfo, out IntermediateNode rightNode, out BinaryOpKind operation, out IList<string> relations, out var fieldFunction))
             {
-                TryRearrangeNodes(context, ref binaryOpNodeLeft, ref binaryOpNodeRight);
+                // If we can't get the field name, probably there is a field function in the binary operation.
+                ProcessSpecialCalls(context, node.Op, ref binaryOpNodeLeft, ref binaryOpNodeRight, out var newNode);
+
+                if (newNode != null)
+                {
+                    return newNode.Accept(this, context);
+                }
 
                 if (!TryGetFieldNameOrRelationField(context, binaryOpNodeLeft, binaryOpNodeRight, node.Op, out columnInfo, out rightNode, out operation, out relations, out fieldFunction))
                 {
@@ -133,12 +142,14 @@ namespace Microsoft.PowerFx.Dataverse
             return ret;
         }
 
-        private void TryRearrangeNodes(Context context, ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight)
+        private void ProcessSpecialCalls(Context context, BinaryOpKind kind, ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, out IntermediateNode newNode)
         {
             // Let's just transform the left/right nodes and the rest of the code will validate if we can delegate and generate the delegated expression
 
             // Check for CallNode presence
             (CallNode call, bool isCallOnLeft, bool isCallOnRight) = nodeLeft is CallNode callLeft ? (callLeft, true, false) : nodeRight is CallNode callRight ? (callRight, false, true) : (null, false, false);
+
+            newNode = null;
 
             if (call != null)
             {
@@ -150,6 +161,11 @@ namespace Microsoft.PowerFx.Dataverse
                 if (call.Function == BuiltinFunctionsCore.DateDiff)
                 {
                     ProcessDateDiff(ref nodeLeft, ref nodeRight, call, isCallOnLeft, isCallOnRight, context);
+                }
+
+                if (call.Function == BuiltinFunctionsCore.Year)
+                {
+                    newNode = ProcessYear(call, isCallOnLeft ? nodeRight : nodeLeft, kind);
                 }
             }
         }
@@ -167,7 +183,7 @@ namespace Microsoft.PowerFx.Dataverse
         private static void ProcessDateAdd(ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, CallNode call, bool isCallOnLeft, bool isCallOnRight)
         {
             IntermediateNode arg0 = call.Args[0];            // datetime
-            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration            
+            IntermediateNode negArg1 = Negate(call.Args[1]); // -duration
 
             if (isCallOnLeft)
             {
@@ -260,6 +276,92 @@ namespace Microsoft.PowerFx.Dataverse
                                ? new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft))
                                : new CallNode(IRContext.NotInSource(arg0.IRContext.ResultType), BuiltinFunctionsCore.DateAdd, arg0, EnsureNumber(nodeLeft), call.Args[2]);
                 }
+            }
+        }
+
+        private static IntermediateNode CreateAndCallNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column >= Date(arg, 1, 1) && column < Date(arg + 1, 1, 1)
+            return new CallNode(
+                IRContext.NotInSource(FormulaType.Boolean),
+                BuiltinFunctionsCore.And,
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode)),
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
+        }
+
+        private static IntermediateNode CreateOrCallNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column < Date(arg, 1, 1) || column >= Date(arg + 1, 1, 1)
+            return new CallNode(
+                IRContext.NotInSource(FormulaType.Boolean),
+                BuiltinFunctionsCore.Or,
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode)),
+                new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode)));
+        }
+
+        private static IntermediateNode CreateLtDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column < Date(arg, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode));
+        }
+
+        private static IntermediateNode CreateLeqDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column < Date(arg + 1, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.LtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
+        }
+
+        private static IntermediateNode CreateGtDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column >= Date(arg, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
+        }
+
+        private static IntermediateNode CreateGeqDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
+        {
+            // column >= Date(arg, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateEarliestDateTime(yearNode));
+        }
+
+        /// <summary>
+        /// Process a binary operator when Year() function is present.
+        /// </summary>
+        /// <param name="callNode">The Year() call node.</param>
+        /// <param name="argNode">The oposite node from Year() call node.</param>
+        /// <param name="kind">Binary operation kind.</param>
+        /// <returns></returns>
+        private IntermediateNode ProcessYear(CallNode callNode, IntermediateNode argNode, BinaryOpKind kind)
+        {
+            var callNodeArg = callNode.Args[0];
+
+            switch (kind)
+            {
+                // Translates to column in between two dates
+                case BinaryOpKind.EqDecimals:
+                    return CreateAndCallNode(argNode, callNodeArg);
+
+                // Translates to column is not in between two dates
+                case BinaryOpKind.NeqDecimals:
+                    return CreateOrCallNode(argNode, callNodeArg);
+
+                // Translates to column is less than a date
+                case BinaryOpKind.LtDecimals:
+                    return CreateLtDateTimeBinaryNode(argNode, callNodeArg);
+
+                // Translates to column is less than or equal to a date
+                case BinaryOpKind.LeqDecimals:
+                    return CreateLeqDateTimeBinaryNode(argNode, callNodeArg);
+
+                // Translates to column is greater than a date
+                case BinaryOpKind.GtDecimals:
+                    return CreateGtDateTimeBinaryNode(argNode, callNodeArg);
+
+                // Translates to column is greater than or equal to a date
+                case BinaryOpKind.GeqDecimals:
+                    return CreateGeqDateTimeBinaryNode(argNode, callNodeArg);
+
+                default:
+                    return null;
             }
         }
 
