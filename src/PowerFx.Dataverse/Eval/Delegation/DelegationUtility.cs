@@ -157,12 +157,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         /// Creates a Datetime call node.
         /// </summary>
         /// <param name="yearNode">Year IR node.</param>
-        /// <param name="month">Month value.</param>
-        /// <param name="day">Day value.</param>
-        /// <param name="hour">Hour value.</param>
-        /// <param name="minute">Minute value.</param>
-        /// <param name="second">Second value.</param>
-        /// <param name="millisecond">Millisencond value.</param>
         /// <returns></returns>
         private static IRCallNode CreateDateTimeCallNode(IntermediateNode yearNode)
         {
