@@ -180,7 +180,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         public async Task JoinDelegationAsync(int id, string expr, int n, string expected, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => GetResult(result), false, false, null, true, true, false, expectedWarnings);
+            await DelegationTestAsync(id, "JoinDelegation.txt", expr, n, expected, result => GetResult(result), false, false, null, true, true, false, false, expectedWarnings);
         }
 
         private static string GetResult(FormulaValue fv)

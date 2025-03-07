@@ -167,17 +167,20 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         private static IRCallNode CreateDateTimeCallNode(IntermediateNode yearNode)
         {
             var zeroLitNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0d);
+            var zeroFloatNode = new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, zeroLitNode);
+            var oneLitNode = new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1d);            
+            var oneFloatNode = new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, oneLitNode);
 
             return new IRCallNode(
                     IRContext.NotInSource(FormulaType.DateTime),
                     BuiltinFunctionsCore.DateTime,
                     new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, yearNode), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0), zeroLitNode),
-                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 0), zeroLitNode));
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, oneFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, oneFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode),
+                    new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Coalesce, zeroFloatNode, zeroLitNode));
         }
 
         /// <summary>
@@ -197,7 +200,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
         /// <returns></returns>
         public static IRCallNode CreateLatestDateTime(IntermediateNode yearNode)
         {
-            var nextYearNode = new IRBinaryOpNode(IRContext.NotInSource(FormulaType.Number), BinaryOpKind.AddNumbers, new IRCallNode(IRContext.NotInSource(FormulaType.Number), BuiltinFunctionsCore.Float, yearNode), new NumberLiteralNode(IRContext.NotInSource(FormulaType.Number), 1d));
+            var nextYearNode = new IRBinaryOpNode(IRContext.NotInSource(FormulaType.Decimal), BinaryOpKind.AddDecimals, yearNode, new DecimalLiteralNode(IRContext.NotInSource(FormulaType.Number), 1));
             
             return CreateDateTimeCallNode(nextYearNode);
         }

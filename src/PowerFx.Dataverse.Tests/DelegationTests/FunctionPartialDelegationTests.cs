@@ -20,7 +20,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(4, "Concat(t1, Price & \",\")", "100,10,-10,", false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         public async Task FunctionPartialDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "PartialFunctionDelegation.txt", expr, -2, expected, result => result.ToObject(), cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, false, expectedWarnings);
+            await DelegationTestAsync(id, "PartialFunctionDelegation.txt", expr, -2, expected, result => result.ToObject(), cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, false, false, expectedWarnings);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(15, "Distinct(ForAll(t1, {Xyz: Price}), Xyz)", 3)]
         public async Task DistinctDelegationAsync(int id, string expr, int expectedRows, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "DistinctDelegation.txt", expr, expectedRows, null, null, true, true, null, false, true, true, expectedWarnings);
+            await DelegationTestAsync(id, "DistinctDelegation.txt", expr, expectedRows, null, null, true, true, null, false, true, true, false, expectedWarnings);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             _output = output;
         }
 
-        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
+        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, bool skipSaving, params string[] expectedWarnings)
         {
             _output.WriteLine($"{id}");
 
@@ -82,7 +82,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     return;
                 }
 
-                Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => $"{er.Span.Min}-{er.Span.Lim}: {er.Message}")));
+                Assert.True(check.IsSuccess, string.Join(", ", check.Errors.Select(er => er.ToString())));
 
                 DependencyInfo scan = check.ApplyDependencyInfoScan();
 
@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 IRResult irNode = check.ApplyIR();
                 string actualIr = check.GetCompactIRString();
 
-                if (i == 0)
+                if (i == 0 && !skipSaving)
                 {
                     SaveExpression(id, file, expr, dv, opts, config, allSymbols);
                 }
@@ -136,7 +136,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                     Configure(false, extraConfig, dv, out PowerFxConfig config2, out RecalcEngine engine2, out SymbolTable fakeSymbolTable2, out ISymbolSlot fakeSlot2, out TestDataverseTableValue fakeTableValue2, out ReadOnlySymbolTable allSymbols2);
                     
                     CheckResult check2 = engine2.Check(input, options: opts, symbolTable: allSymbols2);
-                    Assert.True(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => $"{er.Span.Min}-{er.Span.Lim}: {er.Message}")));
+                    Assert.True(check2.IsSuccess, string.Join(", ", check2.Errors.Select(er => er.ToString())));
 
                     IExpressionEvaluator run2 = check2.GetEvaluator();
                     var fakeSymbolValues2 = new SymbolValues(fakeSymbolTable2);

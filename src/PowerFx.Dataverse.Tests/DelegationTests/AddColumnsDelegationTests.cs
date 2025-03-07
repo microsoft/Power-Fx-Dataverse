@@ -25,7 +25,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 foreach (bool parserNumberIsFloatOption in new[] { true, false })
                 {
                     int i = 1 + (4 * (id - 1)) + (cdsNumberIsFloat ? 0 : 2) + (parserNumberIsFloatOption ? 0 : 1);
-                    await DelegationTestAsync(i, "AddColumnsDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, expectedWarnings.Select(ew => parserNumberIsFloatOption ? ew : ew.Replace("LtNumbers", "LtDecimals")).ToArray());
+                    await DelegationTestAsync(i, "AddColumnsDelegation.txt", expr, expectedRows, expectedIds, ResultGetter(column), cdsNumberIsFloat, parserNumberIsFloatOption, null, true, true, true, false, expectedWarnings.Select(ew => parserNumberIsFloatOption ? ew : ew.Replace("LtNumbers", "LtDecimals")).ToArray());
                 }
             }
         }

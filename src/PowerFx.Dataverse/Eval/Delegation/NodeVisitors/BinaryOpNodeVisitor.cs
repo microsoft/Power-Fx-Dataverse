@@ -165,20 +165,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (call.Function == BuiltinFunctionsCore.Year)
                 {
-                    if ((isCallOnLeft && nodeRight is CallNode rightCallNode && rightCallNode.Function == BuiltinFunctionsCore.Year) ||
-                        (isCallOnRight && nodeLeft is CallNode leftCallNode && leftCallNode.Function == BuiltinFunctionsCore.Year))
-                    {
-                        return;
-                    }
-
-                    if ((call.Args[0] is UnaryOpNode unaryOpNode && unaryOpNode.Child is ScopeAccessNode) || call.Args[0] is ScopeAccessNode)
-                    {
-                        newNode = ProcessYear(call, isCallOnLeft ? nodeRight : nodeLeft, kind);
-                    }
-                    else
-                    {
-                        return;
-                    }                    
+                    newNode = ProcessYear(call, isCallOnLeft ? nodeRight : nodeLeft, kind);
                 }
             }
         }
@@ -326,8 +313,8 @@ namespace Microsoft.PowerFx.Dataverse
 
         private static IntermediateNode CreateGtDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
         {
-            // column > Date(arg, 1, 1)
-            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GtDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
+            // column >= Date(arg, 1, 1)
+            return new BinaryOpNode(IRContext.NotInSource(FormulaType.Boolean), BinaryOpKind.GeqDateTime, fieldAccess, DelegationUtility.CreateLatestDateTime(yearNode));
         }
 
         private static IntermediateNode CreateGeqDateTimeBinaryNode(IntermediateNode yearNode, IntermediateNode fieldAccess)
