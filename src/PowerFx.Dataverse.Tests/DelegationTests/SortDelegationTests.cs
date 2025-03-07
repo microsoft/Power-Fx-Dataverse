@@ -104,7 +104,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 true,
                 true,
                 true,
-                false,
                 expectedWarning);
         }
     }

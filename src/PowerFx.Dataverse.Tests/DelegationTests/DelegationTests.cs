@@ -30,8 +30,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     public sealed partial class DelegationTests
     {
         internal static ConcurrentDictionary<string, List<string>> _delegationTests = new ConcurrentDictionary<string, List<string>>();
-
-        internal static ConcurrentDictionary<string, string> _delegationIds = new ConcurrentDictionary<string, string>();
+        internal static ConcurrentDictionary<string, string> _delegationDelegationIRs = new ConcurrentDictionary<string, string>();
 
         public readonly ITestOutputHelper _output;
 
@@ -40,7 +39,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             _output = output;
         }
 
-        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, bool skipSaving, params string[] expectedWarnings)
+        internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
         {
             _output.WriteLine($"{id}");
 
@@ -90,9 +89,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 IRResult irNode = check.ApplyIR();
                 string actualIr = check.GetCompactIRString();
 
-                if (i == 0 && !skipSaving)
+                if (i == 0)
                 {
-                    SaveExpression(id, file, expr, dv, opts, config, allSymbols);
+                    SaveExpression(id, file, expr, actualIr, dv, opts, config, allSymbols);
                 }
 
                 _output.WriteLine("IR with delegation");
@@ -369,7 +368,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public DateTime UtcNow => new DateTime(2024, 7, 29, 21, 57, 04, DateTimeKind.Utc);
         }
 
-        private void SaveExpression(int id, string file, string expr, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
+        private void SaveExpression(int id, string file, string expr, string expectedDelegationIR, DataverseConnection dv, ParserOptions opts, PowerFxConfig config, ReadOnlySymbolTable allSymbols)
         {
             RecalcEngine engine2 = new RecalcEngine(config);
             ConfigureEngine(dv, engine2, false);
@@ -383,8 +382,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             CallVisitor visitor = new CallVisitor();
             CallVisitor.RetVal retVal = visitor.StartVisit(irNode2.TopNode, null);
+
+            var key = $"{id:0000}-{file}";
+
             _delegationTests.TryAdd(expr, retVal.Calls);
-            _delegationIds.AddOrUpdate($"{id:0000}-{file}", (s1) => null, (s1, s2) => throw new InvalidOperationException($"Conflicting test with {id} in file {file}"));
+            _delegationDelegationIRs.AddOrUpdate(key, (s1) => expectedDelegationIR, (s1, s2) => s2 == expectedDelegationIR ? null : throw new InvalidOperationException($"Conflicting test with {id} in file {file}"));
         }
 
         private static void ConfigureEngine(DataverseConnection dv, RecalcEngine engine, bool enableDelegation)

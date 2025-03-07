@@ -48,7 +48,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(28, "With(LookUp(t1, Old_Price > 100), Filter(t2, Data = Old_Price))", 1, false, true)]
         public async Task WithDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "WithDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, false, expectedWarnings);
+            await DelegationTestAsync(id, "WithDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
         }
     }
 }

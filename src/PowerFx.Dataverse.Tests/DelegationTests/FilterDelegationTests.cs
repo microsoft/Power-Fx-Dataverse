@@ -349,57 +349,36 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(275, "Filter(Summarize(t1, new_name, Sum(ThisGroup, Price) As TotalPrice), new_name = \"test\")", 0, false, false)]
 
         // Year
-        [InlineData(276, "Filter(t1, Year(Date) = 2023)", 1, false, false)]
-        [InlineData(277, "Filter(t1, Year(Date) = 2022 + 1)", 1, false, false)]
         [InlineData(278, "Filter(t1, Year(Date) = If(true, 2023))", 1, false, false)]
         [InlineData(279, "Filter(t1, If(true,Year(Date)) = If(true, 2023))", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
-
-        [InlineData(280, "Filter(t1, Year(Date) > 2023)", 0, false, false)]
-        [InlineData(281, "Filter(t1, Year(Date) >= 2023)", 1, false, false)]
-        [InlineData(282, "Filter(t1, Year(Date) < 2023)", 2, false, false)]
-        [InlineData(283, "Filter(t1, Year(Date) <= 2023)", 3, false, false)]
-        [InlineData(284, "Filter(t1, Year(Date) <> 2023)", 2, false, false)]
-
         [InlineData(285, "Filter(t1, Year(Date) = Year(Date))", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.", "Warning: Can't delegate GeqDateTime: Expression compares multiple fields.")]
         [InlineData(286, "Filter(t1, 2023 = Year(Date + 1))", 1, false, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(287, "Filter(t1, Year(Date) = Price)", 0, false, false, "Warning 22-23: Can't delegate EqDecimals: Expression compares multiple fields.", "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
+
+        // Let's test if the delegation transformation will procude the same 'Year' IR result as the "plain" expression.
+        [InlineData(276, "Filter(t1, Year(Date) = 2023)", 1, false, false)]
+        [InlineData(276, "Filter(t1, Date >= DateTime(2023,1,1,0,0,0,0) && Date < DateTime(2023+1,1,1,0,0,0,0))", 1, false, false)]
+
+        [InlineData(277, "Filter(t1, Year(Date) = 2022 + 1)", 1, false, false)]
+        [InlineData(277, "Filter(t1, Date >= DateTime(2022+1,1,1,0,0,0,0) && Date < DateTime(2022+1+1,1,1,0,0,0,0))", 1, false, false)]        
+
+        [InlineData(280, "Filter(t1, Year(Date) > 2023)", 0, false, false)]
+        [InlineData(280, "Filter(t1, Date >= DateTime(2023+1,1,1,0,0,0,0))", 0, false, false)]
+
+        [InlineData(281, "Filter(t1, Year(Date) >= 2023)", 1, false, false)]
+        [InlineData(281, "Filter(t1, Date >= DateTime(2023,1,1,0,0,0,0))", 1, false, false)]
+        
+        [InlineData(282, "Filter(t1, Year(Date) < 2023)", 2, false, false)]
+        [InlineData(282, "Filter(t1, Date < DateTime(2023,1,1,0,0,0,0))", 2, false, false)]
+
+        [InlineData(283, "Filter(t1, Year(Date) <= 2023)", 3, false, false)]
+        [InlineData(283, "Filter(t1, Date < DateTime(2023+1,1,1,0,0,0,0))", 3, false, false)]
+
+        [InlineData(284, "Filter(t1, Year(Date) <> 2023)", 2, false, false)]
+        [InlineData(284, "Filter(t1, Date < DateTime(2023,1,1,0,0,0,0) || Date >= DateTime(2023+1,1,1,0,0,0,0))", 2, false, false)]
         public async Task FilterDelegationAsync(int id, string expr, int expectedRows, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
-            await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, false, expectedWarnings);
-        }
-
-        [Theory]
-        [InlineData(
-            276,
-            "Filter(t1, Date >= DateTime(2023,1,1,0,0,0,0) && Date < DateTime(2023+1,1,1,0,0,0,0))",
-            1)]
-        [InlineData(
-            277,
-            "Filter(t1, Date >= DateTime(2022+1,1,1,0,0,0,0) && Date < DateTime(2022+1+1,1,1,0,0,0,0))",
-            1)]
-        [InlineData(
-            280,
-            "Filter(t1, Date >= DateTime(2023+1,1,1,0,0,0,0))",
-            0)]
-        [InlineData(
-            281,
-            "Filter(t1, Date >= DateTime(2023,1,1,0,0,0,0))",
-            1)]
-        [InlineData(
-            282,
-            "Filter(t1, Date < DateTime(2023,1,1,0,0,0,0))",
-            2)]
-        [InlineData(
-            283,
-            "Filter(t1, Date < DateTime(2023+1,1,1,0,0,0,0))",
-            3)]
-        [InlineData(
-            284,
-            "Filter(t1, Date < DateTime(2023,1,1,0,0,0,0) || Date >= DateTime(2023+1,1,1,0,0,0,0))",
-            2)]
-        public async Task DelegationIRMatchAsync(int id, string expr, int expectedRows)
-        {
-            await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, false, false, null, false, true, true, true);
+            await DelegationTestAsync(id, "FilterDelegation.txt", expr, expectedRows, null, null, cdsNumberIsFloat, parserNumberIsFloatOption, null, false, true, true, expectedWarnings);
         }
 
         [Fact]

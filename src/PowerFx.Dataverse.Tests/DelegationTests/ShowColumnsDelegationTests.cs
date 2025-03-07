@@ -54,7 +54,6 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 false,
                 isCheckSuccess,
                 false,
-                false,
                 expectedWarnings);
         }
     }
