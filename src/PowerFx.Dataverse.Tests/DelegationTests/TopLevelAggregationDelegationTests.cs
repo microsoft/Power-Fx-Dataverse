@@ -14,16 +14,17 @@ using Xunit;
 
 namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
-    public class CountRowsAndCountIfDelegationTests
+    public class TopLevelAggregationDelegationTests
     {
         private static List<DelegationOperator> _supportedDelegationOperator = new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.And, DelegationOperator.Or, DelegationOperator.Not, DelegationOperator.Null, DelegationOperator.JoinInner };
 
         [Theory]
+
         [InlineData(1, "CountRows(t1)")]
         [InlineData(2, "CountRows(Filter(t1, Name = \"test\" Or Credit = 0))")]
         [InlineData(3, "CountRows(Filter(t1, Name = \"test\" And Credit = 0))")]
 
-        // Can't delegate CountRows() becuase inner filter is non delegable due to column comaparison.
+        // Can't delegate CountRows() because inner filter is non delegable due to column comparison.
         [InlineData(4, "CountRows(Filter(t1, Name = \"test\" And Credit = Amount))")]
 
         [InlineData(5, "CountIf(t1, Name = \"test\")")]
@@ -43,9 +44,24 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // Can't delegate CountIf() with Join()
         [InlineData(14, "CountIf(Join(t1, t1 As t2, LeftRecord.id = t2.id, JoinType.Inner, t2.name As newName), newName = \"test\")")]
-        public async Task CountRowsAndCountIfDelegationAsync(int id, string expression)
+
+        // Basic top level Sum() aggregation.
+        [InlineData(15, "Sum(t1, amount)")]
+
+        // top level Sum() with ForAll().
+        [InlineData(16, "Sum(ForAll(t1, {amount: ThisRecord.amount}), amount)")]
+
+        // top level Sum() with ForAll() and column manipulation, can't be delegated.
+        [InlineData(17, "Sum(ForAll(t1, {amount: ThisRecord.amount * 2}), amount)")]
+
+        // top level Sum() with Filter() and ForAll().
+        [InlineData(18, "Sum(ForAll(Filter(t1, ThisRecord.Name = \"test\"), {amount: ThisRecord.amount}), amount)")]
+
+        // Can't delegate Sum() with Summarize(). But still partially delegates Summarize.
+        [InlineData(19, "Sum(Summarize(t1, name, Sum(ThisGroup, amount) As TotalAmount), TotalAmount)")]
+        public async Task TopLevelAggregationDelegationAsync(int id, string expression)
         {
-            var file = "CountRowsAndCountIfDelegationAsync.txt";
+            var file = "TopLevelAggregationDelegationAsync.txt";
 
             var recordType = RecordType.Empty()
                 .Add("name", FormulaType.String, "Name")

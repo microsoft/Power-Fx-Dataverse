@@ -32,7 +32,7 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     fieldName = GetRealFieldName(tableArg, tln);
                 }
-                else if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[i]).Child, out var columnInfo))
+                else if (TryGetSimpleFieldName(context, node.Args[i], out var columnInfo))
                 {
                     fieldName = columnInfo;
                 }

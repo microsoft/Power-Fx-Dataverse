@@ -99,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return result;
             }
 
-            public override async Task<FormulaValue> RetrieveCount(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            public override async Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 delegationParameters.EnsureOnlyFeatures(table.SupportedFeatures);
