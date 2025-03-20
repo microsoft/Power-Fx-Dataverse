@@ -188,6 +188,11 @@ namespace Microsoft.PowerFx.Dataverse
                     throw new CustomFunctionErrorException($"Error while executing query in ExecuteQueryAsync: {entityCollectionResponse.Error}");
                 }
 
+                if (entityCollectionResponse.Response.Entities.Count == 0)
+                {
+                    return FormulaValue.NewBlank(delegationParameters.ExpectedReturnType);
+                }
+
                 if (entityCollectionResponse.Response.Entities.Count > 1)
                 {
                     throw new InvalidOperationException($"Expected less or equal one entity, found {entityCollectionResponse.Response.Entities.Count} entities.");
