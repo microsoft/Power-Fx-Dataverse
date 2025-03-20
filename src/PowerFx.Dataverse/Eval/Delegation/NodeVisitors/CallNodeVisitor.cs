@@ -98,6 +98,7 @@ namespace Microsoft.PowerFx.Dataverse
                 "Summarize" => ProcessSummarize(node, tableArg, context),
                 "CountIf" => ProcessCountIf(node, tableArg, context),
                 "CountRows" => ProcessCountRows(node, tableArg, context),
+                "Sum" => ProcessSum(node, tableArg, context),
 
                 _ => ProcessOtherCall(node, tableArg, context)
             };

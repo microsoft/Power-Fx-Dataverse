@@ -289,6 +289,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public bool TryGetSimpleFieldName(Context context, IntermediateNode node, out FxColumnInfo columnInfo)
         {
+            if (node is LazyEvalNode lazyEvalNode)
+            {
+                node = lazyEvalNode.Child;
+            }
+
             if (TryGetFieldName(context, node, out columnInfo, out var invertCoercion, out _, out var fieldFunctions))
             {
                 if (!invertCoercion && !fieldFunctions.Any())

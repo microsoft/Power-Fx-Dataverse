@@ -88,6 +88,7 @@ namespace Microsoft.PowerFx.Dataverse
                     columnSet.AttributeExpressions.Add(new XrmAttributeExpression()
                     {
                         AttributeName = columnInfo.RealColumnName,
+                        Alias = columnInfo.RealColumnName, // DV doesn't allow this to be null, so we have to set it.
                         HasGroupBy = fxGroupByNode?.Contains(columnInfo.RealColumnName) == true,
                         AggregateType = FxToXRMAggregateType(columnInfo.AggregateMethod)
                     });

@@ -328,5 +328,27 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 BinaryOpKind.TimeDifference => BinaryOp.Add,
                 _ => BinaryOp.Error
             };
+
+        internal static bool CanDelegateTopLevelAggregate(FxColumnInfo fxColumnInfo, SummarizeMethod method, TableDelegationInfo capabilities, bool isDataverseDelegation)
+        {
+            if (isDataverseDelegation)
+            {
+                return true;
+            }
+
+            if (capabilities == null || fxColumnInfo == null)
+            {
+                return false;
+            }
+
+            var topLevelAggregateCapability = capabilities.TopLevelAggregationCapabilities;
+
+            if (topLevelAggregateCapability == null)
+            {
+                return false;
+            }
+
+            return topLevelAggregateCapability.IsTopLevelAggregationSupported(method, fxColumnInfo.RealColumnName);
+        }
     }
 }

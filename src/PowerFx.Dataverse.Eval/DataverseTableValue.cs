@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override sealed IEnumerable<DValue<RecordValue>> Rows => _lazyTaskRows.Value.ConfigureAwait(false).GetAwaiter().GetResult();
 
-        public DelegationParameterFeatures SupportedFeatures => DelegationParameterFeatures.Filter | DelegationParameterFeatures.Top | DelegationParameterFeatures.Columns | DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Count;
+        public DelegationParameterFeatures SupportedFeatures => DelegationParameterFeatures.Filter | DelegationParameterFeatures.Top | DelegationParameterFeatures.Columns | DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Count | DelegationParameterFeatures.ApplyTopLevelAggregation;
 
         public readonly EntityMetadata _entityMetadata;
 
@@ -167,26 +167,57 @@ namespace Microsoft.PowerFx.Dataverse
 
         public async Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, DelegationParameters parameters, CancellationToken cancellationToken)
         {
-            // if condition expression is empty, we can call seprate function to get count of the table.
+            // if condition expression is empty, we can call separate function to get count of the table.
+            cancellationToken.ThrowIfCancellationRequested();
             var delegationParameters = (DataverseDelegationParameters)parameters;
             if (delegationParameters.ReturnTotalRowCount == true)
             {
                 var count = await GetCountAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
-                if (delegationParameters.ExpectedReturnType == FormulaType.Decimal)
+                var countFV = ToFxNumericFormulaValue(count, delegationParameters.ExpectedReturnType);
+                return countFV;
+            }
+            else
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                QueryExpression query = CreateQueryExpression(_entityMetadata.LogicalName, delegationParameters);
+
+                DataverseResponse<EntityCollection> entityCollectionResponse = await _connection.Services.RetrieveMultipleAsync(query, cancellationToken).ConfigureAwait(false);
+
+                if (entityCollectionResponse.HasError)
                 {
-                    return FormulaValue.New(count);
+                    throw new CustomFunctionErrorException($"Error while executing query in ExecuteQueryAsync: {entityCollectionResponse.Error}");
                 }
-                else if (delegationParameters.ExpectedReturnType == FormulaType.Number)
+
+                if (entityCollectionResponse.Response.Entities.Count > 1)
                 {
-                    return FormulaValue.New((float)count);
+                    throw new InvalidOperationException($"Expected less or equal one entity, found {entityCollectionResponse.Response.Entities.Count} entities.");
                 }
-                else
+
+                var aggregationValue = entityCollectionResponse.Response.Entities.First().Attributes.First().Value;
+
+                if (aggregationValue is AliasedValue aliasedValue)
                 {
-                    throw new InvalidOperationException($"Expected type is number or decimal, found {delegationParameters.ExpectedReturnType}");
+                    aggregationValue = aliasedValue.Value;
                 }
+
+                var aggregationFV = ToFxNumericFormulaValue(aggregationValue, delegationParameters.ExpectedReturnType);
+                return aggregationFV;
+            }
+        }
+
+        private static FormulaValue ToFxNumericFormulaValue(object value, FormulaType expectedFT)
+        {
+            if (expectedFT != FormulaType.Decimal && expectedFT != FormulaType.Number)
+            {
+                throw new InvalidOperationException($"Expected type is number or decimal, found {expectedFT}");
             }
 
-            throw new InvalidOperationException("ExecuteQueryAsync encountered incorrect query.");
+            if (!DataverseRecordValue.TryParseDataverseValueNoNetworkRequest(expectedFT, value, CancellationToken.None, out var fxValue))
+            {
+                throw new InvalidOperationException($"Could not conver {value} to {expectedFT} in {nameof(DataverseRecordValue.TryParseDataverseValueNoNetworkRequest)}");
+            }
+
+            return fxValue;
         }
 
         private async Task<long> GetCountAsync(IServiceProvider services, DataverseDelegationParameters parameters, CancellationToken cancellationToken)

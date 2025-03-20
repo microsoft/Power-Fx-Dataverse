@@ -45,7 +45,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             return metadata;
         }
 
-        // get a RecordValue for the first entity in the table.
+        // get a RecordValue for the first aggregationEntity in the table.
         public Entity GetFirstEntity(string logicalName, DataverseConnection dataverseConnection, CancellationToken cancellationToken)
         {
             if (dataverseConnection == null)
@@ -63,7 +63,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                 }
             }
 
-            throw new InvalidOperationException($"No entity of type {logicalName}.");
+            throw new InvalidOperationException($"No aggregationEntity of type {logicalName}.");
         }
 
         public RecordValue ConvertEntityToRecordValue(string logicalName, DataverseConnection dataverseConnection, CancellationToken cancellationToken)
@@ -116,7 +116,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         // When set, returns the column name that's allowed to be updated. Attempting to update any other column name will result in an error.
         public Func<string> _getTargetedColumnName;
 
-        // Gets a copy of the entity.
+        // Gets a copy of the aggregationEntity.
         // modifying the storage still requires a call to Update.
         public Entity LookupRef(EntityReference entityRef, CancellationToken cancellationToken)
         {
@@ -124,7 +124,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests
         }
 
         // Gets direct access to the entire storage.
-        // Modifying this entity will modify the storage.
+        // Modifying this aggregationEntity will modify the storage.
         internal Entity LookupRefCore(EntityReference entityRef)
         {
             _onLookupRef?.Invoke(entityRef);
@@ -249,6 +249,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests
             if (qe.Distinct)
             {
                 entityList = entityList.Distinct(new EntityComparer(qe.ColumnSet)).ToList();
+            }
+
+            // Handle top level aggregation.
+            if (qe.ColumnSet.AttributeExpressions.Count == 1 && entityList.Count > 0 && qe.ColumnSet.AttributeExpressions.First().AggregateType == XrmAggregateType.Sum)
+            {
+                var aggregationEntity = new Entity(qe.EntityName);
+                var aliasName = qe.ColumnSet.AttributeExpressions.First().Alias;
+                aggregationEntity[aliasName] = entityList.Sum(e => Convert.ToDouble(e[aliasName] is AliasedValue aliasedValue ? aliasedValue.Value : e[aliasName]));
+                entityList = new List<Entity> { aggregationEntity };
             }
 
             var result = new EntityCollection(entityList) { TotalRecordCount = entityList.Count };

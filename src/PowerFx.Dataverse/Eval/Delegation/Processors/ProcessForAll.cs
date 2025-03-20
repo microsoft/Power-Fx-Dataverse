@@ -19,7 +19,7 @@ namespace Microsoft.PowerFx.Dataverse
             context = context.GetContextForPredicateEval(node, tableArg);
 
             // check if we have a simple field name here
-            if (TryGetSimpleFieldName(context, ((LazyEvalNode)node.Args[1]).Child, out var fieldName))
+            if (TryGetSimpleFieldName(context, node.Args[1], out var fieldName))
             {
                 var forAllColumns = new List<(FxColumnInfo, string)>();
                 forAllColumns.Add((fieldName, DVSymbolTable.SingleColumnTableFieldName));

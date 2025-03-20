@@ -37,7 +37,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             }
         }
 
-        private static DelegationParameterFeatures _supportedFeatures = DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Columns | DelegationParameterFeatures.Count | DelegationParameterFeatures.Filter | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Top;
+        private static DelegationParameterFeatures _supportedFeatures = DelegationParameterFeatures.ApplyGroupBy | DelegationParameterFeatures.ApplyJoin | DelegationParameterFeatures.Columns | DelegationParameterFeatures.Count | DelegationParameterFeatures.Filter | DelegationParameterFeatures.Sort | DelegationParameterFeatures.Top | DelegationParameterFeatures.ApplyTopLevelAggregation;
 
         public DelegationParameterFeatures SupportedFeatures => _supportedFeatures;
 
@@ -90,6 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 SelectionRestriction = new SelectionRestrictions() { IsSelectable = isSelectable },
                 SummarizeCapabilities = new MockSummarizeCapabilities(),
                 CountCapabilities = new MockCountCapabilities(),
+                TopLevelAggregationCapabilities = new MockTopLevelAggreagationCapabilities(),
                 PrimaryKeyNames = new string[] { "id" },
                 SupportsJoinFunction = true,
             };
@@ -115,6 +116,19 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             public override bool IsCountableAfterSummarize()
             {
                 return true;
+            }
+        }
+
+        private class MockTopLevelAggreagationCapabilities : TopLevelAggregationCapabilities
+        {
+            public override bool IsTopLevelAggregationSupported(SummarizeMethod method, string propertyName)
+            {
+                if (method == SummarizeMethod.Sum)
+                {
+                    return true;
+                }
+
+                return false;
             }
         }
 
