@@ -155,7 +155,7 @@ namespace Microsoft.PowerFx.Dataverse
             // If a columnmap is defined, there will be a match in term of columns but a mismatch on the type itself
             // To be noted also, some columns in the lazy type could contain (lazy) lookup fields
             // In order to preserve lazyness and avoid network calls, we use LazyRecordValue            
-            IEnumerable<DValue<RecordValue>> lazyRows = rows.Select(r => DValue<RecordValue>.Of(new LazyRecordValue(r.Value, (RecordType)delegationParameters.ExpectedReturnType))); //, columns)));
+            IEnumerable<DValue<RecordValue>> lazyRows = rows.Select(r => DValue<RecordValue>.Of(new LazyRecordValue(r.Value, (RecordType)delegationParameters.ExpectedReturnType)));
 
             var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), lazyRows);
             return result;
