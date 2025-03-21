@@ -104,6 +104,11 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     features |= DelegationParameterFeatures.ApplyGroupBy;
                 }
+                else if (ColumnMap != null && ColumnMap.Any(column => column.AggregateMethod != SummarizeMethod.None))
+                {
+                    // top level aggregation without grouping.
+                    features |= DelegationParameterFeatures.ApplyTopLevelAggregation;
+                }
 
                 if (ReturnTotalRowCount)
                 {
@@ -118,62 +123,50 @@ namespace Microsoft.PowerFx.Dataverse
 
         public string GetODataGroupBy()
         {
-            var sb = new StringBuilder();
-            var groupByNode = GroupBy;
+            // Filter out columns that do NOT produce a real aggregator expression
+            var aggregatorExpressions = ColumnMap?
+                .Where(c => c.AggregateMethod != SummarizeMethod.None &&
+                            c.AggregateMethod != SummarizeMethod.CountRows)
+                .ToList();
 
-            if (groupByNode == null)
+            bool hasAggregations = !aggregatorExpressions.IsNullOrEmpty();
+
+            var groupByProperties = GroupBy?.GroupingProperties ?? Enumerable.Empty<string>();
+            bool hasGroupByProperties = !groupByProperties.IsNullOrEmpty();
+
+            // If we have neither grouping nor aggregations, there's nothing to produce
+            if (!hasGroupByProperties && !hasAggregations)
             {
                 return string.Empty;
             }
 
-            // Start building the $apply parameter
-            sb.Append("groupby(");
+            // Precompute the aggregator portion (if any).
+            // e.g. "aggregate(Sales with sum as TotalSales,Quantity with max as MaxQty)"
+            var aggregateClause = hasAggregations
+                ? $"aggregate({string.Join(",", aggregatorExpressions.Select(TranslateNode))})"
+                : string.Empty;
 
-            // List of grouping properties
-            sb.Append('(');
-
-            bool isFirst = true;
-            foreach (var prop in groupByNode.GroupingProperties)
+            // If no group-by properties but we do have aggregations,
+            // return only the "aggregate(...)" portion
+            if (!hasGroupByProperties)
             {
-                if (!isFirst)
-                {
-                    sb.Append(',');
-                }
-
-                sb.Append(prop);
-                isFirst = false;
+                return aggregateClause;
             }
 
-            sb.Append(')');
+            // Otherwise, we do have group-by properties
+            // Build the "groupby((...))" portion
+            var sb = new StringBuilder();
+            sb.Append("groupby((");
+            sb.Append(string.Join(",", groupByProperties));
+            sb.Append(")");
 
-            // Check if there are child transformations (e.g., aggregations)
-            if (ColumnMap?.Any(c => c.AggregateMethod != SummarizeMethod.None) == true)
+            // If we also have aggregations, append aggregate portion
+            if (hasAggregations)
             {
-                sb.Append(",aggregate(");
-
-                isFirst = true;
-                foreach (var aggExpression in ColumnMap)
-                {
-                    if (aggExpression.AggregateMethod == SummarizeMethod.None || aggExpression.AggregateMethod == SummarizeMethod.CountRows)
-                    {
-                        continue;
-                    }
-
-                    string expression = TranslateNode(aggExpression);
-                    if (!isFirst)
-                    {
-                        sb.Append(',');
-                    }
-
-                    sb.Append(expression);
-                    isFirst = false;
-                }
-
-                sb.Append(')');
+                sb.Append($",{aggregateClause}");
             }
 
-            sb.Append(')');
-
+            sb.Append(")");
             return sb.ToString();
         }
 
@@ -182,6 +175,12 @@ namespace Microsoft.PowerFx.Dataverse
             var method = aggExpression.AggregateMethod; // e.g., "sum", "min", etc.
             var propertyName = aggExpression.RealColumnName;
             var alias = aggExpression.AliasColumnName;
+
+            // OData requires aliasing, so generate it in case of top level aggregation I.e. Sum(table, field).
+            if (alias == null)
+            {
+                alias = $"{propertyName}_{method.ToString().ToLowerInvariant()}";
+            }
 
             if (method == SummarizeMethod.Count)
             {

@@ -40,5 +40,18 @@ namespace Microsoft.PowerFx.Dataverse
 
             return ProcessOtherCall(node, tableArg, context);
         }
+
+        private RetVal ProcessSum(CallNode node, RetVal tableArg, Context context)
+        {
+            var predicateContext = context.GetContextForPredicateEval(node, tableArg);
+            if (node.Args.Count == 2 &&
+                TryGetSimpleFieldName(predicateContext, node.Args[1], out var fxColumnInfo) &&
+                tableArg.TryAddTopLevelAggregate(node, SummarizeMethod.Sum, fxColumnInfo, out RetVal result))
+            {
+                return result;
+            }
+
+            return ProcessOtherCall(node, tableArg, context);
+        }
     }
 }

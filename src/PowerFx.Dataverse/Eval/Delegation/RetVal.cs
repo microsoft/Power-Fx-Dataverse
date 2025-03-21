@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.PowerFx;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.Functions.Delegation;
 using Microsoft.PowerFx.Core.Functions.Delegation.DelegationMetadata;
 using Microsoft.PowerFx.Core.IR;
@@ -618,6 +619,50 @@ namespace Microsoft.PowerFx.Dataverse
                 result = new RetVal(Hooks.MakeQueryExecutorCall(retValResult));
 
                 return true;
+            }
+
+            internal bool TryAddTopLevelAggregate(CallNode node, SummarizeMethod method, FxColumnInfo fxColumnInfo, out RetVal result)
+            {
+                if (HasJoin || HasGroupBy || HasTopCount)
+                {
+                    result = null;
+                    return false;
+                }
+
+                TableDelegationInfo capabilities = null;
+                if (!IsDataverseDelegation && !TableType.ToRecord().TryGetCapabilities(out capabilities))
+                {
+                    result = null;
+                    return false;
+                }
+
+                if (HasLeftColumnMap)
+                {
+                    // check column exist in left column map, this will catch any previous renames.
+                    if (LeftColumnMap.TryGetColumnInfo(fxColumnInfo.AliasOrRealName, out var columnInfo))
+                    {
+                        fxColumnInfo = columnInfo;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Column must exist on the left column map.");
+                    }
+                }
+
+                fxColumnInfo = fxColumnInfo.CloneAndUpdateAggregation(method);
+
+                if (DelegationUtility.CanDelegateTopLevelAggregate(fxColumnInfo, method, capabilities, IsDataverseDelegation))
+                {
+                    var newLeftColumnMap = new FxColumnMap(TableType);
+                    newLeftColumnMap.AddColumn(fxColumnInfo);
+                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, _groupByNode, _maxRows, newLeftColumnMap);
+                    return true;
+                }
+                else
+                {
+                    result = null;
+                    return false;
+                }
             }
         }
     }

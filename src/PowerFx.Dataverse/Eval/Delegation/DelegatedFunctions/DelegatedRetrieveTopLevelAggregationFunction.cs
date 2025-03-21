@@ -21,10 +21,10 @@ namespace Microsoft.PowerFx.Dataverse
     /// Executes a query against a table and returns a table.
     /// First Arg is the table to query, Second Arg is the filter to apply, Third Arg is the number of records to return.
     /// </summary>
-    internal class DelegatedRetrieveCountFunction : DelegateFunction
+    internal class DelegatedRetrieveTopLevelAggregationFunction : DelegateFunction
     {
-        public DelegatedRetrieveCountFunction(DelegationHooks hooks, FormulaType returnType)
-          : base(hooks, "__retrieveCount", returnType)
+        public DelegatedRetrieveTopLevelAggregationFunction(DelegationHooks hooks, FormulaType returnType)
+          : base(hooks, "__retrieveTopLevelAggregation", returnType)
         {
         }
 
@@ -147,7 +147,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var rowCount = await _hooks.RetrieveCount(services, table, delegationParameters, cancellationToken);
+            var rowCount = await _hooks.ExecuteQueryAsync(services, table, delegationParameters, cancellationToken);
 
             return rowCount;
         }
