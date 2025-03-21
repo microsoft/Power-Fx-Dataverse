@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
@@ -145,8 +146,18 @@ namespace Microsoft.PowerFx.Dataverse
             };
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
-            var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), rows);
+            // In CDP case, RecordValue here will have a type of CdpRecordType which is lazy
+            // In DV case, RecordValue is an Entity
+            // If a $select is defined, the rows will have a subset of the columns, as expected
+            IEnumerable<DValue<RecordValue>> rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
+
+            // ReturnFormulaType here is coming from the original IR and will be non-lazy
+            // If a columnmap is defined, there will be a match in term of columns but a mismatch on the type itself
+            // To be noted also, some columns in the lazy type could contain (lazy) lookup fields
+            // In order to preserve lazyness and avoid network calls, we use LazyRecordValue            
+            IEnumerable<DValue<RecordValue>> lazyRows = rows.Select(r => DValue<RecordValue>.Of(new LazyRecordValue(r.Value, (RecordType)delegationParameters.ExpectedReturnType)));
+
+            var result = new InMemoryTableValue(IRContext.NotInSource(this.ReturnFormulaType), lazyRows);
             return result;
         }
 
