@@ -1,0 +1,12 @@
+{
+  "@odata.context": "https://4a7e3d66-307c-e707-981c-4b24ee4fd3e4.13.common.tip1002.azure-apihub.net/apim/salesforce/8c97378f123647ca99747c14a8973c5a/$metadata#datasets('default')/tables('account')/items",
+  "value": [
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "10561797-fcfc-4062-ba52-08d5b0675740",
+      "CreatedById": "005J9000000yN6zIAE",
+      "Name": "Account 1",
+      "Type": "Investor"
+    }
+  ]
+}

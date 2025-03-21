@@ -172,5 +172,57 @@ namespace PowerFx.Dataverse.Cdp.Tests
             // OData query - note $filter is present but $top=1000
             Assert.Equal<object>(@" x-ms-request-url: /apim/sql/2cc03a388d38465fba53f05cd2c76181/v2/datasets/default%2Cdefault/tables/%5BSalesLT%5D.%5BProduct%5D/items?api-version=2015-09-01&$filter=%28ProductID%20eq%20680%29&$top=1000", query);
         }
+
+        [Fact]
+        public async Task SF_Filter()
+        {
+            using var testConnector = new LoggingTestServer(null /* no swagger */, _output);
+            var config = new PowerFxConfig(Features.PowerFxV1);
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
+
+            ConsoleLogger logger = new ConsoleLogger(_output);
+            using var httpClient = new HttpClient(testConnector);
+            string connectionId = "8c97378f123647ca99747c14a8973c5a";
+            string jwt = "eyJ0eXAiO...";
+            using var client = new PowerPlatformConnectorClient("4a7e3d66-307c-e707-981c-4b24ee4fd3e4.13.common.tip1002.azure-apihub.net", "7526ddf1-6e97-eed6-86bb-8fd46790d670", connectionId, () => jwt, httpClient) { SessionId = "8e67ebdc-d402-455a-b33a-304820832383" };
+
+            CdpDataSource cds = new CdpDataSource("default");
+
+            testConnector.SetResponseFromFiles(@"Responses\SF GetDatasetsMetadata.json", @"Responses\SF GetTables.json");
+            IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, $"/apim/salesforce/{connectionId}", CancellationToken.None, logger);
+            CdpTable connectorTable = tables.First(t => t.DisplayName == "Accounts");
+
+            testConnector.SetResponseFromFile(@"Responses\SF GetSchema Accounts.json");
+            await connectorTable.InitAsync(client, $"/apim/salesforce/{connectionId}", CancellationToken.None, logger);
+            CdpTableValue sfTable = connectorTable.GetTableValue();
+
+            SymbolValues symbolValues = new SymbolValues().Add("Accounts", sfTable);
+            RuntimeConfig rc = new RuntimeConfig(symbolValues).AddService<ConnectorLogger>(logger);
+
+            // Expression with tabular connector
+            string expr = @"ShowColumns(FirstN(Accounts, 80), Name, Type, CreatedById)";
+
+            // Will check type of CreatedById -> Users table
+            testConnector.SetResponseFromFile(@"Responses\SF GetSchema Users.json");
+            CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
+            Assert.True(check.IsSuccess);
+
+            testConnector.SetResponseFromFile(@"Responses\SF GetData Accounts.json");
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
+
+            TableValue tv = (TableValue)result;
+            RecordValue rv = tv.Rows.First().Value;
+
+            // This is in memory, there is no relationship, no network call
+            FormulaValue name = rv.GetField("Name");
+
+            // Here, there is a relationship and we'll observe a network call
+            testConnector.SetResponseFromFiles(@"Responses\SF GetSchema Users.json", @"Responses\SF GetSchema Users.json", @"Responses\SF GetData User.json");
+            FormulaValue createdBy = rv.GetField("CreatedById");
+
+            // Unknown field, no crash
+            FormulaValue unknown = rv.GetField("Unknown");
+        }
     }
 }
