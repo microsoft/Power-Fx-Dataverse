@@ -251,20 +251,28 @@ namespace Microsoft.PowerFx.Dataverse
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FxFilterExpression filter)
         {
-            if (filter.Filters?.Count > 0)
+            if (filter == null)
             {
-                var op = filter.FilterOperator switch
-                {
-                    FxFilterOperator.And => "and",
-                    FxFilterOperator.Or => "or",
-                    _ => throw new NotSupportedException($"Unsupported filter operator: {filter.FilterOperator}"),
-                };
+                return null;
+            }
 
+            var op = filter.FilterOperator switch
+            {
+                FxFilterOperator.And => "and",
+                FxFilterOperator.Or => "or",
+                _ => throw new NotSupportedException($"Unsupported filter operator: {filter.FilterOperator}"),
+            };
+
+            if (filter.Filters?.Count > 0)
+            {                
                 StringBuilder sb = new StringBuilder();
-
                 int count = 0;
 
-                sb.Append('(');
+                if (filter.Filters.Count > 1)
+                {
+                    sb.Append('(');
+                }
+
                 foreach (var sub in filter.Filters)
                 {
                     if (count > 0)
@@ -278,15 +286,31 @@ namespace Microsoft.PowerFx.Dataverse
                     count++;
                 }
 
-                sb.Append(')');
+                if (filter.Filters.Count > 1)
+                {
+                    sb.Append(')');
+                }
 
                 return sb.ToString();
             }
 
             if (filter.Conditions?.Count > 0)
             {
+                StringBuilder sb = new StringBuilder();
+                int count = 0;
+
+                if (filter.Conditions.Count > 1)
+                {
+                    sb.Append('(');
+                }
+
                 foreach (var condition in filter.Conditions)
                 {
+                    if (count > 0)
+                    {
+                        sb.Append($" {op} ");
+                    }
+
                     var fieldName = condition.AttributeName;
 
                     if (!condition.FieldFunctions.IsNullOrEmpty())
@@ -313,41 +337,52 @@ namespace Microsoft.PowerFx.Dataverse
                     if (condition.Operator == FxConditionOperator.Contains)
                     {
                         // not supported on Azure tables but we don't support capabilities for now
-                        return $"contains({fieldName},{EscapeOdata(value)})";
+                        sb.Append($"contains({fieldName},{EscapeOdata(value)})");
                     }
                     else if (condition.Operator == FxConditionOperator.Null)
                     {
-                        return $"({fieldName} eq null)";
+                        sb.Append($"({fieldName} eq null)");
                     }
                     else if (condition.Operator == FxConditionOperator.NotNull)
                     {
-                        return $"({fieldName} ne null)";
+                        sb.Append($"({fieldName} ne null)");
                     }
                     else if (condition.Operator == FxConditionOperator.BeginsWith)
                     {
-                        return $"startswith({fieldName},{EscapeOdata(value)})";
+                        sb.Append($"startswith({fieldName},{EscapeOdata(value)})");
                     }
                     else if (condition.Operator == FxConditionOperator.EndsWith)
                     {
-                        return $"endswith({fieldName},{EscapeOdata(value)})";
+                        sb.Append($"endswith({fieldName},{EscapeOdata(value)})");
+                    }
+                    else
+                    {
+                        string cop = condition.Operator switch
+                        {
+                            FxConditionOperator.GreaterEqual => "ge",
+                            FxConditionOperator.GreaterThan => "gt",
+                            FxConditionOperator.LessEqual => "le",
+                            FxConditionOperator.LessThan => "lt",
+                            FxConditionOperator.Equal => "eq",
+                            FxConditionOperator.NotEqual => "ne",
+                            _ => throw new NotImplementedException($"DataverseDelegationParameters don't support: {condition.Operator} operator"),
+                        };
+
+                        string odValue = EscapeOdata(value);
+                        string odFilter = $"({fieldName} {cop} {odValue})";
+
+                        sb.Append(odFilter);
                     }
 
-                    string op = condition.Operator switch
-                    {
-                        FxConditionOperator.GreaterEqual => "ge",
-                        FxConditionOperator.GreaterThan => "gt",
-                        FxConditionOperator.LessEqual => "le",
-                        FxConditionOperator.LessThan => "lt",
-                        FxConditionOperator.Equal => "eq",
-                        FxConditionOperator.NotEqual => "ne",
-                        _ => throw new NotImplementedException($"DataverseDelegationParameters don't support: {condition.Operator} operator"),
-                    };
-
-                    string odValue = EscapeOdata(value);
-                    string odFilter = $"({fieldName} {op} {odValue})";
-
-                    return odFilter;
+                    count++;
                 }
+
+                if (filter.Conditions.Count > 1)
+                {
+                    sb.Append(')');
+                }
+
+                return sb.ToString();
             }
 
             return null;
