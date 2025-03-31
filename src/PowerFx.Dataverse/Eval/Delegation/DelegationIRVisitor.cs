@@ -371,6 +371,12 @@ namespace Microsoft.PowerFx.Dataverse
                 op == BinaryOpKind.GeqTime;
         }
 
+        internal static bool IsOpKindInComparison(BinaryOpKind op)
+        {
+            return op == BinaryOpKind.InScalarTable || 
+                op == BinaryOpKind.InText;
+        }
+
         protected override RetVal Ret(IntermediateNode node)
         {
             return new RetVal(node);

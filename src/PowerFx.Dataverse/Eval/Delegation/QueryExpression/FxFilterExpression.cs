@@ -51,7 +51,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal void AddCondition(string field, FxConditionOperator op, object value, FieldFunction fieldFunction = default)
         {
-            _conditions.Add(new FxConditionExpression(field, op, value, fieldFunction));
+            AddCondition(new FxConditionExpression(field, op, value, fieldFunction));
+        }
+
+        internal void AddCondition(string field, FxConditionOperator op, object[] value, FieldFunction fieldFunction = default)
+        {
+            AddCondition(new FxConditionExpression(field, op, (object[])value, new FieldFunction[] { fieldFunction }));
         }
 
         internal void AddFilter(FxFilterExpression siblingFilter)

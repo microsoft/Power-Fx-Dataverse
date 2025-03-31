@@ -770,11 +770,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests
                     }
 
                     break;
-
                 case ConditionOperator.Contains:
 
                     // case insensitive, always on strings
                     return ((string)value).Contains((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);
+
+                case ConditionOperator.ContainValues:
+                    var containValues = condition.Values.FirstOrDefault(inVal => comparer.Compare(value, inVal) == 0);
+                    return containValues != null;
 
                 case ConditionOperator.BeginsWith:
                     return ((string)value).StartsWith((string)condition.Values[0], StringComparison.OrdinalIgnoreCase);

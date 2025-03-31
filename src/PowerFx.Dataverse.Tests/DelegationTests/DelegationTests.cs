@@ -37,6 +37,48 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public DelegationTests(ITestOutputHelper output)
         {
             _output = output;
+            DetectDuplicateInlineData(typeof(DelegationTests));
+        }
+
+        private static void DetectDuplicateInlineData(Type testClass)
+        {
+            var theoryMethods = testClass.GetMethods()
+                .Where(m => m.GetCustomAttributes(typeof(TheoryAttribute), true).Any());
+
+            foreach (var method in theoryMethods)
+            {
+                var seenIds = new HashSet<int>();
+                var paramNames = method.GetParameters().Select(p => p.Name).ToArray();
+                int index = Array.IndexOf(paramNames, "id");
+
+                if (index < 0)
+                {
+                    continue; // Skip if no 'id' param
+                }
+
+                var inlineDatas = method.GetCustomAttributes(typeof(InlineDataAttribute), true)
+                                    .Cast<InlineDataAttribute>();
+
+                foreach (var attr in inlineDatas)
+                {
+                    var data = attr.GetData(null!).FirstOrDefault();
+                    if (data == null || index >= data.Length)
+                    {
+                        continue;
+                    }
+
+                    var id = Convert.ToInt32(data[index]);
+
+                    if (seenIds.Contains(id, default))
+                    {
+                        throw new Exception($"Duplicate ID '{id}' found in method '{method.Name}'");
+                    }
+                    else 
+                    { 
+                        seenIds.Add(id);
+                    }
+                }
+            }
         }
 
         internal async Task DelegationTestAsync(int id, string file, string expr, int expectedRows, object expectedResult, Func<FormulaValue, object> resultGetter, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, Action<PowerFxConfig> extraConfig, bool withExtraEntity, bool isCheckSuccess, bool withTransformed, params string[] expectedWarnings)
