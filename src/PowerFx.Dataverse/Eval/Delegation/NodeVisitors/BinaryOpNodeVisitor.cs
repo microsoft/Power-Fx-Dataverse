@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.IR.Symbols;
@@ -17,6 +18,7 @@ using Microsoft.PowerFx.Syntax;
 using Microsoft.PowerFx.Types;
 using BinaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.BinaryOpNode;
 using CallNode = Microsoft.PowerFx.Core.IR.Nodes.CallNode;
+using IRRecordNode = Microsoft.PowerFx.Core.IR.Nodes.RecordNode;
 using Span = Microsoft.PowerFx.Syntax.Span;
 using UnaryOpNode = Microsoft.PowerFx.Core.IR.Nodes.UnaryOpNode;
 
@@ -134,12 +136,32 @@ namespace Microsoft.PowerFx.Dataverse
                 var inNode = _hooks.MakeInCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
                 ret = CreateBinaryOpRetVal(context, node, inNode);
             }
+            else if (IsOpKindInComparison(operation) && IsNodeSingleColumnTable(rightNode))
+            {
+                var irNode = _hooks.MakeInCall(callerSourceTable, tableType, relations, fieldFunction, columnInfo.RealColumnName, operation, rightNode, callerScope);
+                ret = CreateBinaryOpRetVal(context, node, irNode);
+            }
             else
             {
                 ret = new RetVal(node);
             }
 
             return ret;
+        }
+
+        private static bool IsNodeSingleColumnTable(IntermediateNode node)
+        {
+            if (node is CallNode maybeCallToTable &&
+                maybeCallToTable.Function.Name == "Table" &&
+                !maybeCallToTable.Args.IsNullOrEmpty() && 
+                maybeCallToTable.Args.First() is IRRecordNode recordNode &&
+                !recordNode.Fields.IsNullOrEmpty() &&
+                recordNode.Fields.Count == 1)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void ProcessSpecialCalls(Context context, BinaryOpKind kind, ref IntermediateNode nodeLeft, ref IntermediateNode nodeRight, out IntermediateNode newNode)

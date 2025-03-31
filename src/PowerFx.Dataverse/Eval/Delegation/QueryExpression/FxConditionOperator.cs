@@ -110,5 +110,9 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// The string does not end with another string. Value = 19.
         /// </summary>
         DoesNotEndWith = 19,
+
+        ContainsValues = 20,
+
+        DoesNotContainValues = 21
     }
 }

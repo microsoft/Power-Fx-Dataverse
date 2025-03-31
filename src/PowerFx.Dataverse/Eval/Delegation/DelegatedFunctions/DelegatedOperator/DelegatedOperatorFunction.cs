@@ -64,6 +64,10 @@ namespace Microsoft.PowerFx.Dataverse
                 // case insensitive
                 _op = FxConditionOperator.Contains;
             }
+            else if (_binaryOpKind == BinaryOpKind.InScalarTable)
+            {
+                _op = FxConditionOperator.ContainsValues;
+            }
             else if (_binaryOpKind == BinaryOpKind.Invalid)
             {
                 if (parentOperation == FieldFunction.StartsWith)
@@ -124,7 +128,7 @@ namespace Microsoft.PowerFx.Dataverse
 
             var value = MaybeReplaceBlank(args[2]);
 
-            if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)))
+            if (!value.Type._type.IsPrimitive && !(value.Type._type.IsRecord && AttributeUtility.TryGetLogicalNameFromOdataName(field, out field)) && _op != FxConditionOperator.ContainsValues)
             {
                 throw new InvalidOperationException("Unsupported type : expected Primitive");
             }
@@ -154,7 +158,34 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                dvValue = _hooks.RetrieveAttribute(table, field, value);
+                if (_op == FxConditionOperator.ContainsValues)
+                {
+                    if (value is TableValue tv && tv.Type.FieldNames.Count() == 1)
+                    {
+                        var inValues = new List<object>();
+                        var rowFieldName = tv.Type.FieldNames.First();
+                        foreach (var row in tv.Rows)
+                        {
+                            var inValue = _hooks.RetrieveAttribute(table, field, row.Value.GetField(rowFieldName));
+                            inValues.Add(inValue);
+                        }
+
+                        dvValue = inValues;
+                    }
+                    else if (value is StringValue sv)
+                    {
+                        dvValue = sv.Value;
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"operator {_op} with binary op kind {_binaryOpKind} is not supported.");
+                    }
+                }
+                else
+                {
+                    dvValue = _hooks.RetrieveAttribute(table, field, value);
+                }
+
                 if (DelegationUtility.IsElasticTable(table.Type) && field == "partitionid" && _op == FxConditionOperator.Equal)
                 {
                     result = new DelegationFormulaValue(filter: null, partitionId: (string)dvValue, orderBy: null);
@@ -191,7 +222,14 @@ namespace Microsoft.PowerFx.Dataverse
             }
             else
             {
-                filter.AddCondition(field, op, dataverseValue, fieldFunction);
+                if (dataverseValue is IEnumerable<object> inValues)
+                {
+                    filter.AddCondition(field, op, inValues.ToArray(), fieldFunction);
+                }
+                else
+                {
+                    filter.AddCondition(field, op, dataverseValue, fieldFunction);
+                }
             }
 
             return filter;

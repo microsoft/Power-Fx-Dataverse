@@ -339,6 +339,24 @@ namespace Microsoft.PowerFx.Dataverse
                         // not supported on Azure tables but we don't support capabilities for now
                         sb.Append($"contains({fieldName},{EscapeOdata(value)})");
                     }
+                    else if (condition.Operator == FxConditionOperator.ContainsValues)
+                    {
+                        var inValues = condition.Values;
+                        sb.Append('(');
+                        var isFirst = true;
+                        foreach (var inVal in inValues)
+                        {
+                            if (!isFirst)
+                            {
+                                sb.Append(" or ");
+                            }
+
+                            sb.Append($"{fieldName} eq {EscapeOdata(inVal)}");
+                            isFirst = false;
+                        }
+
+                        sb.Append(')');
+                    }
                     else if (condition.Operator == FxConditionOperator.Null)
                     {
                         sb.Append($"({fieldName} eq null)");

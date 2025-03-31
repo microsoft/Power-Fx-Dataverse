@@ -223,6 +223,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
                 FxConditionOperator.DoesNotBeginWith => ConditionOperator.DoesNotBeginWith,
                 FxConditionOperator.EndsWith => ConditionOperator.EndsWith,
                 FxConditionOperator.DoesNotEndWith => ConditionOperator.DoesNotEndWith,
+                FxConditionOperator.ContainsValues => ConditionOperator.ContainValues,
+                FxConditionOperator.DoesNotContainValues => ConditionOperator.DoesNotContainValues,
                 _ => throw new ArgumentOutOfRangeException(nameof(fxOperator), fxOperator, null)
             };
         }
