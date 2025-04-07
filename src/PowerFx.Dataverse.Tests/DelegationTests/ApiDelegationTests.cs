@@ -18,11 +18,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
     {
         // Delegation using direct API.
         [Theory]
-        [InlineData(1, "Filter(t1, Price < 120 And 90 <= Price)", true, "((Price lt 120) and (Price ge 90))", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData(1, "Filter(t1, Price < 120 And 90 <= Price)", true, "(Price lt 120 and Price ge 90)", 1000, "Table({Price:100,opt:Blank()})")]
         [InlineData(2, "Filter(t1, Price < 120 Or 90 <= Price)", false, null, null, "Table({Price:100,opt:Blank()})")] // Or not delegated
         [InlineData(3, "Filter(t1, Price > 120 And 90 <= Price)", false, null, null, "Table()")] // Gt not delegated
         [InlineData(4, "First(t1).Price", true, null, 1, "100")]
-        [InlineData(5, "Filter(t1, ThisRecord.opt = Opt.display2)", true, "(opt eq 'logical2')", 1000, "Table({Price:100,opt:Blank()})")]
+        [InlineData(5, "Filter(t1, ThisRecord.opt = Opt.display2)", true, "opt eq 'logical2'", 1000, "Table({Price:100,opt:Blank()})")]
         [InlineData(6, "Filter(t1, IsBlank(Price))", false, null, null, "Table()")] // Null not delegated
         [InlineData(7, "Filter(t1, Not(Price < 120) = true)", false, null, null, "Table()")] // Not not delegated
         [InlineData(8, "ShowColumns(t1, Price)", false, null, null, "Table({Price:100})")] // table not selectable

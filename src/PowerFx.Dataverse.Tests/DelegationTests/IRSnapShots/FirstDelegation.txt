@@ -2,18 +2,18 @@
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
-(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=(new_price lt 100)&$top=1
-(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=(new_price lt 100)&$top=1
-(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(100)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=(new_price lt 100)&$top=1
-(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=(new_price lt 100)&$top=1
+(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=new_price%20lt%20100&$top=1
+(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=new_price%20lt%20100&$top=1
+(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(100)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=new_price%20lt%20100&$top=1
+(__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=new_price%20lt%20100&$top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
 (__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $top=1
-(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $select=new_quantity&$top=1
-(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $select=new_quantity&$top=1
-(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $select=new_quantity&$top=1
-(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $select=new_quantity&$top=1
+(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $top=1$select=new_quantity
+(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $top=1$select=new_quantity
+(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $top=1$select=new_quantity
+(__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {DISTINCT(new_quantity As Value)})).Value | $top=1$select=new_quantity
 (__retrieveSingle(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).field1 | $top=1
 (__retrieveSingle(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).field1 | $top=1
 (__retrieveSingle(elastictable, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).field1 | $top=1

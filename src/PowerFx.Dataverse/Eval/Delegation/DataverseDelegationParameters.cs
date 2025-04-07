@@ -56,7 +56,7 @@ namespace Microsoft.PowerFx.Dataverse
         /// <summary>
         /// This is the expected RecordType Host needs to return after it performed delegation.
         /// </summary>
-        public FormulaType ExpectedReturnType => _expectedReturnType;
+        public override FormulaType ExpectedReturnType => _expectedReturnType;
 
         /// <summary>
         /// If true, Delegation will return total row count. I.e. SQL Count(*).
@@ -121,7 +121,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override string GetOdataFilter() => ToOdataFilter(FxFilter);
 
-        public string GetODataGroupBy()
+        public override string GetODataApply()
         {
             // Filter out columns that do NOT produce a real aggregator expression
             var aggregatorExpressions = ColumnMap?
@@ -129,26 +129,26 @@ namespace Microsoft.PowerFx.Dataverse
                             c.AggregateMethod != SummarizeMethod.CountRows)
                 .ToList();
 
-            bool hasAggregations = !aggregatorExpressions.IsNullOrEmpty();
+            bool haveAggregations = !aggregatorExpressions.IsNullOrEmpty();
 
             var groupByProperties = GroupBy?.GroupingProperties ?? Enumerable.Empty<string>();
-            bool hasGroupByProperties = !groupByProperties.IsNullOrEmpty();
+            bool haveGroupByProperties = !groupByProperties.IsNullOrEmpty();
 
             // If we have neither grouping nor aggregations, there's nothing to produce
-            if (!hasGroupByProperties && !hasAggregations)
+            if (!haveGroupByProperties && !haveAggregations)
             {
                 return string.Empty;
             }
 
             // Precompute the aggregator portion (if any).
             // e.g. "aggregate(Sales with sum as TotalSales,Quantity with max as MaxQty)"
-            var aggregateClause = hasAggregations
+            var aggregateClause = haveAggregations
                 ? $"aggregate({string.Join(",", aggregatorExpressions.Select(TranslateNode))})"
                 : string.Empty;
 
             // If no group-by properties but we do have aggregations,
             // return only the "aggregate(...)" portion
-            if (!hasGroupByProperties)
+            if (!haveGroupByProperties)
             {
                 return aggregateClause;
             }
@@ -161,7 +161,7 @@ namespace Microsoft.PowerFx.Dataverse
             sb.Append(")");
 
             // If we also have aggregations, append aggregate portion
-            if (hasAggregations)
+            if (haveAggregations)
             {
                 sb.Append($",{aggregateClause}");
             }
@@ -179,7 +179,7 @@ namespace Microsoft.PowerFx.Dataverse
             // OData requires aliasing, so generate it in case of top level aggregation I.e. Sum(table, field).
             if (alias == null)
             {
-                alias = $"{propertyName}_{method.ToString().ToLowerInvariant()}";
+                alias = DelegationParameters.ODataAggregationResultFieldName;
             }
 
             if (method == SummarizeMethod.Count)
@@ -205,7 +205,7 @@ namespace Microsoft.PowerFx.Dataverse
                 int top = Top ?? 0;
                 IEnumerable<string> select = GetColumns();
                 IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
-                string groupBy = GetODataGroupBy();
+                string groupBy = GetODataApply();
 
                 if (!string.IsNullOrEmpty(joinApply))
                 {
@@ -359,11 +359,11 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else if (condition.Operator == FxConditionOperator.Null)
                     {
-                        sb.Append($"({fieldName} eq null)");
+                        sb.Append($"{fieldName} eq null");
                     }
                     else if (condition.Operator == FxConditionOperator.NotNull)
                     {
-                        sb.Append($"({fieldName} ne null)");
+                        sb.Append($"{fieldName} ne null");
                     }
                     else if (condition.Operator == FxConditionOperator.BeginsWith)
                     {
@@ -387,7 +387,7 @@ namespace Microsoft.PowerFx.Dataverse
                         };
 
                         string odValue = EscapeOdata(value);
-                        string odFilter = $"({fieldName} {cop} {odValue})";
+                        string odFilter = $"{fieldName} {cop} {odValue}";
 
                         sb.Append(odFilter);
                     }
@@ -471,6 +471,233 @@ namespace Microsoft.PowerFx.Dataverse
             }
 
             return HasNoFilter && HasNoJoin && HasNoGroupBy;
+        }
+
+        public override bool ReturnTotalCount()
+        {
+           return ReturnTotalRowCount;
+        }
+
+        public override string GetODataQueryString()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            // Check if GroupByTransformationNode is present
+            if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0 || (Features & DelegationParameterFeatures.Count) != 0)
+            {
+                // Generate the $apply parameter based on the GroupByTransformationNode
+                sb.Append("$apply");
+                AddEqual(sb);
+
+                AppendFilterParam(ODataElements, sb, true);
+                AppendGroupByParam(ODataElements, sb);
+                AppendOrderByParam(ODataElements, sb, true);
+
+                if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0)
+                {
+                    AppendTopParam(ODataElements, sb, true);
+                }
+
+                if (ODataElements.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+                {
+                    AppendCountReturn(ODataElements, sb);
+                }
+            }
+            else
+            {
+                // Join 
+                AppendJoinParam(ODataElements, sb);
+                AppendFilterParam(ODataElements, sb, false);
+                AppendOrderByParam(ODataElements, sb, false);
+                if (!ODataElements.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+                {
+                    AppendTopParam(ODataElements, sb, false);
+                }
+
+                AppendSelectParam(ODataElements, sb);
+            }
+
+            return sb.ToString();
+        }
+
+        private static void AddEqual(StringBuilder sb)
+        {
+            sb.Append('=');
+        }
+
+        private static void AddSeparatorIfNeeded(StringBuilder sb, bool isApplySeprator)
+        {
+            // length needs to be greater that $apply= for need of separator.
+            if (sb.Length > DataverseDelegationParameters.Odata_Apply.Length + 1)
+            {
+                if (isApplySeprator)
+                {
+                    sb.Append('/');
+                }
+                else
+                {
+                    sb.Append('&');
+                }
+            }
+        }
+
+        private void AppendCountReturn(IReadOnlyDictionary<string, string> ode, StringBuilder sb)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+            {
+                AddSeparatorIfNeeded(sb, true);
+                if (ColumnMap.SourceTableRecordType.TryGetPrimaryKeyFieldName(out var primaryKeyNames))
+                {
+                    if (primaryKeyNames.Count() != 1)
+                    {
+                        throw new InvalidOperationException($"Unsuppoeted PK count {primaryKeyNames.Count()}");
+                    }
+
+                    sb.Append(Uri.EscapeDataString($"aggregate({primaryKeyNames.First()} with countdistinct as {DelegationParameters.ODataAggregationResultFieldName})"));
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Source Table doesnot have Primary key.");
+                }
+            }
+        }
+
+        private static void AppendTopParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Top, out string top))
+            {
+                AddSeparatorIfNeeded(sb, isApplySeprator);
+                string topParamString = null;
+                if (!isApplySeprator) 
+                { 
+                    topParamString = DataverseDelegationParameters.Odata_Top; 
+                }
+                else
+                {
+                    topParamString = DataverseDelegationParameters.Odata_Top.Substring(1);
+                }
+
+                sb.Append(topParamString);
+                if (isApplySeprator)
+                {
+                    sb.Append('(');
+                }
+                else
+                {
+                    sb.Append('=');
+                }
+
+                sb.Append(Uri.EscapeDataString(top));
+
+                if (isApplySeprator)
+                {
+                    sb.Append(')');
+                }
+            }
+        }
+
+        private static void AppendFilterParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Filter, out string filter))
+            {
+                // in group by, filter is part of apply and is first element.
+                string filterParamString = null;
+                if (!isApplySeprator)
+                {
+                    AddSeparatorIfNeeded(sb, isApplySeprator);
+                    filterParamString = DataverseDelegationParameters.Odata_Filter;
+                }
+                else
+                {
+                    filterParamString = DataverseDelegationParameters.Odata_Filter.Substring(1);
+                }
+
+                sb.Append(filterParamString);
+                if (isApplySeprator)
+                {
+                    sb.Append(Uri.EscapeDataString("("));
+                }
+                else
+                {
+                    AddEqual(sb);
+                }
+
+                sb.Append(Uri.EscapeDataString(filter));
+
+                if (isApplySeprator)
+                {
+                    sb.Append(Uri.EscapeDataString(")"));
+                }
+            }
+        }
+
+        private static void AppendOrderByParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_OrderBy, out string orderBy))
+            {
+                AddSeparatorIfNeeded(sb, isApplySeprator);
+                string orderByParamString = null;
+                if (!isApplySeprator)
+                {
+                    orderByParamString = DataverseDelegationParameters.Odata_OrderBy;
+                }
+                else
+                {
+                    orderByParamString = DataverseDelegationParameters.Odata_OrderBy.Substring(1);
+                }
+
+                sb.Append(orderByParamString);
+
+                if (isApplySeprator)
+                {
+                    sb.Append('(');
+                }
+                else
+                {
+                    AddEqual(sb);
+                }
+
+                sb.Append(Uri.EscapeDataString(orderBy));
+
+                if (isApplySeprator)
+                {
+                    sb.Append(')');
+                }
+            }
+        }
+
+        private static void AppendSelectParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb)
+        {
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Select, out string select))
+            {
+                AddSeparatorIfNeeded(sb, false);
+                sb.Append(DataverseDelegationParameters.Odata_Select);
+                AddEqual(sb);
+                sb.Append(Uri.EscapeDataString(select));
+            }
+        }
+
+        private static void AppendGroupByParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
+        {
+            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string groupBy))
+            {
+                if (oDataElements.ContainsKey(DataverseDelegationParameters.Odata_Filter))
+                {
+                    AddSeparatorIfNeeded(sb, true);
+                }
+
+                sb.Append(Uri.EscapeDataString(groupBy));
+            }
+        }
+
+        private static void AppendJoinParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
+        {
+            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
+            {
+                sb.Append(DataverseDelegationParameters.Odata_Apply);
+                AddEqual(sb);
+                sb.Append(apply);
+            }
         }
     }
 }

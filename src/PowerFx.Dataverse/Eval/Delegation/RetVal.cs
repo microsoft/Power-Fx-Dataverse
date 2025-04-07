@@ -548,7 +548,8 @@ namespace Microsoft.PowerFx.Dataverse
                         if (countCapabilities != null &&
                             countCapabilities.IsCountableTable() &&
                             (!HasJoin || countCapabilities.IsCountableAfterJoin()) &&
-                            (!HasGroupBy || countCapabilities.IsCountableAfterSummarize()))
+                            (!HasGroupBy || countCapabilities.IsCountableAfterSummarize()) &&
+                            (!HasFilter || countCapabilities.IsCountableAfterFilter()))
                         {
                             return true;
                         }
