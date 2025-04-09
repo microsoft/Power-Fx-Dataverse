@@ -37,6 +37,7 @@
     <PackageReference Include="Microsoft.PowerFx.Core.Tests" Version="$(PowerFxVersion)" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.PowerFx.LanguageServerProtocol" Version="$(PowerFxVersion)" />
     <PackageReference Include="Microsoft.PowerFx.Json" Version="$(PowerFxVersion)" />
+    <PackageReference Include="Microsoft.PowerFx.Connectors" Version="$(PowerFxVersion)" />
   </ItemGroup>
 
   <ItemGroup>    

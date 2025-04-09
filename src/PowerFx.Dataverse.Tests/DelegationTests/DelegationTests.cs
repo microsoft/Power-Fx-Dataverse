@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Connectors;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Core.Tests;
@@ -38,6 +39,61 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         {
             _output = output;
             DetectDuplicateInlineData(typeof(DelegationTests));
+        }
+
+        [Fact]
+        public async Task LiveConnectorTest()
+        {
+#if false
+            var endpoint = "https://44f782dc-c6fb-eafc-907b-dc95ca486d9c.15.common.tip1002.azure-apihub.net/";
+            var connectionId = "5772e1af38d64721bc9b96307fae662e";
+            var envId = "44f782dc-c6fb-eafc-907b-dc95ca486d9c";
+            var sessionId = "4eac2adc-8cd1-441d-b0e9-608d3f360f8d";
+            var dataset = "testconnector.database.windows.net,testconnector";
+            var tableToUseInExpression = "Employees";
+            var expr = @"CountRows(Employees)";
+            var jwt = " ";
+
+            using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt) { SessionId = sessionId };
+
+            CdpDataSource cds = new CdpDataSource(dataset);
+
+            IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
+            CdpTable connectorTable = tables.First(t => t.DisplayName == tableToUseInExpression);
+
+            Assert.False(connectorTable.IsInitialized);
+            Assert.Equal(tableToUseInExpression, connectorTable.DisplayName);
+
+            await connectorTable.InitAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
+
+            CdpTableValue sqlTable = connectorTable.GetTableValue();
+
+            var ads = sqlTable.Type._type.AssociatedDataSources;
+            Assert.NotNull(ads);
+            Assert.Single(ads);
+
+            var dataSourceInfo = ads.First();
+            Assert.NotNull(dataSourceInfo);
+
+            Assert.True(dataSourceInfo.IsDelegatable);
+            Assert.True(dataSourceInfo.IsPageable);
+            Assert.True(dataSourceInfo.IsRefreshable);
+            Assert.True(dataSourceInfo.IsSelectable);
+            Assert.True(dataSourceInfo.IsWritable);
+            Assert.True(dataSourceInfo.RequiresAsync);
+
+            SymbolValues symbolValues = new SymbolValues().Add(tableToUseInExpression, sqlTable);
+            RuntimeConfig rc = new RuntimeConfig(symbolValues);
+
+            var config = new PowerFxConfig(Features.PowerFxV1);
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation(2);
+            CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
+            var ir = check.GetCompactIRString();
+            Assert.True(check.IsSuccess);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
+            Assert.IsNotAssignableFrom<ErrorValue>(result);
+#endif
         }
 
         private static void DetectDuplicateInlineData(Type testClass)
@@ -270,139 +326,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
-            if (dp == null)
-            {
-                return string.Empty;
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            IReadOnlyDictionary<string, string> ode = dp.ODataElements;
-
-            // Check if GroupByTransformationNode is present
-            if (dp.GroupBy != null)
-            {
-                // Generate the $apply parameter based on the GroupByTransformationNode
-                sb.Append("$apply");
-                AddEqual(sb);
-
-                AppendFilterParam(dp.ODataElements, sb, true);
-                AppendGroupByParam(dp.ODataElements, sb);
-                AppendOrderByParam(dp.ODataElements, sb, true);
-            }
-            else
-            {
-                // Join 
-                AppendJoinParam(ode, sb);
-                AppendFilterParam(ode, sb, false);
-                AppendOrderByParam(ode, sb, false);
-                AppendSelectParam(ode, sb);
-            }
-
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Top, out string top))
-            {
-                AddSeparatorIfNeeded(sb, false);
-                sb.Append(DataverseDelegationParameters.Odata_Top);
-                AddEqual(sb);
-                sb.Append(top);
-            }
-
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out string count))
-            {
-                AddSeparatorIfNeeded(sb, false);
-                sb.Append(DataverseDelegationParameters.Odata_Count);
-                AddEqual(sb);
-                sb.Append(count);
-            }
-
-            return sb.ToString();
-        }
-
-        private static void AddEqual(StringBuilder sb)
-        {
-            sb.Append('=');
-        }
-
-        private static void AddSeparatorIfNeeded(StringBuilder sb, bool isApplySeprator)
-        {
-            if (sb.Length > 0)
-            {
-                if (isApplySeprator)
-                {
-                    sb.Append('/');
-                }
-                else
-                {
-                    sb.Append('&');
-                }
-            }
-        }
-
-        private static void AppendFilterParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isApplySeprator)
-        {
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Filter, out string filter))
-            {
-                // in group by, filter is part of apply and is first element.
-                string filterParamString = null;
-                if (!isApplySeprator)
-                {
-                    AddSeparatorIfNeeded(sb, isApplySeprator);
-                    filterParamString = DataverseDelegationParameters.Odata_Filter;
-                }
-                else
-                {
-                    filterParamString = DataverseDelegationParameters.Odata_Filter.Substring(1);
-                }
-
-                sb.Append(filterParamString);
-                AddEqual(sb);
-                sb.Append(filter);
-            }
-        }
-
-        private static void AppendOrderByParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb, bool isGroupBySeprator)
-        {
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_OrderBy, out string orderBy))
-            {
-                AddSeparatorIfNeeded(sb, isGroupBySeprator);
-                sb.Append(DataverseDelegationParameters.Odata_OrderBy);
-                AddEqual(sb);
-                sb.Append(orderBy);
-            }
-        }
-
-        private static void AppendSelectParam(IReadOnlyDictionary<string, string> ode, StringBuilder sb)
-        {
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Select, out string select))
-            {
-                AddSeparatorIfNeeded(sb, false);
-                sb.Append(DataverseDelegationParameters.Odata_Select);
-                AddEqual(sb);
-                sb.Append(select);
-            }
-        }
-
-        private static void AppendGroupByParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
-        {
-            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string groupBy))
-            {
-                if (oDataElements.ContainsKey(DataverseDelegationParameters.Odata_Filter))
-                {
-                    AddSeparatorIfNeeded(sb, true);
-                }
-
-                sb.Append(groupBy);
-            }
-        }
-
-        private static void AppendJoinParam(IReadOnlyDictionary<string, string> oDataElements, StringBuilder sb)
-        {
-            if (oDataElements.TryGetValue(DataverseDelegationParameters.Odata_Apply, out string apply))
-            {                
-                sb.Append(DataverseDelegationParameters.Odata_Apply);
-                AddEqual(sb);
-                sb.Append(apply);
-            }        
+            return dp.GetODataQueryString();
         }
 
         public class HelperClock : IClockService

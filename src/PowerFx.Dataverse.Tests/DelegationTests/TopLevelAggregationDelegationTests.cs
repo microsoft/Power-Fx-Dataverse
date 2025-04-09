@@ -90,7 +90,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var oDataStrings = string.Empty;
             var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
 
-            oDataStrings = DelegationTests.GetODataString(delegationParameter);
+            oDataStrings = delegationParameter != null ? DelegationTests.GetODataString(delegationParameter) : string.Empty;
 
             await DelegationTestUtility.CompareSnapShotAsync(id, file, string.IsNullOrEmpty(oDataStrings) ? actualIr : $"{actualIr} | {oDataStrings}", id, false);
         }
