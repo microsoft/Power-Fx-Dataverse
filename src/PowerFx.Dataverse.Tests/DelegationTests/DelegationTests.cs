@@ -44,15 +44,15 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Fact]
         public async Task LiveConnectorTest()
         {
-#if false
+#if true
             var endpoint = "https://44f782dc-c6fb-eafc-907b-dc95ca486d9c.15.common.tip1002.azure-apihub.net/";
             var connectionId = "5772e1af38d64721bc9b96307fae662e";
             var envId = "44f782dc-c6fb-eafc-907b-dc95ca486d9c";
             var sessionId = "4eac2adc-8cd1-441d-b0e9-608d3f360f8d";
             var dataset = "testconnector.database.windows.net,testconnector";
             var tableToUseInExpression = "Employees";
-            var expr = @"CountRows(Employees)";
-            var jwt = " ";
+            var expr = @"Summarize(Employees, FirstName, Max(ThisGroup, Salary) As TSalary)";
+            var jwt = "";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt) { SessionId = sessionId };
 

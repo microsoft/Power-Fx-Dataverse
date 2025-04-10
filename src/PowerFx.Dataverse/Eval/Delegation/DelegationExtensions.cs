@@ -21,7 +21,13 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation
             }
 
             var summarizeCapabilities = tableDelegationInfo.SummarizeCapabilities;
-            if (summarizeCapabilities.IsSummarizableProperty(columnName, summarizeMethod))
+
+            // none is assigned to groupby properties.
+            if(summarizeMethod == SummarizeMethod.None)
+            {
+                return true;
+            }
+            else if (summarizeCapabilities.IsSummarizableProperty(columnName, summarizeMethod))
             {
                 return true;
             }

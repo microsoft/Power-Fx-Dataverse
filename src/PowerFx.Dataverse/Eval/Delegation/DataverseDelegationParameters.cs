@@ -493,10 +493,10 @@ namespace Microsoft.PowerFx.Dataverse
                 AppendGroupByParam(ODataElements, sb);
                 AppendOrderByParam(ODataElements, sb, true);
 
-                if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0)
-                {
-                    AppendTopParam(ODataElements, sb, true);
-                }
+                //if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0)
+                //{
+                //    AppendTopParam(ODataElements, sb, true);
+                //}
 
                 if (ODataElements.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
                 {
