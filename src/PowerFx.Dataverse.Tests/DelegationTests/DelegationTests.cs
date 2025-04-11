@@ -44,29 +44,35 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Fact]
         public async Task LiveConnectorTest()
         {
-#if false
-            var endpoint = "https://44f782dc-c6fb-eafc-907b-dc95ca486d9c.15.common.tip1002.azure-apihub.net/";
-            var connectionId = "5772e1af38d64721bc9b96307fae662e";
-            var envId = "44f782dc-c6fb-eafc-907b-dc95ca486d9c";
-            var sessionId = "4eac2adc-8cd1-441d-b0e9-608d3f360f8d";
-            var dataset = "testconnector.database.windows.net,testconnector";
-            var tableToUseInExpression = "Employees";
-            var expr = @"CountRows(Employees)";
-            var jwt = " ";
+#if true
+            var endpoint = "https://0ce5196d-8c72-e39b-8563-68221e59a250.13.common.tip1002.azure-apihub.net/";
+            var connectionId = "shared-sql-048184e1-f0b1-4a06-930a-f90e1706b005";
+            var envId = "0ce5196d-8c72-e39b-8563-68221e59a250";
+            var sessionId = "6a3351a6-2769-4de0-93ab-39b380f65bc3";
+            var dataset = "agrawalsau-msft-mip.database.windows.net,MipLabels";
+            var tableToUseInExpression = "CustomerDetails";
+            var expr = @"Filter('CustomerDetails', Aadhar_Number = ""123"")";
+            var jwt = "";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt) { SessionId = sessionId };
 
-            CdpDataSource cds = new CdpDataSource(dataset);
+            CdpDataSource cds = new CdpDataSource(dataset, ConnectorSettings.NewCDPConnectorSettings(extractSensitivityLabel: true, purviewAccountName: "purviewe2etests-0507-eastus2euap-donotdelete-1"));
 
             IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
-            CdpTable connectorTable = tables.First(t => t.DisplayName == tableToUseInExpression);
+            CdpTable connectorTable = tables.First(t => t.DisplayName == "CustomerDetails");
 
             Assert.False(connectorTable.IsInitialized);
-            Assert.Equal(tableToUseInExpression, connectorTable.DisplayName);
+            
+            //Assert.Equal(tableToUseInExpression, connectorTable.DisplayName);
 
             await connectorTable.InitAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
 
             CdpTableValue sqlTable = connectorTable.GetTableValue();
+            var recordType = sqlTable.Type.ToRecord();
+            if (recordType is ICDPAggregateMetadata metadataFetcher)
+            {
+                metadataFetcher.TryGetSensitivityLabelInfo(out var meta);
+            }
 
             var ads = sqlTable.Type._type.AssociatedDataSources;
             Assert.NotNull(ads);
@@ -92,7 +98,12 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var ir = check.GetCompactIRString();
             Assert.True(check.IsSuccess);
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
-            Assert.IsNotAssignableFrom<ErrorValue>(result);
+            var resultTable = Assert.IsAssignableFrom<TableValue>(result);
+            recordType = resultTable.Type.ToRecord();
+            if (recordType is ICDPAggregateMetadata metadataFetcher2)
+            {
+                metadataFetcher2.TryGetSensitivityLabelInfo(out var meta);
+            }
 #endif
         }
 
