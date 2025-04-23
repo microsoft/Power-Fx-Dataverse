@@ -1,7 +1,7 @@
 @echo off
 
 set nugetRoot=C:\Users\lucgen\.nuget\packages
-set pfxVer=1.3.0-build.20250304-1001
+set pfxVer=1.3.0-build.20250422-1001
 
 set pfxRoot=C:\Data\Power-Fx
 set pfxConfig=Release

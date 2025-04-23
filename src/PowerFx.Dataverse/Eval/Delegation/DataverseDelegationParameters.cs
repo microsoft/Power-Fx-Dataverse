@@ -264,7 +264,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
 
             if (filter.Filters?.Count > 0)
-            {                
+            {
                 StringBuilder sb = new StringBuilder();
                 int count = 0;
 
@@ -475,7 +475,7 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override bool ReturnTotalCount()
         {
-           return ReturnTotalRowCount;
+            return ReturnTotalRowCount;
         }
 
         public override string GetODataQueryString()
@@ -526,18 +526,18 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         private static void AddSeparatorIfNeeded(StringBuilder sb, bool isApplySeprator)
-        {
-            // length needs to be greater that $apply= for need of separator.
-            if (sb.Length > DataverseDelegationParameters.Odata_Apply.Length + 1)
+        {            
+            if (isApplySeprator)
             {
-                if (isApplySeprator)
+                // length needs to be greater that $apply= for need of separator.
+                if (sb.Length > DataverseDelegationParameters.Odata_Apply.Length + 1)
                 {
                     sb.Append('/');
                 }
-                else
-                {
-                    sb.Append('&');
-                }
+            }
+            else if (sb.Length > 0)
+            {
+                sb.Append('&');
             }
         }
 
@@ -568,9 +568,9 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 AddSeparatorIfNeeded(sb, isApplySeprator);
                 string topParamString = null;
-                if (!isApplySeprator) 
-                { 
-                    topParamString = DataverseDelegationParameters.Odata_Top; 
+                if (!isApplySeprator)
+                {
+                    topParamString = DataverseDelegationParameters.Odata_Top;
                 }
                 else
                 {

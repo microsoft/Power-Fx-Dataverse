@@ -32,6 +32,11 @@ namespace Microsoft.PowerFx.Dataverse
 
         public IExternalControl AppInfoControl => throw new NotImplementedException();
 
+        public bool IsRunningDataflowAnalysis()
+        {
+            throw new NotImplementedException();
+        }
+
         public bool TryGetControlByUniqueId(string name, out IExternalControl control)
         {
             throw new NotImplementedException();

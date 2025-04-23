@@ -224,5 +224,46 @@ namespace PowerFx.Dataverse.Cdp.Tests
             // Unknown field, no crash
             FormulaValue unknown = rv.GetField("Unknown");
         }
+
+        [Fact]
+        public async Task SF_CdpTabular3()
+        {
+            using var testConnector = new LoggingTestServer(null /* no swagger */, _output);
+            var config = new PowerFxConfig(Features.PowerFxV1);
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation();
+
+            ConsoleLogger logger = new ConsoleLogger(_output);
+            using var httpClient = new HttpClient(testConnector);
+            string connectionId = "ae0ded8a3e1e40c1b1157c933bb33acc";
+            string jwt = "eyJ0eXA...";
+            using var client = new PowerPlatformConnectorClient("1e252dbd-f4f4-ee29-8705-b1c17fc0446c.07.common.tip1002.azure-apihub.net", "1e252dbd-f4f4-ee29-8705-b1c17fc0446c", connectionId, () => jwt, httpClient)
+            {
+                SessionId = "8e67ebdc-d402-455a-b33a-304820832384"
+            };
+
+            testConnector.SetResponseFromFiles(@"Responses\SF GetDatasetsMetadata.json", @"Responses\SF GetSchema Contact.json");
+            CdpDataSource cds = new CdpDataSource("default");
+            CdpTable tabularService = await cds.GetTableAsync(client, $"/apim/salesforce/{connectionId}", "Contact", CancellationToken.None, logger);
+                       
+            CdpTableValue spTable = tabularService.GetTableValue();            
+            Assert.True(spTable.IsDelegable);
+
+            SymbolValues symbolValues = new SymbolValues().Add("Contacts", spTable);
+            RuntimeConfig rc = new RuntimeConfig(symbolValues).AddService<ConnectorLogger>(logger);
+
+            // Expression with tabular connector
+            string expr = @"ShowColumns(FirstN(Contacts, 30), 'Full Name', Salutation)";
+            CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
+            Assert.True(check.IsSuccess);
+            
+            testConnector.SetResponseFromFile(@"Responses\SF GetData Contacts.json");
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
+
+            TableValue tv = result as TableValue;
+            RecordValue[] rv = tv.Rows.Select(dr => dr.Value).ToArray();
+
+            Assert.Equal(1, rv.Length);
+        }
     }
 }

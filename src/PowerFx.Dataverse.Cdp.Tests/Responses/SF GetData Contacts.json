@@ -1,0 +1,11 @@
+{
+  "@odata.context": "https://1e252dbd-f4f4-ee29-8705-b1c17fc0446c.07.common.tip1002.azure-apihub.net/apim/salesforce/ae0ded8a3e1e40c1b1157c933bb33acc/$metadata#datasets('default')/tables('contact')/items",
+  "value": [
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "c21e6615-3967-49fb-b02e-669fac5b4b4a",
+      "Name": "Luc Genetier",
+      "Salutation": null
+    }
+  ]
+}
