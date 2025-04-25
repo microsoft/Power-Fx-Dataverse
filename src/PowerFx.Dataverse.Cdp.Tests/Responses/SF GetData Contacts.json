@@ -1,0 +1,138 @@
+{
+  "@odata.context": "https://a6a7d261-6ab6-e2fa-a6e1-ab1424adda5d.02.common.tip1002.azure-apihub.net/apim/salesforce/e5de49f91adb4801a49702480006054d/$metadata#datasets('default')/tables('contact')/items",
+  "value": [
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "d6a65556-e615-43f9-80ca-812d9865e1d0",
+      "Name": "Rose",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "ab10781b-31d9-4ca7-944b-f9f793d45bab",
+      "Name": "Sean",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "6dc92a1b-ae43-4d3e-a710-dbfeb094dffd",
+      "Name": "Jack",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "c5161cd9-8adf-4d26-8504-579d01f86818",
+      "Name": "Pat",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "9d85a663-7e50-4c95-9b88-f854369b9983",
+      "Name": "Andy",
+      "Salutation": "Mr"
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "c0614b1d-6de2-4111-8d6f-f65e410d7b8b",
+      "Name": "Tim",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "611e127d-d5e4-4545-a818-7d8233d5355a",
+      "Name": "John",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "3a38e260-414b-4efd-a831-8c88b2569ee5",
+      "Name": "Stella",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "36911800-a6ca-4e4b-ad1b-9eea901040c5",
+      "Name": "Lauren",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "8fbc8fdb-16e3-46f8-a96f-a5a1dd476bad",
+      "Name": "Babara",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "23038f3b-8554-4117-8ea8-131bad78e3dd",
+      "Name": "Josh",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "14393b07-9667-48e0-8d81-e69baed45a96",
+      "Name": "Jane",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "72b72a97-986c-4496-9b3a-0f10de2d43d7",
+      "Name": "Arthur",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "5da97335-e2bb-4b6c-a6b9-251880cde601",
+      "Name": "Ashley",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "fefd954c-6b04-48c1-bd38-068a9784b8f6",
+      "Name": "Tom",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "a8ca7116-91a4-4241-8e52-5bb9322f6938",
+      "Name": "Liz",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "0f9ab9db-d6af-48bc-8dfd-570ec8c84992",
+      "Name": "Edna",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "805b23de-df6b-4667-a6bc-8738aaa6ee42",
+      "Name": "Avi",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "bb4bca9f-0f8d-4edb-8ca6-774897b7d4a6",
+      "Name": "Siddartha",
+      "Salutation": "Ms."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "cc61b7af-c4ae-4d6c-88a5-b5068decc9e3",
+      "Name": "Jake",
+      "Salutation": "Mr."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "cd871c1a-62a1-4570-a0fd-c81d88b47809",
+      "Name": "Rox",
+      "Salutation": "Mx."
+    },
+    {
+      "@odata.etag": "",
+      "ItemInternalId": "1d59ffb9-8450-46ef-886a-337e07e5d0ba",
+      "Name": "Baton",
+      "Salutation": null
+    }
+  ]
+}
+ 

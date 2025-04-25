@@ -4,28 +4,28 @@ __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, 
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Xyz}) | $top=999&$select=new_price
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Price,new_price As Price2}) | $top=999&$select=new_price%2Cnew_price
 ForAll(local, ({Price:MulNumbers(new_price,2)}))
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Value}) | $top=1$select=new_price
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Price}) | $top=1$select=new_price
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Xyz}) | $top=1$select=new_price
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Price,new_price As Price2}) | $top=1$select=new_price%2Cnew_price
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Value}) | $top=1&$select=new_price
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Price}) | $top=1&$select=new_price
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Xyz}) | $top=1&$select=new_price
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price As Price,new_price As Price2}) | $top=1&$select=new_price%2Cnew_price
 First(ForAll(local, ({Price:MulNumbers(new_price,2)})))
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Value}) | $top=2$select=new_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Price}) | $top=2$select=new_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Xyz}) | $top=2$select=new_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Price,new_price As Price2}) | $top=2$select=new_price%2Cnew_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Value}) | $top=2&$select=new_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Price}) | $top=2&$select=new_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Xyz}) | $top=2&$select=new_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {new_price As Price,new_price As Price2}) | $top=2&$select=new_price%2Cnew_price
 FirstN(ForAll(local, ({Price:MulNumbers(new_price,2)})), 2)
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$top=999&$select=new_price
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$orderby=new_price&$top=999&$select=new_price
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$orderby=new_price&$top=999&$select=new_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3$select=new_price%2Cnew_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3$select=new_price%2Cnew_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3&$select=new_price%2Cnew_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3&$select=new_price%2Cnew_price
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=new_price%20gt%200&$top=999&$select=new_price
 __retrieveMultiple(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $filter=new_price%20gt%200&$top=999&$select=new_price
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As x}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$top=999&$select=new_price
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price As x}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$orderby=new_price&$top=999&$select=new_price
 __retrieveMultiple(local, __or(__lt(local, {fieldFunctions:Table(), fieldName:new_price}, 0), __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 90)), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price As x}) | $filter=%28new_price%20lt%200%20or%20new_price%20gt%2090%29&$orderby=new_price&$top=999&$select=new_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3$select=new_price%2Cnew_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3$select=new_price%2Cnew_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3&$select=new_price%2Cnew_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 3, {new_price As Price,new_price As Price2}) | $top=3&$select=new_price%2Cnew_price
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As Value}) | $top=999&$select=new_price
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As x}) | $top=999&$select=new_price
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As x}) | $top=999&$select=new_price

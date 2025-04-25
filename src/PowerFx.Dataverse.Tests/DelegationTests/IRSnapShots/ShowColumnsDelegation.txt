@@ -1,7 +1,7 @@
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), {new_price,old_price}) | $top=1$select=new_price%2Cold_price
-__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), {new_price,old_price}) | $top=1$select=new_price%2Cold_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), {new_price,old_price}) | $top=1&$select=new_price%2Cold_price
+__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), Float(1), {new_price,old_price}) | $top=1&$select=new_price%2Cold_price
 __retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), Float(1), {new_price,old_price}) | $filter=new_price%20lt%20120&$top=1&$select=new_price%2Cold_price
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price,old_price}) | $top=1$select=new_price%2Cold_price
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {new_price,old_price}) | $top=1&$select=new_price%2Cold_price
 __retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), {new_price,old_price}) | $filter=new_price%20lt%20120&$top=1&$select=new_price%2Cold_price
 __retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), {new_price,old_price}) | $filter=new_price%20lt%20120&$top=1&$select=new_price%2Cold_price
 __retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price}) | $filter=new_price%20lt%20120&$top=999&$select=new_price
@@ -9,8 +9,8 @@ __retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_pri
 __retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price,old_price}) | $filter=new_price%20lt%20120&$top=999&$select=new_price%2Cold_price
 ShowColumns(__retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank(), __allColumns()), new_price)
 __retrieveGUID(local, GUID(00000000-0000-0000-0000-000000000001), Blank(), {localid})
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {localid}) | $top=1$select=localid
-__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {localid}) | $top=1$select=localid
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {localid}) | $top=1&$select=localid
+__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), {localid}) | $top=1&$select=localid
 
 __retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_price As Value)}) | $top=999&$select=new_price
 __retrieveMultiple(local, __noop(), __orderBy(new_price, True), __noJoin(), __noopGroupBy(), 999, {new_price}) | $orderby=new_price&$top=999&$select=new_price
