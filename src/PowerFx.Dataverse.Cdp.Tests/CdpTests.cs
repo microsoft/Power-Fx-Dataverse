@@ -263,7 +263,15 @@ namespace PowerFx.Dataverse.Cdp.Tests
             TableValue tv = result as TableValue;
             RecordValue[] rv = tv.Rows.Select(dr => dr.Value).ToArray();
 
-            Assert.Equal(1, rv.Length);
+            Assert.Equal(22, rv.Length);
+
+            FormulaValue sal0 = rv[0].GetField("Salutation");            
+            OptionSetValue os0 = Assert.IsType<OptionSetValue>(sal0);
+            Assert.Equal("Ms.", os0.DisplayName);
+
+            FormulaValue sal4 = rv[4].GetField("Salutation");
+            ErrorValue ev4 = Assert.IsType<ErrorValue>(sal4);
+            Assert.Equal("Invalid OptionSet value 'Mr'", ev4.Errors.First().Message);
         }
     }
 }
