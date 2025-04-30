@@ -2,10 +2,10 @@ With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noop
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
-With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price%20lt%20100&$top=1
-With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price%20lt%20100&$top=1
-With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(100)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price%20lt%20100&$top=1
-With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price%20lt%20100&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price+lt+100&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price+lt+100&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, Float(100)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price+lt+100&$top=1
+With({r:local}, ((__retrieveSingle(local, __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 100), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $filter=new_price+lt+100&$top=1
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
 With({r:local}, ((__retrieveSingle(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price)) | $top=1
