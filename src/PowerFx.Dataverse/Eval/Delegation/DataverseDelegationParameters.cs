@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web;
 using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -417,7 +418,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 string str => EscapeOdata(str),
                 bool b => b.ToString().ToLowerInvariant(),
-                DateTime dt => (dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                DateTime dt => $"'{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}'",
                 float f => f.ToString(),
                 decimal d => d.ToString(),
                 double d2 => d2.ToString(),
@@ -481,6 +482,7 @@ namespace Microsoft.PowerFx.Dataverse
         public override string GetODataQueryString()
         {
             StringBuilder sb = new StringBuilder();
+            IReadOnlyDictionary<string, string> ode = ODataElements;
 
             // Check if GroupByTransformationNode is present
             if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0 || (Features & DelegationParameterFeatures.Count) != 0)
@@ -489,32 +491,32 @@ namespace Microsoft.PowerFx.Dataverse
                 sb.Append("$apply");
                 AddEqual(sb);
 
-                AppendFilterParam(ODataElements, sb, true);
-                AppendGroupByParam(ODataElements, sb);
-                AppendOrderByParam(ODataElements, sb, true);
+                AppendFilterParam(ode, sb, true);
+                AppendGroupByParam(ode, sb);
+                AppendOrderByParam(ode, sb, true);
 
                 if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0)
                 {
-                    AppendTopParam(ODataElements, sb, true);
+                    AppendTopParam(ode, sb, true);
                 }
 
-                if (ODataElements.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+                if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
                 {
-                    AppendCountReturn(ODataElements, sb);
+                    AppendCountReturn(ode, sb);
                 }
             }
             else
             {
                 // Join 
-                AppendJoinParam(ODataElements, sb);
-                AppendFilterParam(ODataElements, sb, false);
-                AppendOrderByParam(ODataElements, sb, false);
-                if (!ODataElements.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+                AppendJoinParam(ode, sb);
+                AppendFilterParam(ode, sb, false);
+                AppendOrderByParam(ode, sb, false);
+                if (!ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
                 {
-                    AppendTopParam(ODataElements, sb, false);
+                    AppendTopParam(ode, sb, false);
                 }
 
-                AppendSelectParam(ODataElements, sb);
+                AppendSelectParam(ode, sb);
             }
 
             return sb.ToString();
@@ -622,7 +624,7 @@ namespace Microsoft.PowerFx.Dataverse
                     AddEqual(sb);
                 }
 
-                sb.Append(Uri.EscapeDataString(filter));
+                sb.Append(HttpUtility.UrlEncode(filter));
 
                 if (isApplySeprator)
                 {

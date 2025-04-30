@@ -2,9 +2,9 @@ With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noo
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $top=999&$select=new_quantity
 With({r:local}, (Distinct(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, __allColumns()), (new_quantity)))) | $top=2
 With({r:local}, (__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 2, {DISTINCT(new_quantity As Value)}))) | $top=2&$select=new_quantity
-With({r:local}, (__retrieveMultiple(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 30), __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120)), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=%28new_quantity%20lt%2030%20and%20new_price%20lt%20120%29&$top=999&$select=new_quantity
-With({r:local}, (__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=new_quantity%20lt%2020&$top=999&$select=new_quantity
-With({r:local}, (__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=new_quantity%20lt%2020&$top=999&$select=new_quantity
+With({r:local}, (__retrieveMultiple(local, __and(__lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 30), __lt(local, {fieldFunctions:Table(), fieldName:new_price}, 120)), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=(new_quantity+lt+30+and+new_price+lt+120)&$top=999&$select=new_quantity
+With({r:local}, (__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=new_quantity+lt+20&$top=999&$select=new_quantity
+With({r:local}, (__retrieveMultiple(local, __lt(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), 999, {DISTINCT(new_quantity As Value)}))) | $filter=new_quantity+lt+20&$top=999&$select=new_quantity
 With({r:local}, (Distinct(local, (_new_polyfield_value))))
 With({r:local}, (Distinct(local, (refg))))
 With({r:local}, (Distinct(elastictable, (field1))))
