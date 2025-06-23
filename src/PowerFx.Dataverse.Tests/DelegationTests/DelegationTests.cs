@@ -42,7 +42,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         }
 
         [Fact]
-        public async Task LiveConnectorTest()
+        public async Task LivePowerAppsConnectorTest()
         {
 #if false
             var endpoint = "https://44f782dc-c6fb-eafc-907b-dc95ca486d9c.15.common.tip1002.azure-apihub.net/";
@@ -54,17 +54,50 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var expr = @"CountRows(Employees)";
             var jwt = " ";
 
-            using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt) { SessionId = sessionId };
+            var dataSourceInfo = ads.First();
+            Assert.NotNull(dataSourceInfo);
 
-            CdpDataSource cds = new CdpDataSource(dataset);
+            Assert.True(dataSourceInfo.IsDelegatable);
+            Assert.True(dataSourceInfo.IsPageable);
+            Assert.True(dataSourceInfo.IsRefreshable);
+            Assert.True(dataSourceInfo.IsSelectable);
+            Assert.True(dataSourceInfo.IsWritable);
+            Assert.True(dataSourceInfo.RequiresAsync);
 
-            IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
+            SymbolValues symbolValues = new SymbolValues().Add(tableToUseInExpression, sqlTable);
+            RuntimeConfig rc = new RuntimeConfig(symbolValues);
+
+            var config = new PowerFxConfig(Features.PowerFxV1);
+            var engine = new RecalcEngine(config);
+            engine.EnableDelegation(2);
+            CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
+            var ir = check.GetCompactIRString();
+            Assert.True(check.IsSuccess);
+            FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
+#endif
+        }
+
+        [Fact]
+        public async Task LiveSampleConnectorTest()
+        {
+#if false
+            var endpoint = "https://localhost:7157";
+            var dataset = "default";
+            var tableToUseInExpression = "MyTable";
+            var expr = @"MyTable";
+            var uriPrefix = string.Empty;
+
+            using var client = new System.Net.Http.HttpClient() { BaseAddress = new Uri(endpoint) };
+
+            CdpDataSource cds = new CdpDataSource(dataset, ConnectorSettings.NewCDPConnectorSettings(extractSensitivityLabel: true));
+
+            IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, uriPrefix, CancellationToken.None);
             CdpTable connectorTable = tables.First(t => t.DisplayName == tableToUseInExpression);
 
             Assert.False(connectorTable.IsInitialized);
             Assert.Equal(tableToUseInExpression, connectorTable.DisplayName);
 
-            await connectorTable.InitAsync(client, $"/apim/sql/{connectionId}", CancellationToken.None);
+            await connectorTable.InitAsync(client, uriPrefix, CancellationToken.None);
 
             CdpTableValue sqlTable = connectorTable.GetTableValue();
 
@@ -93,6 +126,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.True(check.IsSuccess);
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
             Assert.IsNotAssignableFrom<ErrorValue>(result);
+            var rType = ((TableValue)result).Type.ToRecord();
+
+            var b1 = ((ICDPAggregateMetadata)rType).TryGetSensitivityLabelInfo(out var cdpSensitivityLabelInfo);
+            var b2 = ((ICDPAggregateMetadata)rType).TryGetMetadataItems(out var cdpMD);
 #endif
         }
 
