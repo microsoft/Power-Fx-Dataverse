@@ -62,7 +62,7 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return new FxColumnMap(logicalColumns);
         }
 
-        internal FxColumnMap(TableType sourceTableType, bool returnTotalRowCount = false)
+        public FxColumnMap(TableType sourceTableType, bool returnTotalRowCount = false)
             : this(sourceTableType.ToRecord(), returnTotalRowCount)
         {
         }
@@ -98,7 +98,17 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return false;
         }
 
-        internal FxColumnMap AddColumn(string logicalColumnName, string aliasColumnName = null)
+        internal FxColumnInfo GetDistinctColumn()
+        {
+            if (!HasDistinct())
+            {
+                return null;
+            }
+
+            return _columnInfoMap.Values.FirstOrDefault();
+        }
+
+        public FxColumnMap AddColumn(string logicalColumnName, string aliasColumnName = null)
         {
             var columnInfo = new FxColumnInfo(logicalColumnName, aliasColumnName);
 

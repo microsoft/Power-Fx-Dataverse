@@ -16,7 +16,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 {
     public class TopLevelAggregationDelegationTests
     {
-        private static List<DelegationOperator> _supportedDelegationOperator = new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.And, DelegationOperator.Or, DelegationOperator.Not, DelegationOperator.Null, DelegationOperator.JoinInner };
+        private static List<DelegationOperator> _supportedDelegationOperator = new List<DelegationOperator>() { DelegationOperator.Eq, DelegationOperator.And, DelegationOperator.Gt, DelegationOperator.Or, DelegationOperator.Not, DelegationOperator.Null, DelegationOperator.JoinInner, DelegationOperator.Distinct };
 
         [Theory]
 
@@ -59,6 +59,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         // Can't delegate Sum() with Summarize(). But still partially delegates Summarize.
         [InlineData(19, "Sum(Summarize(t1, name, Sum(ThisGroup, amount) As TotalAmount), TotalAmount)")]
+
+        [InlineData(20, "CountRows(Distinct(Filter(t1, Credit > 5), Credit))")]
+        [InlineData(21, "CountRows(Distinct(Filter(Sort(t1, Credit), Credit > 5), Credit))")]
+        [InlineData(22, "CountRows(Distinct(Filter(ForAll(t1, { Xyz: Credit }), Xyz > 5), Xyz))")]
         public async Task TopLevelAggregationDelegationAsync(int id, string expression)
         {
             var file = "TopLevelAggregationDelegationAsync.txt";
@@ -90,7 +94,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var oDataStrings = string.Empty;
             var delegationParameter = (DataverseDelegationParameters)testTableValue.DelegationParameters;
 
-            oDataStrings = delegationParameter != null ? DelegationTests.GetODataString(delegationParameter) : string.Empty;
+            oDataStrings = delegationParameter != null &&
+
+                // OData can't delegate CountRows() with Summarize() operations.
+                (delegationParameter.GroupBy == null || !delegationParameter.ReturnTotalRowCount)
+                ? DelegationTests.GetODataString(delegationParameter) : string.Empty;
 
             await DelegationTestUtility.CompareSnapShotAsync(id, file, string.IsNullOrEmpty(oDataStrings) ? actualIr : $"{actualIr} | {oDataStrings}", id, false);
         }

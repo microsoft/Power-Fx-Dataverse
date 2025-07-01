@@ -485,7 +485,7 @@ namespace Microsoft.PowerFx.Dataverse
             IReadOnlyDictionary<string, string> ode = ODataElements;
 
             // Check if GroupByTransformationNode is present
-            if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0 || (Features & DelegationParameterFeatures.Count) != 0)
+            if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0)
             {
                 // Generate the $apply parameter based on the GroupByTransformationNode
                 sb.Append("$apply");
@@ -502,7 +502,7 @@ namespace Microsoft.PowerFx.Dataverse
 
                 if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
                 {
-                    AppendCountReturn(ode, sb);
+                    throw new InvalidOperationException("Count is not supported with $apply. Use $apply with group by and aggregation only.");
                 }
             }
             else
@@ -518,6 +518,8 @@ namespace Microsoft.PowerFx.Dataverse
 
                 AppendSelectParam(ode, sb);
             }
+
+            AppendCountReturn(ODataElements, sb);
 
             return sb.ToString();
         }
@@ -545,22 +547,10 @@ namespace Microsoft.PowerFx.Dataverse
 
         private void AppendCountReturn(IReadOnlyDictionary<string, string> ode, StringBuilder sb)
         {
-            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out _))
+            if (ode.TryGetValue(DataverseDelegationParameters.Odata_Count, out var val))
             {
-                AddSeparatorIfNeeded(sb, true);
-                if (ColumnMap.SourceTableRecordType.TryGetPrimaryKeyFieldName(out var primaryKeyNames))
-                {
-                    if (primaryKeyNames.Count() != 1)
-                    {
-                        throw new InvalidOperationException($"Unsuppoeted PK count {primaryKeyNames.Count()}");
-                    }
-
-                    sb.Append(Uri.EscapeDataString($"aggregate({primaryKeyNames.First()} with countdistinct as {DelegationParameters.ODataAggregationResultFieldName})"));
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Source Table doesnot have Primary key.");
-                }
+                AddSeparatorIfNeeded(sb, false);
+                sb.Append($"{DataverseDelegationParameters.Odata_Count}={val}");
             }
         }
 

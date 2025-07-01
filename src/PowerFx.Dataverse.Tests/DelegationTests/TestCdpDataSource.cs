@@ -127,6 +127,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 {
                     return true;
                 }
+                else if (method == SummarizeMethod.CountDistinct)
+                {
+                    return true;
+                }
 
                 return false;
             }

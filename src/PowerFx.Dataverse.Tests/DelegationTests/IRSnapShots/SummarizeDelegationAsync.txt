@@ -21,4 +21,4 @@ Distinct(__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name),
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MIN(amount) As MinAmount}) | $apply=groupby%28%28name%29%2Caggregate%28amount%20with%20min%20as%20MinAmount%29%29/top(1000)
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,MAX(amount) As MaxAmount}) | $apply=groupby%28%28name%29%2Caggregate%28amount%20with%20max%20as%20MaxAmount%29%29/top(1000)
 __retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,AVERAGE(amount) As AvgAmount}) | $apply=groupby%28%28name%29%2Caggregate%28amount%20with%20average%20as%20AvgAmount%29%29/top(1000)
-__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,Count(*)}) | $apply=groupby%28%28name%29%29/top(1000)/aggregate%28id%20with%20countdistinct%20as%20result%29
+__retrieveMultiple(t1, __noop(), __noop(), __noJoin(), __groupBy(name), 1000, {name,Count(*)})
