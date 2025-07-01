@@ -58,6 +58,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
             return new FxColumnInfo(_realColumnName, _aliasColumnName, _isDistinct, aggregation);
         }
 
+        internal FxColumnInfo CloneAndRemoveDistinct()
+        {
+            return new FxColumnInfo(_realColumnName, _aliasColumnName, false, _aggregateOperation);
+        }
+
         public override bool Equals(object obj)
         {
             throw new NotImplementedException();

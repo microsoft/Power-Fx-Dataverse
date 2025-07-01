@@ -577,6 +577,8 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
+            private TableDelegationInfo Capabilities => TableType.ToRecord().TryGetCapabilities(out var capabilities) ? capabilities : null;
+
             internal bool TryAddReturnRowCount(CallNode node, RetVal predicate, out RetVal result)
             {
                 if (predicate != null && !predicate.IsDelegating)
@@ -585,13 +587,6 @@ namespace Microsoft.PowerFx.Dataverse
                     return false;
                 }
 
-                if (!IsCountRowsDelegable(predicate))
-                {
-                    result = null;
-                    return false;
-                }
-
-                // Check if we can delegate Count(*) in capabilities.
                 var predicateHasFilter = predicate?.HasFilter ?? false;
                 IntermediateNode finalFilter = null;
                 if (!HasFilter && predicateHasFilter)
@@ -611,6 +606,46 @@ namespace Microsoft.PowerFx.Dataverse
                     finalFilter = null;
                 }
 
+                // Check if we can delegate Count(*) in capabilities.
+                if (!IsCountRowsDelegable(predicate))
+                {
+                    // If direct Count() is not supported, try delegating to CountDistinct top level aggregation with primary key of table.
+                    if (TableType.TryGetPrimaryKeyFieldName(out var pks) && pks.Count() == 1)
+                    {
+                        // note: fx doesn't support multiple primary keys yet.
+                        var distinctColumn = new FxColumnInfo(pks.First(), aggregateOperation: SummarizeMethod.CountDistinct);
+
+                        if (TryAddTopLevelAggregate(node, SummarizeMethod.CountDistinct, distinctColumn, out result, finalFilter))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        result = null;
+                        return false;
+                    }
+                }
+
+                // if has left column map and column has Distinct add it as top level aggregation.
+                if (HasLeftColumnMap && LeftColumnMap.HasDistinct())
+                {
+                    var distinctColumn = LeftColumnMap.GetDistinctColumn().CloneAndRemoveDistinct();
+
+                    if (TryAddTopLevelAggregate(node, SummarizeMethod.CountDistinct, distinctColumn, out result, finalFilter))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+
                 // Update LeftColumnMap to have it return just count, no need to keep previously selected columns now.
                 var newLeftColumnMap = new FxColumnMap(TableType, returnTotalRowCount: true);
 
@@ -622,7 +657,16 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            internal bool TryAddTopLevelAggregate(CallNode node, SummarizeMethod method, FxColumnInfo fxColumnInfo, out RetVal result)
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="node"></param>
+            /// <param name="method"></param>
+            /// <param name="fxColumnInfo"></param>
+            /// <param name="finalFilter">Only filter needs to be adjusted in case of CountIf(Distinct(Filter())).</param>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            internal bool TryAddTopLevelAggregate(CallNode node, SummarizeMethod method, FxColumnInfo fxColumnInfo, out RetVal result, IntermediateNode finalFilter = null)
             {
                 if (HasJoin || HasGroupBy || HasTopCount)
                 {
@@ -642,7 +686,23 @@ namespace Microsoft.PowerFx.Dataverse
                     // check column exist in left column map, this will catch any previous renames.
                     if (LeftColumnMap.TryGetColumnInfo(fxColumnInfo.AliasOrRealName, out var columnInfo))
                     {
-                        fxColumnInfo = columnInfo;
+                        if (columnInfo.IsDistinct)
+                        {
+                            if (method == SummarizeMethod.CountDistinct)
+                            {
+                                // Since Value is alias for Distinct, it must have been assigned that as Alias value, we need to remove that.
+                                fxColumnInfo = columnInfo.CloneAndRemoveDistinct().CloneAndUpdateAlias(null);
+                            }
+                            else
+                            {
+                                result = null;
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            fxColumnInfo = columnInfo;
+                        }
                     }
                     else
                     {
@@ -656,7 +716,12 @@ namespace Microsoft.PowerFx.Dataverse
                 {
                     var newLeftColumnMap = new FxColumnMap(TableType);
                     newLeftColumnMap.AddColumn(fxColumnInfo);
-                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, _filter, _orderBy, _topCount, _join, _groupByNode, _maxRows, newLeftColumnMap);
+                    finalFilter ??= _filter;
+                    result = new RetVal(Hooks, node, _sourceTableIRNode, TableType, finalFilter, _orderBy, _topCount, _join, _groupByNode, _maxRows, newLeftColumnMap);
+
+                    // Terminate the delegation since there can no longer occur delegation after top-level aggregation.
+                    var terminatedResult = Hooks.MakeQueryExecutorCall(result);
+                    result = new RetVal(terminatedResult);
                     return true;
                 }
                 else

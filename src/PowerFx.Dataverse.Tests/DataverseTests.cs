@@ -2411,10 +2411,10 @@ END
         }
 
         [Theory]
-        [InlineData("If(lookup.data3>1,'Picklist (All Attributes)'.One, 'Optionset Field (Triple Remotes)'.One)", false, "Error 85-89: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
-        [InlineData("If(2>1,'Picklist (All Attributes)'.One, Global2.Three)", false, "Error 47-53: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
-        [InlineData("Switch(1,1,picklist,2,Global2.Four)", false, "Error 29-34: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
-        [InlineData("IfError('Picklist (All Attributes)'.One, Global2.Four)", false, "Error 35-39: The operation cannot be performed on multiple Option Sets. Please use single Option Set as result type.")]
+        [InlineData("If(lookup.data3>1,'Picklist (All Attributes)'.One, 'Optionset Field (Triple Remotes)'.One)", false, "Error 0-90: Argument type mismatch. The types of all result arguments must agree with or be coercible to the first result argument.")]
+        [InlineData("If(2>1,'Picklist (All Attributes)'.One, Global2.Three)", false, "Error 0-54: Argument type mismatch. The types of all result arguments must agree with or be coercible to the first result argument.")]
+        [InlineData("Switch(1,1,picklist,2,Global2.Four)", false, "Error 0-35: Argument type mismatch. The types of all result arguments must agree with or be coercible to the first result argument.")]
+        [InlineData("IfError('Picklist (All Attributes)'.One, Global2.Four)", false, "Error 0-54: Argument type mismatch. The types of all result arguments must agree with or be coercible to the first result argument.")]
         [InlineData("If(3>1,'Picklist (All Attributes)'.One, picklist)", true)]
         public void MultipleOptionSetsUsedInFormula(string expr, bool success, string error = null)
         {
