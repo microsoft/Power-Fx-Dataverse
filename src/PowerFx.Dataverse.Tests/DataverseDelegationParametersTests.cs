@@ -99,7 +99,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
 
             string filter = ddp.GetOdataFilter();
-            Assert.Equal<object>("(a eq 17 and b eq 'xyz' and c le '2025-04-22T17:59:03.000Z')", filter);
+            Assert.Equal<object>("(a eq 17 and b eq 'xyz' and c le 2025-04-22T17:59:03.000Z)", filter);
         }
 
         [Fact]
