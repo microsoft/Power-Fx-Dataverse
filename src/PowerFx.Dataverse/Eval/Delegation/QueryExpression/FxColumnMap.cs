@@ -134,7 +134,8 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
                 throw new InvalidOperationException($"Column {fxColumnInfo.RealColumnName} already exists in the column map");
             }
 
-            if (!_sourceTableRecordType.TryGetBackingDType(fxColumnInfo.RealColumnName, out _))
+            // RealColumn can be null for CountRows().
+            if (fxColumnInfo.RealColumnName != null && !_sourceTableRecordType.TryGetBackingDType(fxColumnInfo.RealColumnName, out _))
             {
                 throw new InvalidOperationException($"Column {fxColumnInfo.RealColumnName} does not exist in the table's type.");
             }
