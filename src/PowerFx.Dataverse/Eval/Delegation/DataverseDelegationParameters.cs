@@ -418,7 +418,7 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 string str => EscapeOdata(str),
                 bool b => b.ToString().ToLowerInvariant(),
-                DateTime dt => $"'{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}'",
+                DateTime dt => $"{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}",
                 float f => f.ToString(),
                 decimal d => d.ToString(),
                 double d2 => d2.ToString(),
