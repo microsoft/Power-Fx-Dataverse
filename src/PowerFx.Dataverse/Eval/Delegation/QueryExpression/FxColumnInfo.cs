@@ -42,7 +42,12 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         /// <param name="aliasColumnName">Alias for the column name, if it is same as <paramref name="realColumnName"/> it will be set to null.</param>
         internal FxColumnInfo(string realColumnName, string aliasColumnName = null, bool isDistinct = false, SummarizeMethod aggregateOperation = SummarizeMethod.None)
         {
-            _realColumnName = realColumnName ?? throw new ArgumentNullException($"{nameof(realColumnName)} cannot be null.");
+            if (realColumnName == null && aggregateOperation != SummarizeMethod.CountRows)
+            {
+                throw new ArgumentNullException(nameof(realColumnName), $"{nameof(realColumnName)} cannot be null.");
+            }
+
+            _realColumnName = realColumnName;
             _aliasColumnName = realColumnName == aliasColumnName ? null : aliasColumnName;
             _isDistinct = isDistinct;
             _aggregateOperation = aggregateOperation;

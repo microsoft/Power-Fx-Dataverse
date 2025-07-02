@@ -72,6 +72,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(22, "Summarize(t1, name, Max(ThisGroup, amount) As MaxAmount)", new DelegationOperator[] { })]
         [InlineData(23, "Summarize(t1, name, Average(ThisGroup, amount) As AvgAmount)", new DelegationOperator[] { })]
         [InlineData(24, "Summarize(t1, name, CountRows(ThisGroup) As TotalRows)", new DelegationOperator[] { })]
+
+        [InlineData(25, "SortByColumns(Summarize(t1, name,  CountRows(ThisGroup) As TotalRows), TotalRows)", new DelegationOperator[] { })]
         public async Task SummarizeDelegationAsync(int id, string expression, DelegationOperator[] delegationOperator)
         {
             var file = "SummarizeDelegationAsync.txt";

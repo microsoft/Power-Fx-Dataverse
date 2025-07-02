@@ -126,8 +126,7 @@ namespace Microsoft.PowerFx.Dataverse
         {
             // Filter out columns that do NOT produce a real aggregator expression
             var aggregatorExpressions = ColumnMap?
-                .Where(c => c.AggregateMethod != SummarizeMethod.None &&
-                            c.AggregateMethod != SummarizeMethod.CountRows)
+                .Where(c => c.AggregateMethod != SummarizeMethod.None)
                 .ToList();
 
             bool haveAggregations = !aggregatorExpressions.IsNullOrEmpty();

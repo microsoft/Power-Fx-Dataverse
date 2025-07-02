@@ -465,7 +465,7 @@ namespace Microsoft.PowerFx.Dataverse
                 return true;
             }
 
-            internal bool TryAddGroupBy(IReadOnlyList<FxColumnInfo> groupingProperties, IEnumerable<FxColumnInfo> columnMap, bool isReturningTotalCount, CallNode node, out RetVal result)
+            internal bool TryAddGroupBy(IReadOnlyList<FxColumnInfo> groupingProperties, IEnumerable<FxColumnInfo> columnMap, CallNode node, out RetVal result)
             {
                 if (HasGroupBy || HasJoin)
                 {
@@ -474,11 +474,6 @@ namespace Microsoft.PowerFx.Dataverse
                 }
 
                 var newLeftColumnMap = HasLeftColumnMap ? LeftColumnMap : new FxColumnMap(TableType);
-
-                if (isReturningTotalCount)
-                {
-                    newLeftColumnMap.MarkReturnTotalRowCount();
-                }
 
                 foreach (var property in groupingProperties)
                 {
