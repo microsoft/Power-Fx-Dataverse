@@ -3,19 +3,24 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core;
 using Microsoft.PowerFx.Dataverse;
 using Microsoft.PowerFx.Repl;
+using Microsoft.PowerFx.Repl.Functions;
 using Microsoft.PowerFx.Repl.Services;
 using Microsoft.PowerFx.Types;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -54,6 +59,8 @@ namespace Microsoft.PowerFx
 
         private const string BatchFileName = "ReplDV.txt";
 
+        private static SqlConnection _sqlConnection;
+
         private static bool _reset;
 
         private static readonly Features _features = Features.PowerFxV1;
@@ -77,7 +84,7 @@ namespace Microsoft.PowerFx
                 { OptionFeaturesNone, OptionFeaturesNone },
                 { OptionPowerFxV1, OptionPowerFxV1 },
                 { OptionStackTrace, OptionStackTrace },
-                { OptionFormatTableColumns, OptionFormatTableColumns }
+                { OptionFormatTableColumns, OptionFormatTableColumns },
             };
 
             foreach (var featureProperty in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
@@ -96,7 +103,6 @@ namespace Microsoft.PowerFx
             config.EnableParseJSONFunction();
 
             config.AddFunction(new ResetFunction());
-            config.AddFunction(new ExitFunction());
             config.AddFunction(new Option0Function());
             config.AddFunction(new Option1Function());
             config.AddFunction(new Option2FunctionBool());
@@ -104,6 +110,7 @@ namespace Microsoft.PowerFx
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
             config.AddFunction(new DVAddTableFunction());
+            config.AddFunction(new SQLConnect1Function());
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
 
@@ -125,7 +132,8 @@ namespace Microsoft.PowerFx
             Console.WriteLine($"Microsoft Power Fx Console Formula REPL, Version {version}");
 
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
-            Console.WriteLine("Enter Excel formulas.  Use \"Help()\" for details, \"Option()\" for options.");
+            Console.WriteLine("Enter Excel formulas.  Use \"Help()\" for details, \"Option()\" for options,");
+            Console.WriteLine("\"DVConnect()\" to connect to Dataverse, \"SQLConnect()\" for SQL execution.");
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
 
             InteractiveRepl();
@@ -147,7 +155,10 @@ namespace Microsoft.PowerFx
             repl.EnableSampleUserObject();
             repl.AddPseudoFunction(new IRPseudoFunction());
             repl.AddPseudoFunction(new CIRPseudoFunction());
-            
+            repl.AddPseudoFunction(new SQLPseudoFunction());
+            repl.AddPseudoFunction(new SQLEvalPseudoFunction());
+            repl.AddPseudoFunction(new DVMetadataPseudoFunction());
+
             //repl.Engine.EnableDelegation();
             _repl = repl;
             return repl;
@@ -161,7 +172,7 @@ namespace Microsoft.PowerFx
             var batchPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\" + BatchFileName;
             if (File.Exists(batchPath))
             {
-                Console.WriteLine($"\n>> // Processing {batchPath}");
+                repl.HandleLineAsync($"// Processing {batchPath}").Wait();
                 var lines = File.ReadAllLines(batchPath);
 
                 foreach (var line in lines)
@@ -171,7 +182,7 @@ namespace Microsoft.PowerFx
             }
             else
             {
-                Console.WriteLine($"\n>> // Place autoexec formulas in {batchPath}");
+                repl.HandleLineAsync($"// Place autoexec formulas in {batchPath}").Wait();
             }
 
             repl.Echo = oldEcho;
@@ -190,6 +201,16 @@ namespace Microsoft.PowerFx
                     repl.WritePromptAsync().Wait();
                     var line = Console.ReadLine();
                     repl.HandleLineAsync(line).Wait();
+
+                    if (repl.ExitRequested)
+                    {
+                        if (_sqlConnection != null)
+                        {
+                            _sqlConnection.Close();
+                        }
+
+                        return;
+                    }
                 }
 
                 _reset = false;
@@ -198,25 +219,26 @@ namespace Microsoft.PowerFx
 
         private class ResetFunction : ReflectionFunction
         {
-            public BooleanValue Execute()
+            public ResetFunction()
+                : base("Reset", FormulaType.Void)
+            {
+            }
+
+            public FormulaValue Execute()
             {
                 _reset = true;
-                return FormulaValue.New(true);
-            }
-        }
-
-        private class ExitFunction : ReflectionFunction
-        {
-            public BooleanValue Execute()
-            {
-                System.Environment.Exit(0);
-                return FormulaValue.New(true);
+                return FormulaValue.NewVoid();
             }
         }
 
         private class DVConnectFunction1Arg : ReflectionFunction
         {
-            public BooleanValue Execute(StringValue connectionSV)
+            public DVConnectFunction1Arg()
+                : base("DVConnect", FormulaType.Void, new[] { FormulaType.String })
+            {
+            }
+
+            public VoidValue Execute(StringValue connectionSV)
             {
                 var dvc2 = new DVConnectFunction2Arg();
                 return dvc2.Execute(connectionSV, BooleanValue.New(false));
@@ -225,7 +247,12 @@ namespace Microsoft.PowerFx
 
         private class DVConnectFunction2Arg : ReflectionFunction
         {
-            public BooleanValue Execute(StringValue connectionSV, BooleanValue multiOrg)
+            public DVConnectFunction2Arg()
+                : base("DVConnect", FormulaType.Void, new[] { FormulaType.String, FormulaType.Boolean })
+            {
+            }
+
+            public VoidValue Execute(StringValue connectionSV, BooleanValue multiOrg)
             {
                 IOrganizationService svcClient;
                 var connectionString = connectionSV.Value;
@@ -264,7 +291,7 @@ namespace Microsoft.PowerFx
                     Console.WriteLine($"Failed to add APIs: {e.Message}");
                 }
 
-                return BooleanValue.New(true);
+                return BooleanValue.NewVoid();
             }
 
             private async Task AddCustomApisAsync(DataverseService clientExecute)
@@ -321,6 +348,210 @@ namespace Microsoft.PowerFx
                 _dv.AddTable(localNameSV.Value, logNameSV.Value);
 
                 return BooleanValue.New(true);
+            }
+        }
+
+        private class SQLConnect1Function : ReflectionFunction
+        {
+            public SQLConnect1Function()
+                : base("SQLConnect", FormulaType.Void, new[] { FormulaType.String })
+            {
+            }
+
+            public FormulaValue Execute(StringValue connectionString)
+            {
+                _sqlConnection = new SqlConnection(connectionString.Value);
+                try
+                {
+                    _sqlConnection.Open();
+                }
+                catch (DbException ex)
+                {
+                    _sqlConnection = null;
+
+                    var error = new ExpressionError() { Message = $"Error: Failed to connect to SQL Server: {ex.Message}" };
+                    return FormulaValue.NewError(error);
+                }
+
+                return FormulaValue.NewVoid();
+            }
+        }
+
+        // extracted from RunAsyncInternal in src\PowerFx.Dataverse.Tests\PowerFxEvaluationTests.cs
+        public static class SQLHelpers
+        {
+            public static SqlCompileResult Compile(string expr)
+            {
+                var options = new SqlCompileOptions
+                {
+                    CreateMode = SqlCompileOptions.Mode.Create,
+                    UdfName = null // will auto generate with guid.
+                };
+
+                var engine = new PowerFx2SqlEngine(PowerFx2SqlEngine.Empty(), dataverseFeatures: new DataverseFeatures() { IsFloatingPointEnabled = true });
+                var compileResult = engine.Compile(expr, options);
+
+                if (compileResult.IsSuccess)
+                {
+                    return compileResult;
+                }
+                else
+                {
+                    foreach (var error in compileResult.Errors)
+                    {
+                        _repl.Output.WriteLineAsync($"Error: {error.Message}", OutputKind.Error);
+                    }
+
+                    return null;
+                }
+            }
+        }
+
+        public class SQLPseudoFunction : IPseudoFunction
+        {
+            public string Name => "SQL";
+
+            public async Task ExecuteAsync(CheckResult checkResult, PowerFxREPL repl, CancellationToken cancel)
+            {
+                var compileResult = SQLHelpers.Compile(checkResult.Parse.Text);
+                if (compileResult != null)
+                {
+                    _repl.Output.WriteAsync(compileResult.SqlFunction, OutputKind.Repl);
+                }
+            }
+        }
+
+        public class SQLEvalPseudoFunction : IPseudoFunction
+        {
+            public string Name => "SQLEval";
+
+            public async Task ExecuteAsync(CheckResult checkResult, PowerFxREPL repl, CancellationToken cancel)
+            {
+                var compileResult = SQLHelpers.Compile(checkResult.Parse.Text);
+                if (compileResult != null)
+                {
+                    try
+                    {
+                        using SqlTransaction tx = _sqlConnection.BeginTransaction();
+                        using SqlCommand createCmd = _sqlConnection.CreateCommand();
+
+                        createCmd.Transaction = tx;
+                        createCmd.CommandText = compileResult.SqlFunction;
+                        int rows = createCmd.ExecuteNonQuery();
+
+                        createCmd.CommandText = $@"CREATE TABLE placeholder (
+    [placeholderid] UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    [dummy] INT NULL,
+    [calc]  AS ([dbo].{compileResult.SqlCreateRow}))";
+                        createCmd.ExecuteNonQuery();
+
+                        var insertCmd = _sqlConnection.CreateCommand();
+                        insertCmd.Transaction = tx;
+                        insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
+                        insertCmd.ExecuteNonQuery();
+
+                        var selectCmd = _sqlConnection.CreateCommand();
+                        selectCmd.Transaction = tx;
+                        selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
+                        using (var reader = selectCmd.ExecuteReader())
+                        {
+                            reader.Read();
+                            var dummyValue = reader.GetInt32(0);
+                            if (dummyValue != 7)
+                            {
+                                throw new Exception("Dummy integer did not round-trip");
+                            }
+
+                            var calcValue = reader.GetValue(1);
+
+                            if (calcValue is DBNull)
+                            {
+                                calcValue = null;
+                            }
+
+                            var fv = PrimitiveValueConversions.Marshal(calcValue, compileResult.ReturnType);
+
+                            _repl.Output.WriteLineAsync(_repl.ValueFormatter.Format(fv), OutputKind.Repl);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _repl.Output.WriteLineAsync($"Error: Failed SQL execution for {checkResult.Parse.Text}", OutputKind.Error);
+                        _repl.Output.WriteLineAsync(e.Message, OutputKind.Error);
+                    }
+                }
+            }
+        }
+
+        private class DVMetadataPseudoFunction : IPseudoFunction
+        {
+            public string Name => "DVMetadata";
+
+            public async Task ExecuteAsync(CheckResult checkResult, PowerFxREPL repl, CancellationToken cancel)
+            {
+                string Format(decimal? x)
+                {
+                    return x == null ? "null" : ((decimal)x).ToString("#,##0.##############");
+                }
+
+                if (checkResult.ReturnType is TableType table && table.TableSymbolName != null)
+                {
+                    if (_dv.MetadataCache.TryGetXrmEntityMetadata(table.TableSymbolName, out var entity))
+                    {
+                        var sb = new StringBuilder();
+
+                        sb.AppendLine($"Entity: {entity.LogicalName}");
+                        sb.AppendLine($"  SchemaName: {entity.SchemaName}");
+                        sb.AppendLine($"  DisplayName: {entity.DisplayName?.UserLocalizedLabel?.Label ?? "<none>"}");
+                        sb.AppendLine($"  ObjectTypeCode: {entity.ObjectTypeCode}");
+                        sb.AppendLine($"  IsCustomEntity: {entity.IsCustomEntity}");
+                        sb.AppendLine($"  IsLogicalEntity: {entity.IsLogicalEntity}");
+                        sb.AppendLine($"  Attributes ({entity.Attributes?.Length ?? 0}):");
+                        if (entity.Attributes != null)
+                        {
+                            var atts = entity.Attributes;
+                            for (int i = 0; i < atts.Length; i++)
+                            {
+                                var attr = atts[i];
+
+                                var primary = (bool)attr.IsPrimaryName ? "primaryName " : ((bool)attr.IsPrimaryId ? "primaryId " : string.Empty);
+                                var ro = !(bool)attr.IsValidForUpdate ? "readOnly " : string.Empty;
+
+                                var typeInfo = attr switch
+                                {
+                                    PicklistAttributeMetadata pl => (bool)pl.OptionSet.IsGlobal ? $"<{pl.OptionSet.Name}>" : "<local>",
+                                    DecimalAttributeMetadata dec => $"<{Format(dec.MaxValue)}:{Format(dec.MinValue)}:{dec.Precision}>",
+                                    MoneyAttributeMetadata mon => $"<{Format((decimal)mon.MaxValue)}:{Format((decimal)mon.MinValue)}:{mon.Precision}>",
+                                    BigIntAttributeMetadata big => $"<{Format((decimal)big.MaxValue)}:{Format((decimal)big.MinValue)}>",
+                                    DoubleAttributeMetadata dbl => $"<{Format((decimal)dbl.MaxValue)}:{Format((decimal)dbl.MinValue)}:{dbl.Precision}>",
+                                    _ => string.Empty
+                                };
+
+                                sb.AppendLine($"    - {attr.LogicalName} {attr.AttributeType}{typeInfo} {primary}{ro}");
+
+                                // skip name fields that accompany the main attribute
+                                if (i + 1 < atts.Length && atts[i].LogicalName + "name" == atts[i + 1].LogicalName && atts[i + 1].AttributeType == AttributeTypeCode.Virtual)
+                                {
+                                    i++;
+                                }
+                            }
+                        }
+
+                        sb.AppendLine($"  OneToManyRelationships: {entity.OneToManyRelationships?.Length ?? 0}");
+                        sb.AppendLine($"  ManyToOneRelationships: {entity.ManyToOneRelationships?.Length ?? 0}");
+                        sb.AppendLine($"  ManyToManyRelationships: {entity.ManyToManyRelationships?.Length ?? 0}");
+
+                        _repl.Output.WriteAsync(sb.ToString(), OutputKind.Repl);
+                    }
+                    else
+                    {
+                        _repl.Output.WriteLineAsync($"Error: failed to retrieve metadata for {table.TableSymbolName}", OutputKind.Error);
+                    }
+                }
+                else
+                {
+                    _repl.Output.WriteLineAsync("Error: Can only be used on a single Dataverse table, for example DVMetadata(account)", OutputKind.Error);
+                }
             }
         }
 
@@ -521,6 +752,43 @@ namespace Microsoft.PowerFx
                     Severity = ErrorSeverity.Critical,
                     Message = $"Invalid option name: {option.Value}."
                 });
+            }
+        }
+
+        private class MyHelpProvider : HelpProvider
+        {
+            public override async Task Execute(PowerFxREPL repl, CancellationToken cancel, string context = null)
+            {
+                var msg =
+@"
+Autoexec formulas can be put in ~/repldv.txt.
+
+DVConnect( DataverseConnectionString [, MultiOrg ] )
+    Connects to Dataverse.
+    Second argument is Boolean: true = MultiOrg, false = SingleOrg (default).
+
+DVAddTable( DataverseTable )
+    If the table was not added with DVConnect (MultiOrg), add each manually here.
+
+DVMetadata( DataverseTable )
+    Displays metadata for the table.
+
+SQLConnect( SQLConnectionString )
+    Connect to SQL Server for SQLEval.
+
+SQL( Formula )
+    Display compiled T-SQL for Formula.
+
+SQLEeval( Formula )
+    Compile the formula to SQL and run on SQL Server.
+
+Reset() 
+    Resets the engine and reruns autoexec.
+   
+";
+
+                await WriteAsync(repl, msg, cancel)
+                    .ConfigureAwait(false);
             }
         }
     }
