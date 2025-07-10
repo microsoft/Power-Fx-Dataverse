@@ -110,6 +110,7 @@ namespace Microsoft.PowerFx
             config.AddFunction(new DVConnectFunction1Arg());
             config.AddFunction(new DVConnectFunction2Arg());
             config.AddFunction(new DVAddTableFunction());
+            config.AddFunction(new SQLConnect0Function());
             config.AddFunction(new SQLConnect1Function());
 
             var optionsSet = new OptionSet("Options", DisplayNameUtility.MakeUnique(options));
@@ -348,6 +349,27 @@ namespace Microsoft.PowerFx
                 _dv.AddTable(localNameSV.Value, logNameSV.Value);
 
                 return BooleanValue.New(true);
+            }
+        }
+
+        private class SQLConnect0Function : ReflectionFunction
+        {
+            public SQLConnect0Function()
+                : base("SQLConnect", FormulaType.Void)
+            {
+            }
+
+            public FormulaValue Execute()
+            {
+                var connectionString = Environment.GetEnvironmentVariable("FxTestSQLDatabase");
+                if (connectionString == null)
+                {
+                    var error = new ExpressionError() { Message = $"Error: Environment variable FxTestSQLDatabase not set" };
+                    return FormulaValue.NewError(error);
+                }
+
+                var sqlConnect1 = new SQLConnect1Function();
+                return sqlConnect1.Execute(StringValue.New(connectionString));
             }
         }
 
@@ -773,8 +795,10 @@ DVAddTable( DataverseTable )
 DVMetadata( DataverseTable )
     Displays metadata for the table.
 
-SQLConnect( SQLConnectionString )
+SQLConnect( [ SQLConnectionString ] )
     Connect to SQL Server for SQLEval.
+    If connection string not provided, attempts to use environment variable 
+    ""FxTestSQLDatabase"" which is used by the test suite.
 
 SQL( Formula )
     Display compiled T-SQL for Formula.
