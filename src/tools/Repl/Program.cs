@@ -61,6 +61,8 @@ namespace Microsoft.PowerFx
 
         private static SqlConnection _sqlConnection;
 
+        private const string SqlConnectionEnvironmentVariable = "FxTestSQLDatabase";
+
         private static bool _reset;
 
         private static readonly Features _features = Features.PowerFxV1;
@@ -361,15 +363,21 @@ namespace Microsoft.PowerFx
 
             public FormulaValue Execute()
             {
-                var connectionString = Environment.GetEnvironmentVariable("FxTestSQLDatabase");
+                var connectionString = Environment.GetEnvironmentVariable(SqlConnectionEnvironmentVariable);
                 if (connectionString == null)
                 {
-                    var error = new ExpressionError() { Message = $"Error: Environment variable FxTestSQLDatabase not set" };
+                    var error = new ExpressionError() { Message = $"Error: Environment variable {SqlConnectionEnvironmentVariable} not set." };
                     return FormulaValue.NewError(error);
                 }
 
                 var sqlConnect1 = new SQLConnect1Function();
-                return sqlConnect1.Execute(StringValue.New(connectionString));
+                var result = sqlConnect1.Execute(StringValue.New(connectionString));
+                if (result is ErrorValue err)
+                {                    
+                    return FormulaValue.NewError(err.Errors.Append(new ExpressionError() { Message = $"Error: Failed SQL connection with environment variable {SqlConnectionEnvironmentVariable} connection string: {connectionString}" }), FormulaType.Blank);
+                }
+
+                return FormulaValue.NewVoid();
             }
         }
 
@@ -449,12 +457,29 @@ namespace Microsoft.PowerFx
 
             public async Task ExecuteAsync(CheckResult checkResult, PowerFxREPL repl, CancellationToken cancel)
             {
+                if (_sqlConnection == null)
+                {
+                    var connect = new SQLConnect0Function();
+                    var result = connect.Execute();
+                    if (result is ErrorValue errors)
+                    {
+                        foreach (var error in errors.Errors)
+                        {
+                            _repl.Output.WriteLineAsync(error.Message, OutputKind.Error);
+                        }
+
+                        return;
+                    }
+                }
+
                 var compileResult = SQLHelpers.Compile(checkResult.Parse.Text);
                 if (compileResult != null)
                 {
                     try
                     {
+                        // by using a transaction, all these additions are rolled back after this routine is finished
                         using SqlTransaction tx = _sqlConnection.BeginTransaction();
+
                         using SqlCommand createCmd = _sqlConnection.CreateCommand();
 
                         createCmd.Transaction = tx;
@@ -468,11 +493,13 @@ namespace Microsoft.PowerFx
                         createCmd.ExecuteNonQuery();
 
                         var insertCmd = _sqlConnection.CreateCommand();
+
                         insertCmd.Transaction = tx;
                         insertCmd.CommandText = "INSERT INTO placeholder (dummy) VALUES (7)";
                         insertCmd.ExecuteNonQuery();
 
                         var selectCmd = _sqlConnection.CreateCommand();
+
                         selectCmd.Transaction = tx;
                         selectCmd.CommandText = $"SELECT dummy, calc from placeholder";
                         using (var reader = selectCmd.ExecuteReader())
