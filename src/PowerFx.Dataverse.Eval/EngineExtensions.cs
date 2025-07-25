@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation;
 using Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression;
 using Microsoft.PowerFx.Types;
@@ -85,18 +87,77 @@ namespace Microsoft.PowerFx.Dataverse
             /// <param name="isDistinct">Decides if Distinct needs be applied.</param>
             /// <param name="cancellationToken"></param>
             /// <returns></returns>
-            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
+            public override async Task<IEnumerable<DValue<RecordValue>>> RetrieveMultipleAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, TableDelegationInfo capabilities, CancellationToken cancellationToken)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 delegationParameters.EnsureOnlyFeatures(table.SupportedFeatures);
-                IReadOnlyCollection<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
+                IEnumerable<DValue<RecordValue>> result = await table.GetRowsAsync(services, delegationParameters, cancellationToken).ConfigureAwait(false);
 
                 if (result.Any(err => err.IsError))
                 {
                     return result.Where(err => err.IsError);
                 }
 
+                result = MayAddAliasingWrapper(delegationParameters, capabilities, result);
                 return result;
+            }
+
+            private static IEnumerable<DValue<RecordValue>> MayAddAliasingWrapper(DelegationParameters delegationParameters, TableDelegationInfo capabilities, IEnumerable<DValue<RecordValue>> innerRVs)
+            {
+                var dp = (DataverseDelegationParameters)delegationParameters;
+
+                if (delegationParameters.ExpectedReturnType is TableType aggregateType 
+                    && IsAliasingSupported(capabilities) 
+                    && dp.ColumnMap?.ExistsAliasing == true)
+                {
+                    return innerRVs.Select(innerRv => DValue<RecordValue>.Of(new AliasedRecordValue(dp.ColumnMap, aggregateType.ToRecord(), innerRv)));
+                }
+
+                return innerRVs;
+            }
+
+            private class AliasedRecordValue : RecordValue
+            {
+                private readonly FxColumnMap _fxColumns;
+
+                private readonly DValue<RecordValue> _innerRecordValue;
+
+                public AliasedRecordValue(FxColumnMap fxColumns, RecordType type, DValue<RecordValue> innerRecordValue)
+                    : base(type)
+                {
+                    _fxColumns = fxColumns;
+                    _innerRecordValue = innerRecordValue;
+                }
+
+                protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (_fxColumns.TryGetColumnInfo(fieldName, out var columnInfo))
+                    {
+                        var fieldValue = await _innerRecordValue.Value.GetFieldAsync(columnInfo.RealColumnName, cancellationToken);
+
+                        if (fieldValue is not BlankValue)
+                        {
+                            return (true, fieldValue);
+                        }
+                    }
+
+                    return (false, null);
+                }
+
+                protected override bool TryGetField(FormulaType fieldType, string fieldName, out FormulaValue result)
+                {
+                    var (success, value) = TryGetFieldAsync(fieldType, fieldName, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+                    result = value;
+                    return success;
+                }
+            }
+
+            private static bool IsAliasingSupported(TableDelegationInfo capabilities)
+            {
+                // If the table supports aliasing, we can return the aliased type.
+                // $$$ Check aliasing capabilities here.
+                return false;
             }
 
             public override async Task<FormulaValue> ExecuteQueryAsync(IServiceProvider services, IDelegatableTableValue table, DelegationParameters delegationParameters, CancellationToken cancellationToken)
