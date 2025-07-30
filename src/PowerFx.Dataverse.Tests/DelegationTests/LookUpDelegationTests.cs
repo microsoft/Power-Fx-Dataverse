@@ -346,6 +346,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [InlineData(245, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, true, false, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(246, "LookUp(t1, EndsWith(\"1\", ThisRecord.Name)).Price", null, false, true, "Warning 7-9: This operation on table 'local' may not work if it has more than 999 rows.")]
         [InlineData(247, "LookUp(Summarize(t1, new_name, Sum(ThisGroup, Price) As TotalPrice), new_name = \"test\")", null, false, false)]
+
+        [InlineData(248, "LookUp(ForAll(t1, {aliased_price : Price}), aliased_price > 50).aliased_price", 100.0, true, true)]
+        [InlineData(249, "LookUp(ForAll(t1, {Currency : Price}), Currency > 50).Currency", 100.0, true, true)]
+
         public async Task LookUpDelegationAsync(int id, string expr, object expected, bool cdsNumberIsFloat, bool parserNumberIsFloatOption, params string[] expectedWarnings)
         {
             await DelegationTestAsync(

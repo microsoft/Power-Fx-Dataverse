@@ -245,3 +245,5 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 LookUp(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name), 999, {new_name,SUM(new_price) As TotalPrice}), (EqText(new_name,test))) | $apply=groupby%28%28new_name%29%2Caggregate%28new_price%20with%20sum%20as%20TotalPrice%29%29/top(999)
+(__retrieveSingle(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 50), __noop(), __noJoin(), __noopGroupBy(), {new_price As aliased_price})).aliased_price | $filter=new_price+gt+50&$top=1&$select=new_price
+(__retrieveSingle(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 50), __noop(), __noJoin(), __noopGroupBy(), {new_price As Currency})).Currency | $filter=new_price+gt+50&$top=1&$select=new_price

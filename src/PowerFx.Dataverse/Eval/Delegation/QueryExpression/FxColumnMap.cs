@@ -111,12 +111,6 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
         public FxColumnMap AddColumn(string logicalColumnName, string aliasColumnName = null)
         {
             var columnInfo = new FxColumnInfo(logicalColumnName, aliasColumnName);
-
-            if (columnInfo.AliasColumnName != null && !ExistsAliasing)
-            {
-                MarkAliasingExists();
-            }
-
             AddColumn(columnInfo);
             return this;
         }
@@ -128,6 +122,11 @@ namespace Microsoft.PowerFx.Dataverse.Eval.Delegation.QueryExpression
 
         internal void AddColumn(FxColumnInfo fxColumnInfo)
         {
+            if (fxColumnInfo.AliasColumnName != null && !ExistsAliasing)
+            {
+                MarkAliasingExists();
+            }
+
             var columnsMapKey = GenerateColumnInfoKey(fxColumnInfo);
 
             if (_columnInfoMap.ContainsKey(columnsMapKey))

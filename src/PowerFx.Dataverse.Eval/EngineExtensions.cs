@@ -98,7 +98,11 @@ namespace Microsoft.PowerFx.Dataverse
                     return result.Where(err => err.IsError);
                 }
 
-                result = MayAddAliasingWrapper(delegationParameters, capabilities, result);
+                if (table is not DataverseTableValue dvTable)
+                {
+                    result = MayAddAliasingWrapper(delegationParameters, capabilities, result);
+                }
+
                 return result;
             }
 
@@ -106,11 +110,11 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dp = (DataverseDelegationParameters)delegationParameters;
 
-                if (delegationParameters.ExpectedReturnType is TableType aggregateType 
-                    && IsAliasingSupported(capabilities) 
-                    && dp.ColumnMap?.ExistsAliasing == true)
+                if (delegationParameters.ExpectedReturnType is RecordType aggregateType
+                    && dp?.ColumnMap?.ExistsAliasing == true
+                    && !IsAliasingSupported(capabilities))
                 {
-                    return innerRVs.Select(innerRv => DValue<RecordValue>.Of(new AliasedRecordValue(dp.ColumnMap, aggregateType.ToRecord(), innerRv)));
+                    return innerRVs.Select(innerRv => DValue<RecordValue>.Of(new AliasedRecordValue(dp.ColumnMap, aggregateType, innerRv)));
                 }
 
                 return innerRVs;
@@ -155,8 +159,11 @@ namespace Microsoft.PowerFx.Dataverse
 
             private static bool IsAliasingSupported(TableDelegationInfo capabilities)
             {
-                // If the table supports aliasing, we can return the aliased type.
-                // $$$ Check aliasing capabilities here.
+                if (capabilities?.ColumnAliasingCapabilities?.IsColumnAliasingSupported() == true)
+                {
+                    return true;
+                }
+
                 return false;
             }
 

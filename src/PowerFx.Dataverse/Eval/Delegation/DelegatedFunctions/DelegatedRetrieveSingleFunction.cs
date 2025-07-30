@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.PowerFx.Core.Entities;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Core.IR.Nodes;
 using Microsoft.PowerFx.Dataverse.Eval.Core;
@@ -122,8 +124,13 @@ namespace Microsoft.PowerFx.Dataverse
                 _partitionId = partitionId,
             };
 #pragma warning restore CS0618 // Type or member is obsolete
+            TableDelegationInfo capabilities = null;
+            if (!((RecordType)ReturnFormulaType).TryGetCapabilities(out capabilities))
+            {
+                capabilities = null;
+            }
 
-            var row = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
+            var row = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, capabilities, cancellationToken).ConfigureAwait(false);
             var result = row.FirstOrDefault();
 
             if (result == null || result.IsBlank)
