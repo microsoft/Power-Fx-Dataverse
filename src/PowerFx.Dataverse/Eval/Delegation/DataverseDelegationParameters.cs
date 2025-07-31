@@ -249,6 +249,13 @@ namespace Microsoft.PowerFx.Dataverse
 
         public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Where(ci => ci.AggregateMethod == SummarizeMethod.None).Select(ci => ci.RealColumnName).ToArray();
 
+        public override IReadOnlyCollection<(string, string)> GetColumnsWithAlias()
+        {
+            return ColumnMap?.Where(ci => ci.AggregateMethod == SummarizeMethod.None)
+                .Select(ci => (ci.RealColumnName, ci.AliasColumnName))
+                .ToList();
+        }
+
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
         private static string ToOdataFilter(FxFilterExpression filter)
         {

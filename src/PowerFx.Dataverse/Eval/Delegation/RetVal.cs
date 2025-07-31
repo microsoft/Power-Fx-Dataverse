@@ -230,7 +230,7 @@ namespace Microsoft.PowerFx.Dataverse
                 // LookUp can't nest to Filter or ForAll
                 if (node.Function == BuiltinFunctionsCore.LookUp &&
                     this.OriginalNode is CallNode maybeFilter &&
-                    (maybeFilter.Function == BuiltinFunctionsCore.Filter || maybeFilter.Function == BuiltinFunctionsCore.ForAll))
+                    (maybeFilter.Function == BuiltinFunctionsCore.Filter))
                 {
                     result = null;
                     return false;

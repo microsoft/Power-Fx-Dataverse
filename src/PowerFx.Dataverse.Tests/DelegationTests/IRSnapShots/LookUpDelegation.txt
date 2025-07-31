@@ -178,7 +178,7 @@ With({r:local}, ((__retrieveGUID(local, GUID(00000000-0000-0000-0000-00000000000
 ((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, Float(20)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1 | $filter=new_quantity+eq+20&$top=1
 ((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1 | $filter=new_quantity+eq+20&$top=1
 ((__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __orderBy(new_price, False), __noJoin(), __noopGroupBy(), __allColumns())).elastic_ref_local_et).field1 | $filter=new_quantity+eq+20&$orderby=new_price%20desc&$top=1
-(LookUp(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __noopGroupBy(), 999, {new_price As a,new_quantity As b}), (EqNumbers(Value(b),20)))).a | $top=999&$select=new_price%2Cnew_quantity
+(__retrieveSingle(local, __eq(local, {fieldFunctions:Table(), fieldName:new_quantity}, 20), __noop(), __noJoin(), __noopGroupBy(), {new_price As a,new_quantity As b})).a | $filter=new_quantity+eq+20&$top=1&$select=new_price%2Cnew_quantity
 LookUp(local, (LtDateTime(DateAdd(new_datetime, Negate(2)),new_datetime)))
 (__retrieveSingle(local, __in(local, {fieldFunctions:Table(), fieldName:new_name}, Concatenate(o, W1)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=contains(new_name%2c%27oW1%27)&$top=1
 (__retrieveSingle(local, __in(local, {fieldFunctions:Table(), fieldName:new_name}, Concatenate(o, W1)), __noop(), __noJoin(), __noopGroupBy(), __allColumns())).new_price | $filter=contains(new_name%2c%27oW1%27)&$top=1
@@ -245,3 +245,5 @@ With({r:local}, (LookUp(r, (ExactInText(oW1,new_name)))))
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 (LookUp(local, (EndsWith(1, new_name)))).new_price
 LookUp(__retrieveMultiple(local, __noop(), __noop(), __noJoin(), __groupBy(new_name), 999, {new_name,SUM(new_price) As TotalPrice}), (EqText(new_name,test))) | $apply=groupby%28%28new_name%29%2Caggregate%28new_price%20with%20sum%20as%20TotalPrice%29%29/top(999)
+(__retrieveSingle(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 50), __noop(), __noJoin(), __noopGroupBy(), {new_price As aliased_price})).aliased_price | $filter=new_price+gt+50&$top=1&$select=new_price
+(__retrieveSingle(local, __gt(local, {fieldFunctions:Table(), fieldName:new_price}, 50), __noop(), __noJoin(), __noopGroupBy(), {new_price As Currency})).Currency | $filter=new_price+gt+50&$top=1&$select=new_price

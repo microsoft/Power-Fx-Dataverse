@@ -149,7 +149,13 @@ namespace Microsoft.PowerFx.Dataverse
             // In CDP case, RecordValue here will have a type of CdpRecordType which is lazy
             // In DV case, RecordValue is an Entity
             // If a $select is defined, the rows will have a subset of the columns, as expected
-            IEnumerable<DValue<RecordValue>> rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, cancellationToken).ConfigureAwait(false);
+
+            if (!((TableType)ReturnFormulaType).ToRecord().TryGetCapabilities(out var capabilities))
+            {
+                capabilities = null;
+            }
+
+            IEnumerable<DValue<RecordValue>> rows = await _hooks.RetrieveMultipleAsync(services, table, delegationParameters, capabilities, cancellationToken).ConfigureAwait(false);
 
             // ReturnFormulaType here is coming from the original IR and will be non-lazy
             // If a columnmap is defined, there will be a match in term of columns but a mismatch on the type itself
