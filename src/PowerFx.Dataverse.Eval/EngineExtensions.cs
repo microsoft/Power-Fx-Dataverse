@@ -110,11 +110,10 @@ namespace Microsoft.PowerFx.Dataverse
             {
                 var dp = (DataverseDelegationParameters)delegationParameters;
 
-                if (delegationParameters.ExpectedReturnType is RecordType aggregateType
-                    && dp?.ColumnMap?.ExistsAliasing == true
+                if (dp?.ColumnMap?.ExistsAliasing == true
                     && !IsAliasingSupported(capabilities))
                 {
-                    return innerRVs.Select(innerRv => DValue<RecordValue>.Of(new AliasedRecordValue(dp.ColumnMap, aggregateType, innerRv)));
+                    return innerRVs.Select(innerRv => DValue<RecordValue>.Of(new AliasedRecordValue(dp.ColumnMap, (RecordType)dp.ExpectedReturnType, innerRv)));
                 }
 
                 return innerRVs;

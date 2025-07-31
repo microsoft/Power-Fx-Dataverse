@@ -44,16 +44,16 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Fact]
         public async Task LivePowerAppsConnectorTest()
         {
-#if true
-            var endpoint = "https://2e60e1f8-dcfd-e26e-ad11-76bce40da16b.09.common.tip2.azure-apihub.net/";
-            var connectionId = "49e3d59c1f094ac2b293e2c7519941ac";
+#if false
+            var endpoint = "https://c8de4e41-7d28-ef89-b58b-cc6d4fa6c16e.18.common.tip1002.azure-apihub.net/";
+            var connectionId = "aa7b586623434ac288552220f0886f9a";
             var envId = "2e60e1f8-dcfd-e26e-ad11-76bce40da16b";
             var sessionId = "f3a552e0-3c14-47f5-8f26-bdba18d20186";
             var uriPrefix = $"/apim/sql/{connectionId}";
             string dataset = "testconnector.database.windows.net,testconnector"; // "testconnector.database.windows.net,testconnector";
             var tableToUseInExpression = "Employees";
-            var expr = @"Filter(ForAll(Employees, {newSalary: Salary}), newSalary > 10)";
-            var jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2FwaWh1Yi5henVyZS5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC85MWJlZTNkOS0wYzE1LTRmMTctODYyNC1jOTJiYjhiMzZlYWQvIiwiaWF0IjoxNzUzNDc5Mjc3LCJuYmYiOjE3NTM0NzkyNzcsImV4cCI6MTc1MzQ4MzcxMywiYWNyIjoiMSIsImFpbyI6IkFWUUJxLzRaQUFBQUdKN2dsWTdBVkgvTnR0aXZyRDYvd2dUckY1TjY0c0d1RmtyUGpSOHNGc29IckU1UHhSZy82RFFFZFN0WWxpc0IxNktyY05uS1FjbnNqVDVUUTZuNWZyMXJlZnNCMDZVT3RuSmdqWEhWWXVHdllONS9SK3JxNVQ1RkNSQ1ZGb2lTS2dCY1BMY24wTXREbWlibWFWcXBlZHZsQnVjNUVxa0xQanhySnR5OXpZbTVpWmlHeFlaS3NrQWJMbnZpd3RobkxnSHh1SlcySUVhd3N4b3l0SUdYa0NZNWJVREdubXJ2ejJvTUl5V0M4RkRUbHF0blV0clFwR0tjNklWaW8zZXBTaUNEeTRla2hqRy9jN2hvSUYvNHMycGUvWlZabG1KdXVDekZRTE95NzlwYm1HazlWUWhod1R5RXN1MjFaWmM1dy83UFZYVlUxOXRaRjg1dng0WHFRVkM0V0xkaXJHN2lFWGZOK3NSSHI3VGZmSzArRW1PaGovUVdTRFpDaWNxRU1lRmlMRC9RUWJWMzlxQW5tcWNNVzVDZDFOQU1RMlVuQXN2WWE2Y2tHM2dwYXRUWmNMZWhuSU5GR3c3b2hkbVIiLCJhbXIiOlsicnNhIiwibWZhIl0sImFwcGlkIjoiNjBmMzhjZjQtYTBiZi00ZmRmLWIwYjUtMTRkMzEzMWJjMDMxIiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJ1c2VyMTEiLCJnaXZlbl9uYW1lIjoiYXVyb3JhIiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMjAuMjkuMjI1LjE5NSIsIm5hbWUiOiJhdXJvcmF1c2VyMTEiLCJvaWQiOiI1YTY1MGQxZS03M2Q5LTQ4NDAtOGIyOS1lZWNmOGE3OGE1ZGQiLCJwdWlkIjoiMTAwMzIwMDEzQjlDODA1MyIsInJoIjoiMS5BVzhBMmVPLWtSVU1GMC1HSk1rcnVMTnVyVjg4QmY2U05oUlBydkx1TlB3SUhLNXZBRTV2QUEuIiwic2NwIjoiUnVudGltZS5BbGwiLCJzaWQiOiIwMDZlYTgzOS0wYTY3LWM0ZGItYWMwZC05NGU5YmJmYWIxMDciLCJzdWIiOiJaMWFmZENrVVp3WFBIUlZNcXlSci1ZbG1qMm5LQkpHdXRVTEdwTU00aWVzIiwidGlkIjoiOTFiZWUzZDktMGMxNS00ZjE3LTg2MjQtYzkyYmI4YjM2ZWFkIiwidW5pcXVlX25hbWUiOiJhdXJvcmF1c2VyMTFAY2FwaW50ZWdyYXRpb24wMS5vbm1pY3Jvc29mdC5jb20iLCJ1cG4iOiJhdXJvcmF1c2VyMTFAY2FwaW50ZWdyYXRpb24wMS5vbm1pY3Jvc29mdC5jb20iLCJ1dGkiOiIySl95N2Z4YTAwNlBmTWgwZXB5c0FBIiwidmVyIjoiMS4wIiwieG1zX2Z0ZCI6Ijh5MWJwRHQtd19meHkxWmRnVklmclZBck5ZYWc0QnZRcXZDMGx6a05RZndCZFhOM1pYTjBNeTFrYzIxeiIsInhtc19pZHJlbCI6IjEgMiJ9.BCSiCDE8PJMq_OwEEpWASUFY4lHtEX6abGWvz8IlSOC_y12pFREnAPGu3h9L2YDHLDret3sXDfASkMZ1FSwanwAVHPTBxoC0rOlF57-JD7PPsxewroW_BwLAZRfiWWbLLKbIWEQjpBY0NCG4auuG7W3OLqJnt0J6jH_htm3_UHRaxlcemZBPoUfgEULkUPTxn2S1TTXOQsnvOSCjCcN1mSjyn9CeptElEe9_tEi7hHaTAcNOJJuIhcVe6KQP1pzPj6cZnOZPp3MryL-uqxjmVfoJX4AQHhTIUUbThbzXosIYYBu8gAqv4YYMkmLo3iZfor2VmnIX7KjttK70L0Lr7g";
+            var expr = @"First(Filter(ForAll(Employees, {Bonus: Salary}), Bonus < 80000)).Bonus";
+            var jwt = "";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
 
@@ -77,9 +77,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             Assert.True(check.IsSuccess);
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
 
-            var resultTV = (TableValue)result;
-            var rows = resultTV.Rows.First();
-            var newSalary = rows.Value.GetField("newSalary");
+            var resultTV = (DecimalValue)result;
+
+            //var rows = resultTV.Rows.First();
+            //var newSalary = rows.Value.GetField("newSalary");
 #endif
         }
 
