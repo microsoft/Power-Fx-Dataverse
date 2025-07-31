@@ -591,6 +591,7 @@ namespace Microsoft.PowerFx.Dataverse
                 || (tableArg.IsDelegating && tableArg.OriginalNode is CallNode callNode
                     && (callNode.Function.Name == "ShowColumns" ||
                         callNode.Function.Name == "Distinct" ||
+                        callNode.Function.Name == "ForAll" ||
                         callNode.Function.Name == "Sort" ||
                         callNode.Function.Name == "SortByColumns")))
             {

@@ -45,24 +45,26 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public async Task LivePowerAppsConnectorTest()
         {
 #if false
-            var endpoint = "https://44f782dc-c6fb-eafc-907b-dc95ca486d9c.15.common.tip1002.azure-apihub.net/";
-            var connectionId = "5772e1af38d64721bc9b96307fae662e";
-            var envId = "5772e1af38d64721bc9b96307fae662e";
-            var sessionId = "52ebd253-48c1-4920-9f2a-dcc5ca49846c";
-            var dataset = "testconnector.database.windows.net,testconnector";
+            var endpoint = "https://c8de4e41-7d28-ef89-b58b-cc6d4fa6c16e.18.common.tip1002.azure-apihub.net/";
+            var connectionId = "aa7b586623434ac288552220f0886f9a";
+            var envId = "2e60e1f8-dcfd-e26e-ad11-76bce40da16b";
+            var sessionId = "f3a552e0-3c14-47f5-8f26-bdba18d20186";
+            var uriPrefix = $"/apim/sql/{connectionId}";
+            string dataset = "testconnector.database.windows.net,testconnector"; // "testconnector.database.windows.net,testconnector";
             var tableToUseInExpression = "Employees";
-            var expr = @"CountRows(Employees)";
+            var expr = @"First(Filter(ForAll(Employees, {Bonus: Salary}), Bonus < 80000)).Bonus";
             var jwt = "";
 
-            var dataSourceInfo = ads.First();
-            Assert.NotNull(dataSourceInfo);
+            using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
 
-            Assert.True(dataSourceInfo.IsDelegatable);
-            Assert.True(dataSourceInfo.IsPageable);
-            Assert.True(dataSourceInfo.IsRefreshable);
-            Assert.True(dataSourceInfo.IsSelectable);
-            Assert.True(dataSourceInfo.IsWritable);
-            Assert.True(dataSourceInfo.RequiresAsync);
+            CdpDataSource cds = new CdpDataSource(dataset);
+
+            IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, uriPrefix, CancellationToken.None);
+            CdpTable connectorTable = tables.First(t => t.DisplayName == tableToUseInExpression);
+
+            await connectorTable.InitAsync(client, uriPrefix, CancellationToken.None);
+
+            CdpTableValue sqlTable = connectorTable.GetTableValue();
 
             SymbolValues symbolValues = new SymbolValues().Add(tableToUseInExpression, sqlTable);
             RuntimeConfig rc = new RuntimeConfig(symbolValues);
@@ -74,6 +76,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var ir = check.GetCompactIRString();
             Assert.True(check.IsSuccess);
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
+
+            var resultTV = (DecimalValue)result;
+
+            //var rows = resultTV.Rows.First();
+            //var newSalary = rows.Value.GetField("newSalary");
 #endif
         }
 

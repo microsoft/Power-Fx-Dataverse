@@ -24,7 +24,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public DelegationParameters DelegationParameters = null;        
 
         public TestTableValue(string tableName, RecordType recordType, RecordValue record, List<DelegationOperator> allColumnFilters)
-            : base(new TestRecordType(tableName, recordType, allColumnFilters, false))
+            : base(recordType is TestRecordType ? recordType : new TestRecordType(tableName, recordType, allColumnFilters, false))
         {
             _recordValue = record;
         }
