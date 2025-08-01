@@ -40,7 +40,7 @@ namespace Microsoft.PowerFx.Dataverse
                         return ProcessOtherCall(node, tableArg, context);
                     }
                 }
-                else if (arg is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordNode scope && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities, out isReturningTotalCount))
+                else if (arg is LazyEvalNode lazyEvalNode && lazyEvalNode.Child is RecordNode scope && TryProcessAggregateExpression(node, scope, context, tableArg, aggregateExpressions, capabilities))
                 {
                     continue;
                 }
@@ -50,7 +50,7 @@ namespace Microsoft.PowerFx.Dataverse
                 }
             }
 
-            if (tableArg.TryAddGroupBy(groupByProperties, aggregateExpressions, isReturningTotalCount, node, out RetVal result))
+            if (tableArg.TryAddGroupBy(groupByProperties, aggregateExpressions, node, out RetVal result))
             {
                 return result;
             }
@@ -58,10 +58,9 @@ namespace Microsoft.PowerFx.Dataverse
             return ProcessOtherCall(node, tableArg, context);
         }
 
-        private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities, out bool isReturningTotalCount)
+        private static bool TryProcessAggregateExpression(CallNode node, RecordNode scope, Context context, RetVal sourceTable, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
         {
             var aliasName = scope.Fields.First().Key.Value;
-            isReturningTotalCount = false;
             if (scope.Fields.First().Value is CallNode aggregationCallNode)
             {
                 // Try single-field aggregations (Sum, Min, Max, Avg)
@@ -77,10 +76,9 @@ namespace Microsoft.PowerFx.Dataverse
                     // CountIf() is a special case, as it requires a predicate with IsBlank() and Not() functions
                     return true;
                 }
-                else if (HasCountRowsAggregation(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities))
+                else if (TryAddCountRowsAggregation(aggregationCallNode, node, context, sourceTable, aliasName, aggregateExpressions, capabilities))
                 {
-                    // CountRows() is a special case, as it doesn't require a field name.s
-                    isReturningTotalCount = true;
+                    // CountRows() is a special case, as it doesn't require a field name, just alias name e.g. CountRows(ThisGroup) as TCount.
                     return true;
                 }
             }
@@ -144,11 +142,12 @@ namespace Microsoft.PowerFx.Dataverse
             return false;
         }
 
-        private static bool HasCountRowsAggregation(CallNode maybeCountRowsNode, CallNode node, Context context, RetVal sourceTable, string aliasName, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
+        private static bool TryAddCountRowsAggregation(CallNode maybeCountRowsNode, CallNode node, Context context, RetVal sourceTable, string aliasName, IList<FxColumnInfo> aggregateExpressions, TableDelegationInfo capabilities)
         {
             if (IsAggregateFunction(maybeCountRowsNode, node, BuiltinFunctionsCore.CountRows.Name, 1) &&
                 capabilities.CanDelegateSummarize(null, SummarizeMethod.CountRows, sourceTable.IsDataverseDelegation))
             {
+                aggregateExpressions.Add(new FxColumnInfo(null, aliasName, isDistinct: false, aggregateOperation: SummarizeMethod.CountRows));
                 return true;
             }
 
