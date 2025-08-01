@@ -1496,7 +1496,7 @@ END
         [Theory]
         [InlineData("Lookup", "Error 0-6: The result type Record is not supported in formula columns.")] // "Lookup"
         [InlineData("If(true, 'Self Reference', Lookup)", "Error 0-34: The result type Record is not supported in formula columns.")] // "Polymorphic Lookup"
-        [InlineData("Blank()", "Error 0-7: The result type Blank is not supported in formula columns.")] // "Blank"
+        [InlineData("Blank()", "Error 0-7: The result type ObjNull is not supported in formula columns.")] // "Blank"
         [InlineData("Guid", "Error 0-4: The result type Guid is not supported in formula columns.")] // "Guid"
         [InlineData("Owner", "Error 0-5: The result type Record is not supported in formula columns.")] // "Owner"
         [InlineData("Customer", "Error 0-8: The result type Record is not supported in formula columns.")] // "Customer"
