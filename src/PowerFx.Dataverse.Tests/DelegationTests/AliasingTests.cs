@@ -21,6 +21,14 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             "First(Filter(ForAll(t1,{logicalF2 : logicalF1}), logicalF2 < 10)).logicalF2",
             "(__retrieveSingle(t1, __lt(t1, {fieldFunctions:Table(), fieldName:logicalF1}, Float(10)), __noop(), __noJoin(), __noopGroupBy(), {logicalF1 As logicalF2})).logicalF2",
             10.0)]
+        [InlineData(
+            "First(Summarize(Filter(ForAll(t1,{aliasedF1 : logicalF1}), aliasedF1 <= 10), aliasedF1, Sum(ThisGroup, aliasedF1) As aliasSum)).aliasSum",
+            "(__retrieveSingle(t1, __lte(t1, {fieldFunctions:Table(), fieldName:logicalF1}, Float(10)), __noop(), __noJoin(), __groupBy(logicalF1), {logicalF1 As aliasedF1,SUM(logicalF1) As aliasSum})).aliasSum",
+            30.0)]
+        [InlineData(
+            "First(Filter(ForAll(t1,{logicalF1 : logicalF1}), logicalF1 < 10)).logicalF1",
+            "(__retrieveSingle(t1, __lt(t1, {fieldFunctions:Table(), fieldName:logicalF1}, Float(10)), __noop(), __noJoin(), __noopGroupBy(), {logicalF1})).logicalF1",
+            10.0)]
         public async Task TestAliasingWrapper(string expression, string expectedIR, double expectedValue)
         {
             // Arrange
@@ -36,12 +44,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
                 "t1",
                 RecordType.Empty()
                     .Add("logicalF1", FormulaType.Number, "DisplayF1")
-                    .Add("logicalF2", FormulaType.Number, "DisplayF2"),
+                    .Add("logicalF2", FormulaType.Number, "DisplayF2")
+                    .Add("aliasSum", FormulaType.Number),
                 allowedOperators);
 
             var mockRecord = FormulaValue.NewRecordFromFields(
                 recordType,
-                new NamedValue[] { new NamedValue("logicalF1", FormulaValue.New(10.0)), new NamedValue("logicalF2", FormulaValue.New(20.0)) });
+                new NamedValue[] { new NamedValue("logicalF1", FormulaValue.New(10.0)), new NamedValue("logicalF2", FormulaValue.New(20.0)), new NamedValue("aliasSum", FormulaValue.New(30.0)) });
 
             var tableValue = new TestTableValue(
                 "t1",
@@ -62,7 +71,8 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             // Assert
             Assert.True(checkResult.IsSuccess);
 
-            Assert.Equal(expectedIR, checkResult.GetCompactIRString());
+            var actualIR = checkResult.GetCompactIRString();
+            Assert.Equal(expectedIR, actualIR);
 
             var evaluationResult = await checkResult
                 .GetEvaluator()
