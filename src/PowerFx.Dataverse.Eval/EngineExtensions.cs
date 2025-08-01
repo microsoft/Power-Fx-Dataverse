@@ -128,8 +128,8 @@ namespace Microsoft.PowerFx.Dataverse
                 public AliasedRecordValue(FxColumnMap fxColumns, RecordType type, DValue<RecordValue> innerRecordValue)
                     : base(type)
                 {
-                    _fxColumns = fxColumns;
-                    _innerRecordValue = innerRecordValue;
+                    _fxColumns = fxColumns ?? throw new ArgumentNullException(nameof(fxColumns));
+                    _innerRecordValue = innerRecordValue ?? throw new ArgumentNullException(nameof(innerRecordValue));
                 }
 
                 protected override async Task<(bool Result, FormulaValue Value)> TryGetFieldAsync(FormulaType fieldType, string fieldName, CancellationToken cancellationToken)
@@ -137,12 +137,25 @@ namespace Microsoft.PowerFx.Dataverse
                     cancellationToken.ThrowIfCancellationRequested();
                     if (_fxColumns.TryGetColumnInfo(fieldName, out var columnInfo))
                     {
-                        var fieldValue = await _innerRecordValue.Value.GetFieldAsync(columnInfo.RealColumnName, cancellationToken);
+                        FormulaValue fieldValue;
+                        if (columnInfo.AggregateMethod == SummarizeMethod.None)
+                        {
+                            fieldValue = await _innerRecordValue.Value.GetFieldAsync(columnInfo.RealColumnName, cancellationToken);
+                        }
+                        else
+                        {
+                            // For aggregate methods, we need to use the alias column name, since it can't have the logical name.
+                            fieldValue = _innerRecordValue.Value.GetField(columnInfo.AliasColumnName);
+                        }
 
                         if (fieldValue is not BlankValue)
                         {
                             return (true, fieldValue);
                         }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Report a bug! Field {fieldName} not found in FxColumnMap.");
                     }
 
                     return (false, null);
