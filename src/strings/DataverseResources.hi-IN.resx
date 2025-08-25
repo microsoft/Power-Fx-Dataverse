@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलम में समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>{0} फ़ंक्शन के लिए तर्कों की अमान्य संख्या: {1} प्राप्त हुआ, अपेक्षित {2}</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलम में {1} फ़ंक्शन के लिए {0} तर्क समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>इस तर्क को सूत्र स्तंभों में इस प्रकार पास नहीं किया जा सकता.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>इस तर्क को सूत्र स्तंभों में {0} प्रकार के रूप में पारित नहीं किया जा सकता.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>इस तर्क के लिए केवल एक लिटरल मान समर्थित है.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>इस इनपुट पर समय क्षेत्र कनवर्जन के बिना {0} को कार्यान्वित नहीं किया जा सकता है, जो फॉर्मूला कॉलम में समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>यह कार्रवाई उन मानों पर नहीं की जा सकती जो अलग-अलग दिनांक समय व्यवहार के हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलम में केवल छोटी दिनांक और समय प्रारूप स्ट्रिंग समर्थित हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>{0} तर्क {1} दिनांक अंकगणितीय फ़ंक्शन के लिए समय की अमान्य/असमर्थित इकाई है.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलमों में स्थानीय-विशिष्ट फॉर्मेटिंग टोकन जैसे "." और "," समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलमों में {0} समर्थित नहीं है, इसकी जगह {1} उपयोग करें.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>फ़ॉर्मूला कॉलम में {0} समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>यह संचालन सूत्र स्तंभों में प्रकार {0} पर नहीं किया जा सकता है.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>परिणाम प्रकार {0} फॉर्मूला स्तंभों में समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>सूत्र स्तंभों में सीधे किसी संपूर्ण रिकॉर्ड को संदर्भित करना समर्थित नहीं है. कृपया रिकॉर्ड में किसी मान्य फ़ील्ड का संदर्भ दें.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>इस फॉर्मूला का परिणाम प्रकार {0} होने की उम्मीद है, लेकिन असली परिणाम प्रकार {1} है. फॉर्मूला कॉलम के परिणाम प्रकार को बदला नहीं जा सकता है.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>फॉर्मूला कॉलम में {0} प्रकार के कॉलम समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>{1} प्रारूप वाले {0} प्रकार के स्तंभ फॉर्मूला स्तंभों में समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>सूत्र स्तंभों में बलपूर्वक रिकॉर्ड या तालिकाएं समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>सूत्र स्तंभों में एकल-स्तंभ तालिकाएँ समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>सूत्र स्तंभों में वर्चुअल तालिका {0} संदर्भित नहीं कर सकता.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>संख्याओं के साथ टेक्स्ट फ़ंक्शन का उपयोग करते समय दूसरे तर्क में प्रारूप शामिल करें. प्रारूप स्ट्रिंग में सूत्र स्तंभों में हजारों या दशमलव विभाजक शामिल नहीं हो सकते.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>संख्याओं को टेक्स्ट में रूपांतरित करने के लिए टेक्स्ट फ़ंक्शन का उपयोग करें. दूसरे तर्क में एक प्रारूप शामिल करें, जिसमें सूत्र कॉलम में हजारों या दशमलव विभाजक शामिल नहीं हो सकते.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>संबंधित तालिकाओं में मुद्रा स्तंभों के साथ गणना फिलहाल सूत्र स्तंभों में समर्थित नहीं हैं.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>मुद्रा फ़ील्ड का प्रत्यक्ष उपयोग अभी तक समर्थित नहीं है. दशमलव (CurrencyField) का वैकल्पिक हल के रूप में उपयोग करें लेकिन ध्यान रहे कि दशमलव में मुद्रा की तुलना में एक छोटी सीमा है.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>संबंधित तालिकाओं से {0} नाम वाला विकल्प सेट फ़ार्मूला कॉलम में फ़िलहाल समर्थित नहीं है.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>नाम {0} के साथ विकल्प सेट के लिए मेटाडेटा नहीं मिला.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>संचालन कई विकल्प सेट पर नहीं किया जा सकता. कृपया परिणाम प्रकार के रूप में एकल विकल्प सेट का इस्तेमाल करें.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>
