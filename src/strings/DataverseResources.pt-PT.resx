@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>Não suportado em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>Número inválido de argumentos para a função {0}: recebido {1}, esperado {2}</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>O argumento {0} não é suportado para a função {1} em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>Não é possível transmitir este argumento com este tipo em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>Não é possível transmitir este argumento com o tipo {0} em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>Este argumento só suporta um valor literal.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>Não é possível efetuar {0} nesta entrada sem uma conversão de fuso horário, que não é suportada em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>Não é possível efetuar esta operação em valores que têm Comportamentos de Data/Hora diferentes.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>As colunas de fórmula só suportam cadeias no formato data e hora abreviada.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>O argumento {0} é uma unidade de tempo inválida/não suportada para a função aritmética de data {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>Tokens de formatação específicos da região, como "." e ",", não são suportados em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>{0} não é suportado em colunas de fórmula. Utilize {1} em vez disso.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>{0} não é suportado em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Não é possível efetuar esta operação no tipo {0} em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>O tipo de resultado {0} não é suportado em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>A referenciação direta de um registo inteiro não é suportada em colunas de fórmula. Referencie um campo válido no registo.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>É esperado que o tipo de resultado desta fórmula seja {0}, mas o tipo de resultado real é {1}. Não é possível alterar o tipo de resultado de uma coluna de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>As colunas do tipo {0} não são suportadas em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>As colunas do tipo {0} com o formato {1} não são suportadas em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>Forçar registos ou tabelas não é suportado em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>As tabelas de coluna única não são suportadas em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Não é possível referenciar a tabela virtual {0} em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>Inclua um formato no segundo argumento quando utilizar a função Texto com números. A cadeia de formato não pode incluir separadores decimais ou de milhares em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>Utilize a função Texto para converter números em texto. Inclua um formato no segundo argumento que não pode incluir um separador decimal ou de milhares em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Os cálculos com colunas de moeda em tabelas relacionadas não são atualmente suportados em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>A utilização direta de campos de moeda ainda não é suportada. Utilize Decimal(CurrencyField) como solução alternativa, mas note que decimal tem um intervalo menor que currency.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>O Conjunto de Opções com o nome {0} das tabelas relacionadas não é atualmente suportado em colunas de fórmula.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>Os metadados do Conjunto de Opções com o nome {0} não foram encontrados.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>Não é possível efetuar a operação em vários Conjuntos de Opções. Utilize um só Conjunto de Opções como tipo de resultado.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>

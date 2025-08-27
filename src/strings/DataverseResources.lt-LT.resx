@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>Formulės stulpeliuose nepalaikoma.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>Netinkamas funkcijos {0} argumentų skaičius: gautas – {1}, numatytas – {2}</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>Formulės stulpeliuose funkcijos {1} argumentas {0} nepalaikomas.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>Šio argumento negalima perduoti formulės stulpeliuose kaip šio tipo.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>Šio argumento negalima perduoti formulės stulpeliuose kaip tipo {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>Šiame argumente palaikoma tik literalo reikšmė.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>{0} negalima atlikti su šia įvestimi be laiko juostos konvertavimo, kuris formulės stulpeliuose nepalaikomas.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>Šios operacijos negalima atlikti su reikšmėmis, kurių datos ir laiko veikimo būdai yra kitokie.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>Formulės stulpeliuose palaikomos tik trumpo datos ir laiko formato eilutės.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>Argumentas {0} yra netinkamas / nepalaikomas datos aritmetinės funkcijos {1} laiko vienetas.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>Formulės stulpeliuose lokalėms būdingi formatavimo atpažinimo ženklai (pvz., „.“ ir „,“) nepalaikomi.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>Funkcija {0} formulės stulpeliuose nepalaikoma, vietoj jos naudokite {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>{0} tipo stulpeliai formulės stulpeliuose nepalaikomi.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Šios operacijos negalima atlikti formulės stulpelių tipe {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>{0} tipo rezultatas formulės stulpeliuose nepalaikomas.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>Formulės stulpeliuose nepalaikoma tiesioginė nuoroda į visą įrašą. Nurodykite tinkamą įrašo lauką.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>Tikimasi, kad šios formulės rezultato tipas bus {0}, tačiau faktinis rezultato tipas yra {1}. Formulės stulpelio rezultatų tipo pakeisti negalima.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>{0} tipo stulpeliai formulės stulpeliuose nepalaikomi.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>{0} tipo stulpeliai, kurių formatas {1}, formulės stulpeliuose nepalaikomi.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>Įrašų arba lentelių vertimas formulės stulpeliuose nepalaikomas.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>Vieno stulpelio lentelės formulės stulpeliuose nepalaikomos.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Negalima nurodyti virtualiosios lentelės {0} formulės stulpeliuose.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>Kai funkcija Tekstas naudojama su skaičiais, į antrąjį argumentą įtraukite formatą. Formato eilutėje formulės stulpeliuose negali būti tūkstančių ar dešimtainio skyriklio.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>Skaičiams į tekstą konvertuoti naudokite funkciją Tekstas. Į antrąjį argumentą įtraukite formatą, kurio formulės stulpeliuose nebūtų tūkstančių ar dešimtainio skyriklio.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Skaičiavimai su valiutų stulpeliais susijusių lentelių formulės stulpeliuose šiuo metu nepalaikomi.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Tiesioginis valiutos laukų naudojimas dar nepalaikomas. Kaip apėjimo būdą naudokite Decimal(CurrencyField), tačiau atminkite, kad dešimtainio skaičiaus diapazonas mažesnis už valiutos.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>Parinkčių rinkinys, kurio pavadinimas {0}, iš susijusių lentelių šiuo metu formulės stulpeliuose nepalaikomas.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>Parinkčių rinkinio, kurio pavadinimas {0}, metaduomenys nebuvo rasti.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>Operacijos negalima atlikti keliuose parinkčių rinkiniuose. Kaip rezultatų tipą naudokite vieną parinkčių rinkinį.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>

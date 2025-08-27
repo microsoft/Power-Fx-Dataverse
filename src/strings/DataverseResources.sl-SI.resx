@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>Ni podprto v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>Neveljavno število argumentov za funkcijo {0} – prejeto: {1}, pričakovano: {2}</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>Argument {0} ni podprt za funkcijo {1} v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>Tega argumenta ni mogoče prenesti v stolpce s formulami kot to vrsto.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>Tega argumenta ni mogoče prenesti v stolpce s formulami kot vrsto {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>Za ta argument je podprta samo vrednost z nizom.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>Funkcije {0} ni mogoče izvesti za ta vnos brez pretvorbe časovnega pasu, kar pa ni podprto v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>Tega postopka ni mogoče izvesti pri vrednostih, ki imajo različno delovanje datuma in ure.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>V stolpcih s formulo so podprti samo nizi s kratko obliko zapisa datuma in ure.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>Argument {0} je neveljavna/nepodprta časovna enota za aritmetično funkcijo datuma {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>Žetoni za oblikovanje za območne nastavitve, kot sta ».« in »,«, niso podprti v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>Funkcija {0} ni podprta v stolpcih s formulo, uporabite raje {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>Naslednje ni podprto v stolpcih s formulo: {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Tega postopka ni mogoče izvesti za vrsto {0} v stolpcih s formulami.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>Vrsta rezultata {0} ni podprta v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>Neposreden sklic na celoten zapis ni podprt v stolpcih s formulo. Uporabite sklic na veljavno polje v zapisu.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>Vrsta rezultata za to formulo naj bi bila {0}, vendar je dejanska vrsta rezultata {1}. Vrste rezultata stolpca s formulo ni mogoče spremeniti.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>Stolpci vrste {0} niso podprti v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>Stolpci vrste {0} z obliko zapisa {1} niso podprti v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>Vsiljevanje zapisov ali tabel ni podprto v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>Tabele z enim stolpcem niso podprte v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Na navidezno tabelo {0} v stolpcih s formulami se ni mogoče sklicevati.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>Ko uporabljate funkcijo besedila s številkami, v drugi argument vključite obliko zapisa. V stolpcih s formulo niz z obliko zapisa ne sme vsebovati ločila za tisočice ali decimalna števila.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>Uporabite funkcijo besedila in pretvorite številke v besedilo. V drugi argument vključite obliko zapisa, ki v stolpcih s formulo ne sme vsebovati ločila za tisočice ali decimalna števila.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Izračuni s stolpci za valute v povezanih tabelah trenutno niso podprti v stolpcih s formulo.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Neposredna uporaba denarnih polj še ni podprta. Kot rešitev uporabite polje Decimal(CurrencyField), vendar upoštevajte, da ima decimalno polje manjši obseg kot denarno.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>Nabor možnosti z imenom {0} iz povezanih tabel trenutno ni podprt v stolpcih s formulami.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>Metapodatkov za nabor možnosti z imenom {0} ni bilo mogoče najti.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>Operacije ni mogoče izvesti na več naborih možnosti. Kot vrsto rezultat uporabite en nabor možnosti.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>

@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>Формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>{0} функциясына арналған аргументтер саны жарамсыз: {1} алынды, {2} күтілді</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>Формула бағандарындағы {1} функциясы үшін {0} аргументіне қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>Бұл аргумент формула бағандарында осы түр ретінде өткізілмеуі мүмкін.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>Бұл аргумент формула бағандарында {0} түрінде өткізілмеуі мүмкін.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>Бұл аргумент үшін тек әріптік мәнге қолдау көрсетіледі.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>Формула бағандарында қолдау көрсетілмейтін уақыт белдеуін түрлендірмей, бұл жазбада {0} орындалмайды.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>Бұл операцияны күннің уақыт әрекеттері әр түрлі мәндерде орындауға болмайды.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>Формула бағандарында тек қысқа күн мен уақыт пішімі жолдарына қолдау көрсетіледі.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>{0} аргументі — {1} күн арифметикалық функциясы үшін жарамсыз/қолдау көрсетілмейтін уақыт бірлігі.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>Формула бағандарында "." және "," сияқты жергілікті пішімдеу таңбалауыштары қолданылмайды.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>{0} формула бағандарында қолданылмайды, оның орнына {1} пайдаланыңыз.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>{0} формула бағандарында қолданылмайды.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Бұл әрекет формула бағандарында {0} түрінде орындалмауы мүмкін.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>{0} нәтиже түріне формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>Формула бағандарында бүкіл жазбаға тікелей сілтеме жасауға қолдау көрсетілмейді. Жазбадағы жарамды өріске сілтеме жасаңыз.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>Бұл формула үшін нәтиже түрі {0} болады деп күтіледі, бірақ нақты нәтиже түрі — {1}. Формула бағанының нәтиже түрін өзгерту мүмкін емес.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>{0} түріндегі бағандарға формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>{1} пішімді {0} түріндегі бағандарға формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>Мәжбүрлі жазбаларға немесе кестелерге формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>Бір бағанды кестелерге формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Формула бағандарында {0} виртуалды кестесіне сілтеме жасау мүмкін емес.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>"Мәтін" функциясын сандармен бірге пайдаланғанда, екінші аргументке пішім енгізіңіз. Пішім жолы формула бағандарында мыңдаған немесе ондық бөлгішті қамтымауы керек.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>Сандарды мәтінге түрлендіру үшін "Мәтін" функциясын пайдаланыңыз. Формула бағандарындағы мыңдаған немесе ондық бөлгішті қамтымайтын екінші аргументке пішім енгізіңіз.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Қатысты кестелердегі валюта бағандарымен есептеуге қазір формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Валюталық өрістерді тікелей пайдалануға әлі қолдау көрсетілмейді. Ондық таңбаны (CurrencyField) айналып өту жолы ретінде пайдаланыңыз, бірақ ондық таңбаның валютаға қарағанда ауқымы аз екенін ескеріңіз.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>Қатысты кестелердегі {0} атты параметрлер жиынына қазіргі уақытта формула бағандарында қолдау көрсетілмейді.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>{0} атты параметрлер жиынының метадеректері табылмады.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>Бұл әрекетті бірнеше параметрлер жиынында орындау мүмкін емес. Нәтиже түрі ретінде жеке параметрлер жиынын пайдаланыңыз.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>

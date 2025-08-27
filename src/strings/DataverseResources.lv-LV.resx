@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -119,118 +118,118 @@
   </resheader>
   <data name="FormulaColumns_NotSupported" xml:space="preserve">
     <value>Netiek atbalstīts formulu kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where there the full PowerApps support is not available.</comment>
   </data>
   <data name="FormulaColumns_MathFunctionBadArity" xml:space="preserve">
     <value>Nederīgs argumentu skaits funkcijai {0}: saņemti {1}, paredzēti {2}</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where an invalid number of arguments is supplied to a math function. The {0} will be the name of the function. The {1} will be the incorrect number of arguments received. The {2} will be the correct number of args expected. </comment>
   </data>
   <data name="FormulaColumns_ArgNotSupported" xml:space="preserve">
     <value>Formulu kolonnās arguments {0} funkcijai {1} netiek atbalstīts.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments that are not supported there.  The {0} will be the name of the argument that is not supported.  The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_ArgTypeNotSupported" xml:space="preserve">
     <value>Šo argumentu formulu kolonnās nevar nodot kā šāda tipa argumentu.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_ArgumentTypeNotSupported" xml:space="preserve">
     <value>Šo argumentu formulu kolonnās nevar nodot kā argumentu, kura tips ir {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for an argument where the type is not supported. {0} is the attempted type the argument is being coerced to.</comment>
   </data>
   <data name="FormulaColumns_LiteralArgRequired" xml:space="preserve">
     <value>Šim argumentam tiek atbalstīta tikai literāļa vērtība.</value>
-    
+    <comment>Error Message. Used in formula columns for arguments where the value supplied must be a literal value (for example, a number or a string), instead of a calculation.</comment>
   </data>
   <data name="FormulaColumns_TimeZoneConversion" xml:space="preserve">
     <value>Funkciju {0} šai ievadei nevar veikt bez laika joslas pārvēršanas, kas formulu kolonnās netiek atbalstīta.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where time zone conversion is needed to perform the operation. The {0} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_IncompatibleDateTimes" xml:space="preserve">
     <value>Šo darbību nevar izpildīt vērtībām, kurām ir atšķirīga datuma un laika uzvedība.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where values of different Date Time Behaviors are used together, which is not supported</comment>
   </data>
   <data name="FormulaColumns_DateTimeFormatNotSupported" xml:space="preserve">
     <value>Formulu kolonnās tiek atbalstītas tikai īsās datuma un laika formāta virknes.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_InvalidTimeUnit" xml:space="preserve">
     <value>Arguments {0} ir nederīga/neatbalstīta laika vienība datuma aritmētiskajai funkcijai {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an unsupported unit of time to the DateAdd or DateDiff function. The {0} will be the name of the argument. The {1} will be the name of the function.</comment>
   </data>
   <data name="FormulaColumns_NumericFormatNotSupported" xml:space="preserve">
     <value>Lokalizācijai raksturīgi formatējuma marķieri (piemēram, “.” un “,”) netiek atbalstīti formulu kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker supplies an invalid format string</comment>
   </data>
   <data name="FormulaColumns_FunctionNotSupported" xml:space="preserve">
     <value>Funkcija {0} netiek atbalstīta formulu kolonnās, tā vietā izmantojiet funkciju {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported, providing an alternate function name.  The {0} will be the name of the function that is not supported, and {1} is the name of the suggested alternate.</comment>
   </data>
   <data name="FormulaColumns_FunctionSupportDisabled" xml:space="preserve">
     <value>Funkcija {0} netiek atbalstīta formulu kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to use a function that is not supported. The {0} will be the name of the function that is not supported.</comment>
   </data>
   <data name="FormulaColumns_OperationNotSupported" xml:space="preserve">
     <value>Formulu kolonnās šo darbību nevar veikt tipam {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to perform an unsupported operatiom. The {0} will be the type the operation is not supported for.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeNotSupported" xml:space="preserve">
     <value>Rezultātu tips {0} netiek atbalstīts formulu kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns a type which is not supported.</comment>
   </data>
   <data name="FormulaColumns_RecordAccessNotSupported" xml:space="preserve">
     <value>Formulu kolonnās netiek atbalstīta tieša atsauce uz visu ierakstu. Lūdzu, norādiet atsauci uz derīgu lauku ierakstā.</value>
-    
+    <comment>Error Message. Used in formula columns for scenarios where the maker attempts to reference an entire record instead of a specific field.</comment>
   </data>
   <data name="FormulaColumns_ResultTypeMustMatch" xml:space="preserve">
     <value>Ir paredzams, ka šīs formulas rezultāta tips būs {0}, taču faktiskais rezultāta tips ir {1}. Formulu kolonnas rezultāta tipu nevar mainīt.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that returns an unexpected result type during editing. The {0} will be the name of the required type. The {1} will be the name of the incorrect type.</comment>
   </data>
   <data name="FormulaColumns_ColumnTypeNotSupported" xml:space="preserve">
     <value>Formulu kolonnās netiek atbalstītas kolonnas, kuru tips ir {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is not supported, such as floating point.</comment>
   </data>
   <data name="FormulaColumns_ColumnFormatNotSupported" xml:space="preserve">
     <value>Formulu kolonnās netiek atbalstītas kolonnas, kuru tips ir {0}, formāts {1}.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts to use a column from Dataverse that is of a format that not supported, such as whole number formatted as language.</comment>
   </data>
   <data name="FormulaColumns_AggregateCoercionNotSupported" xml:space="preserve">
     <value>Formulu kolonnās netiek atbalstīta ierakstu vai tabulu pakļaušana.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula where the maker attempts record-record or table-table coercion.</comment>
   </data>
   <data name="FormulaColumns_SingleColumnTableNotSupported" xml:space="preserve">
     <value>Formulu kolonnās netiek atbalstītas vienas kolonnas tabulas.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a single-column table.</comment>
   </data>
   <data name="FormulaColumns_VirtualTableNotSupported" xml:space="preserve">
     <value>Formulu kolonnās nevar atsaukties uz virtuālo tabulu {0}.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that references a virtual table.</comment>
   </data>
   <data name="FormulaColumns_TextNumberMissingFormat" xml:space="preserve">
     <value>Iekļaujiet formātu otrā argumentā, izmantojot teksta funkciju ar skaitļiem. Formāta virknē nevar iekļaut tūkstošu vai decimāldaļskaitļu atdalītāju formulas kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for Text of a number without a format string.</comment>
   </data>
   <data name="FormulaColumns_ImplicitNumberToText" xml:space="preserve">
     <value>Izmantojiet teksta funkciju, lai pārvērstu skaitļus par tekstu. Iekļaujiet formātu otrā argumentā, kurā nevar iekļaut tūkstošu vai decimāldaļskaitļu atdalītāju formulas kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for implicit conversion of number to text.</comment>
   </data>
   <data name="FormulaColumns_RelatedCurrency" xml:space="preserve">
     <value>Aprēķini ar valūtas kolonnām saistītajās tabulās pašlaik netiek atbalstīti formulas kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns when a currency field is referenced on a related table, not currently supported.</comment>
   </data>
   <data name="FormulaColumns_DirectCurrencyNotSupported" xml:space="preserve">
     <value>Valūtas lauku tieša izmantošana vēl netiek atbalstīta. Izmantojiet Decimal(CurrencyField) kā risinājumu, taču ņemiet vērā, ka decimāldaļskaitļa diapazons ir mazāks nekā valūtas diapazons.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses currency fields directly expression.</comment>
   </data>
   <data name="FormulaColumns_RelatedEntityOptionSetNotSupported" xml:space="preserve">
     <value>Opciju kopa ar nosaukumu {0} no saistītajām tabulām pašlaik netiek atbalstīta formulu kolonnās.</value>
-    
+    <comment>Error Message. Used in formula columns for a formula that uses OptionSet from related tables.</comment>
   </data>
   <data name="FormulaColumns_InvalidOptionSet" xml:space="preserve">
     <value>Opciju kopai ar {0} nosaukumu nav atrasti metadati.</value>
-    
+    <comment>Error Message. Used in formula columns when optionset info is not found.</comment>
   </data>
   <data name="FormulaColumns_ResultFromMultipleOptionSetsNotSupported" xml:space="preserve">
     <value>Darbību nevar veikt vairākām opciju kopām. Lūdzu, izmantojiet vienu opciju kopu kā rezultāta tipu.</value>
-    
+    <comment>Error Message. Used when formula columns use multiple optionsets as result.</comment>
   </data>
 </root>
