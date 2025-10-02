@@ -243,6 +243,7 @@ namespace Microsoft.PowerFx.Dataverse
             return ode;
         }
 
+        [Obsolete("Please use GetODataElements) instead.")]
         public IReadOnlyDictionary<string, string> ODataElements
         {
             get => GetODataElements(null);
