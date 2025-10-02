@@ -120,7 +120,7 @@ namespace Microsoft.PowerFx.Dataverse
             }
         }
 
-        public override string GetOdataFilter() => ToOdataFilter(FxFilter);
+        public override string GetOdataFilter() => ToOdataFilter(FxFilter, null);
 
         public override string GetODataApply()
         {
@@ -194,56 +194,59 @@ namespace Microsoft.PowerFx.Dataverse
             return $"{propertyName} with {method.ToString().ToLowerInvariant()} as {alias}";
         }
 
+        private IReadOnlyDictionary<string, string> GetODataElements(QueryMarshallerSettings qms)
+        {
+            Dictionary<string, string> ode = new Dictionary<string, string>();
+
+            string joinApply = GetOdataJoinApply();
+            string filter = ToOdataFilter(FxFilter, qms);
+            int top = Top ?? 0;
+            IEnumerable<string> select = GetColumns();
+            IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
+            string groupBy = GetODataApply();
+
+            if (!string.IsNullOrEmpty(joinApply))
+            {
+                ode.Add(Odata_Apply, joinApply);
+            }
+
+            if (!string.IsNullOrEmpty(filter))
+            {
+                ode.Add(Odata_Filter, filter);
+            }
+
+            if (!string.IsNullOrEmpty(groupBy))
+            {
+                ode.Add(Odata_Apply, groupBy);
+            }
+
+            if (orderBy != null && orderBy.Any())
+            {
+                ode.Add(Odata_OrderBy, string.Join(",", orderBy.Select(x => x.col + (x.asc ? string.Empty : " desc"))));
+            }
+
+            if (select != null && select.Any())
+            {
+                ode.Add(Odata_Select, string.Join(",", select));
+            }
+
+            if (top > 0)
+            {
+                ode.Add(Odata_Top, top.ToString());
+            }
+
+            if (ReturnTotalRowCount)
+            {
+                ode.Add(Odata_Count, "true");
+            }
+
+            return ode;
+        }
+
+        [Obsolete("Please use GetODataElements) instead.")]
         public IReadOnlyDictionary<string, string> ODataElements
         {
-            get
-            {
-                Dictionary<string, string> ode = new Dictionary<string, string>();
-
-                string joinApply = GetOdataJoinApply();
-                string filter = GetOdataFilter();
-                int top = Top ?? 0;
-                IEnumerable<string> select = GetColumns();
-                IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
-                string groupBy = GetODataApply();
-
-                if (!string.IsNullOrEmpty(joinApply))
-                {
-                    ode.Add(Odata_Apply, joinApply);
-                }
-
-                if (!string.IsNullOrEmpty(filter))
-                {
-                    ode.Add(Odata_Filter, filter);
-                }
-
-                if (!string.IsNullOrEmpty(groupBy))
-                {
-                    ode.Add(Odata_Apply, groupBy);
-                }
-
-                if (orderBy != null && orderBy.Any())
-                {
-                    ode.Add(Odata_OrderBy, string.Join(",", orderBy.Select(x => x.col + (x.asc ? string.Empty : " desc"))));
-                }
-
-                if (select != null && select.Any())
-                {
-                    ode.Add(Odata_Select, string.Join(",", select));
-                }
-
-                if (top > 0)
-                {
-                    ode.Add(Odata_Top, top.ToString());
-                }
-
-                if (ReturnTotalRowCount)
-                {
-                    ode.Add(Odata_Count, "true");
-                }
-
-                return ode;
-            }
+            get => GetODataElements(null);
         }
 
         public override IReadOnlyCollection<string> GetColumns() => ColumnMap?.Where(ci => ci.AggregateMethod == SummarizeMethod.None).Select(ci => ci.RealColumnName).ToArray();
@@ -256,7 +259,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
-        private static string ToOdataFilter(FxFilterExpression filter)
+        private static string ToOdataFilter(FxFilterExpression filter, QueryMarshallerSettings qms)
         {
             if (filter == null)
             {
@@ -287,7 +290,7 @@ namespace Microsoft.PowerFx.Dataverse
                         sb.Append($" {op} ");
                     }
 
-                    var odStr = ToOdataFilter(sub);
+                    var odStr = ToOdataFilter(sub, qms);
                     sb.Append(odStr);
 
                     count++;
@@ -344,7 +347,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (condition.Operator == FxConditionOperator.Contains)
                     {
                         // not supported on Azure tables but we don't support capabilities for now
-                        sb.Append($"contains({fieldName},{EscapeOdata(value)})");
+                        sb.Append($"contains({fieldName},{EscapeOdata(value, qms)})");
                     }
                     else if (condition.Operator == FxConditionOperator.ContainsValues)
                     {
@@ -358,7 +361,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 sb.Append(" or ");
                             }
 
-                            sb.Append($"{fieldName} eq {EscapeOdata(inVal)}");
+                            sb.Append($"{fieldName} eq {EscapeOdata(inVal, qms)}");
                             isFirst = false;
                         }
 
@@ -374,11 +377,11 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else if (condition.Operator == FxConditionOperator.BeginsWith)
                     {
-                        sb.Append($"startswith({fieldName},{EscapeOdata(value)})");
+                        sb.Append($"startswith({fieldName},{EscapeOdata(value, qms)})");
                     }
                     else if (condition.Operator == FxConditionOperator.EndsWith)
                     {
-                        sb.Append($"endswith({fieldName},{EscapeOdata(value)})");
+                        sb.Append($"endswith({fieldName},{EscapeOdata(value, qms)})");
                     }
                     else
                     {
@@ -393,7 +396,7 @@ namespace Microsoft.PowerFx.Dataverse
                             _ => throw new NotImplementedException($"DataverseDelegationParameters don't support: {condition.Operator} operator"),
                         };
 
-                        string odValue = EscapeOdata(value);
+                        string odValue = EscapeOdata(value, qms);
                         string odFilter = $"{fieldName} {cop} {odValue}";
 
                         sb.Append(odFilter);
@@ -413,7 +416,7 @@ namespace Microsoft.PowerFx.Dataverse
             return null;
         }
 
-        private static string EscapeOdata(object obj)
+        private static string EscapeOdata(object obj, QueryMarshallerSettings qms)
         {
             if (obj == null)
             {
@@ -422,9 +425,12 @@ namespace Microsoft.PowerFx.Dataverse
 
             return obj switch
             {
-                string str => EscapeOdata(str),
-                bool b => b.ToString().ToLowerInvariant(),
-                DateTime dt => $"{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}",
+                string str => EscapeOdata(str, qms),
+                bool b => qms?.EncodeBooleanAsInteger == true ? (b ? "1" : "0") : b.ToString().ToLowerInvariant(),
+                DateTime dt => $"{(qms?.EncodeDateAsString == true ? "'" : string.Empty)}" +
+                                    $"{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()):yyyy-MM-ddTHH:mm:ss.fffZ}" +
+                                    $"{(qms?.EncodeDateAsString == true ? "'" : string.Empty)}",
+
                 float f => f.ToString(),
                 decimal d => d.ToString(),
                 double d2 => d2.ToString(),
@@ -436,7 +442,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
-        private static string EscapeOdata(string str)
+        private static string EscapeOdata(string str, QueryMarshallerSettings qms)
         {
             // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
             // escaped single quote as 2 single quotes.
@@ -485,10 +491,10 @@ namespace Microsoft.PowerFx.Dataverse
             return ReturnTotalRowCount;
         }
 
-        public override string GetODataQueryString()
+        public override string GetODataQueryString(QueryMarshallerSettings queryMarshallerSettings)
         {
             StringBuilder sb = new StringBuilder();
-            IReadOnlyDictionary<string, string> ode = ODataElements;
+            IReadOnlyDictionary<string, string> ode = GetODataElements(queryMarshallerSettings);
 
             // Check if GroupByTransformationNode is present
             if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0)
@@ -525,7 +531,7 @@ namespace Microsoft.PowerFx.Dataverse
                 AppendSelectParam(ode, sb);
             }
 
-            AppendCountReturn(ODataElements, sb);
+            AppendCountReturn(ode, sb);
 
             return sb.ToString();
         }

@@ -45,19 +45,20 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         public async Task LivePowerAppsConnectorTest()
         {
 #if false
-            var endpoint = "https://c8de4e41-7d28-ef89-b58b-cc6d4fa6c16e.18.common.tip1002.azure-apihub.net/";
-            var connectionId = "aa7b586623434ac288552220f0886f9a";
-            var envId = "2e60e1f8-dcfd-e26e-ad11-76bce40da16b";
-            var sessionId = "f3a552e0-3c14-47f5-8f26-bdba18d20186";
-            var uriPrefix = $"/apim/sql/{connectionId}";
-            string dataset = "testconnector.database.windows.net,testconnector"; // "testconnector.database.windows.net,testconnector";
-            var tableToUseInExpression = "Employees";
-            var expr = @"First(Filter(ForAll(Employees, {Bonus: Salary}), Bonus < 80000)).Bonus";
+            var endpoint = "https://f57b7fa9-0eac-e2e9-946c-725b144d6310.09.common.tip1002.azure-apihub.net/";
+            var connectionId = "06e79d6e99024f5db40ac8e983c914aa";
+            var envId = "f57b7fa9-0eac-e2e9-946c-725b144d6310";
+            var sessionId = "df12176a-f4d8-4652-88a4-0e48a591d957";
+            var uriPrefix = $"/apim/sharepointonline/{connectionId}";
+            string dataset = "https%253A%252F%252Faurorafinanceintegration02.sharepoint.com%252Fsites%252Fjvtest"; // "testconnector.database.windows.net,testconnector";
+            var tableToUseInExpression = "test1";
+            var expr = @"Filter(test1, Created > Date(2025,09,01))";
             var jwt = "";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
 
-            CdpDataSource cds = new CdpDataSource(dataset);
+            var qms = new QueryMarshallerSettings() { EncodeBooleanAsInteger = true, EncodeDateAsString = true };
+            CdpDataSource cds = new CdpDataSource(dataset, ConnectorSettings.NewCDPConnectorSettings(queryMarshallerSettings: qms));
 
             IEnumerable<CdpTable> tables = await cds.GetTablesAsync(client, uriPrefix, CancellationToken.None);
             CdpTable connectorTable = tables.First(t => t.DisplayName == tableToUseInExpression);
@@ -366,7 +367,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
-            return dp.GetODataQueryString();
+            return dp.GetODataQueryString(null);
         }
 
         public class HelperClock : IClockService

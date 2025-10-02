@@ -121,5 +121,27 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string filter = ddp.GetOdataFilter();
             Assert.Equal<object>("(a eq 17 or (b gt -4 and startswith(c,'ax')))", filter);
         }
+
+        [Fact]
+        public void SPOTreatsDateAsString_Test()
+        {
+            var fxFilter = new FxFilterExpression(FxFilterOperator.And);
+            fxFilter.AddCondition("Created", FxConditionOperator.GreaterThan, new DateTime(2025, 9, 1));
+
+            DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
+
+            string filter = ddp.GetODataQueryString(new QueryMarshallerSettings { EncodeDateAsString = true });
+            Assert.Equal<object>("$filter=Created+gt+%272025-09-01T00%3a00%3a00.000Z%27", filter);
+        }
+
+        [Fact]
+        public void SPOTreatsBooleanAsInteger_Test()
+        {
+            var fxFilter = new FxFilterExpression(FxFilterOperator.And);
+            fxFilter.AddCondition("IsActive", FxConditionOperator.Equal, true);
+            DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
+            string filter = ddp.GetODataQueryString(new QueryMarshallerSettings { EncodeBooleanAsInteger = true });
+            Assert.Equal<object>("$filter=IsActive+eq+1", filter);
+        }
     }
 }
