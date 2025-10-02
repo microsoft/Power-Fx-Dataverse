@@ -442,7 +442,7 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
-        private static string EscapeOdata(string str)
+        private static string EscapeOdata(string str, QueryMarshallerSettings qms)
         {
             // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
             // escaped single quote as 2 single quotes.
