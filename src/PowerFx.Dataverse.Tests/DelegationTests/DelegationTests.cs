@@ -44,7 +44,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
         [Fact]
         public async Task LivePowerAppsConnectorTest()
         {
-#if false
+#if true
             var endpoint = "https://f57b7fa9-0eac-e2e9-946c-725b144d6310.09.common.tip1002.azure-apihub.net/";
             var connectionId = "06e79d6e99024f5db40ac8e983c914aa";
             var envId = "f57b7fa9-0eac-e2e9-946c-725b144d6310";
@@ -53,7 +53,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             string dataset = "https%253A%252F%252Faurorafinanceintegration02.sharepoint.com%252Fsites%252Fjvtest"; // "testconnector.database.windows.net,testconnector";
             var tableToUseInExpression = "test1";
             var expr = @"Filter(test1, Created > Date(2025,09,01))";
-            var jwt = "";
+            var jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkhTMjNiN0RvN1RjYVUxUm9MSHdwSXEyNFZZZyIsImtpZCI6IkhTMjNiN0RvN1RjYVUxUm9MSHdwSXEyNFZZZyJ9.eyJhdWQiOiJodHRwczovL2FwaWh1Yi5henVyZS5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC80YWJjMjRlYS0yZDBiLTQwMTEtODdkNC0zZGUzMmNhMWU5Y2MvIiwiaWF0IjoxNzU5MzM2NzgzLCJuYmYiOjE3NTkzMzY3ODMsImV4cCI6MTc1OTM0MDk4MiwiYWNyIjoiMSIsImFpbyI6IkFXUUJtLzRhQUFBQUMvaWtrT0dzV3g1RXlOOXkrbmdJZDFVdDh6RzBQZHpjTENKNTJnL1VodFg5ZExLTlVTSXE1MWJUaCtNN09kb0draXR3MktrL3V6dEg0S2tNTnlUMEZPaUFkR2VBcUpJbjVtSlJZWi81dVNDNlYwL0xOT0dyeDdZMnBKd2V0WDVnYkxMQjBkR29uN3RzeUtzK1BkNThadzFuRCtpeGg2RkNnZ0RIVVZ6ZEhnbW5mVlJNZEJaekpRK3U4aHUwc0M0QTlNZ2RBTzZGRWVGcWlLZ1I0LzBHeWpFOU8vbWFKS0RBZlpXYVlhVVUveXB0bEdMMjB2dyt0YjFjcDZCalRlT2pOYTFSV3B0bTNqMFVYZjhvMnBYRWpjVzIzeTA0TWJKTHpMdEl3Q0RFV3lnMFBkak9RVnZqRDk5TnR1RGwvTUJOcEJ3R095ZTNxekxyRVdseFhyQmQya2p0cWRYM2NNSmZGWm9HaVcvbytndVhFZW1OWlo0MnMvS2w0UlBSZzE1aTkzSllBVFQ4MDJUeXpKWmEyNHM3blhqWkY4RFY1SHZ2UjBOMUtCdFZ5dHgzN0RFT01hNkJHVEJkOXNBY0s4cHZIRDZ6QWpqS2NBamtRb3hOamNqcFh3PT0iLCJhbXIiOlsicnNhIiwibWZhIl0sImFwcGlkIjoiNjBmMzhjZjQtYTBiZi00ZmRmLWIwYjUtMTRkMzEzMWJjMDMxIiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJhdXJvcmEiLCJnaXZlbl9uYW1lIjoidXNlcjAxIiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMTMuNzIuMjQxLjIzOSIsIm5hbWUiOiJhdXJvcmF1c2VyMDEiLCJvaWQiOiJkOGU5MGRiNi1kMDljLTRhOTAtYmMxZS04NjUxMmE3OTdmZDMiLCJwdWlkIjoiMTAwMzIwMDJCQTBENzQ1NyIsInJoIjoiMS5BYmNBNmlTOFNnc3RFVUNIMUQzakxLSHB6Rjg4QmY2U05oUlBydkx1TlB3SUhLNjNBQnUzQUEuIiwic2NwIjoiUnVudGltZS5BbGwiLCJzaWQiOiIwMDhkZjAwOS1lY2U5LWI2MmItYTMxZC01NzUxNTA0YWFmMTciLCJzdWIiOiJONlRHR2FmckFfZVVOa3JtUnZoLXdBYlp2SXFEamg5YVFYZEVaN1BZS29JIiwidGlkIjoiNGFiYzI0ZWEtMmQwYi00MDExLTg3ZDQtM2RlMzJjYTFlOWNjIiwidW5pcXVlX25hbWUiOiJhdXJvcmF1c2VyMDFAYXVyb3JhZmluYW5jZWludGVncmF0aW9uMDIub25taWNyb3NvZnQuY29tIiwidXBuIjoiYXVyb3JhdXNlcjAxQGF1cm9yYWZpbmFuY2VpbnRlZ3JhdGlvbjAyLm9ubWljcm9zb2Z0LmNvbSIsInV0aSI6ImVKMnZrQnZHQUUtN1NVUWtDbzBFQUEiLCJ2ZXIiOiIxLjAiLCJ4bXNfZnRkIjoidkcxaVRtZENURDdaNWRiSnYyNnVYZUpmRzU5WFVsSGlRY3J6UGN4OXZuMEJkWE56YjNWMGFDMWtjMjF6IiwieG1zX2lkcmVsIjoiNiAxIn0.CT538tLQDtPAVACMY0OwfGbMbvVL-XTwOaVoQdHkIFF7BbX4mAUNqTOoUHmmnkjzmrg2U0BrgRjmPmH9oDGHscIHNuzmdtIr9HxLgEx05BjqQeu9N_jRgsKHoREdzCFfSBEkx-RF7B6TXxlisgEIiF9glwlAets3XbgxSKV2qSItcqoo83pwZESdC-WQqmSpbIM3nxb7C2VHmutJgFCY1_0-M39MVIodiNFJ3Syu0yEjgYDAoz-GXaPUKVTmk2Kk-cKAadkT4NpIm7SV0LoxPD13nxLPxArNK5ia1j1ciMCVk0DFccc-VhRqVTf6y8smkDufKINNqXmf2DshIIefTQ";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
 
