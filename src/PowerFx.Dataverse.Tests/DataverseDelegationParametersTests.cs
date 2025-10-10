@@ -94,7 +94,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var fxFilter = new FxFilterExpression(FxFilterOperator.And);
             fxFilter.AddCondition("a", FxConditionOperator.Equal, 17m);
             fxFilter.AddCondition("b", FxConditionOperator.Equal, "xyz");
-            fxFilter.AddCondition("c", FxConditionOperator.LessEqual, new DateTime(2025, 4, 22, 17, 59, 3, DateTimeKind.Unspecified));
+            fxFilter.AddCondition("c", FxConditionOperator.LessEqual, new DateTime(2025, 4, 22, 17, 59, 3, DateTimeKind.Utc));
 
             DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
 
@@ -130,8 +130,13 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
 
-            string filter = ddp.GetODataQueryString(new QueryMarshallerSettings { EncodeDateAsString = true });
-            Assert.Equal<object>("$filter=Created+gt+%272025-09-01T00%3a00%3a00.000Z%27", filter);
+            var qms = new QueryMarshallerSettings { EncodeDateAsString = true };
+            var sp = new BasicServiceProvider();
+            var estTZ = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            sp.AddService(typeof(TimeZoneInfo), estTZ);
+            var drc = new DelegationRuntimeConfig(qms, sp);
+            string filter = ddp.GetODataQueryString(drc);
+            Assert.Equal<object>("$filter=Created+gt+%272025-09-01T04%3a00%3a00.000Z%27", filter);
         }
 
         [Fact]
@@ -140,7 +145,10 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var fxFilter = new FxFilterExpression(FxFilterOperator.And);
             fxFilter.AddCondition("IsActive", FxConditionOperator.Equal, true);
             DataverseDelegationParameters ddp = new DataverseDelegationParameters(FormulaType.String) { FxFilter = fxFilter };
-            string filter = ddp.GetODataQueryString(new QueryMarshallerSettings { EncodeBooleanAsInteger = true });
+            var qms = new QueryMarshallerSettings { EncodeBooleanAsInteger = true };
+            var sp = new BasicServiceProvider();
+            var drc = new DelegationRuntimeConfig(qms, sp);
+            string filter = ddp.GetODataQueryString(drc);
             Assert.Equal<object>("$filter=IsActive+eq+1", filter);
         }
     }

@@ -367,7 +367,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
-            return dp.GetODataQueryString(null);
+            var tz = TimeZoneInfo.Utc;
+            var services = new BasicServiceProvider();
+            services.AddService(typeof(TimeZoneInfo), tz);
+            var drc = new DelegationRuntimeConfig(null, services);
+            return dp.GetODataQueryString(drc);
         }
 
         public class HelperClock : IClockService
