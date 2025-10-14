@@ -52,7 +52,7 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             var uriPrefix = $"/apim/sharepointonline/{connectionId}";
             string dataset = "https%253A%252F%252Faurorafinanceintegration02.sharepoint.com%252Fsites%252Fjvtest"; // "testconnector.database.windows.net,testconnector";
             var tableToUseInExpression = "test1";
-            var expr = @"Filter(test1, Created > Date(2025,09,01))";
+            var expr = @"Filter(test1, dtField = Date(2025,10,13))";
             var jwt = "";
 
             using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
@@ -69,6 +69,9 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             SymbolValues symbolValues = new SymbolValues().Add(tableToUseInExpression, sqlTable);
             RuntimeConfig rc = new RuntimeConfig(symbolValues);
+            var pstZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+
+            rc.SetTimeZone(pstZone);
 
             var config = new PowerFxConfig(Features.PowerFxV1);
             var engine = new RecalcEngine(config);
@@ -367,7 +370,11 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
         internal static string GetODataString(DataverseDelegationParameters dp)
         {
-            return dp.GetODataQueryString(null);
+            var tz = TimeZoneInfo.Utc;
+            var services = new BasicServiceProvider();
+            services.AddService(typeof(TimeZoneInfo), tz);
+            var drc = new DelegationRuntimeConfig(null, services);
+            return dp.GetODataQueryString(drc);
         }
 
         public class HelperClock : IClockService
