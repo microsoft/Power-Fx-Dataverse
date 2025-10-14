@@ -194,12 +194,12 @@ namespace Microsoft.PowerFx.Dataverse
             return $"{propertyName} with {method.ToString().ToLowerInvariant()} as {alias}";
         }
 
-        private IReadOnlyDictionary<string, string> GetODataElements(QueryMarshallerSettings qms)
+        private IReadOnlyDictionary<string, string> GetODataElements(DelegationRuntimeConfig delegationRC)
         {
             Dictionary<string, string> ode = new Dictionary<string, string>();
 
             string joinApply = GetOdataJoinApply();
-            string filter = ToOdataFilter(FxFilter, qms);
+            string filter = ToOdataFilter(FxFilter, delegationRC);
             int top = Top ?? 0;
             IEnumerable<string> select = GetColumns();
             IReadOnlyCollection<(string col, bool asc)> orderBy = GetOrderBy();
@@ -259,7 +259,7 @@ namespace Microsoft.PowerFx.Dataverse
         }
 
         // $$$ -  https://github.com/microsoft/Power-Fx-Dataverse/issues/488
-        private static string ToOdataFilter(FxFilterExpression filter, QueryMarshallerSettings qms)
+        private static string ToOdataFilter(FxFilterExpression filter, DelegationRuntimeConfig delegationRC)
         {
             if (filter == null)
             {
@@ -290,7 +290,7 @@ namespace Microsoft.PowerFx.Dataverse
                         sb.Append($" {op} ");
                     }
 
-                    var odStr = ToOdataFilter(sub, qms);
+                    var odStr = ToOdataFilter(sub, delegationRC);
                     sb.Append(odStr);
 
                     count++;
@@ -347,7 +347,7 @@ namespace Microsoft.PowerFx.Dataverse
                     if (condition.Operator == FxConditionOperator.Contains)
                     {
                         // not supported on Azure tables but we don't support capabilities for now
-                        sb.Append($"contains({fieldName},{EscapeOdata(value, qms)})");
+                        sb.Append($"contains({fieldName},{EscapeOdata(value, delegationRC)})");
                     }
                     else if (condition.Operator == FxConditionOperator.ContainsValues)
                     {
@@ -361,7 +361,7 @@ namespace Microsoft.PowerFx.Dataverse
                                 sb.Append(" or ");
                             }
 
-                            sb.Append($"{fieldName} eq {EscapeOdata(inVal, qms)}");
+                            sb.Append($"{fieldName} eq {EscapeOdata(inVal, delegationRC)}");
                             isFirst = false;
                         }
 
@@ -377,11 +377,11 @@ namespace Microsoft.PowerFx.Dataverse
                     }
                     else if (condition.Operator == FxConditionOperator.BeginsWith)
                     {
-                        sb.Append($"startswith({fieldName},{EscapeOdata(value, qms)})");
+                        sb.Append($"startswith({fieldName},{EscapeOdata(value, delegationRC)})");
                     }
                     else if (condition.Operator == FxConditionOperator.EndsWith)
                     {
-                        sb.Append($"endswith({fieldName},{EscapeOdata(value, qms)})");
+                        sb.Append($"endswith({fieldName},{EscapeOdata(value, delegationRC)})");
                     }
                     else
                     {
@@ -396,7 +396,7 @@ namespace Microsoft.PowerFx.Dataverse
                             _ => throw new NotImplementedException($"DataverseDelegationParameters don't support: {condition.Operator} operator"),
                         };
 
-                        string odValue = EscapeOdata(value, qms);
+                        string odValue = EscapeOdata(value, delegationRC);
                         string odFilter = $"{fieldName} {cop} {odValue}";
 
                         sb.Append(odFilter);
@@ -416,21 +416,25 @@ namespace Microsoft.PowerFx.Dataverse
             return null;
         }
 
-        private static string EscapeOdata(object obj, QueryMarshallerSettings qms)
+        private static string EscapeOdata(object obj, DelegationRuntimeConfig delegationRC)
         {
             if (obj == null)
             {
                 return "null";
             }
 
+            var qms = delegationRC?.QueryMarshallerSettings;
+            var sourceTZ = delegationRC?.ServiceProvider?.GetService(typeof(TimeZoneInfo)) as TimeZoneInfo ?? TimeZoneInfo.Local;
+
             return obj switch
             {
-                string str => EscapeOdata(str, qms),
+                // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
+                // escaped single quote as 2 single quotes.
+                string str => "'" + str.Replace("'", "''") + "'",
                 bool b => qms?.EncodeBooleanAsInteger == true ? (b ? "1" : "0") : b.ToString().ToLowerInvariant(),
                 DateTime dt => $"{(qms?.EncodeDateAsString == true ? "'" : string.Empty)}" +
-                                    $"{(dt.Kind == DateTimeKind.Utc || dt.Kind == DateTimeKind.Unspecified ? dt : dt.ToUniversalTime()):yyyy-MM-ddTHH:mm:ss.fffZ}" +
-                                    $"{(qms?.EncodeDateAsString == true ? "'" : string.Empty)}",
-
+                               $"{ToUtcForOData(dt, sourceTZ):yyyy-MM-ddTHH:mm:ss.fffZ}" +
+                               $"{(qms?.EncodeDateAsString == true ? "'" : string.Empty)}",
                 float f => f.ToString(),
                 decimal d => d.ToString(),
                 double d2 => d2.ToString(),
@@ -442,11 +446,23 @@ namespace Microsoft.PowerFx.Dataverse
             };
         }
 
-        private static string EscapeOdata(string str, QueryMarshallerSettings qms)
+        // Helper: interpret dt as wall-clock in SourceTZ (if not already UTC) and return UTC
+        private static DateTime ToUtcForOData(DateTime dt, TimeZoneInfo sourceTZ)
         {
-            // https://docs.oasis-open.org/odata/odata/v4.01/cs01/part2-url-conventions/odata-v4.01-cs01-part2-url-conventions.html#sec_URLComponents
-            // escaped single quote as 2 single quotes.
-            return "'" + str.Replace("'", "''") + "'";
+            if (dt.Kind == DateTimeKind.Utc)
+            {
+                return dt;
+            }
+
+            // If it's Local and SourceTZ == Local, normal ToUniversalTime is fine
+            if (dt.Kind == DateTimeKind.Local && sourceTZ.Equals(TimeZoneInfo.Local))
+            {
+                return dt.ToUniversalTime();
+            }
+
+            // Otherwise, reinterpret as SourceTZ and convert to UTC
+            var wallClock = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+            return TimeZoneInfo.ConvertTimeToUtc(wallClock, sourceTZ);
         }
 
         private string GetOdataJoinApply()
@@ -491,10 +507,10 @@ namespace Microsoft.PowerFx.Dataverse
             return ReturnTotalRowCount;
         }
 
-        public override string GetODataQueryString(QueryMarshallerSettings queryMarshallerSettings)
+        public override string GetODataQueryString(DelegationRuntimeConfig delegationRC)
         {
             StringBuilder sb = new StringBuilder();
-            IReadOnlyDictionary<string, string> ode = GetODataElements(queryMarshallerSettings);
+            IReadOnlyDictionary<string, string> ode = GetODataElements(delegationRC);
 
             // Check if GroupByTransformationNode is present
             if ((Features & DelegationParameterFeatures.ApplyGroupBy) != 0 || (Features & DelegationParameterFeatures.ApplyTopLevelAggregation) != 0)
