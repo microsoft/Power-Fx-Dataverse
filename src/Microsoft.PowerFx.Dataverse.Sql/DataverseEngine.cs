@@ -51,7 +51,7 @@ namespace Microsoft.PowerFx.Dataverse
         protected readonly CultureInfo _cultureInfo;
 
         // the max supported expression length
-        internal const int MaxExpressionLength = 1000;
+        internal const int MaxExpressionLength = 2000;
 
         // During solution import or during validation checks, we pass invariant expression which is stored in db, with cultureInfo as null. This Invariant
         // expression length could be sometimes greater than display expression length and allowed MaxExpressionLength. so, compiling formula will fail for
