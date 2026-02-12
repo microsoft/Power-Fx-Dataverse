@@ -203,8 +203,6 @@ namespace PowerFx.Dataverse.Cdp.Tests
             // Expression with tabular connector
             string expr = @"ShowColumns(FirstN(Accounts, 80), Name, Type, CreatedById)";
 
-            // Will check type of CreatedById -> Users table
-            testConnector.SetResponseFromFile(@"Responses\SF GetSchema Users.json");
             CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
             Assert.True(check.IsSuccess);
 
@@ -217,8 +215,6 @@ namespace PowerFx.Dataverse.Cdp.Tests
             // This is in memory, there is no relationship, no network call
             FormulaValue name = rv.GetField("Name");
 
-            // Here, there is a relationship and we'll observe a network call
-            testConnector.SetResponseFromFiles(@"Responses\SF GetSchema Users.json", @"Responses\SF GetSchema Users.json", @"Responses\SF GetData User.json");
             FormulaValue createdBy = rv.GetField("CreatedById");
 
             // Unknown field, no crash
