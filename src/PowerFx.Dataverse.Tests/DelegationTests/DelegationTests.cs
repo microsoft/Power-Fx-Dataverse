@@ -5,6 +5,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,21 +43,41 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
             DetectDuplicateInlineData(typeof(DelegationTests));
         }
 
+        private sealed class InterceptingHandler : DelegatingHandler
+        {
+            public HttpRequestMessage? LastRequest { get; private set; }
+
+            public InterceptingHandler(HttpMessageHandler innerHandler)
+                : base(innerHandler) 
+            { 
+            }
+
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                LastRequest = request;
+                return base.SendAsync(request, cancellationToken);
+            }
+        }
+
+        private static Task<string> LiveTokenProvider(CancellationToken ct) => Task.FromResult("token");
+
         [Fact]
         public async Task LivePowerAppsConnectorTest()
         {
 #if false
-            var endpoint = "https://f57b7fa9-0eac-e2e9-946c-725b144d6310.09.common.tip1002.azure-apihub.net/";
-            var connectionId = "06e79d6e99024f5db40ac8e983c914aa";
-            var envId = "f57b7fa9-0eac-e2e9-946c-725b144d6310";
+            var endpoint = "https://1e67bcdac858e1da93bea66f31bbc0f.1.environment.api.preprod.powerplatform.com/connectors/runtime/invoke/scaleGroups/tip1002/shards/11/apis/";
+            var connectionId = "47093bd92e7d407db7b5496b3c4f688b";
+            var envId = "1e67bcda-c858-e1da-93be-a66f31bbc0f1";
             var sessionId = "df12176a-f4d8-4652-88a4-0e48a591d957";
-            var uriPrefix = $"/apim/sharepointonline/{connectionId}";
-            string dataset = "https%253A%252F%252Faurorafinanceintegration02.sharepoint.com%252Fsites%252Fjvtest"; // "testconnector.database.windows.net,testconnector";
-            var tableToUseInExpression = "test1";
-            var expr = @"Filter(test1, dtField = Date(2025,10,13))";
-            var jwt = "";
+            var uriPrefix = $"salesforce/connections/{connectionId}";
+            string dataset = "default"; // "testconnector.database.windows.net,testconnector";
+            var tableToUseInExpression = "Accounts";
+            var expr = @"First(Filter(Accounts, StartsWith('Account Number', ""cd""))).'Owner ID'";
 
-            using var client = new PowerPlatformConnectorClient(endpoint, envId, connectionId, () => jwt);
+            var (handler, baseURI) = PowerPlatformConnectorHelper.FromBaseUrl(endpoint, envId, connectionId, LiveTokenProvider, new InterceptingHandler(new HttpClientHandler()));
+
+            using var client = new HttpClient(handler) { BaseAddress = new Uri(endpoint) };
 
             var qms = new QueryMarshallerSettings() { EncodeBooleanAsInteger = true, EncodeDateAsString = true };
             CdpDataSource cds = new CdpDataSource(dataset, ConnectorSettings.NewCDPConnectorSettings(queryMarshallerSettings: qms));
@@ -75,13 +97,22 @@ namespace Microsoft.PowerFx.Dataverse.Tests.DelegationTests
 
             var config = new PowerFxConfig(Features.PowerFxV1);
             var engine = new RecalcEngine(config);
-            engine.EnableDelegation(2);
+            engine.EnableDelegation(1000);
             CheckResult check = engine.Check(expr, options: new ParserOptions() { AllowsSideEffects = true }, symbolTable: symbolValues.SymbolTable);
             var ir = check.GetCompactIRString();
             Assert.True(check.IsSuccess);
             FormulaValue result = await check.GetEvaluator().EvalAsync(CancellationToken.None, rc);
 
-            var resultTV = (DecimalValue)result;
+            foreach (var row in ((TableValue)result).Rows)
+            {
+                var record = row.Value;
+                var type = record.Type.GetFieldType("Owner ID");
+                foreach (var field in record.Fields)
+                {
+                }
+
+                var res = record.GetField("Owner ID");
+            }
 
             //var rows = resultTV.Rows.First();
             //var newSalary = rows.Value.GetField("newSalary");
