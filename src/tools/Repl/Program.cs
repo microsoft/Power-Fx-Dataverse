@@ -983,7 +983,7 @@ SQLEeval( Formula )
     Compile the formula to SQL and run on SQL Server.
 
 Option( Options.NetworkTrace, true )
-    Turns network tracing on or off.  
+    Turns network tracing on or off.
     When on, all HTTP requests and responses will be logged to the console.
 
 Reset() 
