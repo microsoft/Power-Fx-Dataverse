@@ -923,27 +923,35 @@ namespace Microsoft.PowerFx
                 }
 
                 var bytes = content.ReadAsByteArrayAsync().Result;
-                Stream stream = new MemoryStream(bytes);
+                Stream baseStream = new MemoryStream(bytes);
+                Stream currentStream = baseStream;
 
-                foreach (var encoding in encodings)
+                try
                 {
-                    switch (encoding.ToLowerInvariant())
+                    foreach (var encoding in encodings)
                     {
-                        case "gzip":
-                            stream = new GZipStream(stream, CompressionMode.Decompress);
-                            break;
-                        case "deflate":
-                            stream = new DeflateStream(stream, CompressionMode.Decompress);
-                            break;
-                        case "br":
-                            stream = new BrotliStream(stream, CompressionMode.Decompress);
-                            break;
+                        switch (encoding.ToLowerInvariant())
+                        {
+                            case "gzip":
+                                currentStream = new GZipStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                            case "deflate":
+                                currentStream = new DeflateStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                            case "br":
+                                currentStream = new BrotliStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                        }
+                    }
+
+                    using (var reader = new StreamReader(currentStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
+                    {
+                        return reader.ReadToEnd();
                     }
                 }
-
-                using (var reader = new StreamReader(stream))
+                finally
                 {
-                    return reader.ReadToEnd();
+                    currentStream?.Dispose();
                 }
             }
 
