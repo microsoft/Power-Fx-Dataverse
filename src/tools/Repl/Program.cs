@@ -987,7 +987,7 @@ SQLConnect( [ SQLConnectionString ] )
 SQL( Formula )
     Display compiled T-SQL for Formula.
 
-SQLEeval( Formula )
+SQLEval( Formula )
     Compile the formula to SQL and run on SQL Server.
 
 Option( Options.NetworkTrace, true )
