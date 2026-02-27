@@ -5,8 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -55,6 +58,10 @@ namespace Microsoft.PowerFx
 
         private const string OptionFeaturesNone = "FeaturesNone";
 
+        private const string OptionNetworkTrace = "NetworkTrace";
+
+        private static bool _networkTrace = false;
+
         private const string OptionPowerFxV1 = "PowerFxV1";
 
         private const string BatchFileName = "ReplDV.txt";
@@ -86,6 +93,7 @@ namespace Microsoft.PowerFx
                 { OptionFeaturesNone, OptionFeaturesNone },
                 { OptionPowerFxV1, OptionPowerFxV1 },
                 { OptionStackTrace, OptionStackTrace },
+                { OptionNetworkTrace, OptionNetworkTrace },
                 { OptionFormatTableColumns, OptionFormatTableColumns },
             };
 
@@ -130,6 +138,8 @@ namespace Microsoft.PowerFx
         {
             Console.InputEncoding = System.Text.Encoding.Unicode;
             Console.OutputEncoding = System.Text.Encoding.Unicode;
+
+            SetupNetworkTracing();
 
             var version = typeof(RecalcEngine).Assembly.GetName().Version.ToString();
             Console.WriteLine($"Microsoft Power Fx Console Formula REPL, Version {version}");
@@ -622,6 +632,7 @@ namespace Microsoft.PowerFx
                 sb.Append($"{"NumberIsFloat:",-42}{_numberIsFloat}\n");
                 sb.Append($"{"LargeCallDepth:",-42}{_largeCallDepth}\n");
                 sb.Append($"{"StackTrace:",-42}{_stackTrace}\n");
+                sb.Append($"{"NetworkTrace:",-42}{_networkTrace}\n");
 
                 foreach (var prop in typeof(Features).GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
@@ -668,6 +679,11 @@ namespace Microsoft.PowerFx
                 if (string.Equals(option.Value, OptionStackTrace, StringComparison.OrdinalIgnoreCase))
                 {
                     return BooleanValue.New(_stackTrace);
+                }
+
+                if (string.Equals(option.Value, OptionNetworkTrace, StringComparison.OrdinalIgnoreCase))
+                {
+                    return BooleanValue.New(_networkTrace);
                 }
 
                 return FormulaValue.NewError(new ExpressionError()
@@ -718,6 +734,12 @@ namespace Microsoft.PowerFx
                 if (string.Equals(option.Value, OptionStackTrace, StringComparison.OrdinalIgnoreCase))
                 {
                     _stackTrace = value.Value;
+                    return value;
+                }
+
+                if (string.Equals(option.Value, OptionNetworkTrace, StringComparison.OrdinalIgnoreCase))
+                {
+                    _networkTrace = value.Value;
                     return value;
                 }
 
@@ -804,6 +826,141 @@ namespace Microsoft.PowerFx
             }
         }
 
+        private static void SetupNetworkTracing()
+        {
+            DiagnosticListener.AllListeners.Subscribe(new HttpDiagnosticObserver());
+        }
+
+        private class HttpDiagnosticObserver : IObserver<DiagnosticListener>
+        {
+            public void OnCompleted()
+            {
+            }
+
+            public void OnError(Exception error)
+            {
+            }
+
+            public void OnNext(DiagnosticListener listener)
+            {
+                if (listener.Name == "HttpHandlerDiagnosticListener")
+                {
+                    listener.Subscribe(new HttpEventObserver());
+                }
+            }
+        }
+
+        private class HttpEventObserver : IObserver<KeyValuePair<string, object>>
+        {
+            public void OnCompleted()
+            {
+            }
+
+            public void OnError(Exception error)
+            {
+            }
+
+            public void OnNext(KeyValuePair<string, object> kvp)
+            {
+                if (!_networkTrace)
+                {
+                    return;
+                }
+
+                var oldColor = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+
+                try
+                {
+                    if (kvp.Key == "System.Net.Http.HttpRequestOut.Start")
+                    {
+                        var request = GetProperty<HttpRequestMessage>(kvp.Value, "Request");
+                        if (request != null)
+                        {
+                            Console.WriteLine($"  [HTTP] >> {request.Method} {request.RequestUri}");
+
+                            if (request.Content != null)
+                            {
+                                var body = request.Content.ReadAsStringAsync().Result;
+                                if (!string.IsNullOrEmpty(body))
+                                {
+                                    Console.WriteLine($"  [HTTP] >> {body}");
+                                }
+                            }
+                        }
+                    }
+                    else if (kvp.Key == "System.Net.Http.HttpRequestOut.Stop")
+                    {
+                        var response = GetProperty<HttpResponseMessage>(kvp.Value, "Response");
+                        if (response != null)
+                        {
+                            Console.WriteLine($"  [HTTP] << {(int)response.StatusCode} {response.ReasonPhrase}");
+
+                            if (response.Content != null)
+                            {
+                                var body = ReadContentAsString(response.Content);
+                                if (!string.IsNullOrEmpty(body))
+                                {
+                                    Console.WriteLine($"  [HTTP] << {body}");
+                                }
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    Console.ForegroundColor = oldColor;
+                }
+            }
+
+            private static string ReadContentAsString(HttpContent content)
+            {
+                var encodings = content.Headers.ContentEncoding;
+
+                if (!encodings.Any())
+                {
+                    return content.ReadAsStringAsync().Result;
+                }
+
+                var bytes = content.ReadAsByteArrayAsync().Result;
+                Stream baseStream = new MemoryStream(bytes);
+                Stream currentStream = baseStream;
+
+                try
+                {
+                    foreach (var encoding in encodings)
+                    {
+                        switch (encoding.ToLowerInvariant())
+                        {
+                            case "gzip":
+                                currentStream = new GZipStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                            case "deflate":
+                                currentStream = new DeflateStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                            case "br":
+                                currentStream = new BrotliStream(currentStream, CompressionMode.Decompress, leaveOpen: false);
+                                break;
+                        }
+                    }
+
+                    using (var reader = new StreamReader(currentStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
+                finally
+                {
+                    currentStream?.Dispose();
+                }
+            }
+
+            private static T GetProperty<T>(object obj, string propertyName)
+            {
+                return (T)obj?.GetType().GetProperty(propertyName)?.GetValue(obj);
+            }
+        }
+
         private class MyHelpProvider : HelpProvider
         {
             public override async Task Execute(PowerFxREPL repl, CancellationToken cancel, string context = null)
@@ -830,8 +987,12 @@ SQLConnect( [ SQLConnectionString ] )
 SQL( Formula )
     Display compiled T-SQL for Formula.
 
-SQLEeval( Formula )
+SQLEval( Formula )
     Compile the formula to SQL and run on SQL Server.
+
+Option( Options.NetworkTrace, true )
+    Turns network tracing on or off.
+    When on, all HTTP requests and responses will be logged to the console.
 
 Reset() 
     Resets the engine and reruns autoexec.
