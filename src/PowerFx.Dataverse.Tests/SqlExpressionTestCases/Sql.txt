@@ -64,6 +64,19 @@ true
 >> "%_" in "SQL wildcards"
 false
 
+// check quotes in LIKE patterns are handled
+>> StartsWith("it's here", "it's")
+true
+
+>> EndsWith("five o'clock", "o'clock")
+true
+
+>> "o'c" in "five o'clock"
+true
+
+>> StartsWith("50%_off", "50%_")
+true
+
 //Test decimal arithmetic + precision
 >> -43.3285467387 + 19.1232549
 -24.2052918389

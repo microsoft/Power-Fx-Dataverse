@@ -32,11 +32,13 @@ namespace Microsoft.PowerFx.Dataverse
             var returnType = context.GetReturnType(node);
             if (context.InInlineLiteralContext)
             {
-                return RetVal.FromSQL(value, returnType);
+                // The caller post-processes the value and is responsible for passing the result to EncodeStringLiteral.
+                // Normalize here so that any checks or transformations operate on the same text that the encoder emits.
+                return RetVal.FromSQL(CrmEncodeDecode.SqlLiteralNormalize(value), returnType);
             }
             else
             {
-                return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(value)}");
+                return context.SetIntermediateVariable(node, EncodeStringLiteral(value));
             }
         }
 
@@ -482,7 +484,7 @@ namespace Microsoft.PowerFx.Dataverse
                         }
 
                         // supporting OptionSetToText operation for enum cases like Text(TimeUnit.Days).
-                        return context.SetIntermediateVariable(node, $"N{CrmEncodeDecode.SqlLiteralEncode(name)}");
+                        return context.SetIntermediateVariable(node, EncodeStringLiteral(name));
                     }
 
                     // throwing error as Text(optionsetField) gives numeric Value of the option.
@@ -629,6 +631,17 @@ namespace Microsoft.PowerFx.Dataverse
             Inner
         }
 
+        /// <summary>
+        /// Encodes a string as an N-prefixed SQL string literal using <see cref="CrmEncodeDecode.SqlLiteralEncode(string)"/>.
+        /// String values that are written into generated SQL text should be encoded with this method.
+        /// </summary>
+        /// <param name="value">The string to encode.</param>
+        /// <returns>The encoded SQL string literal.</returns>
+        internal static string EncodeStringLiteral(string value)
+        {
+            return $"N{CrmEncodeDecode.SqlLiteralEncode(value)}";
+        }
+
         internal string EncodeLikeArgument(IntermediateNode node, MatchType matchType, Context context)
         {
             if (node is TextLiteralNode)
@@ -639,16 +652,15 @@ namespace Microsoft.PowerFx.Dataverse
                     var arg = node.Accept(this, context);
                     var match = arg.ToString();
 
-                    // encode SQL placeholders and quotes
+                    // escape LIKE wildcard characters
                     match = match.Replace("[", "[[]");
                     match = match.Replace("_", "[_]");
                     match = match.Replace("%", "[%]");
-                    match = match.Replace("'", "''");
 
                     // append start and end wildcards, as needed
                     var startWildcard = matchType != MatchType.Prefix ? "%" : string.Empty;
                     var endWildcard = matchType != MatchType.Suffix ? "%" : string.Empty;
-                    return $"N'{startWildcard}{match}{endWildcard}'";
+                    return EncodeStringLiteral($"{startWildcard}{match}{endWildcard}");
                 }
             }
             else if (node is CallNode callNode && callNode.Function == BuiltinFunctionsCore.Blank)

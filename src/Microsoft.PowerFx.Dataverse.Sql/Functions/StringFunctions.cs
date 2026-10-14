@@ -238,13 +238,10 @@ namespace Microsoft.PowerFx.Dataverse.Functions
 
                         format = backslashEscaped.ToString();
 
-                        // Single ticks need to be doubled in order to escape within the single tick delimited format string used in the FORMAT call below.
-                        // This needs to be done after all other adjustments above
-                        format = format.Replace("'", "''");
-
                         // Format function throws error if null arg is passed - e.g, FORMAT(NULL, N'0')
                         // use 0 if numeric arg is NULL which result in # placeholders not being filled (correctly)
-                        context.SetIntermediateVariable(result, $"FORMAT({CoerceNullToInt(val)}, N'{format}')");
+                        // The format string is encoded after all other adjustments above.
+                        context.SetIntermediateVariable(result, $"FORMAT({CoerceNullToInt(val)}, {EncodeStringLiteral(format)})");
                     }
                 }
 
