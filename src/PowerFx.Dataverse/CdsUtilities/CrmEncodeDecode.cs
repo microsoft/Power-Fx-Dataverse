@@ -11,6 +11,17 @@ namespace Microsoft.PowerFx.Dataverse.CdsUtilities
     internal static class CrmEncodeDecode
     {
         /// <summary>
+        /// Applies the same character normalization as <see cref="SqlLiteralEncode(string)"/>, without adding quotes or escaping.
+        /// Use this when a value needs to be inspected or transformed before it is passed to <see cref="SqlLiteralEncode(string)"/>.
+        /// </summary>
+        /// <param name="input">The string to normalize.</param>
+        /// <returns>The normalized string.</returns>
+        public static string SqlLiteralNormalize(string input)
+        {
+            return input.Replace('\u02BC', '\'');
+        }
+
+        /// <summary>
         /// Encodes a string to be used as a sql literal string.
         ///
         /// IMPORTANT: Please use SQL PARAMETERS whenever possible
