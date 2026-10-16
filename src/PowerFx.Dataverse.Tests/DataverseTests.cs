@@ -2262,6 +2262,107 @@ END
             Assert.True(result.IsSuccess);
         }
 
+        [Fact]
+        public void CheckNonGlobalOptionSets()
+        {
+            var localModelWithCollidingDisplayNames = new EntityMetadataModel
+            {
+                DisplayCollectionName = "entityLogicalName",
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("nonGlobalField1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label1", Value = 1 }, new OptionMetadataModel { Label = "label2", Value = 2 } }, isGlobal: false),
+                    AttributeMetadataModel.NewPicklist("nonGlobalField2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label3", Value = 3 }, new OptionMetadataModel { Label = "label4", Value = 4 } }, isGlobal: false)
+                }
+            };
+
+            var localModelWithoutCollidingDisplayNames = new EntityMetadataModel
+            {
+                DisplayCollectionName = "entityLogicalName",
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("nonGlobalField1", "Picklist1", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label1", Value = 1 }, new OptionMetadataModel { Label = "label2", Value = 2 } }, isGlobal: false),
+                    AttributeMetadataModel.NewPicklist("nonGlobalField2", "Picklist2", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label3", Value = 3 }, new OptionMetadataModel { Label = "label4", Value = 4 } }, isGlobal: false)
+                }
+            };
+
+            // Testing nonGlobal option sets with colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as true
+            var provider = new MockXrmMetadataProvider(localModelWithCollidingDisplayNames);
+            var engine = new PowerFx2SqlEngine(localModelWithCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+            var result = engine.Check("'Picklist (nonGlobalField1)' = 'Picklist (entityLogicalName) (nonGlobalField1)'.'label1' || 'Picklist (nonGlobalField2)' = 'Picklist (entityLogicalName) (nonGlobalField2)'.'label3'");
+            Assert.True(result.IsSuccess);
+
+            // Testing nonGlobal option sets with colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as false
+            engine = new PowerFx2SqlEngine(localModelWithCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: false));
+            result = engine.Check("'Picklist (nonGlobalField1)' = 'Picklist (entityLogicalName) (nonGlobalField1)'.'label1' || 'Picklist (nonGlobalField2)' = 'Picklist (entityLogicalName) (nonGlobalField2)'.'label3'");
+            Assert.False(result.IsSuccess);
+
+            // Testing nonGlobal option sets without colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as true
+            provider = new MockXrmMetadataProvider(localModelWithoutCollidingDisplayNames);
+            engine = new PowerFx2SqlEngine(localModelWithoutCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+            result = engine.Check("'Picklist (entityLogicalName) (nonGlobalField1)' = [@Picklist1].'label1' || 'Picklist (entityLogicalName) (nonGlobalField2)' = [@Picklist2].'label3'");
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Name isn't valid. 'Picklist (entityLogicalName) (nonGlobalField1)' isn't recognized", result.Errors.First().ToString());
+        }
+
+        [Fact]
+        public void CheckGlobalOptionSets2()
+        {
+            var localModelWithCollidingDisplayNames = new EntityMetadataModel
+            {
+                DisplayCollectionName = "entityLogicalName",
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("globalField1", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label1", Value = 1 }, new OptionMetadataModel { Label = "label2", Value = 2 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("globalField2", "Picklist", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label3", Value = 3 }, new OptionMetadataModel { Label = "label4", Value = 4 } }, isGlobal: true)
+                }
+            };
+
+            var localModelWithoutCollidingDisplayNames = new EntityMetadataModel
+            {
+                DisplayCollectionName = "entityLogicalName",
+                LogicalName = "local",
+                PrimaryIdAttribute = "localid",
+                Attributes = new AttributeMetadataModel[]
+                {
+                    AttributeMetadataModel.NewGuid("localid", "LocalId"),
+                    AttributeMetadataModel.NewPicklist("globalField1", "Picklist1", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label1", Value = 1 }, new OptionMetadataModel { Label = "label2", Value = 2 } }, isGlobal: true),
+                    AttributeMetadataModel.NewPicklist("globalField2", "Picklist2", new OptionMetadataModel[] { new OptionMetadataModel { Label = "label3", Value = 3 }, new OptionMetadataModel { Label = "label4", Value = 4 } }, isGlobal: true)
+                }
+            };
+
+            // Testing global option sets with colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as true
+            var provider = new MockXrmMetadataProvider(localModelWithCollidingDisplayNames);
+            var engine = new PowerFx2SqlEngine(localModelWithCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+            var result = engine.Check("'Picklist (globalField1)' = 'Picklist (globalField1_optionSet)'.'label1' || 'Picklist (globalField2)' = 'Picklist (globalField2_optionSet)'.'label3'");
+            Assert.True(result.IsSuccess);
+
+            // Testing global option sets with colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as false
+            engine = new PowerFx2SqlEngine(localModelWithCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: false));
+            result = engine.Check("'Picklist (globalField1)' = [@Picklist].'label1'");
+            Assert.True(result.IsSuccess);
+
+            // label3 is not present in the PickList optionSet, as an OptionSet is already saved with the unique key as PickList (globalField1)
+            result = engine.Check("'Picklist (globalField2)' = [@Picklist].'label3'");
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Name isn't valid. 'label3' isn't recognized.", result.Errors.First().ToString());
+
+            // Testing global option sets without colliding display names and useUpdatedOptionSetKeyWhenDisplayNameIsSame as false
+            provider = new MockXrmMetadataProvider(localModelWithoutCollidingDisplayNames);
+            engine = new PowerFx2SqlEngine(localModelWithoutCollidingDisplayNames.ToXrm(), new CdsEntityMetadataProvider(provider, useUpdatedOptionSetKeyWhenDisplayNameIsSame: true));
+            result = engine.Check("'Picklist (globalField1_optionSet)' = [@Picklist1].'label1' || 'Picklist2 (globalField2_optionSet)' = [@Picklist2].'label3'");
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Name isn't valid. 'Picklist (globalField1_optionSet)' isn't recognized", result.Errors.First().ToString());
+        }
+
         [Theory]
         [InlineData("Float", true)] // "Local Float"
         [InlineData("Other.Float", true)] // "Remote non-float with name collision"
